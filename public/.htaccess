@@ -1,0 +1,25 @@
+<IfModule mod_reWrite-.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    ReWrite-Engine On
+
+    # Handle Authorization Header
+    ReWrite-Cond %{HTTP:Authorization} .
+    ReWrite-Rule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    ReWrite-Cond %{HTTP:x-xsrf-token} .
+    ReWrite-Rule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    ReWrite-Cond %{REQUEST_FILENAME} !-d
+    ReWrite-Cond %{REQUEST_URI} (.+)/$
+    ReWrite-Rule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    ReWrite-Cond %{REQUEST_FILENAME} !-d
+    ReWrite-Cond %{REQUEST_FILENAME} !-f
+    ReWrite-Rule ^ index.php [L]
+</IfModule>
