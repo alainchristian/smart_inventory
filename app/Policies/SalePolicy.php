@@ -2,65 +2,64 @@
 
 namespace App\Policies;
 
+use App\Enums\LocationType;
 use App\Models\Sale;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class SalePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Sale $sale): bool
     {
-        return false;
+        if ($user->isOwner()) {
+            return true;
+        }
+
+        return $user->isShopManager() && $user->hasLocationAccess(
+            LocationType::SHOP,
+            $sale->shop_id
+        );
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return false;
+        // Only shop managers and owners can create sales
+        return $user->isShopManager() || $user->isOwner();
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Sale $sale): bool
+    public function void(User $user, Sale $sale): bool
     {
-        return false;
+        // Cannot void already voided sale
+        if ($sale->voided_at) {
+            return false;
+        }
+
+        // Owner can void any sale
+        if ($user->isOwner()) {
+            return true;
+        }
+
+        // Shop manager can void sales from their shop
+        return $user->isShopManager() && $user->hasLocationAccess(
+            LocationType::SHOP,
+            $sale->shop_id
+        );
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Sale $sale): bool
+    public function modifyPrice(User $user, Sale $sale): bool
     {
-        return false;
+        // Shop managers can modify (requires approval)
+        // Owners can modify without approval
+        return $user->isShopManager() || $user->isOwner();
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Sale $sale): bool
+    public function approvePriceOverride(User $user, Sale $sale): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Sale $sale): bool
-    {
-        return false;
+        // Only owners can approve price overrides
+        return $user->isOwner() && $sale->has_price_override;
     }
 }
