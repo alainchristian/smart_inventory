@@ -13,12 +13,21 @@ use App\Models\Transfer;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // System-wide analytics
+        // Get filter parameters
+        $filter = $request->get('filter', 'today');
+        $fromDate = $request->get('from');
+        $toDate = $request->get('to');
+
+        // Determine date range based on filter
+        $dateRange = $this->getDateRange($filter, $fromDate, $toDate);
+
+        // System-wide analytics (not date-dependent)
         $stats = [
             'total_users' => User::active()->count(),
             'total_warehouses' => Warehouse::active()->count(),
@@ -64,31 +73,117 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
-        // Sales statistics (last 30 days)
-        $salesStats = [
-            'today' => Sale::notVoided()->whereDate('sale_date', today())->sum('total') / 100,
-            'this_week' => Sale::notVoided()
-                ->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()])
-                ->sum('total') / 100,
-            'this_month' => Sale::notVoided()
-                ->whereYear('sale_date', now()->year)
-                ->whereMonth('sale_date', now()->month)
-                ->sum('total') / 100,
-            'total_count_today' => Sale::notVoided()->whereDate('sale_date', today())->count(),
-        ];
-
-        // Top performing shops (by sales this month)
-        $topShops = Shop::withCount(['sales' => function ($query) {
-            $query->notVoided()
-                ->whereYear('sale_date', now()->year)
-                ->whereMonth('sale_date', now()->month);
-        }])
-            ->with(['sales' => function ($query) {
-                $query->notVoided()
+        // Sales statistics - FILTERED BY DATE RANGE
+        $salesQuery = Sale::notVoided();
+        
+        if ($filter === 'today') {
+            $salesStats = [
+                'today' => $salesQuery->whereDate('sale_date', today())->sum('total') / 100,
+                'this_week' => Sale::notVoided()
+                    ->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()])
+                    ->sum('total') / 100,
+                'this_month' => Sale::notVoided()
                     ->whereYear('sale_date', now()->year)
-                    ->whereMonth('sale_date', now()->month);
-            }])
-            ->get()
+                    ->whereMonth('sale_date', now()->month)
+                    ->sum('total') / 100,
+                'total_count_today' => $salesQuery->whereDate('sale_date', today())->count(),
+            ];
+        } elseif ($filter === 'week') {
+            $weekStart = now()->startOfWeek();
+            $weekEnd = now()->endOfWeek();
+            
+            $salesStats = [
+                'today' => $salesQuery->whereBetween('sale_date', [$weekStart, $weekEnd])->sum('total') / 100,
+                'this_week' => $salesQuery->whereBetween('sale_date', [$weekStart, $weekEnd])->sum('total') / 100,
+                'this_month' => Sale::notVoided()
+                    ->whereYear('sale_date', now()->year)
+                    ->whereMonth('sale_date', now()->month)
+                    ->sum('total') / 100,
+                'total_count_today' => $salesQuery->whereBetween('sale_date', [$weekStart, $weekEnd])->count(),
+            ];
+        } elseif ($filter === 'month') {
+            $salesStats = [
+                'today' => $salesQuery->whereYear('sale_date', now()->year)
+                    ->whereMonth('sale_date', now()->month)
+                    ->sum('total') / 100,
+                'this_week' => Sale::notVoided()
+                    ->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()])
+                    ->sum('total') / 100,
+                'this_month' => $salesQuery->whereYear('sale_date', now()->year)
+                    ->whereMonth('sale_date', now()->month)
+                    ->sum('total') / 100,
+                'total_count_today' => $salesQuery->whereYear('sale_date', now()->year)
+                    ->whereMonth('sale_date', now()->month)
+                    ->count(),
+            ];
+        } elseif ($filter === 'custom' && $fromDate && $toDate) {
+            $from = Carbon::parse($fromDate)->startOfDay();
+            $to = Carbon::parse($toDate)->endOfDay();
+            
+            $salesStats = [
+                'today' => $salesQuery->whereBetween('sale_date', [$from, $to])->sum('total') / 100,
+                'this_week' => $salesQuery->whereBetween('sale_date', [$from, $to])->sum('total') / 100,
+                'this_month' => $salesQuery->whereBetween('sale_date', [$from, $to])->sum('total') / 100,
+                'total_count_today' => $salesQuery->whereBetween('sale_date', [$from, $to])->count(),
+            ];
+        } else {
+            // Default to today
+            $salesStats = [
+                'today' => $salesQuery->whereDate('sale_date', today())->sum('total') / 100,
+                'this_week' => Sale::notVoided()
+                    ->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()])
+                    ->sum('total') / 100,
+                'this_month' => Sale::notVoided()
+                    ->whereYear('sale_date', now()->year)
+                    ->whereMonth('sale_date', now()->month)
+                    ->sum('total') / 100,
+                'total_count_today' => $salesQuery->whereDate('sale_date', today())->count(),
+            ];
+        }
+
+        // Top performing shops (by sales in selected date range)
+        $topShopsQuery = Shop::withCount(['sales' => function ($query) use ($filter, $fromDate, $toDate) {
+            $query->notVoided();
+            
+            if ($filter === 'today') {
+                $query->whereDate('sale_date', today());
+            } elseif ($filter === 'week') {
+                $query->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()]);
+            } elseif ($filter === 'month') {
+                $query->whereYear('sale_date', now()->year)
+                      ->whereMonth('sale_date', now()->month);
+            } elseif ($filter === 'custom' && $fromDate && $toDate) {
+                $from = Carbon::parse($fromDate)->startOfDay();
+                $to = Carbon::parse($toDate)->endOfDay();
+                $query->whereBetween('sale_date', [$from, $to]);
+            } else {
+                // Default to this month
+                $query->whereYear('sale_date', now()->year)
+                      ->whereMonth('sale_date', now()->month);
+            }
+        }])
+        ->with(['sales' => function ($query) use ($filter, $fromDate, $toDate) {
+            $query->notVoided();
+            
+            if ($filter === 'today') {
+                $query->whereDate('sale_date', today());
+            } elseif ($filter === 'week') {
+                $query->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()]);
+            } elseif ($filter === 'month') {
+                $query->whereYear('sale_date', now()->year)
+                      ->whereMonth('sale_date', now()->month);
+            } elseif ($filter === 'custom' && $fromDate && $toDate) {
+                $from = Carbon::parse($fromDate)->startOfDay();
+                $to = Carbon::parse($toDate)->endOfDay();
+                $query->whereBetween('sale_date', [$from, $to]);
+            } else {
+                // Default to this month
+                $query->whereYear('sale_date', now()->year)
+                      ->whereMonth('sale_date', now()->month);
+            }
+        }]);
+
+        $topShops = $topShopsQuery->get()
             ->map(function ($shop) {
                 $shop->total_sales = $shop->sales->sum('total') / 100;
                 return $shop;
@@ -133,5 +228,50 @@ class DashboardController extends Controller
             'criticalAlerts',
             'lowStockProducts'
         ));
+    }
+
+    /**
+     * Helper method to get date range based on filter
+     */
+    private function getDateRange($filter, $fromDate = null, $toDate = null)
+    {
+        switch ($filter) {
+            case 'today':
+                return [
+                    'start' => Carbon::today(),
+                    'end' => Carbon::today()->endOfDay(),
+                ];
+            
+            case 'week':
+                return [
+                    'start' => Carbon::now()->startOfWeek(),
+                    'end' => Carbon::now()->endOfWeek(),
+                ];
+            
+            case 'month':
+                return [
+                    'start' => Carbon::now()->startOfMonth(),
+                    'end' => Carbon::now()->endOfMonth(),
+                ];
+            
+            case 'custom':
+                if ($fromDate && $toDate) {
+                    return [
+                        'start' => Carbon::parse($fromDate)->startOfDay(),
+                        'end' => Carbon::parse($toDate)->endOfDay(),
+                    ];
+                }
+                // Fallback to today if custom dates are invalid
+                return [
+                    'start' => Carbon::today(),
+                    'end' => Carbon::today()->endOfDay(),
+                ];
+            
+            default:
+                return [
+                    'start' => Carbon::today(),
+                    'end' => Carbon::today()->endOfDay(),
+                ];
+        }
     }
 }
