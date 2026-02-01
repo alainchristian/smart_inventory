@@ -13,17 +13,30 @@ use App\Models\Shop;
 use App\Models\Transfer;
 use Illuminate\Http\Request;
 
+/**
+ * Controller responsible for displaying the Shop Manager dashboard.
+ *
+ * This implementation extends the default dashboard by computing additional
+ * metrics required for the enhanced dashboard view. Specifically, it
+ * calculates change percentages for today's KPIs relative to yesterday and
+ * includes a last sync timestamp so the UI can display recency information.
+ */
 class DashboardController extends Controller
 {
+    /**
+     * Display the shop dashboard.
+     */
     public function index()
     {
-        $user = auth()->user();
-        $shopId = $user->location_id;
-        $shop = Shop::with('defaultWarehouse')->findOrFail($shopId);
+        $user    = auth()->user();
+        $shopId  = $user->location_id;
+        $shop    = Shop::with('defaultWarehouse')->findOrFail($shopId);
 
+        // ------------------------------------------------------------------
         // Today's sales statistics
+        // ------------------------------------------------------------------
         $todaySales = [
-            'total_sales' => Sale::notVoided()
+            'total_sales'       => Sale::notVoided()
                 ->where('shop_id', $shopId)
                 ->whereDate('sale_date', today())
                 ->sum('total') / 100,
@@ -31,7 +44,7 @@ class DashboardController extends Controller
                 ->where('shop_id', $shopId)
                 ->whereDate('sale_date', today())
                 ->count(),
-            'items_sold' => Sale::notVoided()
+            'items_sold'        => Sale::notVoided()
                 ->where('shop_id', $shopId)
                 ->whereDate('sale_date', today())
                 ->with('items')
@@ -46,25 +59,74 @@ class DashboardController extends Controller
             $todaySales['average_transaction'] = $todaySales['total_sales'] / $todaySales['transaction_count'];
         }
 
-        // This week's sales
+        // ------------------------------------------------------------------
+        // Yesterday's sales statistics (for change calculation)
+        // ------------------------------------------------------------------
+        $yesterdaySales = [
+            'total_sales'       => Sale::notVoided()
+                ->where('shop_id', $shopId)
+                ->whereDate('sale_date', today()->subDay())
+                ->sum('total') / 100,
+            'transaction_count' => Sale::notVoided()
+                ->where('shop_id', $shopId)
+                ->whereDate('sale_date', today()->subDay())
+                ->count(),
+            'items_sold'        => Sale::notVoided()
+                ->where('shop_id', $shopId)
+                ->whereDate('sale_date', today()->subDay())
+                ->with('items')
+                ->get()
+                ->sum(function ($sale) {
+                    return $sale->items->sum('quantity_sold');
+                }),
+            'average_transaction' => 0,
+        ];
+
+        if ($yesterdaySales['transaction_count'] > 0) {
+            $yesterdaySales['average_transaction'] = $yesterdaySales['total_sales'] / $yesterdaySales['transaction_count'];
+        }
+
+        // ------------------------------------------------------------------
+        // Compute change percentages (vs yesterday). If yesterday's metric
+        // is zero, the change defaults to 100% (either positive or negative)
+        // depending on whether there was activity today. This avoids division
+        // by zero and still provides meaningful feedback in the UI.
+        // ------------------------------------------------------------------
+        $todaySalesChange        = $yesterdaySales['total_sales'] > 0
+            ? (($todaySales['total_sales'] - $yesterdaySales['total_sales']) / $yesterdaySales['total_sales']) * 100
+            : ($todaySales['total_sales'] > 0 ? 100 : 0);
+        $todayTransactionsChange = $yesterdaySales['transaction_count'] > 0
+            ? (($todaySales['transaction_count'] - $yesterdaySales['transaction_count']) / $yesterdaySales['transaction_count']) * 100
+            : ($todaySales['transaction_count'] > 0 ? 100 : 0);
+        $todayItemsChange        = $yesterdaySales['items_sold'] > 0
+            ? (($todaySales['items_sold'] - $yesterdaySales['items_sold']) / $yesterdaySales['items_sold']) * 100
+            : ($todaySales['items_sold'] > 0 ? 100 : 0);
+        $todayAvgTxnChange       = $yesterdaySales['average_transaction'] > 0
+            ? (($todaySales['average_transaction'] - $yesterdaySales['average_transaction']) / $yesterdaySales['average_transaction']) * 100
+            : ($todaySales['average_transaction'] > 0 ? 100 : 0);
+
+        // ------------------------------------------------------------------
+        // This week's and month's sales totals (for summary cards)
+        // ------------------------------------------------------------------
         $weekSales = Sale::notVoided()
             ->where('shop_id', $shopId)
             ->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()])
             ->sum('total') / 100;
 
-        // This month's sales
         $monthSales = Sale::notVoided()
             ->where('shop_id', $shopId)
             ->whereYear('sale_date', now()->year)
             ->whereMonth('sale_date', now()->month)
             ->sum('total') / 100;
 
-        // Current stock levels
+        // ------------------------------------------------------------------
+        // Stock levels for this shop
+        // ------------------------------------------------------------------
         $stockStats = [
-            'total_boxes' => Box::where('location_type', 'shop')
+            'total_boxes'   => Box::where('location_type', 'shop')
                 ->where('location_id', $shopId)
                 ->count(),
-            'full_boxes' => Box::where('location_type', 'shop')
+            'full_boxes'    => Box::where('location_type', 'shop')
                 ->where('location_id', $shopId)
                 ->where('status', 'full')
                 ->count(),
@@ -72,12 +134,14 @@ class DashboardController extends Controller
                 ->where('location_id', $shopId)
                 ->where('status', 'partial')
                 ->count(),
-            'total_items' => Box::where('location_type', 'shop')
+            'total_items'   => Box::where('location_type', 'shop')
                 ->where('location_id', $shopId)
                 ->sum('items_remaining'),
         ];
 
+        // ------------------------------------------------------------------
         // Low stock products
+        // ------------------------------------------------------------------
         $lowStockProducts = Product::active()
             ->with(['boxes' => function ($query) use ($shopId) {
                 $query->where('location_type', 'shop')
@@ -96,7 +160,9 @@ class DashboardController extends Controller
             ->sortBy('current_stock')
             ->take(10);
 
-        // Pending transfer requests
+        // ------------------------------------------------------------------
+        // Pending transfer requests destined for this shop
+        // ------------------------------------------------------------------
         $pendingTransfers = Transfer::where('to_shop_id', $shopId)
             ->where('status', TransferStatus::PENDING)
             ->with(['fromWarehouse', 'requestedBy', 'items.product'])
@@ -104,7 +170,9 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Transfers in transit to this shop
+        // ------------------------------------------------------------------
+        // Transfers currently en route to this shop
+        // ------------------------------------------------------------------
         $incomingTransfers = Transfer::where('to_shop_id', $shopId)
             ->whereIn('status', [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED])
             ->with(['fromWarehouse', 'transporter'])
@@ -112,7 +180,9 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Recent sales
+        // ------------------------------------------------------------------
+        // Recent sales and returns
+        // ------------------------------------------------------------------
         $recentSales = Sale::notVoided()
             ->where('shop_id', $shopId)
             ->with(['soldBy', 'items'])
@@ -120,21 +190,24 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // Recent returns
         $recentReturns = ReturnModel::where('shop_id', $shopId)
             ->with(['processedBy', 'items.product'])
             ->orderBy('processed_at', 'desc')
             ->limit(5)
             ->get();
 
+        // ------------------------------------------------------------------
         // Pending returns awaiting approval
+        // ------------------------------------------------------------------
         $pendingReturns = ReturnModel::where('shop_id', $shopId)
             ->pendingApproval()
             ->with(['items.product'])
             ->orderBy('processed_at', 'asc')
             ->get();
 
-        // Alerts for this shop
+        // ------------------------------------------------------------------
+        // Alerts for this shop or general alerts relevant to this user
+        // ------------------------------------------------------------------
         $alerts = Alert::where(function ($query) use ($shopId) {
             $query->whereNull('user_id')
                 ->orWhere('user_id', auth()->id());
@@ -151,7 +224,9 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // Top selling products (this month)
+        // ------------------------------------------------------------------
+        // Top selling products for this month
+        // ------------------------------------------------------------------
         $topProducts = Product::withCount(['saleItems' => function ($query) use ($shopId) {
             $query->whereHas('sale', function ($q) use ($shopId) {
                 $q->where('shop_id', $shopId)
@@ -167,6 +242,14 @@ class DashboardController extends Controller
             ->sortByDesc('sale_items_count')
             ->take(5);
 
+        // ------------------------------------------------------------------
+        // Determine the last synchronization time. If you have a sync log or
+        // event store, you should retrieve the actual last sync timestamp here.
+        // For now, we default to the current time to indicate that data is
+        // freshly generated.
+        // ------------------------------------------------------------------
+        $lastSync = now();
+
         return view('shop.dashboard', compact(
             'shop',
             'todaySales',
@@ -180,7 +263,12 @@ class DashboardController extends Controller
             'recentReturns',
             'pendingReturns',
             'alerts',
-            'topProducts'
+            'topProducts',
+            'todaySalesChange',
+            'todayTransactionsChange',
+            'todayItemsChange',
+            'todayAvgTxnChange',
+            'lastSync'
         ));
     }
 }

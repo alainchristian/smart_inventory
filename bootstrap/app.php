@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'location' => \App\Http\Middleware\CheckLocation::class,
         ]);
+    })
+    ->withSchedule(function (Schedule $schedule) {
+        // Generate system alerts every 5 minutes
+        $schedule->command('alerts:generate')->everyFiveMinutes();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

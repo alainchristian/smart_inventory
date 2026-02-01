@@ -1,10 +1,142 @@
 <?php
 
 use App\Livewire\Actions\Logout;
+use App\Models\Alert;
+use App\Models\Product;
+use App\Models\Box;
+use App\Models\Transfer;
+use App\Enums\TransferStatus;
 use Livewire\Volt\Component;
+use Livewire\Attributes\On;
 
 new class extends Component
 {
+    public $notifications = [];
+    public $unreadCount = 0;
+
+    public function mount(): void
+    {
+        $this->loadNotifications();
+    }
+
+    #[On('notification-updated')]
+    #[On('alert-created')]
+    #[On('stock-updated')]
+    #[On('transfer-updated')]
+    public function loadNotifications(): void
+    {
+        $notifications = collect();
+
+        // Get critical alerts from database
+        $criticalAlerts = Alert::critical()
+            ->unresolved()
+            ->notDismissed()
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        foreach ($criticalAlerts as $alert) {
+            $notifications->push([
+                'id' => 'alert-' . $alert->id,
+                'type' => 'alert',
+                'icon' => 'alert',
+                'color' => 'red',
+                'title' => $alert->title,
+                'message' => $alert->message,
+                'time' => $alert->created_at->diffForHumans(),
+                'url' => $alert->action_url,
+                'is_read' => $alert->is_read,
+            ]);
+        }
+
+        // Check for low stock products
+        $lowStockProducts = Product::active()
+            ->with('boxes')
+            ->get()
+            ->filter(function ($product) {
+                $totalStock = $product->boxes()
+                    ->whereIn('status', ['full', 'partial'])
+                    ->sum('items_remaining');
+                return $totalStock <= $product->low_stock_threshold && $totalStock > 0;
+            })
+            ->take(5);
+
+        foreach ($lowStockProducts as $product) {
+            $totalStock = $product->boxes()
+                ->whereIn('status', ['full', 'partial'])
+                ->sum('items_remaining');
+
+            $notifications->push([
+                'id' => 'low-stock-' . $product->id,
+                'type' => 'low_stock',
+                'icon' => 'package',
+                'color' => 'orange',
+                'title' => 'Low Stock Alert',
+                'message' => $product->name . ' is running low (' . $totalStock . ' items remaining)',
+                'time' => 'Just now',
+                'url' => '#',
+                'is_read' => false,
+            ]);
+        }
+
+        // Check for expiring products
+        $expiringBoxes = Box::whereIn('status', ['full', 'partial'])
+            ->where('expiry_date', '<=', now()->addDays(30))
+            ->where('expiry_date', '>=', now())
+            ->with('product')
+            ->orderBy('expiry_date', 'asc')
+            ->limit(5)
+            ->get();
+
+        foreach ($expiringBoxes as $box) {
+            $daysUntilExpiry = now()->diffInDays($box->expiry_date);
+            $notifications->push([
+                'id' => 'expiring-' . $box->id,
+                'type' => 'expiring',
+                'icon' => 'clock',
+                'color' => 'yellow',
+                'title' => 'Product Expiring Soon',
+                'message' => $box->product->name . ' (Box ' . $box->box_code . ') expires in ' . $daysUntilExpiry . ' days',
+                'time' => $daysUntilExpiry . ' days',
+                'url' => '#',
+                'is_read' => false,
+            ]);
+        }
+
+        // Check for pending transfers
+        $pendingTransfers = Transfer::where('status', TransferStatus::PENDING)
+            ->with(['toShop', 'requestedBy'])
+            ->orderBy('requested_at', 'desc')
+            ->limit(3)
+            ->get();
+
+        foreach ($pendingTransfers as $transfer) {
+            $notifications->push([
+                'id' => 'transfer-' . $transfer->id,
+                'type' => 'transfer',
+                'icon' => 'truck',
+                'color' => 'blue',
+                'title' => 'Pending Transfer',
+                'message' => 'Transfer ' . $transfer->transfer_number . ' to ' . $transfer->toShop->name . ' awaiting approval',
+                'time' => $transfer->requested_at->diffForHumans(),
+                'url' => '#',
+                'is_read' => false,
+            ]);
+        }
+
+        $this->notifications = $notifications->take(10)->toArray();
+        $this->unreadCount = $notifications->where('is_read', false)->count();
+    }
+
+    public function markAllAsRead(): void
+    {
+        // Mark all alerts as read
+        Alert::where('is_read', false)->update(['is_read' => true, 'read_at' => now()]);
+
+        $this->loadNotifications();
+        $this->dispatch('notification-updated');
+    }
+
     public function logout(Logout $logout): void
     {
         $logout();
@@ -12,13 +144,13 @@ new class extends Component
     }
 }; ?>
 
-<div>
+<div wire:poll.30s="loadNotifications">
     <nav class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 shadow-sm z-30 lg:left-64">
-        <div class="h-full flex items-center justify-between px-4 lg:px-6 gap-4">
+        <div class="h-full flex items-center justify-between px-4 lg:px-6 gap-3">
             <!-- Left: Mobile Menu Button -->
-            <div class="flex items-center">
+            <div class="flex items-center lg:hidden">
                 <!-- Mobile Menu Toggle -->
-                <button @click="$dispatch('toggle-sidebar')" class="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <button @click="$dispatch('toggle-sidebar')" class="p-2 hover:bg-gray-100 rounded-lg transition-colors -ml-2">
                     <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -28,14 +160,14 @@ new class extends Component
             <!-- Center: Extended Search Bar -->
             <div class="flex-1 max-w-2xl">
                 <div class="relative w-full">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <div class="absolute inset-y-0 left-0 pl-3 lg:pl-4 flex items-center pointer-events-none">
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
                     <input type="text"
-                           placeholder="Search products, boxes, transfers, sales..."
-                           class="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
+                           placeholder="Search products, boxes, transfers..."
+                           class="w-full pl-10 lg:pl-12 pr-4 py-2 lg:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors placeholder:text-gray-400">
                 </div>
             </div>
 
@@ -77,34 +209,84 @@ new class extends Component
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                         </svg>
-                        <span class="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
+                        @if($unreadCount > 0)
+                        <span class="absolute top-1 right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
+                        </span>
+                        @endif
                     </button>
 
                     <!-- Notifications Dropdown -->
                     <div x-show="open" x-cloak
                          class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                        <div class="p-4 border-b">
+                        <div class="p-4 border-b flex items-center justify-between">
                             <h3 class="font-semibold text-gray-900">Notifications</h3>
+                            @if($unreadCount > 0)
+                            <button wire:click="markAllAsRead" class="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                                Mark all read
+                            </button>
+                            @endif
                         </div>
                         <div class="max-h-96 overflow-y-auto">
-                            <a href="#" class="block px-4 py-3 hover:bg-gray-50 border-b">
+                            @forelse($notifications as $notification)
+                            <a href="{{ $notification['url'] ?? '#' }}"
+                               class="block px-4 py-3 hover:bg-gray-50 border-b transition-colors {{ !$notification['is_read'] ? 'bg-blue-50' : '' }}">
                                 <div class="flex items-start space-x-3">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <!-- Icon based on notification type -->
+                                    @php
+                                        $iconColors = [
+                                            'red' => 'bg-red-100 text-red-600',
+                                            'orange' => 'bg-orange-100 text-orange-600',
+                                            'yellow' => 'bg-yellow-100 text-yellow-600',
+                                            'blue' => 'bg-blue-100 text-blue-600',
+                                            'green' => 'bg-green-100 text-green-600',
+                                        ];
+                                        $colorClass = $iconColors[$notification['color']] ?? 'bg-gray-100 text-gray-600';
+                                    @endphp
+                                    <div class="w-10 h-10 {{ $colorClass }} rounded-lg flex items-center justify-center flex-shrink-0">
+                                        @if($notification['icon'] === 'alert')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                        </svg>
+                                        @elseif($notification['icon'] === 'package')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                                         </svg>
+                                        @elseif($notification['icon'] === 'clock')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        @elseif($notification['icon'] === 'truck')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                        </svg>
+                                        @endif
                                     </div>
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium text-gray-900">Low Stock Alert</p>
-                                        <p class="text-xs text-gray-600 mt-1">Product XYZ running low</p>
-                                        <p class="text-xs text-gray-400 mt-1">2 minutes ago</p>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ $notification['title'] }}</p>
+                                        <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ $notification['message'] }}</p>
+                                        <p class="text-xs text-gray-400 mt-1">{{ $notification['time'] }}</p>
                                     </div>
+                                    @if(!$notification['is_read'])
+                                    <div class="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-2"></div>
+                                    @endif
                                 </div>
                             </a>
+                            @empty
+                            <div class="px-4 py-8 text-center">
+                                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="text-sm text-gray-500 font-medium">All caught up!</p>
+                                <p class="text-xs text-gray-400 mt-1">No new notifications</p>
+                            </div>
+                            @endforelse
                         </div>
+                        @if(count($notifications) > 0)
                         <div class="p-3 border-t text-center">
-                            <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-700">View All</a>
+                            <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-700">View All Notifications</a>
                         </div>
+                        @endif
                     </div>
                 </div>
 
@@ -154,5 +336,11 @@ new class extends Component
 
     <style>
     [x-cloak] { display: none !important; }
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
     </style>
 </div>

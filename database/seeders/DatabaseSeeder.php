@@ -395,16 +395,18 @@ class DatabaseSeeder extends Seeder
         $allBoxes = collect();
 
         foreach ($products->all as $product) {
-            $numBoxes = rand(2, 5);
+            // Increased from rand(2, 5) to rand(8, 15) to ensure enough inventory
+            $numBoxes = rand(8, 15);
 
             for ($i = 0; $i < $numBoxes; $i++) {
                 $warehouse = $warehouses->all->random();
                 $manager = $users->warehouseManagers->random();
 
-                $isFull = rand(1, 100) <= 80;
+                // Increased probability of full boxes from 80% to 90%
+                $isFull = rand(1, 100) <= 90;
                 $status = $isFull ? BoxStatus::FULL : BoxStatus::PARTIAL;
                 $itemsTotal = $product->items_per_box;
-                $itemsRemaining = $isFull ? $itemsTotal : rand(1, $itemsTotal - 1);
+                $itemsRemaining = $isFull ? $itemsTotal : rand((int) ceil($itemsTotal * 0.7), $itemsTotal - 1);
 
                 $boxCode = sprintf('BOX-%s-%05d', $today->format('Ymd'), $boxCounter++);
                 $receivedAt = $today->copy()->subDays(rand(0, 30));
@@ -509,70 +511,313 @@ class DatabaseSeeder extends Seeder
     {
         $this->command->info('💰 Creating sales...');
 
+        // First, ensure shops have inventory by transferring boxes from warehouses
+        $this->ensureShopsHaveInventory($shops, $users);
+
         $saleCounter = 1;
         $today = now();
+        $totalSalesCreated = 0;
 
-        for ($i = 0; $i < 15; $i++) {
-            $shop = $shops->all->random();
-            $shopManager = $users->shopManagers->random();
-            $saleDate = $today->copy()->subDays(rand(0, 7));
-            $saleNumber = sprintf('SALE-%s-%05d', $saleDate->format('Ymd'), $saleCounter++);
+        // Define sales distribution for the last 90 days
+        // More recent days have more sales
+        $salesDistribution = [
+            'today' => rand(8, 15),              // Today: 8-15 sales
+            'yesterday' => rand(10, 18),         // Yesterday: 10-18 sales (for trend comparison)
+            'last_7_days' => rand(5, 12),        // Per day in last 7 days: 5-12 sales
+            'last_30_days' => rand(3, 8),        // Per day in days 8-30: 3-8 sales
+            'last_90_days' => rand(1, 5),        // Per day in days 31-90: 1-5 sales
+        ];
 
-            $availableBoxes = Box::where('location_type', 'shop')
-                ->where('location_id', $shop->id)
-                ->where('items_remaining', '>', 0)
-                ->with('product')
-                ->get();
+        // Create sales for the last 90 days
+        for ($daysAgo = 0; $daysAgo < 90; $daysAgo++) {
+            $saleDate = $today->copy()->subDays($daysAgo);
 
-            if ($availableBoxes->isEmpty()) continue;
-
-            $sale = Sale::create([
-                'sale_number' => $saleNumber,
-                'shop_id' => $shop->id,
-                'type' => SaleType::INDIVIDUAL_ITEMS,
-                'payment_method' => [PaymentMethod::CASH, PaymentMethod::CARD, PaymentMethod::MOBILE_MONEY][rand(0, 2)],
-                'subtotal' => 0,
-                'tax' => 0,
-                'total' => 0,
-                'sold_by' => $shopManager->id,
-                'sale_date' => $saleDate,
-            ]);
-
-            $numItems = rand(1, min(5, $availableBoxes->count()));
-            $subtotal = 0;
-
-            for ($j = 0; $j < $numItems; $j++) {
-                $box = $availableBoxes->random();
-                $product = $box->product;
-                $quantity = rand(1, min($box->items_remaining, 10));
-
-                $unitPrice = $product->selling_price;
-                $lineTotal = $unitPrice * $quantity;
-                $subtotal += $lineTotal;
-
-                SaleItem::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $product->id,
-                    'box_id' => $box->id,
-                    'quantity_sold' => $quantity,
-                    'is_full_box' => false,
-                    'original_unit_price' => $unitPrice,
-                    'actual_unit_price' => $unitPrice,
-                    'line_total' => $lineTotal,
-                    'price_was_modified' => false,
-                ]);
-
-                $newRemaining = $box->items_remaining - $quantity;
-                $box->update([
-                    'items_remaining' => $newRemaining,
-                    'status' => $newRemaining === 0 ? BoxStatus::EMPTY : BoxStatus::PARTIAL,
-                ]);
+            // Determine number of sales for this day
+            $numSalesForDay = 0;
+            if ($daysAgo === 0) {
+                $numSalesForDay = $salesDistribution['today'];
+            } elseif ($daysAgo === 1) {
+                $numSalesForDay = $salesDistribution['yesterday'];
+            } elseif ($daysAgo < 7) {
+                $numSalesForDay = $salesDistribution['last_7_days'];
+            } elseif ($daysAgo < 30) {
+                $numSalesForDay = $salesDistribution['last_30_days'];
+            } else {
+                $numSalesForDay = $salesDistribution['last_90_days'];
             }
 
-            $tax = round($subtotal * 0.18);
-            $sale->update(['subtotal' => $subtotal, 'tax' => $tax, 'total' => $subtotal + $tax]);
+            // Weekend adjustment (reduce sales on weekends)
+            if ($saleDate->isWeekend()) {
+                $numSalesForDay = (int) ceil($numSalesForDay * 0.7);
+            }
+
+            // Create sales for this day
+            for ($i = 0; $i < $numSalesForDay; $i++) {
+                // Weighted shop selection (some shops are busier)
+                $shop = $this->getWeightedRandomShop($shops);
+
+                // Get available boxes at this shop
+                $availableBoxes = Box::where('location_type', LocationType::SHOP)
+                    ->where('location_id', $shop->id)
+                    ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
+                    ->where('items_remaining', '>', 0)
+                    ->with('product')
+                    ->get();
+
+                if ($availableBoxes->isEmpty()) {
+                    $this->command->warn("   ⚠ Shop {$shop->name} has no inventory, skipping sale");
+                    continue;
+                }
+
+                // Get shop manager for this shop
+                $shopManager = $users->shopManagers->first(function ($manager) use ($shop) {
+                    return $manager->location_id === $shop->id;
+                }) ?? $users->shopManagers->first();
+
+                // Generate sale time (business hours: 8 AM - 8 PM with peak hours)
+                $saleTime = $this->generateBusinessHourTime($saleDate);
+                $saleNumber = sprintf('SALE-%s-%05d', $saleTime->format('Ymd'), $saleCounter++);
+
+                // Determine payment method (realistic distribution in Rwanda)
+                $paymentMethod = $this->getRealisticPaymentMethod();
+
+                // Create sale
+                $sale = Sale::create([
+                    'sale_number' => $saleNumber,
+                    'shop_id' => $shop->id,
+                    'type' => SaleType::INDIVIDUAL_ITEMS,
+                    'payment_method' => $paymentMethod,
+                    'subtotal' => 0,
+                    'tax' => 0,
+                    'discount' => 0,
+                    'total' => 0,
+                    'customer_name' => $this->generateCustomerName(),
+                    'customer_phone' => $this->generateRwandaPhone(),
+                    'sold_by' => $shopManager->id,
+                    'sale_date' => $saleTime,
+                ]);
+
+                // Add items to sale (1-5 different products)
+                $numItems = rand(1, min(5, $availableBoxes->count()));
+                $subtotal = 0;
+                $selectedBoxes = $availableBoxes->random(min($numItems, $availableBoxes->count()));
+
+                foreach ($selectedBoxes as $box) {
+                    $product = $box->product;
+
+                    // Determine quantity (prefer smaller quantities for individual items to conserve inventory)
+                    $maxQuantity = min($box->items_remaining, 5);
+                    $quantity = $maxQuantity > 3 ? rand(1, 3) : rand(1, $maxQuantity);
+
+                    $unitPrice = $product->selling_price;
+
+                    // 10% chance of price discount (5-15% off)
+                    $priceWasModified = rand(1, 100) <= 10;
+                    $actualUnitPrice = $unitPrice;
+                    if ($priceWasModified) {
+                        $discountPercent = rand(5, 15) / 100;
+                        $actualUnitPrice = (int) round($unitPrice * (1 - $discountPercent));
+                    }
+
+                    $lineTotal = $actualUnitPrice * $quantity;
+                    $subtotal += $lineTotal;
+
+                    SaleItem::create([
+                        'sale_id' => $sale->id,
+                        'product_id' => $product->id,
+                        'box_id' => $box->id,
+                        'quantity_sold' => $quantity,
+                        'is_full_box' => false,
+                        'original_unit_price' => $unitPrice,
+                        'actual_unit_price' => $actualUnitPrice,
+                        'line_total' => $lineTotal,
+                        'price_was_modified' => $priceWasModified,
+                        'price_modification_reason' => $priceWasModified ? 'Customer loyalty discount' : null,
+                    ]);
+
+                    // Update box inventory
+                    $newRemaining = $box->items_remaining - $quantity;
+                    $box->update([
+                        'items_remaining' => $newRemaining,
+                        'status' => $newRemaining === 0 ? BoxStatus::EMPTY : BoxStatus::PARTIAL,
+                    ]);
+                }
+
+                // Calculate tax (18% VAT in Rwanda)
+                $tax = (int) round($subtotal * 0.18);
+
+                // 5% chance of having a discount
+                $discount = 0;
+                if (rand(1, 100) <= 5) {
+                    $discount = (int) round($subtotal * (rand(5, 10) / 100));
+                }
+
+                $total = $subtotal + $tax - $discount;
+
+                $sale->update([
+                    'subtotal' => $subtotal,
+                    'tax' => $tax,
+                    'discount' => $discount,
+                    'total' => $total,
+                ]);
+
+                $totalSalesCreated++;
+            }
         }
 
-        $this->command->info('   ✓ Created 15 sales');
+        // Void some sales (2% of total) for realism
+        $salesToVoid = (int) ceil($totalSalesCreated * 0.02);
+        $recentSales = Sale::whereNull('voided_at')
+            ->where('sale_date', '>=', $today->copy()->subDays(30))
+            ->inRandomOrder()
+            ->limit($salesToVoid)
+            ->get();
+
+        foreach ($recentSales as $sale) {
+            $sale->update([
+                'voided_at' => $sale->sale_date->copy()->addHours(rand(1, 4)),
+                'voided_by' => $users->shopManagers->random()->id,
+                'void_reason' => ['Customer returned items', 'Transaction error', 'Wrong items scanned'][rand(0, 2)],
+            ]);
+
+            // Restore inventory for voided sales
+            foreach ($sale->items as $item) {
+                $box = $item->box;
+                if ($box) {
+                    $box->update([
+                        'items_remaining' => $box->items_remaining + $item->quantity_sold,
+                        'status' => $box->items_remaining > 0
+                            ? ($box->items_remaining >= $box->items_total ? BoxStatus::FULL : BoxStatus::PARTIAL)
+                            : BoxStatus::EMPTY,
+                    ]);
+                }
+            }
+        }
+
+        $this->command->info("   ✓ Created {$totalSalesCreated} sales across 90 days");
+        $this->command->info("   ✓ Voided {$salesToVoid} sales for realism");
+    }
+
+    /**
+     * Ensure shops have inventory by transferring boxes from warehouses
+     */
+    private function ensureShopsHaveInventory($shops, $users): void
+    {
+        $this->command->info('📦 Transferring inventory to shops...');
+
+        $warehouses = Warehouse::all();
+        $products = Product::all();
+
+        foreach ($shops->all as $shop) {
+            // Check if shop already has inventory
+            $existingInventory = Box::where('location_type', LocationType::SHOP)
+                ->where('location_id', $shop->id)
+                ->count();
+
+            if ($existingInventory > 0) {
+                continue; // Shop already has inventory
+            }
+
+            // Transfer 70-90% of products to each shop (increased from 30-50%)
+            $productsToTransfer = $products->random((int) ceil($products->count() * rand(70, 90) / 100));
+
+            foreach ($productsToTransfer as $product) {
+                // Get boxes from warehouse (increased from 1-2 to 2-4)
+                $warehouseBoxes = Box::where('location_type', LocationType::WAREHOUSE)
+                    ->where('product_id', $product->id)
+                    ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
+                    ->where('items_remaining', '>', 0)
+                    ->limit(rand(2, 4))
+                    ->get();
+
+                foreach ($warehouseBoxes as $box) {
+                    // Transfer box to shop
+                    $box->update([
+                        'location_type' => LocationType::SHOP,
+                        'location_id' => $shop->id,
+                    ]);
+                }
+            }
+        }
+
+        $this->command->info('   ✓ Inventory transferred to shops');
+    }
+
+    /**
+     * Get weighted random shop (some shops are busier)
+     */
+    private function getWeightedRandomShop($shops): Shop
+    {
+        $weights = [60, 25, 15]; // Shop A is busiest, then B, then C
+        $rand = rand(1, 100);
+
+        if ($rand <= $weights[0]) {
+            return $shops->shopA;
+        } elseif ($rand <= $weights[0] + $weights[1]) {
+            return $shops->shopB;
+        } else {
+            return $shops->shopC;
+        }
+    }
+
+    /**
+     * Generate realistic payment method distribution
+     */
+    private function getRealisticPaymentMethod(): PaymentMethod
+    {
+        $rand = rand(1, 100);
+
+        // Realistic distribution for Rwanda
+        if ($rand <= 50) {
+            return PaymentMethod::MOBILE_MONEY; // 50% - very popular in Rwanda
+        } elseif ($rand <= 75) {
+            return PaymentMethod::CASH;         // 25%
+        } elseif ($rand <= 92) {
+            return PaymentMethod::CARD;         // 17%
+        } elseif ($rand <= 98) {
+            return PaymentMethod::BANK_TRANSFER; // 6%
+        } else {
+            return PaymentMethod::CREDIT;       // 2%
+        }
+    }
+
+    /**
+     * Generate business hour timestamp
+     */
+    private function generateBusinessHourTime($date): \Carbon\Carbon
+    {
+        $hour = rand(8, 19); // 8 AM to 7 PM
+
+        // Peak hours: 12 PM - 2 PM and 5 PM - 7 PM
+        $peakHourProbability = rand(1, 100);
+        if ($peakHourProbability <= 60) {
+            $peakHours = [12, 13, 17, 18, 19];
+            $hour = $peakHours[array_rand($peakHours)];
+        }
+
+        $minute = rand(0, 59);
+        $second = rand(0, 59);
+
+        return $date->copy()->setTime($hour, $minute, $second);
+    }
+
+    /**
+     * Generate random customer name
+     */
+    private function generateCustomerName(): string
+    {
+        $firstNames = ['Jean', 'Marie', 'Pierre', 'Alice', 'Emmanuel', 'Grace', 'David', 'Sarah', 'Patrick', 'Claudine'];
+        $lastNames = ['Mugisha', 'Uwimana', 'Habimana', 'Mukamana', 'Niyonzima', 'Ingabire', 'Ndayisaba', 'Mukamazimpaka'];
+
+        return $firstNames[array_rand($firstNames)] . ' ' . $lastNames[array_rand($lastNames)];
+    }
+
+    /**
+     * Generate Rwanda phone number
+     */
+    private function generateRwandaPhone(): string
+    {
+        $prefixes = ['078', '079', '072', '073'];
+        return '+250' . $prefixes[array_rand($prefixes)] . rand(1000000, 9999999);
     }
 }

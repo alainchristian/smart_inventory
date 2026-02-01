@@ -75,10 +75,16 @@ class DashboardController extends Controller
 
         // Sales statistics - FILTERED BY DATE RANGE
         $salesQuery = Sale::notVoided();
-        
+
+        // Get yesterday's sales for trend comparison
+        $yesterdaySales = Sale::notVoided()
+            ->whereDate('sale_date', today()->subDay())
+            ->sum('total') / 100;
+
         if ($filter === 'today') {
+            $todaySales = $salesQuery->whereDate('sale_date', today())->sum('total') / 100;
             $salesStats = [
-                'today' => $salesQuery->whereDate('sale_date', today())->sum('total') / 100,
+                'today' => $todaySales,
                 'this_week' => Sale::notVoided()
                     ->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()])
                     ->sum('total') / 100,
@@ -87,6 +93,10 @@ class DashboardController extends Controller
                     ->whereMonth('sale_date', now()->month)
                     ->sum('total') / 100,
                 'total_count_today' => $salesQuery->whereDate('sale_date', today())->count(),
+                'yesterday' => $yesterdaySales,
+                'trend_percentage' => $yesterdaySales > 0
+                    ? (($todaySales - $yesterdaySales) / $yesterdaySales) * 100
+                    : ($todaySales > 0 ? 100 : 0),
             ];
         } elseif ($filter === 'week') {
             $weekStart = now()->startOfWeek();
@@ -218,6 +228,24 @@ class DashboardController extends Controller
             })
             ->take(10);
 
+        // At-Risk Inventory Summary
+        $atRiskInventory = [
+            'low_stock_count' => $lowStockProducts->count(),
+            'expiring_soon_count' => Box::whereIn('status', ['full', 'partial'])
+                ->where('expiry_date', '<=', now()->addDays(30))
+                ->where('expiry_date', '>=', now())
+                ->count(),
+            'pending_transfers' => $transferStats['pending'],
+            'items_in_transit' => $transferStats['in_transit'],
+            'critical_alerts' => $criticalAlerts->count(),
+        ];
+
+        // System health/last updated
+        $systemHealth = [
+            'last_sync' => now(),
+            'status' => 'operational',
+        ];
+
         return view('owner.dashboard', compact(
             'stats',
             'recentTransfers',
@@ -226,7 +254,12 @@ class DashboardController extends Controller
             'topShops',
             'recentUsers',
             'criticalAlerts',
-            'lowStockProducts'
+            'lowStockProducts',
+            'atRiskInventory',
+            'systemHealth',
+            'filter',
+            'fromDate',
+            'toDate'
         ));
     }
 
