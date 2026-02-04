@@ -1,7 +1,11 @@
 <?php
 
-namespace App\Livewire\Inventory\Transfers;
+namespace App\Livewire\Shop\Transfers;
 
+use App\Enums\AlertSeverity;
+use App\Enums\TransferStatus;
+use App\Models\Alert;
+use App\Models\Box;
 use App\Models\Product;
 use App\Models\Transfer;
 use App\Models\TransferBox;
@@ -25,7 +29,23 @@ class ReceiveTransfer extends Component
 
     public function mount(Transfer $transfer)
     {
-        $this->authorize('receive', $transfer);
+        $user = auth()->user();
+
+        // Verify user is a shop manager
+        if (!$user->isShopManager()) {
+            abort(403, 'Only shop managers can access this page.');
+        }
+
+        // Verify this transfer is for this shop
+        if ($transfer->to_shop_id !== $user->location_id) {
+            abort(403, 'You can only receive transfers for your shop.');
+        }
+
+        // Only in-transit or delivered transfers can be received
+        if (!in_array($transfer->status, [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED])) {
+            abort(403, 'Only in-transit or delivered transfers can be received.');
+        }
+
         $this->transfer = $transfer;
     }
 
@@ -185,14 +205,56 @@ class ReceiveTransfer extends Component
         try {
             $transferService = app(TransferService::class);
 
+            // First mark as delivered if not already
+            if ($this->transfer->status === TransferStatus::IN_TRANSIT) {
+                $transferService->markAsDelivered($this->transfer);
+            }
+
             $transferService->receiveTransfer(
                 $this->transfer,
                 array_values($this->scannedBoxes)
             );
 
+            // Create alert for warehouse manager if there are discrepancies
+            $expectedCount = $this->transfer->boxes()->count();
+            $hasDiscrepancies = count($this->scannedBoxes) < $expectedCount;
+            $hasDamagedBoxes = collect($this->scannedBoxes)->contains('is_damaged', true);
+
+            if ($hasDiscrepancies || $hasDamagedBoxes) {
+                $warehouseManagerUser = $this->transfer->fromWarehouse->manager ?? null;
+
+                if ($warehouseManagerUser) {
+                    $message = "Transfer {$this->transfer->transfer_number} received with issues: ";
+                    $issues = [];
+
+                    if ($hasDiscrepancies) {
+                        $missing = $expectedCount - count($this->scannedBoxes);
+                        $issues[] = "{$missing} missing boxes";
+                    }
+
+                    if ($hasDamagedBoxes) {
+                        $damaged = collect($this->scannedBoxes)->where('is_damaged', true)->count();
+                        $issues[] = "{$damaged} damaged boxes";
+                    }
+
+                    $message .= implode(', ', $issues) . '.';
+
+                    Alert::create([
+                        'title' => 'Transfer Received with Issues',
+                        'message' => $message,
+                        'severity' => AlertSeverity::WARNING,
+                        'entity_type' => 'transfer',
+                        'entity_id' => $this->transfer->id,
+                        'user_id' => $warehouseManagerUser->id,
+                        'action_url' => route('warehouse.transfers.show', $this->transfer),
+                        'action_label' => 'View Transfer',
+                    ]);
+                }
+            }
+
             session()->flash('success', 'Transfer received successfully');
 
-            return redirect()->route('transfers.index');
+            return redirect()->route('shop.transfers.index');
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
         }
@@ -230,7 +292,7 @@ class ReceiveTransfer extends Component
 
     public function render()
     {
-        return view('livewire.inventory.transfers.receive-transfer', [
+        return view('livewire.shop.transfers.receive-transfer', [
             'expectedBoxes' => $this->getExpectedBoxesCount(),
             'scannedCount' => $this->getScannedBoxesCount(),
             'remainingCount' => $this->getRemainingBoxesCount(),

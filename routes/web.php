@@ -77,8 +77,8 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager', CheckLocatio
         // Transfers
         Route::prefix('transfers')->name('transfers.')->group(function () {
             Route::get('/', function () { return view('warehouse.transfers.index'); })->name('index');
-            Route::get('/{transfer}', function ($transfer) { return view('warehouse.transfers.show', compact('transfer')); })->name('show');
-            Route::get('/{transfer}/pack', function ($transfer) { return view('warehouse.transfers.pack', compact('transfer')); })->name('pack');
+            Route::get('/{transfer}', function (\App\Models\Transfer $transfer) { return view('warehouse.transfers.show', compact('transfer')); })->name('show');
+            Route::get('/{transfer}/pack', function (\App\Models\Transfer $transfer) { return view('warehouse.transfers.pack', compact('transfer')); })->name('pack');
         });
 
         // Reports
@@ -109,8 +109,8 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager', CheckLocation::cl
         Route::prefix('transfers')->name('transfers.')->group(function () {
             Route::get('/', function () { return view('shop.transfers.index'); })->name('index');
             Route::get('/request', function () { return view('shop.transfers.request'); })->name('request');
-            Route::get('/{transfer}', function ($transfer) { return view('shop.transfers.show', compact('transfer')); })->name('show');
-            Route::get('/{transfer}/receive', function ($transfer) { return view('shop.transfers.receive', compact('transfer')); })->name('receive');
+            Route::get('/{transfer}', function (\App\Models\Transfer $transfer) { return view('shop.transfers.show', compact('transfer')); })->name('show');
+            Route::get('/{transfer}/receive', function (\App\Models\Transfer $transfer) { return view('shop.transfers.receive', compact('transfer')); })->name('receive');
         });
 
         // Returns

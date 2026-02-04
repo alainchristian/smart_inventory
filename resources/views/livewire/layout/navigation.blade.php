@@ -27,20 +27,26 @@ new class extends Component
     {
         $notifications = collect();
 
-        // Get critical alerts from database
-        $criticalAlerts = Alert::critical()
+        // Get all unresolved alerts for the user from database
+        $userAlerts = Alert::forUser(auth()->id())
             ->unresolved()
             ->notDismissed()
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        foreach ($criticalAlerts as $alert) {
+        foreach ($userAlerts as $alert) {
+            $colorMap = [
+                'CRITICAL' => 'red',
+                'WARNING' => 'orange',
+                'INFO' => 'blue',
+            ];
+
             $notifications->push([
                 'id' => 'alert-' . $alert->id,
                 'type' => 'alert',
                 'icon' => 'alert',
-                'color' => 'red',
+                'color' => $colorMap[$alert->severity->name] ?? 'gray',
                 'title' => $alert->title,
                 'message' => $alert->message,
                 'time' => $alert->created_at->diffForHumans(),
@@ -130,8 +136,10 @@ new class extends Component
 
     public function markAllAsRead(): void
     {
-        // Mark all alerts as read
-        Alert::where('is_read', false)->update(['is_read' => true, 'read_at' => now()]);
+        // Mark all user's unread alerts as read
+        Alert::forUser(auth()->id())
+            ->where('is_read', false)
+            ->update(['is_read' => true, 'read_at' => now()]);
 
         $this->loadNotifications();
         $this->dispatch('notification-updated');

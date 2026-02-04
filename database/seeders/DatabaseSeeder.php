@@ -440,6 +440,7 @@ class DatabaseSeeder extends Seeder
 
         $transferCounter = 1;
         $today = now();
+        $claimedBoxIds = []; // Track boxes already assigned to transfers
 
         $transfersData = [
             ['status' => TransferStatus::PENDING, 'days_ago' => 1],
@@ -473,27 +474,25 @@ class DatabaseSeeder extends Seeder
                 'transporter_id' => $data['status']->value !== 'pending' ? $transporters->all->random()->id : null,
             ]);
 
+            // Set review timestamps
             if ($data['status']->value !== 'pending') {
-                $transfer->update(['reviewed_by' => $warehouseManager->id, 'reviewed_at' => $requestedAt->copy()->addHours(2)]);
-            }
-            if (in_array($data['status']->value, ['in_transit', 'delivered', 'received'])) {
-                $transfer->update(['shipped_at' => $requestedAt->copy()->addHours(6)]);
-            }
-            if (in_array($data['status']->value, ['delivered', 'received'])) {
-                $transfer->update(['delivered_at' => $requestedAt->copy()->addHours(8)]);
-            }
-            if ($data['status']->value === 'received') {
-                $transfer->update(['received_by' => $shopManager->id, 'received_at' => $requestedAt->copy()->addHours(9)]);
+                $transfer->update([
+                    'reviewed_by' => $warehouseManager->id,
+                    'reviewed_at' => $requestedAt->copy()->addHours(2)
+                ]);
             }
 
-            // Add products
+            // Pick 2-4 random products
             $numProducts = rand(2, 4);
             $selectedProducts = $products->all->random($numProducts);
+            $transferItems = [];
 
             foreach ($selectedProducts as $product) {
-                $quantityRequested = rand(1, 3) * $product->items_per_box;
+                // Calculate boxes needed (1-3 boxes per product)
+                $boxesNeeded = rand(1, 3);
+                $quantityRequested = $boxesNeeded * $product->items_per_box;
 
-                TransferItem::create([
+                $item = TransferItem::create([
                     'transfer_id' => $transfer->id,
                     'product_id' => $product->id,
                     'quantity_requested' => $quantityRequested,
@@ -501,10 +500,75 @@ class DatabaseSeeder extends Seeder
                     'quantity_received' => $data['status']->value === 'received' ? $quantityRequested : 0,
                     'discrepancy_quantity' => 0,
                 ]);
+
+                $transferItems[] = ['item' => $item, 'boxesNeeded' => $boxesNeeded];
+            }
+
+            // If status is past approved, assign boxes and scan them out
+            if (in_array($data['status']->value, ['in_transit', 'delivered', 'received'])) {
+                foreach ($transferItems as $itemData) {
+                    $item = $itemData['item'];
+                    $boxesNeeded = $itemData['boxesNeeded'];
+                    $product = $item->product;
+
+                    // Find available boxes at the source warehouse
+                    $availableBoxes = Box::where('product_id', $product->id)
+                        ->where('location_type', LocationType::WAREHOUSE)
+                        ->where('location_id', $warehouse->id)
+                        ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
+                        ->where('items_remaining', '>', 0)
+                        ->whereNotIn('id', $claimedBoxIds)
+                        ->limit($boxesNeeded)
+                        ->get();
+
+                    // Assign whatever boxes are available (may be fewer than requested)
+                    foreach ($availableBoxes as $box) {
+                        TransferBox::create([
+                            'transfer_id' => $transfer->id,
+                            'box_id' => $box->id,
+                            'scanned_out_by' => $warehouseManager->id,
+                            'scanned_out_at' => $requestedAt->copy()->addHours(4),
+                            'scanned_in_by' => $data['status']->value === 'received' ? $shopManager->id : null,
+                            'scanned_in_at' => $data['status']->value === 'received' ? $requestedAt->copy()->addHours(9) : null,
+                            'is_received' => $data['status']->value === 'received',
+                            'is_damaged' => false,
+                        ]);
+
+                        // Mark this box as claimed
+                        $claimedBoxIds[] = $box->id;
+                    }
+                }
+
+                // Set packed timestamps
+                $transfer->update([
+                    'packed_by' => $warehouseManager->id,
+                    'packed_at' => $requestedAt->copy()->addHours(3),
+                ]);
+            }
+
+            // Set shipped/delivered/received timestamps
+            if (in_array($data['status']->value, ['in_transit', 'delivered', 'received'])) {
+                $transfer->update(['shipped_at' => $requestedAt->copy()->addHours(6)]);
+            }
+            if (in_array($data['status']->value, ['delivered', 'received'])) {
+                $transfer->update(['delivered_at' => $requestedAt->copy()->addHours(8)]);
+            }
+            if ($data['status']->value === 'received') {
+                $transfer->update([
+                    'received_by' => $shopManager->id,
+                    'received_at' => $requestedAt->copy()->addHours(9)
+                ]);
+
+                // Move boxes to shop for received transfers
+                $transferBoxIds = TransferBox::where('transfer_id', $transfer->id)->pluck('box_id');
+                Box::whereIn('id', $transferBoxIds)->update([
+                    'location_type' => LocationType::SHOP,
+                    'location_id' => $shop->id,
+                ]);
             }
         }
 
-        $this->command->info('   ✓ Created 10 transfers');
+        $this->command->info('   ✓ Created 10 transfers with ' . count($claimedBoxIds) . ' boxes assigned');
     }
 
     private function seedSales($shops, $users): void
@@ -722,11 +786,17 @@ class DatabaseSeeder extends Seeder
             $productsToTransfer = $products->random((int) ceil($products->count() * rand(70, 90) / 100));
 
             foreach ($productsToTransfer as $product) {
-                // Get boxes from warehouse (increased from 1-2 to 2-4)
+                // Get boxes from warehouse, excluding those already assigned to active transfers
+                $boxesInActiveTransfers = TransferBox::query()
+                    ->join('transfers', 'transfer_boxes.transfer_id', '=', 'transfers.id')
+                    ->whereIn('transfers.status', [TransferStatus::APPROVED, TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED])
+                    ->pluck('transfer_boxes.box_id');
+
                 $warehouseBoxes = Box::where('location_type', LocationType::WAREHOUSE)
                     ->where('product_id', $product->id)
                     ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
                     ->where('items_remaining', '>', 0)
+                    ->whereNotIn('id', $boxesInActiveTransfers)
                     ->limit(rand(2, 4))
                     ->get();
 

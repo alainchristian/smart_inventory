@@ -9,6 +9,7 @@ use App\Events\Inventory\TransferApproved;
 use App\Events\Inventory\TransferReceived;
 use App\Events\Inventory\TransferRequested;
 use App\Models\Box;
+use App\Models\Product;
 use App\Models\Transfer;
 use App\Models\TransferBox;
 use Illuminate\Support\Facades\DB;
@@ -148,7 +149,29 @@ class TransferService
     public function scanOutBox(Transfer $transfer, string $boxCode): TransferBox
     {
         return DB::transaction(function () use ($transfer, $boxCode) {
-            $box = Box::where('box_code', $boxCode)->firstOrFail();
+            // Primary lookup: by internal box_code
+            $box = Box::where('box_code', $boxCode)->first();
+
+            // Fallback: treat input as a product barcode, pick one un-scanned box
+            if (!$box) {
+                $product = Product::where('barcode', $boxCode)->first();
+                if ($product) {
+                    $box = Box::where('product_id', $product->id)
+                        ->where('location_type', LocationType::WAREHOUSE)
+                        ->where('location_id', $transfer->from_warehouse_id)
+                        ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
+                        ->whereNotIn('id',
+                            TransferBox::where('transfer_id', $transfer->id)
+                                ->whereNotNull('scanned_out_at')
+                                ->pluck('box_id')
+                        )
+                        ->first();
+                }
+            }
+
+            if (!$box) {
+                throw new \Exception("No box found for code/barcode: {$boxCode}");
+            }
 
             $transferBox = TransferBox::where('transfer_id', $transfer->id)
                 ->where('box_id', $box->id)
@@ -283,6 +306,158 @@ class TransferService
             }
 
             return $transfer;
+        });
+    }
+
+    /**
+     * Resolve a scanned barcode to a product.
+     * Returns the Product if the barcode matches products.barcode, null otherwise.
+     */
+    public function resolveProductByBarcode(string $barcode): ?Product
+    {
+        return Product::where('barcode', $barcode)->first();
+    }
+
+    /**
+     * During the PACK stage: the warehouse manager scans a product barcode
+     * and types a quantity. This method finds that many available boxes at
+     * the source warehouse, creates TransferBox records, and scans them out
+     * in one atomic operation.
+     *
+     * @param  Transfer $transfer   Must be in APPROVED status.
+     * @param  string   $barcode    The product barcode that was scanned.
+     * @param  int      $quantity   Number of boxes to pack (not items — boxes).
+     * @return array                The TransferBox instances that were created.
+     * @throws \Exception           If product not found, or not enough boxes available.
+     */
+    public function packBoxesByProductBarcode(Transfer $transfer, string $barcode, int $quantity): array
+    {
+        if ($transfer->status !== TransferStatus::APPROVED) {
+            throw new \Exception('Only approved transfers can be packed');
+        }
+
+        return DB::transaction(function () use ($transfer, $barcode, $quantity) {
+            $product = $this->resolveProductByBarcode($barcode);
+            if (!$product) {
+                throw new \Exception("No product found with barcode: {$barcode}");
+            }
+
+            // Verify this product is actually in the transfer request
+            $transferItem = $transfer->items()->where('product_id', $product->id)->first();
+            if (!$transferItem) {
+                throw new \Exception("Product {$product->name} is not part of this transfer request");
+            }
+
+            // Find available boxes at the source warehouse, excluding any already assigned to this transfer
+            $alreadyAssignedBoxIds = TransferBox::where('transfer_id', $transfer->id)
+                ->pluck('box_id');
+
+            $boxes = Box::where('product_id', $product->id)
+                ->where('location_type', LocationType::WAREHOUSE)
+                ->where('location_id', $transfer->from_warehouse_id)
+                ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
+                ->where('items_remaining', '>', 0)
+                ->whereNotIn('id', $alreadyAssignedBoxIds)
+                ->limit($quantity)
+                ->get();
+
+            if ($boxes->count() < $quantity) {
+                throw new \Exception(
+                    "Only {$boxes->count()} box(es) available for {$product->name} at this warehouse. Requested: {$quantity}"
+                );
+            }
+
+            $createdTransferBoxes = [];
+            foreach ($boxes as $box) {
+                $tb = TransferBox::create([
+                    'transfer_id' => $transfer->id,
+                    'box_id'      => $box->id,
+                    'scanned_out_by' => auth()->id(),
+                    'scanned_out_at' => now(),
+                ]);
+                $createdTransferBoxes[] = $tb;
+
+                // Increment quantity_shipped on the TransferItem
+                $transferItem->increment('quantity_shipped', $box->items_remaining);
+            }
+
+            // Mark transfer as packed if not already
+            if (!$transfer->packed_at) {
+                $transfer->update([
+                    'packed_by' => auth()->id(),
+                    'packed_at' => now(),
+                ]);
+            }
+
+            return $createdTransferBoxes;
+        });
+    }
+
+    /**
+     * During the RECEIVE stage: the shop manager scans a product barcode
+     * and types a quantity. This method finds that many un-received
+     * TransferBox rows for that product in this transfer and marks them
+     * as received, moving the boxes to the shop.
+     *
+     * @param  Transfer $transfer   Must be in DELIVERED or IN_TRANSIT status.
+     * @param  string   $barcode    The product barcode that was scanned.
+     * @param  int      $quantity   Number of boxes to receive.
+     * @return array                The TransferBox instances that were updated.
+     * @throws \Exception
+     */
+    public function receiveBoxesByProductBarcode(Transfer $transfer, string $barcode, int $quantity): array
+    {
+        if (!in_array($transfer->status, [TransferStatus::DELIVERED, TransferStatus::IN_TRANSIT])) {
+            throw new \Exception('Only delivered or in-transit transfers can be received');
+        }
+
+        return DB::transaction(function () use ($transfer, $barcode, $quantity) {
+            $product = $this->resolveProductByBarcode($barcode);
+            if (!$product) {
+                throw new \Exception("No product found with barcode: {$barcode}");
+            }
+
+            // Find un-received TransferBox rows for this product in this transfer
+            $transferBoxes = TransferBox::where('transfer_id', $transfer->id)
+                ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
+                ->where('is_received', false)
+                ->limit($quantity)
+                ->get();
+
+            if ($transferBoxes->count() < $quantity) {
+                throw new \Exception(
+                    "Only {$transferBoxes->count()} un-received box(es) of {$product->name} in this transfer. Requested: {$quantity}"
+                );
+            }
+
+            $updated = [];
+            foreach ($transferBoxes as $tb) {
+                $tb->update([
+                    'scanned_in_by' => auth()->id(),
+                    'scanned_in_at' => now(),
+                    'is_received'   => true,
+                ]);
+
+                // Move the box to the destination shop
+                $box = $tb->box;
+                $box->moveTo(
+                    LocationType::SHOP,
+                    $transfer->to_shop_id,
+                    "Transfer received: {$transfer->transfer_number}",
+                    $transfer->id,
+                    'transfer'
+                );
+
+                // Increment quantity_received on TransferItem
+                $transferItem = $transfer->items()->where('product_id', $product->id)->first();
+                if ($transferItem) {
+                    $transferItem->increment('quantity_received', $box->items_remaining);
+                }
+
+                $updated[] = $tb;
+            }
+
+            return $updated;
         });
     }
 
