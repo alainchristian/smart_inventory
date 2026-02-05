@@ -32,6 +32,83 @@ use App\Enums\TransferStatus;
         </div>
     </div>
 
+    <!-- Phone Scanner Mode Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
+            <div>
+                <h3 class="text-base md:text-lg font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
+                <p class="text-xs md:text-sm text-gray-600">Use your phone as a dedicated scanner while working on desktop</p>
+            </div>
+
+            @if(!$showScannerQR)
+                <button type="button"
+                        wire:click="generateScannerSession"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-sm md:text-base transition-colors">
+                    Enable Phone Scanner
+                </button>
+            @else
+                <button type="button"
+                        wire:click="closeScannerSession"
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold text-sm md:text-base transition-colors">
+                    Disable Scanner
+                </button>
+            @endif
+        </div>
+
+        @if($showScannerQR && $scannerSession)
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 md:p-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Manual Code Section -->
+                    <div class="flex flex-col justify-center">
+                        <div class="text-center mb-4">
+                            <p class="text-sm text-gray-600 mb-2">Enter this code on your phone:</p>
+                            <div class="bg-white px-6 py-4 rounded-lg shadow-sm">
+                                <p class="text-3xl md:text-4xl font-bold text-purple-600 tracking-widest">
+                                    {{ $scannerSession->session_code }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 md:p-4">
+                            <p class="text-sm text-purple-800 font-semibold mb-2">📱 Steps:</p>
+                            <ol class="text-xs md:text-sm text-purple-700 space-y-1">
+                                <li>1. On your phone, go to: <strong class="text-purple-900">{{ url('/scanner') }}</strong></li>
+                                <li>2. Enter the code above</li>
+                                <li>3. Start scanning barcodes</li>
+                                <li>4. Scans appear here automatically</li>
+                            </ol>
+                        </div>
+
+                        <div class="mt-3 text-xs text-gray-500 text-center">
+                            Session expires: {{ $scannerSession->expires_at->diffForHumans() }}
+                        </div>
+                    </div>
+
+                    <!-- Status Section -->
+                    <div class="flex flex-col justify-center">
+                        <div class="bg-white rounded-lg shadow-sm border-2 border-dashed border-gray-300 p-6 text-center">
+                            <div class="text-purple-600 mb-3">
+                                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-2">Waiting for Phone</h4>
+                            <p class="text-sm text-gray-600">
+                                Open <strong>{{ url('/scanner') }}</strong> on your phone and enter the code above
+                            </p>
+                            <div class="mt-4 text-xs text-gray-500">
+                                Scans will appear on this page automatically
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Polling for scans -->
+            <div wire:poll.2s="checkForScans"></div>
+        @endif
+    </div>
+
     <!-- Scanner Section -->
     <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
         <div class="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">

@@ -13,6 +13,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Mobile Scanner (public access for phone scanning)
+Route::get('/scanner', function () {
+    return view('scanner.mobile');
+})->name('scanner.mobile');
+
 // Authentication routes
 require __DIR__.'/auth.php';
 

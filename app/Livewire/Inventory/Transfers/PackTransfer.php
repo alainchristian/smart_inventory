@@ -3,6 +3,7 @@
 namespace App\Livewire\Inventory\Transfers;
 
 use App\Models\Product;
+use App\Models\ScannerSession;
 use App\Models\Transfer;
 use App\Models\TransferBox;
 use App\Services\Inventory\TransferService;
@@ -19,6 +20,8 @@ class PackTransfer extends Component
     public array $packedBoxes = [];
     public bool $enableScanner = true;
     public ?int $transporter_id = null;
+    public ?ScannerSession $scannerSession = null;
+    public bool $showScannerQR = false;
 
     protected $listeners = [
         'barcode-scanned' => 'handleBarcodeScan',
@@ -33,6 +36,17 @@ class PackTransfer extends Component
         $this->authorize('pack', $transfer);
         $this->transfer = $transfer;
         $this->refreshPackedBoxes();
+
+        // Check for active scanner session
+        $this->scannerSession = ScannerSession::active()
+            ->where('transfer_id', $transfer->id)
+            ->where('page_type', 'pack_transfer')
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if ($this->scannerSession) {
+            $this->showScannerQR = true;
+        }
     }
 
     public function handleBarcodeScan($barcode)
@@ -223,6 +237,60 @@ class PackTransfer extends Component
                 'items'        => $tb->box->items_remaining,
                 'scanned_out'  => $tb->scanned_out_at !== null,
             ];
+        }
+    }
+
+    public function generateScannerSession()
+    {
+        // Deactivate any existing sessions for this transfer
+        ScannerSession::where('transfer_id', $this->transfer->id)
+            ->where('page_type', 'pack_transfer')
+            ->where('user_id', auth()->id())
+            ->update(['is_active' => false]);
+
+        // Create new session
+        $this->scannerSession = ScannerSession::create([
+            'session_code' => ScannerSession::generateCode(),
+            'user_id' => auth()->id(),
+            'page_type' => 'pack_transfer',
+            'transfer_id' => $this->transfer->id,
+            'is_active' => true,
+            'expires_at' => now()->addHours(2), // Session expires in 2 hours
+        ]);
+
+        $this->showScannerQR = true;
+    }
+
+    public function closeScannerSession()
+    {
+        if ($this->scannerSession) {
+            $this->scannerSession->deactivate();
+            $this->scannerSession = null;
+        }
+        $this->showScannerQR = false;
+    }
+
+    public function checkForScans()
+    {
+        if (!$this->scannerSession) {
+            return;
+        }
+
+        $this->scannerSession->refresh();
+
+        if ($this->scannerSession->last_scanned_barcode &&
+            $this->scannerSession->last_scan_at &&
+            $this->scannerSession->last_scan_at->isAfter(now()->subSeconds(3))) {
+
+            // New scan detected
+            $barcode = $this->scannerSession->last_scanned_barcode;
+
+            // Clear the barcode to avoid re-processing
+            $this->scannerSession->update(['last_scanned_barcode' => null]);
+
+            // Process the scan (your existing scan logic)
+            $this->scanInput = $barcode;
+            $this->scanProduct();
         }
     }
 
