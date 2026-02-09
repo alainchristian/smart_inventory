@@ -14,10 +14,30 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
-        $warehouseId = $user->location_id;
+
+        // For Owners, get warehouse from query parameter or use first warehouse
+        if ($user->isOwner()) {
+            $warehouseId = $request->query('warehouse_id');
+
+            if (!$warehouseId) {
+                // Default to first warehouse
+                $warehouse = Warehouse::orderBy('name')->first();
+                if (!$warehouse) {
+                    abort(404, 'No warehouses found in the system.');
+                }
+                $warehouseId = $warehouse->id;
+            }
+        } else {
+            // Warehouse managers use their assigned location
+            if (!$user->location_id) {
+                abort(403, 'No warehouse assigned to your account.');
+            }
+            $warehouseId = $user->location_id;
+        }
+
         $warehouse = Warehouse::findOrFail($warehouseId);
 
         // Warehouse stock statistics

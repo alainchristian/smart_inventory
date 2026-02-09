@@ -18,6 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'location' => \App\Http\Middleware\CheckLocation::class,
         ]);
+
+        // Trust all proxies (ngrok, load balancers, etc.)
+        // This fixes HTTPS detection when behind proxy
+        $middleware->trustProxies(at: '*', headers: Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+            Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+            Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
+            Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
+            Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB);
     })
     ->withSchedule(function (Schedule $schedule) {
         // Generate system alerts every 5 minutes

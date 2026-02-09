@@ -21,6 +21,7 @@ enum UserRole: string
     {
         return match($this) {
             self::OWNER => [
+                // Original owner permissions
                 'view_all_locations',
                 'manage_users',
                 'view_purchase_prices',
@@ -28,6 +29,17 @@ enum UserRole: string
                 'manage_products',
                 'view_reports',
                 'manage_settings',
+                // Shop Manager permissions
+                'request_transfers',
+                'receive_transfers',
+                'create_sales',
+                'process_returns',
+                'view_shop_reports',
+                // Warehouse Manager permissions
+                'manage_warehouse_inventory',
+                'approve_transfers',
+                'scan_boxes',
+                'view_warehouse_reports',
             ],
             self::WAREHOUSE_MANAGER => [
                 'manage_warehouse_inventory',

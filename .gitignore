@@ -21,3 +21,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/logs/*
+/bootstrap/cache/*

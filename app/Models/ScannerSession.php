@@ -67,4 +67,34 @@ class ScannerSession extends Model
         return $query->where('is_active', true)
                     ->where('expires_at', '>', now());
     }
+
+    /**
+     * Check if session is active and not expired
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active && $this->expires_at->isFuture();
+    }
+
+    /**
+     * Check if phone has been active recently
+     */
+    public function hasRecentActivity(): bool
+    {
+        if (!$this->last_scan_at) {
+            return false;
+        }
+
+        return $this->last_scan_at->isAfter(now()->subSeconds(30));
+    }
+
+    /**
+     * Mark session as having recent activity
+     */
+    public function recordActivity(): void
+    {
+        $this->update([
+            'last_scan_at' => now()
+        ]);
+    }
 }

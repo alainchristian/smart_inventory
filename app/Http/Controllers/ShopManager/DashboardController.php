@@ -28,9 +28,27 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $user    = auth()->user();
-        $shopId  = $user->location_id;
-        $shop    = Shop::with('defaultWarehouse')->findOrFail($shopId);
+        $user = auth()->user();
+
+        // For shop managers, use their assigned shop
+        if ($user->isShopManager()) {
+            $shopId = $user->location_id;
+        }
+
+        // For owners, they can select or use first shop
+        if ($user->isOwner()) {
+            $shopId = request()->get('shop_id') ?? session('selected_shop_id') ?? Shop::first()?->id;
+
+            if (!$shopId) {
+                return redirect()->route('owner.dashboard')
+                    ->with('error', 'No shop found. Please create a shop first.');
+            }
+
+            // Store selected shop in session
+            session(['selected_shop_id' => $shopId]);
+        }
+
+        $shop = Shop::with('defaultWarehouse')->findOrFail($shopId);
 
         // ------------------------------------------------------------------
         // Today's sales statistics

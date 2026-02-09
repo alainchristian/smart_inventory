@@ -34,77 +34,160 @@ use App\Enums\TransferStatus;
 
     <!-- Phone Scanner Mode Section -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
-            <div>
-                <h3 class="text-base md:text-lg font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
-                <p class="text-xs md:text-sm text-gray-600">Use your phone as a dedicated scanner while working on desktop</p>
-            </div>
 
-            @if(!$showScannerQR)
+        @if(!$showScannerQR)
+            <!-- Scanner Disabled State -->
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-base md:text-lg font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
+                    <p class="text-xs md:text-sm text-gray-600">Use your phone as a dedicated scanner while working on desktop</p>
+                </div>
                 <button type="button"
                         wire:click="generateScannerSession"
                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold text-sm md:text-base transition-colors">
                     Enable Phone Scanner
                 </button>
-            @else
+            </div>
+
+        @elseif($phoneConnected)
+            <!-- Phone Connected - Compact View -->
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <!-- Animated pulse indicator -->
+                    <div class="relative">
+                        <span class="flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-base md:text-lg font-semibold text-green-600">📱 Phone Connected</h3>
+                        <p class="text-xs md:text-sm text-gray-600">Scanner ready - Point camera at barcodes</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button"
+                            wire:click="$toggle('showScannerQR')"
+                            class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-xs md:text-sm font-medium transition-colors">
+                        Show QR Code
+                    </button>
+                    <button type="button"
+                            wire:click="closeScannerSession"
+                            class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs md:text-sm font-medium transition-colors">
+                        Disconnect
+                    </button>
+                </div>
+            </div>
+
+            <!-- Session info (collapsible) -->
+            <div class="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500 flex items-center justify-between">
+                <span>Session: <code class="bg-gray-100 px-2 py-0.5 rounded font-mono">{{ $scannerSession->session_code }}</code></span>
+                <span>Expires: {{ $scannerSession->expires_at->diffForHumans() }}</span>
+            </div>
+
+            <!-- Polling for scans -->
+            <div wire:poll.2s="checkForScans"></div>
+
+        @elseif($scannerSession && $scannerSession->expires_at->isPast())
+            <!-- Session Expired State -->
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                        <svg class="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base md:text-lg font-semibold text-orange-600">⏱️ Session Expired</h3>
+                        <p class="text-xs md:text-sm text-gray-600">Your phone scanner session has expired. Reconnect to continue.</p>
+                    </div>
+                </div>
+                <button type="button"
+                        wire:click="generateScannerSession"
+                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold text-sm md:text-base transition-colors">
+                    Reconnect Phone
+                </button>
+            </div>
+
+        @elseif($showScannerQR && $scannerSession)
+            <!-- Scanner Enabled - Waiting for Phone Connection -->
+            @php
+                // Generate scanner URL using config APP_URL to ensure it uses PC's IP
+                $scannerUrl = config('app.url') . '/scanner?code=' . $scannerSession->session_code;
+            @endphp
+
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
+                <div>
+                    <h3 class="text-base md:text-lg font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
+                    <p class="text-xs md:text-sm text-gray-600">Scan QR code with your phone to connect</p>
+                </div>
                 <button type="button"
                         wire:click="closeScannerSession"
                         class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold text-sm md:text-base transition-colors">
-                    Disable Scanner
+                    Cancel
                 </button>
-            @endif
-        </div>
+            </div>
 
-        @if($showScannerQR && $scannerSession)
+            <!-- QR Code Section (Only show when waiting for connection) -->
             <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-4 md:p-6">
                 <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Manual Code Section -->
+
+                    <!-- QR CODE SECTION (PRIMARY - LEFT SIDE) -->
+                    <div class="text-center">
+                        <div class="bg-white p-6 rounded-lg inline-block shadow-lg border-4 border-indigo-200">
+                            {!! QrCode::size(250)->generate($scannerUrl) !!}
+                        </div>
+                        <div class="mt-4 bg-indigo-100 rounded-lg p-3">
+                            <p class="text-sm font-bold text-indigo-900">📱 PRIMARY METHOD</p>
+                            <p class="text-xs text-indigo-700 mt-1">Open phone camera and point at QR code above</p>
+                        </div>
+                    </div>
+
+                    <!-- INSTRUCTIONS & MANUAL CODE (BACKUP - RIGHT SIDE) -->
                     <div class="flex flex-col justify-center">
-                        <div class="text-center mb-4">
-                            <p class="text-sm text-gray-600 mb-2">Enter this code on your phone:</p>
-                            <div class="bg-white px-6 py-4 rounded-lg shadow-sm">
-                                <p class="text-3xl md:text-4xl font-bold text-indigo-600 tracking-widest">
+                        <div class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg p-4 mb-4">
+                            <p class="font-bold mb-3 text-lg">📷 Quick Setup:</p>
+                            <ol class="text-sm space-y-2">
+                                <li class="flex items-start">
+                                    <span class="font-bold mr-2">1.</span>
+                                    <span>Open <strong>phone camera app</strong></span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="font-bold mr-2">2.</span>
+                                    <span>Point at <strong>QR code</strong> (left)</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="font-bold mr-2">3.</span>
+                                    <span>Tap notification to open scanner</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="font-bold mr-2">4.</span>
+                                    <span><strong>Done!</strong> Start scanning barcodes</span>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <!-- Alternative Manual Code -->
+                        <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
+                            <p class="text-xs text-gray-500 mb-2">Alternative (if camera doesn't work):</p>
+                            <p class="text-xs text-gray-600 mb-2">Go to: <strong class="text-indigo-600">{{ url('/scanner') }}</strong></p>
+                            <p class="text-xs text-gray-600 mb-2">Enter code:</p>
+                            <div class="bg-gray-50 px-4 py-2 rounded border border-gray-300">
+                                <p class="text-2xl font-bold text-gray-700 tracking-widest text-center">
                                     {{ $scannerSession->session_code }}
                                 </p>
                             </div>
                         </div>
 
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
-                            <p class="text-sm text-blue-800 font-semibold mb-2">📱 Steps:</p>
-                            <ol class="text-xs md:text-sm text-blue-700 space-y-1">
-                                <li>1. On your phone, go to: <strong class="text-blue-900">{{ url('/scanner') }}</strong></li>
-                                <li>2. Enter the code above</li>
-                                <li>3. Start scanning barcodes</li>
-                                <li>4. Scans appear here automatically</li>
-                            </ol>
-                        </div>
-
                         <div class="mt-3 text-xs text-gray-500 text-center">
-                            Session expires: {{ $scannerSession->expires_at->diffForHumans() }}
-                        </div>
-                    </div>
-
-                    <!-- Status Section -->
-                    <div class="flex flex-col justify-center">
-                        <div class="bg-white rounded-lg shadow-sm border-2 border-dashed border-gray-300 p-6 text-center">
-                            <div class="text-green-600 mb-3">
-                                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            <h4 class="text-lg font-semibold text-gray-900 mb-2">Waiting for Phone</h4>
-                            <p class="text-sm text-gray-600">
-                                Open <strong>{{ url('/scanner') }}</strong> on your phone and enter the code above
-                            </p>
-                            <div class="mt-4 text-xs text-gray-500">
-                                Scans will appear on this page automatically
-                            </div>
+                            ⏱️ Session expires: {{ $scannerSession->expires_at->diffForHumans() }}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Polling for scans -->
+            <!-- Polling for scans and connection status -->
             <div wire:poll.2s="checkForScans"></div>
         @endif
     </div>

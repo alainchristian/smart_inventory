@@ -1,4 +1,22 @@
 <x-app-layout>
+    <!-- Warehouse Selector (for Owners) -->
+    @if(auth()->user()->isOwner())
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Warehouse</label>
+            <form method="GET" action="{{ route('warehouse.dashboard') }}">
+                <select name="warehouse_id"
+                        onchange="this.form.submit()"
+                        class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    @foreach(\App\Models\Warehouse::orderBy('name')->get() as $wh)
+                        <option value="{{ $wh->id }}" {{ $wh->id == $warehouse->id ? 'selected' : '' }}>
+                            {{ $wh->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+    @endif
+
     <!-- Page Header -->
     <div class="mb-4">
         <h1 class="text-2xl font-bold text-gray-900">{{ $warehouse->name }}</h1>

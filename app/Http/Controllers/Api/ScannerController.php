@@ -88,6 +88,43 @@ class ScannerController extends Controller
     }
 
     /**
+     * Ping to keep session alive and update last activity
+     */
+    public function ping(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'session_code' => 'required|string|size:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid session code',
+            ], 400);
+        }
+
+        $session = ScannerSession::active()
+            ->where('session_code', $request->session_code)
+            ->first();
+
+        if (!$session) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session not found or expired',
+            ], 404);
+        }
+
+        // Update last activity timestamp
+        $session->update(['last_scan_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'expires_at' => $session->expires_at->toIso8601String(),
+            'is_active' => true,
+        ]);
+    }
+
+    /**
      * Check session status and get latest scan
      */
     public function status(Request $request)

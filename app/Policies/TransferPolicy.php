@@ -78,7 +78,7 @@ class TransferPolicy
             return false;
         }
 
-        // Only warehouse personnel
+        // Only warehouse personnel or owners
         return $user->isWarehouseManager() || $user->isOwner();
     }
 

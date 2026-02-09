@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,5 +27,11 @@ class AppServiceProvider extends ServiceProvider
             'warehouse' => \App\Models\Warehouse::class,
             'shop' => \App\Models\Shop::class,
         ]);
+
+        // Force HTTPS for all URLs when behind ngrok or other proxy
+        // This fixes Livewire file upload mixed content errors
+        if (request()->header('X-Forwarded-Proto') === 'https') {
+            URL::forceScheme('https');
+        }
     }
 }

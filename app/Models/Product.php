@@ -62,6 +62,11 @@ class Product extends Model
         return $this->hasMany(SaleItem::class);
     }
 
+    public function barcodes(): HasMany
+    {
+        return $this->hasMany(ProductBarcode::class);
+    }
+
     // Accessors for price formatting
     public function getPurchasePriceInDollarsAttribute(): float
     {

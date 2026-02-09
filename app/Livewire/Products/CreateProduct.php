@@ -56,6 +56,11 @@ class CreateProduct extends Component
 
     public function mount()
     {
+        // Pre-fill barcode from query string if provided (from box receiving)
+        if (request()->has('barcode')) {
+            $this->barcode = request()->get('barcode');
+        }
+
         // Generate SKU if empty
         if (empty($this->sku)) {
             $this->generateSku();

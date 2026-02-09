@@ -22,12 +22,7 @@ class LoginRedirectController extends Controller
         // Update last login timestamp
         $user->recordLogin();
 
-        // Redirect based on role
-        return match ($user->role) {
-            UserRole::OWNER => redirect()->route('owner.dashboard'),
-            UserRole::WAREHOUSE_MANAGER => redirect()->route('warehouse.dashboard'),
-            UserRole::SHOP_MANAGER => redirect()->route('shop.dashboard'),
-            default => redirect()->route('login')->with('error', 'Invalid user role'),
-        };
+        // Use the getDashboardRoute method from User model
+        return redirect($user->getDashboardRoute());
     }
 }

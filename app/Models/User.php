@@ -138,6 +138,17 @@ class User extends Authenticatable
         $this->update(['last_login_at' => now()]);
     }
 
+    // Get dashboard route based on role
+    public function getDashboardRoute(): string
+    {
+        return match($this->role) {
+            UserRole::OWNER => route('owner.dashboard'),
+            UserRole::WAREHOUSE_MANAGER => route('warehouse.dashboard'),
+            UserRole::SHOP_MANAGER => route('shop.dashboard'),
+            default => route('login'),
+        };
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

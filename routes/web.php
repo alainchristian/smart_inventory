@@ -13,6 +13,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// QR Code Test Route (for troubleshooting)
+Route::get('/qr-test', function () {
+    return view('qr-code-test');
+})->name('qr.test');
+
 // Mobile Scanner (public access for phone scanning)
 Route::get('/scanner', function () {
     return view('scanner.mobile');
@@ -65,8 +70,8 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     Route::get('/settings', function () { return view('owner.settings'); })->name('settings');
 });
 
-// Warehouse Manager routes - Warehouse-scoped access
-Route::middleware(['auth', CheckRole::class . ':warehouse_manager', CheckLocation::class])
+// Warehouse Manager routes - Allow warehouse managers and owners
+Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckLocation::class])
     ->prefix('warehouse')
     ->name('warehouse.')
     ->group(function () {
@@ -93,8 +98,8 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager', CheckLocatio
         });
     });
 
-// Shop Manager routes - Shop-scoped access
-Route::middleware(['auth', CheckRole::class . ':shop_manager', CheckLocation::class])
+// Shop Manager routes - Allow shop managers and owners
+Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocation::class])
     ->prefix('shop')
     ->name('shop.')
     ->group(function () {

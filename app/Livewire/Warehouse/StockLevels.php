@@ -13,8 +13,19 @@ class StockLevels extends Component
 {
     use WithPagination;
 
+    public ?int $warehouseId = null;
     public string $search = '';
     public string $statusFilter = 'all';
+
+    public function mount()
+    {
+        $user = auth()->user();
+
+        // Auto-select warehouse for warehouse managers
+        if ($user->isWarehouseManager()) {
+            $this->warehouseId = $user->location_id;
+        }
+    }
 
     public function updatingSearch()
     {
@@ -29,6 +40,21 @@ class StockLevels extends Component
     public function render()
     {
         $user = auth()->user();
+
+        // For Owners, require warehouse selection
+        if ($user->isOwner() && !$this->warehouseId) {
+            return view('livewire.warehouse.stock-levels', [
+                'stockData' => [],
+                'products' => collect(),
+                'warehouses' => \App\Models\Warehouse::orderBy('name')->get(),
+                'needsWarehouseSelection' => true,
+            ]);
+        }
+
+        // Validate warehouse access for warehouse managers
+        if ($user->isWarehouseManager() && $user->location_id !== $this->warehouseId) {
+            abort(403, 'You do not have access to this warehouse.');
+        }
 
         // Get all products with their stock at this warehouse
         $products = Product::query()
@@ -46,10 +72,10 @@ class StockLevels extends Component
         // Get stock levels for each product
         $stockData = [];
         foreach ($products as $product) {
-            $stock = $product->getCurrentStock(LocationType::WAREHOUSE->value, $user->location_id);
+            $stock = $product->getCurrentStock(LocationType::WAREHOUSE->value, $this->warehouseId);
 
             // Apply status filter
-            if ($this->statusFilter === 'low' && !$product->isLowStock(LocationType::WAREHOUSE->value, $user->location_id)) {
+            if ($this->statusFilter === 'low' && !$product->isLowStock(LocationType::WAREHOUSE->value, $this->warehouseId)) {
                 continue;
             } elseif ($this->statusFilter === 'out' && $stock['total_items'] > 0) {
                 continue;
@@ -60,13 +86,17 @@ class StockLevels extends Component
                 'full_boxes' => $stock['full_boxes'],
                 'partial_boxes' => $stock['partial_boxes'],
                 'total_items' => $stock['total_items'],
-                'is_low_stock' => $product->isLowStock(LocationType::WAREHOUSE->value, $user->location_id),
+                'is_low_stock' => $product->isLowStock(LocationType::WAREHOUSE->value, $this->warehouseId),
             ];
         }
 
         return view('livewire.warehouse.stock-levels', [
             'stockData' => $stockData,
             'products' => $products,
+            'warehouses' => $user->isOwner()
+                ? \App\Models\Warehouse::orderBy('name')->get()
+                : collect(),
+            'needsWarehouseSelection' => false,
         ]);
     }
 }

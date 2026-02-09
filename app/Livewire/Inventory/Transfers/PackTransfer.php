@@ -22,6 +22,8 @@ class PackTransfer extends Component
     public ?int $transporter_id = null;
     public ?ScannerSession $scannerSession = null;
     public bool $showScannerQR = false;
+    public bool $phoneConnected = false;
+    public ?\Carbon\Carbon $lastPhoneActivity = null;
 
     protected $listeners = [
         'barcode-scanned' => 'handleBarcodeScan',
@@ -268,6 +270,8 @@ class PackTransfer extends Component
             $this->scannerSession = null;
         }
         $this->showScannerQR = false;
+        $this->phoneConnected = false;
+        $this->lastPhoneActivity = null;
     }
 
     public function checkForScans()
@@ -278,6 +282,19 @@ class PackTransfer extends Component
 
         $this->scannerSession->refresh();
 
+        // Check if phone has been active recently (within last 10 seconds)
+        if ($this->scannerSession->last_scan_at &&
+            $this->scannerSession->last_scan_at->gt(now()->subSeconds(10))) {
+            $this->phoneConnected = true;
+            $this->lastPhoneActivity = $this->scannerSession->last_scan_at;
+        } elseif ($this->phoneConnected &&
+                  $this->lastPhoneActivity &&
+                  $this->lastPhoneActivity->lt(now()->subSeconds(30))) {
+            // Phone hasn't scanned in 30 seconds, mark as potentially disconnected
+            $this->phoneConnected = false;
+        }
+
+        // Check for new scans
         if ($this->scannerSession->last_scanned_barcode &&
             $this->scannerSession->last_scan_at &&
             $this->scannerSession->last_scan_at->isAfter(now()->subSeconds(3))) {
@@ -285,12 +302,22 @@ class PackTransfer extends Component
             // New scan detected
             $barcode = $this->scannerSession->last_scanned_barcode;
 
+            // Mark phone as connected when scan is received
+            $this->phoneConnected = true;
+            $this->lastPhoneActivity = now();
+
             // Clear the barcode to avoid re-processing
             $this->scannerSession->update(['last_scanned_barcode' => null]);
 
             // Process the scan (your existing scan logic)
             $this->scanInput = $barcode;
             $this->scanProduct();
+        }
+
+        // Check if session has expired
+        if ($this->scannerSession->expires_at->isPast()) {
+            $this->phoneConnected = false;
+            session()->flash('info', 'Scanner session expired. Please reconnect your phone.');
         }
     }
 

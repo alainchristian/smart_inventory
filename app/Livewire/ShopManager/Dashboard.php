@@ -21,11 +21,25 @@ class Dashboard extends Component
     {
         $user = auth()->user();
 
-        if (!$user->isShopManager()) {
+        // Allow shop managers and owners
+        if (!$user->isShopManager() && !$user->isOwner()) {
             abort(403, 'Unauthorized access.');
         }
 
-        $this->shopId = $user->location_id;
+        // For shop managers, use their assigned shop
+        if ($user->isShopManager()) {
+            $this->shopId = $user->location_id;
+        }
+
+        // For owners, use session or first shop
+        if ($user->isOwner()) {
+            $this->shopId = session('selected_shop_id') ?? \App\Models\Shop::first()?->id;
+
+            if (!$this->shopId) {
+                abort(404, 'No shop found. Please create a shop first.');
+            }
+        }
+
         $this->selectedDate = today()->format('Y-m-d');
     }
 

@@ -8,6 +8,7 @@ use App\Enums\TransferStatus;
 use App\Models\Alert;
 use App\Models\Box;
 use App\Models\Product;
+use App\Models\ScannerSession;
 use App\Models\Transfer;
 use App\Models\Transporter;
 use App\Services\Inventory\TransferService;
@@ -21,6 +22,12 @@ class PackTransfer extends Component
     public string $scanInput = '';
     public ?int $transporterId = null;
     public bool $showShipModal = false;
+
+    // Scanner session properties
+    public ?ScannerSession $scannerSession = null;
+    public bool $showScannerQR = false;
+    public bool $phoneConnected = false;
+    public ?\Carbon\Carbon $lastPhoneActivity = null;
 
     public function mount(Transfer $transfer)
     {
@@ -62,6 +69,17 @@ class PackTransfer extends Component
 
         // Load already assigned boxes (if any)
         $this->loadAssignedBoxes();
+
+        // Check for active scanner session
+        $this->scannerSession = ScannerSession::active()
+            ->where('transfer_id', $transfer->id)
+            ->where('page_type', 'pack_transfer')
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if ($this->scannerSession) {
+            $this->showScannerQR = true;
+        }
     }
 
     protected function loadAssignedBoxes()
@@ -274,6 +292,85 @@ class PackTransfer extends Component
         } catch (\Exception $e) {
             session()->flash('error', 'Error shipping transfer: ' . $e->getMessage());
             $this->closeShipModal();
+        }
+    }
+
+    public function generateScannerSession()
+    {
+        // Deactivate any existing sessions for this transfer
+        ScannerSession::where('transfer_id', $this->transfer->id)
+            ->where('page_type', 'pack_transfer')
+            ->where('user_id', auth()->id())
+            ->update(['is_active' => false]);
+
+        // Create new session
+        $this->scannerSession = ScannerSession::create([
+            'session_code' => ScannerSession::generateCode(),
+            'user_id' => auth()->id(),
+            'page_type' => 'pack_transfer',
+            'transfer_id' => $this->transfer->id,
+            'is_active' => true,
+            'expires_at' => now()->addHours(2),
+        ]);
+
+        $this->showScannerQR = true;
+    }
+
+    public function closeScannerSession()
+    {
+        if ($this->scannerSession) {
+            $this->scannerSession->deactivate();
+            $this->scannerSession = null;
+        }
+        $this->showScannerQR = false;
+        $this->phoneConnected = false;
+        $this->lastPhoneActivity = null;
+    }
+
+    public function checkForScans()
+    {
+        if (!$this->scannerSession) {
+            return;
+        }
+
+        $this->scannerSession->refresh();
+
+        // Check if phone has been active recently (within last 10 seconds)
+        if ($this->scannerSession->last_scan_at &&
+            $this->scannerSession->last_scan_at->gt(now()->subSeconds(10))) {
+            $this->phoneConnected = true;
+            $this->lastPhoneActivity = $this->scannerSession->last_scan_at;
+        } elseif ($this->phoneConnected &&
+                  $this->lastPhoneActivity &&
+                  $this->lastPhoneActivity->lt(now()->subSeconds(30))) {
+            // Phone hasn't scanned in 30 seconds, mark as potentially disconnected
+            $this->phoneConnected = false;
+        }
+
+        // Check for new scans
+        if ($this->scannerSession->last_scanned_barcode &&
+            $this->scannerSession->last_scan_at &&
+            $this->scannerSession->last_scan_at->isAfter(now()->subSeconds(3))) {
+
+            // New scan detected
+            $barcode = $this->scannerSession->last_scanned_barcode;
+
+            // Mark phone as connected when scan is received
+            $this->phoneConnected = true;
+            $this->lastPhoneActivity = now();
+
+            // Clear the barcode to avoid re-processing
+            $this->scannerSession->update(['last_scanned_barcode' => null]);
+
+            // Process the scan using existing scanBox logic
+            $this->scanInput = $barcode;
+            $this->scanBox();
+        }
+
+        // Check if session has expired
+        if ($this->scannerSession->expires_at->isPast()) {
+            $this->phoneConnected = false;
+            session()->flash('info', 'Scanner session expired. Please reconnect your phone.');
         }
     }
 
