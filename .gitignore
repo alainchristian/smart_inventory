@@ -27,3 +27,4 @@ yarn-error.log
 /storage/framework/sessions/*
 /storage/logs/*
 /bootstrap/cache/*
+/*.md
