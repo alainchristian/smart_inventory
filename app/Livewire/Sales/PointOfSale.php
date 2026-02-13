@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sales;
 
+use App\Enums\LocationType;
 use App\Enums\PaymentMethod;
 use App\Enums\SaleType;
 use App\Models\Box;
@@ -11,29 +12,43 @@ use Livewire\Component;
 
 class PointOfSale extends Component
 {
+    // ── Shop context ──────────────────────────────────────────────────────
     public int $shopId;
-    public string $scanInput = '';
-    public array $cart = [];
-    public ?string $customerName = null;
-    public ?string $customerPhone = null;
-    public string $paymentMethod = 'cash';
-    public int $discount = 0;
-    public int $tax = 0;
-    public bool $scannerEnabled = true;
 
+    // ── Scan / search ────────────────────────────────────────────────────
+    public string $scanInput      = '';
+    public string $productSearch  = '';
+    public array  $allStockProducts = [];   // loaded once on focus, all available products
+    public array  $searchResults  = [];     // filtered subset shown in dropdown
+    public bool   $showSearchResults = false;
+
+    // ── Cart ──────────────────────────────────────────────────────────────
+    public array $cart = [];
+
+    // ── Checkout ──────────────────────────────────────────────────────────
+    public string $paymentMethod = 'cash';
+    public float $discount = 0;
+    public float $tax = 0;
+    public bool $showCheckoutModal = false;
+
+    // ── Edit modal ────────────────────────────────────────────────────────
+    public bool $showEditModal = false;
+    public ?string $editingCartKey = null;
+
+    // ── Receipt ───────────────────────────────────────────────────────────
+    public bool $showReceipt = false;
+    public ?array $completedSale = null;
+
+    // ── Listeners ─────────────────────────────────────────────────────────
     protected $listeners = [
         'barcode-scanned' => 'handleBarcodeScan',
     ];
 
-    protected $rules = [
-        'paymentMethod' => 'required|in:cash,card,mobile_money,bank_transfer,credit',
-        'customerName' => 'nullable|string|max:255',
-        'customerPhone' => 'nullable|string|max:20',
-        'discount' => 'integer|min:0',
-        'tax' => 'integer|min:0',
-    ];
+    // =========================================================================
+    // MOUNT
+    // =========================================================================
 
-    public function mount()
+    public function mount(): void
     {
         $user = auth()->user();
 
@@ -44,229 +59,357 @@ class PointOfSale extends Component
         }
     }
 
-    public function handleBarcodeScan($barcode)
+    // =========================================================================
+    // BARCODE SCANNING
+    // =========================================================================
+
+    public function handleBarcodeScan(string $barcode): void
     {
         $this->scanInput = $barcode;
-        $this->scanProduct();
+        $this->scanBox();
     }
 
-    public function scanProduct()
+    /**
+     * Scan a box code to identify its product, then add that product to cart.
+     * We do NOT track which specific box was scanned — just use it for product lookup.
+     */
+    public function scanBox(): void
     {
         $code = trim($this->scanInput);
+        $this->scanInput = '';
 
         if (empty($code)) {
             return;
         }
 
-        // Try to find product by barcode
-        $product = Product::where('barcode', $code)->first();
-
-        if ($product) {
-            $this->addProductToCart($product->id);
-        } else {
-            // Try as box code
-            $box = Box::where('box_code', $code)
-                ->where('location_type', 'shop')
-                ->where('location_id', $this->shopId)
-                ->first();
-
-            if ($box) {
-                $this->addBoxToCart($box->id);
-            } else {
-                session()->flash('scan_error', 'Product or box not found');
-                $this->dispatch('scan-error', message: "Not found: {$code}");
-            }
-        }
-
-        $this->scanInput = '';
-    }
-
-    public function addProductToCart($productId, int $quantity = 1)
-    {
-        $product = Product::findOrFail($productId);
-
-        // Find an available box
-        $box = Box::where('location_type', 'shop')
+        // 1. Try as a box_code at this shop
+        $box = Box::where('box_code', $code)
+            ->where('location_type', LocationType::SHOP->value)
             ->where('location_id', $this->shopId)
-            ->where('product_id', $product->id)
-            ->whereIn('status', ['full', 'partial'])
-            ->where('items_remaining', '>', 0)
-            ->orderBy('status') // Full boxes first
             ->first();
 
-        if (!$box) {
-            session()->flash('error', 'No stock available for this product');
-            $this->dispatch('stock-error', productName: $product->name);
+        if ($box) {
+            $this->addProductToCart($box->product_id);
             return;
         }
 
-        if ($quantity > $box->items_remaining) {
-            session()->flash('error', "Only {$box->items_remaining} items available in stock");
+        // 2. Try as a product barcode (products.barcode column)
+        $product = Product::where('barcode', $code)->active()->first();
+        if ($product) {
+            $this->addProductToCart($product->id);
             return;
         }
 
-        $cartKey = "product_{$product->id}_box_{$box->id}";
+        session()->flash('scan_error', "No product found for code: {$code}");
+    }
 
-        if (isset($this->cart[$cartKey])) {
-            $newQuantity = $this->cart[$cartKey]['quantity'] + $quantity;
-            if ($newQuantity > $box->items_remaining) {
-                session()->flash('error', "Cannot add more items. Only {$box->items_remaining} available.");
-                return;
-            }
-            $this->cart[$cartKey]['quantity'] = $newQuantity;
+    // =========================================================================
+    // PRODUCT SEARCH
+    // =========================================================================
+
+    /**
+     * Called when the search input is focused.
+     * Loads ALL products that have stock at this shop and shows the dropdown.
+     */
+    public function loadAvailableProducts(): void
+    {
+        $this->allStockProducts = Product::active()
+            ->whereHas('boxes', function ($query) {
+                $query->where('location_type', LocationType::SHOP->value)
+                      ->where('location_id', $this->shopId)
+                      ->whereIn('status', ['full', 'partial'])
+                      ->where('items_remaining', '>', 0);
+            })
+            ->with('category')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Product $p) {
+                $stock = $p->getCurrentStock(LocationType::SHOP->value, $this->shopId);
+                return [
+                    'id'              => $p->id,
+                    'name'            => $p->name,
+                    'sku'             => $p->sku,
+                    'category'        => $p->category->name ?? '—',
+                    'unit_price'      => $p->selling_price,
+                    'box_price'       => $p->calculateBoxPrice(),
+                    'items_per_box'   => $p->items_per_box,
+                    'available_boxes' => $stock['full_boxes'] + $stock['partial_boxes'],
+                    'available_items' => $stock['total_items'],
+                ];
+            })
+            ->toArray();
+
+        $this->searchResults    = $this->allStockProducts;
+        $this->showSearchResults = true;
+    }
+
+    /**
+     * Called on every keystroke in the search input.
+     * Filters the already-loaded list — no new DB query needed.
+     */
+    public function updatedProductSearch(): void
+    {
+        $q = mb_strtolower(trim($this->productSearch));
+
+        if ($q === '') {
+            // Empty search: show everything
+            $this->searchResults = $this->allStockProducts;
         } else {
-            $this->cart[$cartKey] = [
-                'type' => 'item',
-                'product_id' => $product->id,
-                'box_id' => $box->id,
-                'product_name' => $product->name,
-                'box_code' => $box->box_code,
-                'quantity' => $quantity,
-                'unit_price' => $product->selling_price,
-                'is_full_box' => false,
-                'available' => $box->items_remaining,
+            $this->searchResults = array_values(array_filter(
+                $this->allStockProducts,
+                function (array $product) use ($q) {
+                    return str_contains(mb_strtolower($product['name']), $q)
+                        || str_contains(mb_strtolower($product['sku']),  $q);
+                }
+            ));
+        }
+
+        $this->showSearchResults = true;
+    }
+
+    public function closeSearch(): void
+    {
+        $this->productSearch     = '';
+        $this->searchResults     = [];
+        $this->allStockProducts  = [];
+        $this->showSearchResults = false;
+    }
+
+    // =========================================================================
+    // CART MANAGEMENT
+    // =========================================================================
+
+    /**
+     * Add a product to the cart (or increment its quantity if already there).
+     * Default sell_by is 'box'. The cart is keyed by product_id so the same
+     * product is never duplicated — just its quantity increases.
+     */
+    public function addProductToCart(int $productId, string $sellBy = 'box', int $qty = 1): void
+    {
+        $product = Product::find($productId);
+
+        if (! $product) {
+            session()->flash('error', 'Product not found');
+            return;
+        }
+
+        $stock          = $product->getCurrentStock(LocationType::SHOP->value, $this->shopId);
+        $availableBoxes = $stock['full_boxes'] + $stock['partial_boxes'];
+        $availableItems = $stock['total_items'];
+
+        if ($availableItems === 0) {
+            session()->flash('error', "No stock available for {$product->name}");
+            return;
+        }
+
+        $key = "p_{$productId}";
+
+        if (isset($this->cart[$key])) {
+            // Already in cart: increment quantity
+            $current = $this->cart[$key];
+
+            if ($current['sell_by'] === 'box') {
+                $newQty = $current['quantity'] + 1;
+                if ($newQty > $availableBoxes) {
+                    session()->flash('error', "Only {$availableBoxes} box(es) available for {$product->name}");
+                    return;
+                }
+            } else {
+                $newQty = $current['quantity'] + 1;
+                if ($newQty > $availableItems) {
+                    session()->flash('error', "Only {$availableItems} item(s) available for {$product->name}");
+                    return;
+                }
+            }
+
+            $this->cart[$key]['quantity']       = $newQty;
+            $this->cart[$key]['available_boxes'] = $availableBoxes;
+            $this->cart[$key]['available_items'] = $availableItems;
+        } else {
+            $this->cart[$key] = [
+                'product_id'      => $product->id,
+                'product_name'    => $product->name,
+                'sku'             => $product->sku,
+                'sell_by'         => $sellBy,
+                'quantity'        => $qty,
+                'items_per_box'   => $product->items_per_box,
+                'unit_price'      => $product->selling_price,
+                'box_price'       => $product->calculateBoxPrice(),
+                'final_price'     => $sellBy === 'box'
+                                       ? $product->calculateBoxPrice()
+                                       : $product->selling_price,
+                'price_modified'  => false,
+                'price_reason'    => null,
+                'available_boxes' => $availableBoxes,
+                'available_items' => $availableItems,
             ];
         }
 
+        $this->closeSearch();
         $this->dispatch('item-added', productName: $product->name);
     }
 
-    public function addBoxToCart($boxId)
+    public function openEditItem(string $key): void
     {
-        $box = Box::with('product')->findOrFail($boxId);
-
-        if ($box->location_type->value !== 'shop' || $box->location_id !== $this->shopId) {
-            session()->flash('error', 'Box is not at this shop location');
-            return;
+        if (isset($this->cart[$key])) {
+            $this->editingCartKey = $key;
+            $this->showEditModal  = true;
         }
-
-        if (!in_array($box->status->value, ['full', 'partial'])) {
-            session()->flash('error', 'Box is not available for sale');
-            return;
-        }
-
-        $cartKey = "box_{$box->id}";
-
-        if (isset($this->cart[$cartKey])) {
-            session()->flash('warning', 'Box already in cart');
-            return;
-        }
-
-        $this->cart[$cartKey] = [
-            'type' => 'box',
-            'product_id' => $box->product_id,
-            'box_id' => $box->id,
-            'product_name' => $box->product->name,
-            'box_code' => $box->box_code,
-            'quantity' => 1,
-            'unit_price' => $box->product->calculateBoxPrice(),
-            'is_full_box' => true,
-            'available' => 1,
-        ];
-
-        $this->dispatch('box-added', boxCode: $box->box_code);
     }
 
-    public function updateQuantity($cartKey, $quantity)
-    {
-        if (!isset($this->cart[$cartKey])) {
-            return;
-        }
-
-        $item = $this->cart[$cartKey];
-
-        if ($quantity > $item['available']) {
-            session()->flash('error', 'Quantity exceeds available stock');
+    public function updateCartItem(
+        string  $key,
+        int     $quantity,
+        string  $sellBy,
+        int     $finalPrice,
+        bool    $priceModified,
+        ?string $priceReason
+    ): void {
+        if (! isset($this->cart[$key])) {
             return;
         }
 
         if ($quantity <= 0) {
-            $this->removeItem($cartKey);
-        } else {
-            $this->cart[$cartKey]['quantity'] = $quantity;
+            $this->removeFromCart($key);
+            $this->showEditModal  = false;
+            $this->editingCartKey = null;
+            return;
         }
+
+        $item  = $this->cart[$key];
+        $stock = Product::find($item['product_id'])
+            ?->getCurrentStock(LocationType::SHOP->value, $this->shopId);
+
+        $maxQty = $sellBy === 'box'
+            ? ($stock['full_boxes'] + $stock['partial_boxes'])
+            : $stock['total_items'];
+
+        if ($quantity > $maxQty) {
+            session()->flash('error', "Only {$maxQty} available");
+            return;
+        }
+
+        $this->cart[$key]['sell_by']        = $sellBy;
+        $this->cart[$key]['quantity']       = $quantity;
+        $this->cart[$key]['final_price']    = $finalPrice;
+        $this->cart[$key]['price_modified'] = $priceModified;
+        $this->cart[$key]['price_reason']   = $priceReason;
+
+        $this->showEditModal  = false;
+        $this->editingCartKey = null;
     }
 
-    public function removeItem($cartKey)
+    public function removeFromCart(string $key): void
     {
-        unset($this->cart[$cartKey]);
+        unset($this->cart[$key]);
     }
 
-    public function clearCart()
+    public function clearCart(): void
     {
-        $this->cart = [];
-        $this->customerName = null;
-        $this->customerPhone = null;
+        $this->cart     = [];
         $this->discount = 0;
-        $this->tax = 0;
-        session()->flash('info', 'Cart cleared');
+        $this->tax      = 0;
     }
 
-    public function getSubtotalProperty()
+    // =========================================================================
+    // COMPUTED TOTALS
+    // =========================================================================
+
+    public function getSubtotalProperty(): int
     {
-        return collect($this->cart)->sum(function ($item) {
-            return $item['quantity'] * $item['unit_price'];
-        });
+        return collect($this->cart)->sum(fn ($item) => $item['quantity'] * $item['final_price']);
     }
 
-    public function getTotalProperty()
+    public function getTotalProperty(): int
     {
-        return $this->subtotal + $this->tax - $this->discount;
+        $taxCents      = (int) round($this->tax * 100);
+        $discountCents = (int) round($this->discount * 100);
+        return $this->subtotal + $taxCents - $discountCents;
     }
 
-    public function completeSale()
+    public function getItemCountProperty(): int
+    {
+        return count($this->cart);
+    }
+
+    // =========================================================================
+    // CHECKOUT
+    // =========================================================================
+
+    public function completeSale(): void
     {
         if (empty($this->cart)) {
             session()->flash('error', 'Cart is empty');
             return;
         }
 
-        $this->validate();
+        $this->validate([
+            'paymentMethod' => 'required|in:cash,card,mobile_money,bank_transfer,credit',
+        ]);
 
         try {
             $saleService = app(SaleService::class);
 
             $items = collect($this->cart)->map(function ($item) {
+                $isFullBox   = $item['sell_by'] === 'box';
+                $itemsToSell = $isFullBox
+                    ? $item['quantity'] * $item['items_per_box']
+                    : $item['quantity'];
+
                 return [
-                    'product_id' => $item['product_id'],
-                    'box_id' => $item['box_id'],
-                    'quantity' => $item['quantity'],
-                    'is_full_box' => $item['is_full_box'],
-                    'price' => $item['unit_price'],
+                    'product_id'               => $item['product_id'],
+                    'quantity'                 => $itemsToSell,
+                    'is_full_box'              => $isFullBox,
+                    'price'                    => $item['final_price'],
+                    'price_was_modified'       => $item['price_modified'],
+                    'price_modification_reason' => $item['price_reason'],
                 ];
             })->values()->toArray();
 
             $sale = $saleService->createSale([
-                'shop_id' => $this->shopId,
-                'type' => SaleType::MIXED,
+                'shop_id'        => $this->shopId,
+                'type'           => SaleType::MIXED,
                 'payment_method' => PaymentMethod::from($this->paymentMethod),
-                'customer_name' => $this->customerName,
-                'customer_phone' => $this->customerPhone,
-                'items' => $items,
-                'tax' => $this->tax,
-                'discount' => $this->discount,
+                'items'          => $items,
+                'tax'            => (int) round($this->tax * 100),
+                'discount'       => (int) round($this->discount * 100),
             ]);
 
-            session()->flash('success', "Sale {$sale->sale_number} completed successfully");
+            // Capture receipt data before clearing cart
+            $this->completedSale = [
+                'sale_number'    => $sale->sale_number,
+                'total'          => $sale->total,
+                'subtotal'       => $this->subtotal,
+                'tax'            => (int) round($this->tax * 100),
+                'discount'       => (int) round($this->discount * 100),
+                'payment_method' => $this->paymentMethod,
+                'items'          => collect($this->cart)->values()->toArray(),
+            ];
 
-            // Reset cart
             $this->clearCart();
+            $this->showCheckoutModal = false;
+            $this->showReceipt       = true;
 
             $this->dispatch('sale-completed', saleNumber: $sale->sale_number);
 
-            return redirect()->route('sales.receipt', $sale);
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
         }
     }
 
+    public function closeReceipt(): void
+    {
+        $this->showReceipt   = false;
+        $this->completedSale = null;
+    }
+
+    // =========================================================================
+    // RENDER
+    // =========================================================================
+
     public function render()
     {
         return view('livewire.sales.point-of-sale', [
-            'products' => Product::active()->with('category')->orderBy('name')->get(),
-            'subtotal' => $this->subtotal,
-            'total' => $this->total,
-            'itemCount' => count($this->cart),
             'paymentMethods' => PaymentMethod::cases(),
         ]);
     }

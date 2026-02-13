@@ -28,3 +28,4 @@ yarn-error.log
 /storage/logs/*
 /bootstrap/cache/*
 /*.md
+nul

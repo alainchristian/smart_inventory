@@ -9,6 +9,7 @@ use App\Models\Box;
 use App\Models\Product;
 use App\Models\ProductBarcode;
 use App\Models\Sale;
+use App\Models\ScannerSession;
 use App\Models\Shop;
 use App\Services\Sales\SaleService;
 use Illuminate\Support\Facades\DB;
@@ -29,15 +30,19 @@ class PointOfSale extends Component
     // Search
     public $searchQuery = '';
     public $searchResults = [];
+    public $allStockProducts = [];   // loaded once on focus, all available products
     public $showSearchResults = false;
 
-    // Add Item Modal
-    public $showAddItemModal = false;
-    public $selectedProduct = null;
-    public $selectedProductBoxes = [];
-    public $addItemMode = 'individual'; // 'individual' or 'full_box'
-    public $addItemQuantity = 1;
-    public $addItemBoxId = null;
+    // ── Add Item Modal (staging — shown before cart commit) ───────────────────
+    public bool   $showAddModal     = false;
+    public ?array $stagingProduct   = null;  // the product being staged
+    public array  $stagingStock     = [];    // stock info for the product
+    public string $stagingMode      = 'box'; // 'box' | 'item'
+    public int    $stagingQty       = 1;
+    public int    $stagingPrice     = 0;     // cents — editable
+    public bool   $stagingPriceModified = false;
+    public string $stagingPriceReason   = '';
+    public ?int   $stagingCartIndex = null;  // if editing existing cart item
 
     // Price Modification Modal
     public $showPriceModal = false;
@@ -59,6 +64,11 @@ class PointOfSale extends Component
     // Receipt Modal
     public $showReceiptModal = false;
     public $completedSale = null;
+
+    // ── Phone scanner session ─────────────────────────────────────────────────
+    public ?ScannerSession $scannerSession = null;
+    public bool $showScannerPanel         = false;
+    public string $lastProcessedScan      = '';
 
     // Barcode Scanning
     public $barcodeInput = '';
@@ -105,20 +115,91 @@ class PointOfSale extends Component
 
         $shop = Shop::find($this->shopId);
         $this->shopName = $shop->name ?? 'Unknown Shop';
+
+        // Re-attach any active scanner session for this user
+        $this->scannerSession = ScannerSession::active()
+            ->where('user_id', auth()->id())
+            ->where('page_type', 'pos')
+            ->latest()
+            ->first();
+
+        if ($this->scannerSession) {
+            $this->showScannerPanel = true;
+        }
     }
 
     // ==================== SEARCH ====================
 
+    /**
+     * Called when the search input is focused.
+     * Loads ALL products that have stock at this shop and shows the dropdown.
+     */
+    public function loadAvailableProducts()
+    {
+        $this->allStockProducts = Product::where('is_active', true)
+            ->whereHas('boxes', function ($query) {
+                $query->where('location_type', 'shop')
+                      ->where('location_id', $this->shopId)
+                      ->whereIn('status', ['full', 'partial'])
+                      ->where('items_remaining', '>', 0);
+            })
+            ->with('category')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($product) {
+                $stock = $product->getCurrentStock('shop', $this->shopId);
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'barcode' => $product->barcode,
+                    'category' => $product->category?->name,
+                    'selling_price' => $product->selling_price,
+                    'selling_price_display' => number_format($product->selling_price / 100, 0),
+                    'items_per_box' => $product->items_per_box,
+                    'box_price' => $product->calculateBoxPrice(),
+                    'box_price_display' => number_format($product->calculateBoxPrice() / 100, 0),
+                    'stock' => $stock,
+                    'has_stock' => $stock['total_items'] > 0,
+                ];
+            })
+            ->toArray();
+
+        $this->searchResults = $this->allStockProducts;
+        $this->showSearchResults = true;
+    }
+
+    /**
+     * Called on every keystroke in the search input.
+     * Filters the already-loaded list — no new DB query needed.
+     */
     public function updatedSearchQuery()
     {
-        if (strlen($this->searchQuery) < 2) {
-            $this->searchResults = [];
-            $this->showSearchResults = false;
-            return;
+        $q = mb_strtolower(trim($this->searchQuery));
+
+        if ($q === '') {
+            // Empty search: show everything
+            $this->searchResults = $this->allStockProducts;
+        } else {
+            $this->searchResults = array_values(array_filter(
+                $this->allStockProducts,
+                function (array $product) use ($q) {
+                    return str_contains(mb_strtolower($product['name']), $q)
+                        || str_contains(mb_strtolower($product['sku']),  $q)
+                        || str_contains(mb_strtolower($product['barcode'] ?? ''), $q);
+                }
+            ));
         }
 
-        $this->searchProducts($this->searchQuery);
         $this->showSearchResults = true;
+    }
+
+    public function closeSearch()
+    {
+        $this->searchQuery = '';
+        $this->searchResults = [];
+        $this->allStockProducts = [];
+        $this->showSearchResults = false;
     }
 
     public function searchProducts($query)
@@ -165,46 +246,68 @@ class PointOfSale extends Component
             return;
         }
 
-        $this->selectedProduct = [
+        // Stage the product for modal
+        $this->openAddModal($product, $stock);
+
+        // Close search dropdown
+        $this->showSearchResults = false;
+        $this->searchQuery = '';
+    }
+
+    /**
+     * Open the add modal with a product.
+     * If the product already exists in cart, pre-fill with current values.
+     */
+    private function openAddModal(Product $product, array $stock)
+    {
+        $this->stagingProduct = [
             'id' => $product->id,
             'name' => $product->name,
             'sku' => $product->sku,
             'category' => $product->category?->name,
             'selling_price' => $product->selling_price,
-            'selling_price_display' => number_format($product->selling_price / 100, 0),
             'items_per_box' => $product->items_per_box,
             'box_price' => $product->calculateBoxPrice(),
-            'box_price_display' => number_format($product->calculateBoxPrice() / 100, 0),
-            'stock' => $stock,
         ];
 
-        // Load available boxes
-        $this->selectedProductBoxes = Box::where('product_id', $product->id)
-            ->where('location_type', 'shop')
-            ->where('location_id', $this->shopId)
-            ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
-            ->where('items_remaining', '>', 0)
-            ->orderBy('expiry_date', 'asc')
-            ->get()
-            ->map(function ($box) {
-                return [
-                    'id' => $box->id,
-                    'box_code' => $box->box_code,
-                    'items_remaining' => $box->items_remaining,
-                    'items_total' => $box->items_total,
-                    'status' => $box->status->label(),
-                    'batch_number' => $box->batch_number,
-                    'expiry_date' => $box->expiry_date?->format('Y-m-d'),
-                ];
-            })
-            ->toArray();
+        $this->stagingStock = $stock;
 
-        $this->addItemMode = 'individual';
-        $this->addItemQuantity = 1;
-        $this->addItemBoxId = $this->selectedProductBoxes[0]['id'] ?? null;
-        $this->showAddItemModal = true;
-        $this->showSearchResults = false;
-        $this->searchQuery = '';
+        // Check if product already in cart
+        $existingIndex = $this->findCartItemByProduct($product->id);
+
+        if ($existingIndex !== false) {
+            // Pre-fill with existing cart values (edit mode)
+            $existingItem = $this->cart[$existingIndex];
+            $this->stagingCartIndex = $existingIndex;
+            $this->stagingMode = $existingItem['is_full_box'] ? 'box' : 'item';
+            $this->stagingQty = $existingItem['quantity'];
+            $this->stagingPrice = $existingItem['price'];
+            $this->stagingPriceModified = $existingItem['price_modified'] ?? false;
+            $this->stagingPriceReason = $existingItem['price_modification_reason'] ?? '';
+        } else {
+            // New item defaults
+            $this->stagingCartIndex = null;
+            $this->stagingMode = 'box'; // default to boxes
+            $this->stagingQty = 1;
+            $this->stagingPrice = $product->calculateBoxPrice();
+            $this->stagingPriceModified = false;
+            $this->stagingPriceReason = '';
+        }
+
+        $this->showAddModal = true;
+    }
+
+    /**
+     * Find a cart item by product ID (regardless of box or mode).
+     */
+    private function findCartItemByProduct($productId)
+    {
+        foreach ($this->cart as $index => $item) {
+            if ($item['product_id'] === $productId) {
+                return $index;
+            }
+        }
+        return false;
     }
 
     // ==================== BARCODE SCANNING ====================
@@ -246,37 +349,12 @@ class PointOfSale extends Component
             return;
         }
 
-        // Quick add to cart (1 item from first available box)
-        $box = Box::where('product_id', $product->id)
-            ->where('location_type', 'shop')
-            ->where('location_id', $this->shopId)
-            ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
-            ->where('items_remaining', '>', 0)
-            ->orderBy('expiry_date', 'asc')
-            ->first();
-
-        if (!$box) {
-            $this->dispatch('notification', [
-                'type' => 'error',
-                'message' => "No available boxes for {$product->name}"
-            ]);
-            return;
-        }
-
-        $this->addToCart([
-            'product_id' => $product->id,
-            'product_name' => $product->name,
-            'box_id' => $box->id,
-            'box_code' => $box->box_code,
-            'quantity' => 1,
-            'is_full_box' => false,
-            'price' => $product->selling_price,
-            'line_total' => $product->selling_price,
-        ]);
+        // Open modal instead of adding directly
+        $this->openAddModal($product, $stock);
 
         $this->dispatch('notification', [
-            'type' => 'success',
-            'message' => "Added {$product->name} to cart"
+            'type' => 'info',
+            'message' => "Scanned: {$product->name}"
         ]);
     }
 
@@ -298,110 +376,263 @@ class PointOfSale extends Component
             ->first();
     }
 
-    // ==================== CART MANAGEMENT ====================
+    // ==================== PHONE SCANNER SESSION ====================
 
-    public function addItemToCart()
+    /**
+     * Create a new scanner session and show the QR panel.
+     */
+    public function enablePhoneScanner(): void
     {
-        $this->validate([
-            'addItemMode' => 'required|in:individual,full_box',
-            'addItemQuantity' => 'required|integer|min:1',
-            'addItemBoxId' => 'required|exists:boxes,id',
+        // Deactivate any previous POS session for this user
+        ScannerSession::where('user_id', auth()->id())
+            ->where('page_type', 'pos')
+            ->update(['is_active' => false]);
+
+        $this->scannerSession = ScannerSession::create([
+            'session_code' => ScannerSession::generateCode(),
+            'user_id'      => auth()->id(),
+            'page_type'    => 'pos',
+            'transfer_id'  => null,
+            'is_active'    => true,
+            'expires_at'   => now()->addHours(2),
         ]);
 
-        $box = Box::findOrFail($this->addItemBoxId);
-        $product = Product::findOrFail($this->selectedProduct['id']);
+        $this->showScannerPanel = true;
+    }
 
-        $isFullBox = $this->addItemMode === 'full_box';
-        $quantity = $isFullBox ? $box->items_remaining : $this->addItemQuantity;
+    /**
+     * Deactivate the scanner session.
+     */
+    public function disablePhoneScanner(): void
+    {
+        if ($this->scannerSession) {
+            $this->scannerSession->deactivate();
+            $this->scannerSession = null;
+        }
+        $this->showScannerPanel = false;
+    }
+
+    /**
+     * Called every 2 seconds by wire:poll in the blade.
+     * Picks up any barcode the phone submitted via the API and processes it.
+     */
+    public function checkForScans(): void
+    {
+        if (! $this->scannerSession) {
+            return;
+        }
+
+        $this->scannerSession->refresh();
+
+        // Only process if there is a new scan we haven't handled yet
+        if (
+            $this->scannerSession->last_scanned_barcode
+            && $this->scannerSession->last_scanned_barcode !== $this->lastProcessedScan
+            && $this->scannerSession->last_scan_at?->isAfter(now()->subSeconds(5))
+        ) {
+            $barcode = $this->scannerSession->last_scanned_barcode;
+            $this->lastProcessedScan = $barcode;
+
+            // Feed it into the existing barcode handling pipeline
+            $this->handleBarcodeScanned($barcode);
+        }
+    }
+
+    // ==================== CART MANAGEMENT ====================
+
+    /**
+     * Called when user changes mode in the add modal.
+     * Updates the staged price accordingly.
+     */
+    public function updatedStagingMode()
+    {
+        if (!$this->stagingProduct) {
+            return;
+        }
+
+        // Only update price if it hasn't been manually modified
+        if (!$this->stagingPriceModified) {
+            if ($this->stagingMode === 'box') {
+                $this->stagingPrice = $this->stagingProduct['box_price'];
+            } else {
+                $this->stagingPrice = $this->stagingProduct['selling_price'];
+            }
+        }
+    }
+
+    /**
+     * Reactive update when quantity changes.
+     */
+    public function updatedStagingQty()
+    {
+        // Validate max quantity
+        if ($this->stagingMode === 'item' && $this->stagingStock) {
+            $maxItems = $this->stagingStock['total_items'];
+            if ($this->stagingQty > $maxItems) {
+                $this->stagingQty = $maxItems;
+                $this->dispatch('notification', [
+                    'type' => 'warning',
+                    'message' => "Only {$maxItems} items available"
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Commit the staged product to the cart.
+     * Called when user clicks "Add to Cart" in the modal.
+     */
+    public function confirmAddToCart()
+    {
+        if (!$this->stagingProduct) {
+            return;
+        }
 
         // Validate quantity
-        if ($quantity > $box->items_remaining) {
+        if ($this->stagingQty < 1) {
             $this->dispatch('notification', [
                 'type' => 'error',
-                'message' => "Only {$box->items_remaining} items available in this box"
+                'message' => 'Quantity must be at least 1'
             ]);
             return;
         }
 
-        $price = $isFullBox ? $product->calculateBoxPrice() : $product->selling_price;
-        $lineTotal = $isFullBox ? $price : ($price * $quantity);
+        // Get the first available box (FIFO)
+        $box = Box::where('product_id', $this->stagingProduct['id'])
+            ->where('location_type', 'shop')
+            ->where('location_id', $this->shopId)
+            ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
+            ->where('items_remaining', '>', 0)
+            ->orderBy('expiry_date', 'asc')
+            ->first();
 
-        $this->addToCart([
-            'product_id' => $product->id,
-            'product_name' => $product->name,
+        if (!$box) {
+            $this->dispatch('notification', [
+                'type' => 'error',
+                'message' => 'No available boxes for this product'
+            ]);
+            return;
+        }
+
+        // Validate quantity against box availability
+        if ($this->stagingMode === 'box') {
+            // For box mode, quantity represents number of full boxes
+            $totalItemsNeeded = $this->stagingQty * $this->stagingProduct['items_per_box'];
+            if ($totalItemsNeeded > $this->stagingStock['total_items']) {
+                $this->dispatch('notification', [
+                    'type' => 'error',
+                    'message' => 'Insufficient stock for requested boxes'
+                ]);
+                return;
+            }
+        } else {
+            // For item mode, validate against total available items
+            if ($this->stagingQty > $this->stagingStock['total_items']) {
+                $this->dispatch('notification', [
+                    'type' => 'error',
+                    'message' => 'Only ' . $this->stagingStock['total_items'] . ' items available'
+                ]);
+                return;
+            }
+        }
+
+        $isFullBox = $this->stagingMode === 'box';
+        $lineTotal = $this->stagingPrice * $this->stagingQty;
+        $originalPrice = $isFullBox
+            ? $this->stagingProduct['box_price']
+            : $this->stagingProduct['selling_price'];
+
+        $cartItem = [
+            'product_id' => $this->stagingProduct['id'],
+            'product_name' => $this->stagingProduct['name'],
             'box_id' => $box->id,
             'box_code' => $box->box_code,
-            'quantity' => $quantity,
+            'quantity' => $this->stagingQty,
             'is_full_box' => $isFullBox,
-            'price' => $price,
-            'original_price' => $price,
+            'price' => $this->stagingPrice,
+            'original_price' => $originalPrice,
             'line_total' => $lineTotal,
-        ]);
+            'price_modified' => $this->stagingPriceModified,
+            'price_modification_reason' => $this->stagingPriceReason ?: null,
+            'requires_owner_approval' => false,
+        ];
 
-        $this->showAddItemModal = false;
-        $this->selectedProduct = null;
-        $this->dispatch('notification', [
-            'type' => 'success',
-            'message' => 'Item added to cart'
-        ]);
-    }
+        // Check if price was modified and requires approval
+        if ($this->stagingPriceModified) {
+            $percentageChange = (($originalPrice - $this->stagingPrice) / $originalPrice) * 100;
+            $cartItem['requires_owner_approval'] = $percentageChange > 20;
+        }
 
-    private function addToCart($item)
-    {
-        // Check if same product+box already in cart
-        $existingIndex = $this->findCartItem($item['product_id'], $item['box_id'], $item['is_full_box']);
-
-        if ($existingIndex !== false) {
-            // Update quantity
-            $this->cart[$existingIndex]['quantity'] += $item['quantity'];
-            $this->cart[$existingIndex]['line_total'] = $this->cart[$existingIndex]['quantity'] * $this->cart[$existingIndex]['price'];
+        // If editing existing cart item, replace it
+        if ($this->stagingCartIndex !== null && isset($this->cart[$this->stagingCartIndex])) {
+            $this->cart[$this->stagingCartIndex] = $cartItem;
+            $message = 'Cart item updated';
         } else {
-            $this->cart[] = $item;
+            // Add new item to cart
+            $this->cart[] = $cartItem;
+            $message = 'Added to cart';
         }
 
         $this->calculateCartTotal();
+        $this->closeAddModal();
+
+        $this->dispatch('notification', [
+            'type' => 'success',
+            'message' => $message
+        ]);
     }
 
-    private function findCartItem($productId, $boxId, $isFullBox)
-    {
-        foreach ($this->cart as $index => $item) {
-            if ($item['product_id'] === $productId &&
-                $item['box_id'] === $boxId &&
-                $item['is_full_box'] === $isFullBox) {
-                return $index;
-            }
-        }
-        return false;
-    }
-
-    public function updateCartItemQuantity($index, $newQuantity)
+    /**
+     * Open the add modal to edit an existing cart item.
+     */
+    public function openEditItem($index)
     {
         if (!isset($this->cart[$index])) {
             return;
         }
 
-        $box = Box::find($this->cart[$index]['box_id']);
-        if (!$box) {
-            return;
-        }
+        $item = $this->cart[$index];
+        $product = Product::with('category')->findOrFail($item['product_id']);
+        $stock = $product->getCurrentStock('shop', $this->shopId);
 
-        if ($newQuantity < 1) {
-            $this->removeCartItem($index);
-            return;
-        }
+        $this->stagingProduct = [
+            'id' => $product->id,
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'category' => $product->category?->name,
+            'selling_price' => $product->selling_price,
+            'items_per_box' => $product->items_per_box,
+            'box_price' => $product->calculateBoxPrice(),
+        ];
 
-        if ($newQuantity > $box->items_remaining) {
-            $this->dispatch('notification', [
-                'type' => 'error',
-                'message' => "Only {$box->items_remaining} items available"
-            ]);
-            return;
-        }
+        $this->stagingStock = $stock;
+        $this->stagingCartIndex = $index;
+        $this->stagingMode = $item['is_full_box'] ? 'box' : 'item';
+        $this->stagingQty = $item['quantity'];
+        $this->stagingPrice = $item['price'];
+        $this->stagingPriceModified = $item['price_modified'] ?? false;
+        $this->stagingPriceReason = $item['price_modification_reason'] ?? '';
 
-        $this->cart[$index]['quantity'] = $newQuantity;
-        $this->cart[$index]['line_total'] = $this->cart[$index]['price'] * $newQuantity;
-        $this->calculateCartTotal();
+        $this->showAddModal = true;
     }
+
+    /**
+     * Close the add modal and reset staging state.
+     */
+    public function closeAddModal()
+    {
+        $this->showAddModal = false;
+        $this->stagingProduct = null;
+        $this->stagingStock = [];
+        $this->stagingMode = 'box';
+        $this->stagingQty = 1;
+        $this->stagingPrice = 0;
+        $this->stagingPriceModified = false;
+        $this->stagingPriceReason = '';
+        $this->stagingCartIndex = null;
+    }
+
+
 
     public function removeCartItem($index)
     {
@@ -635,12 +866,6 @@ class PointOfSale extends Component
     }
 
     // ==================== UI HELPERS ====================
-
-    public function closeAddItemModal()
-    {
-        $this->showAddItemModal = false;
-        $this->selectedProduct = null;
-    }
 
     public function closePriceModal()
     {
