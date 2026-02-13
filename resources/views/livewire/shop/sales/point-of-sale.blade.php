@@ -52,6 +52,101 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- LEFT: Product Search & Selection -->
             <div class="lg:col-span-2 space-y-4">
+
+                {{-- ── Phone Scanner Panel ─────────────────────────────────────────────── --}}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+
+                    {{-- Header row --}}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center
+                                {{ $showScannerPanel ? 'bg-green-100' : 'bg-gray-100' }}">
+                                <svg class="w-4 h-4 {{ $showScannerPanel ? 'text-green-600' : 'text-gray-500' }}"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">Phone Scanner</p>
+                                <p class="text-xs {{ $showScannerPanel ? 'text-green-600 font-medium' : 'text-gray-400' }}">
+                                    {{ $showScannerPanel ? '● Connected — polling for scans' : 'Use your phone as a barcode scanner' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Toggle button --}}
+                        @if($showScannerPanel)
+                            <button wire:click="disablePhoneScanner"
+                                    class="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200
+                                           rounded-lg hover:bg-red-50 transition">
+                                Disconnect
+                            </button>
+                        @else
+                            <button wire:click="enablePhoneScanner"
+                                    class="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200
+                                           rounded-lg hover:bg-blue-50 transition">
+                                Enable
+                            </button>
+                        @endif
+                    </div>
+
+                    {{-- Expanded panel: QR code + instructions --}}
+                    @if($showScannerPanel && $scannerSession)
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                            {{-- QR Code --}}
+                            <div class="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-4 border border-gray-200">
+                                <p class="text-xs text-gray-500 mb-3 font-medium">Scan QR with your phone camera</p>
+                                {!! QrCode::size(140)->generate(url('/scanner') . '?code=' . $scannerSession->session_code) !!}
+                                <p class="text-xs text-gray-400 mt-3">Or open <strong class="text-gray-600">{{ url('/scanner') }}</strong></p>
+                                <div class="mt-2 px-4 py-1.5 bg-white border border-gray-300 rounded-lg">
+                                    <p class="text-xl font-bold tracking-[0.3em] text-gray-800 text-center">
+                                        {{ $scannerSession->session_code }}
+                                    </p>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2">
+                                    Expires {{ $scannerSession->expires_at->diffForHumans() }}
+                                </p>
+                            </div>
+
+                            {{-- Instructions --}}
+                            <div class="space-y-3">
+                                <p class="text-sm font-semibold text-gray-800">How to connect:</p>
+                                <ol class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-start gap-2">
+                                        <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                                        <span>Open your phone camera and point it at the QR code</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                                        <span>Tap the notification to open the scanner page</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                                        <span>Scan any box — it will appear in the POS instantly</span>
+                                    </li>
+                                </ol>
+
+                                {{-- Live status indicator --}}
+                                <div class="flex items-center gap-2 mt-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                                    <span class="relative flex h-2 w-2">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                    </span>
+                                    <p class="text-xs text-green-700 font-medium">Listening for scans every 2 seconds</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                </div>
+
+                {{-- Polling: only active when scanner session is open --}}
+                @if($showScannerPanel)
+                    <div wire:poll.2000ms="checkForScans"></div>
+                @endif
+
                 <!-- Barcode Scanner Input -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -72,39 +167,84 @@
                 </div>
 
                 <!-- Manual Search -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                     x-data="{ open: @entangle('showSearchResults') }"
+                     @click.away="open = false; $wire.closeSearch()">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Search Products
+                        🔍 Search Products
                     </label>
                     <div class="relative">
-                        <input type="text"
-                               wire:model.live.debounce.300ms="searchQuery"
-                               placeholder="Search by name, SKU, or barcode..."
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                        <div class="absolute right-3 top-3 text-gray-400">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <input type="text"
+                                   wire:model.live.debounce.200ms="searchQuery"
+                                   wire:focus="loadAvailableProducts"
+                                   placeholder="Click to browse or type to filter..."
+                                   autocomplete="off"
+                                   class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            @if($searchQuery)
+                                <button type="button"
+                                        wire:click="$set('searchQuery', '')"
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            @endif
                         </div>
 
                         <!-- Search Results Dropdown -->
-                        @if($showSearchResults && !empty($searchResults))
-                            <div class="absolute z-20 w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
-                                @foreach($searchResults as $result)
+                        <div x-show="open"
+                             x-cloak
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="opacity-0 -translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="opacity-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 -translate-y-1"
+                             class="absolute z-20 w-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+
+                            <!-- Result count header -->
+                            <div class="px-4 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                                <span class="text-xs text-gray-500 font-medium">
+                                    @if($searchQuery)
+                                        {{ count($searchResults) }} result{{ count($searchResults) !== 1 ? 's' : '' }}
+                                        for "{{ $searchQuery }}"
+                                    @else
+                                        {{ count($searchResults) }} product{{ count($searchResults) !== 1 ? 's' : '' }} in stock
+                                    @endif
+                                </span>
+                                <button type="button"
+                                        @click="open = false; $wire.closeSearch()"
+                                        class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Product list -->
+                            <div class="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                                @forelse($searchResults as $result)
                                     <button wire:click="selectProduct({{ $result['id'] }})"
+                                            @click="open = false"
                                             type="button"
-                                            class="w-full px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-left transition">
+                                            class="w-full px-4 py-3 hover:bg-gray-50 text-left transition group">
                                         <div class="flex items-center justify-between">
-                                            <div class="flex-1">
-                                                <p class="font-semibold text-gray-900">{{ $result['name'] }}</p>
-                                                <p class="text-sm text-gray-600">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-semibold text-gray-900 truncate group-hover:text-indigo-700 transition">{{ $result['name'] }}</p>
+                                                <p class="text-sm text-gray-600 mt-0.5">
                                                     SKU: {{ $result['sku'] }}
                                                     @if($result['category'])
-                                                        • {{ $result['category'] }}
+                                                        · {{ $result['category'] }}
                                                     @endif
                                                 </p>
                                             </div>
-                                            <div class="text-right ml-4">
+                                            <div class="text-right ml-4 shrink-0">
                                                 <p class="font-bold text-indigo-600">{{ $result['selling_price_display'] }} RWF</p>
                                                 <p class="text-xs text-gray-500">
                                                     Stock: {{ $result['stock']['total_items'] }} items
@@ -112,12 +252,23 @@
                                             </div>
                                         </div>
                                         @if(!$result['has_stock'])
-                                            <span class="inline-block mt-1 px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded">Out of Stock</span>
+                                            <span class="inline-block mt-2 px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded">Out of Stock</span>
                                         @endif
                                     </button>
-                                @endforeach
+                                @empty
+                                    <div class="px-4 py-8 text-center">
+                                        <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                        </svg>
+                                        <p class="text-sm text-gray-500">No products with stock found</p>
+                                        @if($searchQuery)
+                                            <p class="text-xs text-gray-400 mt-1">Try a different search term</p>
+                                        @endif
+                                    </div>
+                                @endforelse
                             </div>
-                        @endif
+                        </div>
                     </div>
                 </div>
 
@@ -161,25 +312,19 @@
                                     </div>
 
                                     <div class="mt-3 flex items-center gap-2">
-                                        <div class="flex items-center gap-2">
-                                            <button wire:click="updateCartItemQuantity({{ $index }}, {{ $item['quantity'] - 1 }})"
-                                                    class="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 font-semibold">
-                                                -
-                                            </button>
-                                            <span class="px-4 py-1 bg-gray-100 rounded font-semibold text-gray-900">{{ $item['quantity'] }}</span>
-                                            <button wire:click="updateCartItemQuantity({{ $index }}, {{ $item['quantity'] + 1 }})"
-                                                    class="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 font-semibold">
-                                                +
-                                            </button>
-                                        </div>
-
-                                        <button wire:click="openPriceModal({{ $index }})"
-                                                class="px-3 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded font-medium text-sm">
-                                            Modify Price
+                                        <button wire:click="openEditItem({{ $index }})"
+                                                class="px-3 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded font-medium text-sm flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            Edit
                                         </button>
 
                                         <button wire:click="removeCartItem({{ $index }})"
-                                                class="ml-auto px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded font-medium text-sm">
+                                                class="ml-auto px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded font-medium text-sm flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
                                             Remove
                                         </button>
                                     </div>
@@ -248,93 +393,184 @@
 
     <!-- ============================= MODALS ============================= -->
 
-    <!-- Add Item Modal -->
-    @if($showAddItemModal && $selectedProduct)
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <!-- ── Add/Edit Item Modal ──────────────────────────────────────────────── -->
+    @if($showAddModal && $stagingProduct)
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+             x-data="{
+                 mode: @entangle('stagingMode'),
+                 qty: @entangle('stagingQty'),
+                 price: @entangle('stagingPrice'),
+                 priceModified: @entangle('stagingPriceModified'),
+                 get lineTotal() {
+                     return this.price * this.qty;
+                 },
+                 get lineTotalDisplay() {
+                     return Math.floor(this.lineTotal / 100).toLocaleString();
+                 }
+             }">
             <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <!-- Header -->
                 <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-                    <h3 class="text-xl font-bold text-gray-900">Add Item to Cart</h3>
-                    <button wire:click="closeAddItemModal" class="text-gray-400 hover:text-gray-600">
+                    <h3 class="text-xl font-bold text-gray-900">
+                        {{ $stagingCartIndex !== null ? 'Edit Cart Item' : 'Add to Cart' }}
+                    </h3>
+                    <button wire:click="closeAddModal" class="text-gray-400 hover:text-gray-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
 
-                <div class="p-6">
+                <div class="p-6 space-y-6">
                     <!-- Product Info -->
-                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                        <h4 class="font-semibold text-gray-900 text-lg">{{ $selectedProduct['name'] }}</h4>
+                    <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-100">
+                        <h4 class="font-bold text-gray-900 text-lg">{{ $stagingProduct['name'] }}</h4>
                         <div class="mt-2 grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p class="text-gray-600">SKU: <span class="font-semibold text-gray-900">{{ $selectedProduct['sku'] }}</span></p>
-                                <p class="text-gray-600">Category: <span class="font-semibold text-gray-900">{{ $selectedProduct['category'] ?? 'N/A' }}</span></p>
+                                <p class="text-gray-600">SKU: <span class="font-semibold text-gray-900">{{ $stagingProduct['sku'] }}</span></p>
+                                <p class="text-gray-600">Category: <span class="font-semibold text-gray-900">{{ $stagingProduct['category'] ?? 'N/A' }}</span></p>
                             </div>
                             <div>
-                                <p class="text-gray-600">Unit Price: <span class="font-semibold text-indigo-600">{{ $selectedProduct['selling_price_display'] }} RWF</span></p>
-                                <p class="text-gray-600">Box Price: <span class="font-semibold text-indigo-600">{{ $selectedProduct['box_price_display'] }} RWF</span></p>
+                                <p class="text-gray-600">Item Price: <span class="font-semibold text-indigo-600">{{ number_format($stagingProduct['selling_price'] / 100, 0) }} RWF</span></p>
+                                <p class="text-gray-600">Box Price ({{ $stagingProduct['items_per_box'] }} items): <span class="font-semibold text-indigo-600">{{ number_format($stagingProduct['box_price'] / 100, 0) }} RWF</span></p>
                             </div>
                         </div>
-                        <div class="mt-3 flex items-center gap-4 text-sm">
-                            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full font-semibold">
-                                {{ $selectedProduct['stock']['total_items'] }} items in stock
-                            </span>
-                            <span class="text-gray-600">
-                                {{ $selectedProduct['stock']['full_boxes'] }} full • {{ $selectedProduct['stock']['partial_boxes'] }} partial
-                            </span>
-                        </div>
                     </div>
 
-                    <!-- Sale Mode -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Sale Mode</label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button wire:click="$set('addItemMode', 'individual')"
-                                    class="px-4 py-3 rounded-lg border-2 transition {{ $addItemMode === 'individual' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-300 hover:border-gray-400' }}">
-                                <div class="font-semibold">Individual Items</div>
-                                <div class="text-sm opacity-75">Sell by piece</div>
-                            </button>
-                            <button wire:click="$set('addItemMode', 'full_box')"
-                                    class="px-4 py-3 rounded-lg border-2 transition {{ $addItemMode === 'full_box' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-300 hover:border-gray-400' }}">
-                                <div class="font-semibold">Full Box</div>
-                                <div class="text-sm opacity-75">Sell entire box</div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Select Box -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Box</label>
-                        <select wire:model="addItemBoxId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                            @foreach($selectedProductBoxes as $box)
-                                <option value="{{ $box['id'] }}">
-                                    {{ $box['box_code'] }} - {{ $box['items_remaining'] }}/{{ $box['items_total'] }} items
-                                    @if($box['batch_number']) • Batch: {{ $box['batch_number'] }} @endif
-                                    @if($box['expiry_date']) • Exp: {{ $box['expiry_date'] }} @endif
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Quantity (only for individual mode) -->
-                    @if($addItemMode === 'individual')
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-                            <input type="number"
-                                   wire:model="addItemQuantity"
-                                   min="1"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <!-- Stock Summary -->
+                    @if($stagingStock)
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="font-semibold text-green-900">📦 Available Stock:</span>
+                                <div class="flex items-center gap-4">
+                                    <span class="text-green-700">
+                                        <strong>{{ $stagingStock['total_items'] }}</strong> items
+                                    </span>
+                                    <span class="text-green-600">
+                                        {{ $stagingStock['full_boxes'] }} full box{{ $stagingStock['full_boxes'] !== 1 ? 'es' : '' }}
+                                        • {{ $stagingStock['partial_boxes'] }} partial
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
+                    <!-- Mode Toggle -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Sale Mode</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button wire:click="$set('stagingMode', 'box')"
+                                    type="button"
+                                    class="px-4 py-3 rounded-lg border-2 transition {{ $stagingMode === 'box' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold' : 'border-gray-300 hover:border-gray-400 text-gray-700' }}">
+                                <div class="flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                    </svg>
+                                    <span class="font-semibold">Full Boxes</span>
+                                </div>
+                                <div class="text-xs opacity-75 mt-1">Sell by the box</div>
+                            </button>
+                            <button wire:click="$set('stagingMode', 'item')"
+                                    type="button"
+                                    class="px-4 py-3 rounded-lg border-2 transition {{ $stagingMode === 'item' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold' : 'border-gray-300 hover:border-gray-400 text-gray-700' }}">
+                                <div class="flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                    </svg>
+                                    <span class="font-semibold">Individual Items</span>
+                                </div>
+                                <div class="text-xs opacity-75 mt-1">Sell by piece</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quantity Controls -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Quantity
+                            <span class="text-gray-500 font-normal" x-show="mode === 'box'">
+                                (number of boxes @ {{ $stagingProduct['items_per_box'] }} items each)
+                            </span>
+                            <span class="text-gray-500 font-normal" x-show="mode === 'item'">
+                                (number of individual items)
+                            </span>
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <button wire:click="$set('stagingQty', {{ max(1, $stagingQty - 1) }})"
+                                    type="button"
+                                    class="w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-bold text-xl transition">
+                                −
+                            </button>
+                            <input type="number"
+                                   wire:model.live="stagingQty"
+                                   min="1"
+                                   class="flex-1 text-center text-2xl font-bold px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <button wire:click="$set('stagingQty', {{ $stagingQty + 1 }})"
+                                    type="button"
+                                    class="w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-bold text-xl transition">
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Price (editable) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Unit Price (RWF)
+                            <span class="text-gray-500 font-normal">
+                                — price per {{ $stagingMode === 'box' ? 'box' : 'item' }}
+                            </span>
+                        </label>
+                        <div class="relative">
+                            <input type="number"
+                                   wire:model.live="stagingPrice"
+                                   wire:change="$set('stagingPriceModified', {{ $stagingPrice }} !== ({{ $stagingMode }} === 'box' ? {{ $stagingProduct['box_price'] }} : {{ $stagingProduct['selling_price'] }}))"
+                                   min="0"
+                                   step="100"
+                                   class="w-full text-lg font-semibold px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent {{ $stagingPriceModified ? 'bg-yellow-50 border-yellow-400' : '' }}">
+                            <div class="absolute right-3 top-3 text-gray-500">
+                                RWF
+                            </div>
+                        </div>
+                        @if($stagingPriceModified)
+                            <div class="mt-2">
+                                <label class="block text-xs text-yellow-700 font-medium mb-1">Price Modification Reason</label>
+                                <input type="text"
+                                       wire:model="stagingPriceReason"
+                                       placeholder="e.g., Bulk discount, damage, manager approval..."
+                                       class="w-full text-sm px-3 py-2 border border-yellow-300 rounded-lg bg-yellow-50 focus:ring-2 focus:ring-yellow-500">
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Live Line Total -->
+                    <div class="bg-indigo-100 border-2 border-indigo-300 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-indigo-700 font-medium">Line Total</p>
+                                <p class="text-xs text-indigo-600">
+                                    <span x-text="qty"></span> × <span x-text="Math.floor(price / 100).toLocaleString()"></span> RWF
+                                </p>
+                            </div>
+                            <p class="text-3xl font-bold text-indigo-900">
+                                <span x-text="lineTotalDisplay"></span> <span class="text-xl">RWF</span>
+                            </p>
+                        </div>
+                    </div>
+
                     <!-- Actions -->
-                    <div class="flex gap-3">
-                        <button wire:click="addItemToCart"
-                                class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
-                            Add to Cart
+                    <div class="flex gap-3 pt-4">
+                        <button wire:click="confirmAddToCart"
+                                type="button"
+                                class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            {{ $stagingCartIndex !== null ? 'Update Cart' : 'Add to Cart' }}
                         </button>
-                        <button wire:click="closeAddItemModal"
-                                class="px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition">
+                        <button wire:click="closeAddModal"
+                                type="button"
+                                class="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition">
                             Cancel
                         </button>
                     </div>

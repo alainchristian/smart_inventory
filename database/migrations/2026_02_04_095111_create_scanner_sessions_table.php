@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('session_code', 10)->unique();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('page_type'); // 'pack_transfer' or 'receive_transfer'
-            $table->foreignId('transfer_id')->constrained()->onDelete('cascade');
+            $table->string('page_type'); // 'pack_transfer', 'receive_transfer', or 'pos'
+            $table->foreignId('transfer_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('last_scanned_barcode')->nullable();
             $table->timestamp('last_scan_at')->nullable();
             $table->boolean('is_active')->default(true);
