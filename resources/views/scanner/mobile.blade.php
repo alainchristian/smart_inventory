@@ -2,550 +2,233 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Mobile Scanner - Smart Inventory</title>
-    @vite(['resources/css/app.css'])
+    <title>Smart Inventory Scanner</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: #000;
-        }
-        .scanner-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: white;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
-        .status-bar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem;
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 1.25rem 1rem;
             text-align: center;
-            flex-shrink: 0;
-            z-index: 100;
         }
-        .camera-view {
-            flex: 1;
-            position: relative;
-            background: #000;
-            overflow: hidden;
-        }
-        #barcode-scanner-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        #barcode-scanner-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .scan-feedback {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(34, 197, 94, 0.95);
-            color: white;
-            padding: 1.5rem 2.5rem;
-            border-radius: 0.75rem;
-            font-size: 1.5rem;
-            font-weight: bold;
-            display: none;
-            z-index: 1000;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-        }
-        .controls {
-            background: rgba(0, 0, 0, 0.9);
-            padding: 1rem;
-            text-align: center;
-            flex-shrink: 0;
-            z-index: 100;
-        }
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .btn-disconnect {
-            background: #ef4444;
-            color: white;
-        }
-        .btn-connect {
-            background: white;
-            color: #667eea;
-            margin-top: 0.5rem;
-        }
+        .header h1 { font-size: 1.25rem; font-weight: 700; }
+        .header p  { font-size: 0.8rem; opacity: 0.8; margin-top: 2px; }
+
+        .content { flex: 1; padding: 1.25rem 1rem; display: flex; flex-direction: column; gap: 1rem; }
+
+        /* Connect panel */
+        .connect-panel { background: #1e293b; border-radius: 1rem; padding: 1.25rem; }
+        .connect-panel h2 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
         .code-input {
-            margin-top: 0.5rem;
-            padding: 0.75rem;
-            font-size: 1.75rem;
-            text-align: center;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
-            width: 16rem;
-            max-width: 90%;
-            border-radius: 0.5rem;
-            border: none;
-            font-weight: 600;
+            width: 100%; padding: 0.85rem; font-size: 1.75rem; font-weight: 700;
+            text-align: center; letter-spacing: 0.4em; text-transform: uppercase;
+            background: #0f172a; border: 2px solid #334155; border-radius: 0.5rem;
+            color: white; outline: none;
+        }
+        .code-input:focus { border-color: #6366f1; }
+        .btn {
+            width: 100%; padding: 0.9rem; border: none; border-radius: 0.6rem;
+            font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 0.75rem;
+            transition: opacity 0.2s;
+        }
+        .btn:active { opacity: 0.8; }
+        .btn-connect   { background: #4f46e5; color: white; }
+        .btn-scan      { background: #10b981; color: white; font-size: 1.2rem; padding: 1.1rem; }
+        .btn-disconnect { background: #ef4444; color: white; }
+        .btn-manual    { background: #475569; color: white; font-size: 0.9rem; padding: 0.7rem; }
+
+        /* Connected panel */
+        .connected-panel { display: none; background: #1e293b; border-radius: 1rem; padding: 1.25rem; }
+        .session-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .session-badge {
+            background: #064e3b; border: 1px solid #10b981; border-radius: 0.4rem;
+            padding: 0.3rem 0.7rem; font-size: 0.8rem; color: #10b981;
+        }
+        .session-code { font-family: monospace; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.15em; }
+
+        /* Scan area */
+        .scan-area { text-align: center; }
+        .scan-icon { font-size: 4rem; margin: 0.5rem 0; }
+        .scan-label { font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem; }
+
+        /* Hidden file input */
+        #camera-input {
+            position: absolute; opacity: 0; width: 1px; height: 1px; overflow: hidden;
         }
 
-        /* Scanning frame overlay */
-        .scanning-frame {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 280px;
-            height: 280px;
-            border: 3px solid #10b981;
-            border-radius: 12px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
-            pointer-events: none;
-            z-index: 100;
+        /* Feedback */
+        .feedback {
+            border-radius: 0.75rem; padding: 1rem; text-align: center;
+            font-size: 1rem; font-weight: 600; display: none;
         }
+        .feedback.success { background: #064e3b; border: 1px solid #10b981; color: #6ee7b7; }
+        .feedback.error   { background: #450a0a; border: 1px solid #ef4444; color: #fca5a5; }
 
-        /* Corner markers */
-        .scanning-frame::before,
-        .scanning-frame::after {
-            content: '';
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            border: 4px solid #10b981;
+        /* Stats */
+        .stats { display: flex; gap: 0.75rem; }
+        .stat {
+            flex: 1; background: #0f172a; border-radius: 0.6rem;
+            padding: 0.75rem; text-align: center;
         }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #6ee7b7; }
+        .stat-label { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
 
-        .scanning-frame::before {
-            top: -3px;
-            left: -3px;
-            border-right: none;
-            border-bottom: none;
+        /* Manual entry */
+        .manual-section { background: #1e293b; border-radius: 1rem; padding: 1rem; display: none; }
+        .manual-section h3 { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.6rem; }
+        .manual-input {
+            width: 100%; padding: 0.75rem; background: #0f172a; border: 1px solid #334155;
+            border-radius: 0.5rem; color: white; font-size: 1rem; outline: none;
         }
+        .manual-input:focus { border-color: #6366f1; }
+        .manual-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .btn-send { flex: 1; background: #4f46e5; color: white; border: none; border-radius: 0.5rem; padding: 0.65rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
 
-        .scanning-frame::after {
-            top: -3px;
-            right: -3px;
-            border-left: none;
-            border-bottom: none;
+        /* Processing overlay */
+        .processing {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            display: none; align-items: center; justify-content: center;
+            flex-direction: column; gap: 1rem; z-index: 100;
         }
-
-        /* Bottom corners */
-        .corner-bl,
-        .corner-br {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            border: 4px solid #10b981;
+        .spinner {
+            width: 48px; height: 48px; border: 4px solid #334155;
+            border-top-color: #6366f1; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-
-        .corner-bl {
-            bottom: -3px;
-            left: -3px;
-            border-right: none;
-            border-top: none;
-        }
-
-        .corner-br {
-            bottom: -3px;
-            right: -3px;
-            border-left: none;
-            border-top: none;
-        }
-
-        /* Animated scanning line */
-        .scan-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(to right, transparent, #10b981, transparent);
-            box-shadow: 0 0 10px #10b981;
-            animation: scan 2s ease-in-out infinite;
-        }
-
-        @keyframes scan {
-            0%, 100% { top: 0; }
-            50% { top: calc(100% - 2px); }
-        }
-
-        /* Status indicator pulse */
-        .status-pulse {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-            margin-right: 6px;
-            vertical-align: middle;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.3); }
-        }
-
-        /* Scanning instruction */
-        .scan-instruction {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            z-index: 101;
-            white-space: nowrap;
-        }
-
-        /* Active scanning indicator */
-        .scanning-active {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(16, 185, 129, 0.95);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            z-index: 101;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="scanner-container">
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div id="status-connected" style="display: none;">
-                <p class="text-sm opacity-75 mb-1">🔄 Initializing Camera...</p>
-                <p class="text-3xl font-bold" id="session-code">------</p>
-                <p class="text-xs opacity-75 mt-2">📦 <span id="transfer-info">Transfer</span></p>
-            </div>
-            <div id="status-connecting">
-                <p class="text-xl font-semibold mb-2">📱 Mobile Scanner</p>
-                <p class="text-sm opacity-90 mb-3">Enter Session Code</p>
-                <input type="text"
-                       id="code-input"
-                       maxlength="6"
-                       placeholder="------"
-                       class="code-input">
-                <br>
-                <button onclick="connectScanner()" class="btn btn-connect">
-                    <span>🔗 Connect</span>
-                </button>
-            </div>
-        </div>
 
-        <!-- Test Camera Button (for debugging) -->
-        <button onclick="testCamera()" style="position: fixed; top: 10px; right: 10px; z-index: 9999; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 5px; font-size: 12px; opacity: 0.8;">
-            Test Camera
-        </button>
-
-        <!-- Camera View -->
-        <div class="camera-view">
-            <div id="barcode-scanner-container">
-                <video id="scanner-video" playsinline></video>
-
-                <!-- Scanning Frame Overlay -->
-                <div class="scanning-frame" id="scanning-frame" style="display: none;">
-                    <div class="corner-bl"></div>
-                    <div class="corner-br"></div>
-                    <div class="scan-line"></div>
-                </div>
-
-                <!-- Active Scanning Indicator -->
-                <div class="scanning-active" id="scanning-active" style="display: none;">
-                    <span class="status-pulse"></span>
-                    <span>🔍 Scanning Active</span>
-                </div>
-
-                <!-- Scan Instruction -->
-                <div class="scan-instruction" id="scan-instruction" style="display: none;">
-                    📱 Point camera at barcode
-                </div>
-            </div>
-
-            <!-- Scan Success Feedback -->
-            <div class="scan-feedback" id="scan-feedback">✓ Scanned!</div>
-        </div>
-
-        <!-- Controls -->
-        <div class="controls">
-            <div id="stats" style="color: white; font-size: 0.875rem; margin-bottom: 0.75rem;">
-                Scans: <span id="scan-count" class="font-bold text-green-400">0</span> |
-                Last: <span id="last-barcode" class="font-mono text-blue-300">-</span>
-            </div>
-            <button onclick="disconnectScanner()" class="btn btn-disconnect" style="display: none;" id="disconnect-btn">
-                ⛔ Disconnect
-            </button>
-        </div>
+    <div class="header">
+        <h1>📦 Smart Inventory</h1>
+        <p id="header-status">Mobile Scanner</p>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+    <!-- Hidden native camera input -->
+    <input type="file" id="camera-input" accept="image/*" capture="environment">
+
+    <div class="content">
+
+        <!-- Connect Panel -->
+        <div class="connect-panel" id="connect-panel">
+            <h2>🔗 Enter Session Code</h2>
+            <input type="text" class="code-input" id="code-input" maxlength="6" placeholder="ABC123" autocomplete="off" autocorrect="off" spellcheck="false">
+            <button class="btn btn-connect" onclick="connectScanner()">Connect</button>
+        </div>
+
+        <!-- Connected Panel -->
+        <div class="connected-panel" id="connected-panel">
+            <div class="session-info">
+                <div>
+                    <div class="session-badge">● Connected</div>
+                    <div class="session-code" id="session-code-display" style="margin-top:4px;">------</div>
+                </div>
+                <button class="btn btn-disconnect" style="width:auto;padding:0.5rem 1rem;margin-top:0;" onclick="disconnectScanner()">Disconnect</button>
+            </div>
+
+            <!-- Main scan button -->
+            <div class="scan-area">
+                <div class="scan-icon">📷</div>
+                <div class="scan-label">Tap the button below to scan a barcode</div>
+                <button class="btn btn-scan" onclick="triggerCameraCapture()">
+                    📸 Scan Barcode
+                </button>
+            </div>
+
+            <!-- Feedback -->
+            <div class="feedback" id="feedback" style="margin-top:0.75rem;"></div>
+
+            <!-- Stats -->
+            <div class="stats" style="margin-top:0.75rem;">
+                <div class="stat">
+                    <div class="stat-value" id="scan-count">0</div>
+                    <div class="stat-label">Scanned</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="last-code" style="font-size:0.85rem;">—</div>
+                    <div class="stat-label">Last Code</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual entry toggle -->
+        <button class="btn btn-manual" id="manual-toggle" onclick="toggleManual()" style="display:none;">
+            ✏️ Type Barcode Manually
+        </button>
+        <div class="manual-section" id="manual-section">
+            <h3>MANUAL ENTRY</h3>
+            <input type="text" class="manual-input" id="manual-input" placeholder="Type barcode here…" autocomplete="off">
+            <div class="manual-row">
+                <button class="btn-send" onclick="submitManual()">Send →</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Processing overlay -->
+    <div class="processing" id="processing">
+        <div class="spinner"></div>
+        <p style="color:#94a3b8;font-size:0.9rem;">Decoding barcode…</p>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script>
-        let sessionCode = null;
-        let isConnected = false;
-        let scanCount = 0;
-        let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        let lastScannedBarcode = null;
-        let lastScanTime = 0;
-        let connectionHeartbeat = null;
+        let sessionCode     = null;
+        let isConnected     = false;
+        let scanCount       = 0;
+        let heartbeat       = null;
+        let csrfToken       = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // Check if camera is supported
-        function checkCameraSupport() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                return {
-                    supported: false,
-                    message: 'Your browser does not support camera access.\n\nPlease use:\n• iOS: Safari browser\n• Android: Chrome or Firefox'
-                };
-            }
+        // ── Native camera input handler ───────────────────────────────────────
+        document.getElementById('camera-input').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-            const isSecure = location.protocol === 'https:' ||
-                            location.hostname === 'localhost' ||
-                            location.hostname === '127.0.0.1' ||
-                            /^192\.168\./.test(location.hostname) ||
-                            /^10\./.test(location.hostname);
-
-            if (!isSecure && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                console.warn('HTTP detected - camera may be blocked by browser security');
-            }
-
-            return { supported: true };
-        }
-
-        function showError(message) {
-            const container = document.getElementById('barcode-scanner-container');
-            if (container) {
-                container.innerHTML = `
-                    <div style="padding: 20px; background: #fee; color: #c00; text-align: center; white-space: pre-wrap; font-family: sans-serif; line-height: 1.6;">
-                        <h3 style="margin-bottom: 15px; font-size: 1.5rem;">⚠️ Camera Error</h3>
-                        <p style="font-size: 14px;">${message}</p>
-                        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
-                            Try Again
-                        </button>
-                    </div>
-                `;
-            }
-        }
-
-        async function connectScanner() {
-            const code = document.getElementById('code-input').value.trim().toUpperCase();
-
-            if (code.length !== 6) {
-                alert('Please enter a 6-digit code');
-                return;
-            }
+            document.getElementById('processing').style.display = 'flex';
 
             try {
-                const response = await fetch('/api/scanner/connect', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({ session_code: code })
-                });
+                const html5QrCode = new Html5Qrcode('__hidden_decoder__');
 
-                const data = await response.json();
-
-                if (data.success) {
-                    sessionCode = code;
-                    isConnected = true;
-
-                    document.getElementById('status-connecting').style.display = 'none';
-                    document.getElementById('status-connected').style.display = 'block';
-                    document.getElementById('session-code').textContent = sessionCode;
-                    document.getElementById('transfer-info').textContent = data.session.transfer_number || data.session.page_type;
-                    document.getElementById('disconnect-btn').style.display = 'inline-block';
-
-                    // Start heartbeat to keep connection alive
-                    startConnectionHeartbeat();
-
-                    // Start camera
-                    startCamera();
-                } else {
-                    alert(data.message || 'Failed to connect');
-                }
-            } catch (error) {
-                console.error('Connection error:', error);
-                alert('Connection failed. Please try again.');
-            }
-        }
-
-        async function startCamera() {
-            // Check browser compatibility
-            const support = checkCameraSupport();
-            if (!support.supported) {
-                showError(support.message);
-                return;
-            }
-
-            // Request camera permission explicitly first
-            try {
-                console.log('📷 Requesting camera permission...');
-
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
-                });
-
-                console.log('✓ Camera permission granted');
-
-                // Stop test stream
-                stream.getTracks().forEach(track => track.stop());
-
-                // Now initialize Quagga
-                initializeQuagga();
-
-            } catch (error) {
-                console.error('❌ Camera permission error:', error);
-
-                let errorMessage = 'Failed to access camera.\n\n';
-
-                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                    errorMessage += '🚫 Camera permission denied.\n\n';
-                    errorMessage += 'Please:\n';
-                    errorMessage += '1. Tap the address bar\n';
-                    errorMessage += '2. Tap the lock/camera icon\n';
-                    errorMessage += '3. Set Camera to "Allow"\n';
-                    errorMessage += '4. Refresh this page';
-                } else if (error.name === 'NotFoundError') {
-                    errorMessage += '📷 No camera detected.\n\n';
-                    errorMessage += 'Please check camera is not covered\nand no other app is using it.';
-                } else if (error.name === 'NotSupportedError') {
-                    errorMessage += '🌐 Camera not supported.\n\n';
-                    errorMessage += 'Please use:\n• iOS: Safari browser\n• Android: Chrome browser';
-                } else if (error.name === 'NotReadableError') {
-                    errorMessage += '⚠️ Camera is busy.\n\n';
-                    errorMessage += 'Close other apps using camera\nand try again.';
-                } else {
-                    errorMessage += 'Error: ' + error.name + '\n' + error.message;
+                // Create hidden div for decoder if not exists
+                if (!document.getElementById('__hidden_decoder__')) {
+                    const div = document.createElement('div');
+                    div.id = '__hidden_decoder__';
+                    div.style.display = 'none';
+                    document.body.appendChild(div);
                 }
 
-                showError(errorMessage);
+                const result = await html5QrCode.scanFile(file, false);
+                console.log('📦 Decoded from photo:', result);
+                await sendBarcode(result);
+
+            } catch (err) {
+                console.error('Decode failed:', err);
+                showFeedback('❌ Could not read barcode. Try again with better lighting.', false);
+            } finally {
+                document.getElementById('processing').style.display = 'none';
+                // Reset input so same file can be re-selected
+                e.target.value = '';
             }
+        });
+
+        function triggerCameraCapture() {
+            if (!isConnected) return;
+            document.getElementById('camera-input').click();
         }
 
-        function initializeQuagga() {
-            console.log('🎥 Initializing barcode scanner...');
-
-            if (typeof Quagga === 'undefined') {
-                showError('Scanner library not loaded.\nPlease refresh the page.');
-                return;
-            }
-
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: document.querySelector('#barcode-scanner-container'),
-                    constraints: {
-                        width: { min: 640 },
-                        height: { min: 480 },
-                        facingMode: "environment",
-                        aspectRatio: { min: 1, max: 2 }
-                    }
-                },
-                decoder: {
-                    readers: [
-                        "code_128_reader",
-                        "ean_reader",
-                        "ean_8_reader",
-                        "code_39_reader",
-                        "upc_reader",
-                        "upc_e_reader"
-                    ]
-                },
-                locate: true,
-                locator: {
-                    patchSize: "medium",
-                    halfSample: true
-                },
-                numOfWorkers: 4,
-                frequency: 10
-            }, function(err) {
-                if (err) {
-                    console.error('❌ Quagga initialization error:', err);
-                    showError('Failed to start scanner:\n' + err.message + '\n\nPlease refresh and try again.');
-                    return;
-                }
-
-                console.log('✓ Scanner initialized successfully');
-                Quagga.start();
-
-                // Show visual indicators
-                document.getElementById('scanning-frame').style.display = 'block';
-                document.getElementById('scanning-active').style.display = 'flex';
-                document.getElementById('scan-instruction').style.display = 'block';
-
-                // Update status bar
-                updateCameraStatus('📷 Camera Active - Scanning...', '#10b981');
-            });
-
-            Quagga.onDetected(function(result) {
-                const barcode = result.codeResult.code;
-                const currentTime = Date.now();
-
-                // Debounce
-                if (barcode !== lastScannedBarcode || (currentTime - lastScanTime) > 2000) {
-                    console.log('📦 Barcode detected:', barcode);
-                    lastScannedBarcode = barcode;
-                    lastScanTime = currentTime;
-                    sendBarcode(barcode);
-                }
-            });
-        }
-
-        function updateCameraStatus(text, color) {
-            const statusBar = document.querySelector('.status-bar');
-            let statusElement = document.getElementById('camera-status');
-
-            if (!statusElement && statusBar) {
-                statusElement = document.createElement('p');
-                statusElement.id = 'camera-status';
-                statusElement.className = 'text-xs opacity-75 mt-1';
-                document.getElementById('status-connected').appendChild(statusElement);
-            }
-
-            if (statusElement) {
-                statusElement.textContent = text;
-                statusElement.style.color = color;
-            }
-        }
-
-        function stopCamera() {
-            if (typeof Quagga !== 'undefined') {
-                Quagga.stop();
-            }
-
-            // Hide visual indicators
-            const frame = document.getElementById('scanning-frame');
-            const active = document.getElementById('scanning-active');
-            const instruction = document.getElementById('scan-instruction');
-
-            if (frame) frame.style.display = 'none';
-            if (active) active.style.display = 'none';
-            if (instruction) instruction.style.display = 'none';
-        }
-
+        // ── Send to server ────────────────────────────────────────────────────
         async function sendBarcode(barcode) {
-            if (!isConnected || !sessionCode) return;
-
             try {
                 const response = await fetch('/api/scanner/scan', {
                     method: 'POST',
@@ -554,175 +237,119 @@
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': csrfToken
                     },
-                    body: JSON.stringify({
-                        session_code: sessionCode,
-                        barcode: barcode
-                    })
+                    body: JSON.stringify({ session_code: sessionCode, barcode })
                 });
-
                 const data = await response.json();
-
                 if (data.success) {
                     scanCount++;
                     document.getElementById('scan-count').textContent = scanCount;
-                    document.getElementById('last-barcode').textContent = barcode.substring(0, 15);
-                    showScanFeedback(barcode);
-
-                    // Double vibrate if supported
-                    if (navigator.vibrate) {
-                        navigator.vibrate([100, 50, 100]);
-                    }
-
-                    // Play beep sound
+                    document.getElementById('last-code').textContent = barcode.length > 10
+                        ? barcode.substring(0, 10) + '…' : barcode;
+                    showFeedback('✅ ' + barcode, true);
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                     playBeep();
                 } else {
-                    if (data.message.includes('expired')) {
-                        alert('Session expired. Please reconnect.');
-                        disconnectScanner();
+                    showFeedback('⚠️ ' + (data.message || 'Error'), false);
+                    if (data.message && data.message.includes('expired')) {
+                        alert('Session expired. Please reconnect.'); disconnectScanner();
                     }
                 }
-            } catch (error) {
-                console.error('Scan error:', error);
+            } catch (err) {
+                console.error('API error:', err);
+                showFeedback('❌ Network error. Check connection.', false);
             }
         }
 
-        function showScanFeedback(barcode) {
-            // Show feedback with barcode
-            const feedback = document.getElementById('scan-feedback');
-            feedback.textContent = '✓ Scanned: ' + (barcode ? barcode.substring(0, 10) + '...' : '');
-            feedback.style.display = 'block';
-
-            // Flash the scanning frame green
-            const frame = document.getElementById('scanning-frame');
-            if (frame) {
-                frame.style.borderColor = '#22c55e';
-                frame.style.boxShadow = '0 0 30px #22c55e, 0 0 0 9999px rgba(0, 0, 0, 0.5)';
-
-                setTimeout(() => {
-                    frame.style.borderColor = '#10b981';
-                    frame.style.boxShadow = '0 0 0 9999px rgba(0, 0, 0, 0.5)';
-                }, 300);
-            }
-
-            setTimeout(() => {
-                feedback.style.display = 'none';
-            }, 1500);
+        function showFeedback(message, success) {
+            const el = document.getElementById('feedback');
+            el.textContent = message;
+            el.className = 'feedback ' + (success ? 'success' : 'error');
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
         }
 
-        // Play beep sound on successful scan
         function playBeep() {
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.15);
-            } catch (err) {
-                // Silent fail if audio not supported
-                console.log('Audio beep not supported');
-            }
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = 880; osc.type = 'sine';
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+            } catch(e) {}
         }
 
-        // Connection heartbeat to keep session active
-        function startConnectionHeartbeat() {
-            // Send ping every 5 seconds to keep connection active
-            connectionHeartbeat = setInterval(() => {
-                if (isConnected && sessionCode) {
-                    fetch('/api/scanner/ping', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken
-                        },
-                        body: JSON.stringify({
-                            session_code: sessionCode
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data.success) {
-                            console.warn('Connection lost');
-                            // Optionally show reconnection prompt
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Heartbeat failed:', error);
-                    });
-                }
-            }, 5000); // Every 5 seconds
+        // ── Connection ────────────────────────────────────────────────────────
+        async function connectScanner() {
+            const code = document.getElementById('code-input').value.trim().toUpperCase();
+            if (code.length !== 6) { alert('Please enter a 6-character code'); return; }
+            try {
+                const r = await fetch('/api/scanner/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                    body: JSON.stringify({ session_code: code })
+                });
+                const data = await r.json();
+                if (data.success) {
+                    sessionCode = code; isConnected = true;
+                    document.getElementById('connect-panel').style.display = 'none';
+                    document.getElementById('connected-panel').style.display = 'block';
+                    document.getElementById('manual-toggle').style.display = 'block';
+                    document.getElementById('session-code-display').textContent = code;
+                    document.getElementById('header-status').textContent =
+                        (data.session.transfer_number || data.session.page_type || 'Connected');
+                    startHeartbeat();
+                } else { alert(data.message || 'Failed to connect'); }
+            } catch(e) { alert('Connection failed. Check your internet.'); }
         }
 
-        function stopConnectionHeartbeat() {
-            if (connectionHeartbeat) {
-                clearInterval(connectionHeartbeat);
-                connectionHeartbeat = null;
-            }
+        function startHeartbeat() {
+            heartbeat = setInterval(() => {
+                if (!isConnected || !sessionCode) return;
+                fetch('/api/scanner/ping', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                    body: JSON.stringify({ session_code: sessionCode })
+                }).catch(() => {});
+            }, 5000);
         }
 
         function disconnectScanner() {
-            stopConnectionHeartbeat();
-            stopCamera();
-            isConnected = false;
-            sessionCode = null;
-            scanCount = 0;
-            lastScannedBarcode = null;
-
-            document.getElementById('status-connected').style.display = 'none';
-            document.getElementById('status-connecting').style.display = 'block';
+            clearInterval(heartbeat);
+            isConnected = false; sessionCode = null; scanCount = 0;
+            document.getElementById('connected-panel').style.display = 'none';
+            document.getElementById('manual-toggle').style.display = 'none';
+            document.getElementById('manual-section').style.display = 'none';
+            document.getElementById('connect-panel').style.display = 'block';
             document.getElementById('code-input').value = '';
             document.getElementById('scan-count').textContent = '0';
-            document.getElementById('last-barcode').textContent = '-';
-            document.getElementById('disconnect-btn').style.display = 'none';
+            document.getElementById('last-code').textContent = '—';
+            document.getElementById('header-status').textContent = 'Mobile Scanner';
         }
 
-        // Test camera function
-        function testCamera() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('✗ getUserMedia not supported\n\nYour browser does not support camera access.\n\niOS: Use Safari\nAndroid: Use Chrome');
-                return;
-            }
-
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    alert('✓ Camera works!\n\nCamera permission granted.\nBrowser supports getUserMedia.');
-                    stream.getTracks().forEach(track => track.stop());
-                })
-                .catch(error => {
-                    alert('✗ Camera error:\n\n' + error.name + '\n' + error.message + '\n\nPlease grant camera permission in browser settings.');
-                });
+        function toggleManual() {
+            const s = document.getElementById('manual-section');
+            s.style.display = s.style.display === 'none' ? 'block' : 'none';
         }
 
-        // Auto-capitalize code input
+        function submitManual() {
+            const v = document.getElementById('manual-input').value.trim();
+            if (v) { sendBarcode(v); document.getElementById('manual-input').value = ''; }
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
-            const codeInput = document.getElementById('code-input');
-            codeInput.addEventListener('input', (e) => {
-                e.target.value = e.target.value.toUpperCase();
+            const inp = document.getElementById('code-input');
+            inp.addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+            inp.addEventListener('keypress', e => { if (e.key === 'Enter') connectScanner(); });
+            document.getElementById('manual-input').addEventListener('keypress', e => {
+                if (e.key === 'Enter') submitManual();
             });
-
-            // Connect on Enter key
-            codeInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    connectScanner();
-                }
-            });
-
-            // Check if code provided in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
             if (code && code.length === 6) {
-                document.getElementById('code-input').value = code.toUpperCase();
-                // Auto-connect if code provided
+                inp.value = code.toUpperCase();
                 setTimeout(() => connectScanner(), 500);
             }
         });

@@ -1,3 +1,6 @@
+# ============================================
+# Laravel Framework
+# ============================================
 /.phpunit.cache
 /node_modules
 /public/build
@@ -16,16 +19,114 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /auth.json
+
+# ============================================
+# IDE and Editors
+# ============================================
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
+
+# ============================================
+# Laravel Storage and Cache
+# ============================================
 /storage/framework/views/*
 !/storage/framework/views/.gitignore
 /storage/framework/cache/*
 /storage/framework/sessions/*
 /storage/logs/*
 /bootstrap/cache/*
-/*.md
+
+# ============================================
+# Personal Deployment Scripts
+# ============================================
+deploy.ps1
+sync.ps1
+status.ps1
+test.ps1
+
+# Keep example scripts for team
+!*.ps1.example
+
+# ============================================
+# Executables & Binaries
+# ============================================
+*.exe
+*.dll
+*.so
+*.dylib
+*.app
+
+# ============================================
+# SSH Keys & Certificates (SECURITY)
+# ============================================
+*.pub
+*.pem
+*.key
+id_rsa*
+*.ppk
+*.cer
+*.crt
+
+# ============================================
+# Database & Backups
+# ============================================
+*.sql
+*.dump
+*.sqlite
+*.backup
+*.bak
+*.tmp
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
 nul
+
+# ============================================
+# Media & Large Files (optional)
+# ============================================
+# Uncomment if you don't want to track videos/large files
+# *.mp4
+# *.avi
+# *.mov
+# *.mkv
+
+# ============================================
+# Documentation (KEEP THESE - do NOT ignore)
+# ============================================
+# DO NOT add *.md here!
+# README.md, CHANGELOG.md, docs/*.md should be tracked
+
+# ============================================
+# Temporary & Test Files
+# ============================================
+*.log
+*.swp
+*.swo
+*~
+.phpunit.result.cache
+coverage/
+.phpunit.cache/
+
+# ============================================
+# Composer
+# ============================================
+composer.phar
+/composer.lock.example
+
+# ============================================
+# Node
+# ============================================
+package-lock.json.example
+yarn.lock.example
+
+# ============================================
+# Project Specific
+# ============================================
+# Add any project-specific files here

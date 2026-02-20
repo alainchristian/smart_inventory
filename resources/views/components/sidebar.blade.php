@@ -69,7 +69,8 @@
             openShopTransfers: {{ request()->routeIs('shop.transfers.*') ? 'true' : 'false' }},
             openWarehouseTransfers: {{ request()->routeIs('warehouse.transfers.*') ? 'true' : 'false' }},
             openSales: {{ request()->routeIs('*.sales.*') ? 'true' : 'false' }},
-            openReturns: {{ request()->routeIs('*.returns.*') ? 'true' : 'false' }}
+            openReturns: {{ request()->routeIs('*.returns.*') ? 'true' : 'false' }},
+            openTransfers: {{ request()->routeIs('*.transfers.*') && !request()->routeIs('shop.sales.*') ? 'true' : 'false' }}
         }">
             <div class="space-y-1">
                 @if(auth()->user()->isOwner())
@@ -474,6 +475,7 @@
                         </div>
                     </div>
 
+                    @if(!request()->routeIs('shop.sales.*'))
                     <!-- Transfers Section (Combined) -->
                     <div class="pt-2">
                         <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Transfers</p>
@@ -507,6 +509,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
 
                     <!-- Reports Section -->
                     <div class="pt-2">

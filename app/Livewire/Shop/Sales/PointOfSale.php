@@ -324,12 +324,25 @@ class PointOfSale extends Component
 
     public function handleBarcodeScanned($barcode)
     {
+        \Log::info('handleBarcodeScanned called', [
+            'barcode' => $barcode,
+            'scanningEnabled' => $this->scanningEnabled
+        ]);
+
         if (!$this->scanningEnabled) {
+            \Log::warning('Scanning is disabled');
             return;
         }
 
         // Try to find product by barcode
         $product = $this->findProductByBarcode($barcode);
+
+        \Log::info('Product lookup result', [
+            'barcode' => $barcode,
+            'found' => ! is_null($product),
+            'product_id' => $product?->id ?? null,
+            'product_name' => $product?->name ?? null
+        ]);
 
         if (!$product) {
             $this->dispatch('notification', [
@@ -341,6 +354,12 @@ class PointOfSale extends Component
 
         // Check stock
         $stock = $product->getCurrentStock('shop', $this->shopId);
+        \Log::info('Stock check', [
+            'product_id' => $product->id,
+            'shop_id' => $this->shopId,
+            'stock' => $stock
+        ]);
+
         if ($stock['total_items'] === 0) {
             $this->dispatch('notification', [
                 'type' => 'error',
@@ -350,6 +369,7 @@ class PointOfSale extends Component
         }
 
         // Open modal instead of adding directly
+        \Log::info('Opening add modal for product', ['product_id' => $product->id]);
         $this->openAddModal($product, $stock);
 
         $this->dispatch('notification', [
@@ -418,23 +438,66 @@ class PointOfSale extends Component
      */
     public function checkForScans(): void
     {
+        // Debug: Check if method is being called
+        \Log::info('checkForScans called', [
+            'has_session' => ! is_null($this->scannerSession),
+            'session_id' => $this->scannerSession?->id ?? null,
+        ]);
+
         if (! $this->scannerSession) {
+            \Log::warning('checkForScans: No scanner session');
             return;
         }
 
         $this->scannerSession->refresh();
 
-        // Only process if there is a new scan we haven't handled yet
-        if (
-            $this->scannerSession->last_scanned_barcode
-            && $this->scannerSession->last_scanned_barcode !== $this->lastProcessedScan
-            && $this->scannerSession->last_scan_at?->isAfter(now()->subSeconds(5))
-        ) {
-            $barcode = $this->scannerSession->last_scanned_barcode;
-            $this->lastProcessedScan = $barcode;
+        // Log the session state
+        \Log::info('Scanner session state', [
+            'id' => $this->scannerSession->id,
+            'is_active' => $this->scannerSession->is_active,
+            'last_scanned_barcode' => $this->scannerSession->last_scanned_barcode,
+            'expires_at' => $this->scannerSession->expires_at,
+        ]);
 
-            // Feed it into the existing barcode handling pipeline
+        // Only process if a barcode is waiting in the DB
+        if (! $this->scannerSession->last_scanned_barcode) {
+            return;
+        }
+
+        $barcode = $this->scannerSession->last_scanned_barcode;
+        \Log::info('Processing barcode from scanner', ['barcode' => $barcode]);
+
+        // Update connected status
+        $this->lastProcessedScan = $barcode;
+
+        try {
+            // Feed into the existing barcode handling pipeline
             $this->handleBarcodeScanned($barcode);
+
+            // Only clear from DB if processing was successful
+            $this->scannerSession->update([
+                'last_scanned_barcode' => null,
+                'last_scan_at'         => now(),
+            ]);
+
+            \Log::info('Barcode processed successfully', ['barcode' => $barcode]);
+        } catch (\Throwable $e) {
+            \Log::error('Error processing barcode', [
+                'barcode' => $barcode,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Clear the barcode even on error to prevent infinite retry
+            $this->scannerSession->update([
+                'last_scanned_barcode' => null,
+                'last_scan_at'         => now(),
+            ]);
+
+            $this->dispatch('notification', [
+                'type' => 'error',
+                'message' => 'Scanner error: ' . $e->getMessage()
+            ]);
         }
     }
 
@@ -549,6 +612,7 @@ class PointOfSale extends Component
             'box_code' => $box->box_code,
             'quantity' => $this->stagingQty,
             'is_full_box' => $isFullBox,
+            'items_per_box' => $this->stagingProduct['items_per_box'],
             'price' => $this->stagingPrice,
             'original_price' => $originalPrice,
             'line_total' => $lineTotal,
@@ -786,14 +850,18 @@ class PointOfSale extends Component
 
             // Prepare items for SaleService
             $items = collect($this->cart)->map(function ($item) {
+                $isFullBox   = $item['is_full_box'];
+                $itemsToSell = $isFullBox
+                    ? (int) $item['quantity'] * (int) ($item['items_per_box'] ?? 1)
+                    : (int) $item['quantity'];
+
                 return [
-                    'product_id' => $item['product_id'],
-                    'box_id' => $item['box_id'],
-                    'quantity' => $item['quantity'],
-                    'is_full_box' => $item['is_full_box'],
-                    'price' => $item['price'],
-                    'price_override_reason' => $item['price_modification_reason'] ?? null,
-                    'price_override_reference' => $item['price_modification_reference'] ?? null,
+                    'product_id'                   => $item['product_id'],
+                    'quantity'                     => $itemsToSell,
+                    'is_full_box'                  => $isFullBox,
+                    'price'                        => (int) $item['price'],
+                    'price_modification_reason'    => $item['price_modification_reason'] ?? null,
+                    'price_modification_reference' => $item['price_modification_reference'] ?? null,
                 ];
             })->toArray();
 
@@ -819,7 +887,7 @@ class PointOfSale extends Component
                 'message' => 'Sale completed successfully!'
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->dispatch('notification', [
                 'type' => 'error',
                 'message' => 'Error completing sale: ' . $e->getMessage()

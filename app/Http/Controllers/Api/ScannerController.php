@@ -66,11 +66,20 @@ class ScannerController extends Controller
             ], 400);
         }
 
+        \Log::info('Scanner API: scan endpoint hit', [
+            'session_code' => $request->session_code,
+            'barcode'      => $request->barcode,
+            'ip'           => $request->ip(),
+        ]);
+
         $session = ScannerSession::active()
             ->where('session_code', $request->session_code)
             ->first();
 
         if (!$session) {
+            \Log::warning('Scanner API: session not found', [
+                'session_code' => $request->session_code,
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Session not found or expired',
@@ -79,6 +88,12 @@ class ScannerController extends Controller
 
         // Record the scan
         $session->recordScan($request->barcode);
+
+        \Log::info('Scanner API: barcode written', [
+            'session_id'   => $session->id,
+            'session_code' => $session->session_code,
+            'barcode'      => $request->barcode,
+        ]);
 
         return response()->json([
             'success' => true,

@@ -43,6 +43,9 @@ class SaleService
                 'discount'         => $data['discount'] ?? 0,
                 'total'            => 0,
                 'has_price_override' => false,
+                'customer_name'    => $data['customer_name'] ?? null,
+                'customer_phone'   => $data['customer_phone'] ?? null,
+                'notes'            => $data['notes'] ?? null,
             ]);
 
             $subtotal         = 0;
@@ -123,7 +126,8 @@ class SaleService
                 'has_price_override' => $hasPriceOverride,
             ]);
 
-            event(new \App\Events\SaleCompleted($sale));
+            // Event removed — App\Events\Sales\SaleCompleted has no registered listeners.
+            // Re-add once a listener exists: event(new SaleCompleted($sale));
 
             return $sale;
         });
@@ -150,7 +154,7 @@ class SaleService
                         $box->increment('items_remaining', $item->quantity_sold);
 
                         // Update box status
-                        if ($box->items_remaining === $box->items_total) {
+                        if ($box->items_remaining >= $box->items_total) {
                             $box->update(['status' => BoxStatus::FULL]);
                         } else {
                             $box->update(['status' => BoxStatus::PARTIAL]);
