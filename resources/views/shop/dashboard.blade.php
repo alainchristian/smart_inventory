@@ -27,7 +27,7 @@
     <!-- Page Header -->
     <div class="mb-4 flex flex-col lg:flex-row lg:items-end lg:justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ $shop->name }}</h1>
+            <h1 class="text-2xl font-bold text-gray-900">{{ $shop->name }}hhh</h1>
             <p class="text-gray-600 text-sm">Sales and inventory managements</p>
         </div>
         <div class="mt-2 lg:mt-0 text-sm text-gray-500">Last sync: {{ $lastSync->diffForHumans() }}</div>
