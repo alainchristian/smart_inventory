@@ -23,6 +23,7 @@ class ReturnModel extends Model
         'customer_name',
         'customer_phone',
         'refund_amount',
+        'refund_method',
         'is_exchange',
         'processed_by',
         'processed_at',

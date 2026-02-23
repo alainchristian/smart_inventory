@@ -405,25 +405,28 @@ class ProcessReturn extends Component
 
             $return = $returnService->processReturn($data, auth()->user());
 
-            // Create alert for owner if requires approval
-            if ($requiresApproval) {
+            // Auto-approve small returns, require owner approval for large ones
+            if (!$requiresApproval) {
+                // Auto-approve small returns
+                $returnService->approveReturn($return, auth()->user());
+                session()->flash('success', "Return {$return->return_number} processed and approved successfully.");
+            } else {
+                // Create alert for owner to approve large returns
                 $owner = \App\Models\User::where('role', 'owner')->first();
                 if ($owner) {
                     \App\Models\Alert::create([
                         'title' => 'Large Return Requires Approval',
-                        'message' => "Return {$return->return_number} with refund of RWF " . number_format($estimatedRefund) . " needs approval",
+                        'message' => "Return {$return->return_number} with refund of RWF " . number_format($estimatedRefund) . " needs your approval",
                         'severity' => \App\Enums\AlertSeverity::WARNING,
                         'entity_type' => 'return',
                         'entity_id' => $return->id,
                         'user_id' => $owner->id,
-                        'action_url' => route('shop.returns.index'),
-                        'action_label' => 'View Return',
+                        'action_url' => route('shop.returns.index') . '?pending_approval=1',
+                        'action_label' => 'Review & Approve',
                     ]);
                 }
 
-                session()->flash('success', "Return {$return->return_number} processed successfully. Awaiting owner approval due to large refund amount.");
-            } else {
-                session()->flash('success', "Return {$return->return_number} processed successfully.");
+                session()->flash('success', "Return {$return->return_number} processed successfully. Awaiting owner approval due to large refund amount (>RWF 500).");
             }
 
             return redirect()->route('shop.returns.index');

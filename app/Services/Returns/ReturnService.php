@@ -64,13 +64,15 @@ class ReturnService
             // Calculate refund amount if not provided and not an exchange
             $refundAmount = 0;
             if (!($data['is_exchange'] ?? false)) {
-                // Calculate refund based on items
-                if (isset($data['sale_id']) && $data['sale_id']) {
-                    $sale = Sale::find($data['sale_id']);
-                    if ($sale) {
-                        // For now, refund full sale amount if linked to sale
-                        // In production, you might want to prorate based on returned items
-                        $refundAmount = $sale->total;
+                // Use estimated refund if provided, otherwise calculate from items
+                if (isset($data['estimated_refund'])) {
+                    $refundAmount = $data['estimated_refund'];
+                } elseif (isset($data['items']) && is_array($data['items'])) {
+                    // Calculate from returned items
+                    foreach ($data['items'] as $item) {
+                        if (isset($item['unit_price']) && isset($item['quantity_returned'])) {
+                            $refundAmount += $item['unit_price'] * $item['quantity_returned'];
+                        }
                     }
                 }
             }
@@ -84,6 +86,7 @@ class ReturnService
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_phone' => $data['customer_phone'] ?? null,
                 'refund_amount' => $refundAmount,
+                'refund_method' => $data['refund_method'] ?? null,
                 'is_exchange' => $data['is_exchange'] ?? false,
                 'processed_by' => $processedBy->id,
                 'processed_at' => now(),
@@ -188,25 +191,8 @@ class ReturnService
                 'user_agent' => request()->header('User-Agent'),
             ]);
 
-            // Create alert for owner to review if refund is significant
-            if ($refundAmount > 10000) { // More than $100
-                $owner = User::where('location_type', LocationType::SHOP)
-                    ->where('location_id', $data['shop_id'])
-                    ->first();
-
-                if ($owner) {
-                    Alert::create([
-                        'title' => 'Large Return Processed',
-                        'message' => "Return {$return->return_number} processed with refund amount of " . number_format($refundAmount / 100, 2),
-                        'severity' => AlertSeverity::WARNING,
-                        'entity_type' => 'return',
-                        'entity_id' => $return->id,
-                        'user_id' => $owner->id,
-                        'action_url' => route('shop.returns.show', $return),
-                        'action_label' => 'View Return',
-                    ]);
-                }
-            }
+            // Note: Large return alerts are now handled in ProcessReturn component
+            // This legacy alert code is commented out to avoid duplication
 
             return $return;
         });
@@ -263,8 +249,8 @@ class ReturnService
                 'entity_type' => 'return',
                 'entity_id' => $return->id,
                 'user_id' => $return->processed_by,
-                'action_url' => route('shop.returns.show', $return),
-                'action_label' => 'View Return',
+                'action_url' => route('shop.returns.index'),
+                'action_label' => 'View Returns',
             ]);
 
             return $return;

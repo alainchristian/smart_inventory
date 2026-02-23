@@ -170,6 +170,10 @@
                                class="block px-4 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('shop.returns.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                                 Returns
                             </a>
+                            <a href="{{ route('shop.damaged-goods.index') }}"
+                               class="block px-4 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('shop.damaged-goods.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                Damaged Goods
+                            </a>
                             <a href="{{ route('shop.inventory.stock') }}"
                                class="block px-4 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('shop.inventory.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                                 Shop Stock
@@ -432,6 +436,14 @@
                             <span class="font-medium">Returns</span>
                         </a>
 
+                        <a href="{{ route('shop.damaged-goods.index') }}"
+                           class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 {{ request()->routeIs('shop.damaged-goods.*') ? 'bg-purple-50 text-purple-600 border border-purple-200' : 'text-gray-700 hover:bg-gray-100' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-1.964-1.333-2.732 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span class="font-medium">Damaged Goods</span>
+                        </a>
+
                         <a href="{{ route('shop.inventory.stock') }}"
                            class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 {{ request()->routeIs('shop.inventory.*') ? 'bg-purple-50 text-purple-600 border border-purple-200' : 'text-gray-700 hover:bg-gray-100' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -584,6 +596,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"></path>
                             </svg>
                             <span class="font-medium">Returns</span>
+                        </a>
+
+                        <a href="{{ route('shop.damaged-goods.index') }}"
+                           class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 {{ request()->routeIs('shop.damaged-goods.*') ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-gray-700 hover:bg-gray-100' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-1.964-1.333-2.732 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span class="font-medium">Damaged Goods</span>
                         </a>
                     </div>
 

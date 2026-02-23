@@ -129,6 +129,11 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
             Route::get('/create', function () { return view('shop.returns.create'); })->name('create');
         });
 
+        // Damaged Goods
+        Route::prefix('damaged-goods')->name('damaged-goods.')->group(function () {
+            Route::get('/', function () { return view('shop.damaged-goods.index'); })->name('index');
+        });
+
         // Inventory
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/stock', function () { return view('shop.inventory.stock'); })->name('stock');

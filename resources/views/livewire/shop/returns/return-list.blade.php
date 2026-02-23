@@ -68,7 +68,7 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{{ $isOwner ? '6' : '5' }} gap-4">
             <!-- Search -->
             <div>
                 <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Search</label>
@@ -110,6 +110,22 @@
                     <option value="exchange">Exchanges Only</option>
                 </select>
             </div>
+
+            <!-- Shop Filter (Owner Only) -->
+            @if($isOwner)
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Shop</label>
+                    <select
+                        wire:model.live="shopFilter"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                    >
+                        <option value="all">All Shops</option>
+                        @foreach($shops as $shop)
+                            <option value="{{ $shop->id }}">{{ $shop->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
 
             <!-- Date From -->
             <div>
@@ -153,6 +169,9 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Return #</th>
+                        @if($isOwner)
+                            <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden xl:table-cell">Shop</th>
+                        @endif
                         <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Sale #</th>
                         <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Customer</th>
                         <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden md:table-cell">Reason</th>
@@ -170,6 +189,13 @@
                             <td class="px-4 lg:px-6 py-3 whitespace-nowrap">
                                 <div class="text-sm font-bold text-gray-900">{{ $return->return_number }}</div>
                             </td>
+
+                            <!-- Shop Name (Owner Only) -->
+                            @if($isOwner)
+                                <td class="px-4 lg:px-6 py-3 whitespace-nowrap hidden xl:table-cell">
+                                    <div class="text-sm font-medium text-gray-900">{{ $return->shop->name ?? 'Unknown' }}</div>
+                                </td>
+                            @endif
 
                             <!-- Sale Number -->
                             <td class="px-4 lg:px-6 py-3 whitespace-nowrap hidden sm:table-cell">
@@ -246,21 +272,45 @@
 
                             <!-- Actions -->
                             <td class="px-4 lg:px-6 py-3 whitespace-nowrap text-sm" @click.stop>
-                                <button
-                                    @click="expandedRow === {{ $return->id }} ? expandedRow = null : expandedRow = {{ $return->id }}"
-                                    class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
-                                >
-                                    <span x-text="expandedRow === {{ $return->id }} ? 'Hide' : 'View'">View</span>
-                                    <svg class="w-3.5 h-3.5 ml-1 transition-transform" :class="{ 'rotate-180': expandedRow === {{ $return->id }} }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                    </svg>
-                                </button>
+                                <div class="flex items-center space-x-2">
+                                    <button
+                                        @click="expandedRow === {{ $return->id }} ? expandedRow = null : expandedRow = {{ $return->id }}"
+                                        class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                                    >
+                                        <span x-text="expandedRow === {{ $return->id }} ? 'Hide' : 'View'">View</span>
+                                        <svg class="w-3.5 h-3.5 ml-1 transition-transform" :class="{ 'rotate-180': expandedRow === {{ $return->id }} }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </button>
+
+                                    @if(!$return->approved_at)
+                                        @php
+                                            $canApprove = auth()->user()->isOwner() ||
+                                                         (auth()->user()->isShopManager() && $return->refund_amount < 50000);
+                                        @endphp
+                                        @if($canApprove)
+                                            <button
+                                                wire:click="approveReturn({{ $return->id }})"
+                                                wire:loading.attr="disabled"
+                                                wire:target="approveReturn({{ $return->id }})"
+                                                class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                                                title="{{ $return->refund_amount >= 50000 ? 'Owner approval required' : 'Approve return' }}"
+                                            >
+                                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                <span wire:loading.remove wire:target="approveReturn({{ $return->id }})">Approve</span>
+                                                <span wire:loading wire:target="approveReturn({{ $return->id }})">...</span>
+                                            </button>
+                                        @endif
+                                    @endif
+                                </div>
                             </td>
                         </tr>
 
                         <!-- Expandable Detail Row -->
                         <tr x-show="expandedRow === {{ $return->id }}" x-collapse x-cloak>
-                            <td colspan="9" class="px-4 lg:px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <td colspan="{{ $isOwner ? '10' : '9' }}" class="px-4 lg:px-6 py-4 bg-gray-50 border-b border-gray-200">
                                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                     <!-- Return Items -->
                                     <div class="lg:col-span-2">
@@ -326,13 +376,62 @@
                                                 </div>
                                             @endif
                                         </div>
+
+                                        <!-- Approval Actions -->
+                                        @if(!$return->approved_at)
+                                            @php
+                                                $canApprove = auth()->user()->isOwner() ||
+                                                             (auth()->user()->isShopManager() && $return->refund_amount < 50000);
+                                                $requiresOwner = $return->refund_amount >= 50000;
+                                            @endphp
+
+                                            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
+                                                <div class="flex items-start space-x-2">
+                                                    <svg class="w-4 h-4 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    <div class="flex-1">
+                                                        <p class="text-xs font-bold text-amber-800 uppercase mb-1">Pending Approval</p>
+                                                        @if($requiresOwner && !auth()->user()->isOwner())
+                                                            <p class="text-xs text-amber-700">
+                                                                Large refund (RWF {{ number_format($return->refund_amount) }}) requires owner approval.
+                                                            </p>
+                                                        @elseif($canApprove)
+                                                            <p class="text-xs text-amber-700 mb-2">
+                                                                @if($requiresOwner)
+                                                                    Large refund - owner approval required
+                                                                @else
+                                                                    This return is ready for approval
+                                                                @endif
+                                                            </p>
+                                                            <button
+                                                                wire:click="approveReturn({{ $return->id }})"
+                                                                wire:loading.attr="disabled"
+                                                                wire:target="approveReturn({{ $return->id }})"
+                                                                class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                                                            >
+                                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                                </svg>
+                                                                <span wire:loading.remove wire:target="approveReturn({{ $return->id }})">Approve Return</span>
+                                                                <span wire:loading wire:target="approveReturn({{ $return->id }})">Approving...</span>
+                                                            </button>
+                                                        @else
+                                                            <p class="text-xs text-amber-700">
+                                                                Waiting for {{ $requiresOwner ? 'owner' : 'manager' }} approval.
+                                                            </p>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-16 text-center">
+                            <td colspan="{{ $isOwner ? '10' : '9' }}" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center">
                                     <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                                         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
