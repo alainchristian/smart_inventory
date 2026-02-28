@@ -610,6 +610,7 @@ aside nav p.text-gray-400 {
 @media (max-width: 1400px) {
   .row-ops-activity { grid-template-columns: 1fr 1fr; }
   .row-ops-activity > *:last-child { grid-column: 1 / -1; }
+  .row-trace-alerts { grid-template-columns: 1fr 320px; }
 }
 
 @media (max-width: 1200px) {
@@ -617,6 +618,19 @@ aside nav p.text-gray-400 {
   .row-sales-shops  { grid-template-columns: 1fr; }
   .row-ops-activity { grid-template-columns: 1fr; }
   .row-trace-alerts { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1024px) {
+  .row-trace-alerts { grid-template-columns: 1fr; }
+  .right-stack-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 900px) {
+  .row-sales-shops  { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
@@ -740,7 +754,10 @@ aside nav p.text-gray-400 {
     font-size: 12px;
   }
 
-  .right-stack-panel { gap: 10px; }
+  .right-stack-panel {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -778,4 +795,263 @@ aside nav p.text-gray-400 {
   }
   .sp-period-name { font-size: 9px; }
   .sp-period-val { font-size: 13px; }
+}
+
+/* Table responsiveness */
+.recent-movements-table {
+  min-width: 600px;
+}
+
+@media (max-width: 1024px) {
+  .recent-movements-table {
+    min-width: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .recent-movements-table {
+    min-width: auto;
+  }
+
+  /* Hide Location column on tablets */
+  .recent-movements-table th:nth-child(4),
+  .recent-movements-table td:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  /* On mobile, show only Box Code, Product, and Status */
+  .recent-movements-table th:nth-child(5),
+  .recent-movements-table td:nth-child(5),
+  .recent-movements-table th:nth-child(6),
+  .recent-movements-table td:nth-child(6) {
+    display: none;
+  }
+
+  .recent-movements-table {
+    font-size: 11px;
+  }
+
+  .recent-movements-table th,
+  .recent-movements-table td {
+    padding: 8px 6px !important;
+  }
+
+  .recent-movements-table th:first-child,
+  .recent-movements-table td:first-child {
+    padding-left: 12px !important;
+  }
+
+  .recent-movements-table th:last-child,
+  .recent-movements-table td:last-child {
+    padding-right: 12px !important;
+  }
+
+  .recent-movements-table .status-pill {
+    font-size: 9px;
+    padding: 2px 5px;
+  }
+
+  /* Make product images smaller on mobile */
+  .recent-movements-table .w-8.h-8 {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .recent-movements-table .w-8.h-8 svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* Alerts panel mobile adjustments */
+  .alert-sev {
+    font-size: 8px;
+    padding: 2px 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recent-movements-table th,
+  .recent-movements-table td {
+    padding: 6px 4px !important;
+  }
+
+  .recent-movements-table th:first-child,
+  .recent-movements-table td:first-child {
+    padding-left: 8px !important;
+  }
+
+  .recent-movements-table th:last-child,
+  .recent-movements-table td:last-child {
+    padding-right: 8px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SALES PERFORMANCE RESPONSIVE
+═══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  #salesChart {
+    max-height: 220px !important;
+  }
+
+  .sp-period-val {
+    font-size: 14px !important;
+  }
+
+  .sp-period-name {
+    font-size: 9.5px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  #salesChart {
+    max-height: 200px !important;
+  }
+
+  .sp-period-row {
+    flex-direction: column;
+  }
+
+  .sp-period-col {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 14px !important;
+  }
+
+  .sp-period-col:last-child {
+    border-bottom: none;
+  }
+
+  .sp-period-val {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #salesChart {
+    max-height: 180px !important;
+  }
+
+  .period-tab {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   TOP SHOPS RESPONSIVE
+═══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .shop-rank {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .shop-name {
+    font-size: 12px !important;
+  }
+
+  .shop-revenue {
+    font-size: 10px !important;
+  }
+
+  .stock-shop-name {
+    width: 100px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .shop-rank {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+  }
+
+  .shop-row {
+    gap: 10px !important;
+    padding: 10px 0 !important;
+  }
+
+  .shop-name {
+    font-size: 12px !important;
+  }
+
+  .shop-revenue {
+    font-size: 10px !important;
+    min-width: 70px;
+  }
+
+  .shop-ok-badge {
+    font-size: 9px !important;
+    padding: 2px 5px !important;
+  }
+
+  /* Stock fill section */
+  .stock-shop-name {
+    width: 80px !important;
+    font-size: 10px !important;
+  }
+
+  .stock-fill-pct {
+    width: 28px !important;
+    font-size: 10px !important;
+  }
+
+  .stock-fill-row {
+    gap: 8px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .shop-rank {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .shop-row {
+    gap: 8px !important;
+    padding: 8px 0 !important;
+  }
+
+  .shop-name {
+    font-size: 11px !important;
+  }
+
+  .shop-revenue {
+    font-size: 9px !important;
+    min-width: 60px;
+  }
+
+  /* Hide OK badge on very small screens */
+  .shop-ok-badge {
+    display: none !important;
+  }
+
+  /* Stock fill section */
+  .stock-shop-name {
+    width: 60px !important;
+    font-size: 9px !important;
+  }
+
+  .stock-fill-pct {
+    width: 24px !important;
+    font-size: 9px !important;
+  }
+
+  .stock-fill-row {
+    gap: 6px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .stock-warning {
+    font-size: 12px !important;
+  }
 }

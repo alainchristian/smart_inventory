@@ -16,7 +16,7 @@
 
     <!-- Table -->
     <div class="overflow-x-auto">
-        <table class="w-full text-sm" style="min-width: 600px;">
+        <table class="w-full text-sm recent-movements-table">
             <thead style="background: var(--surface2); border-bottom: 1px solid var(--border);">
                 <tr>
                     <th class="px-4 py-3 text-left">

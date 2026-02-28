@@ -55,6 +55,11 @@ function initSalesChart() {
 
     const chartData = @json($chartData);
 
+    // Determine aspect ratio based on screen size
+    const isMobile = window.innerWidth <= 640;
+    const isTablet = window.innerWidth <= 1024 && window.innerWidth > 640;
+    const aspectRatio = isMobile ? 1.5 : (isTablet ? 2 : 2.5);
+
     salesChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -64,14 +69,14 @@ function initSalesChart() {
                     label: 'Transactions',
                     data: chartData.fullBoxData,
                     backgroundColor: '#3b6fd4',
-                    borderRadius: 6,
+                    borderRadius: isMobile ? 4 : 6,
                     borderSkipped: false,
                 },
                 {
                     label: 'Items Sold',
                     data: chartData.itemsData,
                     backgroundColor: '#0e9e86',
-                    borderRadius: 6,
+                    borderRadius: isMobile ? 4 : 6,
                     borderSkipped: false,
                 }
             ]
@@ -79,7 +84,7 @@ function initSalesChart() {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            aspectRatio: 2.5,
+            aspectRatio: aspectRatio,
             interaction: {
                 mode: 'index',
                 intersect: false,

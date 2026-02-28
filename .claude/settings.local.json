@@ -6,7 +6,8 @@
       "Bash(ssh root@5.78.135.79 \"export DEBIAN_FRONTEND=noninteractive && apt update -y && echo ''Update completed''\")",
       "Bash(ssh root@5.78.135.79 \"rm -f /etc/nginx/sites-enabled/default\")",
       "Bash(ssh root@5.78.135.79 \"nginx -t\")",
-      "Bash(ssh root@5.78.135.79 \"systemctl reload nginx && echo ''✓ Nginx reloaded successfully''\")"
+      "Bash(ssh root@5.78.135.79 \"systemctl reload nginx && echo ''✓ Nginx reloaded successfully''\")",
+      "Bash(npm run build)"
     ]
   }
 }
