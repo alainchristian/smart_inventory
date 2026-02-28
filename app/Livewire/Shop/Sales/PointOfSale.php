@@ -22,6 +22,7 @@ class PointOfSale extends Component
     public $shopName;
     public $availableShops = [];
     public $isOwner = false;
+    public $showShopSelectionModal = false;
 
     // Cart
     public $cart = [];
@@ -99,10 +100,15 @@ class PointOfSale extends Component
             // Load all shops for the dropdown
             $this->availableShops = Shop::orderBy('name')->get()->toArray();
 
-            // Use session, request parameter, or first shop
+            // Use session or request parameter, but don't auto-select
             $this->shopId = request()->get('shop_id')
-                ?? session('selected_shop_id')
-                ?? Shop::first()?->id;
+                ?? session('selected_shop_id');
+
+            // If no shop selected, show selection modal
+            if (!$this->shopId) {
+                $this->showShopSelectionModal = true;
+                return; // Don't load shop name until selection
+            }
 
             if ($this->shopId) {
                 session(['selected_shop_id' => $this->shopId]);
@@ -110,7 +116,11 @@ class PointOfSale extends Component
         }
 
         if (!$this->shopId) {
-            abort(404, 'No shop found. Please create a shop first.');
+            // For shop managers, this is an error
+            if (!$user->isOwner()) {
+                abort(404, 'No shop found. Please contact administrator.');
+            }
+            return; // For owners, we'll show the modal
         }
 
         $shop = Shop::find($this->shopId);
@@ -908,6 +918,28 @@ class PointOfSale extends Component
     }
 
     // ==================== SHOP SELECTION (Owners only) ====================
+
+    public function selectShopFromModal()
+    {
+        if (!$this->isOwner || !$this->shopId) {
+            return;
+        }
+
+        // Update session
+        session(['selected_shop_id' => $this->shopId]);
+
+        // Update shop name
+        $shop = Shop::find($this->shopId);
+        $this->shopName = $shop->name ?? 'Unknown Shop';
+
+        // Close modal
+        $this->showShopSelectionModal = false;
+
+        $this->dispatch('notification', [
+            'type' => 'success',
+            'message' => "Now operating at {$this->shopName}"
+        ]);
+    }
 
     public function changeShop()
     {
