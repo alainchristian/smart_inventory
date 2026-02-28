@@ -7,6 +7,10 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Transfer;
 use App\Models\User;
+use App\Models\ReturnModel;
+use App\Models\DamagedGood;
+use App\Services\Analytics\InventoryAnalyticsService;
+use App\Services\Analytics\TransferAnalyticsService;
 use Livewire\Component;
 
 class Dashboard extends Component
@@ -92,6 +96,51 @@ class Dashboard extends Component
         session()->flash('info', 'Alert dismissed.');
     }
 
+    public function getReturnsThisMonth()
+    {
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        $returns = ReturnModel::whereBetween('processed_at', [$startOfMonth, $endOfMonth])
+            ->where('is_exchange', false)
+            ->selectRaw('COUNT(*) as count, SUM(refund_amount) as amount')
+            ->first();
+
+        return [
+            'count' => $returns->count ?? 0,
+            'amount' => $returns->amount ?? 0,
+        ];
+    }
+
+    public function getDamagedGoodsLoss()
+    {
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        return DamagedGood::whereBetween('recorded_at', [$startOfMonth, $endOfMonth])
+            ->sum('estimated_loss') ?? 0;
+    }
+
+    public function getStockTurnoverRate()
+    {
+        $service = app(InventoryAnalyticsService::class);
+        return $service->calculateStockTurnover('all');
+    }
+
+    public function getTransferEfficiency()
+    {
+        $service = app(TransferAnalyticsService::class);
+        $last30Days = now()->subDays(30)->format('Y-m-d');
+        $today = now()->format('Y-m-d');
+
+        $kpis = $service->getTransferKpis($last30Days, $today, null);
+
+        return [
+            'avg_hours' => $kpis['avg_completion_hours'] ?? 0,
+            'discrepancy_rate' => $kpis['discrepancy_rate'] ?? 0,
+        ];
+    }
+
     public function render()
     {
         return view('livewire.owner.dashboard', [
@@ -99,6 +148,10 @@ class Dashboard extends Component
             'transferStatusData' => $this->getTransferStatusData(),
             'criticalAlerts' => $this->getCriticalAlerts(),
             'recentUsers' => $this->getRecentUsers(),
+            'returnsThisMonth' => $this->getReturnsThisMonth(),
+            'damagedGoodsLoss' => $this->getDamagedGoodsLoss(),
+            'stockTurnover' => $this->getStockTurnoverRate(),
+            'transferEfficiency' => $this->getTransferEfficiency(),
         ]);
     }
 }

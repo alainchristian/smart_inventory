@@ -12,6 +12,10 @@ use App\Models\Shop;
 use App\Models\Transfer;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Models\ReturnModel;
+use App\Models\DamagedGood;
+use App\Services\Analytics\InventoryAnalyticsService;
+use App\Services\Analytics\TransferAnalyticsService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -35,6 +39,8 @@ class DashboardController extends Controller
             'total_products' => Product::active()->count(),
             'total_boxes' => Box::count(),
             'total_items_in_stock' => Box::sum('items_remaining'),
+            'warehouse_boxes' => Box::where('location_type', 'warehouse')->count(),
+            'shop_boxes' => Box::where('location_type', 'shop')->count(),
         ];
 
         // Inventory value (calculated in cents, convert to dollars)
@@ -72,6 +78,14 @@ class DashboardController extends Controller
                 ->where('status', TransferStatus::RECEIVED)
                 ->count(),
         ];
+
+        // Delivered Today count (Problem 4)
+        $deliveredToday = Transfer::where(function($query) {
+                $query->where('status', TransferStatus::DELIVERED)
+                      ->orWhere('status', TransferStatus::RECEIVED);
+            })
+            ->whereDate('delivered_at', Carbon::today())
+            ->count();
 
         // Sales statistics - FILTERED BY DATE RANGE
         $salesQuery = Sale::notVoided();
@@ -246,6 +260,76 @@ class DashboardController extends Controller
             'status' => 'operational',
         ];
 
+        // Quick Analytics Data
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        // Returns this month
+        $returns = ReturnModel::whereBetween('processed_at', [$startOfMonth, $endOfMonth])
+            ->where('is_exchange', false)
+            ->selectRaw('COUNT(*) as count, SUM(refund_amount) as amount')
+            ->first();
+
+        $returnsThisMonth = [
+            'count' => $returns->count ?? 0,
+            'amount' => $returns->amount ?? 0,
+        ];
+
+        // Damaged goods loss this month
+        $damagedGoodsLoss = DamagedGood::whereBetween('recorded_at', [$startOfMonth, $endOfMonth])
+            ->sum('estimated_loss') ?? 0;
+
+        // Stock turnover
+        $inventoryService = app(InventoryAnalyticsService::class);
+        $stockTurnover = $inventoryService->calculateStockTurnover('all');
+
+        // Transfer efficiency
+        $transferService = app(TransferAnalyticsService::class);
+        $last30Days = now()->subDays(30)->format('Y-m-d');
+        $today = now()->format('Y-m-d');
+        $transferKpis = $transferService->getTransferKpis($last30Days, $today, null);
+
+        $transferEfficiency = [
+            'avg_hours' => $transferKpis['avg_completion_hours'] ?? 0,
+            'discrepancy_rate' => $transferKpis['discrepancy_rate'] ?? 0,
+        ];
+
+        // Sales Chart Data (Problem 3) - 7 days of data
+        $salesChartData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $dayTotal = Sale::notVoided()
+                ->whereDate('sale_date', $date)
+                ->sum('total');  // stored in cents
+            $dayCount = Sale::notVoided()
+                ->whereDate('sale_date', $date)
+                ->count();
+            $salesChartData[] = [
+                'label'        => $date->format('D'),   // Mon, Tue…
+                'date'         => $date->toDateString(),
+                'revenue'      => $dayTotal / 100,
+                'transactions' => $dayCount,
+            ];
+        }
+
+        // Shop Stock Fill Data (Problem 5)
+        $shopStockFill = Shop::active()->get()->map(function($shop) {
+            $boxes = Box::where('location_type', 'shop')
+                ->where('location_id', $shop->id)
+                ->whereIn('status', ['full', 'partial'])
+                ->selectRaw('SUM(items_remaining) as remaining, SUM(items_total) as total')
+                ->first();
+
+            $fillPct = ($boxes && $boxes->total > 0)
+                ? round(($boxes->remaining / $boxes->total) * 100)
+                : 0;
+
+            return [
+                'name' => $shop->name,
+                'pct' => $fillPct,
+            ];
+        })->sortByDesc('pct')->values()->all();
+
         return view('owner.dashboard', compact(
             'stats',
             'recentTransfers',
@@ -259,7 +343,14 @@ class DashboardController extends Controller
             'systemHealth',
             'filter',
             'fromDate',
-            'toDate'
+            'toDate',
+            'returnsThisMonth',
+            'damagedGoodsLoss',
+            'stockTurnover',
+            'transferEfficiency',
+            'deliveredToday',
+            'salesChartData',
+            'shopStockFill'
         ));
     }
 

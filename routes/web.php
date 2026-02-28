@@ -59,11 +59,64 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/create', function () { return view('owner.products.create'); })->name('create');
     });
 
+    // Categories
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('/', function () { return view('owner.categories.index'); })->name('index');
+        Route::get('/create', function () { return view('owner.categories.create'); })->name('create');
+    });
+
+    // Boxes/Inventory
+    Route::prefix('boxes')->name('boxes.')->group(function () {
+        Route::get('/', function () { return view('owner.boxes.index'); })->name('index');
+        Route::get('/{box}', function ($box) { return view('owner.boxes.show', compact('box')); })->name('show');
+    });
+
+    // Transfers
+    Route::prefix('transfers')->name('transfers.')->group(function () {
+        Route::get('/', function () { return view('owner.transfers.index'); })->name('index');
+        Route::get('/{transfer}', function ($transfer) { return view('owner.transfers.show', compact('transfer')); })->name('show');
+    });
+
+    // Sales
+    Route::prefix('sales')->name('sales.')->group(function () {
+        Route::get('/', function () { return view('owner.sales.index'); })->name('index');
+        Route::get('/{sale}', function ($sale) { return view('owner.sales.show', compact('sale')); })->name('show');
+    });
+
+    // Returns
+    Route::prefix('returns')->name('returns.')->group(function () {
+        Route::get('/', function () { return view('owner.returns.index'); })->name('index');
+        Route::get('/{return}', function ($return) { return view('owner.returns.show', compact('return')); })->name('show');
+    });
+
+    // Damaged Goods
+    Route::prefix('damaged-goods')->name('damaged-goods.')->group(function () {
+        Route::get('/', function () { return view('owner.damaged-goods.index'); })->name('index');
+        Route::get('/{damagedGood}', function ($damagedGood) { return view('owner.damaged-goods.show', compact('damagedGood')); })->name('show');
+    });
+
+    // Transporters
+    Route::prefix('transporters')->name('transporters.')->group(function () {
+        Route::get('/', function () { return view('owner.transporters.index'); })->name('index');
+        Route::get('/create', function () { return view('owner.transporters.create'); })->name('create');
+    });
+
+    // Alerts
+    Route::prefix('alerts')->name('alerts.')->group(function () {
+        Route::get('/', function () { return view('owner.alerts.index'); })->name('index');
+    });
+
+    // Activity Logs
+    Route::prefix('activity-logs')->name('activity-logs.')->group(function () {
+        Route::get('/', function () { return view('owner.activity-logs.index'); })->name('index');
+    });
+
     // Reports
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/inventory', function () { return view('owner.reports.inventory'); })->name('inventory');
         Route::get('/sales', function () { return view('owner.reports.sales'); })->name('sales');
         Route::get('/transfers', function () { return view('owner.reports.transfers'); })->name('transfers');
+        Route::get('/losses', function () { return view('owner.reports.losses'); })->name('losses');
     });
 
     // System settings
