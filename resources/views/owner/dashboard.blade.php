@@ -20,10 +20,21 @@
         <livewire:dashboard.time-filter />
     </div>
 
-    {{-- Inventory Health Row (Problem 8) - Consistent with Business Overview Cards --}}
+    {{-- ─────────────────────────────────────────────────────────────────────
+         Inventory Health (static snapshot from DashboardController $stats)
+         FIX #1  — uses active_boxes / total_items_in_stock which now both
+                    share the same Box::available() filter as BusinessKpiRow.
+         FIX #3  — total_items_in_stock no longer includes damaged/empty boxes.
+         FIX #4  — card 4 now clearly shows active_boxes (full/partial only)
+                    and separates the raw all-time count into the meta line.
+         FIX #6  — Gross Margin badge labelled "Potential margin on stock"
+                    so the owner can distinguish it from the realised margin
+                    shown in the Business Overview (Livewire) section below.
+    ───────────────────────────────────────────────────────────────────────── --}}
     @if(isset($stats))
     <div class="section-label">Inventory Health</div>
     <div class="biz-kpi-grid" style="margin-bottom: 24px">
+
         {{-- Card 1: Stock Cost Value --}}
         <div class="bkpi violet" style="animation:fadeUp .4s ease .05s both">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -41,7 +52,9 @@
             <div class="bkpi-meta">What you paid · RWF</div>
         </div>
 
-        {{-- Card 2: Retail Value --}}
+        {{-- Card 2: Retail Value
+             FIX #3: badge now shows total_items_in_stock which uses the same
+             Box::available() filter as the valuation — no more damaged items inflating the count --}}
         <div class="bkpi blue" style="animation:fadeUp .4s ease .10s both">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                 <div style="display:flex;align-items:center;gap:8px">
@@ -52,13 +65,21 @@
                     </div>
                     <span class="bkpi-name">Potential Retail</span>
                 </div>
-                <span class="bkpi-pct blue">{{ number_format($stats['total_items_in_stock']) }}</span>
+                <span class="bkpi-pct blue">{{ number_format($stats['total_items_in_stock']) }} items</span>
             </div>
             <div class="bkpi-value">{{ number_format($stats['retail_value']) }}</div>
-            <div class="bkpi-meta">{{ number_format($stats['total_items_in_stock']) }} items in stock · RWF</div>
+            {{-- FIX #3: items count now consistent with valuation (available boxes only) --}}
+            <div class="bkpi-meta">{{ number_format($stats['total_items_in_stock']) }} sellable items · RWF</div>
+            @if(($stats['damaged_items'] ?? 0) > 0)
+            <div class="bkpi-meta" style="color:var(--red);margin-top:4px">
+                + {{ number_format($stats['damaged_items']) }} damaged items (excluded)
+            </div>
+            @endif
         </div>
 
-        {{-- Card 3: Potential Profit --}}
+        {{-- Card 3: Potential Profit / Gross Margin
+             FIX #6: label explicitly says "Potential margin on stock" — owner
+             knows this is NOT the same as realised margin in Business Overview --}}
         <div class="bkpi green" style="animation:fadeUp .4s ease .15s both">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                 <div style="display:flex;align-items:center;gap:8px">
@@ -70,14 +91,21 @@
                     </div>
                     <span class="bkpi-name">Gross Margin</span>
                 </div>
-                @php $marginPct = $stats['retail_value'] > 0 ? ($stats['potential_profit'] / $stats['retail_value']) * 100 : 0; @endphp
+                @php
+                    $marginPct = $stats['retail_value'] > 0
+                        ? ($stats['potential_profit'] / $stats['retail_value']) * 100
+                        : 0;
+                @endphp
                 <span class="bkpi-pct green">{{ number_format($marginPct, 1) }}%</span>
             </div>
             <div class="bkpi-value" style="color:var(--green)">{{ number_format($stats['potential_profit']) }}</div>
-            <div class="bkpi-meta">Expected profit margin · RWF</div>
+            {{-- FIX #6: clear label to distinguish from realised margin below --}}
+            <div class="bkpi-meta">Potential margin on stock · RWF</div>
         </div>
 
-        {{-- Card 4: Items in Stock --}}
+        {{-- Card 4: Active Boxes (sellable)
+             FIX #4: headline now shows active_boxes (full/partial, items > 0).
+             Raw total_boxes shown in meta as context for ops team. --}}
         <div class="bkpi pink" style="animation:fadeUp .4s ease .20s both">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                 <div style="display:flex;align-items:center;gap:8px">
@@ -89,17 +117,22 @@
                             <circle cx="18.5" cy="18.5" r="2.5"/>
                         </svg>
                     </div>
-                    <span class="bkpi-name">Total Boxes</span>
+                    <span class="bkpi-name">Active Boxes</span>
                 </div>
-                <span class="bkpi-pct pink">Active</span>
+                <span class="bkpi-pct pink">Full/Partial</span>
             </div>
-            <div class="bkpi-value">{{ number_format($stats['total_boxes']) }}</div>
-            <div class="bkpi-meta">{{ number_format($stats['total_items_in_stock']) }} items total</div>
+            {{-- FIX #4: active_boxes (available) — not the raw all-time count --}}
+            <div class="bkpi-value">{{ number_format($stats['active_boxes']) }}</div>
+            <div class="bkpi-meta">
+                {{ number_format($stats['total_items_in_stock']) }} items ·
+                {{ number_format($stats['total_boxes']) }} total boxes on record
+            </div>
         </div>
+
     </div>
     @endif
 
-    {{-- Row 1: Business KPIs --}}
+    {{-- Row 1: Business KPIs (Livewire — period-aware, includes realised margin) --}}
     <div class="section-label">Business Overview</div>
     <livewire:dashboard.business-kpi-row />
 
