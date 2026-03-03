@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }} - Operations Centre</title>
 
-    <!-- Google Fonts - DM Sans & DM Mono -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -14,9 +14,14 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 
-    <!-- Theme Initialization Script -->
+    {{-- Chart.js loaded ONCE here in the head. --}}
+    {{-- Loading it inside @push('scripts') or dynamically via createElement fails --}}
+    {{-- with Livewire SPA navigation because @stack('scripts') does not re-execute --}}
+    {{-- on navigate, and async script injection races against Alpine component init. --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Theme lock -->
     <script>
-        // Lock to light theme
         (function() {
             document.documentElement.setAttribute('data-theme', 'light');
             localStorage.setItem('theme', 'light');
@@ -27,7 +32,7 @@
       x-data="{ mobileMenuOpen: false }"
       @toggle-mobile-menu.window="mobileMenuOpen = !mobileMenuOpen"
       @close-mobile-menu.window="mobileMenuOpen = false">
-    <!-- Mobile Menu Overlay -->
+
     <div x-show="mobileMenuOpen"
          x-cloak
          @click="mobileMenuOpen = false; $dispatch('close-mobile-menu')"
@@ -40,17 +45,12 @@
          x-transition:leave-end="opacity-0">
     </div>
 
-    <!-- Sidebar Component -->
     <livewire:layout.sidebar />
 
-    <!-- Main Content Wrapper -->
     <div class="lg:ml-[var(--sidebar-width)]">
-        <!-- Top Navigation Bar -->
         <livewire:layout.topbar />
-
-        <!-- Page Content -->
         <main class="min-h-screen" style="background-color: var(--bg); padding-top: var(--topbar-height);">
-            <div class="p-4 sm:p-5 lg:p-7">
+            <div class="p-5 sm:p-6 lg:p-8 xl:p-10">
                 {{ $slot }}
             </div>
         </main>
@@ -58,7 +58,6 @@
 
     @livewireScripts
 
-    <!-- Additional Scripts (Chart.js, etc.) -->
     @stack('scripts')
 </body>
 </html>

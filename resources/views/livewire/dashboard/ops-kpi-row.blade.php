@@ -1,5 +1,8 @@
 <div class="ops-kpi-grid">
 
+  {{-- Card 1: Sellable Boxes
+       Uses the same Box::available() filter as Inventory Health and Business Overview.
+       Damaged boxes shown in the sub-line — never mixed into the headline number. --}}
   <div class="okpi" style="animation:fadeUp .4s ease .25s both">
     <div class="okpi-icon blue">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -8,13 +11,18 @@
       </svg>
     </div>
     <div class="okpi-body">
-      <div class="okpi-value">{{ number_format($activeBoxes) }}</div>
-      <div class="okpi-label">Active Boxes</div>
-      <div class="okpi-sub" style="white-space:normal;overflow:visible">WH: {{ $warehouseBoxes }} &nbsp;·&nbsp; Shops: {{ $shopBoxes }}</div>
+      <div class="okpi-value">{{ number_format($sellableBoxes) }}</div>
+      <div class="okpi-label">Sellable Boxes</div>
+      <div class="okpi-sub" style="white-space:normal;overflow:visible">
+        WH: {{ $warehouseBoxes }} &nbsp;·&nbsp; Shops: {{ $shopBoxes }}
+        @if($damagedBoxes > 0)
+          &nbsp;·&nbsp; <span style="color:var(--red)">{{ $damagedBoxes }} damaged</span>
+        @endif
+      </div>
     </div>
-    <span class="okpi-delta up">↑ 12%</span>
   </div>
 
+  {{-- Card 2: Active Transfers --}}
   <div class="okpi" style="animation:fadeUp .4s ease .30s both">
     <div class="okpi-icon amber">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -25,11 +33,14 @@
     <div class="okpi-body">
       <div class="okpi-value">{{ $activeTransfers }}</div>
       <div class="okpi-label">Active Transfers</div>
-      <div class="okpi-sub" style="white-space:normal;overflow:visible">Transit: {{ $inTransitCount }} &nbsp;·&nbsp; Pending: {{ $pendingCount }}</div>
+      <div class="okpi-sub" style="white-space:normal;overflow:visible">
+        Transit: {{ $inTransitCount }} &nbsp;·&nbsp; Pending: {{ $pendingCount }}
+      </div>
     </div>
     <span class="okpi-delta warn">{{ $pendingCount }} pending</span>
   </div>
 
+  {{-- Card 3: Low Stock Alerts --}}
   <div class="okpi" style="animation:fadeUp .4s ease .35s both">
     <div class="okpi-icon red">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -40,11 +51,16 @@
     <div class="okpi-body">
       <div class="okpi-value">{{ $lowStockTotal }}</div>
       <div class="okpi-label">Low Stock Alerts</div>
-      <div class="okpi-sub">{{ $lowStockCritical }} critical · {{ $lowStockTotal - $lowStockCritical }} warning</div>
+      <div class="okpi-sub">
+        {{ $lowStockCritical }} critical &nbsp;·&nbsp; {{ $lowStockTotal - $lowStockCritical }} warning
+      </div>
     </div>
-    <span class="okpi-delta down">↑ {{ $lowStockTotal }}</span>
+    @if($lowStockCritical > 0)
+      <span class="okpi-delta down">{{ $lowStockCritical }} critical</span>
+    @endif
   </div>
 
+  {{-- Card 4: Today's Transactions --}}
   <div class="okpi" style="animation:fadeUp .4s ease .40s both">
     <div class="okpi-icon green">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -57,6 +57,9 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     Route::prefix('products')->name('products.')->group(function () {
         Route::get('/', function () { return view('owner.products.index'); })->name('index');
         Route::get('/create', function () { return view('owner.products.create'); })->name('create');
+        Route::get('/{product}/edit', function (\App\Models\Product $product) {
+            return view('owner.products.edit', compact('product'));
+        })->name('edit');
     });
 
     // Categories

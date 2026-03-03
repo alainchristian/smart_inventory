@@ -18,10 +18,11 @@ class TopShops extends Component
         $this->loadData();
     }
 
+    // ── LIVEWIRE 3 FIX ────────────────────────────────────────────────────────
     #[On('time-filter-changed')]
-    public function refresh(array $payload): void
+    public function refresh(string $period, ?string $from = null, ?string $to = null): void
     {
-        $this->period = $payload['period'] ?? 'today';
+        $this->period = $period;
         $this->loadData();
     }
 
@@ -30,7 +31,7 @@ class TopShops extends Component
         [$start, $end] = $this->periodRange();
 
         $this->shops = Shop::withSum(
-                ['sales as revenue' => fn($q) => $q->whereBetween('sale_date', [$start, $end])],
+                ['sales as revenue' => fn($q) => $q->notVoided()->whereBetween('sale_date', [$start, $end])],
                 'total'
             )
             ->orderByDesc('revenue')
@@ -39,6 +40,7 @@ class TopShops extends Component
             ->map(function ($shop, $idx) {
                 $fill = Box::where('location_type', 'shop')
                     ->where('location_id', $shop->id)
+                    ->available()
                     ->selectRaw('SUM(items_remaining) as rem, SUM(items_total) as tot')
                     ->first();
                 $fillPct = ($fill && $fill->tot > 0)
@@ -47,7 +49,7 @@ class TopShops extends Component
                     'name'     => $shop->name,
                     'revenue'  => ($shop->revenue ?? 0) / 100,
                     'fill_pct' => $fillPct,
-                    'rank_css' => ['r1','r2','r3'][$idx] ?? 'r3',
+                    'rank_css' => ['r1', 'r2', 'r3'][$idx] ?? 'r3',
                     'rank'     => $idx + 1,
                 ];
             })
@@ -58,7 +60,7 @@ class TopShops extends Component
 
     private function periodRange(): array
     {
-        return match($this->period) {
+        return match ($this->period) {
             'week'    => [now()->startOfWeek(),    now()->endOfDay()],
             'month'   => [now()->startOfMonth(),   now()->endOfDay()],
             'quarter' => [now()->startOfQuarter(), now()->endOfDay()],

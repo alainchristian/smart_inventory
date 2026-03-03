@@ -1,6 +1,5 @@
 <div class="time-filter-row">
 
-    {{-- Segmented period buttons --}}
     <div class="time-seg">
         @foreach(['today' => 'Today', 'week' => 'Week', 'month' => 'Month', 'quarter' => 'Quarter', 'year' => 'Year'] as $key => $label)
             <button class="time-seg-btn {{ $activePeriod === $key ? 'active' : '' }}"
@@ -8,7 +7,6 @@
         @endforeach
     </div>
 
-    {{-- Custom range toggle --}}
     <button class="time-custom-btn" wire:click="$toggle('showCustom')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -18,13 +16,12 @@
         Custom Range
     </button>
 
-    {{-- Inline date pickers --}}
     @if($showCustom)
     <div style="display:flex;align-items:center;gap:6px">
         <input type="date" wire:model="customFrom"
                style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--rsm);
                       background:var(--surface);color:var(--text);font-size:12px">
-        <span style="color:var(--text-dim);font-size:12px">→</span>
+        <span style="color:var(--text-dim);font-size:12px">to</span>
         <input type="date" wire:model="customTo"
                style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--rsm);
                       background:var(--surface);color:var(--text);font-size:12px">
@@ -35,9 +32,8 @@
     </div>
     @endif
 
-    {{-- Currency chip --}}
     <div class="currency-chip">
-        <span>🇷🇼</span> {{ $currency }}
+        <span>&#127479;&#127484;</span> {{ $currency }}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="6 9 12 15 18 9"/>
         </svg>

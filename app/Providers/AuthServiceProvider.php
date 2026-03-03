@@ -42,11 +42,11 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         Gate::define('viewOwnerDashboard', fn (User $user) =>
-            $user->role === 'owner'
+            $user->isOwner()
         );
 
         Gate::define('viewPurchasePrice', fn (User $user) =>
-            $user->role === 'owner'
+            $user->isOwner()
         );
     }
 }

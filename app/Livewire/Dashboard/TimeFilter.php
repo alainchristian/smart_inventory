@@ -30,11 +30,15 @@ class TimeFilter extends Component
 
     private function dispatchFilter(): void
     {
-        $this->dispatch('time-filter-changed', [
-            'period' => $this->activePeriod,
-            'from'   => $this->customFrom,
-            'to'     => $this->customTo,
-        ]);
+        // Livewire 3: named parameters, NOT an array.
+        // All #[On('time-filter-changed')] listeners must use:
+        //   public function refresh(string $period, ?string $from, ?string $to)
+        // The old array syntax ($payload['period']) silently received nothing.
+        $this->dispatch('time-filter-changed',
+            period: $this->activePeriod,
+            from:   $this->customFrom,
+            to:     $this->customTo,
+        );
     }
 
     public function render()

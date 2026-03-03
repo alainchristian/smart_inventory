@@ -1,12 +1,12 @@
 <div x-data="{ open: false }"
      @toggle-mobile-menu.window="open = !open"
      @close-mobile-menu.window="open = false"
-     class="fixed left-0 top-0 h-screen bg-[var(--surface)] border-r border-[var(--border)] flex flex-col transition-transform duration-300 ease-in-out z-50
+     class="fixed left-0 top-0 h-screen bg-[var(--surface)] flex flex-col transition-transform duration-300 ease-in-out z-50
             -translate-x-full lg:translate-x-0"
      :class="{ 'translate-x-0': open }"
      style="width: var(--sidebar-width);">
     <!-- Logo & Branding -->
-    <div class="p-5 border-b" style="border-color: var(--border);">
+    <div class="px-5 border-b flex flex-col justify-center" style="height: var(--topbar-height); border-color: var(--border);">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent), #6b8dff);">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="color: white;">
@@ -21,7 +21,7 @@
     </div>
 
     <!-- Role/Location Badge -->
-    <div class="px-4 py-2 border-b" style="background: var(--surface2); border-color: var(--border);">
+    <div class="px-4 py-2 border-b border-r border-[var(--border)]" style="background: var(--surface2); border-color: var(--border);">
         @if(auth()->user()->isOwner())
             <div class="flex items-center space-x-2">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded" style="background: var(--accent-glow); color: var(--accent);">Owner</span>
@@ -41,7 +41,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 overflow-y-auto p-4 space-y-4" x-data="{
+    <nav class="flex-1 overflow-y-auto p-4 space-y-4 border-r border-[var(--border)]" x-data="{
         openLocations: {{ request()->routeIs('owner.warehouses.*') || request()->routeIs('owner.shops.*') ? 'true' : 'false' }},
         openShopOps: {{ request()->routeIs('shop.*') && !request()->routeIs('shop.dashboard') ? 'true' : 'false' }},
         openWarehouseOps: {{ request()->routeIs('warehouse.*') && !request()->routeIs('warehouse.dashboard') ? 'true' : 'false' }},
@@ -373,7 +373,7 @@
     </nav>
 
     <!-- User Info & Logout -->
-    <div class="border-t p-4" style="border-color: var(--border); background: var(--surface2);">
+    <div class="border-t border-r border-[var(--border)] p-4" style="border-color: var(--border); background: var(--surface2);">
         <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-white" style="background: linear-gradient(135deg, var(--accent), #6b8dff);">
                 {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}

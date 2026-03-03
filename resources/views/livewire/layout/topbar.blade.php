@@ -1,4 +1,4 @@
-<div class="fixed top-0 lg:left-[var(--sidebar-width)] left-0 right-0" style="background: var(--surface); z-index: 60; height: var(--topbar-height);">
+<div class="fixed top-0 lg:left-[var(--sidebar-width)] left-0 right-0 border-b" style="background: var(--surface); border-color: var(--border); z-index: 60; height: var(--topbar-height);">
     <div class="px-3 sm:px-4 lg:px-6 h-full flex items-center w-full">
         <div class="flex items-center justify-between gap-3 sm:gap-4 lg:gap-6 w-full">
             <!-- Left: Mobile Menu + Page Title -->

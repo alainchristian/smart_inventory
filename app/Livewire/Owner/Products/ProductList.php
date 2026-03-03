@@ -22,6 +22,7 @@ class ProductList extends Component
     public string  $sortBy        = 'name';
     public string  $sortDirection = 'asc';
 
+    // Period from global TimeFilter (owner enrichment only)
     public string  $period = 'month';
     public ?string $from   = null;
     public ?string $to     = null;
@@ -44,8 +45,6 @@ class ProductList extends Component
         }
     }
 
-    // Match the named-parameter format that TimeFilter.php dispatches
-    // $this->dispatch('time-filter-changed', period: ..., from: ..., to: ...)
     #[On('time-filter-changed')]
     public function refreshPeriod(string $period, ?string $from = null, ?string $to = null): void
     {
@@ -84,17 +83,11 @@ class ProductList extends Component
     public function deleteProduct(int $productId): void
     {
         $product = Product::findOrFail($productId);
-
-        if (! auth()->user()->isOwner()) {
-            session()->flash('error', 'Only owners can delete products.');
-            return;
-        }
-
+        $this->authorize('delete', $product);
         if ($product->boxes()->exists()) {
             session()->flash('error', 'Cannot delete a product that has boxes in inventory.');
             return;
         }
-
         $product->delete();
         session()->flash('success', 'Product deleted.');
     }
@@ -102,17 +95,8 @@ class ProductList extends Component
     public function toggleActive(int $productId): void
     {
         $product = Product::findOrFail($productId);
-
-        // Only owners can toggle — check role directly as a safeguard
-        if (! auth()->user()->isOwner()) {
-            session()->flash('error', 'Only owners can change product status.');
-            return;
-        }
-
-        $product->update(['is_active' => ! $product->is_active]);
-
-        // Re-fetch to get updated value
-        $product->refresh();
+        $this->authorize('update', $product);
+        $product->update(['is_active' => !$product->is_active]);
         session()->flash('success', $product->is_active ? 'Product activated.' : 'Product deactivated.');
     }
 
@@ -134,14 +118,14 @@ class ProductList extends Component
         $isOwner = $user->isOwner();
         [$start, $end] = $this->periodRange();
 
-        // Base product query
+        // -- Base product query ----
         $query = Product::query()
             ->with('category')
             ->when($this->search,     fn ($q) => $q->search($this->search))
             ->when($this->categoryId, fn ($q) => $q->where('category_id', $this->categoryId))
             ->when($this->activeOnly, fn ($q) => $q->active());
 
-        // Low stock filter
+        // -- Low stock filter ----
         if ($this->lowStockOnly) {
             if ($isOwner) {
                 $lowIds = DB::table('boxes')
@@ -160,19 +144,20 @@ class ProductList extends Component
 
                 $query->whereIn('id', $lowIds->merge($zeroIds)->unique());
             }
+            // Manager post-filter applied after paginate (see below)
         }
 
-        // DB-level sorting
+        // -- DB-level sorting ----
         $dbFields = ['name', 'sku', 'created_at', 'selling_price', 'purchase_price'];
         $query->orderBy(
             in_array($this->sortBy, $dbFields) ? $this->sortBy : 'name',
             $this->sortDirection
         );
 
-        $products   = $query->paginate(50);
-        $productIds = $products->pluck('id')->toArray();
+        $products    = $query->paginate(50);
+        $productIds  = $products->pluck('id')->toArray();
 
-        // Sales enrichment (owner only - single grouped query)
+        // -- Sales enrichment (owner only - single grouped query) ----
         $salesStats = [];
         if ($isOwner && !empty($productIds)) {
             foreach (
@@ -196,7 +181,7 @@ class ProductList extends Component
             }
         }
 
-        // Stock enrichment (single grouped query)
+        // -- Stock enrichment (single grouped query) ----
         $stockData = [];
         if (!empty($productIds)) {
             $boxQuery = DB::table('boxes')
@@ -224,7 +209,7 @@ class ProductList extends Component
             }
         }
 
-        // Post-filter: manager low-stock (can't do efficiently in DB)
+        // -- Post-filter: manager low-stock ----
         if ($this->lowStockOnly && !$isOwner && $this->locationType && $this->locationId) {
             $filtered = collect($products->items())->filter(function ($p) use ($stockData) {
                 return ($stockData[$p->id]->total_items ?? 0) <= $p->low_stock_threshold;

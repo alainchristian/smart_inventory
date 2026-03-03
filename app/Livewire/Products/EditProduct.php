@@ -6,8 +6,10 @@ use App\Models\Category;
 use App\Models\Product;
 use Livewire\Component;
 
-class CreateProduct extends Component
+class EditProduct extends Component
 {
+    public Product $product;
+
     // Identity
     public string  $name        = '';
     public string  $sku         = '';
@@ -15,11 +17,11 @@ class CreateProduct extends Component
     public ?int    $categoryId  = null;
     public string  $description = '';
 
-    // Packaging & pricing (user enters RWF, stored in cents)
-    public int     $itemsPerBox       = 1;
-    public string  $purchasePrice     = '';   // user input string, convert on save
-    public string  $sellingPrice      = '';
-    public string  $boxSellingPrice   = '';
+    // Packaging & pricing
+    public int     $itemsPerBox      = 1;
+    public string  $purchasePrice    = '';
+    public string  $sellingPrice     = '';
+    public string  $boxSellingPrice  = '';
 
     // Operational
     public int     $lowStockThreshold = 10;
@@ -32,8 +34,8 @@ class CreateProduct extends Component
     {
         return [
             'name'             => 'required|string|max:255',
-            'sku'              => 'required|string|max:100|unique:products,sku',
-            'barcode'          => 'nullable|string|max:100|unique:products,barcode',
+            'sku'              => 'required|string|max:100|unique:products,sku,' . $this->product->id,
+            'barcode'          => 'nullable|string|max:100|unique:products,barcode,' . $this->product->id,
             'categoryId'       => 'required|exists:categories,id',
             'description'      => 'nullable|string|max:1000',
             'itemsPerBox'      => 'required|integer|min:1|max:10000',
@@ -49,42 +51,42 @@ class CreateProduct extends Component
     }
 
     protected $messages = [
-        'name.required'      => 'Product name is required.',
-        'sku.required'       => 'SKU is required.',
-        'sku.unique'         => 'This SKU is already taken.',
-        'barcode.unique'     => 'This barcode is already registered.',
-        'categoryId.required'=> 'Please select a category.',
-        'itemsPerBox.min'    => 'Must be at least 1 item per box.',
+        'name.required'       => 'Product name is required.',
+        'sku.required'        => 'SKU is required.',
+        'sku.unique'          => 'This SKU is already taken by another product.',
+        'barcode.unique'      => 'This barcode is already registered to another product.',
+        'categoryId.required' => 'Please select a category.',
         'purchasePrice.required' => 'Purchase price is required.',
         'sellingPrice.required'  => 'Selling price is required.',
     ];
 
-    public function mount(): void
+    public function mount(Product $product): void
     {
-        if (request()->has('barcode')) {
-            $this->barcode = request()->get('barcode');
-        }
-        $this->generateSku();
+        $this->product = $product;
+
+        // Populate form fields — prices converted from cents to RWF
+        $this->name             = $product->name;
+        $this->sku              = $product->sku;
+        $this->barcode          = $product->barcode ?? '';
+        $this->categoryId       = $product->category_id;
+        $this->description      = $product->description ?? '';
+        $this->itemsPerBox      = $product->items_per_box;
+        $this->purchasePrice    = $product->purchase_price > 0
+                                    ? (string) ($product->purchase_price / 100)
+                                    : '';
+        $this->sellingPrice     = $product->selling_price > 0
+                                    ? (string) ($product->selling_price / 100)
+                                    : '';
+        $this->boxSellingPrice  = $product->box_selling_price
+                                    ? (string) ($product->box_selling_price / 100)
+                                    : '';
+        $this->lowStockThreshold = $product->low_stock_threshold;
+        $this->reorderPoint      = $product->reorder_point;
+        $this->unitOfMeasure     = $product->unit_of_measure ?? 'piece';
+        $this->supplier          = $product->supplier ?? '';
+        $this->isActive          = $product->is_active;
     }
 
-    public function generateSku(): void
-    {
-        $count = str_pad(Product::count() + 1, 3, '0', STR_PAD_LEFT);
-        $this->sku = 'PROD-' . strtoupper(substr(uniqid(), -4)) . '-' . $count;
-    }
-
-    public function updatedName(): void
-    {
-        // Auto-suggest SKU from name only if still on generated value
-        if (str_starts_with($this->sku, 'PROD-')) {
-            $words = array_slice(explode(' ', strtoupper($this->name)), 0, 3);
-            $prefix = implode('-', array_map(fn($w) => substr($w, 0, 3), $words));
-            $count  = str_pad(Product::count() + 1, 3, '0', STR_PAD_LEFT);
-            $this->sku = $prefix . '-' . $count;
-        }
-    }
-
-    // Live margin preview
     public function getMarginProperty(): ?float
     {
         $buy  = (float) $this->purchasePrice;
@@ -93,7 +95,6 @@ class CreateProduct extends Component
         return round(($sell - $buy) / $sell * 100, 1);
     }
 
-    // Live box price suggestion
     public function getBoxPriceSuggestionProperty(): string
     {
         $sell = (float) $this->sellingPrice;
@@ -102,16 +103,16 @@ class CreateProduct extends Component
         return number_format($sell * $ipb, 0, '.', ',');
     }
 
-    public function save(): void
+    public function update(): void
     {
         if (! auth()->user()->isOwner()) {
-            session()->flash('error', 'Only owners can create products.');
+            session()->flash('error', 'Only owners can edit products.');
             return;
         }
 
         $this->validate();
 
-        $product = Product::create([
+        $this->product->update([
             'category_id'        => $this->categoryId,
             'name'               => $this->name,
             'sku'                => strtoupper(trim($this->sku)),
@@ -130,13 +131,13 @@ class CreateProduct extends Component
             'is_active'          => $this->isActive,
         ]);
 
-        session()->flash('success', "Product \"{$product->name}\" created successfully.");
+        session()->flash('success', "Product \"{$this->product->name}\" updated successfully.");
         $this->redirect(route('owner.products.index'), navigate: true);
     }
 
     public function render(): \Illuminate\Contracts\View\View
     {
-        return view('livewire.products.create-product', [
+        return view('livewire.products.edit-product', [
             'categories' => Category::active()->orderBy('name')->get(),
         ]);
     }

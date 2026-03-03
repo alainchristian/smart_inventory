@@ -20,7 +20,7 @@
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
         <div class="flex flex-col h-full">
             <!-- Sidebar Header with Logo -->
-            <div class="px-4 flex items-center justify-between border-b" style="height: var(--topbar-height); border-color: var(--border);">
+            <div class="px-4 flex items-center justify-between" style="height: var(--topbar-height); box-sizing: border-box;">
                 <div class="flex items-center space-x-2.5">
                     <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent), #6b8dff);">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="color: white;">
@@ -43,7 +43,7 @@
             </div>
 
             <!-- Role/Location Badge -->
-            <div class="px-4 py-2.5 border-b" style="background: var(--surface2); border-color: var(--border);">
+            <div class="px-4 py-2.5" style="background: var(--surface2);">
                 @if(auth()->user()->isOwner())
                     <div class="flex items-center space-x-2">
                         <span class="inline-flex px-2 py-0.5 text-[10px] font-bold rounded" style="background: var(--accent-glow); color: var(--accent);">OWNER</span>

@@ -1,9 +1,12 @@
 {{--
     business-kpi-row.blade.php
-    FIX #5: Sales headline now shows $sales['current'] (period-selected value)
-            instead of hardcoded $sales['month'].
-    FIX #6: Profit badge label distinguishes "Realised margin" from inventory markup.
-            Inventory badge label shows "Potential markup" (not the same thing).
+    Card 4 (Locations) updated to match Image 2 design:
+    - Location pin icon (replaces house icon)
+    - "Active" badge in header (replaces empty space)
+    - Large headline total (warehouses + shops)
+    - "Total locations &middot; Network" subtitle line
+    - Smaller coloured sub-stats (Warehouses / Shops / Users)
+      matching the pattern of the other three cards
 --}}
 <div class="biz-kpi-grid">
 
@@ -20,15 +23,13 @@
         <span class="bkpi-name">Sales</span>
       </div>
       <span class="bkpi-pct {{ $sales['growth'] >= 0 ? 'up' : 'down' }}">
-        {{ $sales['growth'] >= 0 ? '↑' : '↓' }} {{ abs($sales['growth']) }}%
+        {{ $sales['growth'] >= 0 ? '&uarr;' : '&darr;' }} {{ abs($sales['growth']) }}%
       </span>
     </div>
 
-    {{-- FIX #5: headline = selected period value, not always month --}}
     <div class="bkpi-value">{{ number_format($sales['current']) }}</div>
-    <div class="bkpi-meta">{{ number_format($sales['count']) }} transactions · RWF</div>
+    <div class="bkpi-meta">{{ number_format($sales['count']) }} transactions &middot; RWF</div>
 
-    {{-- Sub-row: fixed reference points (Today / Week / Month) --}}
     <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
       @foreach(['today' => 'Today', 'week' => 'Week', 'month' => 'Month'] as $k => $lbl)
       <div style="text-align:center;flex:1">
@@ -53,7 +54,6 @@
         </div>
         <span class="bkpi-name">Profit</span>
       </div>
-      {{-- FIX #6: label clarifies this is realised margin on sales (not inventory markup) --}}
       <span class="bkpi-pct green" title="{{ $profit['margin_label'] }}">
         {{ $profit['margin_pct'] }}%
       </span>
@@ -62,10 +62,8 @@
     <div class="bkpi-value" style="color:var(--green)">
       {{ number_format($profit['margin_rwf']) }}
     </div>
-    {{-- FIX #6: explicit label so owner knows what the % means --}}
-    <div class="bkpi-meta">{{ $profit['margin_label'] }} · RWF</div>
+    <div class="bkpi-meta">{{ $profit['margin_label'] }} &middot; RWF</div>
 
-    {{-- Sub-row: Today / Week / Month profit breakdowns --}}
     <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
       @foreach(['today' => 'Today', 'week' => 'Week', 'month' => 'Month'] as $k => $lbl)
       <div style="text-align:center;flex:1">
@@ -89,7 +87,6 @@
         </div>
         <span class="bkpi-name">Inventory</span>
       </div>
-      {{-- FIX #6: label clarifies this is potential markup, not realised margin --}}
       <span class="bkpi-pct blue" title="{{ $inventory['markup_label'] }}">
         {{ $inventory['markup_pct'] }}%
       </span>
@@ -97,13 +94,11 @@
 
     <div class="bkpi-value" style="display:flex;align-items:baseline;gap:6px;font-size:16px">
       <span>{{ number_format($inventory['cost']) }}</span>
-      <span style="font-size:12px;color:var(--text-dim)">→</span>
+      <span style="font-size:12px;color:var(--text-dim)">&#8594;</span>
       <span style="color:var(--text-sub);font-size:14px">{{ number_format($inventory['retail']) }}</span>
     </div>
-    {{-- FIX #6: explicit label so owner knows what the % badge means --}}
-    <div class="bkpi-meta">{{ $inventory['markup_label'] }} · Cost → Retail · RWF</div>
+    <div class="bkpi-meta">{{ $inventory['markup_label'] }} &middot; Cost &#8594; Retail &middot; RWF</div>
 
-    {{-- Sub-row: Warehouse / Shop breakdown --}}
     <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
       <div style="text-align:center;flex:1">
         <div style="font-size:11px;font-weight:700;color:{{ $inventory['warehouse'] > 0 ? 'var(--blue)' : 'var(--text-dim)' }};font-family:var(--mono)">
@@ -126,39 +121,51 @@
     </div>
   </div>
 
-  {{-- Card 4: Locations --}}
+  {{-- Card 4: Locations - updated to match Image 2 --}}
   <div class="bkpi violet" style="animation:fadeUp .4s ease .20s both">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+
+    {{-- Header row: pin icon + label + "Active" badge --}}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:8px">
         <div class="bkpi-icon violet">
+          {{-- Location pin (replaces old house icon to match Image 2) --}}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
           </svg>
         </div>
         <span class="bkpi-name">Locations</span>
       </div>
+      {{-- "Active" badge matches the pill style of other cards' % badges --}}
+      <span class="bkpi-pct violet">Active</span>
     </div>
-    <div style="display:flex;gap:16px;margin-top:16px">
+
+    {{-- Headline: total (warehouses + shops), matching the large number style of other cards --}}
+    <div class="bkpi-value">{{ $locations['warehouses'] + $locations['shops'] }}</div>
+    <div class="bkpi-meta">Total locations &middot; Network</div>
+
+    {{-- Sub-stats row: three coloured figures, same pattern as Sales / Profit / Inventory --}}
+    <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
       <div style="text-align:center;flex:1">
-        <div style="font-size:22px;font-weight:800;color:var(--violet);font-family:var(--mono)">
+        <div style="font-size:11px;font-weight:700;color:var(--violet);font-family:var(--mono)">
           {{ $locations['warehouses'] }}
         </div>
-        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Warehouses</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Warehouses</div>
       </div>
       <div style="text-align:center;flex:1">
-        <div style="font-size:22px;font-weight:800;color:var(--violet);font-family:var(--mono)">
+        <div style="font-size:11px;font-weight:700;color:var(--green);font-family:var(--mono)">
           {{ $locations['shops'] }}
         </div>
-        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Shops</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Shops</div>
       </div>
       <div style="text-align:center;flex:1">
-        <div style="font-size:22px;font-weight:800;color:var(--violet);font-family:var(--mono)">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);font-family:var(--mono)">
           {{ $locations['users'] }}
         </div>
-        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Users</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Users</div>
       </div>
     </div>
+
   </div>
 
 </div>
