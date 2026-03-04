@@ -174,7 +174,7 @@
                     <div class="p-2 bg-gray-50 rounded border-l-2 border-blue-400">
                         <p class="font-semibold text-gray-900 text-sm">{{ $transfer->transfer_number }}</p>
                         <p class="text-xs text-gray-600">To: {{ $transfer->toShop->name }}</p>
-                        <p class="text-xs text-gray-500">Approved {{ $transfer->reviewed_at->diffForHumans() }}</p>
+                        <p class="text-xs text-gray-500">Approved {{ $transfer->reviewed_at ? $transfer->reviewed_at->diffForHumans() : 'recently' }}</p>
                     </div>
                 @empty
                     <p class="text-xs text-gray-500 text-center py-4">No shipments pending</p>
@@ -195,7 +195,7 @@
                     <div class="p-2 bg-gray-50 rounded border-l-2 border-green-400">
                         <p class="font-semibold text-gray-900 text-sm">{{ $transfer->transfer_number }}</p>
                         <p class="text-xs text-gray-600">To: {{ $transfer->toShop->name }}</p>
-                        <p class="text-xs text-gray-500">Shipped {{ $transfer->shipped_at->diffForHumans() }}</p>
+                        <p class="text-xs text-gray-500">Shipped {{ $transfer->shipped_at ? $transfer->shipped_at->diffForHumans() : 'recently' }}</p>
                     </div>
                 @empty
                     <p class="text-xs text-gray-500 text-center py-4">No transfers in transit</p>
@@ -243,7 +243,7 @@
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-semibold text-gray-900 truncate">{{ $box->product->name }}</p>
                             <p class="text-xs text-gray-600">{{ $box->box_code }} • {{ $box->items_remaining }} items</p>
-                            <p class="text-xs text-gray-500">Received {{ $box->received_at->diffForHumans() }} by {{ $box->receivedBy->name }}</p>
+                            <p class="text-xs text-gray-500">Received {{ $box->received_at ? $box->received_at->diffForHumans() : 'recently' }} by {{ $box->receivedBy->name ?? 'Unknown' }}</p>
                         </div>
                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ $box->status->value === 'full' ? 'bg-green-100 text-green-800' : ($box->status->value === 'partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') }}">
                             {{ $box->status->label() }}

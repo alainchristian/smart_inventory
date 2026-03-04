@@ -48,17 +48,6 @@ class InventorySnapshot extends Model
         return $this->morphTo('location', 'location_type', 'location_id');
     }
 
-    // Accessors for price formatting
-    public function getTotalCostValueInDollarsAttribute(): float
-    {
-        return $this->total_cost_value / 100;
-    }
-
-    public function getTotalRetailValueInDollarsAttribute(): float
-    {
-        return $this->total_retail_value / 100;
-    }
-
     // Helper methods
     public function getTotalBoxesCount(): int
     {

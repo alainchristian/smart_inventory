@@ -80,6 +80,19 @@
                     <span class="text-[14px] font-medium">Products</span>
                 </a>
 
+                <a href="{{ route('owner.products.purchase-prices') }}" wire:navigate
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                          {{ request()->routeIs('owner.products.purchase-prices') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                    @if(request()->routeIs('owner.products.purchase-prices'))
+                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                    @endif
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4h.01M9 5v2m0 4h.01"/>
+                    </svg>
+                    <span class="text-[14px] font-medium">Prices</span>
+                </a>
+
                 <a href="{{ route('shop.pos') }}" wire:navigate
                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                           {{ request()->routeIs('shop.pos') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">

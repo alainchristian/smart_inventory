@@ -66,12 +66,6 @@ class ReturnModel extends Model
         return $this->hasMany(ReturnItem::class, 'return_id');
     }
 
-    // Accessors for price formatting
-    public function getRefundAmountInDollarsAttribute(): float
-    {
-        return $this->refund_amount / 100;
-    }
-
     // Helper methods
     public function isApproved(): bool
     {

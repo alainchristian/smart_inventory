@@ -49,7 +49,7 @@ new class extends Component
                 'color' => $colorMap[$alert->severity->name] ?? 'gray',
                 'title' => $alert->title,
                 'message' => $alert->message,
-                'time' => $alert->created_at->diffForHumans(),
+                'time' => $alert->created_at ? $alert->created_at->diffForHumans() : 'Recently',
                 'url' => $alert->action_url,
                 'is_read' => $alert->is_read,
             ]);
@@ -124,7 +124,7 @@ new class extends Component
                 'color' => 'blue',
                 'title' => 'Pending Transfer',
                 'message' => 'Transfer ' . $transfer->transfer_number . ' to ' . $transfer->toShop->name . ' awaiting approval',
-                'time' => $transfer->requested_at->diffForHumans(),
+                'time' => $transfer->requested_at ? $transfer->requested_at->diffForHumans() : 'Recently',
                 'url' => '#',
                 'is_read' => false,
             ]);

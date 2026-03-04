@@ -47,7 +47,7 @@ class TopShops extends Component
                     ? round(($fill->rem / $fill->tot) * 100) : 0;
                 return [
                     'name'     => $shop->name,
-                    'revenue'  => ($shop->revenue ?? 0) / 100,
+                    'revenue'  => $shop->revenue ?? 0,
                     'fill_pct' => $fillPct,
                     'rank_css' => ['r1', 'r2', 'r3'][$idx] ?? 'r3',
                     'rank'     => $idx + 1,

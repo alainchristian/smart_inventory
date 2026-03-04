@@ -70,12 +70,6 @@ class DamagedGood extends Model
         return $this->belongsTo(User::class, 'disposition_decided_by');
     }
 
-    // Accessors for price formatting
-    public function getEstimatedLossInDollarsAttribute(): float
-    {
-        return $this->estimated_loss / 100;
-    }
-
     // Helper methods
     public function hasDisposition(): bool
     {

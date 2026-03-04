@@ -109,8 +109,8 @@ class ProductDetail extends Component
                 'date'          => $si->sale->sale_date->format('M d, Y'),
                 'shop'          => $si->sale->shop->name ?? '--',
                 'sold_by'       => $si->sale->soldBy->name ?? '--',
-                'original'      => number_format($si->original_unit_price / 100),
-                'actual'        => number_format($si->actual_unit_price / 100),
+                'original'      => number_format($si->original_unit_price),
+                'actual'        => number_format($si->actual_unit_price),
                 'diff_pct'      => $si->original_unit_price > 0
                     ? round(($si->original_unit_price - $si->actual_unit_price) / $si->original_unit_price * 100, 1)
                     : 0,
@@ -126,7 +126,7 @@ class ProductDetail extends Component
             ->limit(15)
             ->get()
             ->map(fn ($m) => [
-                'date'          => $m->moved_at->diffForHumans(),
+                'date'          => $m->moved_at ? $m->moved_at->diffForHumans() : 'Unknown',
                 'box_code'      => $m->box->box_code ?? '--',
                 'type'          => $m->movement_type,
                 'from'          => $this->locationLabel($m->from_location_type?->value, $m->from_location_id, $warehouses, $shops),

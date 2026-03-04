@@ -55,7 +55,7 @@
                 </svg>
             </div>
             <p class="text-2xl font-bold">
-                RWF {{ number_format($this->lossKpis['total_refunds'] / 100, 0) }}
+                RWF {{ number_format($this->lossKpis['total_refunds'], 0) }}
             </p>
             <p class="text-xs opacity-75 mt-2">Amount refunded to customers</p>
         </div>
@@ -93,7 +93,7 @@
                 </svg>
             </div>
             <p class="text-2xl font-bold">
-                RWF {{ number_format($this->lossKpis['damaged_loss'] / 100, 0) }}
+                RWF {{ number_format($this->lossKpis['damaged_loss'], 0) }}
             </p>
             <p class="text-xs opacity-75 mt-2">Estimated damaged goods loss</p>
         </div>
@@ -145,12 +145,12 @@
                             <td class="px-3 py-2 text-right text-gray-600">{{ $product['return_count'] }}</td>
                             <td class="px-3 py-2 text-right text-gray-600">{{ number_format($product['returned_quantity']) }}</td>
                             <td class="px-3 py-2 text-right text-red-600">
-                                RWF {{ number_format($product['refund_amount'] / 100, 0) }}
+                                RWF {{ number_format($product['refund_amount'], 0) }}
                             </td>
                             <td class="px-3 py-2 text-right text-gray-600">{{ $product['damage_count'] }}</td>
                             <td class="px-3 py-2 text-right text-gray-600">{{ number_format($product['damaged_quantity']) }}</td>
                             <td class="px-3 py-2 text-right text-red-700 font-bold">
-                                RWF {{ number_format($product['total_loss'] / 100, 0) }}
+                                RWF {{ number_format($product['total_loss'], 0) }}
                             </td>
                         </tr>
                     @empty
@@ -180,13 +180,13 @@
                     name: 'Refunds',
                     data: lossTrendData.map(item => ({
                         x: new Date(item.date).getTime(),
-                        y: (item.refunds / 100).toFixed(2)
+                        y: (item.refunds).toFixed(2)
                     }))
                 }, {
                     name: 'Damaged Loss',
                     data: lossTrendData.map(item => ({
                         x: new Date(item.date).getTime(),
-                        y: (item.damaged_loss / 100).toFixed(2)
+                        y: (item.damaged_loss).toFixed(2)
                     }))
                 }],
                 chart: {

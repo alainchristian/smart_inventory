@@ -393,7 +393,8 @@ class ReceiveBoxes extends Component
                         'barcode' => $this->productBarcode,
                         'items_per_box' => $this->newProductItemsPerBox,
                         'purchase_price' => 0,
-                        'selling_price' => round($this->newProductSellingPrice * 100),
+                        'selling_price' => (int) $this->newProductSellingPrice,
+                        'box_selling_price' => null,
                         'low_stock_threshold' => 10,
                         'reorder_point' => 20,
                         'unit_of_measure' => 'piece',
@@ -567,14 +568,14 @@ class ReceiveBoxes extends Component
                     $this->editableProductSkus[$rowNum] = $product->sku;
                     $this->editableProductCategories[$rowNum] = $product->category_id;
                     $this->editableProductItemsPerBox[$rowNum] = $product->items_per_box;
-                    $this->editableProductPrices[$rowNum] = $product->selling_price / 100;
+                    $this->editableProductPrices[$rowNum] = $product->selling_price;
 
                     // Track if Excel has different values
                     $this->excelHasDifferentValues[$rowNum] = [
                         'name' => $item['product_name'] !== $product->name,
                         'sku' => ($item['sku'] ?? '') !== $product->sku,
                         'items_per_box' => ($item['items_per_box'] ?? 0) != $product->items_per_box,
-                        'price' => ($item['selling_price'] ?? 0) != ($product->selling_price / 100),
+                        'price' => ($item['selling_price'] ?? 0) != $product->selling_price,
                     ];
 
                 } else {
@@ -792,7 +793,7 @@ class ReceiveBoxes extends Component
                             'name' => $this->editableProductNames[$rowNum],
                             'sku' => $this->editableProductSkus[$rowNum],
                             'items_per_box' => $this->editableProductItemsPerBox[$rowNum],
-                            'selling_price' => $this->editableProductPrices[$rowNum] * 100,
+                            'selling_price' => (int) $this->editableProductPrices[$rowNum],
                             'category_id' => $this->editableProductCategories[$rowNum],
                         ]);
 
@@ -828,7 +829,7 @@ class ReceiveBoxes extends Component
                                 'name' => $this->editableProductNames[$rowNum],
                                 'sku' => $this->editableProductSkus[$rowNum],
                                 'items_per_box' => $this->editableProductItemsPerBox[$rowNum],
-                                'selling_price' => $this->editableProductPrices[$rowNum] * 100,
+                                'selling_price' => (int) $this->editableProductPrices[$rowNum],
                                 'category_id' => $this->editableProductCategories[$rowNum],
                             ]);
 
@@ -865,7 +866,8 @@ class ReceiveBoxes extends Component
                         'barcode' => $barcode,
                         'items_per_box' => $itemsPerBox,
                         'purchase_price' => 0,
-                        'selling_price' => round($price * 100),
+                        'selling_price' => (int) $price,
+                        'box_selling_price' => null,
                         'low_stock_threshold' => 10,
                         'reorder_point' => 20,
                         'unit_of_measure' => 'piece',

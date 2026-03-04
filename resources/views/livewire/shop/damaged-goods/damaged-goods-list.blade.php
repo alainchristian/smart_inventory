@@ -64,9 +64,9 @@
             </div>
             <p class="text-xl font-bold text-red-600">
                 @if($kpiStats['total_loss'] >= 1000000)
-                    {{ number_format($kpiStats['total_loss'] / 1000000, 1) }}M
+                    {{ number_format($kpiStats['total_loss']0000, 1) }}M
                 @elseif($kpiStats['total_loss'] >= 1000)
-                    {{ number_format($kpiStats['total_loss'] / 1000, 0) }}K
+                    {{ number_format($kpiStats['total_loss']0, 0) }}K
                 @else
                     {{ number_format($kpiStats['total_loss']) }}
                 @endif

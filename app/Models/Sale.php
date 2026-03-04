@@ -81,27 +81,6 @@ class Sale extends Model
         return $this->hasMany(ReturnModel::class);
     }
 
-    // Accessors for price formatting
-    public function getSubtotalInDollarsAttribute(): float
-    {
-        return $this->subtotal / 100;
-    }
-
-    public function getTaxInDollarsAttribute(): float
-    {
-        return $this->tax / 100;
-    }
-
-    public function getDiscountInDollarsAttribute(): float
-    {
-        return $this->discount / 100;
-    }
-
-    public function getTotalInDollarsAttribute(): float
-    {
-        return $this->total / 100;
-    }
-
     // Helper methods
     public function isVoided(): bool
     {

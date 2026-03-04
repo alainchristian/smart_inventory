@@ -1092,3 +1092,12 @@ main table th { font-size: 11px; }
 /* KPI card min height for breathing room */
 .bkpi { min-height: 140px; }
 .okpi { min-height: 80px; }
+/* ═══════════════════════════════════════
+   POS PAGE — Full viewport, no padding
+═══════════════════════════════════════ */
+body:has(.pos-root) > div > main > div {
+  padding: 0 !important;
+}
+body:has(.pos-root) {
+  overflow: hidden;
+}

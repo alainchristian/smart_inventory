@@ -196,7 +196,7 @@ function salesPerfChart() {
                                 font: { size: 11, family: 'DM Sans' },
                                 padding: 8,
                                 callback: function(val) {
-                                    return val >= 1000 ? Math.round(val / 1000) + 'K' : val;
+                                    return val >= 1000 ? Math.round(val0) + 'K' : val;
                                 }
                             },
                             border: { display: false }

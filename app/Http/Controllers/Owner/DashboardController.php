@@ -60,8 +60,8 @@ class DashboardController extends Controller
             ')
             ->first();
 
-        $stats['inventory_value']     = ($inv->cost_value   ?? 0) / 100;
-        $stats['retail_value']        = ($inv->retail_value ?? 0) / 100;
+        $stats['inventory_value']     = $inv->cost_value   ?? 0;
+        $stats['retail_value']        = $inv->retail_value ?? 0;
         $stats['potential_profit']    = $stats['retail_value'] - $stats['inventory_value'];
 
         // FIX #3 — items_in_stock now matches the same filter as the valuation
@@ -91,14 +91,14 @@ class DashboardController extends Controller
         // Never reuse the same Eloquent builder reference across multiple
         // chained calls — each call mutates the builder and stacks WHERE clauses.
         if ($filter === 'today') {
-            $todaySales    = Sale::notVoided()->whereDate('sale_date', today())->sum('total') / 100;
-            $yesterdaySales = Sale::notVoided()->whereDate('sale_date', today()->subDay())->sum('total') / 100;
+            $todaySales    = Sale::notVoided()->whereDate('sale_date', today())->sum('total');
+            $yesterdaySales = Sale::notVoided()->whereDate('sale_date', today()->subDay())->sum('total');
 
             $salesStats = [
                 'period_revenue'    => $todaySales,
                 'period_count'      => Sale::notVoided()->whereDate('sale_date', today())->count(),
-                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total') / 100,
-                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total') / 100,
+                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total'),
+                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total'),
                 'growth_pct'        => $yesterdaySales > 0
                     ? round((($todaySales - $yesterdaySales) / $yesterdaySales) * 100, 1)
                     : ($todaySales > 0 ? 100 : 0),
@@ -110,19 +110,19 @@ class DashboardController extends Controller
 
             $salesStats = [
                 // Key renamed: was 'today' but held week values — now honest
-                'period_revenue'    => Sale::notVoided()->whereBetween('sale_date', [$weekStart, $weekEnd])->sum('total') / 100,
+                'period_revenue'    => Sale::notVoided()->whereBetween('sale_date', [$weekStart, $weekEnd])->sum('total'),
                 'period_count'      => Sale::notVoided()->whereBetween('sale_date', [$weekStart, $weekEnd])->count(),
-                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [$weekStart, $weekEnd])->sum('total') / 100,
-                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total') / 100,
+                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [$weekStart, $weekEnd])->sum('total'),
+                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total'),
                 'growth_pct'        => 0, // computed if needed vs. previous week
             ];
 
         } elseif ($filter === 'month') {
             $salesStats = [
-                'period_revenue'    => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total') / 100,
+                'period_revenue'    => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total'),
                 'period_count'      => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->count(),
-                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total') / 100,
-                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total') / 100,
+                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total'),
+                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total'),
                 'growth_pct'        => 0,
             ];
 
@@ -131,20 +131,20 @@ class DashboardController extends Controller
             $to   = Carbon::parse($toDate)->endOfDay();
 
             $salesStats = [
-                'period_revenue'    => Sale::notVoided()->whereBetween('sale_date', [$from, $to])->sum('total') / 100,
+                'period_revenue'    => Sale::notVoided()->whereBetween('sale_date', [$from, $to])->sum('total'),
                 'period_count'      => Sale::notVoided()->whereBetween('sale_date', [$from, $to])->count(),
-                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total') / 100,
-                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total') / 100,
+                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total'),
+                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total'),
                 'growth_pct'        => 0,
             ];
 
         } else {
             // Fallback: today
             $salesStats = [
-                'period_revenue'    => Sale::notVoided()->whereDate('sale_date', today())->sum('total') / 100,
+                'period_revenue'    => Sale::notVoided()->whereDate('sale_date', today())->sum('total'),
                 'period_count'      => Sale::notVoided()->whereDate('sale_date', today())->count(),
-                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total') / 100,
-                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total') / 100,
+                'this_week'         => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total'),
+                'this_month'        => Sale::notVoided()->whereYear('sale_date', now()->year)->whereMonth('sale_date', now()->month)->sum('total'),
                 'growth_pct'        => 0,
             ];
         }
@@ -156,7 +156,7 @@ class DashboardController extends Controller
             $salesChartData[] = [
                 'label'        => $date->format('D'),
                 'date'         => $date->toDateString(),
-                'revenue'      => Sale::notVoided()->whereDate('sale_date', $date)->sum('total') / 100,
+                'revenue'      => Sale::notVoided()->whereDate('sale_date', $date)->sum('total'),
                 'transactions' => Sale::notVoided()->whereDate('sale_date', $date)->count(),
             ];
         }

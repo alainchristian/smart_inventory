@@ -160,6 +160,14 @@
           @error('sellingPrice')
             <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
           @enderror
+          @if($sellingPrice && $itemsPerBox)
+            <p style="font-size:12px;color:var(--text-sub);margin-top:4px">
+              Box price: RWF {{ number_format((int)$sellingPrice * (int)$itemsPerBox) }}
+              @if($boxSellingPrice)
+                · Override set: RWF {{ number_format((int)$boxSellingPrice) }}
+              @endif
+            </p>
+          @endif
         </div>
 
         <div>

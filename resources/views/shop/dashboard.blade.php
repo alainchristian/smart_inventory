@@ -30,7 +30,7 @@
             <h1 class="text-2xl font-bold text-gray-900">{{ $shop->name }}</h1>
             <p class="text-gray-600 text-sm">Sales and inventory managements</p>
         </div>
-        <div class="mt-2 lg:mt-0 text-sm text-gray-500">Last sync: {{ $lastSync->diffForHumans() }}</div>
+        <div class="mt-2 lg:mt-0 text-sm text-gray-500">Last sync: {{ $lastSync ? $lastSync->diffForHumans() : 'Never' }}</div>
     </div>
 
     <!-- Today's Sales Overview - Compact KPIs -->
@@ -172,7 +172,7 @@
                             <div class="p-2 bg-gray-50 rounded border-l-2 border-orange-400">
                                 <p class="text-sm font-medium text-gray-900">Return #{{ $return->id }}</p>
                                 <p class="text-xs text-gray-600">{{ $return->items->count() }} items</p>
-                                <p class="text-xs text-gray-500">{{ $return->processed_at->diffForHumans() }}</p>
+                                <p class="text-xs text-gray-500">{{ $return->processed_at ? $return->processed_at->diffForHumans() : 'Pending' }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -193,7 +193,7 @@
                             <div class="p-2 bg-gray-50 rounded border-l-2 border-yellow-400">
                                 <p class="text-sm font-medium text-gray-900">{{ $transfer->transfer_number }}</p>
                                 <p class="text-xs text-gray-600">From: {{ $transfer->fromWarehouse->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $transfer->requested_at->diffForHumans() }}</p>
+                                <p class="text-xs text-gray-500">{{ $transfer->requested_at ? $transfer->requested_at->diffForHumans() : 'Recently' }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -311,7 +311,7 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-3 py-2 text-sm font-medium text-gray-900">{{ $sale->sale_number }}</td>
                             <td class="px-3 py-2 text-sm text-gray-600">{{ $sale->items->sum('quantity_sold') }} items</td>
-                            <td class="px-3 py-2 text-sm font-semibold text-gray-900 text-right">{{ number_format($sale->total / 100, 0) }} RWF</td>
+                            <td class="px-3 py-2 text-sm font-semibold text-gray-900 text-right">{{ number_format($sale->total, 0) }} RWF</td>
                             <td class="px-3 py-2 text-sm text-gray-600">{{ $sale->soldBy->name }}</td>
                             <td class="px-3 py-2 text-sm text-gray-600">{{ $sale->sale_date->format('M d, H:i') }}</td>
                         </tr>

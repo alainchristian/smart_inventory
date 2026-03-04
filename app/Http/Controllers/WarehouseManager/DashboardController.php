@@ -75,7 +75,7 @@ class DashboardController extends Controller
             ->sum(function ($box) {
                 return $box->items_remaining * $box->product->purchase_price;
             });
-        $stockStats['inventory_value'] = $inventoryValue / 100;
+        $stockStats['inventory_value'] = $inventoryValue;
 
         // Pending transfer requests
         $pendingTransfers = Transfer::where('from_warehouse_id', $warehouseId)

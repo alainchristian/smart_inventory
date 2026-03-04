@@ -136,7 +136,7 @@
                                         </div>
                                         <div class="text-right shrink-0">
                                             <p class="text-sm font-bold text-green-700">
-                                                {{ number_format($result['box_price'] / 100) }} RWF
+                                                {{ number_format($result['box_price']) }} RWF
                                             </p>
                                             <p class="text-xs text-gray-400">
                                                 {{ $result['available_boxes'] }} box{{ $result['available_boxes'] !== 1 ? 'es' : '' }}
@@ -208,12 +208,12 @@
                                     {{ $item['sell_by'] === 'box'
                                         ? 'box' . ($item['quantity'] > 1 ? 'es' : '')
                                         : 'item' . ($item['quantity'] > 1 ? 's' : '') }}
-                                    × {{ number_format($item['final_price'] / 100) }} RWF
+                                    × {{ number_format($item['final_price']) }} RWF
                                 </p>
                             </div>
                             <div class="text-right shrink-0">
                                 <p class="font-bold text-gray-900 text-sm">
-                                    {{ number_format(($item['quantity'] * $item['final_price']) / 100) }}
+                                    {{ number_format(($item['quantity'] * $item['final_price'])) }}
                                 </p>
                                 <p class="text-xs text-gray-400">RWF</p>
                             </div>
@@ -240,7 +240,7 @@
                     <div class="border-t border-gray-100 px-5 py-4 space-y-2">
                         <div class="flex justify-between text-sm text-gray-600">
                             <span>Subtotal</span>
-                            <span class="font-medium text-gray-900">{{ number_format($this->subtotal / 100) }} RWF</span>
+                            <span class="font-medium text-gray-900">{{ number_format($this->subtotal) }} RWF</span>
                         </div>
                         @if($tax > 0)
                             <div class="flex justify-between text-sm text-gray-600">
@@ -256,7 +256,7 @@
                         @endif
                         <div class="flex justify-between text-lg font-bold border-t border-gray-200 pt-2">
                             <span>Total</span>
-                            <span class="text-blue-700">{{ number_format($this->total / 100) }} RWF</span>
+                            <span class="text-blue-700">{{ number_format($this->total) }} RWF</span>
                         </div>
                         <button wire:click="$set('showCheckoutModal', true)"
                                 class="w-full mt-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-md transition">
@@ -337,7 +337,7 @@
                            :class="finalPrice !== originalPrice ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'"
                            class="block w-full rounded-lg">
                     <p class="text-xs text-gray-400 mt-1">
-                        Standard: <span x-text="(originalPrice / 100).toLocaleString()"></span> RWF
+                        Standard: <span x-text="(originalPrice).toLocaleString()"></span> RWF
                         <template x-if="finalPrice !== originalPrice">
                             <span class="text-yellow-600 font-medium ml-1">⚠ Modified</span>
                         </template>
@@ -357,7 +357,7 @@
                 {{-- Line total --}}
                 <div class="bg-gray-50 rounded-lg px-4 py-3 flex justify-between">
                     <span class="text-sm text-gray-600">Line total:</span>
-                    <span class="font-bold text-blue-700" x-text="(lineTotal / 100).toLocaleString() + ' RWF'"></span>
+                    <span class="font-bold text-blue-700" x-text="(lineTotal).toLocaleString() + ' RWF'"></span>
                 </div>
 
                 {{-- Actions --}}
@@ -399,7 +399,7 @@
                                 {{ $item['product_name'] }}
                                 <span class="text-gray-400">× {{ $item['quantity'] }} {{ $item['sell_by'] === 'box' ? 'box(es)' : 'item(s)' }}</span>
                             </span>
-                            <span class="font-medium">{{ number_format(($item['quantity'] * $item['final_price']) / 100) }}</span>
+                            <span class="font-medium">{{ number_format(($item['quantity'] * $item['final_price'])) }}</span>
                         </div>
                     @endforeach
                     <div class="border-t border-gray-200 pt-2 mt-1 space-y-1">
@@ -415,7 +415,7 @@
                         @endif
                         <div class="flex justify-between font-bold text-base pt-1">
                             <span>Total</span>
-                            <span class="text-blue-700">{{ number_format($this->total / 100) }} RWF</span>
+                            <span class="text-blue-700">{{ number_format($this->total) }} RWF</span>
                         </div>
                     </div>
                 </div>
@@ -490,12 +490,12 @@
                                 {{ $item['product_name'] }}
                                 <span class="text-gray-400">× {{ $item['quantity'] }}</span>
                             </span>
-                            <span class="font-medium">{{ number_format(($item['quantity'] * $item['final_price']) / 100) }}</span>
+                            <span class="font-medium">{{ number_format(($item['quantity'] * $item['final_price'])) }}</span>
                         </div>
                     @endforeach
                     <div class="border-t border-gray-200 pt-2 flex justify-between font-bold">
                         <span>Total Paid</span>
-                        <span class="text-green-700">{{ number_format($completedSale['total'] / 100) }} RWF</span>
+                        <span class="text-green-700">{{ number_format($completedSale['total']) }} RWF</span>
                     </div>
                     <p class="text-xs text-gray-400 text-right mt-1">
                         via {{ ucwords(str_replace('_', ' ', $completedSale['payment_method'])) }}

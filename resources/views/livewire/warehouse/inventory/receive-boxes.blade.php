@@ -437,7 +437,7 @@
                                                                     <p class="text-xs text-gray-600 mt-1">
                                                                         SKU: {{ $result['sku'] }} |
                                                                         {{ $result['items_per_box'] }} items/box |
-                                                                        {{ number_format($result['selling_price'] / 100) }} RWF
+                                                                        {{ number_format($result['selling_price']) }} RWF
                                                                     </p>
                                                                 </button>
                                                             @endforeach
@@ -718,7 +718,7 @@
                                             <div><span class="text-gray-600">Name:</span> <span class="font-semibold ml-2">{{ $product->name }}</span></div>
                                             <div><span class="text-gray-600">SKU:</span> <span class="font-mono ml-2">{{ $product->sku }}</span></div>
                                             <div><span class="text-gray-600">Items/Box:</span> <span class="font-semibold ml-2">{{ $product->items_per_box }}</span></div>
-                                            <div><span class="text-gray-600">Price:</span> <span class="ml-2">{{ number_format($product->selling_price / 100, 0) }} RWF</span></div>
+                                            <div><span class="text-gray-600">Price:</span> <span class="ml-2">{{ number_format($product->selling_price, 0) }} RWF</span></div>
                                         </div>
                                     @endif
                                 </div>
@@ -847,7 +847,7 @@
                                                         <p class="text-xs text-gray-600 mt-1">
                                                             SKU: <span class="font-mono">{{ $result['sku'] }}</span> |
                                                             {{ $result['items_per_box'] }} items/box |
-                                                            {{ number_format($result['selling_price'] / 100, 0) }} RWF
+                                                            {{ number_format($result['selling_price'], 0) }} RWF
                                                         </p>
                                                     </div>
                                                     @if($selectedProductId == $result['id'])

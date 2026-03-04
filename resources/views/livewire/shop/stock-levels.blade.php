@@ -110,7 +110,7 @@
                                 <div class="flex items-center">
                                     <div>
                                         <div class="text-sm font-medium text-gray-900">{{ $data['product']->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ number_format($data['product']->selling_price / 100) }} RWF/item</div>
+                                        <div class="text-sm text-gray-500">{{ number_format($data['product']->selling_price) }} RWF/item</div>
                                     </div>
                                 </div>
                             </td>

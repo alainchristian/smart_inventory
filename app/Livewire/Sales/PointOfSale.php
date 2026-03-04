@@ -322,9 +322,7 @@ class PointOfSale extends Component
 
     public function getTotalProperty(): int
     {
-        $taxCents      = (int) round($this->tax * 100);
-        $discountCents = (int) round($this->discount * 100);
-        return $this->subtotal + $taxCents - $discountCents;
+        return $this->subtotal + (int) $this->tax - (int) $this->discount;
     }
 
     public function getItemCountProperty(): int
@@ -371,8 +369,8 @@ class PointOfSale extends Component
                 'type'           => SaleType::MIXED,
                 'payment_method' => PaymentMethod::from($this->paymentMethod),
                 'items'          => $items,
-                'tax'            => (int) round($this->tax * 100),
-                'discount'       => (int) round($this->discount * 100),
+                'tax'            => (int) $this->tax,
+                'discount'       => (int) $this->discount,
             ]);
 
             // Capture receipt data before clearing cart
@@ -380,8 +378,8 @@ class PointOfSale extends Component
                 'sale_number'    => $sale->sale_number,
                 'total'          => $sale->total,
                 'subtotal'       => $this->subtotal,
-                'tax'            => (int) round($this->tax * 100),
-                'discount'       => (int) round($this->discount * 100),
+                'tax'            => (int) $this->tax,
+                'discount'       => (int) $this->discount,
                 'payment_method' => $this->paymentMethod,
                 'items'          => collect($this->cart)->values()->toArray(),
             ];

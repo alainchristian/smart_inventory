@@ -41,6 +41,11 @@ class Product extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = [
+        'box_purchase_price',
+        'effective_box_selling_price',
+    ];
+
     // Relationships
     public function category(): BelongsTo
     {
@@ -67,35 +72,27 @@ class Product extends Model
         return $this->hasMany(ProductBarcode::class);
     }
 
-    // Accessors for price formatting
-    public function getPurchasePriceInDollarsAttribute(): float
-    {
-        return $this->purchase_price / 100;
-    }
-
-    public function getSellingPriceInDollarsAttribute(): float
-    {
-        return $this->selling_price / 100;
-    }
-
-    public function getBoxSellingPriceInDollarsAttribute(): float
-    {
-        return ($this->box_selling_price ?? 0) / 100;
-    }
-
-    // Mutators for price setting
-    public function setPurchasePriceInDollarsAttribute($value): void
-    {
-        $this->purchase_price = round($value * 100);
-    }
-
-    public function setSellingPriceInDollarsAttribute($value): void
-    {
-        $this->selling_price = round($value * 100);
-    }
-
+    // Pricing (in RWF — whole number, no cents)
     // Business logic
     public function calculateBoxPrice(): int
+    {
+        return $this->box_selling_price ?? ($this->selling_price * $this->items_per_box);
+    }
+
+    /**
+     * Box purchase price — always computed from item price.
+     * Never stored: purchase_price × items_per_box.
+     */
+    public function getBoxPurchasePriceAttribute(): int
+    {
+        return $this->purchase_price * $this->items_per_box;
+    }
+
+    /**
+     * Effective box selling price.
+     * Uses the stored override if set, otherwise computes from item price.
+     */
+    public function getEffectiveBoxSellingPriceAttribute(): int
     {
         return $this->box_selling_price ?? ($this->selling_price * $this->items_per_box);
     }

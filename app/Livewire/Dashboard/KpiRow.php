@@ -61,8 +61,8 @@ class KpiRow extends Component
         $deltaPercentage = $yesterdayRevenue > 0 ? (($delta / $yesterdayRevenue) * 100) : 0;
 
         return [
-            'value' => $todayRevenue / 100, // Convert cents to dollars
-            'delta' => $delta / 100,
+            'value' => $todayRevenue,
+            'delta' => $delta,
             'deltaPercentage' => round($deltaPercentage, 1),
         ];
     }

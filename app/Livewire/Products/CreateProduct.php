@@ -118,10 +118,10 @@ class CreateProduct extends Component
             'barcode'            => $this->barcode ?: null,
             'description'        => $this->description ?: null,
             'items_per_box'      => $this->itemsPerBox,
-            'purchase_price'     => (int) round((float) $this->purchasePrice * 100),
-            'selling_price'      => (int) round((float) $this->sellingPrice  * 100),
+            'purchase_price'     => (int) $this->purchasePrice,
+            'selling_price'      => (int) $this->sellingPrice,
             'box_selling_price'  => $this->boxSellingPrice !== ''
-                                    ? (int) round((float) $this->boxSellingPrice * 100)
+                                    ? (int) $this->boxSellingPrice
                                     : null,
             'low_stock_threshold'=> $this->lowStockThreshold,
             'reorder_point'      => $this->reorderPoint,

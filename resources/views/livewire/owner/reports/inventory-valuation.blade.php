@@ -40,7 +40,7 @@
                 </svg>
             </div>
             <p class="text-2xl font-bold">
-                RWF {{ number_format($this->inventoryKpis['purchase_value'] / 100, 0) }}
+                RWF {{ number_format($this->inventoryKpis['purchase_value'], 0) }}
             </p>
             <p class="text-xs opacity-75 mt-2">Total inventory cost</p>
         </div>
@@ -54,7 +54,7 @@
                 </svg>
             </div>
             <p class="text-2xl font-bold">
-                RWF {{ number_format($this->inventoryKpis['retail_value'] / 100, 0) }}
+                RWF {{ number_format($this->inventoryKpis['retail_value'], 0) }}
             </p>
             <p class="text-xs opacity-75 mt-2">Total selling value</p>
         </div>
@@ -68,7 +68,7 @@
                 </svg>
             </div>
             <p class="text-2xl font-bold">
-                RWF {{ number_format($this->inventoryKpis['potential_profit'] / 100, 0) }}
+                RWF {{ number_format($this->inventoryKpis['potential_profit'], 0) }}
             </p>
             <p class="text-xs opacity-75 mt-2">Profit if all sold</p>
         </div>
@@ -128,7 +128,7 @@
                                 </td>
                                 <td class="px-3 py-2 text-right text-gray-600">{{ number_format($item['items_count']) }}</td>
                                 <td class="px-3 py-2 text-right text-gray-900 font-semibold">
-                                    RWF {{ number_format($item['value'] / 100, 0) }}
+                                    RWF {{ number_format($item['value'], 0) }}
                                 </td>
                             </tr>
                         @empty
@@ -205,10 +205,10 @@
                             </td>
                             <td class="px-3 py-2 text-right text-gray-600">{{ number_format($product['items_count']) }}</td>
                             <td class="px-3 py-2 text-right text-gray-900 font-semibold">
-                                RWF {{ number_format($product['purchase_value'] / 100, 0) }}
+                                RWF {{ number_format($product['purchase_value'], 0) }}
                             </td>
                             <td class="px-3 py-2 text-right text-green-600 font-semibold">
-                                RWF {{ number_format($product['retail_value'] / 100, 0) }}
+                                RWF {{ number_format($product['retail_value'], 0) }}
                             </td>
                         </tr>
                     @empty
@@ -232,7 +232,7 @@
             const inventoryDistributionChart = new ApexCharts(document.querySelector("#inventoryDistributionChart"), {
                 series: [{
                     name: 'Inventory Value',
-                    data: allLocations.map(item => (item.value / 100).toFixed(2))
+                    data: allLocations.map(item => (item.value).toFixed(2))
                 }],
                 chart: {
                     type: 'bar',
@@ -263,7 +263,7 @@
             // Aging Analysis Chart
             const agingData = @json($this->agingAnalysis);
             const agingAnalysisChart = new ApexCharts(document.querySelector("#agingAnalysisChart"), {
-                series: agingData.map(item => item.value / 100),
+                series: agingData.map(item => item.value),
                 chart: {
                     type: 'donut',
                     height: 300

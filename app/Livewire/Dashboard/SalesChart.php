@@ -47,13 +47,13 @@ class SalesChart extends Component
             $fullBoxSale = $dayData->first(function($sale) {
                 return $sale->type === SaleType::FULL_BOX;
             });
-            $fullBoxData[] = $fullBoxSale ? round($fullBoxSale->revenue / 100, 2) : 0;
+            $fullBoxData[] = $fullBoxSale ? round($fullBoxSale->revenue, 2) : 0;
 
             // Get individual items sales
             $individualSale = $dayData->first(function($sale) {
                 return $sale->type === SaleType::INDIVIDUAL_ITEMS;
             });
-            $individualItemsData[] = $individualSale ? round($individualSale->revenue / 100, 2) : 0;
+            $individualItemsData[] = $individualSale ? round($individualSale->revenue, 2) : 0;
         }
 
         return [

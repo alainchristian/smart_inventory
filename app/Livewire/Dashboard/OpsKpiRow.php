@@ -69,8 +69,8 @@ class OpsKpiRow extends Component
 
         // ── Today's transactions ──────────────────────────────────────────────
         $this->todayCount   = Sale::notVoided()->whereDate('sale_date', today())->count();
-        $this->todayRevenue = Sale::notVoided()->whereDate('sale_date', today())->sum('total') / 100;
-        $yesterday          = Sale::notVoided()->whereDate('sale_date', today()->subDay())->sum('total') / 100;
+        $this->todayRevenue = Sale::notVoided()->whereDate('sale_date', today())->sum('total');
+        $yesterday          = Sale::notVoided()->whereDate('sale_date', today()->subDay())->sum('total');
 
         $this->revenueGrowth = $yesterday > 0
             ? round((($this->todayRevenue - $yesterday) / $yesterday) * 100, 1)

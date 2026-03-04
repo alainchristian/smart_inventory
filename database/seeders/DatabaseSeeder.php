@@ -29,30 +29,10 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      */
-    public function run(): void
-    {
-        DB::transaction(function () {
-            $this->command->info('🌱 Starting database seeding...');
-            
-            $users = $this->seedUsers();
-            $warehouses = $this->seedWarehouses($users);
-            $shops = $this->seedShops($warehouses, $users);
-            $transporters = $this->seedTransporters();
-            $categories = $this->seedCategories();
-            $products = $this->seedProducts($categories);
-            $boxes = $this->seedBoxes($products, $warehouses, $users);
-            $this->seedTransfers($warehouses, $shops, $users, $transporters, $products, $boxes);
-            $this->seedSales($shops, $users);
-            
-            $this->command->info('');
-            $this->command->info('✅ Database seeded successfully!');
-            $this->command->info('');
-            $this->command->info('📧 Login Credentials:');
-            $this->command->info('   Owner: owner@inventory.com / password');
-            $this->command->info('   Warehouse Manager: warehouse1@inventory.com / password');
-            $this->command->info('   Shop Manager: shop1@inventory.com / password');
-        });
-    }
+  public function run(): void
+{
+    $this->call(BootstrapSeeder::class);
+}
 
     private function seedUsers(): object
     {

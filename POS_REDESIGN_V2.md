@@ -1,3 +1,79 @@
+# SmartInventory — Point of Sale Modern Redesign
+## Claude Code Instructions
+
+> Drop in project root, then tell Claude Code:
+> "Read POS_REDESIGN_V2.md and follow every step in order."
+
+---
+
+## Critical Rules
+- **DO NOT touch `app/Livewire/Shop/Sales/PointOfSale.php`** — preserve ALL logic
+- **ONLY rewrite** `resources/views/livewire/shop/sales/point-of-sale.blade.php`
+- Every `wire:` binding must match the EXACT method/property names from the PHP file
+- Design system: CSS vars `--accent --surface --surface2 --surface3 --border --border-hi --text --text-sub --text-dim --green --red --amber --violet --pink --r --rx --rsm --font --mono`
+- Run `php artisan view:clear && php artisan cache:clear` after
+
+---
+
+## Step 0 — Read First (MANDATORY)
+
+```bash
+# Read the ENTIRE component before writing anything
+cat app/Livewire/Shop/Sales/PointOfSale.php
+
+# Check QR package
+composer show | grep qrcode
+grep -r "QrCode\|simple-qrcode" composer.json
+
+# Check POS page wrapper
+cat resources/views/shop/pos.blade.php
+```
+
+**Key method and property names to note:**
+- Add to cart: `confirmAddToCart()` (NOT `commitStagingToCart`)
+- Remove item: `removeCartItem($index)` (NOT `removeFromCart`)
+- Cart item name key: `product_name` (NOT `name`)
+- Receipt modal: `$showReceiptModal` (NOT `$showReceipt`)
+- Checkout open: `openCheckout()`
+- Complete sale: `completeSale()`
+- Edit item: `openEditItem($index)`
+- Clear cart: `clearCart()`
+- Search close: `closeSearch()`
+- Product select: `selectProduct($productId)`
+- Load products on focus: `loadAvailableProducts()`
+- Barcode field: `$barcodeInput` / `wire:model.live="barcodeInput"`
+- Scanner toggle: `enablePhoneScanner()` / `disablePhoneScanner()`
+- Price modal: `openPriceModal($index)` / `applyPriceModification()`
+
+---
+
+## Step 1 — Add POS Full-Height CSS
+
+**Target:** `resources/css/app.css` — append at the very end:
+
+```css
+/* ═══════════════════════════════════════
+   POS PAGE — Full viewport, no padding
+═══════════════════════════════════════ */
+body:has(.pos-root) > div > main > div {
+  padding: 0 !important;
+}
+body:has(.pos-root) {
+  overflow: hidden;
+}
+```
+
+Run `npm run build` after.
+
+---
+
+## Step 2 — Full Blade Rewrite
+
+**Target:** `resources/views/livewire/shop/sales/point-of-sale.blade.php`
+
+Replace the **entire** file with the content below. Read Step 0 first to confirm all method names match.
+
+```blade
 {{--
   Point of Sale — Modern Redesign
   Blade-only rewrite. PHP component is untouched.
@@ -119,7 +195,7 @@
       <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
     </svg>
     <span style="font-size:12px;font-weight:700;font-family:var(--mono)">
-      {{ count($cart) }} · {{ number_format($cartTotal) }} RWF
+      {{ count($cart) }} · {{ number_format($cartTotal / 100) }} RWF
     </span>
   </div>
   @endif
@@ -314,7 +390,7 @@
           <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono)">{{ $p['sku'] }}</div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:2px">
             <span style="font-size:14px;font-weight:800;color:var(--accent);font-family:var(--mono)">
-              {{ number_format($p['selling_price']) }}
+              {{ number_format($p['selling_price'] / 100) }}
             </span>
             <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;
                          background:{{ $p['stock']['total_items'] > 0 ? 'var(--green-dim)' : 'var(--red-dim)' }};
@@ -434,10 +510,10 @@
         {{-- Qty · price · line total --}}
         <div style="display:flex;align-items:center;justify-content:space-between">
           <span style="font-size:11px;color:var(--text-dim)">
-            {{ $item['quantity'] }} × {{ number_format($item['price']) }} RWF
+            {{ $item['quantity'] }} × {{ number_format($item['price'] / 100) }} RWF
           </span>
           <span style="font-size:14px;font-weight:800;color:var(--text);font-family:var(--mono)">
-            {{ number_format($item['line_total']) }}
+            {{ number_format($item['line_total'] / 100) }}
           </span>
         </div>
       </div>
@@ -462,14 +538,14 @@
         <div style="display:flex;justify-content:space-between;margin-bottom:3px">
           <span style="font-size:12px;color:var(--text-sub)">Subtotal</span>
           <span style="font-size:12px;font-family:var(--mono);color:var(--text)">
-            {{ number_format($cartTotal) }} RWF
+            {{ number_format($cartTotal / 100) }} RWF
           </span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;
                     padding-top:8px;border-top:1px solid var(--border)">
           <span style="font-size:15px;font-weight:700;color:var(--text)">Total</span>
           <span style="font-size:24px;font-weight:800;color:var(--accent);font-family:var(--mono)">
-            {{ number_format($cartTotal) }}<span style="font-size:12px;font-weight:600"> RWF</span>
+            {{ number_format($cartTotal / 100) }}<span style="font-size:12px;font-weight:600"> RWF</span>
           </span>
         </div>
       </div>
@@ -491,7 +567,7 @@
         @if(empty($cart))
           Add items to checkout
         @else
-          Checkout — {{ number_format($cartTotal) }} RWF
+          Checkout — {{ number_format($cartTotal / 100) }} RWF
         @endif
       </button>
     </div>
@@ -567,7 +643,7 @@
               {{ $stagingProduct['items_per_box'] }} items / box
             </div>
             <div style="font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);margin-top:6px">
-              {{ number_format($stagingProduct['box_price']) }} RWF
+              {{ number_format($stagingProduct['box_price'] / 100) }} RWF
             </div>
           </div>
         </button>
@@ -581,7 +657,7 @@
             </div>
             <div style="font-size:11px;color:var(--text-dim);margin-top:2px">per item</div>
             <div style="font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);margin-top:6px">
-              {{ number_format($stagingProduct['selling_price']) }} RWF
+              {{ number_format($stagingProduct['selling_price'] / 100) }} RWF
             </div>
           </div>
         </button>
@@ -650,11 +726,11 @@
                   display:flex;justify-content:space-between;align-items:center;
                   border:1px solid {{ $stagingPriceModified ? 'var(--amber)' : 'rgba(59,111,212,.2)' }}">
         <span style="font-size:13px;color:var(--text-sub)">
-          {{ $stagingQty }} × {{ number_format($stagingPrice) }} RWF
+          {{ $stagingQty }} × {{ number_format($stagingPrice / 100) }} RWF
         </span>
         <span style="font-size:22px;font-weight:800;font-family:var(--mono);
                      color:{{ $stagingPriceModified ? 'var(--amber)' : 'var(--accent)' }}">
-          {{ number_format(($stagingQty * $stagingPrice)) }}
+          {{ number_format(($stagingQty * $stagingPrice) / 100) }}
           <span style="font-size:12px;font-weight:600">RWF</span>
         </span>
       </div>
@@ -725,7 +801,7 @@
             {{ $item['product_name'] }} × {{ $item['quantity'] }}
           </span>
           <span style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text)">
-            {{ number_format($item['line_total']) }}
+            {{ number_format($item['line_total'] / 100) }}
           </span>
         </div>
         @endforeach
@@ -733,7 +809,7 @@
                     padding-top:10px;border-top:1px solid rgba(59,111,212,.18);margin-top:8px">
           <span style="font-size:15px;font-weight:700;color:var(--text)">Total</span>
           <span style="font-size:26px;font-weight:800;color:var(--accent);font-family:var(--mono)">
-            {{ number_format($cartTotal) }}<span style="font-size:13px;font-weight:600"> RWF</span>
+            {{ number_format($cartTotal / 100) }}<span style="font-size:13px;font-weight:600"> RWF</span>
           </span>
         </div>
       </div>
@@ -884,7 +960,7 @@
           {{ $item['product_name'] ?? $item['name'] ?? '' }} × {{ $item['quantity'] }}
         </span>
         <span style="font-size:12px;font-weight:700;font-family:var(--mono)">
-          {{ number_format(($item['line_total'] ?? 0)) }}
+          {{ number_format(($item['line_total'] ?? 0) / 100) }}
         </span>
       </div>
       @endforeach
@@ -893,13 +969,13 @@
                   display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:15px;font-weight:700;color:var(--text)">Total Paid</span>
         <span style="font-size:26px;font-weight:800;font-family:var(--mono);color:var(--green)">
-          {{ number_format(($completedSale['total'] ?? 0)) }}
+          {{ number_format(($completedSale['total'] ?? 0) / 100) }}
           <span style="font-size:13px;font-weight:600">RWF</span>
         </span>
       </div>
 
       <div style="font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:20px">
-        {{ $completedSale['payment_method']?->label() ?? 'Cash' }}
+        {{ ucwords(str_replace('_',' ', $completedSale['payment_method'] ?? '')) }}
         · {{ now()->format('d M Y H:i') }}
       </div>
 
@@ -924,3 +1000,46 @@
 </style>
 
 </div>{{-- /pos-root --}}
+```
+
+---
+
+## Step 3 — Verify Method Names Match
+
+After writing the blade, run:
+
+```bash
+# Confirm each wire:click method exists in the PHP component
+grep -n "public function " app/Livewire/Shop/Sales/PointOfSale.php | grep -E "confirmAddToCart|removeCartItem|openEditItem|clearCart|closeSearch|openCheckout|completeSale|loadAvailableProducts|selectProduct|enablePhoneScanner|disablePhoneScanner|closeAddModal"
+
+# Confirm property names
+grep -n "public " app/Livewire/Shop/Sales/PointOfSale.php | grep -E "showReceiptModal|showAddModal|showCheckoutModal|stagingMode|stagingQty|stagingPrice|stagingPriceModified|cartTotal|showScannerPanel"
+```
+
+If `showReceiptModal` does not exist and instead `showReceipt` is the property name — find all occurrences of `showReceiptModal` in the blade and replace with `showReceipt`.
+
+---
+
+## Step 4 — Clear and Build
+
+```bash
+php artisan view:clear
+php artisan cache:clear
+npm run build
+```
+
+---
+
+## What Was Redesigned
+
+| Area | Before | After |
+|------|--------|-------|
+| Layout | Scrollable single column | Split pane — products left, cart always-visible right |
+| Product tiles | Hidden until searched | Load on focus, shown as clickable grid cards |
+| Search dropdown | Basic list | Colour-coded stock dots, SKU, category, price, item count |
+| Staging modal | Horizontal layout, plain fields | Mode cards (box / item), quantity stepper, live line-total |
+| Cart items | Plain rows | Badges for BOX/ITEMS/MODIFIED/APPROVAL, inline edit + remove |
+| Checkout modal | Dropdown for payment | 4-button payment picker, large cash input with change display |
+| Receipt modal | Simple success | Green gradient header, line items, one-tap "New Sale" |
+| Notifications | Session flash | Alpine toast stack (real-time, top-right, colour-coded) |
+| Scanner panel | Inline section | Topbar toggle, compact QR strip below search bar |

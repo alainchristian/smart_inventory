@@ -41,9 +41,9 @@
             </div>
             <p class="text-2xl font-bold text-pink-600">
                 @if($kpiStats['total_refunds'] >= 1000000)
-                    {{ number_format($kpiStats['total_refunds'] / 1000000, 1) }}M
+                    {{ number_format($kpiStats['total_refunds']0000, 1) }}M
                 @elseif($kpiStats['total_refunds'] >= 1000)
-                    {{ number_format($kpiStats['total_refunds'] / 1000, 0) }}K
+                    {{ number_format($kpiStats['total_refunds']0, 0) }}K
                 @else
                     {{ number_format($kpiStats['total_refunds']) }}
                 @endif

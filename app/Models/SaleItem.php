@@ -55,22 +55,6 @@ class SaleItem extends Model
         return $this->hasMany(ReturnItem::class, 'original_sale_item_id');
     }
 
-    // Accessors for price formatting
-    public function getOriginalUnitPriceInDollarsAttribute(): float
-    {
-        return $this->original_unit_price / 100;
-    }
-
-    public function getActualUnitPriceInDollarsAttribute(): float
-    {
-        return $this->actual_unit_price / 100;
-    }
-
-    public function getLineTotalInDollarsAttribute(): float
-    {
-        return $this->line_total / 100;
-    }
-
     // Helper methods
     public function getPriceDiscountAmount(): int
     {

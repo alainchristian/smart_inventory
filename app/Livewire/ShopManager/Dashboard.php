@@ -51,7 +51,7 @@ class Dashboard extends Component
             'total' => Sale::notVoided()
                 ->where('shop_id', $this->shopId)
                 ->whereDate('sale_date', $date)
-                ->sum('total') / 100,
+                ->sum('total'),
             'count' => Sale::notVoided()
                 ->where('shop_id', $this->shopId)
                 ->whereDate('sale_date', $date)
@@ -77,7 +77,7 @@ class Dashboard extends Component
             $total = Sale::notVoided()
                 ->where('shop_id', $this->shopId)
                 ->whereBetween('sale_date', [$startTime, $endTime])
-                ->sum('total') / 100;
+                ->sum('total');
 
             if ($total > 0 || $hour >= 8) { // Only show from 8 AM onwards if there's data
                 $data[] = [
@@ -100,11 +100,11 @@ class Dashboard extends Component
             ->get();
 
         return [
-            'cash' => $sales->where('payment_method', 'cash')->sum('total') / 100,
-            'card' => $sales->where('payment_method', 'card')->sum('total') / 100,
-            'mobile_money' => $sales->where('payment_method', 'mobile_money')->sum('total') / 100,
-            'bank_transfer' => $sales->where('payment_method', 'bank_transfer')->sum('total') / 100,
-            'credit' => $sales->where('payment_method', 'credit')->sum('total') / 100,
+            'cash' => $sales->where('payment_method', 'cash')->sum('total'),
+            'card' => $sales->where('payment_method', 'card')->sum('total'),
+            'mobile_money' => $sales->where('payment_method', 'mobile_money')->sum('total'),
+            'bank_transfer' => $sales->where('payment_method', 'bank_transfer')->sum('total'),
+            'credit' => $sales->where('payment_method', 'credit')->sum('total'),
         ];
     }
 

@@ -165,10 +165,10 @@ class PointOfSale extends Component
                     'barcode' => $product->barcode,
                     'category' => $product->category?->name,
                     'selling_price' => $product->selling_price,
-                    'selling_price_display' => number_format($product->selling_price / 100, 0),
+                    'selling_price_display' => number_format($product->selling_price, 0),
                     'items_per_box' => $product->items_per_box,
-                    'box_price' => $product->calculateBoxPrice(),
-                    'box_price_display' => number_format($product->calculateBoxPrice() / 100, 0),
+                    'box_price' => $product->effective_box_selling_price,
+                    'box_price_display' => number_format($product->effective_box_selling_price, 0),
                     'stock' => $stock,
                     'has_stock' => $stock['total_items'] > 0,
                 ];
@@ -232,10 +232,10 @@ class PointOfSale extends Component
                     'barcode' => $product->barcode,
                     'category' => $product->category?->name,
                     'selling_price' => $product->selling_price,
-                    'selling_price_display' => number_format($product->selling_price / 100, 0),
+                    'selling_price_display' => number_format($product->selling_price, 0),
                     'items_per_box' => $product->items_per_box,
-                    'box_price' => $product->calculateBoxPrice(),
-                    'box_price_display' => number_format($product->calculateBoxPrice() / 100, 0),
+                    'box_price' => $product->effective_box_selling_price,
+                    'box_price_display' => number_format($product->effective_box_selling_price, 0),
                     'stock' => $stock,
                     'has_stock' => $stock['total_items'] > 0,
                 ];
@@ -277,7 +277,7 @@ class PointOfSale extends Component
             'category' => $product->category?->name,
             'selling_price' => $product->selling_price,
             'items_per_box' => $product->items_per_box,
-            'box_price' => $product->calculateBoxPrice(),
+            'box_price' => $product->effective_box_selling_price,
         ];
 
         $this->stagingStock = $stock;
@@ -299,7 +299,7 @@ class PointOfSale extends Component
             $this->stagingCartIndex = null;
             $this->stagingMode = 'box'; // default to boxes
             $this->stagingQty = 1;
-            $this->stagingPrice = $product->calculateBoxPrice();
+            $this->stagingPrice = $product->effective_box_selling_price;
             $this->stagingPriceModified = false;
             $this->stagingPriceReason = '';
         }
@@ -676,7 +676,7 @@ class PointOfSale extends Component
             'category' => $product->category?->name,
             'selling_price' => $product->selling_price,
             'items_per_box' => $product->items_per_box,
-            'box_price' => $product->calculateBoxPrice(),
+            'box_price' => $product->effective_box_selling_price,
         ];
 
         $this->stagingStock = $stock;
@@ -735,7 +735,7 @@ class PointOfSale extends Component
         }
 
         $this->priceModificationCartIndex = $index;
-        $this->newPrice = $this->cart[$index]['price'] / 100; // Convert to RWF
+        $this->newPrice = $this->cart[$index]['price'];
         $this->priceModificationReason = '';
         $this->priceModificationReference = '';
         $this->requiresOwnerApproval = false;
@@ -751,15 +751,17 @@ class PointOfSale extends Component
         ]);
 
         $index = $this->priceModificationCartIndex;
-        $newPriceCents = $this->newPrice * 100;
+        $newPrice      = (int) $this->newPrice;
         $originalPrice = $this->cart[$index]['original_price'];
 
         // Check if price decreased by more than 20%
-        $percentageChange = (($originalPrice - $newPriceCents) / $originalPrice) * 100;
+        $percentageChange = $originalPrice > 0
+            ? (($originalPrice - $newPrice) / $originalPrice) * 100
+            : 0;
         $requiresApproval = $percentageChange > 20;
 
-        $this->cart[$index]['price'] = $newPriceCents;
-        $this->cart[$index]['line_total'] = $newPriceCents * $this->cart[$index]['quantity'];
+        $this->cart[$index]['price'] = $newPrice;
+        $this->cart[$index]['line_total'] = $newPrice * $this->cart[$index]['quantity'];
         $this->cart[$index]['price_modified'] = true;
         $this->cart[$index]['price_modification_reason'] = $this->priceModificationReason;
         $this->cart[$index]['price_modification_reference'] = $this->priceModificationReference;
@@ -807,14 +809,14 @@ class PointOfSale extends Component
         $this->paymentMethod = 'cash';
         $this->customerName = '';
         $this->customerPhone = '';
-        $this->amountReceived = $this->cartTotal / 100;
+        $this->amountReceived = $this->cartTotal;
         $this->notes = '';
         $this->showCheckoutModal = true;
     }
 
     public function updatedAmountReceived()
     {
-        $this->changeAmount = max(0, $this->amountReceived - ($this->cartTotal / 100));
+        $this->changeAmount = max(0, $this->amountReceived - $this->cartTotal);
     }
 
     public function completeSale()
@@ -835,7 +837,7 @@ class PointOfSale extends Component
         }
 
         // Validate payment
-        if ($this->paymentMethod === 'cash' && $this->amountReceived < ($this->cartTotal / 100)) {
+        if ($this->paymentMethod === 'cash' && $this->amountReceived < $this->cartTotal) {
             $this->dispatch('notification', [
                 'type' => 'error',
                 'message' => 'Insufficient amount received'

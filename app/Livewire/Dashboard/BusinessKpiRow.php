@@ -44,13 +44,13 @@ class BusinessKpiRow extends Component
         [$prevStart, $prevEnd] = $this->previousRange();
 
         // Revenue for selected period and comparison period
-        $current  = Sale::notVoided()->whereBetween('sale_date', [$start, $end])->sum('total') / 100;
-        $previous = Sale::notVoided()->whereBetween('sale_date', [$prevStart, $prevEnd])->sum('total') / 100;
+        $current  = Sale::notVoided()->whereBetween('sale_date', [$start, $end])->sum('total');
+        $previous = Sale::notVoided()->whereBetween('sale_date', [$prevStart, $prevEnd])->sum('total');
 
         // Always-visible sub-row reference points (not period-dependent)
-        $todayRev = Sale::notVoided()->whereDate('sale_date', today())->sum('total') / 100;
-        $weekRev  = Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total') / 100;
-        $monthRev = Sale::notVoided()->whereBetween('sale_date', [now()->startOfMonth(), now()])->sum('total') / 100;
+        $todayRev = Sale::notVoided()->whereDate('sale_date', today())->sum('total');
+        $weekRev  = Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total');
+        $monthRev = Sale::notVoided()->whereBetween('sale_date', [now()->startOfMonth(), now()])->sum('total');
 
         $this->sales = [
             'today'   => $todayRev,
@@ -68,7 +68,7 @@ class BusinessKpiRow extends Component
             ->whereBetween('sales.sale_date', [$start, $end])
             ->selectRaw('SUM((sale_items.actual_unit_price - products.purchase_price)
                             * sale_items.quantity_sold) as margin')
-            ->value('margin') ?? 0) / 100;
+            ->value('margin') ?? 0);
 
         // Profit sub-row reference points
         $todayMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
@@ -77,7 +77,7 @@ class BusinessKpiRow extends Component
             ->whereDate('sales.sale_date', today())
             ->selectRaw('SUM((sale_items.actual_unit_price - products.purchase_price)
                             * sale_items.quantity_sold) as margin')
-            ->value('margin') ?? 0) / 100;
+            ->value('margin') ?? 0);
 
         $weekMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
@@ -85,7 +85,7 @@ class BusinessKpiRow extends Component
             ->whereBetween('sales.sale_date', [now()->startOfWeek(), now()])
             ->selectRaw('SUM((sale_items.actual_unit_price - products.purchase_price)
                             * sale_items.quantity_sold) as margin')
-            ->value('margin') ?? 0) / 100;
+            ->value('margin') ?? 0);
 
         $monthMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
@@ -93,7 +93,7 @@ class BusinessKpiRow extends Component
             ->whereBetween('sales.sale_date', [now()->startOfMonth(), now()])
             ->selectRaw('SUM((sale_items.actual_unit_price - products.purchase_price)
                             * sale_items.quantity_sold) as margin')
-            ->value('margin') ?? 0) / 100;
+            ->value('margin') ?? 0);
 
         $this->profit = [
             'today'        => $todayMargin,
@@ -114,20 +114,20 @@ class BusinessKpiRow extends Component
             ')
             ->first();
 
-        $cost   = ($inv->cost_value   ?? 0) / 100;
-        $retail = ($inv->retail_value ?? 0) / 100;
+        $cost   = ($inv->cost_value   ?? 0);
+        $retail = ($inv->retail_value ?? 0);
 
-        $whRetail = (Box::available()
+        $whRetail = (int) (Box::available()
             ->where('boxes.location_type', 'warehouse')
             ->join('products', 'boxes.product_id', '=', 'products.id')
             ->selectRaw('SUM(boxes.items_remaining * products.selling_price) AS v')
-            ->value('v') ?? 0) / 100;
+            ->value('v') ?? 0);
 
-        $shopRetail = (Box::available()
+        $shopRetail = (int) (Box::available()
             ->where('boxes.location_type', 'shop')
             ->join('products', 'boxes.product_id', '=', 'products.id')
             ->selectRaw('SUM(boxes.items_remaining * products.selling_price) AS v')
-            ->value('v') ?? 0) / 100;
+            ->value('v') ?? 0);
 
         $whItems   = Box::available()->where('location_type', 'warehouse')->sum('items_remaining');
         $shopItems = Box::available()->where('location_type', 'shop')->sum('items_remaining');

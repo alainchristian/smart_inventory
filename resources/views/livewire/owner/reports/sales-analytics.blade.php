@@ -55,7 +55,7 @@
                 </svg>
             </div>
             <p class="text-2xl font-bold">
-                RWF {{ number_format($this->revenueKpis['total_revenue'] / 100, 0) }}
+                RWF {{ number_format($this->revenueKpis['total_revenue'], 0) }}
             </p>
             <div class="flex items-center mt-2">
                 @if($this->revenueKpis['growth_percentage'] >= 0)
@@ -94,7 +94,7 @@
                 </svg>
             </div>
             <p class="text-2xl font-bold">
-                RWF {{ number_format($this->revenueKpis['avg_transaction_value'] / 100, 0) }}
+                RWF {{ number_format($this->revenueKpis['avg_transaction_value'], 0) }}
             </p>
             <p class="text-xs opacity-75 mt-2">Per transaction average</p>
         </div>
@@ -148,7 +148,7 @@
                                 <td class="px-3 py-2 text-gray-900 font-medium">{{ $product['product_name'] }}</td>
                                 <td class="px-3 py-2 text-right text-gray-600">{{ number_format($product['quantity_sold']) }}</td>
                                 <td class="px-3 py-2 text-right text-gray-900 font-semibold">
-                                    RWF {{ number_format($product['revenue'] / 100, 0) }}
+                                    RWF {{ number_format($product['revenue'], 0) }}
                                 </td>
                             </tr>
                         @empty
@@ -185,7 +185,7 @@
                     name: 'Revenue',
                     data: revenueTrendData.map(item => ({
                         x: new Date(item.date).getTime(),
-                        y: (item.revenue / 100).toFixed(2)
+                        y: (item.revenue).toFixed(2)
                     }))
                 }],
                 chart: {
@@ -222,7 +222,7 @@
             // Payment Methods Chart
             const paymentMethodsData = @json($this->paymentMethods);
             const paymentMethodsChart = new ApexCharts(document.querySelector("#paymentMethodsChart"), {
-                series: paymentMethodsData.map(item => item.revenue / 100),
+                series: paymentMethodsData.map(item => item.revenue),
                 chart: {
                     type: 'pie',
                     height: 300
@@ -247,7 +247,7 @@
             const shopPerformanceChart = new ApexCharts(document.querySelector("#shopPerformanceChart"), {
                 series: [{
                     name: 'Revenue',
-                    data: shopPerformanceData.map(item => (item.revenue / 100).toFixed(2))
+                    data: shopPerformanceData.map(item => (item.revenue).toFixed(2))
                 }],
                 chart: {
                     type: 'bar',

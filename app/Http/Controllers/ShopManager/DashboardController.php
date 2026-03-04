@@ -57,7 +57,7 @@ class DashboardController extends Controller
             'total_sales'       => Sale::notVoided()
                 ->where('shop_id', $shopId)
                 ->whereDate('sale_date', today())
-                ->sum('total') / 100,
+                ->sum('total'),
             'transaction_count' => Sale::notVoided()
                 ->where('shop_id', $shopId)
                 ->whereDate('sale_date', today())
@@ -84,7 +84,7 @@ class DashboardController extends Controller
             'total_sales'       => Sale::notVoided()
                 ->where('shop_id', $shopId)
                 ->whereDate('sale_date', today()->subDay())
-                ->sum('total') / 100,
+                ->sum('total'),
             'transaction_count' => Sale::notVoided()
                 ->where('shop_id', $shopId)
                 ->whereDate('sale_date', today()->subDay())
@@ -129,13 +129,13 @@ class DashboardController extends Controller
         $weekSales = Sale::notVoided()
             ->where('shop_id', $shopId)
             ->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()])
-            ->sum('total') / 100;
+            ->sum('total');
 
         $monthSales = Sale::notVoided()
             ->where('shop_id', $shopId)
             ->whereYear('sale_date', now()->year)
             ->whereMonth('sale_date', now()->month)
-            ->sum('total') / 100;
+            ->sum('total');
 
         // ------------------------------------------------------------------
         // Stock levels for this shop

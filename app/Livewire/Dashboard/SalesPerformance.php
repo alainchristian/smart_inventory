@@ -46,10 +46,10 @@ class SalesPerformance extends Component
     public function getPeriodSummaries(): array
     {
         return [
-            'today'   => Sale::notVoided()->whereDate('sale_date', today())->sum('total') / 100,
-            'week'    => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfDay()])->sum('total') / 100,
-            'month'   => Sale::notVoided()->whereBetween('sale_date', [now()->startOfMonth(), now()->endOfDay()])->sum('total') / 100,
-            'quarter' => Sale::notVoided()->whereBetween('sale_date', [now()->startOfQuarter(), now()->endOfDay()])->sum('total') / 100,
+            'today'   => Sale::notVoided()->whereDate('sale_date', today())->sum('total'),
+            'week'    => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfDay()])->sum('total'),
+            'month'   => Sale::notVoided()->whereBetween('sale_date', [now()->startOfMonth(), now()->endOfDay()])->sum('total'),
+            'quarter' => Sale::notVoided()->whereBetween('sale_date', [now()->startOfQuarter(), now()->endOfDay()])->sum('total'),
         ];
     }
 
@@ -92,7 +92,7 @@ class SalesPerformance extends Component
         for ($h = 0; $h < 24; $h++) {
             $row           = $rows->get($h);
             $labels[]      = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00';
-            $revenueData[] = $row ? round($row->revenue / 100, 0) : 0;
+            $revenueData[] = $row ? round($row->revenue, 0) : 0;
             $countData[]   = $row ? (int) $row->cnt : 0;
         }
     }
@@ -118,7 +118,7 @@ class SalesPerformance extends Component
             $date          = $startOfWeek->copy()->addDays($d);
             $row           = $rows->get($date->format('Y-m-d'));
             $labels[]      = $date->format('D');
-            $revenueData[] = $row ? round($row->revenue / 100, 0) : 0;
+            $revenueData[] = $row ? round($row->revenue, 0) : 0;
             $countData[]   = $row ? (int) $row->cnt : 0;
         }
     }
@@ -144,7 +144,7 @@ class SalesPerformance extends Component
         for ($d = 1; $d <= $daysInMonth; $d++) {
             $row           = $rows->get($d);
             $labels[]      = (string) $d;
-            $revenueData[] = $row ? round($row->revenue / 100, 0) : 0;
+            $revenueData[] = $row ? round($row->revenue, 0) : 0;
             $countData[]   = $row ? (int) $row->cnt : 0;
         }
     }
@@ -176,7 +176,7 @@ class SalesPerformance extends Component
             $key           = $current->format('Y-m-d');
             $row           = $rows->get($key);
             $labels[]      = 'W' . $weekNum;
-            $revenueData[] = $row ? round($row->revenue / 100, 0) : 0;
+            $revenueData[] = $row ? round($row->revenue, 0) : 0;
             $countData[]   = $row ? (int) $row->cnt : 0;
             $current->addWeek();
             $weekNum++;

@@ -156,16 +156,16 @@
       <div class="pd-pricing-strip">
         <div class="pd-price-item">
           <span class="pd-price-label">Purchase</span>
-          <span class="pd-price-value">{{ number_format($product->purchase_price / 100) }} <span style="font-size:11px;color:var(--text-dim)">RWF</span></span>
+          <span class="pd-price-value">{{ number_format($product->purchase_price) }} <span style="font-size:11px;color:var(--text-dim)">RWF</span></span>
         </div>
         <div class="pd-price-item">
           <span class="pd-price-label">Selling</span>
-          <span class="pd-price-value">{{ number_format($product->selling_price / 100) }} <span style="font-size:11px;color:var(--text-dim)">RWF</span></span>
+          <span class="pd-price-value">{{ number_format($product->selling_price) }} <span style="font-size:11px;color:var(--text-dim)">RWF</span></span>
         </div>
         @if($product->box_selling_price)
         <div class="pd-price-item">
           <span class="pd-price-label">Box Price</span>
-          <span class="pd-price-value">{{ number_format($product->box_selling_price / 100) }} <span style="font-size:11px;color:var(--text-dim)">RWF</span></span>
+          <span class="pd-price-value">{{ number_format($product->box_selling_price) }} <span style="font-size:11px;color:var(--text-dim)">RWF</span></span>
         </div>
         @endif
         <div class="pd-price-item">

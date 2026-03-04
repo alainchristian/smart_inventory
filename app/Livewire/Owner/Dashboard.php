@@ -38,7 +38,7 @@ class Dashboard extends Component
             $date = now()->subDays($i);
             $total = Sale::notVoided()
                 ->whereDate('sale_date', $date)
-                ->sum('total') / 100;
+                ->sum('total');
 
             $data[] = [
                 'date' => $date->format('M d'),
