@@ -18,9 +18,9 @@ return new class extends Migration
         DB::table('transfer_items')->delete();
         DB::table('transfer_boxes')->delete();
 
-        // 2. Delete all transactional header records
-        DB::table('sales')->delete();
+        // 2. Delete all transactional header records (returns before sales!)
         DB::table('returns')->delete();
+        DB::table('sales')->delete();
         DB::table('transfers')->delete();
         DB::table('damaged_goods')->delete();
 
