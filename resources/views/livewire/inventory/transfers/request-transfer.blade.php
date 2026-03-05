@@ -235,6 +235,12 @@
 }
 .rt-dropdown-empty h4 { font-size:14px; font-weight:700; color:var(--text); margin:0 0 4px; }
 .rt-dropdown-empty p  { font-size:12px; margin:0; }
+/* Spinner animation */
+@keyframes rt-spin { to { transform: rotate(360deg); } }
+.rt-spin { animation: rt-spin .8s linear infinite; }
+
+/* Livewire loading safety: always hidden until Livewire shows them */
+[wire\:loading] { display: none !important; }
 </style>
 
 {{-- ── Page header ────────────────────────────────── --}}
@@ -554,12 +560,12 @@
           @if(count($items) == 0) disabled @endif
           wire:loading.attr="disabled"
         >
-          <span wire:loading.remove>
+          <span wire:loading.remove style="display:inline-flex;align-items:center;gap:6px">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
             Submit Request
           </span>
-          <span wire:loading style="display:flex;align-items:center;gap:6px">
-            <svg style="animation:spin 1s linear infinite" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 0110 10"/></svg>
+          <span wire:loading style="display:none;align-items:center;gap:6px">
+            <svg class="rt-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 0110 10"/></svg>
             Submitting…
           </span>
         </button>
