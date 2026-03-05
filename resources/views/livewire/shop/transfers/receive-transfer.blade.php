@@ -1,3 +1,33 @@
+<style>
+
+/* Mission 2C: Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+
+</style>
 @php
 use App\Enums\TransferStatus;
 @endphp
@@ -8,13 +38,13 @@ use App\Enums\TransferStatus;
         <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div class="flex-1">
                 <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-900">{{ $transfer->transfer_number }}</h2>
-                    <span class="px-3 py-1 rounded-full text-xs md:text-sm font-medium {{ $transfer->status->color() }}">
+                    <h2 class="text-2xl md:text-2xl font-bold text-gray-900">{{ $transfer->transfer_number }}</h2>
+                    <span class="px-3 py-1 rounded-full text-sm md:text-base font-medium {{ $transfer->status->color() }}">
                         {{ $transfer->status->label() }}
                     </span>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-sm">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-base">
                     <div>
                         <span class="font-medium text-gray-500">From Warehouse</span>
                         <p class="text-gray-900 mt-1">{{ $transfer->fromWarehouse->name }}</p>
@@ -39,12 +69,12 @@ use App\Enums\TransferStatus;
             <!-- Scanner Disabled State -->
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div>
-                    <h3 class="text-base md:text-lg font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
-                    <p class="text-xs md:text-sm text-gray-600">Use your phone as a dedicated scanner while working on desktop</p>
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
+                    <p class="text-sm md:text-base text-gray-600">Use your phone as a dedicated scanner while working on desktop</p>
                 </div>
                 <button type="button"
                         wire:click="generateScannerSession"
-                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-sm md:text-base transition-colors">
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-base md:text-lg transition-colors">
                     Enable Phone Scanner
                 </button>
             </div>
@@ -61,27 +91,27 @@ use App\Enums\TransferStatus;
                         </span>
                     </div>
                     <div>
-                        <h3 class="text-base md:text-lg font-semibold text-green-600">📱 Phone Connected</h3>
-                        <p class="text-xs md:text-sm text-gray-600">Scanner ready - Point camera at barcodes</p>
+                        <h3 class="text-lg md:text-xl font-semibold text-green-600">📱 Phone Connected</h3>
+                        <p class="text-sm md:text-base text-gray-600">Scanner ready - Point camera at barcodes</p>
                     </div>
                 </div>
 
                 <div class="flex gap-2">
                     <button type="button"
                             wire:click="$toggle('showScannerQR')"
-                            class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-xs md:text-sm font-medium transition-colors">
+                            class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm md:text-base font-medium transition-colors">
                         Show QR Code
                     </button>
                     <button type="button"
                             wire:click="closeScannerSession"
-                            class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs md:text-sm font-medium transition-colors">
+                            class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm md:text-base font-medium transition-colors">
                         Disconnect
                     </button>
                 </div>
             </div>
 
             <!-- Session info (collapsible) -->
-            <div class="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500 flex items-center justify-between">
+            <div class="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-500 flex items-center justify-between">
                 <span>Session: <code class="bg-gray-100 px-2 py-0.5 rounded font-mono">{{ $scannerSession->session_code }}</code></span>
                 <span>Expires: {{ $scannerSession->expires_at->diffForHumans() }}</span>
             </div>
@@ -99,13 +129,13 @@ use App\Enums\TransferStatus;
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-base md:text-lg font-semibold text-orange-600">⏱️ Session Expired</h3>
-                        <p class="text-xs md:text-sm text-gray-600">Your phone scanner session has expired. Reconnect to continue.</p>
+                        <h3 class="text-lg md:text-xl font-semibold text-orange-600">⏱️ Session Expired</h3>
+                        <p class="text-sm md:text-base text-gray-600">Your phone scanner session has expired. Reconnect to continue.</p>
                     </div>
                 </div>
                 <button type="button"
                         wire:click="generateScannerSession"
-                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold text-sm md:text-base transition-colors">
+                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold text-base md:text-lg transition-colors">
                     Reconnect Phone
                 </button>
             </div>
@@ -119,12 +149,12 @@ use App\Enums\TransferStatus;
 
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
                 <div>
-                    <h3 class="text-base md:text-lg font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
-                    <p class="text-xs md:text-sm text-gray-600">Scan QR code with your phone to connect</p>
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
+                    <p class="text-sm md:text-base text-gray-600">Scan QR code with your phone to connect</p>
                 </div>
                 <button type="button"
                         wire:click="closeScannerSession"
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold text-sm md:text-base transition-colors">
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold text-base md:text-lg transition-colors">
                     Cancel
                 </button>
             </div>
@@ -139,16 +169,16 @@ use App\Enums\TransferStatus;
                             {!! QrCode::size(250)->generate($scannerUrl) !!}
                         </div>
                         <div class="mt-4 bg-purple-100 rounded-lg p-3">
-                            <p class="text-sm font-bold text-purple-900">📱 PRIMARY METHOD</p>
-                            <p class="text-xs text-purple-700 mt-1">Open phone camera and point at QR code above</p>
+                            <p class="text-base font-bold text-purple-900">📱 PRIMARY METHOD</p>
+                            <p class="text-sm text-purple-700 mt-1">Open phone camera and point at QR code above</p>
                         </div>
                     </div>
 
                     <!-- INSTRUCTIONS & MANUAL CODE (BACKUP - RIGHT SIDE) -->
                     <div class="flex flex-col justify-center">
                         <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg p-4 mb-4">
-                            <p class="font-bold mb-3 text-lg">📷 Quick Setup:</p>
-                            <ol class="text-sm space-y-2">
+                            <p class="font-bold mb-3 text-xl">📷 Quick Setup:</p>
+                            <ol class="text-base space-y-2">
                                 <li class="flex items-start">
                                     <span class="font-bold mr-2">1.</span>
                                     <span>Open <strong>phone camera app</strong></span>
@@ -170,9 +200,9 @@ use App\Enums\TransferStatus;
 
                         <!-- Alternative Manual Code -->
                         <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
-                            <p class="text-xs text-gray-500 mb-2">Alternative (if camera doesn't work):</p>
-                            <p class="text-xs text-gray-600 mb-2">Go to: <strong class="text-purple-600">{{ url('/scanner') }}</strong></p>
-                            <p class="text-xs text-gray-600 mb-2">Enter code:</p>
+                            <p class="text-sm text-gray-500 mb-2">Alternative (if camera doesn't work):</p>
+                            <p class="text-sm text-gray-600 mb-2">Go to: <strong class="text-purple-600">{{ url('/scanner') }}</strong></p>
+                            <p class="text-sm text-gray-600 mb-2">Enter code:</p>
                             <div class="bg-gray-50 px-4 py-2 rounded border border-gray-300">
                                 <p class="text-2xl font-bold text-gray-700 tracking-widest text-center">
                                     {{ $scannerSession->session_code }}
@@ -180,7 +210,7 @@ use App\Enums\TransferStatus;
                             </div>
                         </div>
 
-                        <div class="mt-3 text-xs text-gray-500 text-center">
+                        <div class="mt-3 text-sm text-gray-500 text-center">
                             ⏱️ Session expires: {{ $scannerSession->expires_at->diffForHumans() }}
                         </div>
                     </div>
@@ -199,8 +229,8 @@ use App\Enums\TransferStatus;
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
             <div class="flex-1">
-                <h3 class="text-base md:text-lg font-semibold">Scan Product Barcode</h3>
-                <p class="text-purple-100 text-xs md:text-sm">Scan in any order - mix products freely</p>
+                <h3 class="text-lg md:text-xl font-semibold">Scan Product Barcode</h3>
+                <p class="text-purple-100 text-sm md:text-base">Scan in any order - mix products freely</p>
             </div>
         </div>
 
@@ -211,7 +241,7 @@ use App\Enums\TransferStatus;
                            wire:model="scanInput"
                            wire:keydown.enter="scanBox"
                            placeholder="Scan product barcode..."
-                           class="block w-full px-3 md:px-4 py-2 md:py-3 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-white border-0 text-base md:text-lg font-mono"
+                           class="block w-full px-3 md:px-4 py-2 md:py-3 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-white border-0 text-lg md:text-xl font-mono"
                            autofocus>
                 </div>
                 <button type="button"
@@ -223,11 +253,11 @@ use App\Enums\TransferStatus;
         @else
             <!-- Quantity Confirmation -->
             <div class="bg-white text-gray-900 rounded-lg p-3 md:p-4">
-                <h4 class="font-semibold text-sm md:text-base mb-2">{{ $pendingProductName }}</h4>
-                <p class="text-xs md:text-sm text-gray-600 mb-3 md:mb-4">Available: {{ $pendingAvailableCount }} box(es)</p>
+                <h4 class="font-semibold text-base md:text-lg mb-2">{{ $pendingProductName }}</h4>
+                <p class="text-sm md:text-base text-gray-600 mb-3 md:mb-4">Available: {{ $pendingAvailableCount }} box(es)</p>
 
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
-                    <label class="text-xs md:text-sm font-medium">Boxes:</label>
+                    <label class="text-sm md:text-base font-medium">Boxes:</label>
                     <input type="number"
                            wire:model="scanQuantity"
                            min="1"
@@ -235,12 +265,12 @@ use App\Enums\TransferStatus;
                            class="px-3 py-2 border border-gray-300 rounded-lg w-full sm:w-24 text-center">
                     <button type="button"
                             wire:click="confirmQuantity"
-                            class="px-4 md:px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors text-sm md:text-base">
+                            class="px-4 md:px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors text-base md:text-lg">
                         Confirm
                     </button>
                     <button type="button"
                             wire:click="cancelPending"
-                            class="px-4 md:px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors text-sm md:text-base">
+                            class="px-4 md:px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors text-base md:text-lg">
                         Cancel
                     </button>
                 </div>
@@ -255,7 +285,7 @@ use App\Enums\TransferStatus;
                 <svg class="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                 </svg>
-                <p class="text-xs md:text-sm text-green-800 flex-1">{{ session('success') }}</p>
+                <p class="text-sm md:text-base text-green-800 flex-1">{{ session('success') }}</p>
             </div>
         </div>
     @endif
@@ -266,7 +296,7 @@ use App\Enums\TransferStatus;
                 <svg class="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                 </svg>
-                <p class="text-xs md:text-sm text-green-800 flex-1">{{ session('scan_success') }}</p>
+                <p class="text-sm md:text-base text-green-800 flex-1">{{ session('scan_success') }}</p>
             </div>
         </div>
     @endif
@@ -277,7 +307,7 @@ use App\Enums\TransferStatus;
                 <svg class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                 </svg>
-                <p class="text-xs md:text-sm text-red-800 flex-1">{{ session('error') }}</p>
+                <p class="text-sm md:text-base text-red-800 flex-1">{{ session('error') }}</p>
             </div>
         </div>
     @endif
@@ -288,7 +318,7 @@ use App\Enums\TransferStatus;
                 <svg class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                 </svg>
-                <p class="text-xs md:text-sm text-red-800 flex-1">{{ session('scan_error') }}</p>
+                <p class="text-sm md:text-base text-red-800 flex-1">{{ session('scan_error') }}</p>
             </div>
         </div>
     @endif
@@ -299,31 +329,31 @@ use App\Enums\TransferStatus;
                 <svg class="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                 </svg>
-                <p class="text-xs md:text-sm text-blue-800 flex-1">{{ session('info') }}</p>
+                <p class="text-sm md:text-base text-blue-800 flex-1">{{ session('info') }}</p>
             </div>
         </div>
     @endif
 
     <!-- Progress Summary -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Receiving Progress</h3>
+        <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">Receiving Progress</h3>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
             <div class="text-center p-3 md:p-4 bg-blue-50 rounded-lg">
                 <div class="text-2xl md:text-3xl font-bold text-blue-600">{{ $expectedBoxes }}</div>
-                <div class="text-xs md:text-sm text-gray-600 mt-1">Expected</div>
+                <div class="text-sm md:text-base text-gray-600 mt-1">Expected</div>
             </div>
             <div class="text-center p-3 md:p-4 bg-green-50 rounded-lg">
                 <div class="text-2xl md:text-3xl font-bold text-green-600">{{ $scannedCount }}</div>
-                <div class="text-xs md:text-sm text-gray-600 mt-1">Scanned</div>
+                <div class="text-sm md:text-base text-gray-600 mt-1">Scanned</div>
             </div>
             <div class="text-center p-3 md:p-4 bg-yellow-50 rounded-lg">
                 <div class="text-2xl md:text-3xl font-bold text-yellow-600">{{ $remainingCount }}</div>
-                <div class="text-xs md:text-sm text-gray-600 mt-1">Remaining</div>
+                <div class="text-sm md:text-base text-gray-600 mt-1">Remaining</div>
             </div>
             <div class="text-center p-3 md:p-4 bg-red-50 rounded-lg">
                 <div class="text-2xl md:text-3xl font-bold text-red-600">{{ $damagedCount }}</div>
-                <div class="text-xs md:text-sm text-gray-600 mt-1">Damaged</div>
+                <div class="text-sm md:text-base text-gray-600 mt-1">Damaged</div>
             </div>
         </div>
 
@@ -332,14 +362,14 @@ use App\Enums\TransferStatus;
             <div class="h-3 md:h-4 rounded-full bg-green-600 transition-all"
                  style="width: {{ $progressPercentage }}%"></div>
         </div>
-        <p class="text-xs md:text-sm text-gray-600 text-center mt-2">{{ number_format($progressPercentage, 1) }}% Complete</p>
+        <p class="text-sm md:text-base text-gray-600 text-center mt-2">{{ number_format($progressPercentage, 1) }}% Complete</p>
     </div>
 
     <!-- Scanned Boxes -->
     @if(!empty($scannedBoxes))
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
             <div class="flex items-center justify-between mb-4 md:mb-6">
-                <h3 class="text-base md:text-lg font-semibold text-gray-900">Scanned Boxes ({{ count($scannedBoxes) }})</h3>
+                <h3 class="text-lg md:text-xl font-semibold text-gray-900">Scanned Boxes ({{ count($scannedBoxes) }})</h3>
             </div>
 
             <div class="space-y-3 md:space-y-4">
@@ -348,14 +378,14 @@ use App\Enums\TransferStatus;
                         <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                             <div class="flex-1">
                                 <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
-                                    <span class="font-mono text-xs md:text-sm font-bold text-gray-900">{{ $box['box_code'] }}</span>
-                                    <span class="text-xs md:text-sm text-gray-700">{{ $box['product_name'] }}</span>
+                                    <span class="font-mono text-sm md:text-base font-bold text-gray-900">{{ $box['box_code'] }}</span>
+                                    <span class="text-sm md:text-base text-gray-700">{{ $box['product_name'] }}</span>
                                 </div>
 
                                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
                                     <button type="button"
                                             wire:click="markAsDamaged({{ $boxId }}, {{ $box['is_damaged'] ? 'false' : 'true' }})"
-                                            class="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors {{ $box['is_damaged'] ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                            class="px-3 py-1.5 rounded-lg text-sm md:text-base font-medium transition-colors {{ $box['is_damaged'] ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                         {{ $box['is_damaged'] ? '✓ Damaged' : 'Mark as Damaged' }}
                                     </button>
 
@@ -365,14 +395,14 @@ use App\Enums\TransferStatus;
                                                wire:change="updateDamageNotes({{ $boxId }}, $event.target.value)"
                                                placeholder="Enter damage notes..."
                                                value="{{ $box['damage_notes'] }}"
-                                               class="flex-1 px-3 py-1.5 text-xs md:text-sm border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                               class="flex-1 px-3 py-1.5 text-sm md:text-base border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500">
                                     @endif
                                 </div>
                             </div>
 
                             <button type="button"
                                     wire:click="removeScannedBox({{ $boxId }})"
-                                    class="text-red-600 hover:text-red-900 text-xs md:text-sm font-medium self-start md:ml-4">
+                                    class="text-red-600 hover:text-red-900 text-sm md:text-base font-medium self-start md:ml-4">
                                 Remove
                             </button>
                         </div>
@@ -387,12 +417,12 @@ use App\Enums\TransferStatus;
         <button type="button"
                 wire:click="completeReceipt"
                 @if(empty($scannedBoxes)) disabled @endif
-                class="w-full px-4 md:px-6 py-3 md:py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-sm md:text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                class="w-full px-4 md:px-6 py-3 md:py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-base md:text-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             <svg class="w-5 h-5 md:w-6 md:h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
             Complete Receiving
         </button>
-        <p class="text-xs text-gray-500 text-center mt-2">Partial deliveries allowed. Missing boxes will be reported.</p>
+        <p class="text-sm text-gray-500 text-center mt-2">Partial deliveries allowed. Missing boxes will be reported.</p>
     </div>
 </div>

@@ -1,3 +1,33 @@
+<style>
+
+/* Mission 2C: Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+
+</style>
 <x-app-layout>
     <div class="py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -6,7 +36,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">Transfer Requests</h1>
-                        <p class="mt-1 text-sm text-gray-600">Manage incoming transfer requests from shops</p>
+                        <p class="mt-1 text-base text-gray-600">Manage incoming transfer requests from shops</p>
                     </div>
                 </div>
             </div>
@@ -18,7 +48,7 @@
                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                     </svg>
                     <div>
-                        <p class="text-sm text-blue-700">
+                        <p class="text-base text-blue-700">
                             <strong>Review & Approve:</strong> Review transfer requests from shops, approve or reject them, then pack and ship the requested items.
                         </p>
                     </div>

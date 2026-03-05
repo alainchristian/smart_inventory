@@ -1,3 +1,33 @@
+<style>
+
+/* Mission 2C: Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+
+</style>
 @php
 use App\Enums\TransferStatus;
 @endphp
@@ -8,13 +38,13 @@ use App\Enums\TransferStatus;
         <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div class="flex-1">
                 <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-900">{{ $transfer->transfer_number }}</h2>
-                    <span class="px-3 py-1 rounded-full text-xs md:text-sm font-medium {{ $transfer->status->color() }}">
+                    <h2 class="text-2xl md:text-2xl font-bold text-gray-900">{{ $transfer->transfer_number }}</h2>
+                    <span class="px-3 py-1 rounded-full text-sm md:text-base font-medium {{ $transfer->status->color() }}">
                         {{ $transfer->status->label() }}
                     </span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 text-base">
                     <div>
                         <span class="font-medium text-gray-500">From Warehouse</span>
                         <p class="text-gray-900 mt-1">{{ $transfer->fromWarehouse->name }}</p>
@@ -40,7 +70,7 @@ use App\Enums\TransferStatus;
                             <span class="font-medium text-gray-500">Transporter</span>
                             <p class="text-gray-900 mt-1">{{ $transfer->transporter->name }}</p>
                             @if($transfer->transporter->vehicle_number)
-                                <p class="text-xs text-gray-500 mt-0.5">{{ $transfer->transporter->vehicle_number }}</p>
+                                <p class="text-sm text-gray-500 mt-0.5">{{ $transfer->transporter->vehicle_number }}</p>
                             @endif
                         </div>
                     @endif
@@ -50,15 +80,15 @@ use App\Enums\TransferStatus;
                     <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div class="text-center p-3 bg-blue-50 rounded-lg">
                             <div class="text-2xl font-bold text-blue-600">{{ $transfer->boxes()->count() }}</div>
-                            <div class="text-xs text-gray-600 mt-1">Boxes Assigned</div>
+                            <div class="text-sm text-gray-600 mt-1">Boxes Assigned</div>
                         </div>
                     </div>
                 @endif
 
                 @if($transfer->notes)
                     <div class="mt-4 p-3 md:p-4 bg-gray-50 rounded-lg">
-                        <p class="text-sm font-medium text-gray-700 mb-1">Shop Notes:</p>
-                        <p class="text-sm text-gray-600">{{ $transfer->notes }}</p>
+                        <p class="text-base font-medium text-gray-700 mb-1">Shop Notes:</p>
+                        <p class="text-base text-gray-600">{{ $transfer->notes }}</p>
                     </div>
                 @endif
             </div>
@@ -72,7 +102,7 @@ use App\Enums\TransferStatus;
                 <svg class="h-5 w-5 text-red-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                 </svg>
-                <p class="text-sm text-red-800">{{ session('error') }}</p>
+                <p class="text-base text-red-800">{{ session('error') }}</p>
             </div>
         </div>
     @endif
@@ -80,9 +110,9 @@ use App\Enums\TransferStatus;
     <!-- Requested Items -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6 gap-2">
-            <h3 class="text-base md:text-lg font-semibold text-gray-900">Requested Products</h3>
+            <h3 class="text-lg md:text-xl font-semibold text-gray-900">Requested Products</h3>
             @if($transfer->status === TransferStatus::PENDING)
-                <span class="text-xs md:text-sm text-gray-600">You can modify quantities before approving</span>
+                <span class="text-sm md:text-base text-gray-600">You can modify quantities before approving</span>
             @endif
         </div>
 
@@ -99,12 +129,12 @@ use App\Enums\TransferStatus;
                 <div class="p-3 md:p-5 border-2 rounded-lg {{ $exceedsStock ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white' }}">
                     <div class="flex items-start justify-between">
                         <div class="flex-1">
-                            <h4 class="font-semibold text-gray-900 text-base md:text-lg mb-3">{{ $item['product_name'] }}</h4>
+                            <h4 class="font-semibold text-gray-900 text-lg md:text-xl mb-3">{{ $item['product_name'] }}</h4>
 
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                                 <!-- Boxes Input -->
                                 <div>
-                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">
+                                    <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
                                         Boxes Requested
                                     </label>
                                     @if($transfer->status === TransferStatus::PENDING)
@@ -114,26 +144,26 @@ use App\Enums\TransferStatus;
                                                class="block w-full px-3 md:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 {{ $exceedsStock ? 'border-red-300 bg-red-50' : 'border-gray-300' }}"
                                                placeholder="0">
                                         @error("items.{$index}.boxes_requested")
-                                            <p class="mt-1 text-xs md:text-sm text-red-600">{{ $message }}</p>
+                                            <p class="mt-1 text-sm md:text-base text-red-600">{{ $message }}</p>
                                         @enderror
                                     @else
-                                        <div class="text-xl md:text-2xl font-bold text-gray-900">{{ number_format($requestedBoxes) }}</div>
+                                        <div class="text-2xl md:text-2xl font-bold text-gray-900">{{ number_format($requestedBoxes) }}</div>
                                     @endif
                                 </div>
 
                                 <!-- Available Stock -->
                                 <div>
-                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">
+                                    <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
                                         Available in Warehouse
                                     </label>
                                     <div class="flex items-baseline gap-2">
-                                        <span class="text-xl md:text-2xl font-bold {{ $exceedsStock ? 'text-red-600' : 'text-green-600' }}">
+                                        <span class="text-2xl md:text-2xl font-bold {{ $exceedsStock ? 'text-red-600' : 'text-green-600' }}">
                                             {{ number_format($availableBoxes) }}
                                         </span>
-                                        <span class="text-xs md:text-sm text-gray-600">boxes</span>
+                                        <span class="text-sm md:text-base text-gray-600">boxes</span>
                                     </div>
                                     @if($stock)
-                                        <div class="mt-1 text-xs text-gray-500">
+                                        <div class="mt-1 text-sm text-gray-500">
                                             {{ $stock['full_boxes'] }} full + {{ $stock['partial_boxes'] }} partial
                                         </div>
                                     @endif
@@ -141,16 +171,16 @@ use App\Enums\TransferStatus;
 
                                 <!-- Total Items -->
                                 <div>
-                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">
+                                    <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
                                         Total Items
                                     </label>
                                     <div class="flex items-baseline gap-2">
-                                        <span class="text-xl md:text-2xl font-bold text-gray-900">
+                                        <span class="text-2xl md:text-2xl font-bold text-gray-900">
                                             {{ number_format($totalItems) }}
                                         </span>
-                                        <span class="text-xs md:text-sm text-gray-600">items</span>
+                                        <span class="text-sm md:text-base text-gray-600">items</span>
                                     </div>
-                                    <div class="mt-1 text-xs text-gray-500">
+                                    <div class="mt-1 text-sm text-gray-500">
                                         {{ $item['items_per_box'] }} items per box
                                     </div>
                                 </div>
@@ -162,7 +192,7 @@ use App\Enums\TransferStatus;
                                     <svg class="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="text-xs md:text-sm font-medium">
+                                    <span class="text-sm md:text-base font-medium">
                                         Exceeds available stock by {{ number_format($requestedBoxes - $availableBoxes) }} boxes
                                     </span>
                                 </div>
@@ -179,7 +209,7 @@ use App\Enums\TransferStatus;
         <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
             <button type="button"
                     wire:click="openRejectModal"
-                    class="inline-flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 font-medium transition-colors text-sm md:text-base">
+                    class="inline-flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 font-medium transition-colors text-base md:text-lg">
                 <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -189,7 +219,7 @@ use App\Enums\TransferStatus;
             <button type="button"
                     wire:click="approve"
                     wire:loading.attr="disabled"
-                    class="inline-flex items-center justify-center px-6 md:px-8 py-2 md:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors disabled:opacity-50 text-sm md:text-base">
+                    class="inline-flex items-center justify-center px-6 md:px-8 py-2 md:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors disabled:opacity-50 text-base md:text-lg">
                 <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" wire:loading.remove>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
@@ -202,10 +232,10 @@ use App\Enums\TransferStatus;
             <svg class="mx-auto h-10 w-10 md:h-12 md:w-12 text-green-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <p class="text-base md:text-lg font-medium text-green-900 mb-2">Transfer Approved</p>
-            <p class="text-sm text-green-700 mb-4">This transfer has been approved and is ready for packing.</p>
+            <p class="text-lg md:text-xl font-medium text-green-900 mb-2">Transfer Approved</p>
+            <p class="text-base text-green-700 mb-4">This transfer has been approved and is ready for packing.</p>
             <a href="{{ route('warehouse.transfers.pack', $transfer) }}"
-               class="inline-flex items-center px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors text-sm md:text-base">
+               class="inline-flex items-center px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors text-base md:text-lg">
                 <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                 </svg>
@@ -219,9 +249,9 @@ use App\Enums\TransferStatus;
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                 </svg>
                 <div class="flex-1">
-                    <p class="font-medium text-red-900 text-sm md:text-base">Transfer Rejected</p>
+                    <p class="font-medium text-red-900 text-base md:text-lg">Transfer Rejected</p>
                     @if($transfer->notes)
-                        <p class="mt-2 text-xs md:text-sm text-red-700">Reason: {{ $transfer->notes }}</p>
+                        <p class="mt-2 text-sm md:text-base text-red-700">Reason: {{ $transfer->notes }}</p>
                     @endif
                 </div>
             </div>
@@ -239,7 +269,7 @@ use App\Enums\TransferStatus;
                 <!-- Modal -->
                 <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
                     <div class="flex items-start justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Reject Transfer Request</h3>
+                        <h3 class="text-xl font-semibold text-gray-900">Reject Transfer Request</h3>
                         <button type="button"
                                 @click="$wire.closeRejectModal()"
                                 class="text-gray-400 hover:text-gray-600">
@@ -250,7 +280,7 @@ use App\Enums\TransferStatus;
                     </div>
 
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-base font-medium text-gray-700 mb-2">
                             Reason for Rejection <span class="text-red-600">*</span>
                         </label>
                         <textarea wire:model="rejectReason"
@@ -258,7 +288,7 @@ use App\Enums\TransferStatus;
                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                                   placeholder="Explain why this transfer cannot be fulfilled..."></textarea>
                         @error('rejectReason')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 

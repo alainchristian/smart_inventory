@@ -1,3 +1,33 @@
+<style>
+
+/* Mission 2C: Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+
+</style>
 <div class="card" wire:poll.30s>
   <div class="card-header">
     <div>
@@ -32,11 +62,11 @@
       @endif
     </div>
     <div style="flex:1">
-      <div style="font-weight:600;font-size:13px;color:var(--text)">{{ $row['label'] }}</div>
-      <div style="font-size:11px;color:var(--text-sub);margin-top:2px">{{ $row['sub'] }}</div>
+      <div style="font-weight:600;font-size:16px;color:var(--text)">{{ $row['label'] }}</div>
+      <div style="font-size:13px;color:var(--text-sub);margin-top:2px">{{ $row['sub'] }}</div>
     </div>
     <div class="ts-count {{ $row['color'] }}"
-         style="font-size:22px;font-weight:700;font-family:var(--mono)">
+         style="font-size:26px;font-weight:700;font-family:var(--mono)">
       {{ $row['count'] }}
     </div>
   </a>

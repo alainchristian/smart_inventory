@@ -6,8 +6,8 @@
 
 /* ── Page header */
 .wtl-page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.wtl-page-header-left h1 { font-size:24px; font-weight:800; letter-spacing:-.5px; color:var(--text); margin:0 0 3px; }
-.wtl-page-header-left p  { font-size:13px; color:var(--text-sub); margin:0; }
+.wtl-page-header-left h1 { font-size:29px; font-weight:800; letter-spacing:-.5px; color:var(--text); margin:0 0 3px; }
+.wtl-page-header-left p  { font-size:16px; color:var(--text-sub); margin:0; }
 
 /* ── Pipeline strip */
 .wtl-pipeline {
@@ -27,9 +27,9 @@
     content:''; position:absolute; bottom:0; left:0; right:0; height:3px;
     background:var(--step-color);
 }
-.wtl-step-num   { font-size:22px; font-weight:800; line-height:1; }
-.wtl-step-label { font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-sub); }
-.wtl-step-sub   { font-size:11px; color:var(--text-sub); }
+.wtl-step-num   { font-size:26px; font-weight:800; line-height:1; }
+.wtl-step-label { font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-sub); }
+.wtl-step-sub   { font-size:13px; color:var(--text-sub); }
 
 /* ── Filter / search bar */
 .wtl-bar {
@@ -37,10 +37,10 @@
     background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
     padding:10px 14px;
 }
-.wtl-bar-label { font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-sub); padding-right:6px; }
+.wtl-bar-label { font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-sub); padding-right:6px; }
 .wtl-chip {
     display:inline-flex; align-items:center; gap:5px;
-    padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600;
+    padding:5px 12px; border-radius:20px; font-size:14px; font-weight:600;
     border:1.5px solid transparent; cursor:pointer; transition:all .15s;
     background:transparent; color:var(--text-sub);
 }
@@ -49,7 +49,7 @@
 .wtl-chip-ct {
     display:inline-flex; align-items:center; justify-content:center;
     min-width:18px; height:18px; padding:0 4px; border-radius:10px;
-    background:rgba(255,255,255,.25); font-size:10px; font-weight:800;
+    background:rgba(255,255,255,.25); font-size:12px; font-weight:800;
 }
 
 /* ── Transfer cards */
@@ -74,10 +74,10 @@
 
 /* Number + badge row */
 .wtl-card-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.wtl-num       { font-size:14px; font-weight:800; color:var(--text); letter-spacing:-.2px; }
+.wtl-num       { font-size:17px; font-weight:800; color:var(--text); letter-spacing:-.2px; }
 .wtl-badge {
     display:inline-flex; align-items:center; gap:4px;
-    padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700;
+    padding:2px 9px; border-radius:20px; font-size:12px; font-weight:700;
     letter-spacing:.5px; text-transform:uppercase;
     background:var(--badge-bg); color:var(--badge-color);
 }
@@ -86,12 +86,12 @@
 /* Urgency flag */
 .wtl-urgent {
     display:inline-flex; align-items:center; gap:4px;
-    padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700;
+    padding:2px 9px; border-radius:20px; font-size:12px; font-weight:700;
     background:rgba(217,119,6,.12); color:#d97706;
 }
 
 /* Route */
-.wtl-route { display:flex; align-items:center; gap:8px; font-size:12px; }
+.wtl-route { display:flex; align-items:center; gap:8px; font-size:14px; }
 .wtl-route-node {
     display:inline-flex; align-items:center; gap:5px; font-weight:700; color:var(--text);
 }
@@ -103,7 +103,7 @@
 
 /* Dates */
 .wtl-dates { display:flex; gap:14px; flex-wrap:wrap; }
-.wtl-date  { font-size:11px; color:var(--text-sub); }
+.wtl-date  { font-size:13px; color:var(--text-sub); }
 .wtl-date strong { color:var(--text); font-weight:600; }
 
 /* Stats */
@@ -116,8 +116,8 @@
     padding:0 18px; gap:2px; border-right:1px solid var(--border);
 }
 .wtl-stat:last-child { border-right:none; }
-.wtl-stat-v { font-size:20px; font-weight:800; color:var(--text); line-height:1; }
-.wtl-stat-l { font-size:9px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--text-sub); }
+.wtl-stat-v { font-size:24px; font-weight:800; color:var(--text); line-height:1; }
+.wtl-stat-l { font-size:11px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--text-sub); }
 
 /* Footer */
 .wtl-card-foot {
@@ -127,7 +127,7 @@
 }
 .wtl-action {
     display:inline-flex; align-items:center; gap:5px;
-    padding:5px 12px; border-radius:var(--rsm,6px); font-size:11px; font-weight:600;
+    padding:5px 12px; border-radius:var(--rsm,6px); font-size:13px; font-weight:600;
     border:1px solid var(--border); cursor:pointer; text-decoration:none;
     background:var(--surface); color:var(--text); transition:all .15s;
 }
@@ -136,19 +136,79 @@
 .wtl-action.primary:hover { opacity:.88; }
 .wtl-action.warn          { background:#d97706; color:#fff; border-color:#d97706; }
 .wtl-action.warn:hover    { opacity:.88; }
-.wtl-foot-time { margin-left:auto; font-size:10px; color:var(--text-sub); }
+.wtl-foot-time { margin-left:auto; font-size:12px; color:var(--text-sub); }
 
 /* Empty state */
 .wtl-empty {
     text-align:center; padding:64px 32px;
     background:var(--surface); border:1px dashed var(--border); border-radius:var(--r);
 }
-.wtl-empty-ico { font-size:44px; margin-bottom:16px; }
-.wtl-empty h3  { font-size:17px; font-weight:700; color:var(--text); margin:0 0 8px; }
-.wtl-empty p   { font-size:13px; color:var(--text-sub); margin:0; }
+.wtl-empty-ico { font-size:53px; margin-bottom:16px; }
+.wtl-empty h3  { font-size:20px; font-weight:700; color:var(--text); margin:0 0 8px; }
+.wtl-empty p   { font-size:16px; color:var(--text-sub); margin:0; }
 
 /* Pagination */
 .wtl-pagination { margin-top:4px; }
+
+/* Mission 2A */
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:24px; } /* It was 20px in instructions, but we already scaled fonts. Let's just use what instruction said and it will scale? Actually let's use exact code */
+    .tl-step-sub  { display:none; }
+    
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border);
+                      margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    
+    .tl-route-dash-line { width:20px; }
+    
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:24px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+}
+
+
+/* Mission 2C: Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+
 </style>
 
 <div class="wtl-wrap">

@@ -1,16 +1,46 @@
+<style>
+
+/* Mission 2C: Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+
+</style>
 <div>
     <!-- Page Header with Filters -->
     <div class="mb-4">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Transfer Performance</h1>
-                <p class="text-gray-500 text-xs mt-0.5">Transfer efficiency and logistics analytics</p>
+                <p class="text-gray-500 text-sm mt-0.5">Transfer efficiency and logistics analytics</p>
             </div>
 
             <div class="flex flex-col sm:flex-row gap-2">
                 <!-- Status Filter -->
                 <select wire:model.live="statusFilter"
-                        class="px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                     <option value="">All Statuses</option>
                     @foreach($this->transferStatuses as $status)
                         <option value="{{ $status->value }}">{{ ucfirst(str_replace('_', ' ', $status->value)) }}</option>
@@ -20,15 +50,15 @@
                 <!-- Date Range Filters -->
                 <div class="flex gap-2">
                     <button wire:click="setDateRange('today')"
-                            class="px-3 py-2 text-xs {{ $dateFrom === now()->format('Y-m-d') && $dateTo === now()->format('Y-m-d') ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 border border-gray-300' }} rounded-lg hover:bg-purple-700 hover:text-white transition-colors">
+                            class="px-3 py-2 text-sm {{ $dateFrom === now()->format('Y-m-d') && $dateTo === now()->format('Y-m-d') ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 border border-gray-300' }} rounded-lg hover:bg-purple-700 hover:text-white transition-colors">
                         Today
                     </button>
                     <button wire:click="setDateRange('week')"
-                            class="px-3 py-2 text-xs {{ $dateFrom === now()->subDays(7)->format('Y-m-d') ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 border border-gray-300' }} rounded-lg hover:bg-purple-700 hover:text-white transition-colors">
+                            class="px-3 py-2 text-sm {{ $dateFrom === now()->subDays(7)->format('Y-m-d') ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 border border-gray-300' }} rounded-lg hover:bg-purple-700 hover:text-white transition-colors">
                         Week
                     </button>
                     <button wire:click="setDateRange('month')"
-                            class="px-3 py-2 text-xs {{ $dateFrom === now()->subDays(30)->format('Y-m-d') ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 border border-gray-300' }} rounded-lg hover:bg-purple-700 hover:text-white transition-colors">
+                            class="px-3 py-2 text-sm {{ $dateFrom === now()->subDays(30)->format('Y-m-d') ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 border border-gray-300' }} rounded-lg hover:bg-purple-700 hover:text-white transition-colors">
                         Month
                     </button>
                 </div>
@@ -36,9 +66,9 @@
                 <!-- Custom Date Range -->
                 <div class="flex gap-2">
                     <input type="date" wire:model.live="dateFrom"
-                           class="px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                     <input type="date" wire:model.live="dateTo"
-                           class="px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                 </div>
             </div>
         </div>
@@ -49,63 +79,63 @@
         <!-- Total Transfers -->
         <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow text-white">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase opacity-90">Total Transfers</span>
+                <span class="text-sm font-bold uppercase opacity-90">Total Transfers</span>
                 <svg class="w-6 h-6 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
                 </svg>
             </div>
             <p class="text-2xl font-bold">{{ number_format($this->transferKpis['total_transfers']) }}</p>
-            <p class="text-xs opacity-75 mt-2">Total transfers in period</p>
+            <p class="text-sm opacity-75 mt-2">Total transfers in period</p>
         </div>
 
         <!-- Average Completion Time -->
         <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow text-white">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase opacity-90">Avg Completion</span>
+                <span class="text-sm font-bold uppercase opacity-90">Avg Completion</span>
                 <svg class="w-6 h-6 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
             <p class="text-2xl font-bold">{{ number_format($this->transferKpis['avg_completion_hours'], 1) }}h</p>
-            <p class="text-xs opacity-75 mt-2">Average hours to complete</p>
+            <p class="text-sm opacity-75 mt-2">Average hours to complete</p>
         </div>
 
         <!-- Discrepancy Rate -->
         <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow text-white">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase opacity-90">Discrepancy Rate</span>
+                <span class="text-sm font-bold uppercase opacity-90">Discrepancy Rate</span>
                 <svg class="w-6 h-6 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                 </svg>
             </div>
             <p class="text-2xl font-bold">{{ number_format($this->transferKpis['discrepancy_rate'], 2) }}%</p>
-            <p class="text-xs opacity-75 mt-2">Transfers with discrepancies</p>
+            <p class="text-sm opacity-75 mt-2">Transfers with discrepancies</p>
         </div>
 
         <!-- In-Transit Count -->
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow text-white">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase opacity-90">In Transit</span>
+                <span class="text-sm font-bold uppercase opacity-90">In Transit</span>
                 <svg class="w-6 h-6 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
             </div>
             <p class="text-2xl font-bold">{{ number_format($this->transferKpis['in_transit_count']) }}</p>
-            <p class="text-xs opacity-75 mt-2">Currently in transit</p>
+            <p class="text-sm opacity-75 mt-2">Currently in transit</p>
         </div>
     </div>
 
     <!-- Transfer Volume Trend -->
     <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 mb-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Transfer Volume Trend</h2>
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Transfer Volume Trend</h2>
         <div id="transferVolumeTrendChart" style="height: 300px;"></div>
     </div>
 
     <!-- Transfer Routes Matrix -->
     <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 mb-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Transfer Routes (Warehouse → Shop)</h2>
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Transfer Routes (Warehouse → Shop)</h2>
         <div class="overflow-x-auto">
-            <table class="min-w-full text-xs">
+            <table class="min-w-full text-sm">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-3 py-2 text-left text-gray-700 font-semibold">From Warehouse</th>
@@ -128,7 +158,7 @@
                             <td class="px-3 py-2 text-right text-gray-600">{{ number_format($route['transfer_count']) }}</td>
                             <td class="px-3 py-2 text-right">
                                 @if($route['discrepancy_count'] > 0)
-                                    <span class="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-800">
+                                    <span class="px-2 py-1 text-sm rounded-full bg-amber-100 text-amber-800">
                                         {{ $route['discrepancy_count'] }}
                                     </span>
                                 @else
@@ -136,7 +166,7 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-right">
-                                <span class="px-2 py-1 text-xs rounded-full
+                                <span class="px-2 py-1 text-sm rounded-full
                                     {{ $successRate >= 95 ? 'bg-green-100 text-green-800' : ($successRate >= 80 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800') }}">
                                     {{ number_format($successRate, 1) }}%
                                 </span>
@@ -156,13 +186,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <!-- Status Distribution -->
         <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Status Distribution</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Status Distribution</h2>
             <div id="statusDistributionChart" style="height: 300px;"></div>
         </div>
 
         <!-- Completion Time Distribution -->
         <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Completion Time Distribution</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Completion Time Distribution</h2>
             <div id="completionTimeChart" style="height: 300px;"></div>
         </div>
     </div>
@@ -171,9 +201,9 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <!-- Most Transferred Products -->
         <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Most Transferred Products</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Most Transferred Products</h2>
             <div class="overflow-y-auto" style="max-height: 350px;">
-                <table class="min-w-full text-xs">
+                <table class="min-w-full text-sm">
                     <thead class="bg-gray-50 sticky top-0">
                         <tr>
                             <th class="px-3 py-2 text-left text-gray-700 font-semibold">#</th>
@@ -208,25 +238,25 @@
 
         <!-- Recent Discrepancies -->
         <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Recent Discrepancies</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Discrepancies</h2>
             <div class="overflow-y-auto" style="max-height: 350px;">
                 <div class="space-y-2">
                     @forelse($this->recentDiscrepancies as $transfer)
                         <div class="p-3 bg-amber-50 border-l-4 border-amber-500 rounded-lg">
                             <div class="flex items-start justify-between mb-1">
-                                <span class="text-xs font-bold text-gray-900">{{ $transfer['transfer_number'] }}</span>
-                                <span class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($transfer['created_at'])->format('M d, Y') }}</span>
+                                <span class="text-sm font-bold text-gray-900">{{ $transfer['transfer_number'] }}</span>
+                                <span class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($transfer['created_at'])->format('M d, Y') }}</span>
                             </div>
-                            <div class="text-xs text-gray-700 mb-1">
+                            <div class="text-sm text-gray-700 mb-1">
                                 <strong>From:</strong> {{ $transfer['from_warehouse'] }} →
                                 <strong>To:</strong> {{ $transfer['to_shop'] }}
                             </div>
                             @if($transfer['discrepancy_notes'])
-                                <p class="text-xs text-gray-600 mt-1">{{ Str::limit($transfer['discrepancy_notes'], 80) }}</p>
+                                <p class="text-sm text-gray-600 mt-1">{{ Str::limit($transfer['discrepancy_notes'], 80) }}</p>
                             @endif
                         </div>
                     @empty
-                        <p class="text-xs text-center text-gray-500 py-4">No recent discrepancies</p>
+                        <p class="text-sm text-center text-gray-500 py-4">No recent discrepancies</p>
                     @endforelse
                 </div>
             </div>
@@ -235,9 +265,9 @@
 
     <!-- Warehouse Efficiency -->
     <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Warehouse Efficiency</h2>
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Warehouse Efficiency</h2>
         <div class="overflow-x-auto">
-            <table class="min-w-full text-xs">
+            <table class="min-w-full text-sm">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-3 py-2 text-left text-gray-700 font-semibold">Warehouse</th>
@@ -255,7 +285,7 @@
                             <td class="px-3 py-2 text-right text-gray-600">{{ number_format($warehouse['avg_completion_hours'], 1) }}h</td>
                             <td class="px-3 py-2 text-right">
                                 @if($warehouse['discrepancy_count'] > 0)
-                                    <span class="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-800">
+                                    <span class="px-2 py-1 text-sm rounded-full bg-amber-100 text-amber-800">
                                         {{ $warehouse['discrepancy_count'] }}
                                     </span>
                                 @else
@@ -263,7 +293,7 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-right">
-                                <span class="px-2 py-1 text-xs rounded-full
+                                <span class="px-2 py-1 text-sm rounded-full
                                     {{ (100 - $warehouse['discrepancy_rate']) >= 95 ? 'bg-green-100 text-green-800' : ((100 - $warehouse['discrepancy_rate']) >= 80 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800') }}">
                                     {{ number_format(100 - $warehouse['discrepancy_rate'], 1) }}%
                                 </span>
