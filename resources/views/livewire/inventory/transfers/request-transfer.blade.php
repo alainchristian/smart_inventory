@@ -24,7 +24,7 @@
                                         class="block w-full pl-3 pr-10 py-3 text-base border-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50 transition-shadow duration-200 @error('fromWarehouseId') border-red-300 focus:ring-red-200 focus:border-red-400 @enderror"
                                     >
                                         <option value="">Select Warehouse</option>
-                                        @foreach($warehouses as $warehouse)
+                                        @foreach($this->warehouses as $warehouse)
                                             <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
                                         @endforeach
                                     </select>
@@ -52,7 +52,7 @@
                                     class="block w-full pl-3 pr-10 py-3 text-base border-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50 transition-shadow duration-200 @error('toShopId') border-red-300 focus:ring-red-200 focus:border-red-400 @enderror"
                                 >
                                     <option value="">Select Shop</option>
-                                    @foreach($shops as $shop)
+                                    @foreach($this->shops as $shop)
                                         <option value="{{ $shop->id }}">{{ $shop->name }}</option>
                                     @endforeach
                                 </select>
