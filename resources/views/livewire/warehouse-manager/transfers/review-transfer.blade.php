@@ -1,311 +1,634 @@
-<style>
+@php use App\Enums\TransferStatus; @endphp
 
-/* Mission 2C: Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
+<style>
+/* ── Review Transfer — Design System Aligned ── */
+.rt-wrap { display:flex; flex-direction:column; gap:20px; font-family:var(--font); }
+
+/* ── Alert banners ── */
+.rt-alert {
+    display:flex; align-items:flex-start; gap:12px;
+    padding:14px 18px; border-radius:10px;
+    border:1px solid; font-size:14px; line-height:1.5;
+}
+.rt-alert.success { background:var(--success-dim); border-color:rgba(22,163,74,.25); color:#14532d; }
+.rt-alert.error   { background:var(--red-dim);     border-color:rgba(225,29,72,.25);  color:#7f1d1d; }
+.rt-alert.info    { background:var(--accent-dim);  border-color:rgba(59,111,212,.25); color:#1e3a8a; }
+
+/* ── Card ── */
+.rt-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+}
+.rt-card-head {
+    padding:18px 22px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--surface);
+}
+.rt-card-title {
+    font-size:13px; font-weight:700; letter-spacing:.5px;
+    text-transform:uppercase; color:var(--text-sub);
+}
+.rt-card-body { padding:22px; }
+
+/* ── Transfer header meta grid ── */
+.rt-meta-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+    gap:16px;
+}
+.rt-meta-item { display:flex; flex-direction:column; gap:4px; }
+.rt-meta-label {
+    font-size:10.5px; font-weight:700; letter-spacing:.6px;
+    text-transform:uppercase; color:var(--text-dim);
+}
+.rt-meta-value { font-size:14px; font-weight:600; color:var(--text); }
+
+/* ── Status pill ── */
+.rt-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 12px; border-radius:999px;
+    font-size:11.5px; font-weight:700; letter-spacing:.3px;
+}
+.rt-pill.pending  { background:var(--amber-dim); color:var(--amber); border:1px solid rgba(217,119,6,.25); }
+.rt-pill.approved { background:var(--green-dim);  color:var(--green); border:1px solid rgba(14,158,134,.25); }
+.rt-pill.rejected { background:var(--red-dim);    color:var(--red);   border:1px solid rgba(225,29,72,.25); }
+
+/* ── Route strip ── */
+.rt-route {
+    display:flex; align-items:center; gap:0;
+    background:var(--surface2); border-radius:10px;
+    padding:14px 18px; border:1px solid var(--border);
+}
+.rt-route-node { flex:1; }
+.rt-route-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.rt-route-name  { font-size:14px; font-weight:700; color:var(--text); margin-top:3px; }
+.rt-route-arrow {
+    display:flex; align-items:center; justify-content:center;
+    width:36px; height:36px; border-radius:50%;
+    background:var(--accent-dim); color:var(--accent);
+    flex-shrink:0;
 }
 
+/* ── Product rows ── */
+.rt-product-row {
+    border:1.5px solid var(--border);
+    border-radius:10px; overflow:hidden;
+    transition:border-color var(--tr);
+}
+.rt-product-row.has-warning { border-color:rgba(225,29,72,.4); background:rgba(225,29,72,.02); }
+.rt-product-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; background:var(--surface2);
+    border-bottom:1px solid var(--border);
+}
+.rt-product-name { font-size:15px; font-weight:700; color:var(--text); }
+.rt-product-body {
+    padding:16px 18px;
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:16px;
+    align-items:start;
+}
+@media(max-width:640px) {
+    .rt-product-body { grid-template-columns:1fr; }
+}
+
+/* ── Stat box inside product row ── */
+.rt-stat { display:flex; flex-direction:column; gap:4px; }
+.rt-stat-label { font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
+.rt-stat-value { font-size:22px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1; }
+.rt-stat-sub   { font-size:11px; color:var(--text-dim); margin-top:2px; }
+.rt-stat-value.ok  { color:var(--green); }
+.rt-stat-value.bad { color:var(--red); }
+
+/* ── Input field ── */
+.rt-input {
+    width:100%; padding:10px 14px;
+    background:var(--surface); color:var(--text);
+    border:1.5px solid var(--border-hi);
+    border-radius:8px; font-size:15px; font-weight:700;
+    font-family:var(--mono);
+    transition:border-color var(--tr), box-shadow var(--tr);
+    outline:none;
+}
+.rt-input:focus {
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-glow);
+}
+.rt-input.rt-input-error {
+    border-color:var(--red);
+    box-shadow:0 0 0 3px var(--red-glow);
+}
+
+/* ── Stock availability bar ── */
+.rt-stock-bar-wrap {
+    height:6px; border-radius:999px;
+    background:var(--surface3); overflow:hidden; margin-top:8px;
+}
+.rt-stock-bar { height:100%; border-radius:999px; transition:width .4s var(--ease); }
+.rt-stock-bar.ok  { background:var(--green); }
+.rt-stock-bar.bad { background:var(--red); }
+
+/* ── Warning chip ── */
+.rt-warn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 12px; border-radius:8px; margin-top:12px;
+    background:var(--red-dim); border:1px solid rgba(225,29,72,.25);
+    color:var(--red); font-size:12px; font-weight:600;
+}
+
+/* ── Action footer ── */
+.rt-action-bar {
+    display:flex; align-items:center; justify-content:flex-end;
+    gap:12px; padding:18px 22px;
+    background:var(--surface2); border-top:1px solid var(--border);
+    flex-wrap:wrap;
+}
+
+/* ── Buttons ── */
+.rt-btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:10px 22px; border-radius:9px;
+    font-size:14px; font-weight:700; font-family:var(--font);
+    border:none; cursor:pointer;
+    transition:background var(--tr), transform var(--tr), box-shadow var(--tr), opacity var(--tr);
+    white-space:nowrap;
+}
+.rt-btn:active { transform:scale(.97); }
+.rt-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+
+.rt-btn-approve {
+    background:var(--accent); color:#fff;
+    box-shadow:0 2px 8px var(--accent-glow);
+}
+.rt-btn-approve:hover:not(:disabled) {
+    background:#2d5dbf;
+    box-shadow:0 4px 14px var(--accent-glow);
+}
+.rt-btn-reject {
+    background:var(--red-dim); color:var(--red);
+    border:1.5px solid rgba(225,29,72,.3);
+}
+.rt-btn-reject:hover:not(:disabled) {
+    background:rgba(225,29,72,.15);
+}
+.rt-btn-secondary {
+    background:var(--surface3); color:var(--text-sub);
+    border:1.5px solid var(--border);
+}
+.rt-btn-secondary:hover { background:var(--border); }
+.rt-btn-danger {
+    background:var(--red); color:#fff;
+    box-shadow:0 2px 8px var(--red-glow);
+}
+.rt-btn-danger:hover:not(:disabled) {
+    background:#be1039;
+    box-shadow:0 4px 14px var(--red-glow);
+}
+
+/* ── Status banner (approved/rejected state) ── */
+.rt-status-banner {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:12px; padding:32px; text-align:center; border-radius:12px;
+    border:1px solid;
+}
+.rt-status-banner.approved { background:var(--green-dim); border-color:rgba(14,158,134,.3); color:var(--green); }
+.rt-status-banner.rejected { background:var(--red-dim);   border-color:rgba(225,29,72,.3);  color:var(--red); }
+.rt-status-banner-icon { width:52px; height:52px; }
+.rt-status-banner-title { font-size:18px; font-weight:800; }
+.rt-status-banner-sub   { font-size:14px; opacity:.8; }
+
+/* ── Modal overlay ── */
+.rt-modal-overlay {
+    position:fixed; inset:0; z-index:50;
+    background:rgba(10,14,26,.6);
+    backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    animation:rtFadeIn .15s ease;
+}
+@keyframes rtFadeIn { from { opacity:0 } to { opacity:1 } }
+
+.rt-modal {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; width:100%; max-width:500px;
+    box-shadow:0 24px 60px rgba(0,0,0,.18);
+    animation:rtSlideUp .2s var(--ease);
+}
+@keyframes rtSlideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+
+.rt-modal-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 22px; border-bottom:1px solid var(--border);
+}
+.rt-modal-title { font-size:16px; font-weight:800; color:var(--text); }
+.rt-modal-close {
+    width:32px; height:32px; border-radius:8px;
+    background:var(--surface2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--text-sub); transition:background var(--tr);
+}
+.rt-modal-close:hover { background:var(--surface3); }
+.rt-modal-body { padding:22px; display:flex; flex-direction:column; gap:16px; }
+.rt-modal-foot {
+    display:flex; align-items:center; justify-content:flex-end; gap:10px;
+    padding:16px 22px; border-top:1px solid var(--border);
+}
+
+/* ── Textarea ── */
+.rt-textarea {
+    width:100%; padding:12px 14px;
+    background:var(--surface2); color:var(--text);
+    border:1.5px solid var(--border-hi);
+    border-radius:8px; font-size:14px; font-family:var(--font);
+    resize:vertical; min-height:110px; outline:none;
+    transition:border-color var(--tr), box-shadow var(--tr);
+}
+.rt-textarea:focus {
+    border-color:var(--red);
+    box-shadow:0 0 0 3px var(--red-glow);
+    background:var(--surface);
+}
+
+/* ── Field label ── */
+.rt-field-label {
+    font-size:11px; font-weight:700; letter-spacing:.5px;
+    text-transform:uppercase; color:var(--text-sub); margin-bottom:6px;
+    display:block;
+}
+.rt-field-error { font-size:12px; color:var(--red); margin-top:5px; font-weight:600; }
+
+/* ── Notes box ── */
+.rt-notes {
+    padding:14px 16px; background:var(--surface2);
+    border-radius:8px; border:1px solid var(--border);
+    font-size:14px; color:var(--text-sub); line-height:1.6;
+}
+
+/* ── Pack CTA ── */
+.rt-pack-cta {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 22px; border-radius:9px;
+    background:var(--accent); color:#fff;
+    font-size:14px; font-weight:700; text-decoration:none;
+    box-shadow:0 2px 8px var(--accent-glow);
+    transition:background var(--tr), box-shadow var(--tr);
+}
+.rt-pack-cta:hover { background:#2d5dbf; box-shadow:0 4px 14px var(--accent-glow); }
+
+/* ── Divider ── */
+.rt-divider { border:none; border-top:1px solid var(--border); margin:0; }
+
+@media(max-width:640px) {
+    .rt-action-bar { justify-content:stretch; }
+    .rt-btn { flex:1; }
+    .rt-meta-grid { grid-template-columns:1fr 1fr; }
+}
 </style>
-@php
-use App\Enums\TransferStatus;
-@endphp
 
-<div class="space-y-4 md:space-y-6">
-    <!-- Transfer Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div class="flex-1">
-                <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                    <h2 class="text-2xl md:text-2xl font-bold text-gray-900">{{ $transfer->transfer_number }}</h2>
-                    <span class="px-3 py-1 rounded-full text-sm md:text-base font-medium {{ $transfer->status->color() }}">
-                        {{ $transfer->status->label() }}
-                    </span>
-                </div>
+<div class="rt-wrap">
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 text-base">
-                    <div>
-                        <span class="font-medium text-gray-500">From Warehouse</span>
-                        <p class="text-gray-900 mt-1">{{ $transfer->fromWarehouse->name }}</p>
-                    </div>
-                    <div>
-                        <span class="font-medium text-gray-500">To Shop</span>
-                        <p class="text-gray-900 mt-1">{{ $transfer->toShop->name }}</p>
-                    </div>
-                    <div>
-                        <span class="font-medium text-gray-500">Requested By</span>
-                        <p class="text-gray-900 mt-1">{{ $transfer->requestedBy->name }}</p>
-                    </div>
-                    <div>
-                        <span class="font-medium text-gray-500">Requested Date</span>
-                        <p class="text-gray-900 mt-1">{{ $transfer->requested_at?->format('M d, Y') }}</p>
-                    </div>
-                    <div>
-                        <span class="font-medium text-gray-500">Total Products</span>
-                        <p class="text-gray-900 mt-1">{{ count($items) }} {{ count($items) === 1 ? 'product' : 'products' }}</p>
-                    </div>
-                    @if($transfer->transporter)
-                        <div>
-                            <span class="font-medium text-gray-500">Transporter</span>
-                            <p class="text-gray-900 mt-1">{{ $transfer->transporter->name }}</p>
-                            @if($transfer->transporter->vehicle_number)
-                                <p class="text-sm text-gray-500 mt-0.5">{{ $transfer->transporter->vehicle_number }}</p>
-                            @endif
-                        </div>
-                    @endif
-                </div>
-
-                @if($transfer->boxes()->count() > 0)
-                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="text-center p-3 bg-blue-50 rounded-lg">
-                            <div class="text-2xl font-bold text-blue-600">{{ $transfer->boxes()->count() }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Boxes Assigned</div>
-                        </div>
-                    </div>
-                @endif
-
-                @if($transfer->notes)
-                    <div class="mt-4 p-3 md:p-4 bg-gray-50 rounded-lg">
-                        <p class="text-base font-medium text-gray-700 mb-1">Shop Notes:</p>
-                        <p class="text-base text-gray-600">{{ $transfer->notes }}</p>
-                    </div>
-                @endif
-            </div>
+    {{-- ── Flash Messages ── --}}
+    @if(session()->has('success'))
+        <div class="rt-alert success">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>{{ session('success') }}</span>
         </div>
-    </div>
-
-    <!-- Alert Messages -->
-    @if (session()->has('error'))
-        <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <div class="flex">
-                <svg class="h-5 w-5 text-red-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                </svg>
-                <p class="text-base text-red-800">{{ session('error') }}</p>
-            </div>
+    @endif
+    @if(session()->has('error'))
+        <div class="rt-alert error">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>{{ session('error') }}</span>
         </div>
     @endif
 
-    <!-- Requested Items -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6 gap-2">
-            <h3 class="text-lg md:text-xl font-semibold text-gray-900">Requested Products</h3>
+    {{-- ── Transfer Header Card ── --}}
+    <div class="rt-card">
+        <div class="rt-card-head">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <span style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px">
+                    {{ $transfer->transfer_number }}
+                </span>
+                @php
+                    $statusClass = match($transfer->status) {
+                        TransferStatus::PENDING  => 'pending',
+                        TransferStatus::APPROVED => 'approved',
+                        TransferStatus::REJECTED => 'rejected',
+                        default                  => 'pending',
+                    };
+                @endphp
+                <span class="rt-pill {{ $statusClass }}">
+                    <span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>
+                    {{ $transfer->status->label() }}
+                </span>
+            </div>
+            <div style="font-size:12px;color:var(--text-dim)">
+                {{ $transfer->requested_at?->format('M d, Y · H:i') }}
+            </div>
+        </div>
+
+        <div class="rt-card-body" style="display:flex;flex-direction:column;gap:18px">
+
+            {{-- Route strip --}}
+            <div class="rt-route">
+                <div class="rt-route-node">
+                    <div class="rt-route-label">From Warehouse</div>
+                    <div class="rt-route-name">{{ $transfer->fromWarehouse->name }}</div>
+                </div>
+                <div class="rt-route-arrow">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </div>
+                <div class="rt-route-node" style="text-align:right">
+                    <div class="rt-route-label">To Shop</div>
+                    <div class="rt-route-name">{{ $transfer->toShop->name }}</div>
+                </div>
+            </div>
+
+            {{-- Meta grid --}}
+            <div class="rt-meta-grid">
+                <div class="rt-meta-item">
+                    <span class="rt-meta-label">Requested By</span>
+                    <span class="rt-meta-value">{{ $transfer->requestedBy->name }}</span>
+                </div>
+                <div class="rt-meta-item">
+                    <span class="rt-meta-label">Products</span>
+                    <span class="rt-meta-value">{{ count($items) }} {{ count($items) === 1 ? 'product' : 'products' }}</span>
+                </div>
+                @if($transfer->transporter)
+                    <div class="rt-meta-item">
+                        <span class="rt-meta-label">Transporter</span>
+                        <span class="rt-meta-value">{{ $transfer->transporter->name }}</span>
+                        @if($transfer->transporter->vehicle_number)
+                            <span style="font-size:12px;color:var(--text-dim)">{{ $transfer->transporter->vehicle_number }}</span>
+                        @endif
+                    </div>
+                @endif
+                @if($transfer->reviewed_by)
+                    <div class="rt-meta-item">
+                        <span class="rt-meta-label">Reviewed By</span>
+                        <span class="rt-meta-value">{{ $transfer->reviewedBy?->name ?? '—' }}</span>
+                    </div>
+                @endif
+            </div>
+
+            {{-- Notes --}}
+            @if($transfer->notes && $transfer->status === TransferStatus::PENDING)
+                <div>
+                    <div class="rt-meta-label" style="margin-bottom:6px">Shop Notes</div>
+                    <div class="rt-notes">{{ $transfer->notes }}</div>
+                </div>
+            @endif
+
+        </div>
+    </div>
+
+    {{-- ── Requested Products Card ── --}}
+    <div class="rt-card">
+        <div class="rt-card-head">
+            <span class="rt-card-title">Requested Products</span>
             @if($transfer->status === TransferStatus::PENDING)
-                <span class="text-sm md:text-base text-gray-600">You can modify quantities before approving</span>
+                <span style="font-size:12px;color:var(--text-dim)">
+                    You may adjust quantities before approving
+                </span>
             @endif
         </div>
 
-        <div class="space-y-3 md:space-y-4">
+        <div class="rt-card-body" style="display:flex;flex-direction:column;gap:14px">
             @foreach($items as $index => $item)
                 @php
-                    $stock = $stockLevels[$item['product_id']] ?? null;
+                    $stock          = $stockLevels[$item['product_id']] ?? null;
                     $availableBoxes = $stock ? $stock['total_boxes'] : 0;
-                    $requestedBoxes = $item['boxes_requested'];
-                    $exceedsStock = $requestedBoxes > $availableBoxes;
-                    $totalItems = $requestedBoxes * $item['items_per_box'];
+                    $requestedBoxes = (int) ($item['boxes_requested'] ?? 0);
+                    $exceedsStock   = $requestedBoxes > $availableBoxes;
+                    $totalItems     = $requestedBoxes * $item['items_per_box'];
+                    $stockPct       = $availableBoxes > 0 ? min(100, round(($requestedBoxes / $availableBoxes) * 100)) : 100;
                 @endphp
 
-                <div class="p-3 md:p-5 border-2 rounded-lg {{ $exceedsStock ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white' }}">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-900 text-lg md:text-xl mb-3">{{ $item['product_name'] }}</h4>
+                <div class="rt-product-row {{ $exceedsStock ? 'has-warning' : '' }}">
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                                <!-- Boxes Input -->
-                                <div>
-                                    <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
-                                        Boxes Requested
-                                    </label>
-                                    @if($transfer->status === TransferStatus::PENDING)
-                                        <input type="number"
-                                               wire:model.live="items.{{ $index }}.boxes_requested"
-                                               min="0"
-                                               class="block w-full px-3 md:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 {{ $exceedsStock ? 'border-red-300 bg-red-50' : 'border-gray-300' }}"
-                                               placeholder="0">
-                                        @error("items.{$index}.boxes_requested")
-                                            <p class="mt-1 text-sm md:text-base text-red-600">{{ $message }}</p>
-                                        @enderror
-                                    @else
-                                        <div class="text-2xl md:text-2xl font-bold text-gray-900">{{ number_format($requestedBoxes) }}</div>
-                                    @endif
-                                </div>
-
-                                <!-- Available Stock -->
-                                <div>
-                                    <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
-                                        Available in Warehouse
-                                    </label>
-                                    <div class="flex items-baseline gap-2">
-                                        <span class="text-2xl md:text-2xl font-bold {{ $exceedsStock ? 'text-red-600' : 'text-green-600' }}">
-                                            {{ number_format($availableBoxes) }}
-                                        </span>
-                                        <span class="text-sm md:text-base text-gray-600">boxes</span>
-                                    </div>
-                                    @if($stock)
-                                        <div class="mt-1 text-sm text-gray-500">
-                                            {{ $stock['full_boxes'] }} full + {{ $stock['partial_boxes'] }} partial
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <!-- Total Items -->
-                                <div>
-                                    <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
-                                        Total Items
-                                    </label>
-                                    <div class="flex items-baseline gap-2">
-                                        <span class="text-2xl md:text-2xl font-bold text-gray-900">
-                                            {{ number_format($totalItems) }}
-                                        </span>
-                                        <span class="text-sm md:text-base text-gray-600">items</span>
-                                    </div>
-                                    <div class="mt-1 text-sm text-gray-500">
-                                        {{ $item['items_per_box'] }} items per box
-                                    </div>
-                                </div>
+                    {{-- Product header --}}
+                    <div class="rt-product-head">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div style="width:32px;height:32px;border-radius:8px;background:var(--accent-dim);
+                                        display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                                <svg width="16" height="16" fill="none" stroke="var(--accent)" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
                             </div>
+                            <span class="rt-product-name">{{ $item['product_name'] }}</span>
+                        </div>
+                        <span style="font-size:11px;color:var(--text-dim);background:var(--surface3);
+                                     padding:3px 10px;border-radius:6px;font-weight:600">
+                            {{ $item['items_per_box'] }} items / box
+                        </span>
+                    </div>
 
-                            <!-- Warning if exceeds stock -->
-                            @if($exceedsStock && $requestedBoxes > 0)
-                                <div class="mt-3 md:mt-4 flex items-center gap-2 text-red-600 animate-pulse">
-                                    <svg class="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span class="text-sm md:text-base font-medium">
-                                        Exceeds available stock by {{ number_format($requestedBoxes - $availableBoxes) }} boxes
-                                    </span>
+                    {{-- Product body --}}
+                    <div class="rt-product-body">
+
+                        {{-- Boxes Requested --}}
+                        <div class="rt-stat">
+                            <label class="rt-stat-label">Boxes Requested</label>
+                            @if($transfer->status === TransferStatus::PENDING)
+                                <input type="number"
+                                       wire:model="items.{{ $index }}.boxes_requested"
+                                       min="0"
+                                       class="rt-input {{ $exceedsStock ? 'rt-input-error' : '' }}"
+                                       placeholder="0">
+                                @error("items.{$index}.boxes_requested")
+                                    <span class="rt-field-error">{{ $message }}</span>
+                                @enderror
+                            @else
+                                <span class="rt-stat-value">{{ number_format($requestedBoxes) }}</span>
+                                <span class="rt-stat-sub">boxes</span>
+                            @endif
+                        </div>
+
+                        {{-- Available in Warehouse --}}
+                        <div class="rt-stat">
+                            <span class="rt-stat-label">Available in Warehouse</span>
+                            <span class="rt-stat-value {{ $exceedsStock ? 'bad' : 'ok' }}">
+                                {{ number_format($availableBoxes) }}
+                            </span>
+                            <span class="rt-stat-sub">
+                                @if($stock)
+                                    {{ $stock['full_boxes'] }} full · {{ $stock['partial_boxes'] }} partial
+                                @else
+                                    boxes available
+                                @endif
+                            </span>
+                            @if($availableBoxes > 0)
+                                <div class="rt-stock-bar-wrap">
+                                    <div class="rt-stock-bar {{ $exceedsStock ? 'bad' : 'ok' }}"
+                                         style="width:{{ min(100, $stockPct) }}%"></div>
                                 </div>
                             @endif
                         </div>
+
+                        {{-- Total Items --}}
+                        <div class="rt-stat">
+                            <span class="rt-stat-label">Total Items</span>
+                            <span class="rt-stat-value">{{ number_format($totalItems) }}</span>
+                            <span class="rt-stat-sub">items total</span>
+                        </div>
+
                     </div>
+
+                    {{-- Stock warning --}}
+                    @if($exceedsStock && $requestedBoxes > 0)
+                        <div style="padding:0 18px 14px">
+                            <div class="rt-warn">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                Requested {{ $requestedBoxes }} boxes but only {{ $availableBoxes }} available. Reduce quantity to approve.
+                            </div>
+                        </div>
+                    @endif
+
                 </div>
             @endforeach
         </div>
-    </div>
 
-    <!-- Action Buttons -->
-    @if($transfer->status === TransferStatus::PENDING)
-        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-            <button type="button"
-                    wire:click="openRejectModal"
-                    class="inline-flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 font-medium transition-colors text-base md:text-lg">
-                <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-                Reject Transfer
-            </button>
+        {{-- ── Action Bar (Pending state only) ── --}}
+        @if($transfer->status === TransferStatus::PENDING)
+            <hr class="rt-divider">
+            <div class="rt-action-bar">
+                <button type="button"
+                        wire:click="openRejectModal"
+                        class="rt-btn rt-btn-reject"
+                        wire:loading.attr="disabled">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Reject Request
+                </button>
 
-            <button type="button"
-                    wire:click="approve"
-                    wire:loading.attr="disabled"
-                    class="inline-flex items-center justify-center px-6 md:px-8 py-2 md:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors disabled:opacity-50 text-base md:text-lg">
-                <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" wire:loading.remove>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span wire:loading.remove>Approve Transfer</span>
-                <span wire:loading>Processing...</span>
-            </button>
-        </div>
-    @elseif($transfer->status === TransferStatus::APPROVED)
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4 md:p-6 text-center">
-            <svg class="mx-auto h-10 w-10 md:h-12 md:w-12 text-green-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <p class="text-lg md:text-xl font-medium text-green-900 mb-2">Transfer Approved</p>
-            <p class="text-base text-green-700 mb-4">This transfer has been approved and is ready for packing.</p>
-            <a href="{{ route('warehouse.transfers.pack', $transfer) }}"
-               class="inline-flex items-center px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors text-base md:text-lg">
-                <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                </svg>
-                Pack Transfer
-            </a>
-        </div>
-    @elseif($transfer->status === TransferStatus::REJECTED)
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4 md:p-6">
-            <div class="flex items-start gap-3">
-                <svg class="h-5 w-5 md:h-6 md:w-6 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                </svg>
-                <div class="flex-1">
-                    <p class="font-medium text-red-900 text-base md:text-lg">Transfer Rejected</p>
+                <button type="button"
+                        wire:click="approve"
+                        class="rt-btn rt-btn-approve"
+                        wire:loading.attr="disabled">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" wire:loading.remove wire:target="approve">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" wire:loading wire:target="approve"
+                         style="animation:spin 1s linear infinite">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4" stroke-dashoffset="10" stroke-linecap="round"/>
+                    </svg>
+                    <span wire:loading.remove wire:target="approve">Approve Transfer</span>
+                    <span wire:loading wire:target="approve">Processing…</span>
+                </button>
+            </div>
+
+        {{-- ── Approved state ── --}}
+        @elseif($transfer->status === TransferStatus::APPROVED)
+            <div style="padding:22px">
+                <div class="rt-status-banner approved">
+                    <svg class="rt-status-banner-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="rt-status-banner-title">Transfer Approved</div>
+                    <div class="rt-status-banner-sub">This transfer has been approved and is ready for packing.</div>
+                    <a href="{{ route('warehouse.transfers.pack', $transfer) }}" class="rt-pack-cta">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                        </svg>
+                        Pack Transfer
+                    </a>
+                </div>
+            </div>
+
+        {{-- ── Rejected state ── --}}
+        @elseif($transfer->status === TransferStatus::REJECTED)
+            <div style="padding:22px">
+                <div class="rt-status-banner rejected">
+                    <svg class="rt-status-banner-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="rt-status-banner-title">Transfer Rejected</div>
                     @if($transfer->notes)
-                        <p class="mt-2 text-sm md:text-base text-red-700">Reason: {{ $transfer->notes }}</p>
+                        <div class="rt-status-banner-sub">Reason: {{ $transfer->notes }}</div>
                     @endif
                 </div>
             </div>
-        </div>
-    @endif
+        @endif
 
-    <!-- Reject Modal -->
+    </div>
+
+    {{-- ── Reject Modal ── --}}
     @if($showRejectModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ show: @entangle('showRejectModal') }">
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <!-- Backdrop -->
-                <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
-                     @click="$wire.closeRejectModal()"></div>
+        <div class="rt-modal-overlay" x-data="{ show: @entangle('showRejectModal') }">
+            <div class="rt-modal" @click.stop>
 
-                <!-- Modal -->
-                <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-                    <div class="flex items-start justify-between mb-4">
-                        <h3 class="text-xl font-semibold text-gray-900">Reject Transfer Request</h3>
-                        <button type="button"
-                                @click="$wire.closeRejectModal()"
-                                class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
+                <div class="rt-modal-head">
+                    <span class="rt-modal-title">Reject Transfer Request</span>
+                    <button type="button" class="rt-modal-close" @click="$wire.closeRejectModal()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="rt-modal-body">
+                    <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;
+                                background:var(--red-dim);border-radius:10px;border:1px solid rgba(225,29,72,.2)">
+                        <svg width="18" height="18" fill="none" stroke="var(--red)" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <span style="font-size:13px;color:var(--red);line-height:1.5">
+                            This action will reject the transfer request. The shop will be notified and will need to submit a new request.
+                        </span>
                     </div>
 
-                    <div class="mb-6">
-                        <label class="block text-base font-medium text-gray-700 mb-2">
-                            Reason for Rejection <span class="text-red-600">*</span>
+                    <div>
+                        <label class="rt-field-label">
+                            Reason for Rejection <span style="color:var(--red)">*</span>
                         </label>
                         <textarea wire:model="rejectReason"
-                                  rows="4"
-                                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                  placeholder="Explain why this transfer cannot be fulfilled..."></textarea>
+                                  class="rt-textarea"
+                                  placeholder="Explain why this transfer cannot be fulfilled…"></textarea>
                         @error('rejectReason')
-                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
+                            <span class="rt-field-error">{{ $message }}</span>
                         @enderror
                     </div>
-
-                    <div class="flex items-center justify-end gap-3">
-                        <button type="button"
-                                @click="$wire.closeRejectModal()"
-                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">
-                            Cancel
-                        </button>
-                        <button type="button"
-                                wire:click="reject"
-                                class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors">
-                            Reject Transfer
-                        </button>
-                    </div>
                 </div>
+
+                <div class="rt-modal-foot">
+                    <button type="button"
+                            class="rt-btn rt-btn-secondary"
+                            @click="$wire.closeRejectModal()">
+                        Cancel
+                    </button>
+                    <button type="button"
+                            wire:click="reject"
+                            class="rt-btn rt-btn-danger"
+                            wire:loading.attr="disabled"
+                            wire:target="reject">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" wire:loading.remove wire:target="reject">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        <span wire:loading.remove wire:target="reject">Reject Transfer</span>
+                        <span wire:loading wire:target="reject">Rejecting…</span>
+                    </button>
+                </div>
+
             </div>
         </div>
     @endif
+
 </div>
+
+@push('scripts')
+<style>
+@keyframes spin { to { transform:rotate(360deg) } }
+</style>
+@endpush

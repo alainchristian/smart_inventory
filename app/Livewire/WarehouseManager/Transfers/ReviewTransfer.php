@@ -34,15 +34,15 @@ class ReviewTransfer extends Component
         // Load items with boxes calculation
         foreach ($transfer->items as $item) {
             $product = $item->product;
-            $boxesRequested = $item->quantity_requested / $product->items_per_box;
+            $boxesRequested = (int) round($item->quantity_requested / max(1, $product->items_per_box));
 
             $this->items[] = [
                 'id' => $item->id,
                 'product_id' => $item->product_id,
                 'product_name' => $product->name,
-                'items_per_box' => $product->items_per_box,
+                'items_per_box' => (int) $product->items_per_box,
                 'boxes_requested' => $boxesRequested,
-                'quantity_requested' => $item->quantity_requested,
+                'quantity_requested' => (int) $item->quantity_requested,
             ];
         }
     }
@@ -58,7 +58,8 @@ class ReviewTransfer extends Component
         // Validate all quantities
         $hasErrors = false;
         foreach ($this->items as $index => $item) {
-            if (!isset($item['boxes_requested']) || $item['boxes_requested'] < 1) {
+            $boxesVal = (int) ($item['boxes_requested'] ?? 0);
+            if ($boxesVal < 1) {
                 $this->addError(
                     "items.{$index}.boxes_requested",
                     "Please enter quantity for \"{$item['product_name']}\". Minimum 1 box required."
@@ -73,10 +74,10 @@ class ReviewTransfer extends Component
                 $warehouseStock = $product->getCurrentStock('warehouse', $this->transfer->from_warehouse_id);
                 $availableBoxes = $warehouseStock['full_boxes'] + $warehouseStock['partial_boxes'];
 
-                if ($item['boxes_requested'] > $availableBoxes) {
+                if ($boxesVal > $availableBoxes) {
                     $this->addError(
                         "items.{$index}.boxes_requested",
-                        "\"{$item['product_name']}\": Cannot approve {$item['boxes_requested']} boxes. Only {$availableBoxes} boxes available in warehouse."
+                        "\"{$item['product_name']}\": Cannot approve {$boxesVal} boxes. Only {$availableBoxes} boxes available in warehouse."
                     );
                     $hasErrors = true;
                 }
@@ -94,7 +95,7 @@ class ReviewTransfer extends Component
                 $transferItem = $this->transfer->items()->find($item['id']);
                 if ($transferItem) {
                     $product = Product::find($item['product_id']);
-                    $newQuantity = $item['boxes_requested'] * $product->items_per_box;
+                    $newQuantity = (int) ($item['boxes_requested'] ?? 0) * (int) $product->items_per_box;
                     $transferItem->update([
                         'quantity_requested' => $newQuantity,
                     ]);
