@@ -1,268 +1,568 @@
-<style>
+@php use App\Enums\TransferStatus; @endphp
 
-/* Mission 2C: Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
+<style>
+/* ── Transfer Detail Page ────────────────────────── */
+.td-wrap       { max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:20px; }
+
+/* Breadcrumb */
+.td-breadcrumb { font-size:13px; color:var(--text-sub); display:flex; align-items:center; gap:6px; }
+.td-breadcrumb a { color:var(--accent); text-decoration:none; }
+.td-breadcrumb a:hover { text-decoration:underline; }
+.td-breadcrumb-sep { color:var(--border); }
+
+/* Page title row */
+.td-title-row  { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.td-title      { font-size:26px; font-weight:800; letter-spacing:-.6px; color:var(--text); margin:0; }
+.td-title-sub  { font-size:13px; color:var(--text-sub); margin:4px 0 0; }
+
+/* Status hero banner */
+.td-hero {
+    border-radius:var(--r); overflow:hidden; position:relative;
+    background:var(--surface); border:1px solid var(--border);
+    padding:20px 24px;
+    border-left:5px solid var(--hero-color, var(--accent));
+}
+.td-hero-inner { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+.td-hero-num   { font-size:22px; font-weight:800; color:var(--text); letter-spacing:-.5px; }
+.td-hero-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 14px; border-radius:20px; font-size:12px; font-weight:700;
+    letter-spacing:.5px; text-transform:uppercase;
+    background:var(--badge-bg); color:var(--badge-color);
+}
+.td-hero-badge-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+.td-hero-route { display:flex; align-items:center; gap:10px; font-size:14px; }
+.td-hero-route-node { display:flex; align-items:center; gap:6px; font-weight:700; color:var(--text); }
+.td-hero-route-node svg { color:var(--text-sub); }
+.td-hero-route-arrow { color:var(--text-sub); font-size:18px; }
+.td-hero-divider { width:1px; height:32px; background:var(--border); margin:0 8px; }
+.td-hero-date  { font-size:12px; color:var(--text-sub); }
+.td-hero-date strong { color:var(--text); display:block; font-size:14px; font-weight:700; }
+.td-disc-alert {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 14px; border-radius:8px; font-size:12px; font-weight:700;
+    background:rgba(239,68,68,.1); color:#ef4444; border:1px solid rgba(239,68,68,.2);
+    margin-left:auto;
 }
 
+/* Timeline progress bar */
+.td-timeline   { display:flex; align-items:center; gap:0; margin-top:16px; }
+.td-tl-step    {
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    position:relative;
+}
+.td-tl-step::before {
+    content:''; position:absolute; top:11px; left:calc(-50% + 12px); right:calc(50% + 12px);
+    height:2px; background:var(--border);
+}
+.td-tl-step:first-child::before { display:none; }
+.td-tl-step.done::before  { background:var(--green); }
+.td-tl-step.active::before { background:var(--accent); }
+.td-tl-dot {
+    width:24px; height:24px; border-radius:50%; border:2px solid var(--border);
+    background:var(--surface); display:flex; align-items:center; justify-content:center;
+    position:relative; z-index:1; font-size:11px;
+}
+.td-tl-step.done .td-tl-dot   { background:var(--green); border-color:var(--green); color:#fff; }
+.td-tl-step.active .td-tl-dot { background:var(--accent); border-color:var(--accent); color:#fff; }
+.td-tl-label   { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+                  color:var(--text-sub); text-align:center; }
+.td-tl-step.done .td-tl-label   { color:var(--green); }
+.td-tl-step.active .td-tl-label { color:var(--accent); }
+
+/* Body layout */
+.td-body       { display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start; }
+@media(max-width:860px) { .td-body { grid-template-columns:1fr; } }
+
+/* Cards */
+.td-card       {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); overflow:hidden; margin-bottom:16px;
+}
+.td-card:last-child { margin-bottom:0; }
+.td-card-head  {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 18px; border-bottom:1px solid var(--border);
+    background:var(--surface2);
+}
+.td-card-head-left { display:flex; align-items:center; gap:10px; }
+.td-card-icon  {
+    width:30px; height:30px; border-radius:8px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--icon-bg, rgba(99,102,241,.12));
+    color:var(--icon-c, var(--accent));
+}
+.td-card-head h3 { font-size:13px; font-weight:700; color:var(--text); margin:0; }
+.td-card-head p  { font-size:11px; color:var(--text-sub); margin:0; }
+.td-card-body  { padding:0; }
+
+/* Items table */
+.td-table      { width:100%; border-collapse:collapse; }
+.td-table thead th {
+    padding:10px 16px; font-size:10px; font-weight:700; letter-spacing:.8px;
+    text-transform:uppercase; color:var(--text-sub);
+    border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;
+}
+.td-table tbody tr { border-bottom:1px solid var(--border); transition:background .12s; }
+.td-table tbody tr:last-child { border-bottom:none; }
+.td-table tbody tr:hover { background:var(--surface2); }
+.td-table tbody td { padding:12px 16px; font-size:13px; color:var(--text); vertical-align:middle; }
+.td-table .col-product { font-weight:600; }
+.td-table .col-sku     { font-size:11px; color:var(--text-sub); display:block; margin-top:1px; }
+.td-table .col-num     { font-weight:700; font-size:14px; }
+.td-table .col-disc    { color:#ef4444; font-weight:700; }
+.td-table .col-ok      { color:var(--green); font-weight:700; }
+
+/* Box rows */
+.td-box-row    { display:flex; align-items:center; gap:12px; padding:11px 16px;
+                 border-bottom:1px solid var(--border); }
+.td-box-row:last-child { border-bottom:none; }
+.td-box-row:hover { background:var(--surface2); }
+.td-box-code   { font-size:12px; font-weight:700; color:var(--text); font-family:monospace;
+                 background:var(--surface2); padding:3px 8px; border-radius:4px;
+                 border:1px solid var(--border); }
+.td-box-status {
+    font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px;
+    letter-spacing:.4px; text-transform:uppercase;
+    background:var(--bs-bg); color:var(--bs-c);
+}
+.td-box-scan   { font-size:11px; color:var(--text-sub); margin-left:auto; }
+.td-box-scan strong { color:var(--text); }
+.td-box-items  { font-size:11px; color:var(--text-sub); }
+
+/* Right panel meta card */
+.td-meta-list  { padding:16px; display:flex; flex-direction:column; gap:12px; }
+.td-meta-row   { display:flex; justify-content:space-between; align-items:flex-start;
+                 gap:12px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.td-meta-row:last-child { border-bottom:none; padding-bottom:0; }
+.td-meta-label { font-size:10px; font-weight:700; letter-spacing:.7px; text-transform:uppercase;
+                 color:var(--text-sub); }
+.td-meta-value { font-size:13px; font-weight:600; color:var(--text); text-align:right; }
+.td-meta-value.mono { font-family:monospace; font-size:12px; }
+
+/* Transporter card */
+.td-transporter-body { padding:16px; }
+.td-trans-name { font-size:16px; font-weight:800; color:var(--text); margin:0 0 4px; }
+.td-trans-company { font-size:12px; color:var(--text-sub); margin:0 0 12px; }
+.td-trans-detail { display:flex; flex-direction:column; gap:7px; }
+.td-trans-row  { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-sub); }
+.td-trans-row svg { flex-shrink:0; color:var(--accent); }
+.td-trans-row strong { color:var(--text); }
+
+/* Actions card */
+.td-actions-body { padding:14px; display:flex; flex-direction:column; gap:8px; }
+.td-btn {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:10px 16px; border-radius:var(--rsm); font-size:13px; font-weight:700;
+    border:none; cursor:pointer; text-decoration:none; transition:opacity .15s, transform .1s;
+    width:100%;
+}
+.td-btn:hover   { opacity:.88; transform:translateY(-1px); }
+.td-btn:active  { transform:scale(.99); }
+.td-btn.primary { background:var(--accent); color:#fff; }
+.td-btn.outline { background:transparent; color:var(--text); border:1.5px solid var(--border); }
+.td-btn.outline:hover { border-color:var(--accent); color:var(--accent); }
+.td-btn.danger  { background:rgba(239,68,68,.08); color:#ef4444; border:1.5px solid rgba(239,68,68,.25); }
+.td-btn.danger:hover { background:#ef4444; color:#fff; border-color:#ef4444; }
+.td-btn.success { background:rgba(16,185,129,.1); color:var(--green); border:1.5px solid rgba(16,185,129,.25); }
+.td-btn.success:hover { background:var(--green); color:#fff; border-color:var(--green); }
+.td-btn svg     { flex-shrink:0; }
+
+/* Notes block */
+.td-notes {
+    padding:14px 16px; font-size:13px; color:var(--text-sub);
+    line-height:1.6; font-style:italic;
+    border-top:1px solid var(--border);
+}
+.td-notes:empty { display:none; }
+
+/* Empty state */
+.td-empty { text-align:center; padding:32px; color:var(--text-sub); font-size:13px; }
+.td-empty svg { display:block; margin:0 auto 10px; opacity:.3; }
+
+/* Responsive */
+@media(max-width:860px) {
+    .td-body  { grid-template-columns:1fr; }
+    .td-wrap  { padding:16px; }
+}
+@media(max-width:600px) {
+    .td-hero-inner    { gap:12px; }
+    .td-hero-divider  { display:none; }
+    .td-title         { font-size:20px; }
+    .td-timeline      { overflow-x:auto; padding-bottom:8px; }
+    .td-table         { display:block; overflow-x:auto; white-space:nowrap; }
+}
 </style>
-@php
-use App\Enums\TransferStatus;
-@endphp
 
-<div class="space-y-4 md:space-y-6">
-    <!-- Transfer Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div class="flex-1">
-                <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                    <h2 class="text-2xl md:text-2xl font-bold text-gray-900">{{ $transfer->transfer_number }}</h2>
-                    <span class="px-3 py-1 rounded-full text-sm md:text-base font-medium {{ $transfer->status->color() }}">
-                        {{ $transfer->status->label() }}
-                    </span>
-                </div>
+<div class="td-wrap">
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 text-base">
-                    <div>
-                        <span class="font-medium text-gray-500">From Warehouse</span>
-                        <p class="text-gray-900 mt-1">{{ $transfer->fromWarehouse->name }}</p>
-                    </div>
-                    <div>
-                        <span class="font-medium text-gray-500">To Shop</span>
-                        <p class="text-gray-900 mt-1">{{ $transfer->toShop->name }}</p>
-                    </div>
-                    <div>
-                        <span class="font-medium text-gray-500">Requested Date</span>
-                        <p class="text-gray-900 mt-1">{{ $transfer->requested_at?->format('M d, Y') }}</p>
-                    </div>
-                    @if($transfer->reviewed_at)
-                        <div>
-                            <span class="font-medium text-gray-500">{{ $transfer->status === TransferStatus::APPROVED ? 'Approved' : 'Reviewed' }} Date</span>
-                            <p class="text-gray-900 mt-1">{{ $transfer->reviewed_at?->format('M d, Y') }}</p>
-                        </div>
-                    @endif
-                    @if($transfer->shipped_at)
-                        <div>
-                            <span class="font-medium text-gray-500">Shipped Date</span>
-                            <p class="text-gray-900 mt-1">{{ $transfer->shipped_at?->format('M d, Y') }}</p>
-                        </div>
-                    @endif
-                    @if($transfer->delivered_at)
-                        <div>
-                            <span class="font-medium text-gray-500">Delivered Date</span>
-                            <p class="text-gray-900 mt-1">{{ $transfer->delivered_at?->format('M d, Y') }}</p>
-                        </div>
-                    @endif
-                    @if($transfer->transporter)
-                        <div>
-                            <span class="font-medium text-gray-500">Transporter</span>
-                            <p class="text-gray-900 mt-1">{{ $transfer->transporter->name }}</p>
-                            @if($transfer->transporter->vehicle_number)
-                                <p class="text-sm text-gray-500 mt-0.5">{{ $transfer->transporter->vehicle_number }}</p>
-                            @endif
-                        </div>
-                    @endif
-                </div>
+  {{-- ── Breadcrumb ──────────────────────────────── --}}
+  <div class="td-breadcrumb">
+    <a href="{{ route('shop.transfers.index') }}">Transfers</a>
+    <span class="td-breadcrumb-sep">/</span>
+    <span>{{ $transfer->transfer_number }}</span>
+  </div>
 
-                @if($transfer->boxes()->count() > 0)
-                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="text-center p-3 bg-blue-50 rounded-lg">
-                            <div class="text-2xl font-bold text-blue-600">{{ $transfer->boxes()->count() }}</div>
-                            <div class="text-sm text-gray-600 mt-1">Boxes Shipped</div>
-                        </div>
-                        @if($transfer->status === TransferStatus::RECEIVED)
-                            @php
-                                $receivedCount = $transfer->boxes()->whereNotNull('scanned_in_at')->count();
-                                $damagedCount = $transfer->boxes()->where('is_damaged', true)->count();
-                            @endphp
-                            <div class="text-center p-3 bg-green-50 rounded-lg">
-                                <div class="text-2xl font-bold text-green-600">{{ $receivedCount }}</div>
-                                <div class="text-sm text-gray-600 mt-1">Boxes Received</div>
-                            </div>
-                            @if($damagedCount > 0)
-                                <div class="text-center p-3 bg-red-50 rounded-lg">
-                                    <div class="text-2xl font-bold text-red-600">{{ $damagedCount }}</div>
-                                    <div class="text-sm text-gray-600 mt-1">Damaged</div>
-                                </div>
-                            @endif
-                        @endif
-                    </div>
-                @endif
+  {{-- ── Page title row ──────────────────────────── --}}
+  <div class="td-title-row">
+    <div>
+      <h1 class="td-title">{{ $transfer->transfer_number }}</h1>
+      <p class="td-title-sub">Transfer detail — {{ $transfer->fromWarehouse->name ?? '—' }} → {{ $transfer->toShop->name ?? '—' }}</p>
+    </div>
+    <a href="{{ route('shop.transfers.index') }}" class="td-btn outline" style="width:auto;padding:9px 18px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to Transfers
+    </a>
+  </div>
 
-                @if($transfer->notes)
-                    <div class="mt-4 p-3 md:p-4 bg-gray-50 rounded-lg">
-                        <p class="text-base font-medium text-gray-700 mb-1">Notes:</p>
-                        <p class="text-base text-gray-600">{{ $transfer->notes }}</p>
-                    </div>
-                @endif
-            </div>
+  {{-- ── Status hero ─────────────────────────────── --}}
+  @php
+    $sc = match($transfer->status->value) {
+      'pending'    => ['color'=>'#d97706','bg'=>'rgba(217,119,6,.1)'],
+      'approved'   => ['color'=>'var(--accent)','bg'=>'rgba(99,102,241,.1)'],
+      'in_transit' => ['color'=>'var(--violet)','bg'=>'rgba(139,92,246,.1)'],
+      'delivered'  => ['color'=>'#0ea5e9','bg'=>'rgba(14,165,233,.1)'],
+      'received'   => ['color'=>'var(--green)','bg'=>'rgba(16,185,129,.1)'],
+      'rejected'   => ['color'=>'#ef4444','bg'=>'rgba(239,68,68,.1)'],
+      default      => ['color'=>'var(--text-sub)','bg'=>'rgba(128,128,128,.08)'],
+    };
+
+    // Timeline step states — adapt status values to match TransferStatus enum
+    $steps = [
+      ['label'=>'Requested', 'done'=> true,  'active'=> false],
+      ['label'=>'Approved',  'done'=> in_array($transfer->status->value, ['approved','in_transit','delivered','received']), 'active'=> $transfer->status->value === 'approved'],
+      ['label'=>'In Transit','done'=> in_array($transfer->status->value, ['in_transit','delivered','received']), 'active'=> $transfer->status->value === 'in_transit'],
+      ['label'=>'Delivered', 'done'=> in_array($transfer->status->value, ['delivered','received']), 'active'=> $transfer->status->value === 'delivered'],
+      ['label'=>'Received',  'done'=> $transfer->status->value === 'received', 'active'=> false],
+    ];
+  @endphp
+
+  <div class="td-hero" style="--hero-color:{{ $sc['color'] }}">
+    <div class="td-hero-inner">
+
+      {{-- Number + status --}}
+      <span class="td-hero-num">{{ $transfer->transfer_number }}</span>
+      <span class="td-hero-badge" style="--badge-bg:{{ $sc['bg'] }};--badge-color:{{ $sc['color'] }}">
+        <span class="td-hero-badge-dot"></span>
+        {{ $transfer->status->label() }}
+      </span>
+
+      <div class="td-hero-divider"></div>
+
+      {{-- Route --}}
+      <div class="td-hero-route">
+        <div class="td-hero-route-node">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          {{ $transfer->fromWarehouse->name ?? '—' }}
         </div>
+        <span class="td-hero-route-arrow">→</span>
+        <div class="td-hero-route-node">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ $transfer->toShop->name ?? '—' }}
+        </div>
+      </div>
+
+      <div class="td-hero-divider"></div>
+
+      {{-- Key date --}}
+      <div class="td-hero-date">
+        <strong>{{ $transfer->requested_at?->format('d M Y') ?? '—' }}</strong>
+        Requested
+      </div>
+
+      @if($transfer->has_discrepancy ?? false)
+        <span class="td-disc-alert">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z"/></svg>
+          Discrepancy Recorded
+        </span>
+      @endif
     </div>
 
-    <!-- Status Info -->
-    @if($transfer->status === TransferStatus::PENDING)
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
-            <div class="flex items-start gap-2 md:gap-3">
-                <svg class="h-4 w-4 md:h-5 md:w-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                </svg>
-                <div class="flex-1">
-                    <p class="text-sm md:text-base text-yellow-800">
-                        <strong>Pending Review:</strong> Your transfer request is awaiting warehouse approval.
-                    </p>
-                </div>
-            </div>
+    {{-- Timeline --}}
+    <div class="td-timeline" style="margin-top:20px">
+      @foreach($steps as $step)
+        <div class="td-tl-step {{ $step['done'] ? 'done' : '' }} {{ $step['active'] ? 'active' : '' }}">
+          <div class="td-tl-dot">
+            @if($step['done'])
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            @elseif($step['active'])
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+            @endif
+          </div>
+          <div class="td-tl-label">{{ $step['label'] }}</div>
         </div>
-    @elseif($transfer->status === TransferStatus::APPROVED)
-        <div class="bg-green-50 border border-green-200 rounded-lg p-3 md:p-4">
-            <div class="flex items-start gap-2 md:gap-3">
-                <svg class="h-4 w-4 md:h-5 md:w-5 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                <div class="flex-1">
-                    <p class="text-sm md:text-base text-green-800">
-                        <strong>Approved:</strong> The warehouse has approved your request and is preparing your order.
-                    </p>
-                </div>
-            </div>
-        </div>
-    @elseif($transfer->status === TransferStatus::IN_TRANSIT)
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
-            <div class="flex items-start gap-2 md:gap-3">
-                <svg class="h-4 w-4 md:h-5 md:w-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
-                    <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"/>
-                </svg>
-                <div class="flex-1">
-                    <p class="text-sm md:text-base text-blue-800">
-                        <strong>In Transit:</strong> Your order has been shipped and is on the way to your shop.
-                    </p>
-                </div>
-            </div>
-        </div>
-    @elseif($transfer->status === TransferStatus::DELIVERED)
-        <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 md:p-4">
-            <div class="flex items-start gap-2 md:gap-3">
-                <svg class="h-4 w-4 md:h-5 md:w-5 text-purple-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
-                </svg>
-                <div class="flex-1">
-                    <p class="text-sm md:text-base text-purple-800">
-                        <strong>Delivered:</strong> Your order has been delivered. Please scan the boxes to receive them into your inventory.
-                    </p>
-                    <a href="{{ route('shop.transfers.receive', $transfer) }}"
-                       class="inline-flex items-center mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors text-base">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                        </svg>
-                        Receive Transfer
-                    </a>
-                </div>
-            </div>
-        </div>
-    @elseif($transfer->status === TransferStatus::RECEIVED)
-        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 md:p-4">
-            <div class="flex items-start gap-2 md:gap-3">
-                <svg class="h-4 w-4 md:h-5 md:w-5 text-gray-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                <div class="flex-1">
-                    <p class="text-sm md:text-base text-gray-800">
-                        <strong>Received:</strong> Transfer completed on {{ $transfer->received_at?->format('M d, Y') }}.
-                    </p>
-                </div>
-            </div>
-        </div>
-    @elseif($transfer->status === TransferStatus::REJECTED)
-        <div class="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4">
-            <div class="flex items-start gap-2 md:gap-3">
-                <svg class="h-4 w-4 md:h-5 md:w-5 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                </svg>
-                <div class="flex-1">
-                    <p class="text-sm md:text-base text-red-800">
-                        <strong>Rejected:</strong> The warehouse was unable to fulfill this request.
-                        @if($transfer->notes)
-                            <br><span class="font-medium">Reason:</span> {{ $transfer->notes }}
-                        @endif
-                    </p>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    <!-- Requested Items -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Requested Products</h3>
-
-        <div class="space-y-3 md:space-y-4">
-            @foreach($items as $item)
-                @php
-                    $requestedBoxes = $item['boxes_requested'];
-                    $totalItems = $requestedBoxes * $item['items_per_box'];
-                @endphp
-
-                <div class="p-3 md:p-5 border-2 border-gray-200 rounded-lg bg-white">
-                    <h4 class="font-semibold text-gray-900 text-lg md:text-xl mb-3">{{ $item['product_name'] }}</h4>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                        <!-- Boxes Requested -->
-                        <div>
-                            <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
-                                Boxes Requested
-                            </label>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-2xl md:text-2xl font-bold text-gray-900">{{ number_format($requestedBoxes) }}</span>
-                                <span class="text-sm md:text-base text-gray-600">boxes</span>
-                            </div>
-                        </div>
-
-                        <!-- Items per Box -->
-                        <div>
-                            <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
-                                Items per Box
-                            </label>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-2xl md:text-2xl font-bold text-gray-900">{{ number_format($item['items_per_box']) }}</span>
-                                <span class="text-sm md:text-base text-gray-600">items</span>
-                            </div>
-                        </div>
-
-                        <!-- Total Items -->
-                        <div>
-                            <label class="block text-sm md:text-base font-medium text-gray-700 mb-2">
-                                Total Items
-                            </label>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-2xl md:text-2xl font-bold text-indigo-600">{{ number_format($totalItems) }}</span>
-                                <span class="text-sm md:text-base text-gray-600">items</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
+      @endforeach
     </div>
+  </div>
+
+  {{-- ── Body ────────────────────────────────────── --}}
+  <div class="td-body">
+
+    {{-- ── Left: Items + Boxes ─────────────────── --}}
+    <div>
+
+      {{-- Items requested --}}
+      <div class="td-card">
+        <div class="td-card-head">
+          <div class="td-card-head-left">
+            <div class="td-card-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+            </div>
+            <div>
+              <h3>Products Requested</h3>
+              <p>{{ $transfer->items->count() }} product line(s) · {{ array_sum(array_column($items, 'boxes_requested')) }} boxes total</p>
+            </div>
+          </div>
+        </div>
+        <div class="td-card-body">
+          @if($transfer->items->isEmpty())
+            <div class="td-empty">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+              No items found on this transfer.
+            </div>
+          @else
+            <table class="td-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Requested</th>
+                  <th>Shipped</th>
+                  <th>Received</th>
+                  <th>Discrepancy</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach($transfer->items as $item)
+                  @php
+                    $hasDisc = ($item->discrepancy_quantity ?? 0) != 0;
+                    $received = $item->quantity_received ?? null;
+                    $shipped = $item->quantity_shipped ?? null;
+                  @endphp
+                  <tr>
+                    <td>
+                      <div class="col-product">{{ $item->product->name ?? '—' }}</div>
+                      <span class="col-sku">{{ $item->product->sku ?? '' }}</span>
+                    </td>
+                    <td><span class="col-num">{{ $item->quantity_requested }}</span> <small style="color:var(--text-sub)">items</small></td>
+                    <td>
+                      @if($shipped !== null)
+                        <span class="col-num">{{ $shipped }}</span>
+                      @else
+                        <span style="color:var(--text-sub)">—</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($received !== null)
+                        <span class="{{ $hasDisc ? 'col-disc' : 'col-ok' }}">{{ $received }}</span>
+                      @else
+                        <span style="color:var(--text-sub)">—</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($hasDisc)
+                        <span class="col-disc">{{ $item->discrepancy_quantity > 0 ? '+' : '' }}{{ $item->discrepancy_quantity }}</span>
+                      @else
+                        <span class="col-ok">—</span>
+                      @endif
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          @endif
+        </div>
+      </div>
+
+      {{-- Assigned boxes --}}
+      @if($transfer->boxes()->count() > 0)
+      <div class="td-card">
+        <div class="td-card-head">
+          <div class="td-card-head-left">
+            <div class="td-card-icon" style="--icon-bg:rgba(139,92,246,.12);--icon-c:var(--violet)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+            </div>
+            <div>
+              <h3>Assigned Boxes</h3>
+              <p>{{ $transfer->boxes()->count() }} box(es) assigned to this transfer</p>
+            </div>
+          </div>
+        </div>
+        <div class="td-card-body">
+          @foreach($transfer->boxes as $tb)
+            @php
+              $box = $tb->box;
+              $bsc = match($box->status ?? 'full') {
+                'full'    => ['bg'=>'rgba(16,185,129,.1)','c'=>'var(--green)'],
+                'partial' => ['bg'=>'rgba(217,119,6,.1)','c'=>'#d97706'],
+                'damaged' => ['bg'=>'rgba(239,68,68,.1)','c'=>'#ef4444'],
+                default   => ['bg'=>'rgba(128,128,128,.08)','c'=>'var(--text-sub)'],
+              };
+            @endphp
+            <div class="td-box-row">
+              <span class="td-box-code">{{ $box->box_code ?? '—' }}</span>
+              <span class="td-box-status" style="--bs-bg:{{ $bsc['bg'] }};--bs-c:{{ $bsc['c'] }}">
+                {{ ucfirst($box->status ?? 'full') }}
+              </span>
+              <span class="td-box-items" style="color:var(--text-sub)">
+                {{ $box->items_remaining ?? '—' }} items
+              </span>
+              <div class="td-box-scan">
+                @if($tb->scanned_out_at)
+                  <div>Out: <strong>{{ $tb->scanned_out_at->format('d M, H:i') }}</strong></div>
+                @endif
+                @if($tb->scanned_in_at)
+                  <div style="color:var(--green)">In: <strong>{{ $tb->scanned_in_at->format('d M, H:i') }}</strong></div>
+                @endif
+              </div>
+            </div>
+          @endforeach
+        </div>
+      </div>
+      @endif
+
+    </div>
+
+    {{-- ── Right: Metadata + Transporter + Actions ─ --}}
+    <div>
+
+      {{-- Transfer metadata --}}
+      <div class="td-card">
+        <div class="td-card-head">
+          <div class="td-card-head-left">
+            <div class="td-card-icon" style="--icon-bg:rgba(99,102,241,.1);--icon-c:var(--accent)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div><h3>Transfer Details</h3></div>
+          </div>
+        </div>
+        <div class="td-card-body">
+          <div class="td-meta-list">
+            <div class="td-meta-row">
+              <span class="td-meta-label">Reference</span>
+              <span class="td-meta-value mono">{{ $transfer->transfer_number }}</span>
+            </div>
+            <div class="td-meta-row">
+              <span class="td-meta-label">Status</span>
+              <span class="td-meta-value" style="color:{{ $sc['color'] }}">{{ $transfer->status->label() }}</span>
+            </div>
+            <div class="td-meta-row">
+              <span class="td-meta-label">From</span>
+              <span class="td-meta-value">{{ $transfer->fromWarehouse->name ?? '—' }}</span>
+            </div>
+            <div class="td-meta-row">
+              <span class="td-meta-label">To</span>
+              <span class="td-meta-value">{{ $transfer->toShop->name ?? '—' }}</span>
+            </div>
+            <div class="td-meta-row">
+              <span class="td-meta-label">Requested by</span>
+              <span class="td-meta-value">{{ $transfer->requestedBy->name ?? '—' }}</span>
+            </div>
+            <div class="td-meta-row">
+              <span class="td-meta-label">Requested at</span>
+              <span class="td-meta-value">{{ $transfer->requested_at?->format('d M Y, H:i') ?? '—' }}</span>
+            </div>
+            @if($transfer->reviewedBy)
+            <div class="td-meta-row">
+              <span class="td-meta-label">Reviewed by</span>
+              <span class="td-meta-value">{{ $transfer->reviewedBy->name }}</span>
+            </div>
+            @endif
+            @if($transfer->reviewed_at)
+            <div class="td-meta-row">
+              <span class="td-meta-label">Reviewed at</span>
+              <span class="td-meta-value">{{ $transfer->reviewed_at->format('d M Y, H:i') }}</span>
+            </div>
+            @endif
+            @if($transfer->delivered_at)
+            <div class="td-meta-row">
+              <span class="td-meta-label">Delivered</span>
+              <span class="td-meta-value">{{ $transfer->delivered_at->format('d M Y, H:i') }}</span>
+            </div>
+            @endif
+            @if($transfer->received_at)
+            <div class="td-meta-row">
+              <span class="td-meta-label">Received</span>
+              <span class="td-meta-value" style="color:var(--green)">{{ $transfer->received_at->format('d M Y, H:i') }}</span>
+            </div>
+            @endif
+            @if($transfer->receivedBy)
+            <div class="td-meta-row">
+              <span class="td-meta-label">Received by</span>
+              <span class="td-meta-value">{{ $transfer->receivedBy->name }}</span>
+            </div>
+            @endif
+          </div>
+          @if($transfer->notes)
+            <div class="td-notes">{{ $transfer->notes }}</div>
+          @endif
+        </div>
+      </div>
+
+      {{-- Transporter --}}
+      @if($transfer->transporter)
+      <div class="td-card">
+        <div class="td-card-head">
+          <div class="td-card-head-left">
+            <div class="td-card-icon" style="--icon-bg:rgba(139,92,246,.12);--icon-c:var(--violet)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div><h3>Transporter</h3></div>
+          </div>
+        </div>
+        <div class="td-card-body">
+          <div class="td-transporter-body">
+            <p class="td-trans-name">{{ $transfer->transporter->name }}</p>
+            @if($transfer->transporter->company_name ?? false)
+              <p class="td-trans-company">{{ $transfer->transporter->company_name }}</p>
+            @endif
+            <div class="td-trans-detail">
+              @if($transfer->transporter->phone ?? false)
+                <div class="td-trans-row">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 0 0 .07 2.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.72 6.72l1.28-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                  <strong>{{ $transfer->transporter->phone }}</strong>
+                </div>
+              @endif
+              @if($transfer->transporter->vehicle_number ?? false)
+                <div class="td-trans-row">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  <strong>{{ $transfer->transporter->vehicle_number }}</strong>
+                </div>
+              @endif
+              @if($transfer->transporter->license_number ?? false)
+                <div class="td-trans-row">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                  License: <strong>{{ $transfer->transporter->license_number }}</strong>
+                </div>
+              @endif
+            </div>
+          </div>
+        </div>
+      </div>
+      @endif
+
+      {{-- Context-aware actions --}}
+      @if($transfer->status === TransferStatus::DELIVERED)
+      <div class="td-card">
+        <div class="td-card-head">
+          <div class="td-card-head-left">
+            <div class="td-card-icon" style="--icon-bg:rgba(16,185,129,.1);--icon-c:var(--green)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div><h3>Actions</h3></div>
+          </div>
+        </div>
+        <div class="td-card-body">
+          <div class="td-actions-body">
+            <a href="{{ route('shop.transfers.receive', $transfer) }}" class="td-btn success">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              Scan &amp; Receive Boxes
+            </a>
+          </div>
+        </div>
+      </div>
+      @endif
+
+    </div>
+  </div>
+
 </div>
