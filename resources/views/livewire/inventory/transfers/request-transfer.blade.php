@@ -186,6 +186,9 @@
                                     <button
                                         type="button"
                                         wire:click="addProductToCart({{ $product->id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:loading.class="opacity-60 cursor-wait"
+                                        wire:target="addProductToCart({{ $product->id }})"
                                         @if($isOutOfStock || $isInCart) disabled @endif
                                         class="w-full text-left group flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0 transition-all duration-200
                                             @if($isInCart)
@@ -248,8 +251,12 @@
 
                                         @if(!$isOutOfStock && !$isInCart)
                                             <div class="text-indigo-300 group-hover:text-indigo-600 transition-colors flex-shrink-0 ml-4">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg wire:loading.remove wire:target="addProductToCart({{ $product->id }})" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                <svg wire:loading wire:target="addProductToCart({{ $product->id }})" class="animate-spin w-6 h-6 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                 </svg>
                                             </div>
                                         @endif
