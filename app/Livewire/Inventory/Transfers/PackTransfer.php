@@ -108,53 +108,38 @@ class PackTransfer extends Component
         $totalBoxesRequested = (int) ($transferItem->quantity_requested / $product->items_per_box);
         $stillNeeded = max(0, $totalBoxesRequested - $alreadyPacked);
 
-        $this->pendingBarcode         = $input;
-        $this->pendingProductName     = $product->name;
-        $this->pendingAvailableCount  = min($available, $stillNeeded > 0 ? $stillNeeded : $available);
-        $this->scanQuantity           = min(1, $this->pendingAvailableCount);
-        $this->scanInput              = '';
+        if ($stillNeeded === 0) {
+            session()->flash('scan_error', "All requested boxes for {$product->name} have already been packed");
+            $this->scanInput = '';
+            return;
+        }
+
+        // Auto-pack 1 box immediately
+        $this->scanInput = '';
+        $this->packProductBoxes($input, 1);
     }
 
-    public function confirmQuantity()
+    protected function packProductBoxes(string $barcode, int $quantity)
     {
-        if (!$this->pendingBarcode) {
-            return;
-        }
-
-        if ($this->scanQuantity < 1 || $this->scanQuantity > $this->pendingAvailableCount) {
-            session()->flash('scan_error', "Quantity must be between 1 and {$this->pendingAvailableCount}");
-            return;
-        }
-
         try {
             $transferService = app(TransferService::class);
             $transferService->packBoxesByProductBarcode(
                 $this->transfer,
-                $this->pendingBarcode,
-                $this->scanQuantity
+                $barcode,
+                $quantity
             );
 
             $this->refreshPackedBoxes();
 
-            session()->flash('scan_success', "Packed {$this->scanQuantity} box(es) of {$this->pendingProductName}");
-            $this->dispatch('scan-success', message: "Packed: {$this->pendingProductName}");
+            $product = Product::where('barcode', $barcode)->first();
+            session()->flash('scan_success', "Packed {$quantity} box(es) of {$product->name}");
+            $this->dispatch('scan-success', message: "Packed: {$quantity}x {$product->name}");
         } catch (\Exception $e) {
             session()->flash('scan_error', $e->getMessage());
+            $this->dispatch('scan-error', message: $e->getMessage());
         }
-
-        $this->pendingBarcode         = null;
-        $this->pendingProductName     = null;
-        $this->pendingAvailableCount  = null;
-        $this->scanQuantity           = 1;
     }
 
-    public function cancelPending()
-    {
-        $this->pendingBarcode         = null;
-        $this->pendingProductName     = null;
-        $this->pendingAvailableCount  = null;
-        $this->scanQuantity           = 1;
-    }
 
     /**
      * After boxes are packed, ship the transfer (allows partial shipments).

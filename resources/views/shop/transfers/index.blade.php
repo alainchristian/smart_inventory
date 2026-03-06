@@ -1,4 +1,36 @@
 <style>
+/* Page header responsive */
+.page-header-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+@media(max-width:768px) {
+    .page-header-wrap {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .page-header-wrap > div h1 {
+        font-size: 22px;
+    }
+    .page-header-wrap > div p {
+        font-size: 14px;
+    }
+}
+
+@media(max-width:640px) {
+    .page-header-wrap > div h1 {
+        font-size: 20px;
+    }
+    .page-header-wrap > div p {
+        font-size: 13px;
+        margin-top: 4px;
+    }
+}
 
 /* Mission 2C: Responsive base — applied to all transfer pages */
 @media(max-width:600px) {
@@ -33,7 +65,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Page Header -->
             <div class="mb-6">
-                <div class="flex items-center justify-between">
+                <div class="page-header-wrap">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">Transfer Requests</h1>
                         <p class="mt-1 text-base text-gray-600">View and manage your inventory transfer requests</p>

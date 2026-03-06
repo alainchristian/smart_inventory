@@ -84,8 +84,8 @@ class TransferPolicy
 
     public function receive(User $user, Transfer $transfer): bool
     {
-        // Must be delivered
-        if ($transfer->status !== TransferStatus::DELIVERED) {
+        // Must be in_transit or delivered (shop can receive either way)
+        if (!in_array($transfer->status, [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED])) {
             return false;
         }
 

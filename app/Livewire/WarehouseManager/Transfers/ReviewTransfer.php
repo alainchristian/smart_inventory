@@ -34,21 +34,24 @@ class ReviewTransfer extends Component
         // Load items with boxes calculation
         foreach ($transfer->items as $item) {
             $product = $item->product;
-            $boxesRequested = (int) round($item->quantity_requested / max(1, $product->items_per_box));
+            $itemsPerBox   = max(1, (int) $product->items_per_box);
+            $boxesRequested = (int) round($item->quantity_requested / $itemsPerBox);
 
             $this->items[] = [
-                'id' => $item->id,
-                'product_id' => $item->product_id,
-                'product_name' => $product->name,
-                'items_per_box' => (int) $product->items_per_box,
-                'boxes_requested' => $boxesRequested,
-                'quantity_requested' => (int) $item->quantity_requested,
+                'id'                => $item->id,
+                'product_id'        => $item->product_id,
+                'product_name'      => $product->name,
+                'items_per_box'     => $itemsPerBox,
+                'boxes_requested'   => $boxesRequested,          // always int, never float
+                'quantity_requested'=> (int) $item->quantity_requested,
             ];
         }
     }
 
     public function approve()
     {
+        \Log::info('APPROVE CALLED - items:', $this->items);
+
         // Validate that we can approve
         if ($this->transfer->status !== TransferStatus::PENDING) {
             session()->flash('error', 'Only pending transfers can be approved.');

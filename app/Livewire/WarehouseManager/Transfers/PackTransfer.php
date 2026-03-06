@@ -1,5 +1,9 @@
 <?php
 
+// ORPHANED: This component is not currently wired to any route.
+// The active PackTransfer is App\Livewire\Inventory\Transfers\PackTransfer
+// DO NOT delete until confirmed unused.
+
 namespace App\Livewire\WarehouseManager\Transfers;
 
 use App\Enums\AlertSeverity;

@@ -394,6 +394,85 @@ class TransferService
     }
 
     /**
+     * Pack a specific box by its box code.
+     * This allows warehouse staff to scan individual box codes.
+     *
+     * @param  Transfer $transfer   Must be in APPROVED status.
+     * @param  string   $boxCode    The box code that was scanned.
+     * @param  int      $quantity   Number of boxes with this same code to pack (usually 1).
+     * @return TransferBox          The TransferBox instance that was created.
+     * @throws \Exception           If box not found, already packed, or exceeds requested quantity.
+     */
+    public function packBoxByBoxCode(Transfer $transfer, string $boxCode, int $quantity = 1): TransferBox
+    {
+        if ($transfer->status !== TransferStatus::APPROVED) {
+            throw new \Exception('Only approved transfers can be packed');
+        }
+
+        return DB::transaction(function () use ($transfer, $boxCode, $quantity) {
+            // Find the box by code
+            $box = Box::where('box_code', $boxCode)
+                ->where('location_type', LocationType::WAREHOUSE)
+                ->where('location_id', $transfer->from_warehouse_id)
+                ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
+                ->where('items_remaining', '>', 0)
+                ->first();
+
+            if (!$box) {
+                throw new \Exception("Box '{$boxCode}' not found or not available at this warehouse");
+            }
+
+            // Check if box is already assigned to this transfer
+            $existingTransferBox = TransferBox::where('transfer_id', $transfer->id)
+                ->where('box_id', $box->id)
+                ->first();
+
+            if ($existingTransferBox) {
+                throw new \Exception("Box '{$boxCode}' is already packed in this transfer");
+            }
+
+            // Verify this product is in the transfer request
+            $transferItem = $transfer->items()->where('product_id', $box->product_id)->first();
+            if (!$transferItem) {
+                throw new \Exception("Box contains {$box->product->name}, which is not in this transfer request");
+            }
+
+            // Check if packing this box would exceed the requested quantity for this product
+            $alreadyShipped = $transferItem->quantity_shipped ?? 0;
+            $requestedQty = $transferItem->quantity_requested;
+
+            if (($alreadyShipped + $box->items_remaining) > $requestedQty) {
+                $remaining = $requestedQty - $alreadyShipped;
+                throw new \Exception(
+                    "Cannot pack box '{$boxCode}'. This would exceed requested quantity for {$box->product->name}. " .
+                    "Remaining: {$remaining} items, Box has: {$box->items_remaining} items"
+                );
+            }
+
+            // Create the transfer box record
+            $tb = TransferBox::create([
+                'transfer_id' => $transfer->id,
+                'box_id' => $box->id,
+                'scanned_out_by' => auth()->id(),
+                'scanned_out_at' => now(),
+            ]);
+
+            // Increment quantity_shipped on the TransferItem
+            $transferItem->increment('quantity_shipped', $box->items_remaining);
+
+            // Mark transfer as packed if not already
+            if (!$transfer->packed_at) {
+                $transfer->update([
+                    'packed_by' => auth()->id(),
+                    'packed_at' => now(),
+                ]);
+            }
+
+            return $tb;
+        });
+    }
+
+    /**
      * During the RECEIVE stage: the shop manager scans a product barcode
      * and types a quantity. This method finds that many un-received
      * TransferBox rows for that product in this transfer and marks them

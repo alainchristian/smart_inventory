@@ -1,6 +1,63 @@
+# SmartInventory — Review Transfer Request Redesign
+## Claude Code Instructions
+
+> Drop this file in the project root, then tell Claude Code:
+> "Read REVIEW_TRANSFER_REDESIGN.md and follow every step in order."
+
+---
+
+## Ground Rules
+
+- **DO NOT touch** `app/Livewire/WarehouseManager/Transfers/ReviewTransfer.php` — preserve ALL logic
+- **ONLY rewrite** `resources/views/livewire/warehouse-manager/transfers/review-transfer.blade.php`
+- Every `wire:` binding must match the **EXACT** method/property names from the PHP file
+- Design system: CSS vars `--accent --surface --surface2 --surface3 --border --border-hi --text --text-sub --text-dim --green --red --amber --violet --success --r --rsm --font --mono --tr`
+- Run `php artisan view:clear && php artisan cache:clear` after
+
+---
+
+## Step 0 — Read First (MANDATORY)
+
+```bash
+# Read the ENTIRE PHP component before writing anything
+cat app/Livewire/WarehouseManager/Transfers/ReviewTransfer.php
+
+# Check what git commit was working before
+git log --oneline -20
+
+# View the current blade file
+cat resources/views/livewire/warehouse-manager/transfers/review-transfer.blade.php
+
+# Check wrapper layout
+cat resources/views/warehouse/transfers/show.blade.php
+
+# Verify TransferStatus enum values
+cat app/Enums/TransferStatus.php
+```
+
+**Key method/property names (DO NOT change these in wire: bindings):**
+- Approve transfer: `wire:click="approve"`
+- Open reject modal: `wire:click="openRejectModal"`
+- Close reject modal: `wire:click="closeRejectModal"` / `@click="$wire.closeRejectModal()"`
+- Reject transfer: `wire:click="reject"`
+- Reject reason field: `wire:model="rejectReason"`
+- Boxes requested input: `wire:model.live="items.{{ $index }}.boxes_requested"`
+- Modal toggle property: `$showRejectModal`
+- Stock levels: `$stockLevels` (passed from render)
+- Transfer object: `$transfer`
+- Items array: `$items`
+
+---
+
+## Step 1 — Full Blade Rewrite
+
+**Target:** `resources/views/livewire/warehouse-manager/transfers/review-transfer.blade.php`
+
+Replace the **entire** file with the content below:
+
+```blade
 @php use App\Enums\TransferStatus; @endphp
 
-@push('styles')
 <style>
 /* ── Review Transfer — Design System Aligned ── */
 .rt-wrap { display:flex; flex-direction:column; gap:20px; font-family:var(--font); }
@@ -283,34 +340,12 @@
 /* ── Divider ── */
 .rt-divider { border:none; border-top:1px solid var(--border); margin:0; }
 
-@media(max-width:768px) {
-    .rt-card-head { padding:14px 16px; flex-wrap:wrap; }
-    .rt-card-body { padding:16px; }
-    .rt-product-head { padding:12px 14px; flex-wrap:wrap; gap:8px; }
-    .rt-product-body { padding:14px 16px; }
-    .rt-product-name { font-size:14px; }
-    .rt-route { flex-direction:column; gap:12px; text-align:center; }
-    .rt-route-node:last-child { text-align:center; }
-    .rt-route-arrow { transform:rotate(90deg); }
-    .rt-meta-grid { grid-template-columns:1fr 1fr; gap:12px; }
-    .rt-modal { max-width:calc(100vw - 32px); }
-    .rt-modal-head, .rt-modal-body, .rt-modal-foot { padding:16px; }
-}
-
 @media(max-width:640px) {
-    .rt-action-bar { justify-content:stretch; flex-direction:column; padding:14px 16px; }
-    .rt-btn { flex:1; width:100%; }
-    .rt-meta-grid { grid-template-columns:1fr; }
-    .rt-card-head { gap:8px; }
-    .rt-card-title { font-size:11px; }
-    .rt-stat-value { font-size:18px; }
-    .rt-alert { padding:12px 14px; font-size:13px; }
-    .rt-status-banner { padding:24px 16px; }
-    .rt-status-banner-title { font-size:16px; }
-    .rt-wrap { gap:16px; }
+    .rt-action-bar { justify-content:stretch; }
+    .rt-btn { flex:1; }
+    .rt-meta-grid { grid-template-columns:1fr 1fr; }
 }
 </style>
-@endpush
 
 <div class="rt-wrap">
 
@@ -429,13 +464,11 @@
             @foreach($items as $index => $item)
                 @php
                     $stock          = $stockLevels[$item['product_id']] ?? null;
-                    $availableBoxes = $stock ? (int) $stock['total_boxes'] : 0;
-                    $requestedBoxes = (int) ($item['boxes_requested'] ?? 0);   // explicit int — single source of truth
-                    $exceedsStock   = $requestedBoxes > $availableBoxes && $requestedBoxes > 0;
-                    $totalItems     = $requestedBoxes * (int) $item['items_per_box'];  // always derived from boxes, never from quantity_requested
-                    $stockPct       = ($availableBoxes > 0 && $requestedBoxes > 0)
-                                        ? min(100, (int) round($requestedBoxes / $availableBoxes * 100))
-                                        : 0;
+                    $availableBoxes = $stock ? $stock['total_boxes'] : 0;
+                    $requestedBoxes = (int) ($item['boxes_requested'] ?? 0);
+                    $exceedsStock   = $requestedBoxes > $availableBoxes;
+                    $totalItems     = $requestedBoxes * $item['items_per_box'];
+                    $stockPct       = $availableBoxes > 0 ? min(100, round(($requestedBoxes / $availableBoxes) * 100)) : 100;
                 @endphp
 
                 <div class="rt-product-row {{ $exceedsStock ? 'has-warning' : '' }}">
@@ -463,12 +496,10 @@
                         {{-- Boxes Requested --}}
                         <div class="rt-stat">
                             <label class="rt-stat-label">Boxes Requested</label>
-                            {{-- DEBUG: item={{ json_encode($item) }} --}}
                             @if($transfer->status === TransferStatus::PENDING)
                                 <input type="number"
-                                       wire:model="items.{{ $index }}.boxes_requested"
+                                       wire:model.live="items.{{ $index }}.boxes_requested"
                                        min="0"
-                                       value="{{ $item['boxes_requested'] ?? 0 }}"
                                        class="rt-input {{ $exceedsStock ? 'rt-input-error' : '' }}"
                                        placeholder="0">
                                 @error("items.{$index}.boxes_requested")
@@ -532,7 +563,8 @@
             <div class="rt-action-bar">
                 <button type="button"
                         wire:click="openRejectModal"
-                        class="rt-btn rt-btn-reject">
+                        class="rt-btn rt-btn-reject"
+                        wire:loading.attr="disabled">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -541,12 +573,17 @@
 
                 <button type="button"
                         wire:click="approve"
-                        onclick="console.log('Button clicked!', this)"
-                        class="rt-btn rt-btn-approve">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        class="rt-btn rt-btn-approve"
+                        wire:loading.attr="disabled">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" wire:loading.remove wire:target="approve">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Approve Transfer
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" wire:loading wire:target="approve"
+                         style="animation:spin 1s linear infinite">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4" stroke-dashoffset="10" stroke-linecap="round"/>
+                    </svg>
+                    <span wire:loading.remove wire:target="approve">Approve Transfer</span>
+                    <span wire:loading wire:target="approve">Processing…</span>
                 </button>
             </div>
 
@@ -653,3 +690,70 @@
 @keyframes spin { to { transform:rotate(360deg) } }
 </style>
 @endpush
+```
+
+---
+
+## Step 2 — Clear Caches
+
+```bash
+php artisan view:clear
+php artisan cache:clear
+php artisan config:clear
+```
+
+---
+
+## Step 3 — Verify Buttons Work
+
+```bash
+# Check the PHP methods exist and match wire: targets
+grep -n "public function approve\|public function reject\|public function openRejectModal\|public function closeRejectModal" app/Livewire/WarehouseManager/Transfers/ReviewTransfer.php
+
+# Confirm route for pack link exists
+grep -n "warehouse.transfers.pack" routes/web.php
+
+# Check TransferStatus enum has PENDING / APPROVED / REJECTED
+cat app/Enums/TransferStatus.php
+```
+
+If the `warehouse.transfers.pack` route does not exist, replace:
+```blade
+<a href="{{ route('warehouse.transfers.pack', $transfer) }}" class="rt-pack-cta">
+```
+with:
+```blade
+<a href="{{ route('warehouse.transfers.index') }}" class="rt-pack-cta">
+```
+
+---
+
+## Step 4 — Check Git History for Working Version (if buttons still broken)
+
+```bash
+# See recent commits
+git log --oneline -15
+
+# Find the last commit where ReviewTransfer.php was changed
+git log --oneline -- app/Livewire/WarehouseManager/Transfers/ReviewTransfer.php
+
+# Restore the PHP file from a known-good commit if needed (replace COMMIT_HASH)
+# git checkout COMMIT_HASH -- app/Livewire/WarehouseManager/Transfers/ReviewTransfer.php
+```
+
+---
+
+## Step 5 — Smoke Test Checklist
+
+- [ ] Page loads without errors at `/warehouse/transfers/{id}`
+- [ ] Transfer number, status badge, warehouse→shop route strip displays correctly
+- [ ] Product rows show boxes requested (editable if pending), available stock, total items
+- [ ] Stock availability bar fills correctly (green = ok, red = exceeds stock)
+- [ ] Warning chip appears when requested > available
+- [ ] **Approve button** fires `wire:click="approve"` and shows loading spinner
+- [ ] **Reject button** opens the reject modal via `wire:click="openRejectModal"`
+- [ ] Reject modal: textarea binds to `wire:model="rejectReason"`, confirm fires `wire:click="reject"`
+- [ ] Modal backdrop click and ✕ button both close modal via `$wire.closeRejectModal()`
+- [ ] Approved state shows green banner with Pack Transfer link
+- [ ] Rejected state shows red banner with rejection reason
+- [ ] Flash success/error messages render at the top

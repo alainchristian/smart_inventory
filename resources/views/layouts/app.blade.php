@@ -13,6 +13,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+    @stack('styles')
 
     {{-- Chart.js loaded ONCE here in the head. --}}
     {{-- Loading it inside @push('scripts') or dynamically via createElement fails --}}

@@ -28,13 +28,26 @@ enum TransferStatus: string
     public function color(): string
     {
         return match($this) {
-            self::PENDING => 'yellow',
-            self::APPROVED => 'blue',
-            self::REJECTED => 'red',
-            self::IN_TRANSIT => 'purple',
-            self::DELIVERED => 'indigo',
-            self::RECEIVED => 'green',
-            self::CANCELLED => 'gray',
+            self::PENDING    => 'bg-amber-100 text-amber-800 border border-amber-200',
+            self::APPROVED   => 'bg-blue-100 text-blue-800 border border-blue-200',
+            self::REJECTED   => 'bg-red-100 text-red-800 border border-red-200',
+            self::IN_TRANSIT => 'bg-violet-100 text-violet-800 border border-violet-200',
+            self::DELIVERED  => 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+            self::RECEIVED   => 'bg-green-100 text-green-800 border border-green-200',
+            self::CANCELLED  => 'bg-gray-100 text-gray-600 border border-gray-200',
+        };
+    }
+
+    public function cssColor(): string
+    {
+        return match($this) {
+            self::PENDING    => 'var(--amber)',
+            self::APPROVED   => 'var(--accent)',
+            self::REJECTED   => 'var(--red)',
+            self::IN_TRANSIT => 'var(--violet)',
+            self::DELIVERED  => '#0ea5e9',
+            self::RECEIVED   => 'var(--green)',
+            self::CANCELLED  => 'var(--text-dim)',
         };
     }
 }

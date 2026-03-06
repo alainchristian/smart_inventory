@@ -5,63 +5,70 @@
 .wtl-wrap { display:flex; flex-direction:column; gap:20px; }
 
 /* ── Page header */
-.wtl-page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.wtl-page-header-left h1 { font-size:29px; font-weight:800; letter-spacing:-.5px; color:var(--text); margin:0 0 3px; }
-.wtl-page-header-left p  { font-size:16px; color:var(--text-sub); margin:0; }
+.wtl-page-header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.wtl-page-header-left h1 { font-size:29px; font-weight:800; letter-spacing:-.5px; color:var(--text); margin:0; }
 
-/* ── Pipeline strip */
-.wtl-pipeline {
-    display:grid; grid-template-columns:repeat(3, 1fr); gap:0;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
-    overflow:hidden;
+/* ── Status dropdown */
+.wtl-status-dropdown { position:relative; }
+.wtl-dropdown-btn {
+    display:flex; align-items:center; gap:8px;
+    padding:10px 16px; background:var(--surface); color:var(--text);
+    border:1.5px solid var(--border-hi); border-radius:8px;
+    font-size:14px; font-weight:600; cursor:pointer;
+    transition:border-color .15s, box-shadow .15s;
 }
-.wtl-pipeline-step {
-    padding:14px 16px; display:flex; flex-direction:column; gap:4px;
-    border-right:1px solid var(--border); position:relative; cursor:pointer;
-    transition:background .15s; background:transparent;
+.wtl-dropdown-btn:hover { border-color:var(--accent); }
+.wtl-dropdown-btn svg { transition:transform .2s; }
+.wtl-dropdown-btn.open svg { transform:rotate(180deg); }
+.wtl-dropdown-menu {
+    position:absolute; top:calc(100% + 6px); right:0; z-index:10;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12);
+    min-width:200px; padding:6px; display:none;
 }
-.wtl-pipeline-step:last-child { border-right:none; }
-.wtl-pipeline-step:hover      { background:var(--surface2); }
-.wtl-pipeline-step.active     { background:var(--step-bg); }
-.wtl-pipeline-step.active::after {
-    content:''; position:absolute; bottom:0; left:0; right:0; height:3px;
-    background:var(--step-color);
+.wtl-dropdown-menu.open { display:block; }
+.wtl-dropdown-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px; border-radius:6px; cursor:pointer;
+    font-size:14px; font-weight:600; color:var(--text);
+    transition:background .15s;
 }
-.wtl-step-num   { font-size:26px; font-weight:800; line-height:1; }
-.wtl-step-label { font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-sub); }
-.wtl-step-sub   { font-size:13px; color:var(--text-sub); }
+.wtl-dropdown-item:hover { background:var(--surface2); }
+.wtl-dropdown-item.active { background:var(--accent-dim); color:var(--accent); }
+.wtl-dropdown-count {
+    font-size:12px; font-weight:700; padding:2px 8px;
+    background:var(--surface3); border-radius:12px;
+    color:var(--text-sub);
+}
+.wtl-dropdown-item.active .wtl-dropdown-count { background:var(--accent); color:#fff; }
 
-/* ── Filter / search bar */
-.wtl-bar {
-    display:flex; align-items:center; gap:6px; flex-wrap:wrap;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
-    padding:10px 14px;
-}
-.wtl-bar-label { font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-sub); padding-right:6px; }
-.wtl-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    padding:5px 12px; border-radius:20px; font-size:14px; font-weight:600;
-    border:1.5px solid transparent; cursor:pointer; transition:all .15s;
-    background:transparent; color:var(--text-sub);
-}
-.wtl-chip:hover  { background:var(--surface2); color:var(--text); }
-.wtl-chip.active { background:var(--chip-bg,var(--accent)); color:#fff; }
-.wtl-chip-ct {
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:18px; height:18px; padding:0 4px; border-radius:10px;
-    background:rgba(255,255,255,.25); font-size:12px; font-weight:800;
-}
+/* ── Pipeline strip (hidden in favor of dropdown) */
+.wtl-pipeline { display:none; }
+
+/* ── Filter / search bar (removed in favor of dropdown) */
+.wtl-bar { display:none; }
 
 /* ── Transfer cards */
 .wtl-list { display:flex; flex-direction:column; gap:10px; }
 
 .wtl-card {
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
-    overflow:hidden; transition:border-color .2s, box-shadow .18s; position:relative;
+    background:var(--surface);
+    border:2px solid rgba(128,128,128,.35);
+    border-radius:var(--r);
+    overflow:hidden;
+    transition:border-color .2s, box-shadow .18s;
+    position:relative;
 }
-.wtl-card:hover { border-color:var(--card-color,var(--accent)); box-shadow:0 4px 20px rgba(0,0,0,.08); }
+.wtl-card:hover {
+    border-color:var(--card-color,var(--accent));
+    box-shadow:0 4px 20px rgba(0,0,0,.08);
+}
 .wtl-card-stripe {
     position:absolute; top:0; left:0; bottom:0; width:4px;
+    background:transparent;
+    transition:background .2s;
+}
+.wtl-card:hover .wtl-card-stripe {
     background:var(--card-color,var(--accent));
 }
 
@@ -150,134 +157,118 @@
 /* Pagination */
 .wtl-pagination { margin-top:4px; }
 
-/* Mission 2A */
+/* Responsive Design */
 @media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
-}
-@media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:24px; } /* It was 20px in instructions, but we already scaled fonts. Let's just use what instruction said and it will scale? Actually let's use exact code */
-    .tl-step-sub  { display:none; }
-    
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border);
-                      margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    
-    .tl-route-dash-line { width:20px; }
-    
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:24px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
+    .wtl-card-stats { flex-wrap:wrap; }
 }
 
+@media(max-width:768px) {
+    .wtl-page-header { flex-direction:column; align-items:stretch; gap:12px; }
+    .wtl-page-header h1 { font-size:24px; }
+    .wtl-dropdown-btn { width:100%; justify-content:space-between; }
+    .wtl-dropdown-menu { left:0; right:0; }
+    .wtl-card-top { flex-direction:column; padding:0 16px; min-height:auto; }
+    .wtl-card-stats { border-left:none; border-top:1px solid var(--border); margin:0; }
+    .wtl-stat { padding:12px 16px; flex:1; min-width:100px; }
+    .wtl-route { flex-wrap:wrap; }
+    .wtl-route-dash-line { width:30px; }
+    .wtl-dates { gap:8px; }
+    .wtl-card-foot { padding:12px 16px; flex-wrap:wrap; gap:8px; }
+    .wtl-action { flex:1; justify-content:center; font-size:12px; }
+}
 
-/* Mission 2C: Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
+@media(max-width:640px) {
+    .wtl-page-header h1 { font-size:22px; }
+    .wtl-dropdown-btn { font-size:13px; padding:9px 14px; }
+    .wtl-card { border-radius:8px; }
+    .wtl-card-top { padding:0 14px; }
+    .wtl-card-info { padding:12px 0; }
+    .wtl-num { font-size:15px; }
+    .wtl-badge { font-size:10px; padding:2px 8px; }
+    .wtl-route { font-size:13px; gap:6px; }
+    .wtl-route-dash-line { width:20px; }
+    .wtl-route-node { max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .wtl-stat { padding:10px 12px; min-width:80px; border-right:none; border-bottom:1px solid var(--border); }
+    .wtl-stat:last-child { border-bottom:none; }
+    .wtl-stat-v { font-size:20px; }
+    .wtl-stat-l { font-size:10px; }
+    .wtl-card-foot { padding:10px 14px; gap:6px; }
+    .wtl-foot-time { width:100%; text-align:center; margin-left:0; margin-top:4px; }
+    .wtl-empty { padding:48px 24px; }
+    .wtl-empty-ico { font-size:42px; margin-bottom:12px; }
+    .wtl-empty h3 { font-size:18px; }
+    .wtl-empty p { font-size:14px; }
+    .wtl-wrap { gap:16px; }
 }
 
 </style>
 
 <div class="wtl-wrap">
 
-  {{-- ── Page Header ─────────────────────────────── --}}
+  {{-- ── Page Header with Status Dropdown ─────────── --}}
   <div class="wtl-page-header">
-    <div class="wtl-page-header-left">
-      <h1>Outbound Transfers</h1>
-      <p>Review, pack, and dispatch stock from your warehouse to shops</p>
+    <h1>Outbound Transfers</h1>
+
+    <div class="wtl-status-dropdown" x-data="{ open: false }" @click.away="open = false">
+      <button @click="open = !open" class="wtl-dropdown-btn" :class="{ 'open': open }">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+        </svg>
+        <span>
+          @if($statusFilter === 'all') All Transfers
+          @elseif($statusFilter === TransferStatus::PENDING->value) Pending
+          @elseif($statusFilter === TransferStatus::APPROVED->value) Approved
+          @elseif($statusFilter === TransferStatus::IN_TRANSIT->value) In Transit
+          @elseif($statusFilter === TransferStatus::DELIVERED->value) Delivered
+          @elseif($statusFilter === TransferStatus::RECEIVED->value) Received
+          @elseif($statusFilter === TransferStatus::REJECTED->value) Rejected
+          @elseif($statusFilter === TransferStatus::CANCELLED->value) Cancelled
+          @endif
+        </span>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+
+      <div class="wtl-dropdown-menu" :class="{ 'open': open }">
+        <button wire:click="$set('statusFilter','all')" @click="open = false"
+                class="wtl-dropdown-item {{ $statusFilter==='all'?'active':'' }}">
+          <span>All Transfers</span>
+          <span class="wtl-dropdown-count">{{ $transfers->total() }}</span>
+        </button>
+        <button wire:click="$set('statusFilter','{{ TransferStatus::PENDING->value }}')" @click="open = false"
+                class="wtl-dropdown-item {{ $statusFilter===TransferStatus::PENDING->value?'active':'' }}">
+          <span>Pending</span>
+          @if($pendingCount > 0)<span class="wtl-dropdown-count">{{ $pendingCount }}</span>@endif
+        </button>
+        <button wire:click="$set('statusFilter','{{ TransferStatus::APPROVED->value }}')" @click="open = false"
+                class="wtl-dropdown-item {{ $statusFilter===TransferStatus::APPROVED->value?'active':'' }}">
+          <span>Approved</span>
+          @if($approvedCount > 0)<span class="wtl-dropdown-count">{{ $approvedCount }}</span>@endif
+        </button>
+        <button wire:click="$set('statusFilter','{{ TransferStatus::IN_TRANSIT->value }}')" @click="open = false"
+                class="wtl-dropdown-item {{ $statusFilter===TransferStatus::IN_TRANSIT->value?'active':'' }}">
+          <span>In Transit</span>
+          @if($inTransitCount > 0)<span class="wtl-dropdown-count">{{ $inTransitCount }}</span>@endif
+        </button>
+        <button wire:click="$set('statusFilter','{{ TransferStatus::DELIVERED->value }}')" @click="open = false"
+                class="wtl-dropdown-item {{ $statusFilter===TransferStatus::DELIVERED->value?'active':'' }}">
+          <span>Delivered</span>
+        </button>
+        <button wire:click="$set('statusFilter','{{ TransferStatus::RECEIVED->value }}')" @click="open = false"
+                class="wtl-dropdown-item {{ $statusFilter===TransferStatus::RECEIVED->value?'active':'' }}">
+          <span>Received</span>
+        </button>
+        <button wire:click="$set('statusFilter','{{ TransferStatus::REJECTED->value }}')" @click="open = false"
+                class="wtl-dropdown-item {{ $statusFilter===TransferStatus::REJECTED->value?'active':'' }}">
+          <span>Rejected</span>
+        </button>
+        <button wire:click="$set('statusFilter','{{ TransferStatus::CANCELLED->value }}')" @click="open = false"
+                class="wtl-dropdown-item {{ $statusFilter===TransferStatus::CANCELLED->value?'active':'' }}">
+          <span>Cancelled</span>
+        </button>
+      </div>
     </div>
-  </div>
-
-  {{-- ── Pipeline Overview ───────────────────────── --}}
-  <div class="wtl-pipeline">
-    <button class="wtl-pipeline-step {{ $statusFilter===TransferStatus::PENDING->value?'active':'' }}"
-            style="--step-color:#d97706;--step-bg:rgba(217,119,6,.06)"
-            wire:click="$set('statusFilter','{{ TransferStatus::PENDING->value }}')">
-      <div class="wtl-step-num" style="color:{{ $statusFilter===TransferStatus::PENDING->value?'#d97706':'var(--text-sub)' }}">{{ $pendingCount }}</div>
-      <div class="wtl-step-label">Pending</div>
-      <div class="wtl-step-sub">Awaiting your review</div>
-    </button>
-    <button class="wtl-pipeline-step {{ $statusFilter===TransferStatus::APPROVED->value?'active':'' }}"
-            style="--step-color:var(--accent);--step-bg:rgba(99,102,241,.06)"
-            wire:click="$set('statusFilter','{{ TransferStatus::APPROVED->value }}')">
-      <div class="wtl-step-num" style="color:{{ $statusFilter===TransferStatus::APPROVED->value?'var(--accent)':'var(--text-sub)' }}">{{ $approvedCount }}</div>
-      <div class="wtl-step-label">Approved</div>
-      <div class="wtl-step-sub">Ready to pack</div>
-    </button>
-    <button class="wtl-pipeline-step {{ $statusFilter===TransferStatus::IN_TRANSIT->value?'active':'' }}"
-            style="--step-color:var(--violet);--step-bg:rgba(139,92,246,.06)"
-            wire:click="$set('statusFilter','{{ TransferStatus::IN_TRANSIT->value }}')">
-      <div class="wtl-step-num" style="color:{{ $statusFilter===TransferStatus::IN_TRANSIT->value?'var(--violet)':'var(--text-sub)' }}">{{ $inTransitCount }}</div>
-      <div class="wtl-step-label">In Transit</div>
-      <div class="wtl-step-sub">Dispatched to shop</div>
-    </button>
-  </div>
-
-  {{-- ── Filter Bar ──────────────────────────────── --}}
-  <div class="wtl-bar">
-    <span class="wtl-bar-label">Status</span>
-    <button wire:click="$set('statusFilter','all')"
-            class="wtl-chip {{ $statusFilter==='all'?'active':'' }}">All</button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::PENDING->value }}')"
-            class="wtl-chip {{ $statusFilter===TransferStatus::PENDING->value?'active':'' }}"
-            style="--chip-bg:#d97706">
-      Pending @if($pendingCount>0)<span class="wtl-chip-ct">{{ $pendingCount }}</span>@endif
-    </button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::APPROVED->value }}')"
-            class="wtl-chip {{ $statusFilter===TransferStatus::APPROVED->value?'active':'' }}"
-            style="--chip-bg:var(--accent)">
-      Approved @if($approvedCount>0)<span class="wtl-chip-ct">{{ $approvedCount }}</span>@endif
-    </button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::IN_TRANSIT->value }}')"
-            class="wtl-chip {{ $statusFilter===TransferStatus::IN_TRANSIT->value?'active':'' }}"
-            style="--chip-bg:var(--violet)">
-      In Transit @if($inTransitCount>0)<span class="wtl-chip-ct">{{ $inTransitCount }}</span>@endif
-    </button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::DELIVERED->value }}')"
-            class="wtl-chip {{ $statusFilter===TransferStatus::DELIVERED->value?'active':'' }}"
-            style="--chip-bg:#0ea5e9">Delivered</button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::RECEIVED->value }}')"
-            class="wtl-chip {{ $statusFilter===TransferStatus::RECEIVED->value?'active':'' }}"
-            style="--chip-bg:var(--green)">Received</button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::REJECTED->value }}')"
-            class="wtl-chip {{ $statusFilter===TransferStatus::REJECTED->value?'active':'' }}"
-            style="--chip-bg:#ef4444">Rejected</button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::CANCELLED->value }}')"
-            class="wtl-chip {{ $statusFilter===TransferStatus::CANCELLED->value?'active':'' }}"
-            style="--chip-bg:#6b7280">Cancelled</button>
   </div>
 
   {{-- ── Transfer Cards ──────────────────────────── --}}

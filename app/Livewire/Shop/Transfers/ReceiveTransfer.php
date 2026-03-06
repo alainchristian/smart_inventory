@@ -17,10 +17,6 @@ class ReceiveTransfer extends Component
 {
     public Transfer $transfer;
     public string $scanInput = '';
-    public int $scanQuantity = 1;
-    public ?string $pendingBarcode = null;
-    public ?string $pendingProductName = null;
-    public ?int $pendingAvailableCount = null;
     public array $scannedBoxes = [];
     public bool $enableScanner = true;
     public ?ScannerSession $scannerSession = null;
@@ -78,10 +74,14 @@ class ReceiveTransfer extends Component
             return;
         }
 
+        // Get list of already scanned box IDs to exclude them
+        $alreadyScannedBoxIds = array_keys($this->scannedBoxes);
+
         // --- Try as internal box_code first (legacy / direct lookup) ---
         $transferBox = $this->transfer->boxes()
             ->whereHas('box', fn ($q) => $q->where('box_code', $input))
             ->where('is_received', false)
+            ->whereNotIn('box_id', $alreadyScannedBoxIds)
             ->with('box.product')
             ->first();
 
@@ -95,23 +95,32 @@ class ReceiveTransfer extends Component
         $product = Product::where('barcode', $input)->first();
         if ($product) {
             // Count how many un-received boxes of this product exist in this transfer
+            // (excluding already scanned boxes)
             $available = $this->transfer->boxes()
                 ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
                 ->where('is_received', false)
+                ->whereNotIn('box_id', $alreadyScannedBoxIds)
                 ->count();
 
             if ($available === 0) {
-                session()->flash('scan_error', "All boxes of {$product->name} already received in this transfer");
+                session()->flash('scan_error', "All boxes of {$product->name} already scanned");
                 $this->scanInput = '';
                 return;
             }
 
-            // Show quantity input
-            $this->pendingBarcode      = $input;
-            $this->pendingProductName  = $product->name;
-            $this->pendingAvailableCount = $available;
-            $this->scanQuantity        = 1;
-            $this->scanInput           = '';
+            // Auto-receive 1 box immediately (get the next un-scanned box)
+            $transferBox = $this->transfer->boxes()
+                ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
+                ->where('is_received', false)
+                ->whereNotIn('box_id', $alreadyScannedBoxIds)
+                ->with('box.product')
+                ->first();
+
+            if ($transferBox) {
+                $this->confirmSingleBox($transferBox);
+            }
+
+            $this->scanInput = '';
             return;
         }
 
@@ -121,44 +130,6 @@ class ReceiveTransfer extends Component
         $this->scanInput = '';
     }
 
-    public function confirmQuantity()
-    {
-        if (!$this->pendingBarcode) {
-            return;
-        }
-
-        if ($this->scanQuantity < 1 || $this->scanQuantity > $this->pendingAvailableCount) {
-            session()->flash('scan_error', "Quantity must be between 1 and {$this->pendingAvailableCount}");
-            return;
-        }
-
-        // Find un-received TransferBox rows for this product in this transfer
-        $product = Product::where('barcode', $this->pendingBarcode)->first();
-        $transferBoxes = $this->transfer->boxes()
-            ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
-            ->where('is_received', false)
-            ->with('box.product')
-            ->limit($this->scanQuantity)
-            ->get();
-
-        foreach ($transferBoxes as $tb) {
-            $this->confirmSingleBox($tb);
-        }
-
-        // Clear pending state
-        $this->pendingBarcode         = null;
-        $this->pendingProductName     = null;
-        $this->pendingAvailableCount  = null;
-        $this->scanQuantity           = 1;
-    }
-
-    public function cancelPending()
-    {
-        $this->pendingBarcode         = null;
-        $this->pendingProductName     = null;
-        $this->pendingAvailableCount  = null;
-        $this->scanQuantity           = 1;
-    }
 
     private function confirmSingleBox(TransferBox $transferBox): void
     {
@@ -387,7 +358,47 @@ class ReceiveTransfer extends Component
 
     public function render()
     {
+        $this->transfer->load(['items.product', 'boxes.box.product']);
+
+        // Build a summary: for each transfer item, how many boxes received vs shipped
+        $receivingSummary = [];
+        foreach ($this->transfer->items as $item) {
+            $product = $item->product;
+            $boxesShipped = TransferBox::where('transfer_id', $this->transfer->id)
+                ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
+                ->count();
+
+            $boxesReceived = TransferBox::where('transfer_id', $this->transfer->id)
+                ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
+                ->where('is_received', true)
+                ->count();
+
+            $receivingSummary[] = [
+                'product_id'   => $product->id,
+                'product_name' => $product->name,
+                'barcode'      => $product->barcode,
+                'boxes_shipped' => $boxesShipped,
+                'boxes_received' => $boxesReceived,
+                'complete'     => $boxesReceived >= $boxesShipped,
+            ];
+        }
+
+        // Get all boxes for this transfer with their details
+        $expectedBoxesList = [];
+        foreach ($this->transfer->boxes as $tb) {
+            $expectedBoxesList[] = [
+                'box_id'       => $tb->box->id,
+                'box_code'     => $tb->box->box_code,
+                'product_name' => $tb->box->product->name,
+                'items'        => $tb->box->items_remaining,
+                'is_received'  => $tb->is_received,
+                'is_damaged'   => $tb->is_damaged,
+            ];
+        }
+
         return view('livewire.shop.transfers.receive-transfer', [
+            'receivingSummary' => $receivingSummary,
+            'expectedBoxesList' => $expectedBoxesList,
             'expectedBoxes' => $this->getExpectedBoxesCount(),
             'scannedCount' => $this->getScannedBoxesCount(),
             'remainingCount' => $this->getRemainingBoxesCount(),
