@@ -13,6 +13,10 @@ class TransfersList extends Component
 
     public $statusFilter = 'all';
 
+    protected $listeners = [
+        'transfer-updated' => '$refresh',
+    ];
+
     public function mount()
     {
         $user = auth()->user();

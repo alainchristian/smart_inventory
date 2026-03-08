@@ -11,6 +11,10 @@ class ViewTransfer extends Component
     public Transfer $transfer;
     public array $items = [];
 
+    protected $listeners = [
+        'transfer-updated' => 'refreshTransfer',
+    ];
+
     public function mount(Transfer $transfer)
     {
         $user = auth()->user();
@@ -43,8 +47,54 @@ class ViewTransfer extends Component
         }
     }
 
+    public function refreshTransfer()
+    {
+        // Refresh the transfer data from database
+        $this->transfer->refresh();
+        $this->transfer->load(['items.product', 'boxes.box.product', 'fromWarehouse', 'toShop', 'requestedBy', 'reviewedBy', 'receivedBy', 'transporter']);
+
+        // Reload items
+        $this->items = [];
+        foreach ($this->transfer->items as $item) {
+            $product = $item->product;
+            $boxesRequested = $item->quantity_requested / $product->items_per_box;
+
+            $this->items[] = [
+                'id' => $item->id,
+                'product_id' => $item->product_id,
+                'product_name' => $product->name,
+                'items_per_box' => $product->items_per_box,
+                'boxes_requested' => $boxesRequested,
+                'quantity_requested' => $item->quantity_requested,
+            ];
+        }
+    }
+
+    public function markAsDelivered()
+    {
+        if ($this->transfer->status !== \App\Enums\TransferStatus::IN_TRANSIT) {
+            session()->flash('error', 'Only in-transit transfers can be marked as delivered.');
+            return;
+        }
+
+        try {
+            $transferService = app(\App\Services\Inventory\TransferService::class);
+            $transferService->markAsDelivered($this->transfer);
+            $this->transfer->refresh();
+
+            session()->flash('success', 'Transfer marked as delivered successfully.');
+            $this->dispatch('transfer-updated', transferId: $this->transfer->id);
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
     public function render()
     {
+        // Refresh transfer data on each render to ensure latest data
+        $this->transfer->refresh();
+        $this->transfer->load(['items.product', 'boxes.box.product', 'fromWarehouse', 'toShop', 'requestedBy', 'reviewedBy', 'receivedBy', 'transporter']);
+
         return view('livewire.shop.transfers.view-transfer');
     }
 }

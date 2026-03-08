@@ -215,3 +215,15 @@ Route::middleware(['auth'])->group(function () {
     // Profile
     Route::get('/profile', function () { return view('profile'); })->name('profile');
 });
+
+// Debug transporters
+Route::get('/debug/transporters', function () {
+    $all = \App\Models\Transporter::all();
+    $active = \App\Models\Transporter::active()->get();
+    return response()->json([
+        'total' => $all->count(),
+        'active' => $active->count(),
+        'all_transporters' => $all,
+        'active_transporters' => $active,
+    ]);
+});

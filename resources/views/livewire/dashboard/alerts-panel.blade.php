@@ -22,7 +22,7 @@
                 $iconPath = $this->getAlertIcon($alert->entity_type ?? 'default');
             @endphp
 
-            <div class="flex gap-2.5 p-3 rounded-lg border cursor-pointer transition-all hover:brightness-110"
+            <div class="flex gap-2.5 p-3 rounded-lg border"
                  style="background: {{ str_replace('border-', '', $colors['bg']) }}; border-color: {{ str_replace('text-', '', $colors['border']) }};">
 
                 <!-- Icon -->
@@ -41,15 +41,19 @@
                     <p class="text-[13px] leading-relaxed mt-0.5" style="color: var(--text-sub);">
                         {{ $alert->message }}
                     </p>
-                    <div class="text-[12px] mt-1" style="color: var(--text-dim); font-family: var(--mono);">
-                        {{ $alert->created_at->diffForHumans() }}
+                    <div class="flex items-center gap-2 mt-1.5">
+                        <span class="text-[12px]" style="color: var(--text-dim); font-family: var(--mono);">
+                            {{ $alert->created_at->diffForHumans() }}
+                        </span>
                     </div>
                 </div>
 
                 <!-- Severity Badge -->
-                <span class="alert-sev {{ $alert->severity->value }} self-start mt-0.5">
-                    {{ strtoupper($alert->severity->value) }}
-                </span>
+                <div class="flex flex-col gap-1.5 items-end">
+                    <span class="alert-sev {{ $alert->severity->value }}">
+                        {{ strtoupper($alert->severity->value) }}
+                    </span>
+                </div>
             </div>
         @empty
             <div class="text-center py-12">

@@ -1,90 +1,109 @@
 @php use App\Enums\TransferStatus; @endphp
-<div>
+<div wire:poll.10s>
 <style>
 /* ─── Transfer List Styles ───────────────────────────── */
 .tl-wrap { display:flex; flex-direction:column; gap:20px; }
 
-/* ── Page header */
-.tl-page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.tl-page-header-left h1 { font-size:29px; font-weight:800; letter-spacing:-.5px; color:var(--text); margin:0 0 3px; }
-.tl-page-header-left p  { font-size:16px; color:var(--text-sub); margin:0; }
+/* Mission 2C: Mobile padding override */
+@media(max-width:600px) {
+    .max-w-7xl { padding-left:12px !important; padding-right:12px !important; }
+    .py-6 { padding-top:16px !important; padding-bottom:16px !important; }
+}
 
+/* ── New Request Button */
 .tl-new-btn {
-    display:inline-flex; align-items:center; gap:8px;
-    padding:10px 20px; border-radius:var(--r); border:none; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:12px 20px; border-radius:10px; border:none; cursor:pointer;
     background:var(--accent); color:#fff; font-size:16px; font-weight:700;
-    letter-spacing:.3px; text-decoration:none; transition:opacity .15s, transform .1s;
-    white-space:nowrap;
+    text-decoration:none; transition:all .2s; width:100%;
+    box-shadow: 0 2px 8px rgba(59, 111, 212, 0.25);
 }
-.tl-new-btn:hover { opacity:.88; transform:translateY(-1px); }
-.tl-new-btn svg   { flex-shrink:0; }
+.tl-new-btn:hover { background:#2d5dbf; transform:translateY(-1px); box-shadow: 0 4px 12px rgba(59, 111, 212, 0.3); }
+.tl-new-btn svg { flex-shrink:0; }
 
-/* ── Pipeline strip */
-.tl-pipeline {
-    display:grid; grid-template-columns:repeat(4, 1fr); gap:0;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
-    overflow:hidden;
+/* ── Filter Dropdown */
+.tl-filter-wrap {
+    position:relative;
 }
-.tl-pipeline-step {
-    padding:14px 16px; display:flex; flex-direction:column; gap:4px;
-    border-right:1px solid var(--border); position:relative; cursor:pointer;
-    transition:background .15s; background:transparent;
+.tl-filter-btn {
+    width:100%; display:flex; align-items:center; gap:10px;
+    padding:12px 16px; background:var(--surface); border:1.5px solid var(--border);
+    border-radius:10px; cursor:pointer; font-size:15px; font-weight:600;
+    color:var(--text); transition:all .2s;
 }
-.tl-pipeline-step:last-child { border-right:none; }
-.tl-pipeline-step:hover      { background:var(--surface2); }
-.tl-pipeline-step.active     { background:var(--step-bg); }
-.tl-pipeline-step.active::after {
-    content:''; position:absolute; bottom:0; left:0; right:0; height:3px;
-    background:var(--step-color);
+.tl-filter-btn:hover {
+    border-color:var(--border-hi); background:var(--surface2);
 }
-.tl-step-num   { font-size:26px; font-weight:800; color:var(--step-color,var(--text-sub)); line-height:1; }
-.tl-step-label { font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-sub); }
-.tl-step-sub   { font-size:13px; color:var(--text-sub); }
+.tl-filter-btn svg:first-child {
+    color:var(--text-sub); flex-shrink:0;
+}
+.tl-filter-btn svg:last-child {
+    margin-left:auto; color:var(--text-sub); flex-shrink:0;
+}
+.tl-filter-btn span {
+    flex:1; text-align:left;
+}
 
-/* ── Filter / search bar */
-.tl-bar {
-    display:flex; align-items:center; gap:6px; flex-wrap:wrap;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
-    padding:10px 14px;
+.tl-filter-menu {
+    position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:50;
+    background:var(--surface); border:1.5px solid var(--border);
+    border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,.1);
+    overflow:hidden; opacity:0; visibility:hidden;
+    transform:translateY(-8px); transition:all .2s;
 }
-.tl-bar-label { font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-sub); padding-right:6px; }
-.tl-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    padding:5px 12px; border-radius:20px; font-size:14px; font-weight:600;
-    border:1.5px solid transparent; cursor:pointer; transition:all .15s;
-    background:transparent; color:var(--text-sub);
+.tl-filter-menu.open {
+    opacity:1; visibility:visible; transform:translateY(0);
 }
-.tl-chip:hover  { background:var(--surface2); color:var(--text); }
-.tl-chip.active { background:var(--chip-bg,var(--accent)); color:#fff; }
-.tl-chip-ct {
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:18px; height:18px; padding:0 4px; border-radius:10px;
-    background:rgba(255,255,255,.25); font-size:12px; font-weight:800;
+.tl-filter-item {
+    width:100%; display:flex; align-items:center; gap:10px;
+    padding:10px 16px; background:transparent; border:none;
+    border-bottom:1px solid var(--border); cursor:pointer;
+    font-size:14px; font-weight:600; color:var(--text);
+    text-align:left; transition:background .15s;
 }
-.tl-search { margin-left:auto; position:relative; }
-.tl-search input {
-    padding:6px 10px 6px 32px; border-radius:var(--rsm,6px);
-    border:1px solid var(--border); background:var(--surface2);
-    color:var(--text); font-size:14px; width:200px; outline:none;
-    transition:border-color .15s;
+.tl-filter-item:last-child {
+    border-bottom:none;
 }
-.tl-search input:focus { border-color:var(--accent); }
-.tl-search-ico {
-    position:absolute; left:9px; top:50%; transform:translateY(-50%);
-    color:var(--text-sub); pointer-events:none;
+.tl-filter-item:hover {
+    background:var(--surface2);
 }
+.tl-filter-item.active {
+    background:var(--accent-dim); color:var(--accent);
+}
+.tl-filter-dot {
+    width:8px; height:8px; border-radius:50%; flex-shrink:0;
+}
+.tl-filter-count {
+    margin-left:auto; font-size:12px; font-weight:700;
+    padding:2px 8px; border-radius:12px;
+    background:var(--surface3); color:var(--text-sub);
+}
+
+/* OLD STYLES - Removed for cleaner dropdown design */
 
 /* ── Transfer cards */
 .tl-list { display:flex; flex-direction:column; gap:10px; }
+
+@media(max-width:600px) {
+    .tl-list { gap:12px; }
+}
 
 .tl-card {
     background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
     overflow:hidden; transition:border-color .2s, box-shadow .18s; position:relative;
 }
+
+@media(max-width:600px) {
+    .tl-card { border-radius:10px; }
+}
 .tl-card:hover { border-color:var(--card-color,var(--accent)); box-shadow:0 4px 20px rgba(0,0,0,.08); }
 .tl-card-stripe {
     position:absolute; top:0; left:0; bottom:0; width:4px;
     background:var(--card-color,var(--accent));
+}
+
+@media(max-width:600px) {
+    .tl-card-stripe { width:3px; }
 }
 
 /* Card top row */
@@ -93,6 +112,11 @@
     padding:0 18px 0 22px; min-height:88px;
 }
 .tl-card-info { flex:1; display:flex; flex-direction:column; justify-content:center; gap:5px; padding:14px 0; }
+
+@media(max-width:600px) {
+    .tl-card-top { padding:0 14px; min-height:auto; }
+    .tl-card-info { padding:12px 0; gap:6px; }
+}
 
 /* Number + badge row */
 .tl-card-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -105,6 +129,12 @@
 }
 .tl-badge-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
 
+@media(max-width:600px) {
+    .tl-num { font-size:15px; }
+    .tl-badge { font-size:10px; padding:2px 8px; letter-spacing:.3px; }
+    .tl-badge-dot { width:4px; height:4px; }
+}
+
 /* Route line */
 .tl-route { display:flex; align-items:center; gap:8px; font-size:14px; }
 .tl-route-node {
@@ -116,10 +146,23 @@
 }
 .tl-route-dash-line { width:40px; border-top:1.5px dashed var(--border); }
 
+@media(max-width:600px) {
+    .tl-route { font-size:13px; gap:6px; }
+    .tl-route-node { gap:4px; }
+    .tl-route-node svg { width:11px; height:11px; }
+    .tl-route-dash svg { width:10px; height:10px; }
+    .tl-route-dash-line { width:20px; }
+}
+
 /* Timeline dates */
 .tl-dates { display:flex; gap:14px; flex-wrap:wrap; }
 .tl-date  { font-size:13px; color:var(--text-sub); }
 .tl-date strong { color:var(--text); font-weight:600; }
+
+@media(max-width:600px) {
+    .tl-dates { gap:10px; }
+    .tl-date { font-size:12px; }
+}
 
 /* Card stats panel */
 .tl-card-stats {
@@ -163,35 +206,34 @@
 /* Pagination */
 .tl-pagination { margin-top:4px; }
 
-/* Mission 2A */
-@media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+/* Responsive */
+@media(max-width:768px) {
+    .tl-new-btn { padding:13px 20px; font-size:15px; }
 }
+
 @media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:24px; } /* It was 20px in instructions, but we already scaled fonts. Let's just use what instruction said and it will scale? Actually let's use exact code */
-    .tl-step-sub  { display:none; }
-    
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border);
+    .tl-wrap { gap:16px; }
+
+    .tl-new-btn { padding:12px 18px; font-size:14px; }
+
+    .tl-filter-btn { padding:10px 14px; font-size:14px; }
+    .tl-filter-btn svg:first-child { width:16px; height:16px; }
+    .tl-filter-item { padding:9px 14px; font-size:13px; }
+
+    .tl-card-top { flex-direction:column; padding:0 14px; }
+    .tl-card-stats { border-left:none; border-top:1px solid var(--border);
                       margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    
-    .tl-route-dash-line { width:20px; }
-    
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:24px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
+    .tl-stat { padding:10px 14px; flex:1; min-width:80px; }
+    .tl-stat-v { font-size:20px; }
+
+    .tl-card-foot { flex-wrap:wrap; gap:6px; padding:10px 14px; }
+    .tl-action { flex:1; justify-content:center; font-size:12px; padding:6px 10px; }
+    .tl-foot-time { width:100%; text-align:center; margin-left:0; font-size:11px; }
+
+    .tl-empty { padding:48px 24px; }
+    .tl-empty-ico { font-size:48px; margin-bottom:12px; }
+    .tl-empty h3 { font-size:18px; }
+    .tl-empty p { font-size:14px; }
 }
 
 
@@ -226,87 +268,73 @@
 
 <div class="tl-wrap">
 
-  {{-- ── Page Header ─────────────────────────────── --}}
-  <div class="tl-page-header">
-    <div class="tl-page-header-left">
-      <h1>Transfer Requests</h1>
-      <p>Track all stock movements from warehouse to your shop</p>
-    </div>
-    <a href="{{ route('shop.transfers.request') }}" class="tl-new-btn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      New Request
-    </a>
-  </div>
+  {{-- ── New Request Button ─────────────────────── --}}
+  <a href="{{ route('shop.transfers.request') }}" class="tl-new-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New Request
+  </a>
 
-  {{-- ── Pipeline Overview ───────────────────────── --}}
-  <div class="tl-pipeline">
-    <button class="tl-pipeline-step {{ $statusFilter===TransferStatus::PENDING->value?'active':'' }}"
-            style="--step-color:#d97706;--step-bg:rgba(217,119,6,.06)"
-            wire:click="$set('statusFilter','{{ TransferStatus::PENDING->value }}')">
-      <div class="tl-step-num" style="color:{{ $statusFilter===TransferStatus::PENDING->value?'#d97706':'var(--text-sub)' }}">{{ $pendingCount }}</div>
-      <div class="tl-step-label">Pending</div>
-      <div class="tl-step-sub">Awaiting review</div>
+  {{-- ── Filter Dropdown ──────────────────────────── --}}
+  <div class="tl-filter-wrap" x-data="{ open: false }" @click.away="open = false">
+    <button @click="open = !open" class="tl-filter-btn">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+      </svg>
+      <span>
+        @if($statusFilter === 'all')
+          All Transfers
+        @elseif($statusFilter === TransferStatus::PENDING->value)
+          Pending ({{ $pendingCount }})
+        @elseif($statusFilter === TransferStatus::APPROVED->value)
+          Approved ({{ $approvedCount }})
+        @elseif($statusFilter === TransferStatus::IN_TRANSIT->value)
+          In Transit ({{ $inTransitCount }})
+        @elseif($statusFilter === TransferStatus::DELIVERED->value)
+          Delivered ({{ $deliveredCount }})
+        @elseif($statusFilter === TransferStatus::RECEIVED->value)
+          Received
+        @elseif($statusFilter === TransferStatus::CANCELLED->value)
+          Cancelled
+        @endif
+      </span>
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" :class="{ 'rotate-180': open }" style="transition:transform 0.2s">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+      </svg>
     </button>
-    <button class="tl-pipeline-step {{ $statusFilter===TransferStatus::APPROVED->value?'active':'' }}"
-            style="--step-color:var(--accent);--step-bg:rgba(99,102,241,.06)"
-            wire:click="$set('statusFilter','{{ TransferStatus::APPROVED->value }}')">
-      <div class="tl-step-num" style="color:{{ $statusFilter===TransferStatus::APPROVED->value?'var(--accent)':'var(--text-sub)' }}">{{ $approvedCount }}</div>
-      <div class="tl-step-label">Approved</div>
-      <div class="tl-step-sub">Ready to pack</div>
-    </button>
-    <button class="tl-pipeline-step {{ $statusFilter===TransferStatus::IN_TRANSIT->value?'active':'' }}"
-            style="--step-color:var(--violet);--step-bg:rgba(139,92,246,.06)"
-            wire:click="$set('statusFilter','{{ TransferStatus::IN_TRANSIT->value }}')">
-      <div class="tl-step-num" style="color:{{ $statusFilter===TransferStatus::IN_TRANSIT->value?'var(--violet)':'var(--text-sub)' }}">{{ $inTransitCount }}</div>
-      <div class="tl-step-label">In Transit</div>
-      <div class="tl-step-sub">On the road</div>
-    </button>
-    <button class="tl-pipeline-step {{ $statusFilter===TransferStatus::DELIVERED->value?'active':'' }}"
-            style="--step-color:#0ea5e9;--step-bg:rgba(14,165,233,.06)"
-            wire:click="$set('statusFilter','{{ TransferStatus::DELIVERED->value }}')">
-      <div class="tl-step-num" style="color:{{ $statusFilter===TransferStatus::DELIVERED->value?'#0ea5e9':'var(--text-sub)' }}">{{ $deliveredCount }}</div>
-      <div class="tl-step-label">Delivered</div>
-      <div class="tl-step-sub">Pending scan-in</div>
-    </button>
-  </div>
 
-  {{-- ── Filter Bar ──────────────────────────────── --}}
-  <div class="tl-bar">
-    <span class="tl-bar-label">Status</span>
-    <button wire:click="$set('statusFilter','all')"
-            class="tl-chip {{ $statusFilter==='all'?'active':'' }}">All</button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::PENDING->value }}')"
-            class="tl-chip {{ $statusFilter===TransferStatus::PENDING->value?'active':'' }}"
-            style="--chip-bg:#d97706">
-      Pending @if($pendingCount>0)<span class="tl-chip-ct">{{ $pendingCount }}</span>@endif
-    </button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::APPROVED->value }}')"
-            class="tl-chip {{ $statusFilter===TransferStatus::APPROVED->value?'active':'' }}"
-            style="--chip-bg:var(--accent)">
-      Approved @if($approvedCount>0)<span class="tl-chip-ct">{{ $approvedCount }}</span>@endif
-    </button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::IN_TRANSIT->value }}')"
-            class="tl-chip {{ $statusFilter===TransferStatus::IN_TRANSIT->value?'active':'' }}"
-            style="--chip-bg:var(--violet)">
-      In Transit @if($inTransitCount>0)<span class="tl-chip-ct">{{ $inTransitCount }}</span>@endif
-    </button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::DELIVERED->value }}')"
-            class="tl-chip {{ $statusFilter===TransferStatus::DELIVERED->value?'active':'' }}"
-            style="--chip-bg:#0ea5e9">
-      Delivered @if($deliveredCount>0)<span class="tl-chip-ct">{{ $deliveredCount }}</span>@endif
-    </button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::RECEIVED->value }}')"
-            class="tl-chip {{ $statusFilter===TransferStatus::RECEIVED->value?'active':'' }}"
-            style="--chip-bg:var(--green)">Received</button>
-    <button wire:click="$set('statusFilter','{{ TransferStatus::CANCELLED->value }}')"
-            class="tl-chip {{ $statusFilter===TransferStatus::CANCELLED->value?'active':'' }}"
-            style="--chip-bg:#6b7280">Cancelled</button>
-    @isset($search)
-    <div class="tl-search">
-      <svg class="tl-search-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search transfers…">
+    <div class="tl-filter-menu" :class="{ 'open': open }">
+      <button wire:click="$set('statusFilter','all')" @click="open = false" class="tl-filter-item {{ $statusFilter==='all'?'active':'' }}">
+        All Transfers
+      </button>
+      <button wire:click="$set('statusFilter','{{ TransferStatus::PENDING->value }}')" @click="open = false" class="tl-filter-item {{ $statusFilter===TransferStatus::PENDING->value?'active':'' }}">
+        <span class="tl-filter-dot" style="background:#d97706"></span>
+        Pending
+        @if($pendingCount>0)<span class="tl-filter-count">{{ $pendingCount }}</span>@endif
+      </button>
+      <button wire:click="$set('statusFilter','{{ TransferStatus::APPROVED->value }}')" @click="open = false" class="tl-filter-item {{ $statusFilter===TransferStatus::APPROVED->value?'active':'' }}">
+        <span class="tl-filter-dot" style="background:var(--accent)"></span>
+        Approved
+        @if($approvedCount>0)<span class="tl-filter-count">{{ $approvedCount }}</span>@endif
+      </button>
+      <button wire:click="$set('statusFilter','{{ TransferStatus::IN_TRANSIT->value }}')" @click="open = false" class="tl-filter-item {{ $statusFilter===TransferStatus::IN_TRANSIT->value?'active':'' }}">
+        <span class="tl-filter-dot" style="background:var(--violet)"></span>
+        In Transit
+        @if($inTransitCount>0)<span class="tl-filter-count">{{ $inTransitCount }}</span>@endif
+      </button>
+      <button wire:click="$set('statusFilter','{{ TransferStatus::DELIVERED->value }}')" @click="open = false" class="tl-filter-item {{ $statusFilter===TransferStatus::DELIVERED->value?'active':'' }}">
+        <span class="tl-filter-dot" style="background:#0ea5e9"></span>
+        Delivered
+        @if($deliveredCount>0)<span class="tl-filter-count">{{ $deliveredCount }}</span>@endif
+      </button>
+      <button wire:click="$set('statusFilter','{{ TransferStatus::RECEIVED->value }}')" @click="open = false" class="tl-filter-item {{ $statusFilter===TransferStatus::RECEIVED->value?'active':'' }}">
+        <span class="tl-filter-dot" style="background:var(--green)"></span>
+        Received
+      </button>
+      <button wire:click="$set('statusFilter','{{ TransferStatus::CANCELLED->value }}')" @click="open = false" class="tl-filter-item {{ $statusFilter===TransferStatus::CANCELLED->value?'active':'' }}">
+        <span class="tl-filter-dot" style="background:#6b7280"></span>
+        Cancelled
+      </button>
     </div>
-    @endisset
   </div>
 
   {{-- ── Transfer Cards ──────────────────────────── --}}

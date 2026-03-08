@@ -134,6 +134,9 @@ class PackTransfer extends Component
             $product = Product::where('barcode', $barcode)->first();
             session()->flash('scan_success', "Packed {$quantity} box(es) of {$product->name}");
             $this->dispatch('scan-success', message: "Packed: {$quantity}x {$product->name}");
+
+            // Dispatch event to notify shop manager of updates
+            $this->dispatch('transfer-updated', transferId: $this->transfer->id);
         } catch (\Exception $e) {
             session()->flash('scan_error', $e->getMessage());
             $this->dispatch('scan-error', message: $e->getMessage());
@@ -180,21 +183,6 @@ class PackTransfer extends Component
             // Mark as shipped (partial shipments allowed)
             $transferService->markAsShipped($this->transfer);
             $this->transfer->refresh();
-
-            // Create alert for shop manager
-            $shopManager = $this->transfer->toShop->manager ?? null;
-            if ($shopManager) {
-                \App\Models\Alert::create([
-                    'title' => 'Transfer Shipped - Ready to Receive',
-                    'message' => "Transfer {$this->transfer->transfer_number} has been shipped from warehouse and is on the way.",
-                    'severity' => \App\Enums\AlertSeverity::WARNING,
-                    'entity_type' => 'transfer',
-                    'entity_id' => $this->transfer->id,
-                    'user_id' => $shopManager->id,
-                    'action_url' => route('shop.transfers.receive', $this->transfer),
-                    'action_label' => 'Receive Transfer',
-                ]);
-            }
 
             $message = "Transfer {$this->transfer->transfer_number} shipped successfully";
             if (!empty($discrepancies)) {

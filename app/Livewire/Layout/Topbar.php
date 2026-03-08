@@ -21,10 +21,7 @@ class Topbar extends Component
      */
     public function getUnreadNotificationsCountProperty(): int
     {
-        return Alert::unresolved()
-            ->notDismissed()
-            ->critical()
-            ->count();
+        return $this->totalPendingActions;
     }
 
     /**

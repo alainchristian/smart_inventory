@@ -1,19 +1,10 @@
 @php use App\Enums\TransferStatus; @endphp
 
+@push('styles')
 <style>
 /* ── Transfer Detail Page ────────────────────────── */
-.td-wrap       { max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:20px; }
-
-/* Breadcrumb */
-.td-breadcrumb { font-size:13px; color:var(--text-sub); display:flex; align-items:center; gap:6px; }
-.td-breadcrumb a { color:var(--accent); text-decoration:none; }
-.td-breadcrumb a:hover { text-decoration:underline; }
-.td-breadcrumb-sep { color:var(--border); }
-
-/* Page title row */
-.td-title-row  { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.td-title      { font-size:26px; font-weight:800; letter-spacing:-.6px; color:var(--text); margin:0; }
-.td-title-sub  { font-size:13px; color:var(--text-sub); margin:4px 0 0; }
+.td-wrap       { display:flex; flex-direction:column; gap:20px; max-width:100%; overflow:hidden; box-sizing:border-box; }
+.td-wrap *     { box-sizing:border-box; }
 
 /* Status hero banner */
 .td-hero {
@@ -21,6 +12,7 @@
     background:var(--surface); border:1px solid var(--border);
     padding:20px 24px;
     border-left:5px solid var(--hero-color, var(--accent));
+    max-width:100%;
 }
 .td-hero-inner { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
 .td-hero-num   { font-size:22px; font-weight:800; color:var(--text); letter-spacing:-.5px; }
@@ -31,9 +23,17 @@
     background:var(--badge-bg); color:var(--badge-color);
 }
 .td-hero-badge-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
-.td-hero-route { display:flex; align-items:center; gap:10px; font-size:14px; }
-.td-hero-route-node { display:flex; align-items:center; gap:6px; font-weight:700; color:var(--text); }
-.td-hero-route-node svg { color:var(--text-sub); }
+.td-hero-route { display:flex; align-items:center; gap:10px; font-size:14px; flex-wrap:wrap; }
+.td-hero-route-node {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-weight:700;
+    color:var(--text);
+    word-break:break-word;
+    overflow-wrap:break-word;
+}
+.td-hero-route-node svg { color:var(--text-sub); flex-shrink:0; }
 .td-hero-route-arrow { color:var(--text-sub); font-size:18px; }
 .td-hero-divider { width:1px; height:32px; background:var(--border); margin:0 8px; }
 .td-hero-date  { font-size:12px; color:var(--text-sub); }
@@ -71,13 +71,15 @@
 .td-tl-step.active .td-tl-label { color:var(--accent); }
 
 /* Body layout */
-.td-body       { display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start; }
-@media(max-width:860px) { .td-body { grid-template-columns:1fr; } }
+.td-body       { display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start; max-width:100%; }
+.td-body > div { min-width:0; max-width:100%; }
+@media(max-width:860px) { .td-body { grid-template-columns:1fr; gap:16px; } }
 
 /* Cards */
 .td-card       {
     background:var(--surface); border:1px solid var(--border);
     border-radius:var(--r); overflow:hidden; margin-bottom:16px;
+    max-width:100%; width:100%;
 }
 .td-card:last-child { margin-bottom:0; }
 .td-card-head  {
@@ -94,10 +96,10 @@
 }
 .td-card-head h3 { font-size:13px; font-weight:700; color:var(--text); margin:0; }
 .td-card-head p  { font-size:11px; color:var(--text-sub); margin:0; }
-.td-card-body  { padding:0; }
+.td-card-body  { padding:0; overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
 
 /* Items table */
-.td-table      { width:100%; border-collapse:collapse; }
+.td-table      { width:100%; border-collapse:collapse; min-width:max-content; }
 .td-table thead th {
     padding:10px 16px; font-size:10px; font-weight:700; letter-spacing:.8px;
     text-transform:uppercase; color:var(--text-sub);
@@ -131,23 +133,25 @@
 .td-box-items  { font-size:11px; color:var(--text-sub); }
 
 /* Right panel meta card */
-.td-meta-list  { padding:16px; display:flex; flex-direction:column; gap:12px; }
+.td-meta-list  { padding:16px; display:flex; flex-direction:column; gap:12px; max-width:100%; }
 .td-meta-row   { display:flex; justify-content:space-between; align-items:flex-start;
-                 gap:12px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+                 gap:12px; padding-bottom:12px; border-bottom:1px solid var(--border);
+                 max-width:100%; }
 .td-meta-row:last-child { border-bottom:none; padding-bottom:0; }
 .td-meta-label { font-size:10px; font-weight:700; letter-spacing:.7px; text-transform:uppercase;
-                 color:var(--text-sub); }
-.td-meta-value { font-size:13px; font-weight:600; color:var(--text); text-align:right; }
+                 color:var(--text-sub); flex-shrink:0; }
+.td-meta-value { font-size:13px; font-weight:600; color:var(--text); text-align:right;
+                 word-wrap:break-word; overflow-wrap:break-word; min-width:0; }
 .td-meta-value.mono { font-family:monospace; font-size:12px; }
 
 /* Transporter card */
-.td-transporter-body { padding:16px; }
-.td-trans-name { font-size:16px; font-weight:800; color:var(--text); margin:0 0 4px; }
-.td-trans-company { font-size:12px; color:var(--text-sub); margin:0 0 12px; }
-.td-trans-detail { display:flex; flex-direction:column; gap:7px; }
-.td-trans-row  { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-sub); }
+.td-transporter-body { padding:16px; max-width:100%; }
+.td-trans-name { font-size:16px; font-weight:800; color:var(--text); margin:0 0 4px; word-break:break-word; }
+.td-trans-company { font-size:12px; color:var(--text-sub); margin:0 0 12px; word-break:break-word; }
+.td-trans-detail { display:flex; flex-direction:column; gap:7px; max-width:100%; }
+.td-trans-row  { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-sub); word-break:break-word; }
 .td-trans-row svg { flex-shrink:0; color:var(--accent); }
-.td-trans-row strong { color:var(--text); }
+.td-trans-row strong { color:var(--text); word-break:break-word; }
 
 /* Actions card */
 .td-actions-body { padding:14px; display:flex; flex-direction:column; gap:8px; }
@@ -183,37 +187,244 @@
 /* Responsive */
 @media(max-width:860px) {
     .td-body  { grid-template-columns:1fr; }
-    .td-wrap  { padding:16px; }
+}
+@media(max-width:768px) {
+    .td-hero        { padding:18px; }
+    .td-hero-num    { font-size:20px; }
+    .td-hero-badge  { font-size:11px; }
+    .td-hero-route  { font-size:13px; }
 }
 @media(max-width:600px) {
-    .td-hero-inner    { gap:12px; }
-    .td-hero-divider  { display:none; }
-    .td-title         { font-size:20px; }
-    .td-timeline      { overflow-x:auto; padding-bottom:8px; }
-    .td-table         { display:block; overflow-x:auto; white-space:nowrap; }
+    /* Hero banner */
+    .td-hero        { padding:14px 16px; border-radius:8px; }
+    .td-hero-inner  { gap:10px; }
+    .td-hero-num    { font-size:18px; }
+    .td-hero-badge  { padding:4px 11px; font-size:11px; }
+    .td-hero-divider { display:none; }
+    .td-hero-route  { width:100%; order:3; font-size:12px; }
+    .td-hero-date   { font-size:11px; }
+    .td-timeline    { overflow-x:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch; }
+
+    /* Cards */
+    .td-card        { border-radius:8px; margin-bottom:12px; max-width:100%; }
+    .td-card-head   { padding:11px 14px; max-width:100%; }
+    .td-card-head h3 { font-size:12px; }
+    .td-card-head p  { font-size:10px; }
+    .td-card-icon   { width:26px; height:26px; }
+    .td-card-icon svg { width:13px; height:13px; }
+
+    /* Card body - must scroll table content */
+    .td-card-body { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+
+    /* Table - natural width with scroll */
+    .td-table       {
+        display:table;
+        width:auto;
+        min-width:550px; /* Minimum to show all columns */
+    }
+    .td-table thead th {
+        padding:8px 12px;
+        font-size:9px;
+        white-space:nowrap;
+    }
+    .td-table tbody td {
+        padding:10px 12px;
+        font-size:12px;
+    }
+    .td-table .col-product { font-size:12px; }
+    .td-table .col-sku { font-size:10px; }
+    .td-table .col-num { font-size:13px; }
+
+    /* Metadata */
+    .td-meta-list   { padding:12px 14px; gap:10px; max-width:100%; }
+    .td-meta-row    { padding-bottom:10px; flex-direction:column; align-items:flex-start; gap:4px; max-width:100%; }
+    .td-meta-label  { font-size:9px; }
+    .td-meta-value  {
+        font-size:12px;
+        text-align:left;
+        word-break:break-word;
+        overflow-wrap:break-word;
+        max-width:100%;
+    }
+
+    /* Boxes */
+    .td-box-row     {
+        padding:10px 14px;
+        flex-wrap:wrap;
+        gap:8px;
+    }
+    .td-box-code    { font-size:11px; }
+    .td-box-status  { font-size:9px; }
+    .td-box-items   { font-size:10px; }
+    .td-box-scan    {
+        width:100%;
+        margin-left:0;
+        font-size:10px;
+    }
+
+    /* Transporter */
+    .td-transporter-body { padding:12px 14px; }
+    .td-trans-name { font-size:14px; }
+    .td-trans-company { font-size:11px; }
+    .td-trans-row { font-size:11px; }
+
+    /* Actions */
+    .td-actions-body { padding:12px; }
+    .td-btn { padding:11px 14px; font-size:12px; }
+
+    /* Notes */
+    .td-notes { padding:12px 14px; font-size:12px; }
+}
+
+/* Extra small phones (under 480px) */
+@media(max-width:480px) {
+    .td-wrap { gap:14px; }
+    .td-body { gap:14px; }
+
+    /* Hero banner - more compact and better text handling */
+    .td-hero        { padding:12px; }
+    .td-hero-inner  { gap:8px; flex-direction:column; align-items:flex-start; }
+    .td-hero-num    { font-size:15px; }
+    .td-hero-badge  { padding:4px 10px; font-size:10px; }
+    .td-hero-route  {
+        font-size:11px;
+        gap:8px;
+        width:100%;
+        flex-direction:column;
+        align-items:flex-start;
+    }
+    .td-hero-route-node {
+        font-size:11px;
+        word-break:break-word;
+        white-space:normal;
+    }
+    .td-hero-route-node svg { width:11px; height:11px; }
+    .td-hero-route-arrow { display:none; }
+    .td-hero-date   { font-size:10px; width:100%; }
+    .td-hero-date strong { font-size:11px; }
+    .td-disc-alert  { padding:5px 10px; font-size:10px; width:100%; justify-content:center; margin-top:6px; }
+
+    /* Timeline */
+    .td-timeline { gap:0; margin-top:14px !important; }
+    .td-tl-dot { width:18px; height:18px; }
+    .td-tl-dot svg { width:10px; height:10px; }
+    .td-tl-label { font-size:7px; line-height:1.3; padding:0 2px; }
+
+    /* Cards - more compact */
+    .td-card        { border-radius:6px; margin-bottom:12px; }
+    .td-card-head   { padding:10px 12px; flex-wrap:wrap; gap:8px; }
+    .td-card-head-left { width:100%; }
+    .td-card-head h3 { font-size:11px; }
+    .td-card-head p  { font-size:9px; line-height:1.4; }
+    .td-card-icon   { width:24px; height:24px; border-radius:6px; }
+    .td-card-icon svg { width:12px; height:12px; }
+
+    /* Card body scrolling for tables */
+    .td-card-body { padding:0; }
+
+    /* Table - compact and scrollable */
+    .td-table       { min-width:480px; width:auto; }
+    .td-table thead th {
+        padding:8px;
+        font-size:9px;
+        letter-spacing:0.3px;
+    }
+    .td-table tbody td {
+        padding:10px 8px;
+        font-size:11px;
+    }
+    .td-table .col-product { font-size:11px; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
+    .td-table .col-sku { font-size:9px; margin-top:2px; }
+    .td-table .col-num { font-size:12px; }
+
+    /* Keep product column visible when scrolling */
+    .td-table thead th:first-child,
+    .td-table tbody td:first-child {
+        position:sticky;
+        left:0;
+        background:var(--surface);
+        z-index:2;
+    }
+    .td-table tbody tr:hover td:first-child { background:var(--surface2); }
+
+    /* Metadata - fully stacked */
+    .td-meta-list   { padding:12px; gap:10px; max-width:100%; }
+    .td-meta-row    { padding-bottom:10px; gap:4px; max-width:100%; }
+    .td-meta-label  { font-size:9px; letter-spacing:0.5px; }
+    .td-meta-value  {
+        font-size:12px;
+        word-break:break-word;
+        overflow-wrap:break-word;
+        max-width:100%;
+    }
+    .td-meta-value.mono { font-size:11px; word-break:break-all; }
+
+    /* Boxes */
+    .td-box-row     { padding:10px 12px; gap:7px; flex-wrap:wrap; }
+    .td-box-code    { font-size:10px; padding:3px 7px; }
+    .td-box-status  { font-size:9px; padding:3px 7px; }
+    .td-box-items   { font-size:10px; }
+    .td-box-scan    {
+        font-size:10px;
+        width:100%;
+        margin-left:0;
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+    }
+    .td-box-scan > div { flex:1; min-width:max-content; }
+
+    /* Transporter */
+    .td-transporter-body { padding:10px 12px; }
+    .td-trans-name { font-size:13px; }
+    .td-trans-company { font-size:10px; margin-bottom:10px; }
+    .td-trans-row { font-size:10px; gap:6px; }
+    .td-trans-row svg { width:11px; height:11px; }
+
+    /* Actions */
+    .td-actions-body { padding:10px; }
+    .td-btn { padding:10px 12px; font-size:11px; }
+    .td-btn svg { width:12px; height:12px; }
+
+    /* Notes */
+    .td-notes { padding:10px 12px; font-size:11px; }
+
+    /* Empty state */
+    .td-empty { padding:24px 16px; font-size:12px; }
+    .td-empty svg { width:28px; height:28px; }
 }
 </style>
+@endpush
 
-<div class="td-wrap">
+<div class="td-wrap"
+     @if(in_array($transfer->status->value, ['approved', 'in_transit']))
+     wire:poll.5s
+     @endif>
 
-  {{-- ── Breadcrumb ──────────────────────────────── --}}
-  <div class="td-breadcrumb">
-    <a href="{{ route('shop.transfers.index') }}">Transfers</a>
-    <span class="td-breadcrumb-sep">/</span>
-    <span>{{ $transfer->transfer_number }}</span>
-  </div>
-
-  {{-- ── Page title row ──────────────────────────── --}}
-  <div class="td-title-row">
+  {{-- Action Required Alert --}}
+  @if(in_array($transfer->status, [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED]))
+  <div style="background:#eff6ff;border:1.5px solid #3b82f6;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;">
+    <svg width="20" height="20" fill="#3b82f6" viewBox="0 0 20 20" style="flex-shrink:0;">
+      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+    </svg>
     <div>
-      <h1 class="td-title">{{ $transfer->transfer_number }}</h1>
-      <p class="td-title-sub">Transfer detail — {{ $transfer->fromWarehouse->name ?? '—' }} → {{ $transfer->toShop->name ?? '—' }}</p>
+      <p style="font-size:14px;font-weight:700;color:#1e40af;margin:0 0 2px;">
+        @if($transfer->status === TransferStatus::IN_TRANSIT)
+          Transfer In Transit - Action Required
+        @else
+          Transfer Delivered - Ready to Receive
+        @endif
+      </p>
+      <p style="font-size:13px;color:#1e40af;margin:0;">
+        @if($transfer->status === TransferStatus::IN_TRANSIT)
+          This transfer is on the way. Mark it as delivered when it arrives, then scan to receive the boxes.
+        @else
+          This transfer has been delivered. Scan the boxes to complete the receiving process.
+        @endif
+      </p>
     </div>
-    <a href="{{ route('shop.transfers.index') }}" class="td-btn outline" style="width:auto;padding:9px 18px">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Back to Transfers
-    </a>
   </div>
+  @endif
 
   {{-- ── Status hero ─────────────────────────────── --}}
   @php
@@ -391,7 +602,8 @@
           @foreach($transfer->boxes as $tb)
             @php
               $box = $tb->box;
-              $bsc = match($box->status ?? 'full') {
+              $statusValue = $box->status?->value ?? 'full';
+              $bsc = match($statusValue) {
                 'full'    => ['bg'=>'rgba(16,185,129,.1)','c'=>'var(--green)'],
                 'partial' => ['bg'=>'rgba(217,119,6,.1)','c'=>'#d97706'],
                 'damaged' => ['bg'=>'rgba(239,68,68,.1)','c'=>'#ef4444'],
@@ -401,7 +613,7 @@
             <div class="td-box-row">
               <span class="td-box-code">{{ $box->box_code ?? '—' }}</span>
               <span class="td-box-status" style="--bs-bg:{{ $bsc['bg'] }};--bs-c:{{ $bsc['c'] }}">
-                {{ ucfirst($box->status ?? 'full') }}
+                {{ $box->status?->label() ?? ucfirst($statusValue) }}
               </span>
               <span class="td-box-items" style="color:var(--text-sub)">
                 {{ $box->items_remaining ?? '—' }} items
@@ -541,7 +753,7 @@
       @endif
 
       {{-- Context-aware actions --}}
-      @if($transfer->status === TransferStatus::DELIVERED)
+      @if(in_array($transfer->status, [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED]))
       <div class="td-card">
         <div class="td-card-head">
           <div class="td-card-head-left">
@@ -553,6 +765,12 @@
         </div>
         <div class="td-card-body">
           <div class="td-actions-body">
+            @if($transfer->status === TransferStatus::IN_TRANSIT)
+            <button wire:click="markAsDelivered" class="td-btn primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              Mark as Delivered
+            </button>
+            @endif
             <a href="{{ route('shop.transfers.receive', $transfer) }}" class="td-btn success">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
               Scan &amp; Receive Boxes

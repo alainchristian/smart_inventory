@@ -38,6 +38,12 @@ class AlertsPanel extends Component
                 'text' => 'text-[var(--warn)]',
                 'icon' => 'text-[var(--warn)]'
             ],
+            'success' => [
+                'bg' => 'bg-[var(--green-glow)]',
+                'border' => 'border-[var(--green)]',
+                'text' => 'text-[var(--green)]',
+                'icon' => 'text-[var(--green)]'
+            ],
             'info' => [
                 'bg' => 'bg-[var(--accent-glow)]',
                 'border' => 'border-[var(--accent)]',

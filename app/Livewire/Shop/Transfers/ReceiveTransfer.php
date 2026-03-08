@@ -254,7 +254,11 @@ class ReceiveTransfer extends Component
 
     public function getScannedBoxesCount(): int
     {
-        return count($this->scannedBoxes);
+        // Count boxes already received in database
+        $receivedInDb = $this->transfer->boxes()->where('is_received', true)->count();
+
+        // Add currently scanned boxes (not yet persisted)
+        return $receivedInDb + count($this->scannedBoxes);
     }
 
     public function getRemainingBoxesCount(): int
@@ -361,6 +365,12 @@ class ReceiveTransfer extends Component
         $this->transfer->load(['items.product', 'boxes.box.product']);
 
         // Build a summary: for each transfer item, how many boxes received vs shipped
+        // Create a map of box_id => product_id from transfer boxes for quick lookup
+        $boxProductMap = [];
+        foreach ($this->transfer->boxes as $tb) {
+            $boxProductMap[$tb->box->id] = $tb->box->product_id;
+        }
+
         $receivingSummary = [];
         foreach ($this->transfer->items as $item) {
             $product = $item->product;
@@ -368,10 +378,23 @@ class ReceiveTransfer extends Component
                 ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
                 ->count();
 
-            $boxesReceived = TransferBox::where('transfer_id', $this->transfer->id)
+            // Count boxes already marked as received in database
+            $boxesReceivedInDb = TransferBox::where('transfer_id', $this->transfer->id)
                 ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
                 ->where('is_received', true)
                 ->count();
+
+            // Count boxes currently scanned (in scannedBoxes array) for this product
+            $boxesScannedNow = 0;
+            foreach ($this->scannedBoxes as $scannedBox) {
+                $boxProductId = $boxProductMap[$scannedBox['box_id']] ?? null;
+                if ($boxProductId === $product->id) {
+                    $boxesScannedNow++;
+                }
+            }
+
+            // Total received = already received in DB + currently scanned (not yet persisted)
+            $boxesReceived = $boxesReceivedInDb + $boxesScannedNow;
 
             $receivingSummary[] = [
                 'product_id'   => $product->id,

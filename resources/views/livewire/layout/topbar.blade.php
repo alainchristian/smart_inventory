@@ -46,7 +46,7 @@
             <!-- Right: Action Buttons -->
             <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
                 <!-- Notifications Bell -->
-                <div x-data="{ open: false }" class="relative">
+                <div x-data="{ open: false }" class="relative" wire:poll.15s>
                     <button @click="open = !open" class="relative w-9 h-9 flex items-center justify-center rounded-lg transition-all"
                             style="background: var(--surface2); border: 1px solid var(--border); color: var(--text-sub);"
                             onmouseover="this.style.background='var(--surface3)'; this.style.color='var(--text)';"
@@ -54,10 +54,10 @@
                         <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                         </svg>
-                        @if($this->totalPendingActions > 0)
+                        @if($this->unreadNotificationsCount > 0)
                             <div class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold border-2"
                                  style="background: var(--red); color: white; border-color: var(--surface);">
-                                {{ $this->totalPendingActions > 9 ? '9+' : $this->totalPendingActions }}
+                                {{ $this->unreadNotificationsCount > 9 ? '9+' : $this->unreadNotificationsCount }}
                             </div>
                         @endif
                     </button>
@@ -71,13 +71,13 @@
                          x-transition:leave="transition ease-in duration-75"
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95"
-                         class="absolute right-0 mt-2 w-80 rounded-xl shadow-xl border overflow-hidden"
+                         class="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl shadow-xl border overflow-hidden"
                          style="background: var(--surface); border-color: var(--border); z-index: 100;"
                          x-cloak>
                         <!-- Header -->
                         <div class="p-4 border-b" style="border-color: var(--border);">
                             <div class="flex items-center justify-between">
-                                <h3 class="text-[15px] font-bold" style="color: var(--text);">Requires Attention</h3>
+                                <h3 class="text-[15px] font-bold" style="color: var(--text);">Pending Actions</h3>
                                 @if($this->totalPendingActions > 0)
                                     <span class="text-[11px] font-bold px-2 py-0.5 rounded-full" style="background: var(--red-glow); color: var(--red);">
                                         {{ $this->totalPendingActions }}
@@ -86,80 +86,93 @@
                             </div>
                         </div>
 
-                        <!-- Pending Actions List -->
+                        <!-- Actions List -->
                         <div class="max-h-96 overflow-y-auto">
-                            @php $hasActions = false; @endphp
-                            @foreach($this->pendingActions as $action)
-                                @if($action['count'] > 0)
-                                    @php
-                                        $hasActions = true;
-                                        $colorMap = [
-                                            'amber' => ['bg' => 'var(--amber-glow)', 'text' => 'var(--amber)', 'icon' => 'var(--amber)'],
-                                            'red' => ['bg' => 'var(--red-glow)', 'text' => 'var(--red)', 'icon' => 'var(--red)'],
-                                            'orange' => ['bg' => 'rgba(251,146,60,.14)', 'text' => '#ea580c', 'icon' => '#ea580c'],
-                                        ];
-                                        $colors = $colorMap[$action['color']] ?? $colorMap['red'];
-                                    @endphp
-                                    <a href="{{ $action['route'] ? route($action['route']) : '#' }}"
-                                       class="block p-4 border-b transition-all"
-                                       style="border-color: var(--border);"
-                                       onmouseover="this.style.background='var(--surface2)'"
-                                       onmouseout="this.style.background='transparent'">
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                 style="background: {{ $colors['bg'] }}">
-                                                @if($action['icon'] === 'clock')
-                                                    <svg class="w-5 h-5" fill="none" stroke="{{ $colors['icon'] }}" viewBox="0 0 24 24" stroke-width="2">
-                                                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            @if(Auth::check() && Auth::user()->isOwner())
+                                @forelse($this->pendingActions as $action)
+                                    @if($action['count'] > 0)
+                                        @php
+                                            $colorStyles = match($action['color']) {
+                                                'red' => ['bg' => 'var(--red-glow)', 'text' => 'var(--red)'],
+                                                'amber' => ['bg' => 'var(--amber-glow)', 'text' => 'var(--amber)'],
+                                                'orange' => ['bg' => 'var(--orange-glow)', 'text' => 'var(--orange)'],
+                                                default => ['bg' => 'var(--accent-glow)', 'text' => 'var(--accent)'],
+                                            };
+                                        @endphp
+                                        @if($action['route'])
+                                            <a href="{{ route($action['route']) }}"
+                                               class="block p-3.5 border-b transition-all"
+                                               style="border-color: var(--border);"
+                                               onmouseover="this.style.background='var(--surface2)'"
+                                               onmouseout="this.style.background='transparent'">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-9 h-9 rounded-lg flex items-center justify-center"
+                                                             style="background: {{ $colorStyles['bg'] }}">
+                                                            <svg class="w-4 h-4" fill="none" stroke="{{ $colorStyles['text'] }}" viewBox="0 0 24 24" stroke-width="2">
+                                                                @if($action['icon'] === 'clock')
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                                @elseif($action['icon'] === 'alert')
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                                                @elseif($action['icon'] === 'box')
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                                @else
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                                                @endif
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="text-[13px] font-semibold" style="color: var(--text);">{{ $action['label'] }}</h4>
+                                                            <p class="text-[12px] mt-0.5" style="color: var(--text-sub);">{{ $action['count'] }} pending</p>
+                                                        </div>
+                                                    </div>
+                                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color: var(--text-dim);">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                                     </svg>
-                                                @elseif($action['icon'] === 'alert')
-                                                    <svg class="w-5 h-5" fill="none" stroke="{{ $colors['icon'] }}" viewBox="0 0 24 24" stroke-width="2">
-                                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                                                    </svg>
-                                                @elseif($action['icon'] === 'box')
-                                                    <svg class="w-5 h-5" fill="none" stroke="{{ $colors['icon'] }}" viewBox="0 0 24 24" stroke-width="2">
-                                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-5 h-5" fill="none" stroke="{{ $colors['icon'] }}" viewBox="0 0 24 24" stroke-width="2">
-                                                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-                                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                                    </svg>
-                                                @endif
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center justify-between mb-1">
-                                                    <p class="text-[13px] font-semibold truncate" style="color: var(--text);">{{ $action['label'] }}</p>
-                                                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
-                                                          style="background: {{ $colors['bg'] }}; color: {{ $colors['text'] }};">
-                                                        {{ $action['count'] }}
-                                                    </span>
                                                 </div>
-                                                <p class="text-[12px]" style="color: var(--text-sub);">
-                                                    @if($action['type'] === 'transfer_approval')
-                                                        Pending warehouse review
-                                                    @elseif($action['type'] === 'discrepancy')
-                                                        Missing or extra boxes found
-                                                    @elseif($action['type'] === 'damaged_goods')
-                                                        Awaiting disposition decision
-                                                    @else
-                                                        Needs immediate attention
-                                                    @endif
-                                                </p>
+                                            </a>
+                                        @else
+                                            <div class="p-3.5 border-b" style="border-color: var(--border);">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-9 h-9 rounded-lg flex items-center justify-center"
+                                                             style="background: {{ $colorStyles['bg'] }}">
+                                                            <svg class="w-4 h-4" fill="none" stroke="{{ $colorStyles['text'] }}" viewBox="0 0 24 24" stroke-width="2">
+                                                                @if($action['icon'] === 'clock')
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                                @elseif($action['icon'] === 'alert')
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                                                @elseif($action['icon'] === 'box')
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                                @else
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                                                @endif
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="text-[13px] font-semibold" style="color: var(--text);">{{ $action['label'] }}</h4>
+                                                            <p class="text-[12px] mt-0.5" style="color: var(--text-sub);">{{ $action['count'] }} pending</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </a>
-                                @endif
-                            @endforeach
-
-                            @if(!$hasActions)
+                                        @endif
+                                    @endif
+                                @empty
+                                    <div class="p-8 text-center">
+                                        <svg class="w-12 h-12 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--text-sub);">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <p class="text-[13px] font-medium" style="color: var(--text-dim);">All caught up!</p>
+                                        <p class="text-[12px] mt-1" style="color: var(--text-dim);">No pending actions</p>
+                                    </div>
+                                @endforelse
+                            @else
                                 <div class="p-8 text-center">
                                     <svg class="w-12 h-12 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--text-sub);">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
-                                    <p class="text-[13px] font-medium" style="color: var(--text-dim);">All caught up!</p>
-                                    <p class="text-[12px] mt-1" style="color: var(--text-dim);">No pending actions</p>
+                                    <p class="text-[13px] font-medium" style="color: var(--text-dim);">No notifications</p>
                                 </div>
                             @endif
                         </div>

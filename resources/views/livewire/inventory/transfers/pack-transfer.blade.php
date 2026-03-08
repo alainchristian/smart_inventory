@@ -133,6 +133,11 @@
     transition:border-color var(--tr),box-shadow var(--tr);
 }
 .pt-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow); }
+.pt-select option {
+    background:var(--surface);
+    color:var(--text);
+    padding:8px;
+}
 
 /* Buttons */
 .pt-btn {
@@ -414,8 +419,9 @@
             <div>
                 <label class="pt-field-label">
                     Transporter <span style="color:var(--red)">*</span>
+                    <span style="font-size:11px;color:var(--text-dim);font-weight:normal;margin-left:8px">({{ count($transporters) }} available)</span>
                 </label>
-                <select wire:model="transporter_id" class="pt-select">
+                <select wire:model="transporter_id" class="pt-select" style="color:var(--text);">
                     <option value="">Select transporter…</option>
                     @foreach($transporters as $t)
                         <option value="{{ $t->id }}">
@@ -426,6 +432,13 @@
                 @error('transporter_id')
                     <span class="pt-field-error">{{ $message }}</span>
                 @enderror
+
+                {{-- Debug: Show transporter data --}}
+                @if(count($transporters) === 0)
+                    <div style="margin-top:8px;padding:10px;background:var(--red-glow);color:var(--red);border-radius:6px;font-size:13px">
+                        ⚠️ No active transporters found. Please create transporters in the system.
+                    </div>
+                @endif
             </div>
 
             <button type="button"

@@ -7,6 +7,7 @@ enum AlertSeverity: string
     case INFO = 'info';
     case WARNING = 'warning';
     case CRITICAL = 'critical';
+    case SUCCESS = 'success';
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum AlertSeverity: string
             self::INFO => 'Info',
             self::WARNING => 'Warning',
             self::CRITICAL => 'Critical',
+            self::SUCCESS => 'Success',
         };
     }
 
@@ -23,6 +25,7 @@ enum AlertSeverity: string
             self::INFO => 'blue',
             self::WARNING => 'yellow',
             self::CRITICAL => 'red',
+            self::SUCCESS => 'green',
         };
     }
 }
