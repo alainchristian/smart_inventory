@@ -92,7 +92,13 @@ function salesPerfChart() {
             canvas._chartInstance.data.labels = data.labels;
             canvas._chartInstance.data.datasets[0].data = data.revenueData;
             canvas._chartInstance.data.datasets[1].data = data.countData;
-            canvas._chartInstance.update('none');
+            try {
+                canvas._chartInstance.update('none');
+            } catch (e) {
+                canvas._chartInstance.destroy();
+                delete canvas._chartInstance;
+                this.draw();
+            }
         },
 
         draw() {
@@ -196,7 +202,7 @@ function salesPerfChart() {
                                 font: { size: 11, family: 'DM Sans' },
                                 padding: 8,
                                 callback: function(val) {
-                                    return val >= 1000 ? Math.round(val0) + 'K' : val;
+                                    return val >= 1000 ? Math.round(val/1000) + 'K' : val;
                                 }
                             },
                             border: { display: false }

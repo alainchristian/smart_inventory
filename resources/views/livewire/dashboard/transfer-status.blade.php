@@ -28,7 +28,7 @@
 }
 
 </style>
-<div class="card" wire:poll.30s>
+<div class="card" wire:poll.29s>
   <div class="card-header">
     <div>
       <div class="card-title">Transfer Status</div>

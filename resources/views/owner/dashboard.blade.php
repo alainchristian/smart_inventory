@@ -20,6 +20,61 @@
         <livewire:dashboard.time-filter />
     </div>
 
+    {{-- Pending Actions Banner --}}
+    @php
+        $pendingApprovalCount = \App\Models\Transfer::where('status', 'pending')->count();
+        $discrepancyCount     = \App\Models\Transfer::where('has_discrepancy', true)->count();
+        $criticalAlertsCount  = \App\Models\Alert::where('severity', 'critical')
+                                    ->whereNull('resolved_at')
+                                    ->where('is_dismissed', false)
+                                    ->count();
+
+        // Damaged goods — check actual model name with: ls app/Models | grep -i damage
+        // Adjust class name below if different (e.g. DamagedGoods, DamagedGood)
+        $damagedPendingCount = 0;
+        if (class_exists(\App\Models\DamagedGood::class)) {
+            $damagedPendingCount = \App\Models\DamagedGood::where('disposition', 'pending')->count();
+        }
+
+        $hasPendingActions = ($pendingApprovalCount + $discrepancyCount + $criticalAlertsCount + $damagedPendingCount) > 0;
+    @endphp
+
+    @if($hasPendingActions)
+    <div class="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <p class="text-xs font-bold text-amber-800 uppercase tracking-wide mb-2">⚡ Requires Your Attention</p>
+        <div class="flex flex-wrap gap-2">
+            @if($pendingApprovalCount > 0)
+            <a href="{{ route('warehouse.transfers.index') }}"
+               class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-semibold text-amber-800 hover:bg-amber-100 transition-colors">
+                <span class="w-5 h-5 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold">{{ $pendingApprovalCount }}</span>
+                <span>Transfer{{ $pendingApprovalCount > 1 ? 's' : '' }} Awaiting Approval</span>
+            </a>
+            @endif
+            @if($discrepancyCount > 0)
+            <a href="{{ route('warehouse.transfers.index') }}"
+               class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-red-300 rounded-lg text-xs font-semibold text-red-800 hover:bg-red-50 transition-colors">
+                <span class="w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold">{{ $discrepancyCount }}</span>
+                <span>Unresolved Discrepanc{{ $discrepancyCount > 1 ? 'ies' : 'y' }}</span>
+            </a>
+            @endif
+            @if($damagedPendingCount > 0)
+            <a href="#"
+               class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-orange-300 rounded-lg text-xs font-semibold text-orange-800 hover:bg-orange-50 transition-colors">
+                <span class="w-5 h-5 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">{{ $damagedPendingCount }}</span>
+                <span>Damaged Goods Pending Decision</span>
+            </a>
+            @endif
+            @if($criticalAlertsCount > 0)
+            <a href="#"
+               class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-red-300 rounded-lg text-xs font-semibold text-red-800 hover:bg-red-50 transition-colors">
+                <span class="w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{{ $criticalAlertsCount }}</span>
+                <span>Critical Alert{{ $criticalAlertsCount > 1 ? 's' : '' }}</span>
+            </a>
+            @endif
+        </div>
+    </div>
+    @endif
+
     {{-- ─────────────────────────────────────────────────────────────────────
          Inventory Health (static snapshot from DashboardController $stats)
          FIX #1  — uses active_boxes / total_items_in_stock which now both

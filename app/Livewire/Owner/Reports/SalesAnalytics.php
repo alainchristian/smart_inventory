@@ -4,112 +4,211 @@ namespace App\Livewire\Owner\Reports;
 
 use App\Models\Shop;
 use App\Services\Analytics\SalesAnalyticsService;
+use Carbon\Carbon;
 use Livewire\Component;
 
 class SalesAnalytics extends Component
 {
-    public $dateFrom;
-    public $dateTo;
-    public $locationFilter = 'all';
+    // ─── Filters ──────────────────────────────────────────────────────────────
+    public string $dateFrom    = '';
+    public string $dateTo      = '';
+    public string $locationFilter = 'all';
+    public string $activeTab   = 'overview';   // overview | ledger | audit | sellers
 
-    protected $queryString = ['dateFrom', 'dateTo', 'locationFilter'];
+    protected $queryString = [
+        'dateFrom'       => ['except' => ''],
+        'dateTo'         => ['except' => ''],
+        'locationFilter' => ['except' => 'all'],
+        'activeTab'      => ['except' => 'overview'],
+    ];
 
-    public function mount()
+    // ─── Lifecycle ────────────────────────────────────────────────────────────
+    public function mount(): void
     {
-        // Ensure only owners can access
-        if (!auth()->user()->isOwner()) {
-            abort(403, 'Unauthorized access.');
+        if (! $this->dateFrom) {
+            $this->dateFrom = now()->startOfMonth()->toDateString();
         }
-
-        // Set default date range (last 30 days)
-        $this->dateFrom = $this->dateFrom ?? now()->subDays(30)->format('Y-m-d');
-        $this->dateTo = $this->dateTo ?? now()->format('Y-m-d');
-    }
-
-    public function updatedDateFrom()
-    {
-        $this->validateDates();
-    }
-
-    public function updatedDateTo()
-    {
-        $this->validateDates();
-    }
-
-    public function validateDates()
-    {
-        // Ensure dateFrom is not after dateTo
-        if ($this->dateFrom > $this->dateTo) {
-            $this->dateTo = $this->dateFrom;
+        if (! $this->dateTo) {
+            $this->dateTo = now()->toDateString();
         }
     }
 
-    public function setDateRange($range)
+    // ─── Actions ──────────────────────────────────────────────────────────────
+    public function setDateRange(string $range): void
     {
-        $this->dateTo = now()->format('Y-m-d');
+        $this->dateTo = now()->toDateString();
+        $this->dateFrom = match ($range) {
+            'today'   => now()->startOfDay()->toDateString(),
+            'week'    => now()->startOfWeek()->toDateString(),
+            'month'   => now()->startOfMonth()->toDateString(),
+            'quarter' => now()->startOfQuarter()->toDateString(),
+            'year'    => now()->startOfYear()->toDateString(),
+            default   => now()->startOfMonth()->toDateString(),
+        };
+    }
 
-        switch ($range) {
-            case 'today':
-                $this->dateFrom = now()->format('Y-m-d');
-                break;
-            case 'week':
-                $this->dateFrom = now()->subDays(7)->format('Y-m-d');
-                break;
-            case 'month':
-                $this->dateFrom = now()->subDays(30)->format('Y-m-d');
-                break;
-            case 'quarter':
-                $this->dateFrom = now()->subDays(90)->format('Y-m-d');
-                break;
-            case 'year':
-                $this->dateFrom = now()->subDays(365)->format('Y-m-d');
-                break;
+    public function setTab(string $tab): void
+    {
+        $this->activeTab = $tab;
+    }
+
+    // ─── Computed: meta ───────────────────────────────────────────────────────
+    public function getActiveDateRangeLabelProperty(): string
+    {
+        $from = Carbon::parse($this->dateFrom);
+        $to   = Carbon::parse($this->dateTo);
+
+        // Check if it's today
+        if ($from->isToday() && $to->isToday()) {
+            return 'Today';
         }
-    }
 
-    public function getRevenueKpisProperty()
-    {
-        $service = app(SalesAnalyticsService::class);
-        return $service->getRevenueKpis($this->dateFrom, $this->dateTo, $this->locationFilter);
-    }
+        // Check if it's current week (Monday to today)
+        if ($from->isSameDay(now()->startOfWeek()) && $to->isToday()) {
+            return 'This Week';
+        }
 
-    public function getRevenueTrendProperty()
-    {
-        $service = app(SalesAnalyticsService::class);
-        return $service->getRevenueTrend($this->dateFrom, $this->dateTo, $this->locationFilter);
-    }
+        // Check if it's current month (1st to today)
+        if ($from->isSameDay(now()->startOfMonth()) && $to->isToday()) {
+            return 'This Month';
+        }
 
-    public function getPaymentMethodsProperty()
-    {
-        $service = app(SalesAnalyticsService::class);
-        return $service->getPaymentMethodBreakdown($this->dateFrom, $this->dateTo, $this->locationFilter);
-    }
+        // Check if it's current quarter
+        if ($from->isSameDay(now()->startOfQuarter()) && $to->isToday()) {
+            return 'This Quarter';
+        }
 
-    public function getTopProductsProperty()
-    {
-        $service = app(SalesAnalyticsService::class);
-        return $service->getTopProducts($this->dateFrom, $this->dateTo, $this->locationFilter, 20);
-    }
+        // Check if it's current year
+        if ($from->isSameDay(now()->startOfYear()) && $to->isToday()) {
+            return 'This Year';
+        }
 
-    public function getShopPerformanceProperty()
-    {
-        $service = app(SalesAnalyticsService::class);
-        return $service->getShopPerformance($this->dateFrom, $this->dateTo);
-    }
-
-    public function getSalesByHourProperty()
-    {
-        $service = app(SalesAnalyticsService::class);
-        return $service->getSalesByHour($this->dateFrom, $this->dateTo, $this->locationFilter);
+        // Custom range
+        return $from->format('M d') . ' – ' . $to->format('M d, Y');
     }
 
     public function getShopsProperty()
     {
-        return Shop::orderBy('name')->get();
+        return Shop::orderBy('name')->get(['id', 'name']);
     }
 
+    public function getSelectedShopNameProperty(): string
+    {
+        if ($this->locationFilter === 'all') {
+            return 'All Shops';
+        }
+        if (str_starts_with($this->locationFilter, 'shop:')) {
+            $id = (int) explode(':', $this->locationFilter)[1];
+            $shop = $this->shops->firstWhere('id', $id);
+            return $shop ? $shop->name : 'Shop';
+        }
+        return 'All Shops';
+    }
+
+    // ─── Computed: Overview tab ───────────────────────────────────────────────
+    public function getRevenueKpisProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getRevenueKpis($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getGrossProfitKpisProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getGrossProfitKpis($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getItemsSoldKpiProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getItemsSoldKpi($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getReturnsImpactProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getReturnsImpact($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getRevenueTrendProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getRevenueTrend($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getPaymentMethodsProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getPaymentMethodBreakdown($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getShopPerformanceProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getShopPerformance($this->dateFrom, $this->dateTo);
+    }
+
+    public function getSaleTypeBreakdownProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getSaleTypeBreakdown($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getVoidedSalesStatsProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getVoidedSalesStats($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getSalesByHourProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getSalesByHour($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getTopProductsProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getTopProducts($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getPriceOverrideStatsProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getPriceOverrideStats($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    // ─── Computed: Daily Scorecard (Overview) ─────────────────────────────────
+    public function getDailyScorecardProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getDailyScorecard($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    // ─── Computed: Sellers tab ────────────────────────────────────────────────
+    public function getSellerPerformanceProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getSellerPerformance($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getCustomerRepeatAnalysisProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getCustomerRepeatAnalysis($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    // ─── Computed: Audit tab ──────────────────────────────────────────────────
+    public function getPriceAuditLogProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getPriceAuditLog($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    // ─── Render ───────────────────────────────────────────────────────────────
     public function render()
     {
-        return view('livewire.owner.reports.sales-analytics');
+        return view('livewire.owner.reports.sales-analytics')
+            ->layout('layouts.app');
     }
 }

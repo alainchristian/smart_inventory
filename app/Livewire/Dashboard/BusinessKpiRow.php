@@ -66,8 +66,7 @@ class BusinessKpiRow extends Component
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
             ->whereBetween('sales.sale_date', [$start, $end])
-            ->selectRaw('SUM((sale_items.actual_unit_price - products.purchase_price)
-                            * sale_items.quantity_sold) as margin')
+            ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
             ->value('margin') ?? 0);
 
         // Profit sub-row reference points
@@ -75,24 +74,21 @@ class BusinessKpiRow extends Component
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
             ->whereDate('sales.sale_date', today())
-            ->selectRaw('SUM((sale_items.actual_unit_price - products.purchase_price)
-                            * sale_items.quantity_sold) as margin')
+            ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
             ->value('margin') ?? 0);
 
         $weekMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
             ->whereBetween('sales.sale_date', [now()->startOfWeek(), now()])
-            ->selectRaw('SUM((sale_items.actual_unit_price - products.purchase_price)
-                            * sale_items.quantity_sold) as margin')
+            ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
             ->value('margin') ?? 0);
 
         $monthMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
             ->whereBetween('sales.sale_date', [now()->startOfMonth(), now()])
-            ->selectRaw('SUM((sale_items.actual_unit_price - products.purchase_price)
-                            * sale_items.quantity_sold) as margin')
+            ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
             ->value('margin') ?? 0);
 
         $this->profit = [

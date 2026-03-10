@@ -1,6 +1,6 @@
 <div
     class="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5"
-    wire:poll.30s
+    wire:poll.31s
     x-data="stockDistChart()"
     x-init="init()"
     x-destroy="teardown()"
@@ -80,7 +80,6 @@
 <script>
 function stockDistChart() {
     return {
-        chartInstance: null,
         morphHook: null,
 
         init() {
@@ -95,22 +94,23 @@ function stockDistChart() {
         },
 
         teardown() {
-            // Kill our tracked instance
-            if (this.chartInstance) {
-                this.chartInstance.destroy();
-                this.chartInstance = null;
+            var canvas = document.getElementById('stockDistributionChart');
+            if (canvas && canvas._chartInstance) {
+                canvas._chartInstance.destroy();
+                delete canvas._chartInstance;
             }
-            // Kill any orphaned instance Chart.js still knows about
-            // (happens when teardown() didn't fire cleanly during SPA nav)
-            var orphan = Chart.getChart(canvas);
-            if (orphan) orphan.destroy();
+            if (canvas) {
+                var orphan = Chart.getChart(canvas);
+                if (orphan) orphan.destroy();
+            }
             if (typeof this.morphHook === 'function') {
                 this.morphHook();
             }
         },
 
         updateChart() {
-            if (!this.chartInstance) {
+            var canvas = document.getElementById('stockDistributionChart');
+            if (!canvas || !canvas._chartInstance) {
                 this.draw();
                 return;
             }
@@ -118,10 +118,16 @@ function stockDistChart() {
             var stockData = raw ? JSON.parse(raw) : [];
             if (!stockData.length) return;
 
-            this.chartInstance.data.labels = stockData.map(function(i) { return i.location_name; });
-            this.chartInstance.data.datasets[0].data = stockData.map(function(i) { return i.box_count; });
-            this.chartInstance.data.datasets[0].backgroundColor = stockData.map(function(i) { return i.color; });
-            this.chartInstance.update('none');
+            canvas._chartInstance.data.labels = stockData.map(function(i) { return i.location_name; });
+            canvas._chartInstance.data.datasets[0].data = stockData.map(function(i) { return i.box_count; });
+            canvas._chartInstance.data.datasets[0].backgroundColor = stockData.map(function(i) { return i.color; });
+            try {
+                canvas._chartInstance.update('none');
+            } catch (e) {
+                canvas._chartInstance.destroy();
+                delete canvas._chartInstance;
+                this.draw();
+            }
 
             var totalEl = document.getElementById('stockDistTotal');
             if (totalEl) {
@@ -137,12 +143,12 @@ function stockDistChart() {
             var stockData = raw ? JSON.parse(raw) : [];
             if (!stockData.length) return;
 
-            if (this.chartInstance) {
-                this.chartInstance.destroy();
-                this.chartInstance = null;
+            if (canvas._chartInstance) {
+                canvas._chartInstance.destroy();
+                delete canvas._chartInstance;
             }
 
-            this.chartInstance = new Chart(canvas, {
+            canvas._chartInstance = new Chart(canvas, {
                 type: 'doughnut',
                 data: {
                     labels: stockData.map(function(i) { return i.location_name; }),

@@ -6,6 +6,7 @@ use App\Http\Controllers\ShopManager\DashboardController as ShopDashboardControl
 use App\Http\Controllers\WarehouseManager\DashboardController as WarehouseDashboardController;
 use App\Http\Middleware\CheckLocation;
 use App\Http\Middleware\CheckRole;
+use App\Models\Transfer;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -80,7 +81,7 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     // Transfers
     Route::prefix('transfers')->name('transfers.')->group(function () {
         Route::get('/', function () { return view('owner.transfers.index'); })->name('index');
-        Route::get('/{transfer}', function ($transfer) { return view('owner.transfers.show', compact('transfer')); })->name('show');
+        Route::get('/{transfer}', function (Transfer $transfer) { return view('owner.transfers.show', compact('transfer')); })->name('show');
     });
 
     // Sales

@@ -226,7 +226,11 @@ class GenerateSystemAlerts extends Command
         }
 
         // Resolve transfer alerts when transfer is no longer pending
-        $transferAlerts = Alert::where('title', 'Pending Transfer Approval')
+        $transferAlerts = Alert::whereIn('title', [
+                'Pending Transfer Approval',
+                'New Transfer Request',
+                'Transfer Approval Required',
+            ])
             ->where('entity_type', Transfer::class)
             ->unresolved()
             ->get();

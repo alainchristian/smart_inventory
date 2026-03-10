@@ -447,7 +447,13 @@ aside nav p.text-gray-400 {
 .row-sales-shops   { display: grid; grid-template-columns: 1fr 420px; gap: 18px; margin-bottom: 26px; }
 .row-ops-activity  { display: grid; grid-template-columns: 1fr 1fr 320px; gap: 18px; margin-bottom: 26px; }
 .row-trace-alerts  { display: grid; grid-template-columns: 1fr 360px; gap: 18px; }
-.right-stack-panel { display: flex; flex-direction: column; gap: 14px; }
+.row-trace-alerts > * { min-width: 0; }
+.right-stack-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
 
 /* Business KPI cards */
 .bkpi {
@@ -610,7 +616,7 @@ aside nav p.text-gray-400 {
 @media (max-width: 1400px) {
   .row-ops-activity { grid-template-columns: 1fr 1fr; }
   .row-ops-activity > *:last-child { grid-column: 1 / -1; }
-  .row-trace-alerts { grid-template-columns: 1fr 320px; }
+  .row-trace-alerts { grid-template-columns: 1fr minmax(0, 320px); }
 }
 
 @media (max-width: 1200px) {
@@ -624,8 +630,9 @@ aside nav p.text-gray-400 {
   .row-trace-alerts { grid-template-columns: 1fr; }
   .right-stack-panel {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+    min-width: 0;
   }
 }
 
@@ -705,6 +712,13 @@ aside nav p.text-gray-400 {
   }
   .sp-period-name { font-size: 9.5px; }
   .sp-period-val { font-size: 14px; }
+
+  .right-stack-panel {
+    grid-template-columns: 1fr;
+  }
+  .row-trace-alerts {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -797,95 +811,122 @@ aside nav p.text-gray-400 {
   .sp-period-val { font-size: 13px; }
 }
 
-/* Table responsiveness */
+/* ═══════════════════════════════════════
+   BOX MOVEMENTS TABLE — All columns, all sizes
+═══════════════════════════════════════ */
+
+/* Wrapper must allow horizontal scroll */
+.recent-movements-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    /* Subtle scroll hint shadow on right edge */
+    background:
+        linear-gradient(to right, var(--surface) 30%, transparent),
+        linear-gradient(to left,  var(--surface) 30%, transparent) 100% 0,
+        radial-gradient(farthest-side at 0   50%, rgba(0,0,0,.12), transparent),
+        radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.12), transparent) 100% 0;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+}
+
+/* Table itself: fixed minimum width so all 6 columns always render */
 .recent-movements-table {
-  min-width: 600px;
+    min-width: 640px;   /* enough for all 6 columns */
+    width: 100%;
+    border-collapse: collapse;
 }
 
+/* Default (desktop) cell padding */
+.recent-movements-table th,
+.recent-movements-table td {
+    padding: 10px 16px;
+    white-space: nowrap;
+}
+
+/* Product name is the only cell allowed to wrap/truncate */
+.recent-movements-table .prod-name-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+/* Tighter on tablet */
 @media (max-width: 1024px) {
-  .recent-movements-table {
-    min-width: 500px;
-  }
+    .recent-movements-table {
+        min-width: 600px;
+    }
+    .recent-movements-table th,
+    .recent-movements-table td {
+        padding: 9px 12px;
+        font-size: 12.5px;
+    }
 }
 
+/* Tighter on mobile — but NEVER hide columns */
 @media (max-width: 768px) {
-  .recent-movements-table {
-    min-width: auto;
-  }
+    .recent-movements-table {
+        min-width: 580px;
+        font-size: 12px;
+    }
+    .recent-movements-table th,
+    .recent-movements-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    .recent-movements-table .status-pill {
+        font-size: 10px;
+        padding: 2px 7px;
+    }
+    /* Shrink product icon */
+    .recent-movements-table .w-8.h-8 {
+        width: 26px !important;
+        height: 26px !important;
+    }
+    .recent-movements-table .w-8.h-8 svg {
+        width: 13px !important;
+        height: 13px !important;
+    }
+    /* Tighter product name */
+    .recent-movements-table .prod-name-cell {
+        max-width: 120px;
+    }
 
-  /* Hide Location column on tablets */
-  .recent-movements-table th:nth-child(4),
-  .recent-movements-table td:nth-child(4) {
-    display: none;
-  }
+    /* Alerts panel mobile adjustments */
+    .alert-sev {
+        font-size: 8px;
+        padding: 2px 5px;
+    }
 }
 
-@media (max-width: 640px) {
-  /* On mobile, show only Box Code, Product, and Status */
-  .recent-movements-table th:nth-child(5),
-  .recent-movements-table td:nth-child(5),
-  .recent-movements-table th:nth-child(6),
-  .recent-movements-table td:nth-child(6) {
-    display: none;
-  }
-
-  .recent-movements-table {
-    font-size: 11px;
-  }
-
-  .recent-movements-table th,
-  .recent-movements-table td {
-    padding: 8px 6px !important;
-  }
-
-  .recent-movements-table th:first-child,
-  .recent-movements-table td:first-child {
-    padding-left: 12px !important;
-  }
-
-  .recent-movements-table th:last-child,
-  .recent-movements-table td:last-child {
-    padding-right: 12px !important;
-  }
-
-  .recent-movements-table .status-pill {
-    font-size: 9px;
-    padding: 2px 5px;
-  }
-
-  /* Make product images smaller on mobile */
-  .recent-movements-table .w-8.h-8 {
-    width: 28px !important;
-    height: 28px !important;
-  }
-
-  .recent-movements-table .w-8.h-8 svg {
-    width: 14px !important;
-    height: 14px !important;
-  }
-
-  /* Alerts panel mobile adjustments */
-  .alert-sev {
-    font-size: 8px;
-    padding: 2px 5px;
-  }
-}
-
-@media (max-width: 480px) {
-  .recent-movements-table th,
-  .recent-movements-table td {
-    padding: 6px 4px !important;
-  }
-
-  .recent-movements-table th:first-child,
-  .recent-movements-table td:first-child {
-    padding-left: 8px !important;
-  }
-
-  .recent-movements-table th:last-child,
-  .recent-movements-table td:last-child {
-    padding-right: 8px !important;
-  }
+/* Smallest screens — compact but still all 6 columns */
+@media (max-width: 500px) {
+    .recent-movements-table {
+        min-width: 560px;
+        font-size: 11.5px;
+    }
+    .recent-movements-table th,
+    .recent-movements-table td {
+        padding: 7px 8px;
+        font-size: 11.5px;
+    }
+    .recent-movements-table th:first-child,
+    .recent-movements-table td:first-child {
+        padding-left: 12px;
+    }
+    .recent-movements-table th:last-child,
+    .recent-movements-table td:last-child {
+        padding-right: 12px;
+    }
+    .recent-movements-table .status-pill {
+        font-size: 9.5px;
+        padding: 2px 6px;
+    }
+    .recent-movements-table .prod-name-cell {
+        max-width: 100px;
+    }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1100,4 +1141,163 @@ body:has(.pos-root) > div > main > div {
 }
 body:has(.pos-root) {
   overflow: hidden;
+}
+
+/* Prevent scroll anchor thrash from concurrent wire:poll components */
+main,
+.main-content,
+[data-page-content] {
+    overflow-anchor: none;
+}
+
+/* Alert & system status text overflow fix */
+.right-stack-panel .card,
+.right-stack-panel .bg-\[var\(--surface\)\] {
+    min-width: 0;
+    overflow: hidden;
+}
+.right-stack-panel .card > *,
+.right-stack-panel .bg-\[var\(--surface\)\] > * {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+/* ═══════════════════════════════════════
+   MOBILE SMALL (≤ 500px) — Dashboard fixes
+═══════════════════════════════════════ */
+@media (max-width: 500px) {
+
+    /* ── Sales chart: stack legend below chart, prevent clip ── */
+    #salesChart {
+        max-height: 200px !important;
+    }
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .period-tabs {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
+    }
+    .period-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding: 5px 10px;
+        font-size: 11.5px;
+    }
+
+    /* ── Top Shops: prevent revenue value clip ── */
+    .shop-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 0;
+        overflow: hidden;
+    }
+    .shop-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+    }
+    .shop-revenue {
+        flex-shrink: 0;
+        font-size: 11px;
+        min-width: 56px;
+        text-align: right;
+    }
+
+    /* Stock fill: show full shop name wrapped instead of cut */
+    .stock-fill-row {
+        display: grid;
+        grid-template-columns: 90px 1fr 32px 16px;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .stock-shop-name {
+        width: auto !important;
+        font-size: 10.5px !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* ── Box Movements table: horizontal scroll, don't clip ── */
+    .recent-movements-table,
+    .box-movements-table,
+    [class*="movements"] table,
+    [class*="movements"] .overflow-x-auto {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+        width: 100%;
+    }
+    [class*="movements"] table td,
+    [class*="movements"] table th {
+        white-space: nowrap;
+    }
+
+    /* ── Active Alerts: text must wrap, not clip ── */
+    .alert-card {
+        overflow: hidden;
+    }
+    .alert-body {
+        min-width: 0;
+        overflow: hidden;
+    }
+    .alert-title {
+        font-size: 12.5px;
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+    .alert-desc,
+    .alert-body p,
+    .alert-card p {
+        overflow-wrap: break-word;
+        word-break: break-word;
+        white-space: normal !important;
+        font-size: 11.5px;
+    }
+
+    /* ── Right stack panel: full width single column ── */
+    .right-stack-panel {
+        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    /* ── System Status: ensure circle doesn't overflow ── */
+    .system-status-ring,
+    [class*="system"] svg,
+    [class*="status"] svg {
+        max-width: 80px;
+        max-height: 80px;
+    }
+
+    /* ── General: no card overflows on small screens ── */
+    .card,
+    .bkpi,
+    .okpi {
+        overflow: hidden;
+        min-width: 0;
+    }
+}
+
+/* ═══════════════════════════════════════
+   MOBILE TINY (≤ 380px)
+═══════════════════════════════════════ */
+@media (max-width: 380px) {
+    .shop-revenue { min-width: 44px; font-size: 10px; }
+    .stock-fill-row { grid-template-columns: 72px 1fr 28px 14px; }
+    .alert-title { font-size: 12px; }
+    .alert-desc, .alert-body p { font-size: 11px; }
+    .period-tab { padding: 4px 8px; font-size: 11px; }
 }

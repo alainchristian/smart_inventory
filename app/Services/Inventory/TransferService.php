@@ -8,6 +8,8 @@ use App\Enums\TransferStatus;
 use App\Events\Inventory\TransferApproved;
 use App\Events\Inventory\TransferReceived;
 use App\Events\Inventory\TransferRequested;
+use App\Models\ActivityLog;
+use App\Models\Alert;
 use App\Models\Box;
 use App\Models\Product;
 use App\Models\Transfer;
@@ -48,6 +50,22 @@ class TransferService
                 ]);
             }
 
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'transfer_requested',
+                'entity_type'       => 'Transfer',
+                'entity_id'         => $transfer->id,
+                'entity_identifier' => $transfer->transfer_number,
+                'details' => [
+                    'warehouse_name' => $transfer->fromWarehouse?->name,
+                    'shop_name'      => $transfer->toShop?->name,
+                    'item_count'     => count($data['items']),
+                ],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
             // Dispatch event if it exists
             if (class_exists(TransferRequested::class)) {
                 event(new TransferRequested($transfer));
@@ -71,6 +89,36 @@ class TransferService
                 'notes' => $notes ?? $transfer->notes,
             ]);
 
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'transfer_approved',
+                'entity_type'       => 'Transfer',
+                'entity_id'         => $transfer->id,
+                'entity_identifier' => $transfer->transfer_number,
+                'details' => [
+                    'warehouse_name' => $transfer->fromWarehouse?->name,
+                    'shop_name'      => $transfer->toShop?->name,
+                ],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
+            // Auto-resolve any unresolved alert about this transfer awaiting approval.
+            // Matches both "New Transfer Request" and "Pending Transfer Approval" titles
+            // because both were used at different points.
+            Alert::where('entity_type', Transfer::class)
+                ->where('entity_id', $transfer->id)
+                ->whereIn('title', [
+                    'New Transfer Request',
+                    'Pending Transfer Approval',
+                    'Transfer Approval Required',
+                ])
+                ->whereNull('resolved_at')
+                ->each(function ($alert) {
+                    $alert->markAsResolved();
+                });
+
             // Dispatch event if it exists
             if (class_exists(TransferApproved::class)) {
                 event(new TransferApproved($transfer));
@@ -93,6 +141,34 @@ class TransferService
                 'reviewed_at' => now(),
                 'notes' => $reason,
             ]);
+
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'transfer_rejected',
+                'entity_type'       => 'Transfer',
+                'entity_id'         => $transfer->id,
+                'entity_identifier' => $transfer->transfer_number,
+                'details' => [
+                    'reason'         => $reason,
+                    'warehouse_name' => $transfer->fromWarehouse?->name,
+                    'shop_name'      => $transfer->toShop?->name,
+                ],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
+            Alert::where('entity_type', Transfer::class)
+                ->where('entity_id', $transfer->id)
+                ->whereIn('title', [
+                    'New Transfer Request',
+                    'Pending Transfer Approval',
+                    'Transfer Approval Required',
+                ])
+                ->whereNull('resolved_at')
+                ->each(function ($alert) {
+                    $alert->markAsResolved();
+                });
 
             return $transfer;
         });
@@ -300,6 +376,57 @@ class TransferService
                 'has_discrepancy' => $hasDiscrepancy,
             ]);
 
+            // Log the receipt
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'transfer_received',
+                'entity_type'       => 'Transfer',
+                'entity_id'         => $transfer->id,
+                'entity_identifier' => $transfer->transfer_number,
+                'details' => [
+                    'box_count'       => $transfer->boxes()->count(),
+                    'has_discrepancy' => $hasDiscrepancy,
+                    'shop_name'       => $transfer->toShop?->name,
+                    'warehouse_name'  => $transfer->fromWarehouse?->name,
+                ],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
+            // If there's a discrepancy, log that too
+            if ($hasDiscrepancy) {
+                ActivityLog::create([
+                    'user_id'           => auth()->id(),
+                    'user_name'         => auth()->user()?->name,
+                    'action'            => 'transfer_discrepancy',
+                    'entity_type'       => 'Transfer',
+                    'entity_id'         => $transfer->id,
+                    'entity_identifier' => $transfer->transfer_number,
+                    'details' => [
+                        'box_count'       => $transfer->boxes()->count(),
+                        'received_count'  => count($receivedBoxes),
+                        'shop_name'       => $transfer->toShop?->name,
+                        'warehouse_name'  => $transfer->fromWarehouse?->name,
+                    ],
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->header('User-Agent'),
+                ]);
+            }
+
+            // Resolve the "Transfer Shipped" alert now that it has been received.
+            Alert::where('entity_type', Transfer::class)
+                ->where('entity_id', $transfer->id)
+                ->whereIn('title', [
+                    'Transfer Shipped - Ready to Receive',
+                    'Transfer Shipped - Action Required',
+                    'Transfer In Transit',
+                ])
+                ->whereNull('resolved_at')
+                ->each(function ($alert) {
+                    $alert->markAsResolved();
+                });
+
             // Dispatch event if it exists
             if (class_exists(TransferReceived::class)) {
                 event(new TransferReceived($transfer));
@@ -382,10 +509,27 @@ class TransferService
             }
 
             // Mark transfer as packed if not already
-            if (!$transfer->packed_at) {
+            $wasFirstPack = !$transfer->packed_at;
+            if ($wasFirstPack) {
                 $transfer->update([
                     'packed_by' => auth()->id(),
                     'packed_at' => now(),
+                ]);
+
+                ActivityLog::create([
+                    'user_id'           => auth()->id(),
+                    'user_name'         => auth()->user()?->name,
+                    'action'            => 'transfer_packed',
+                    'entity_type'       => 'Transfer',
+                    'entity_id'         => $transfer->id,
+                    'entity_identifier' => $transfer->transfer_number,
+                    'details' => [
+                        'box_count'      => count($createdTransferBoxes),
+                        'warehouse_name' => $transfer->fromWarehouse?->name,
+                        'shop_name'      => $transfer->toShop?->name,
+                    ],
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->header('User-Agent'),
                 ]);
             }
 
@@ -461,10 +605,27 @@ class TransferService
             $transferItem->increment('quantity_shipped', $box->items_remaining);
 
             // Mark transfer as packed if not already
-            if (!$transfer->packed_at) {
+            $wasFirstPack = !$transfer->packed_at;
+            if ($wasFirstPack) {
                 $transfer->update([
                     'packed_by' => auth()->id(),
                     'packed_at' => now(),
+                ]);
+
+                ActivityLog::create([
+                    'user_id'           => auth()->id(),
+                    'user_name'         => auth()->user()?->name,
+                    'action'            => 'transfer_packed',
+                    'entity_type'       => 'Transfer',
+                    'entity_id'         => $transfer->id,
+                    'entity_identifier' => $transfer->transfer_number,
+                    'details' => [
+                        'box_count'      => 1,
+                        'warehouse_name' => $transfer->fromWarehouse?->name,
+                        'shop_name'      => $transfer->toShop?->name,
+                    ],
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->header('User-Agent'),
                 ]);
             }
 

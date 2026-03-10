@@ -6,9 +6,12 @@ use App\Enums\BoxStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\SaleType;
 use App\Events\Sales\SaleCompleted;
+use App\Models\ActivityLog;
 use App\Models\Box;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\Shop;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class SaleService
@@ -126,8 +129,51 @@ class SaleService
                 'has_price_override' => $hasPriceOverride,
             ]);
 
+            // ── Primary sale log ─────────────────────────────────────────────────────
+            $shop = Shop::find($sale->shop_id);
+
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'sale_created',
+                'entity_type'       => 'Sale',
+                'entity_id'         => $sale->id,
+                'entity_identifier' => $sale->sale_number,
+                'details' => [
+                    'total'        => $sale->total,
+                    'shop_name'    => $shop?->name,
+                    'item_count'   => count($data['items']),
+                    'payment'      => $data['payment_method'] instanceof \BackedEnum
+                                        ? $data['payment_method']->value
+                                        : $data['payment_method'],
+                ],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
+            // ── Separate log if any item had a price override ─────────────────────────
+            if ($hasPriceOverride) {
+                ActivityLog::create([
+                    'user_id'           => auth()->id(),
+                    'user_name'         => auth()->user()?->name,
+                    'action'            => 'price_modified',
+                    'entity_type'       => 'Sale',
+                    'entity_id'         => $sale->id,
+                    'entity_identifier' => $sale->sale_number,
+                    'details' => [
+                        'total'     => $sale->total,
+                        'shop_name' => $shop?->name,
+                    ],
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->header('User-Agent'),
+                ]);
+            }
+
             // Event removed — App\Events\Sales\SaleCompleted has no registered listeners.
             // Re-add once a listener exists: event(new SaleCompleted($sale));
+
+            // Invalidate analytics cache after sale creation
+            Cache::flush();
 
             return $sale;
         });
@@ -163,6 +209,27 @@ class SaleService
                 }
             }
 
+            $shop = Shop::find($sale->shop_id);
+
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'sale_voided',
+                'entity_type'       => 'Sale',
+                'entity_id'         => $sale->id,
+                'entity_identifier' => $sale->sale_number,
+                'details' => [
+                    'reason'    => $reason,
+                    'total'     => $sale->total,
+                    'shop_name' => $shop?->name,
+                ],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
+            // Invalidate analytics cache after voiding sale
+            Cache::flush();
+
             return $sale;
         });
     }
@@ -178,6 +245,27 @@ class SaleService
             'price_override_approved_at' => now(),
             'price_override_reason' => $reason,
         ]);
+
+        $shop = Shop::find($sale->shop_id);
+
+        ActivityLog::create([
+            'user_id'           => auth()->id(),
+            'user_name'         => auth()->user()?->name,
+            'action'            => 'price_override_approved',
+            'entity_type'       => 'Sale',
+            'entity_id'         => $sale->id,
+            'entity_identifier' => $sale->sale_number,
+            'details' => [
+                'reason'    => $reason,
+                'total'     => $sale->total,
+                'shop_name' => $shop?->name,
+            ],
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->header('User-Agent'),
+        ]);
+
+        // Invalidate analytics cache after approving price override
+        Cache::flush();
 
         return $sale;
     }

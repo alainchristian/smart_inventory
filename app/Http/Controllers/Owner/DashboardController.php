@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\ReturnModel;
 use App\Models\DamagedGood;
+use App\Models\ActivityLog;
 use App\Services\Analytics\InventoryAnalyticsService;
 use App\Services\Analytics\TransferAnalyticsService;
 use Illuminate\Http\Request;
@@ -179,6 +180,12 @@ class DashboardController extends Controller
             ];
         });
 
+        // ─── Recent Activities ────────────────────────────────────────────────
+        $recentActivities = ActivityLog::with('user')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
         return view('owner.dashboard', compact(
             'stats',
             'recentTransfers',
@@ -186,6 +193,7 @@ class DashboardController extends Controller
             'salesStats',
             'salesChartData',
             'shopStockFill',
+            'recentActivities',
             'filter',
             'fromDate',
             'toDate',
