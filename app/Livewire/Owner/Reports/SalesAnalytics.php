@@ -13,7 +13,7 @@ class SalesAnalytics extends Component
     public string $dateFrom    = '';
     public string $dateTo      = '';
     public string $locationFilter = 'all';
-    public string $activeTab   = 'overview';   // overview | ledger | audit | sellers
+    public string $activeTab   = 'overview';   // overview | ledger | audit | sellers | payments | credit
 
     protected $queryString = [
         'dateFrom'       => ['except' => ''],

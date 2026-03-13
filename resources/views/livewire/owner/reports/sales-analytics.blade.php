@@ -1,6 +1,6 @@
 {{-- ┌─────────────────────────────────────────────────────────────────────────┐
     │  Owner · Sales Analytics                                               │
-    │  Tabs: Overview · Ledger · Audit · Sellers                            │
+    │  Tabs: Overview · Ledger · Audit · Sellers · Payments · Credit       │
     │  Consistent with .bkpi design system (app.css)                        │
     └─────────────────────────────────────────────────────────────────────────┘ --}}
 <div wire:poll.60s>
@@ -323,6 +323,8 @@
             'ledger'   => ['label' => 'Sales Ledger','icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
             'audit'    => ['label' => 'Price Audit', 'icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
             'sellers'  => ['label' => 'Sellers',    'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],
+            'payments' => ['label' => 'Payments',   'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
+            'credit'   => ['label' => 'Credit',     'icon' => 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z'],
         ];
     @endphp
     @foreach($tabs as $key => $tab)
@@ -1183,6 +1185,433 @@
             </div>
 
         </div>
+    </div>
+
+{{-- ══════════════════════════════════════════════════════════════════════════
+     TAB: PAYMENTS
+══════════════════════════════════════════════════════════════════════════ --}}
+@elseif($activeTab === 'payments')
+
+    @php
+        // Get payment summary data - ensure we include the full day
+        $startDate = \Carbon\Carbon::parse($dateFrom)->startOfDay();
+        $endDate = \Carbon\Carbon::parse($dateTo)->endOfDay();
+
+        $paymentQuery = \App\Models\SalePayment::query()
+            ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
+            ->whereNull('sales.voided_at')
+            ->where('sales.sale_date', '>=', $startDate)
+            ->where('sales.sale_date', '<=', $endDate);
+
+        if ($locationFilter !== 'all') {
+            $shopId = (int) str_replace('shop:', '', $locationFilter);
+            $paymentQuery->where('sales.shop_id', $shopId);
+        }
+
+        $paymentSummary = $paymentQuery
+            ->select('sale_payments.payment_method', \Illuminate\Support\Facades\DB::raw('SUM(sale_payments.amount) as total_amount'), \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT sale_payments.sale_id) as transaction_count'))
+            ->groupBy('sale_payments.payment_method')
+            ->get();
+
+        $paymentMethods = [];
+        foreach (\App\Enums\PaymentMethod::cases() as $method) {
+            $data = $paymentSummary->firstWhere('payment_method', $method->value);
+            $paymentMethods[$method->value] = [
+                'label' => $method->label(),
+                'total' => $data ? $data->total_amount : 0,
+                'count' => $data ? $data->transaction_count : 0,
+            ];
+        }
+
+        $totalRevenue = array_sum(array_column($paymentMethods, 'total'));
+
+        // Split payment stats
+        $salesQuery = \App\Models\Sale::query()
+            ->whereNull('voided_at')
+            ->where('sale_date', '>=', $startDate)
+            ->where('sale_date', '<=', $endDate);
+
+        if ($locationFilter !== 'all') {
+            $shopId = (int) str_replace('shop:', '', $locationFilter);
+            $salesQuery->where('shop_id', $shopId);
+        }
+
+        $totalSales = (clone $salesQuery)->count();
+        $splitPaymentSales = (clone $salesQuery)->where('is_split_payment', true)->count();
+        $splitPercentage = $totalSales > 0 ? round(($splitPaymentSales / $totalSales) * 100, 1) : 0;
+
+        // Credit stats
+        $creditSales = (clone $salesQuery)->where('has_credit', true);
+        $creditCount = $creditSales->count();
+        $creditTotal = $creditSales->sum('credit_amount');
+
+        // Average transaction value (no division needed, amounts are already in RWF)
+        $avgTransactionValue = $totalSales > 0 ? round($totalRevenue / $totalSales) : 0;
+    @endphp
+
+    {{-- Payment KPI Cards - Modern Design --}}
+    <div class="biz-kpi-grid" style="margin-bottom:24px">
+
+        {{-- Total Revenue --}}
+        <div class="bkpi violet" style="animation:fadeUp .35s ease .05s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon violet">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                            <line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Total Revenue</span>
+                </div>
+                <span class="bkpi-pct up">{{ $totalSales }}</span>
+            </div>
+            <div class="bkpi-value">{{ number_format($totalRevenue , 0) }}</div>
+            <div class="bkpi-meta">{{ $totalSales }} transactions · RWF</div>
+            <div style="display:flex;gap:0;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+                <div style="flex:1;text-align:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--violet);font-family:var(--mono)">{{ number_format($avgTransactionValue , 0) }}</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Avg Order</div>
+                </div>
+                <div style="flex:1;text-align:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ $splitPaymentSales }}</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Split</div>
+                </div>
+                <div style="flex:1;text-align:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--amber);font-family:var(--mono)">{{ $creditCount }}</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Credit</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Cash Payments --}}
+        <div class="bkpi green" style="animation:fadeUp .35s ease .10s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Cash</span>
+                </div>
+                @php
+                    $cashPct = $totalRevenue > 0 ? round(($paymentMethods['cash']['total'] / $totalRevenue) * 100, 1) : 0;
+                @endphp
+                <span class="bkpi-pct {{ $cashPct > 0 ? 'up' : '' }}">{{ $cashPct }}%</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--green)">{{ number_format($paymentMethods['cash']['total'] , 0) }}</div>
+            <div class="bkpi-meta">{{ $paymentMethods['cash']['count'] }} transactions · RWF</div>
+        </div>
+
+        {{-- Card Payments --}}
+        <div class="bkpi blue" style="animation:fadeUp .35s ease .15s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                            <line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Card</span>
+                </div>
+                @php
+                    $cardPct = $totalRevenue > 0 ? round(($paymentMethods['card']['total'] / $totalRevenue) * 100, 1) : 0;
+                @endphp
+                <span class="bkpi-pct {{ $cardPct > 0 ? 'up' : '' }}">{{ $cardPct }}%</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--blue)">{{ number_format($paymentMethods['card']['total'] , 0) }}</div>
+            <div class="bkpi-meta">{{ $paymentMethods['card']['count'] }} transactions · RWF</div>
+        </div>
+
+        {{-- Mobile Money --}}
+        <div class="bkpi pink" style="animation:fadeUp .35s ease .20s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon pink">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                            <line x1="12" y1="18" x2="12.01" y2="18"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Mobile Money</span>
+                </div>
+                @php
+                    $mmPct = $totalRevenue > 0 ? round(($paymentMethods['mobile_money']['total'] / $totalRevenue) * 100, 1) : 0;
+                @endphp
+                <span class="bkpi-pct {{ $mmPct > 0 ? 'up' : '' }}">{{ $mmPct }}%</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--pink)">{{ number_format($paymentMethods['mobile_money']['total'] , 0) }}</div>
+            <div class="bkpi-meta">{{ $paymentMethods['mobile_money']['count'] }} transactions · RWF</div>
+        </div>
+
+        {{-- Bank Transfer --}}
+        <div class="bkpi amber" style="animation:fadeUp .35s ease .25s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon amber">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Bank Transfer</span>
+                </div>
+                @php
+                    $btPct = $totalRevenue > 0 ? round(($paymentMethods['bank_transfer']['total'] / $totalRevenue) * 100, 1) : 0;
+                @endphp
+                <span class="bkpi-pct {{ $btPct > 0 ? 'up' : '' }}">{{ $btPct }}%</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--amber)">{{ number_format($paymentMethods['bank_transfer']['total'] , 0) }}</div>
+            <div class="bkpi-meta">{{ $paymentMethods['bank_transfer']['count'] }} transactions · RWF</div>
+        </div>
+
+        {{-- Credit --}}
+        <div class="bkpi red" style="animation:fadeUp .35s ease .30s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon red">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Credit</span>
+                </div>
+                @php
+                    $crPct = $totalRevenue > 0 ? round(($paymentMethods['credit']['total'] / $totalRevenue) * 100, 1) : 0;
+                @endphp
+                <span class="bkpi-pct {{ $crPct > 0 ? 'down' : '' }}">{{ $crPct }}%</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--red)">{{ number_format($paymentMethods['credit']['total'] , 0) }}</div>
+            <div class="bkpi-meta">{{ $creditCount }} transactions · RWF</div>
+            <div style="display:flex;gap:0;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+                <div style="flex:1;text-align:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--red);font-family:var(--mono)">{{ number_format($creditTotal , 0) }}</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Outstanding</div>
+                </div>
+                <div style="flex:1;text-align:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ $creditCount }}</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Sales</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{{-- ══════════════════════════════════════════════════════════════════════════
+     TAB: CREDIT
+══════════════════════════════════════════════════════════════════════════ --}}
+@elseif($activeTab === 'credit')
+
+    @php
+        // Credit summary stats
+        $customerQuery = \App\Models\Customer::query();
+
+        if ($locationFilter !== 'all') {
+            $shopId = (int) str_replace('shop:', '', $locationFilter);
+            $customerQuery->where('shop_id', $shopId);
+        }
+
+        $customersWithCredit = (clone $customerQuery)->where('outstanding_balance', '>', 0)->count();
+        $totalOutstanding = (clone $customerQuery)->sum('outstanding_balance');
+        $totalCreditGiven = (clone $customerQuery)->sum('total_credit_given');
+        $totalRepaid = (clone $customerQuery)->sum('total_repaid');
+
+        // Calculate repayment rate
+        $repaymentRate = $totalCreditGiven > 0 ? round(($totalRepaid / $totalCreditGiven) * 100, 1) : 0;
+
+        // Top customers by outstanding balance
+        $topCustomers = (clone $customerQuery)
+            ->where('outstanding_balance', '>', 0)
+            ->with('shop')
+            ->orderBy('outstanding_balance', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get credit sales from date range - ensure we include the full day
+        $startDate = \Carbon\Carbon::parse($dateFrom)->startOfDay();
+        $endDate = \Carbon\Carbon::parse($dateTo)->endOfDay();
+
+        $creditSalesInPeriod = \App\Models\Sale::query()
+            ->whereNull('voided_at')
+            ->where('has_credit', true)
+            ->where('sale_date', '>=', $startDate)
+            ->where('sale_date', '<=', $endDate);
+
+        if ($locationFilter !== 'all') {
+            $shopId = (int) str_replace('shop:', '', $locationFilter);
+            $creditSalesInPeriod->where('shop_id', $shopId);
+        }
+
+        $creditSalesCount = $creditSalesInPeriod->count();
+        $creditGivenInPeriod = $creditSalesInPeriod->sum('credit_amount');
+    @endphp
+
+    {{-- Credit KPI Cards - Modern Design --}}
+    <div class="biz-kpi-grid" style="margin-bottom:24px">
+
+        {{-- Total Outstanding --}}
+        <div class="bkpi red" style="animation:fadeUp .35s ease .05s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon red">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Outstanding Balance</span>
+                </div>
+                <span class="bkpi-pct down">{{ $customersWithCredit }}</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--red)">{{ number_format($totalOutstanding , 0) }}</div>
+            <div class="bkpi-meta">{{ $customersWithCredit }} customers · RWF</div>
+            <div style="display:flex;gap:0;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+                <div style="flex:1;text-align:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--red);font-family:var(--mono)">{{ number_format($totalCreditGiven , 0) }}</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Total Given</div>
+                </div>
+                <div style="flex:1;text-align:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--green);font-family:var(--mono)">{{ number_format($totalRepaid , 0) }}</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Repaid</div>
+                </div>
+                <div style="flex:1;text-align:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ $repaymentRate }}%</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Rate</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Credit Given (Period) --}}
+        <div class="bkpi amber" style="animation:fadeUp .35s ease .10s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon amber">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Credit Given (Period)</span>
+                </div>
+                <span class="bkpi-pct {{ $creditSalesCount > 0 ? 'down' : '' }}">{{ $creditSalesCount }}</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--amber)">{{ number_format($creditGivenInPeriod , 0) }}</div>
+            <div class="bkpi-meta">{{ $creditSalesCount }} sales · RWF</div>
+        </div>
+
+        {{-- Customers with Credit --}}
+        <div class="bkpi blue" style="animation:fadeUp .35s ease .15s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Customers</span>
+                </div>
+                @php
+                    $avgDebt = $customersWithCredit > 0 ? round($totalOutstanding / $customersWithCredit , 0) : 0;
+                @endphp
+                <span class="bkpi-pct">{{ number_format($avgDebt) }}</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--blue)">{{ number_format($customersWithCredit) }}</div>
+            <div class="bkpi-meta">Avg: {{ number_format($avgDebt, 0) }} RWF per customer</div>
+        </div>
+
+        {{-- Repayment Rate --}}
+        <div class="bkpi green" style="animation:fadeUp .35s ease .20s both">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div class="bkpi-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
+                    <span class="bkpi-name">Repayment Rate</span>
+                </div>
+                <span class="bkpi-pct {{ $repaymentRate >= 80 ? 'up' : 'down' }}">{{ $repaymentRate >= 80 ? '↑' : '↓' }}</span>
+            </div>
+            <div class="bkpi-value" style="color:var(--green)">{{ $repaymentRate }}%</div>
+            <div class="bkpi-meta">{{ number_format($totalRepaid , 0) }} RWF repaid</div>
+        </div>
+
+    </div>
+
+    {{-- Top Customers by Outstanding Balance --}}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;animation:fadeUp .35s ease .25s both">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Top Customers by Outstanding Balance</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Highest credit balances · All time</div>
+            </div>
+            <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">Top {{ $topCustomers->count() }}</span>
+        </div>
+
+        @if($topCustomers->count() > 0)
+            <div style="overflow-x:auto">
+                <table class="sa-table" style="width:100%;border-collapse:collapse;font-size:13px">
+                    <colgroup>
+                        <col style="width:50px">
+                        <col style="width:auto">
+                        <col style="width:140px">
+                        <col style="width:140px">
+                        <col style="width:120px">
+                        <col style="width:120px">
+                        <col style="width:120px">
+                    </colgroup>
+                    <thead>
+                        <tr style="border-bottom:1px solid var(--border);background:var(--surface2)">
+                            <th style="text-align:center;padding:10px 14px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-size:10px">#</th>
+                            <th style="text-align:left;padding:10px 14px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-size:10px">Customer</th>
+                            <th style="text-align:left;padding:10px 14px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-size:10px">Phone</th>
+                            <th style="text-align:left;padding:10px 14px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-size:10px">Shop</th>
+                            <th style="text-align:right;padding:10px 14px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-size:10px">Outstanding</th>
+                            <th style="text-align:right;padding:10px 14px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-size:10px">Given</th>
+                            <th style="text-align:right;padding:10px 14px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-size:10px">Repaid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($topCustomers as $index => $customer)
+                            <tr style="border-bottom:1px solid var(--border)">
+                                <td style="text-align:center;padding:12px 14px">
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:var(--surface2);color:var(--text-sub);font-size:11px;font-weight:700">{{ $index + 1 }}</span>
+                                </td>
+                                <td style="padding:12px 14px;font-weight:600;color:var(--text)">{{ $customer->name }}</td>
+                                <td style="padding:12px 14px;font-family:var(--mono);color:var(--text-sub);font-size:12px">{{ $customer->phone }}</td>
+                                <td style="padding:12px 14px;color:var(--text-sub);font-size:12px">{{ $customer->shop?->name ?? '—' }}</td>
+                                <td style="text-align:right;padding:12px 14px">
+                                    <span style="font-family:var(--mono);font-weight:700;color:var(--red);font-size:13px">{{ number_format($customer->outstanding_balance , 0) }}</span>
+                                </td>
+                                <td style="text-align:right;padding:12px 14px">
+                                    <span style="font-family:var(--mono);color:var(--text-sub);font-size:12px">{{ number_format($customer->total_credit_given , 0) }}</span>
+                                </td>
+                                <td style="text-align:right;padding:12px 14px">
+                                    <span style="font-family:var(--mono);color:var(--green);font-size:12px;font-weight:600">{{ number_format($customer->total_repaid , 0) }}</span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <div style="text-align:center;padding:60px 20px;color:var(--text-dim)">
+                <svg style="width:48px;height:48px;margin:0 auto 16px;opacity:0.3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <div style="font-size:14px;font-weight:600;color:var(--text-sub);margin-bottom:4px">No Credit Customers Found</div>
+                <div style="font-size:12px;font-style:italic">All customers have cleared their balances</div>
+            </div>
+        @endif
     </div>
 
 @endif

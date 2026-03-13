@@ -124,6 +124,8 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/sales', function () { return view('owner.reports.sales'); })->name('sales');
         Route::get('/transfers', function () { return view('owner.reports.transfers'); })->name('transfers');
         Route::get('/losses', function () { return view('owner.reports.losses'); })->name('losses');
+        Route::get('/payment-methods', function () { return view('owner.reports.payment-methods'); })->name('payment-methods');
+        Route::get('/customer-credit', function () { return view('owner.reports.customer-credit'); })->name('customer-credit');
     });
 
     // System settings

@@ -220,6 +220,20 @@
                                            onmouseout="if (!'{{ request()->routeIs('owner.reports.losses') }}') { this.style.color='var(--text-dim)'; }">
                                             Losses
                                         </a>
+                                        <a href="{{ route('owner.reports.payment-methods') }}"
+                                           class="block px-3 py-1 text-[11.5px] rounded-lg transition-colors"
+                                           style="{{ request()->routeIs('owner.reports.payment-methods') ? 'color: var(--accent);' : 'color: var(--text-dim);' }}"
+                                           onmouseover="if (!'{{ request()->routeIs('owner.reports.payment-methods') }}') { this.style.color='var(--text-sub)'; }"
+                                           onmouseout="if (!'{{ request()->routeIs('owner.reports.payment-methods') }}') { this.style.color='var(--text-dim)'; }">
+                                            Payment Methods
+                                        </a>
+                                        <a href="{{ route('owner.reports.customer-credit') }}"
+                                           class="block px-3 py-1 text-[11.5px] rounded-lg transition-colors"
+                                           style="{{ request()->routeIs('owner.reports.customer-credit') ? 'color: var(--accent);' : 'color: var(--text-dim);' }}"
+                                           onmouseover="if (!'{{ request()->routeIs('owner.reports.customer-credit') }}') { this.style.color='var(--text-sub)'; }"
+                                           onmouseout="if (!'{{ request()->routeIs('owner.reports.customer-credit') }}') { this.style.color='var(--text-dim)'; }">
+                                            Customer Credit
+                                        </a>
                                     </div>
                                 </div>
 
