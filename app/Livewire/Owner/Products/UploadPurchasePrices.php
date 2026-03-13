@@ -224,13 +224,15 @@ class UploadPurchasePrices extends Component
         $filename = 'product-prices-' . now()->format('Y-m-d') . '.csv';
         $handle   = fopen('php://temp', 'r+');
 
-        fputcsv($handle, ['sku', 'purchase_price', 'computed_box_purchase_price', 'product_name_reference']);
+        fputcsv($handle, ['sku', 'purchase_price', 'selling_price', 'computed_box_purchase_price', 'computed_box_selling_price', 'product_name_reference']);
 
         foreach ($products as $product) {
             fputcsv($handle, [
                 $product->sku,
                 $product->purchase_price ?? 0,
+                $product->selling_price ?? 0,
                 $product->purchase_price * $product->items_per_box,  // computed, read-only reference
+                $product->selling_price * $product->items_per_box,   // computed, read-only reference
                 $product->name,   // reference only — this column is ignored on upload
             ]);
         }

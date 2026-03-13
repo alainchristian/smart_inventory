@@ -695,7 +695,7 @@
 @if($showCheckoutModal)
 <div style="position:fixed;inset:0;z-index:600;display:flex;align-items:center;
             justify-content:center;background:rgba(26,31,54,.55);backdrop-filter:blur(4px)">
-  <div style="background:var(--surface);border-radius:18px;width:520px;max-width:96vw;
+  <div style="background:var(--surface);border-radius:18px;width:600px;max-width:96vw;
               max-height:94vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.24)">
 
     {{-- Header --}}
@@ -738,83 +738,236 @@
         </div>
       </div>
 
-      {{-- Payment method --}}
-      <div style="margin-bottom:18px">
-        <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);
-                      margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">
-          Payment Method
-        </label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          @foreach(['cash'=>['💵','Cash'],'mobile_money'=>['📱','Mobile Money'],'card'=>['💳','Card'],'bank_transfer'=>['🏦','Bank Transfer']] as $val=>$d)
-          <button wire:click="$set('paymentMethod','{{ $val }}')"
-                  style="padding:12px 10px;border-radius:10px;cursor:pointer;
-                         border:2px solid {{ $paymentMethod===$val ? 'var(--accent)' : 'var(--border)' }};
-                         background:{{ $paymentMethod===$val ? 'var(--accent-dim)' : 'var(--surface2)' }};
-                         text-align:center;transition:.12s">
-            <div style="font-size:18px;margin-bottom:4px">{{ $d[0] }}</div>
-            <div style="font-size:12px;font-weight:700;
-                        color:{{ $paymentMethod===$val ? 'var(--accent)' : 'var(--text-sub)' }}">
-              {{ $d[1] }}
-            </div>
-          </button>
-          @endforeach
-        </div>
-      </div>
-
-      {{-- Cash: amount received + change --}}
-      @if($paymentMethod === 'cash')
+      {{-- ── Customer Selection ─────────────────────────────────────── --}}
       <div style="margin-bottom:16px">
-        <label style="display:block;font-size:12px;font-weight:700;color:var(--text-sub);
-                      margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px">
-          Amount Received
-        </label>
-        <div style="position:relative">
-          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
-                       font-size:12px;font-weight:700;color:var(--text-dim)">RWF</span>
-          <input wire:model.live="amountReceived" type="number" min="0" step="100"
-                 style="width:100%;padding:13px 14px 13px 46px;box-sizing:border-box;
-                        border:2px solid var(--border);border-radius:10px;
-                        font-size:24px;font-weight:800;text-align:right;
-                        background:var(--surface);color:var(--text);font-family:var(--mono);outline:none"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+        <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
+          Customer
         </div>
-        @if($changeAmount > 0)
-        <div style="margin-top:10px;padding:12px 14px;background:var(--green-dim);
-                    border:1.5px solid var(--green);border-radius:10px;
-                    display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;font-weight:700;color:var(--green)">Change to return</span>
-          <span style="font-size:22px;font-weight:800;color:var(--green);font-family:var(--mono)">
-            {{ number_format($changeAmount) }} RWF
-          </span>
-        </div>
+
+        @if($selectedCustomerId)
+          {{-- Selected customer chip --}}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
+                      background:var(--accent-dim);border:1px solid rgba(59,111,212,.18);border-radius:10px">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">
+                {{ $selectedCustomerName }}
+              </div>
+              <div style="font-size:11px;color:var(--text-sub);font-family:var(--mono)">
+                {{ $selectedCustomerPhone }}
+                @if($selectedCustomerOutstandingBalance > 0)
+                  <span style="margin-left:8px;padding:2px 6px;background:rgba(217,119,6,.12);
+                               color:var(--amber);border-radius:6px;font-weight:700">
+                    Credit: {{ number_format($selectedCustomerOutstandingBalance) }} RWF
+                  </span>
+                @endif
+              </div>
+            </div>
+            <button wire:click="clearCustomer"
+                style="width:26px;height:26px;border-radius:50%;border:none;background:rgba(225,29,72,.10);
+                       color:var(--red);cursor:pointer;font-size:16px;display:grid;place-items:center;
+                       line-height:1;padding:0">×</button>
+          </div>
+        @elseif($showNewCustomerForm)
+          {{-- New customer form --}}
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Register New Customer</div>
+            <div style="display:grid;gap:8px">
+              <div>
+                <label style="display:block;font-size:10px;font-weight:600;color:var(--text-sub);margin-bottom:4px">Name *</label>
+                <input wire:model="newCustomerName" type="text" placeholder="Full name"
+                    style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;
+                           background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box">
+              </div>
+              <div>
+                <label style="display:block;font-size:10px;font-weight:600;color:var(--text-sub);margin-bottom:4px">Phone *</label>
+                <input wire:model="newCustomerPhone" type="text" placeholder="+250..."
+                    style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;
+                           background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;font-family:var(--mono)">
+              </div>
+              <div>
+                <label style="display:block;font-size:10px;font-weight:600;color:var(--text-sub);margin-bottom:4px">Email</label>
+                <input wire:model="newCustomerEmail" type="email" placeholder="email@example.com"
+                    style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;
+                           background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box">
+              </div>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <button wire:click="cancelNewCustomer"
+                    style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);
+                           background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;color:var(--text)">
+                  Cancel
+                </button>
+                <button wire:click="saveNewCustomer"
+                    style="flex:1;padding:8px;border-radius:8px;border:none;
+                           background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                  Save & Select
+                </button>
+              </div>
+            </div>
+          </div>
+        @else
+          {{-- Search or create --}}
+          <div style="position:relative">
+            <input wire:model.live="customerSearch" type="text" placeholder="Search by name or phone..."
+                onfocus="@this.set('showCustomerSearch', true)"
+                style="width:100%;padding:9px 11px;border:1.5px solid var(--border);
+                       border-radius:8px;font-size:13px;background:var(--surface);
+                       color:var(--text);outline:none;box-sizing:border-box">
+            @if($showCustomerSearch && count($customerResults) > 0)
+              <div style="position:absolute;top:100%;left:0;right:0;margin-top:4px;
+                          background:var(--surface);border:1px solid var(--border);border-radius:10px;
+                          box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;z-index:10">
+                @foreach($customerResults as $customer)
+                  <button wire:click="selectCustomer({{ $customer['id'] }})" type="button"
+                      style="width:100%;padding:10px 12px;text-align:left;border:none;background:transparent;
+                             cursor:pointer;display:block;border-bottom:1px solid var(--border)">
+                    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px">
+                      {{ $customer['name'] }}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-sub);font-family:var(--mono)">
+                      {{ $customer['phone'] }}
+                      @if($customer['outstanding_balance'] > 0)
+                        <span style="margin-left:6px;color:var(--amber)">
+                          Credit: {{ number_format($customer['outstanding_balance']) }}
+                        </span>
+                      @endif
+                    </div>
+                  </button>
+                @endforeach
+              </div>
+            @endif
+          </div>
+          <button wire:click="showCreateCustomerForm" type="button"
+              style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px dashed var(--border);
+                     background:transparent;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-sub)">
+            + Register New Customer
+          </button>
         @endif
       </div>
-      @endif
 
-      {{-- Customer info --}}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div>
-          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Customer Name <span style="color:var(--text-dim);font-weight:400">(optional)</span>
-          </label>
-          <input wire:model="customerName" type="text" placeholder="Name..."
-                 style="width:100%;padding:9px 11px;border:1.5px solid var(--border);
-                        border-radius:8px;font-size:13px;background:var(--surface);
-                        color:var(--text);outline:none;box-sizing:border-box"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+      {{-- ── Payment Panel (all 5 channels always visible) ───────────── --}}
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
+          Payment
         </div>
-        <div>
-          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Phone <span style="color:var(--text-dim);font-weight:400">(optional)</span>
-          </label>
-          <input wire:model="customerPhone" type="text" placeholder="+250..."
-                 style="width:100%;padding:9px 11px;border:1.5px solid var(--border);
-                        border-radius:8px;font-size:13px;background:var(--surface);
-                        color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+
+        {{-- Balance summary bar --}}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;
+                    background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
+          <div style="text-align:center;flex:1">
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px">Total</div>
+            <div style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--text)">
+              {{ number_format($cartTotal) }}
+            </div>
+          </div>
+          <div style="width:1px;height:30px;background:var(--border)"></div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px">Allocated</div>
+            <div style="font-size:15px;font-weight:700;font-family:var(--mono);
+                        color:{{ $this->totalAllocated >= $cartTotal ? 'var(--green)' : 'var(--text)' }}">
+              {{ number_format($this->totalAllocated) }}
+            </div>
+          </div>
+          <div style="width:1px;height:30px;background:var(--border)"></div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px">Remaining</div>
+            <div style="font-size:15px;font-weight:700;font-family:var(--mono);
+                        color:{{ $this->remainingBalance === 0 ? 'var(--green)' : 'var(--red)' }}">
+              {{ $this->remainingBalance === 0 ? '✓ 0' : number_format($this->remainingBalance) }}
+            </div>
+          </div>
+        </div>
+
+        {{-- Credit warning --}}
+        @if($creditWarningVisible)
+        <div style="padding:10px 12px;background:rgba(217,119,6,.08);border:1.5px solid var(--amber);
+                    border-radius:10px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:2px">
+            ⚠ Outstanding Balance
+          </div>
+          <div style="font-size:11px;color:var(--text-sub)">
+            {{ $creditWarningMessage }}
+          </div>
+        </div>
+        @endif
+
+        {{-- Payment channel rows --}}
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+          {{-- Cash --}}
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border)">
+            <span style="font-size:18px">💵</span>
+            <div style="flex:1">
+              <div style="font-size:11px;font-weight:600;color:var(--text-sub);margin-bottom:2px">Cash</div>
+              <input wire:model.blur="payAmt_cash" type="number" min="0" placeholder="0"
+                  style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;
+                         background:var(--surface);color:var(--text);font-size:13px;font-family:var(--mono)">
+            </div>
+          </div>
+
+          {{-- Card --}}
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border)">
+            <span style="font-size:18px">💳</span>
+            <div style="flex:1">
+              <div style="font-size:11px;font-weight:600;color:var(--text-sub);margin-bottom:2px">Card</div>
+              <input wire:model.blur="payAmt_card" type="number" min="0" placeholder="0"
+                  style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;
+                         background:var(--surface);color:var(--text);font-size:13px;font-family:var(--mono)">
+              @if($payAmt_card > 0)
+                <input wire:model="payRef_card" type="text" placeholder="Ref (optional)"
+                    style="width:100%;margin-top:4px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;
+                           background:var(--surface);color:var(--text);font-size:11px">
+              @endif
+            </div>
+          </div>
+
+          {{-- Mobile Money --}}
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border)">
+            <span style="font-size:18px">📱</span>
+            <div style="flex:1">
+              <div style="font-size:11px;font-weight:600;color:var(--text-sub);margin-bottom:2px">Mobile Money</div>
+              <input wire:model.blur="payAmt_mobile_money" type="number" min="0" placeholder="0"
+                  style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;
+                         background:var(--surface);color:var(--text);font-size:13px;font-family:var(--mono)">
+              @if($payAmt_mobile_money > 0)
+                <input wire:model="payRef_mobile_money" type="text" placeholder="Ref (optional)"
+                    style="width:100%;margin-top:4px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;
+                           background:var(--surface);color:var(--text);font-size:11px">
+              @endif
+            </div>
+          </div>
+
+          {{-- Bank Transfer --}}
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border)">
+            <span style="font-size:18px">🏦</span>
+            <div style="flex:1">
+              <div style="font-size:11px;font-weight:600;color:var(--text-sub);margin-bottom:2px">Bank Transfer</div>
+              <input wire:model.blur="payAmt_bank_transfer" type="number" min="0" placeholder="0"
+                  style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;
+                         background:var(--surface);color:var(--text);font-size:13px;font-family:var(--mono)">
+              @if($payAmt_bank_transfer > 0)
+                <input wire:model="payRef_bank_transfer" type="text" placeholder="Ref (optional)"
+                    style="width:100%;margin-top:4px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;
+                           background:var(--surface);color:var(--text);font-size:11px">
+              @endif
+            </div>
+          </div>
+
+          {{-- Credit --}}
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+                      background:{{ $payAmt_credit > 0 ? 'rgba(217,119,6,.04)' : 'transparent' }}">
+            <span style="font-size:18px">📋</span>
+            <div style="flex:1">
+              <div style="font-size:11px;font-weight:600;color:var(--text-sub);margin-bottom:2px">
+                Credit
+                @if(!$selectedCustomerId)
+                  <span style="color:var(--amber);font-size:10px">(select customer first)</span>
+                @endif
+              </div>
+              <input wire:model.blur="payAmt_credit" type="number" min="0" placeholder="0"
+                  {{ !$selectedCustomerId ? 'disabled' : '' }}
+                  style="width:100%;padding:6px 8px;border:1px solid {{ $payAmt_credit > 0 ? 'var(--amber)' : 'var(--border)' }};
+                         border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;font-family:var(--mono)">
+            </div>
+          </div>
         </div>
       </div>
 
@@ -826,9 +979,7 @@
         <textarea wire:model="notes" rows="2" placeholder="Sale notes..."
                   style="width:100%;padding:9px 11px;border:1.5px solid var(--border);
                          border-radius:8px;font-size:13px;background:var(--surface);
-                         color:var(--text);outline:none;resize:none;box-sizing:border-box"
-                  onfocus="this.style.borderColor='var(--accent)'"
-                  onblur="this.style.borderColor='var(--border)'"></textarea>
+                         color:var(--text);outline:none;resize:none;box-sizing:border-box"></textarea>
       </div>
 
       {{-- Complete sale --}}
@@ -898,9 +1049,38 @@
         </span>
       </div>
 
+      {{-- Payment breakdown --}}
+      @if($completedSale->payments && $completedSale->payments->count() > 0)
+        <div style="margin:12px 0;padding:10px 12px;background:var(--bg);border-radius:8px">
+          <div style="font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
+            Payment Breakdown
+          </div>
+          @foreach($completedSale->payments as $payment)
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+              <span style="font-size:11px;color:var(--text-sub)">
+                {{ match($payment->payment_method->value) {
+                  'cash' => '💵 Cash',
+                  'card' => '💳 Card',
+                  'mobile_money' => '📱 Mobile Money',
+                  'bank_transfer' => '🏦 Bank Transfer',
+                  'credit' => '📋 Credit',
+                  default => $payment->payment_method->label()
+                } }}
+                @if($payment->reference)
+                  <span style="color:var(--text-dim);font-family:var(--mono)"> ({{ $payment->reference }})</span>
+                @endif
+              </span>
+              <span style="font-size:12px;font-weight:700;font-family:var(--mono);
+                            color:{{ $payment->payment_method->value === 'credit' ? 'var(--amber)' : 'var(--text)' }}">
+                {{ number_format($payment->amount) }}
+              </span>
+            </div>
+          @endforeach
+        </div>
+      @endif
+
       <div style="font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:20px">
-        {{ $completedSale['payment_method']?->label() ?? 'Cash' }}
-        · {{ now()->format('d M Y H:i') }}
+        {{ now()->format('d M Y H:i') }}
       </div>
 
       <button wire:click="$set('showReceiptModal', false)"

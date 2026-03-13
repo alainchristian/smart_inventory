@@ -21,6 +21,9 @@
     {{-- on navigate, and async script injection races against Alpine component init. --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+    {{-- ApexCharts for sales analytics --}}
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
+
     <!-- Theme lock -->
     <script>
         (function() {

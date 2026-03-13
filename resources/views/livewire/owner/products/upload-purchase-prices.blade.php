@@ -30,7 +30,7 @@
       <div>
         <div class="text-[13px] font-semibold text-[var(--text)]">Download current price sheet</div>
         <div class="text-[12px] text-[var(--text-sub)] mt-0.5">
-          Pre-filled with all {{ \App\Models\Product::count() }} SKUs and their current purchase prices
+          Pre-filled with all {{ \App\Models\Product::count() }} SKUs and their current purchase & selling prices
         </div>
       </div>
       <button wire:click="downloadTemplate"

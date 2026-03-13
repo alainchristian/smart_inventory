@@ -23,6 +23,11 @@ class Sale extends Model
         'tax',
         'discount',
         'total',
+        'customer_id',
+        'is_split_payment',
+        'amount_paid',
+        'credit_amount',
+        'has_credit',
         'customer_name',
         'customer_phone',
         'sold_by',
@@ -44,6 +49,10 @@ class Sale extends Model
         'tax' => 'integer',
         'discount' => 'integer',
         'total' => 'integer',
+        'is_split_payment' => 'boolean',
+        'amount_paid' => 'integer',
+        'credit_amount' => 'integer',
+        'has_credit' => 'boolean',
         'sale_date' => 'datetime',
         'voided_at' => 'datetime',
         'has_price_override' => 'boolean',
@@ -79,6 +88,16 @@ class Sale extends Model
     public function returns(): HasMany
     {
         return $this->hasMany(ReturnModel::class);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SalePayment::class);
     }
 
     // Helper methods

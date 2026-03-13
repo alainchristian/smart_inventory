@@ -4,16 +4,261 @@
     │  Consistent with .bkpi design system (app.css)                        │
     └─────────────────────────────────────────────────────────────────────────┘ --}}
 <div wire:poll.60s>
+<style>
+/* ── Font size increases for better readability ───────────────────── */
+
+/* Desktop font size increases */
+.sa-page-title { font-size:26px !important; }
+.sa-page-subtitle { font-size:14px !important; }
+.sa-date-btn { font-size:14px !important; padding:6px 16px !important; }
+.sa-date-input, .sa-shop-select { font-size:14px !important; }
+.sa-tab-btn { font-size:15px !important; }
+.sa-tab-btn svg { width:17px !important; height:17px !important; }
+.sa-section-title { font-size:16px !important; }
+.sa-section-subtitle { font-size:13px !important; }
+.sa-table thead th { font-size:12px !important; }
+.sa-table tbody td { font-size:14px !important; }
+.sa-table tfoot td { font-size:14px !important; }
+
+/* ── Mobile responsive: Sales Analytics ───────────────────────────── */
+
+/* Header: stack controls vertically on mobile */
+@media(max-width:640px) {
+    .sa-header-controls { flex-direction:column !important; align-items:stretch !important; gap:10px !important; }
+    .sa-header-controls > div { flex-wrap:wrap; }
+    .sa-header-controls input[type=date] { flex:1; min-width:0; }
+    .sa-header-controls select { width:100%; }
+    .sa-date-sep { display:none; }
+
+    /* Mobile font sizes */
+    .sa-page-title { font-size:24px !important; }
+    .sa-page-subtitle { font-size:13px !important; }
+    .sa-date-btn { font-size:13px !important; }
+}
+
+/* Tab bar: scrollable, equal-width, icons only on very small screens */
+@media(max-width:900px) {
+    .sa-tab-bar { overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex-wrap:nowrap !important; }
+    .sa-tab-bar::-webkit-scrollbar { display:none; }
+}
+@media(max-width:480px) {
+    .sa-tab-bar button span.sa-tab-lbl { display:none; }
+    .sa-tab-bar button { padding:10px 12px !important; }
+}
+
+/* KPI grid: 2-col on mobile */
+@media(max-width:640px) {
+    .biz-kpi-grid { grid-template-columns:1fr 1fr !important; gap:10px !important; }
+    .bkpi { padding:13px 14px !important; }
+    .bkpi-value { font-size:22px !important; }
+    .bkpi-label { font-size:12px !important; }
+}
+
+/* Summary strips: 2-col on mobile, 1-col on very small */
+@media(max-width:640px) {
+    .sa-strip-wrap { flex-wrap:wrap !important; }
+    .sa-strip-wrap > div {
+        min-width:calc(50% - 8px) !important;
+        flex:none !important;
+        padding:12px 14px !important;
+    }
+    .sa-strip-wrap > div > div:nth-child(1) { font-size:10px !important; }
+    .sa-strip-wrap > div > div:nth-child(2) { font-size:20px !important; }
+    .sa-strip-wrap > div > div:nth-child(3) { font-size:10px !important; }
+
+    /* Audit header mobile */
+    .sa-audit-header { padding:12px 16px !important; }
+    .sa-audit-header .sa-section-title { font-size:14px !important; }
+    .sa-audit-header .sa-section-subtitle { font-size:10px !important; }
+}
+@media(max-width:400px) {
+    .sa-strip-wrap > div {
+        min-width:100% !important;
+        padding:14px 16px !important;
+    }
+    .sa-strip-wrap > div > div:nth-child(2) { font-size:24px !important; }
+
+    /* Customer & Returns stats: single column on very small screens */
+    .sa-customer-stats,
+    .sa-returns-stats {
+        grid-template-columns:1fr !important;
+    }
+    .sa-customer-stats .sa-stat-item,
+    .sa-returns-stats .sa-stat-item {
+        border-right:none !important;
+    }
+    .sa-customer-stats .sa-stat-item > div:first-child,
+    .sa-returns-stats .sa-stat-item > div:first-child {
+        font-size:20px !important;
+    }
+    .sa-customer-stats .sa-stat-item > div:last-child,
+    .sa-returns-stats .sa-stat-item > div:last-child {
+        font-size:10px !important;
+    }
+}
+
+/* Two-column layout sections: single column on mobile */
+@media(max-width:640px) {
+    .sa-two-col { grid-template-columns:1fr !important; }
+    .sa-two-col-flex { flex-direction:column !important; }
+
+    /* Customer Analysis stats: 2x2 grid on mobile */
+    .sa-customer-stats {
+        display:grid !important;
+        grid-template-columns:1fr 1fr !important;
+    }
+    .sa-customer-stats .sa-stat-item {
+        border-right:1px solid var(--border) !important;
+        border-bottom:1px solid var(--border) !important;
+        padding:10px 12px !important;
+    }
+    .sa-customer-stats .sa-stat-item:nth-child(2n) {
+        border-right:none !important;
+    }
+    .sa-customer-stats .sa-stat-item > div:first-child { font-size:16px !important; }
+    .sa-customer-stats .sa-stat-item > div:last-child { font-size:9px !important; }
+
+    /* Returns Summary stats: 2x2 grid on mobile */
+    .sa-returns-stats {
+        display:grid !important;
+        grid-template-columns:1fr 1fr !important;
+    }
+    .sa-returns-stats .sa-stat-item {
+        border-right:1px solid var(--border) !important;
+        border-bottom:1px solid var(--border) !important;
+        padding:10px 12px !important;
+        min-width:0 !important;
+    }
+    .sa-returns-stats .sa-stat-item:nth-child(2n) {
+        border-right:none !important;
+    }
+    .sa-returns-stats .sa-stat-item > div:first-child { font-size:16px !important; }
+    .sa-returns-stats .sa-stat-item > div:last-child { font-size:9px !important; }
+
+    /* Customer table: better mobile padding */
+    .sa-customer-table th,
+    .sa-customer-table td {
+        padding:8px 6px !important;
+        font-size:11px !important;
+    }
+    .sa-customer-table th:first-child,
+    .sa-customer-table td:first-child {
+        padding-left:12px !important;
+    }
+
+    /* Returned products: better mobile layout */
+    .sa-returned-products {
+        padding:12px 14px !important;
+    }
+    .sa-returned-products .sa-product-row {
+        padding:8px 0 !important;
+    }
+    .sa-returned-products .sa-product-row span:first-child {
+        font-size:11px !important;
+        word-break:break-word;
+    }
+    .sa-returned-products .sa-product-row span:last-child {
+        font-size:10px !important;
+    }
+}
+
+/* Tables: horizontal scroll with visual hint */
+.sa-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+/*
+  Mobile card transform for dense tables.
+  Tables marked .sa-cards-mob switch to stacked card layout at ≤640px.
+  Each <td data-label="…"> renders as a label+value row.
+  Columns marked .sa-hide-mob are hidden entirely on mobile.
+*/
+@media(max-width:640px) {
+    .sa-hide-mob { display:none !important; }
+
+    .sa-cards-mob thead { display:none; }
+    .sa-cards-mob tfoot { display:none; }
+    .sa-cards-mob tbody { display:block; }
+    .sa-cards-mob tr    { display:block; padding:11px 14px; border-bottom:1px solid var(--border); }
+    .sa-cards-mob tr:last-child { border-bottom:none; }
+    .sa-cards-mob td   { display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:14px !important; }
+    .sa-cards-mob td[data-label]::before {
+        content: attr(data-label);
+        font-size:11px; font-weight:700; color:var(--text-dim);
+        text-transform:uppercase; letter-spacing:.4px; flex-shrink:0; margin-right:8px;
+    }
+    .sa-cards-mob td.sa-row-title { display:block; padding-bottom:7px; border-bottom:1px solid var(--border); margin-bottom:4px; }
+    .sa-cards-mob td.sa-row-title::before { display:none; }
+
+    /* Scorecard mobile - day as header */
+    .sa-scorecard-mob td.sa-day-header {
+        display:block !important;
+        background:var(--bg) !important;
+        padding:10px 12px !important;
+        border:none !important;
+        border-bottom:1px solid var(--border) !important;
+        margin:0 -14px 8px -14px !important;
+        font-size:13px !important;
+        font-weight:700 !important;
+    }
+    .sa-scorecard-mob td.sa-day-header::before { display:none !important; }
+
+    /* Scorecard mobile - show more data in compact layout */
+    .sa-scorecard-mob .sa-day-meta {
+        display:flex !important;
+        flex-wrap:wrap;
+        gap:8px;
+        margin-top:6px;
+        font-size:11px !important;
+        font-weight:500 !important;
+        color:var(--text-sub) !important;
+    }
+    .sa-scorecard-mob .sa-day-meta > span {
+        display:inline-flex;
+        align-items:center;
+        padding:3px 8px;
+        background:var(--surface);
+        border-radius:6px;
+        font-family:var(--mono);
+    }
+
+    /* Mobile totals footer (replaces hidden tfoot) */
+    .sa-mob-total { display:flex !important; }
+
+    /* Ledger table - keep as horizontal scroll, don't convert to cards */
+    .sa-ledger-table { min-width:700px !important; }
+    .sa-ledger-table thead { display:table-header-group !important; }
+    .sa-ledger-table tbody { display:table-row-group !important; }
+    .sa-ledger-table tfoot { display:table-footer-group !important; }
+    .sa-ledger-table tr { display:table-row !important; padding:0 !important; }
+    .sa-ledger-table th { display:table-cell !important; }
+    .sa-ledger-table td { display:table-cell !important; padding:10px 14px !important; }
+    .sa-ledger-table td::before { display:none !important; }
+    .sa-ledger-table col { display:table-column !important; }
+
+    /* Audit table - keep as horizontal scroll, don't convert to cards */
+    .sa-audit-table { min-width:900px !important; }
+    .sa-audit-table thead { display:table-header-group !important; }
+    .sa-audit-table tbody { display:table-row-group !important; }
+    .sa-audit-table tfoot { display:table-footer-group !important; }
+    .sa-audit-table tr { display:table-row !important; padding:0 !important; }
+    .sa-audit-table th { display:table-cell !important; }
+    .sa-audit-table td { display:table-cell !important; padding:10px 14px !important; }
+    .sa-audit-table td::before { display:none !important; }
+    .sa-audit-table col { display:table-column !important; }
+}
+@media(min-width:641px) {
+    .sa-mob-total { display:none !important; }
+}
+</style>
 
 {{-- ══════════════════════════════════════════════════════════════════════════
      PAGE HEADER
 ══════════════════════════════════════════════════════════════════════════ --}}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap">
     <div>
-        <h1 style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin:0 0 4px">
+        <h1 class="sa-page-title" style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin:0 0 4px">
             Sales Analytics
         </h1>
-        <div style="font-size:13px;color:var(--text-dim);font-family:var(--mono)">
+        <div class="sa-page-subtitle" style="font-size:13px;color:var(--text-dim);font-family:var(--mono)">
             {{ $this->activeDateRangeLabel }}
             @if($locationFilter !== 'all')
                 · {{ $this->selectedShopName }}
@@ -23,36 +268,42 @@
     </div>
 
     {{-- Date range quick-select --}}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        @foreach(['today' => 'Today', 'week' => 'Week', 'month' => 'Month', 'quarter' => 'Quarter', 'year' => 'Year'] as $k => $lbl)
-            @php
-                $startDate = match($k) {
-                    'today'   => now()->startOfDay()->toDateString(),
-                    'week'    => now()->startOfWeek()->toDateString(),
-                    'month'   => now()->startOfMonth()->toDateString(),
-                    'quarter' => now()->startOfQuarter()->toDateString(),
-                    'year'    => now()->startOfYear()->toDateString(),
-                    default   => now()->startOfMonth()->toDateString(),
-                };
-                $active = $dateFrom === $startDate && $dateTo === now()->toDateString();
-            @endphp
-            <button wire:click="setDateRange('{{ $k }}')"
-                style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid {{ $active ? 'var(--accent)' : 'var(--border)' }};background:{{ $active ? 'var(--accent)' : 'var(--surface)' }};color:{{ $active ? '#fff' : 'var(--text-sub)' }};cursor:pointer;transition:all .15s">
-                {{ $lbl }}
-            </button>
-        @endforeach
+    <div class="sa-header-controls" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        @php
+            $currentPeriod = 'custom';
+            $periods = [
+                'today'   => ['label' => 'Today',        'start' => now()->startOfDay()->toDateString()],
+                'week'    => ['label' => 'This Week',    'start' => now()->startOfWeek()->toDateString()],
+                'month'   => ['label' => 'This Month',   'start' => now()->startOfMonth()->toDateString()],
+                'quarter' => ['label' => 'This Quarter', 'start' => now()->startOfQuarter()->toDateString()],
+                'year'    => ['label' => 'This Year',    'start' => now()->startOfYear()->toDateString()],
+            ];
+            foreach ($periods as $key => $period) {
+                if ($dateFrom === $period['start'] && $dateTo === now()->toDateString()) {
+                    $currentPeriod = $key;
+                    break;
+                }
+            }
+        @endphp
+        <select wire:change="setDateRange($event.target.value)" class="sa-date-btn"
+            style="padding:6px 16px;border-radius:8px;font-size:14px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">
+            <option value="custom" {{ $currentPeriod === 'custom' ? 'selected' : '' }}>Custom Range</option>
+            @foreach($periods as $key => $period)
+                <option value="{{ $key }}" {{ $currentPeriod === $key ? 'selected' : '' }}>{{ $period['label'] }}</option>
+            @endforeach
+        </select>
 
         {{-- Custom date range --}}
         <div style="display:flex;gap:6px;align-items:center">
-            <input type="date" wire:model.live="dateFrom" max="{{ $dateTo }}"
+            <input type="date" wire:model.live="dateFrom" max="{{ $dateTo }}" class="sa-date-input"
                 style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-family:var(--mono)">
-            <span style="color:var(--text-dim);font-size:12px">→</span>
-            <input type="date" wire:model.live="dateTo" min="{{ $dateFrom }}" max="{{ now()->toDateString() }}"
+            <span class="sa-date-sep" style="color:var(--text-dim);font-size:12px">→</span>
+            <input type="date" wire:model.live="dateTo" min="{{ $dateFrom }}" max="{{ now()->toDateString() }}" class="sa-date-input"
                 style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-family:var(--mono)">
         </div>
 
         {{-- Shop filter --}}
-        <select wire:model.live="locationFilter"
+        <select wire:model.live="locationFilter" class="sa-shop-select"
             style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
             <option value="all">All Shops</option>
             @foreach($this->shops as $shop)
@@ -65,7 +316,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      TAB BAR
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div style="display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:28px">
+<div class="sa-tab-bar" style="display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:28px">
     @php
         $tabs = [
             'overview' => ['label' => 'Overview',  'icon' => 'M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z'],
@@ -75,7 +326,7 @@
         ];
     @endphp
     @foreach($tabs as $key => $tab)
-        <button wire:click="setTab('{{ $key }}')"
+        <button type="button" wire:click="setTab('{{ $key }}')" class="sa-tab-btn"
             style="display:flex;align-items:center;gap:7px;padding:10px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;
                    color:{{ $activeTab === $key ? 'var(--accent)' : 'var(--text-sub)' }};
                    border-bottom:2px solid {{ $activeTab === $key ? 'var(--accent)' : 'transparent' }};
@@ -83,7 +334,7 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="{{ $tab['icon'] }}"/>
             </svg>
-            {{ $tab['label'] }}
+            <span class="sa-tab-lbl">{{ $tab['label'] }}</span>
         </button>
     @endforeach
 </div>
@@ -240,61 +491,84 @@
     {{-- ── Revenue Trend Chart ──────────────────────────────────────────────── --}}
     @php $trend = $this->revenueTrend @endphp
     @if(count($trend))
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;margin-bottom:24px;animation:fadeUp .4s ease .25s both">
+    <div wire:key="chart-{{ $dateFrom }}-{{ $dateTo }}-{{ $locationFilter }}" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;margin-bottom:24px;animation:fadeUp .4s ease .25s both">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div>
-                <div style="font-size:13px;font-weight:700;color:var(--text)">Revenue Trend</div>
-                <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Daily revenue · {{ $this->activeDateRangeLabel }}</div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Revenue Trend</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Daily revenue · {{ $this->activeDateRangeLabel }}</div>
             </div>
         </div>
-        <div id="rev-trend-chart" style="min-height:180px"></div>
+        <div id="rev-trend-chart-{{ md5($dateFrom.$dateTo.$locationFilter) }}" style="min-height:240px"></div>
     </div>
     @endif
 
     {{-- ── Daily Scorecard ──────────────────────────────────────────────────── --}}
-    @php $scorecard = $this->dailyScorecard; @endphp
+    @php
+        $scorecard = $this->dailyScorecard;
+        // Filter out days with no transactions
+        $scorecard = array_filter($scorecard, fn($day) => $day['transactions'] > 0);
+    @endphp
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:24px;animation:fadeUp .4s ease .30s both;overflow:hidden">
         <div style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
             <div>
-                <div style="font-size:13px;font-weight:700;color:var(--text)">Daily Scorecard</div>
-                <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Day-by-day breakdown · revenue, profit, returns</div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Daily Scorecard</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Day-by-day breakdown · revenue, profit, returns</div>
             </div>
         </div>
-        <div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <div class="sa-table-scroll">
+            <table class="sa-cards-mob sa-scorecard-mob sa-table" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                     <tr style="border-bottom:1px solid var(--border);background:var(--bg)">
                         <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Date</th>
                         <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Revenue</th>
-                        <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Transactions</th>
-                        <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Items</th>
+                        <th class="sa-hide-mob" style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Transactions</th>
+                        <th class="sa-hide-mob" style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Items</th>
                         <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Gross Profit</th>
                         <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Margin</th>
-                        <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Discounts</th>
-                        <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Returns</th>
+                        <th class="sa-hide-mob" style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Discounts</th>
+                        <th class="sa-hide-mob" style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Returns</th>
                         <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Net Rev.</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse(array_reverse($scorecard) as $day)
                     <tr style="border-bottom:1px solid var(--border);{{ $day['is_today'] ? 'background:rgba(59,111,212,.04)' : '' }};transition:background .1s" onmouseover="this.style.background='rgba(59,111,212,.03)'" onmouseout="this.style.background='{{ $day['is_today'] ? 'rgba(59,111,212,.04)' : 'transparent' }}'">
-                        <td style="padding:9px 16px;white-space:nowrap">
-                            <span style="font-weight:600;color:{{ $day['is_today'] ? 'var(--accent)' : 'var(--text)' }}">{{ $day['day_label'] }}</span>
-                            @if($day['is_today'])<span style="margin-left:6px;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-dim);padding:1px 6px;border-radius:10px">TODAY</span>@endif
+                        <td class="sa-row-title sa-day-header" style="padding:9px 16px;white-space:nowrap">
+                            <div>
+                                <span style="font-weight:600;color:{{ $day['is_today'] ? 'var(--accent)' : 'var(--text)' }}">{{ $day['day_label'] }}</span>
+                                @if($day['is_today'])<span style="margin-left:6px;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-dim);padding:1px 6px;border-radius:10px">TODAY</span>@endif
+                            </div>
+                            <div class="sa-day-meta">
+                                @if($day['transactions'] > 0)
+                                    <span>{{ $day['transactions'] }} txns</span>
+                                @endif
+                                @if($day['items_sold'] > 0)
+                                    <span>{{ number_format($day['items_sold']) }} items</span>
+                                @endif
+                                @if($day['gross_profit'] > 0)
+                                    <span style="color:var(--green)">{{ number_format($day['gross_profit']) }} GP</span>
+                                @endif
+                                @if($day['discounts'] > 0)
+                                    <span style="color:var(--amber)">{{ number_format($day['discounts']) }} disc</span>
+                                @endif
+                                @if($day['returns_count'] > 0)
+                                    <span style="color:var(--red)">{{ $day['returns_count'] }} returns</span>
+                                @endif
+                            </div>
                         </td>
-                        <td style="padding:9px 14px;text-align:right;font-family:var(--mono);font-weight:600;color:{{ $day['revenue'] > 0 ? 'var(--text)' : 'var(--text-dim)' }}">
+                        <td data-label="Revenue" style="padding:9px 14px;text-align:right;font-family:var(--mono);font-weight:600;color:{{ $day['revenue'] > 0 ? 'var(--text)' : 'var(--text-dim)' }}">
                             {{ $day['revenue'] > 0 ? number_format($day['revenue']) : '—' }}
                         </td>
-                        <td style="padding:9px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub)">
+                        <td class="sa-hide-mob" data-label="Txns" style="padding:9px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub)">
                             {{ $day['transactions'] > 0 ? $day['transactions'] : '—' }}
                         </td>
-                        <td style="padding:9px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub)">
+                        <td class="sa-hide-mob" data-label="Items" style="padding:9px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub)">
                             {{ $day['items_sold'] > 0 ? number_format($day['items_sold']) : '—' }}
                         </td>
-                        <td style="padding:9px 14px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--green)">
+                        <td data-label="Profit" style="padding:9px 14px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--green)">
                             {{ $day['gross_profit'] > 0 ? number_format($day['gross_profit']) : '—' }}
                         </td>
-                        <td style="padding:9px 14px;text-align:right">
+                        <td data-label="Margin" style="padding:9px 14px;text-align:right">
                             @if($day['margin_pct'] > 0)
                                 <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:var(--mono);
                                     background:{{ $day['margin_pct'] >= 30 ? 'var(--green-glow)' : ($day['margin_pct'] >= 15 ? 'rgba(251,191,36,.12)' : 'rgba(225,29,72,.08)') }};
@@ -305,13 +579,13 @@
                                 <span style="color:var(--text-dim)">—</span>
                             @endif
                         </td>
-                        <td style="padding:9px 14px;text-align:right;font-family:var(--mono);color:{{ $day['discounts'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">
+                        <td class="sa-hide-mob" data-label="Discounts" style="padding:9px 14px;text-align:right;font-family:var(--mono);color:{{ $day['discounts'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">
                             {{ $day['discounts'] > 0 ? number_format($day['discounts']) : '—' }}
                         </td>
-                        <td style="padding:9px 14px;text-align:right;font-family:var(--mono);color:{{ $day['returns_count'] > 0 ? 'var(--red)' : 'var(--text-dim)' }}">
+                        <td class="sa-hide-mob" data-label="Returns" style="padding:9px 14px;text-align:right;font-family:var(--mono);color:{{ $day['returns_count'] > 0 ? 'var(--red)' : 'var(--text-dim)' }}">
                             {{ $day['returns_count'] > 0 ? $day['returns_count'] . ' · ' . number_format($day['returned_amount']) : '—' }}
                         </td>
-                        <td style="padding:9px 14px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--text)">
+                        <td data-label="Net Rev." style="padding:9px 14px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--text)">
                             {{ $day['net_revenue'] > 0 ? number_format($day['net_revenue']) : '—' }}
                         </td>
                     </tr>
@@ -324,14 +598,14 @@
     </div>
 
     {{-- ── Bottom Row: Top Products + Shop Breakdown + Payment Methods ─────── --}}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+    <div class="sa-two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
 
         {{-- Top products --}}
         @php $topProducts = $this->topProducts @endphp
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;animation:fadeUp .4s ease .35s both">
             <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-                <div style="font-size:13px;font-weight:700;color:var(--text)">Top Products</div>
-                <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">By revenue · with margin</div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Top Products</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">By revenue · with margin</div>
             </div>
             <div style="overflow:auto;max-height:340px">
                 <table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -370,8 +644,8 @@
             @php $shops = $this->shopPerformance @endphp
             <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;animation:fadeUp .4s ease .40s both">
                 <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-                    <div style="font-size:13px;font-weight:700;color:var(--text)">Shop Performance</div>
-                    <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Revenue share and growth per shop</div>
+                    <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Shop Performance</div>
+                    <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Revenue share and growth per shop</div>
                 </div>
                 @php $maxShopRev = max(array_column($shops, 'revenue') ?: [1]) @endphp
                 @foreach($shops as $shop)
@@ -407,7 +681,7 @@
             @php $methods = $this->paymentMethods @endphp
             <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;animation:fadeUp .4s ease .45s both">
                 <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-                    <div style="font-size:13px;font-weight:700;color:var(--text)">Payment Methods</div>
+                    <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Payment Methods</div>
                 </div>
                 <div style="padding:12px 20px">
                     @foreach($methods as $m)
@@ -436,7 +710,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             </div>
             <div>
-                <div style="font-size:13px;font-weight:700;color:var(--text)">Returns Impact</div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Returns Impact</div>
                 <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono)">{{ $ret['returns_count'] }} returns · {{ number_format($ret['returned_revenue']) }} RWF refunded · {{ $ret['return_rate'] }}% of gross revenue</div>
             </div>
         </div>
@@ -464,7 +738,7 @@
     @endphp
 
     {{-- Summary strip --}}
-    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+    <div class="sa-strip-wrap" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px">
         @foreach([
             ['label'=>'Gross Revenue',  'value'=>number_format($gp['revenue']),      'color'=>'var(--accent)',  'sub'=>$rev['transactions_count'].' transactions'],
             ['label'=>'Total Cost',     'value'=>number_format($gp['total_cost']),   'color'=>'var(--text-sub)','sub'=>'Cost of goods'],
@@ -483,22 +757,33 @@
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
         <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
             <div>
-                <div style="font-size:13px;font-weight:700;color:var(--text)">Product Sales Ledger</div>
-                <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Revenue, cost, and gross profit per product · {{ $this->activeDateRangeLabel }}</div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Product Sales Ledger</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Revenue, cost, and gross profit per product · {{ $this->activeDateRangeLabel }}</div>
             </div>
             <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ count($topP) }} products</span>
         </div>
-        <div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <div class="sa-table-scroll">
+            <table class="sa-ledger-table sa-table" style="min-width:900px;width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">
+                <colgroup>
+                    <col class="sa-hide-mob" style="width:60px">
+                    <col style="width:280px">
+                    <col style="width:100px">
+                    <col style="width:100px">
+                    <col class="sa-hide-mob" style="width:120px">
+                    <col style="width:120px">
+                    <col class="sa-hide-mob" style="width:120px">
+                    <col style="width:140px">
+                    <col style="width:120px">
+                </colgroup>
                 <thead>
                     <tr style="background:var(--bg);border-bottom:1px solid var(--border)">
-                        <th style="padding:10px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">#</th>
-                        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Product</th>
+                        <th class="sa-hide-mob" style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">#</th>
+                        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Product</th>
                         <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Units</th>
                         <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Txns</th>
-                        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Avg Price</th>
+                        <th class="sa-hide-mob" style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Avg Price</th>
                         <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Revenue</th>
-                        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Share</th>
+                        <th class="sa-hide-mob" style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Share</th>
                         <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Gross Profit</th>
                         <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Margin %</th>
                     </tr>
@@ -506,22 +791,22 @@
                 <tbody>
                     @forelse($topP as $i => $p)
                     <tr style="border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background='rgba(59,111,212,.03)'" onmouseout="this.style.background='transparent'">
-                        <td style="padding:10px 16px;font-size:11px;color:var(--text-dim);font-family:var(--mono)">{{ $i + 1 }}</td>
-                        <td style="padding:10px 14px">
-                            <div style="font-weight:600;color:var(--text)">{{ $p['product_name'] }}</div>
+                        <td class="sa-hide-mob" style="padding:10px 12px;font-size:11px;color:var(--text-dim);font-family:var(--mono)">{{ $i + 1 }}</td>
+                        <td style="padding:10px 14px;overflow:hidden;text-overflow:ellipsis">
+                            <div style="font-weight:600;color:var(--text);white-space:normal;word-break:break-word">{{ $p['product_name'] }}</div>
                         </td>
-                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ number_format($p['quantity_sold']) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ $p['transaction_count'] }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ number_format($p['avg_selling_price']) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format($p['revenue']) }}</td>
-                        <td style="padding:10px 14px;text-align:right">
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub);white-space:nowrap">{{ number_format($p['quantity_sold']) }}</td>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub);white-space:nowrap">{{ $p['transaction_count'] }}</td>
+                        <td class="sa-hide-mob" style="padding:10px 14px;text-align:right;font-family:var(--mono);color:var(--text-sub);white-space:nowrap">{{ number_format($p['avg_selling_price']) }}</td>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--text);white-space:nowrap">{{ number_format($p['revenue']) }}</td>
+                        <td class="sa-hide-mob" style="padding:10px 14px;text-align:right;white-space:nowrap">
                             <div style="height:4px;background:var(--bg);border-radius:2px;width:60px;display:inline-block;vertical-align:middle;margin-right:6px">
                                 <div style="height:100%;width:{{ $p['revenue_share'] }}%;background:var(--accent);border-radius:2px"></div>
                             </div>
                             <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $p['revenue_share'] }}%</span>
                         </td>
-                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green)">{{ number_format($p['gross_profit']) }}</td>
-                        <td style="padding:10px 14px;text-align:right">
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green);white-space:nowrap">{{ number_format($p['gross_profit']) }}</td>
+                        <td style="padding:10px 14px;text-align:right;white-space:nowrap">
                             <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:var(--mono);
                                 background:{{ $p['margin_pct'] >= 30 ? 'var(--green-glow)' : ($p['margin_pct'] >= 15 ? 'rgba(251,191,36,.12)' : 'rgba(225,29,72,.08)') }};
                                 color:{{ $p['margin_pct'] >= 30 ? 'var(--green)' : ($p['margin_pct'] >= 15 ? 'var(--amber)' : 'var(--red)') }}">
@@ -536,11 +821,12 @@
                 @if(count($topP))
                 <tfoot>
                     <tr style="background:var(--bg);border-top:2px solid var(--border)">
-                        <td colspan="5" style="padding:10px 14px;font-size:12px;font-weight:700;color:var(--text-sub)">TOTALS</td>
-                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format(array_sum(array_column($topP, 'revenue'))) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text-dim)">100%</td>
-                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green)">{{ number_format(array_sum(array_column($topP, 'gross_profit'))) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:700;font-family:var(--mono);color:var(--green)">{{ $gp['margin_pct'] }}%</td>
+                        <td class="sa-hide-mob" style="padding:10px 12px"></td>
+                        <td colspan="4" style="padding:10px 14px;font-size:12px;font-weight:700;color:var(--text-sub)">TOTALS</td>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--text);white-space:nowrap">{{ number_format(array_sum(array_column($topP, 'revenue'))) }}</td>
+                        <td class="sa-hide-mob" style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text-dim)">100%</td>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green);white-space:nowrap">{{ number_format(array_sum(array_column($topP, 'gross_profit'))) }}</td>
+                        <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:700;font-family:var(--mono);color:var(--green);white-space:nowrap">{{ $gp['margin_pct'] }}%</td>
                     </tr>
                 </tfoot>
                 @endif
@@ -560,7 +846,7 @@
     @endphp
 
     {{-- Summary strip --}}
-    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+    <div class="sa-strip-wrap" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px">
         @foreach([
             ['label'=>'Overridden Sales',    'value'=>$overStat['override_sales_count'],  'color'=>'var(--amber)',   'sub'=>'Sales with price changes'],
             ['label'=>'Overridden Items',    'value'=>$overStat['override_items_count'],  'color'=>'var(--text)',    'sub'=>'Line items modified'],
@@ -577,90 +863,103 @@
 
     {{-- Audit table --}}
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
-        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div class="sa-audit-header" style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div>
-                <div style="font-size:13px;font-weight:700;color:var(--text)">Price Modification Audit Trail</div>
-                <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Every price change in the period · who, what, when, how much</div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Price Modification Audit Trail</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Every price change in the period · who, what, when, how much</div>
             </div>
             <span style="font-size:11px;font-family:var(--mono);color:{{ count($auditLog) > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">
                 {{ count($auditLog) }} modifications
             </span>
         </div>
-        <div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <div class="sa-table-scroll">
+            <table class="sa-audit-table sa-table" style="min-width:1000px;width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">
+                <colgroup>
+                    <col style="width:140px">
+                    <col style="width:240px">
+                    <col style="width:160px">
+                    <col style="width:90px">
+                    <col style="width:110px">
+                    <col style="width:110px">
+                    <col style="width:110px">
+                    <col style="width:100px">
+                    <col style="width:180px">
+                    <col style="width:120px">
+                </colgroup>
                 <thead>
                     <tr style="background:var(--bg);border-bottom:1px solid var(--border)">
-                        <th style="padding:10px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Date & Time</th>
-                        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Sale #</th>
-                        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Shop</th>
-                        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Seller</th>
-                        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Product</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Qty</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Original</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Actual</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Discount</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Margin</th>
-                        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Reason</th>
-                        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Approved</th>
+                        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Date & Time</th>
+                        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Sale # / Product</th>
+                        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Shop / Seller</th>
+                        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Qty</th>
+                        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Original</th>
+                        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Actual</th>
+                        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Discount</th>
+                        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Margin</th>
+                        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Reason</th>
+                        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Approved</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($auditLog as $entry)
                     <tr style="border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background='rgba(59,111,212,.03)'" onmouseout="this.style.background='transparent'">
-                        <td style="padding:9px 16px;white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--text-sub)">
-                            {{ \Carbon\Carbon::parse($entry['sale_date'])->format('M d, H:i') }}
+                        <td style="padding:10px 14px;white-space:nowrap">
+                            <div style="font-family:var(--mono);font-size:12px;color:var(--text);font-weight:600">{{ \Carbon\Carbon::parse($entry['sale_date'])->format('M d, Y') }}</div>
+                            <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:2px">{{ \Carbon\Carbon::parse($entry['sale_date'])->format('H:i') }}</div>
                         </td>
-                        <td style="padding:9px 12px;white-space:nowrap">
-                            <span style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--accent)">{{ $entry['sale_number'] }}</span>
+                        <td style="padding:10px 14px">
+                            <div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--accent);margin-bottom:3px">{{ $entry['sale_number'] }}</div>
+                            <div style="font-size:12px;color:var(--text);white-space:normal;word-break:break-word">
+                                {{ $entry['product_name'] }}
+                                @if($entry['line_count'] > 1)
+                                    <span style="margin-left:4px;padding:1px 6px;background:var(--accent-glow);color:var(--accent);border-radius:10px;font-size:10px;font-weight:700;font-family:var(--mono)">×{{ $entry['line_count'] }}</span>
+                                @endif
+                            </div>
                         </td>
-                        <td style="padding:9px 12px;font-size:11px;color:var(--text-sub);white-space:nowrap">{{ $entry['shop_name'] }}</td>
-                        <td style="padding:9px 12px;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap">{{ $entry['seller_name'] }}</td>
-                        <td style="padding:9px 12px;font-size:11px;color:var(--text)">
-                            {{ $entry['product_name'] }}
-                            @if($entry['line_count'] > 1)
-                                <span style="margin-left:4px;padding:1px 6px;background:var(--accent-glow);color:var(--accent);border-radius:10px;font-size:10px;font-weight:700;font-family:var(--mono)">×{{ $entry['line_count'] }}</span>
-                            @endif
+                        <td style="padding:10px 14px">
+                            <div style="font-size:11px;color:var(--text-sub);margin-bottom:2px">{{ $entry['shop_name'] }}</div>
+                            <div style="font-size:12px;font-weight:600;color:var(--text)">{{ $entry['seller_name'] }}</div>
                         </td>
-                        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--text-sub)">{{ $entry['quantity_display'] }}</td>
-                        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--text-sub)">{{ number_format($entry['original_unit_price']) }}</td>
-                        <td style="padding:9px 12px;text-align:right;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">{{ number_format($entry['actual_unit_price']) }}</td>
-                        <td style="padding:9px 12px;text-align:right">
-                            <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red)">{{ number_format($entry['total_discount']) }}</div>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text-sub);white-space:nowrap">{{ $entry['quantity_display'] }}</td>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text-sub);white-space:nowrap">{{ number_format($entry['original_unit_price']) }}</td>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap">{{ number_format($entry['actual_unit_price']) }}</td>
+                        <td style="padding:10px 14px;text-align:right;white-space:nowrap">
+                            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red)">{{ number_format($entry['total_discount']) }}</div>
                             <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono)">{{ $entry['discount_pct'] }}% off</div>
                         </td>
-                        <td style="padding:9px 12px;text-align:right">
+                        <td style="padding:10px 14px;text-align:right;white-space:nowrap">
                             @if($entry['margin_at_sale'] > 0)
-                                <span style="font-size:11px;font-weight:700;font-family:var(--mono);
+                                <span style="font-size:12px;font-weight:700;font-family:var(--mono);
                                     color:{{ $entry['margin_at_sale'] >= 20 ? 'var(--green)' : ($entry['margin_at_sale'] >= 5 ? 'var(--amber)' : 'var(--red)') }}">
                                     {{ $entry['margin_at_sale'] }}%
                                 </span>
                             @else
-                                <span style="color:var(--red);font-size:11px;font-family:var(--mono);font-weight:700">{{ $entry['margin_at_sale'] }}%</span>
+                                <span style="color:var(--red);font-size:12px;font-family:var(--mono);font-weight:700">{{ $entry['margin_at_sale'] }}%</span>
                             @endif
                         </td>
-                        <td style="padding:9px 12px;font-size:11px;color:var(--text-sub);max-width:180px">
-                            {{ $entry['reason'] ?? '—' }}
+                        <td style="padding:10px 14px;font-size:11px;color:var(--text-sub)">
+                            <div style="white-space:normal;word-break:break-word">{{ $entry['reason'] ?? '—' }}</div>
                             @if($entry['reference'])
-                                <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono)">Ref: {{ $entry['reference'] }}</div>
+                                <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Ref: {{ $entry['reference'] }}</div>
                             @endif
                         </td>
-                        <td style="padding:9px 12px;white-space:nowrap">
+                        <td style="padding:10px 14px;white-space:nowrap">
                             @if($entry['is_approved'])
-                                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--green-glow);color:var(--green)">✓ {{ $entry['approved_by'] }}</span>
+                                <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:var(--green-glow);color:var(--green)">✓ {{ $entry['approved_by'] }}</span>
                             @else
-                                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(251,191,36,.12);color:var(--amber)">Pending</span>
+                                <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:rgba(251,191,36,.12);color:var(--amber)">Pending</span>
                             @endif
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="12" style="padding:48px;text-align:center;color:var(--text-dim)">No price modifications in this period</td></tr>
+                    <tr><td colspan="10" style="padding:48px;text-align:center;color:var(--text-dim)">No price modifications in this period</td></tr>
                     @endforelse
                 </tbody>
                 @if(count($auditLog))
                 <tfoot>
                     <tr style="background:var(--bg);border-top:2px solid var(--border)">
-                        <td colspan="8" style="padding:10px 14px;font-size:12px;font-weight:700;color:var(--text-sub)">TOTAL DISCOUNT GIVEN</td>
-                        <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--red)">{{ number_format($totalDisc) }}</td>
+                        <td colspan="6" style="padding:10px 14px;font-size:12px;font-weight:700;color:var(--text-sub)">TOTAL DISCOUNT GIVEN</td>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--red);white-space:nowrap">{{ number_format($totalDisc) }}</td>
                         <td colspan="3"></td>
                     </tr>
                 </tfoot>
@@ -684,26 +983,26 @@
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:24px">
         <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
             <div>
-                <div style="font-size:13px;font-weight:700;color:var(--text)">Seller Performance</div>
-                <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">{{ $this->activeDateRangeLabel }} · ranked by revenue</div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Seller Performance</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">{{ $this->activeDateRangeLabel }} · ranked by revenue</div>
             </div>
             <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ count($sellers) }} sellers</span>
         </div>
-        <div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <div class="sa-table-scroll">
+            <table class="sa-cards-mob sa-table" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                     <tr style="background:var(--bg);border-bottom:1px solid var(--border)">
-                        <th style="padding:10px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">#</th>
+                        <th class="sa-hide-mob" style="padding:10px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">#</th>
                         <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Seller</th>
-                        <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Shop</th>
+                        <th class="sa-hide-mob" style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Shop</th>
                         <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Txns</th>
                         <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Revenue</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Share</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Avg Order</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Items</th>
+                        <th class="sa-hide-mob" style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Share</th>
+                        <th class="sa-hide-mob" style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Avg Order</th>
+                        <th class="sa-hide-mob" style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Items</th>
                         <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">GP</th>
                         <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Margin</th>
-                        <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--amber);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Discounts</th>
+                        <th class="sa-hide-mob" style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--amber);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Discounts</th>
                         <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--amber);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Overrides</th>
                         <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Voided</th>
                     </tr>
@@ -717,8 +1016,8 @@
                     <tr style="border-bottom:1px solid var(--border);{{ $isTop ? 'background:rgba(14,158,134,.03)' : '' }};transition:background .1s"
                         onmouseover="this.style.background='rgba(59,111,212,.03)'"
                         onmouseout="this.style.background='{{ $isTop ? 'rgba(14,158,134,.03)' : 'transparent' }}'">
-                        <td style="padding:10px 16px;font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $i + 1 }}</td>
-                        <td style="padding:10px 12px">
+                        <td class="sa-hide-mob" style="padding:10px 16px;font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $i + 1 }}</td>
+                        <td class="sa-row-title" style="padding:10px 12px">
                             <div style="display:flex;align-items:center;gap:7px">
                                 <div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;
                                     background:{{ $isTop ? 'var(--green-glow)' : 'var(--bg)' }};
@@ -728,32 +1027,33 @@
                                 <div>
                                     <div style="font-weight:600;color:var(--text);font-size:12px">{{ $s['seller_name'] }}</div>
                                     @if($isTop)<div style="font-size:10px;color:var(--green)">Top seller</div>@endif
+                                    <div style="font-size:10px;color:var(--text-dim);margin-top:2px">{{ $s['shop_name'] }} · {{ $s['transactions'] }} txns · {{ $s['revenue_share'] }}% share</div>
                                 </div>
                             </div>
                         </td>
-                        <td style="padding:10px 12px;font-size:11px;color:var(--text-sub)">{{ $s['shop_name'] }}</td>
-                        <td style="padding:10px 12px;text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ $s['transactions'] }}</td>
-                        <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format($s['revenue']) }}</td>
-                        <td style="padding:10px 12px;text-align:right">
+                        <td class="sa-hide-mob" style="padding:10px 12px;font-size:11px;color:var(--text-sub)">{{ $s['shop_name'] }}</td>
+                        <td data-label="Txns" style="padding:10px 12px;text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ $s['transactions'] }}</td>
+                        <td data-label="Revenue" style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format($s['revenue']) }}</td>
+                        <td class="sa-hide-mob" style="padding:10px 12px;text-align:right">
                             <div style="height:4px;background:var(--bg);border-radius:2px;width:50px;display:inline-block;vertical-align:middle;margin-right:5px">
                                 <div style="height:100%;width:{{ min($s['revenue_share'], 100) }}%;background:var(--accent);border-radius:2px"></div>
                             </div>
                             <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $s['revenue_share'] }}%</span>
                         </td>
-                        <td style="padding:10px 12px;text-align:right;font-family:var(--mono);color:var(--text-sub);font-size:11px">{{ number_format($s['avg_order']) }}</td>
-                        <td style="padding:10px 12px;text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ number_format($s['items_sold']) }}</td>
-                        <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green)">{{ number_format($s['gross_profit']) }}</td>
-                        <td style="padding:10px 12px;text-align:right">
+                        <td class="sa-hide-mob" data-label="Avg Order" style="padding:10px 12px;text-align:right;font-family:var(--mono);color:var(--text-sub);font-size:11px">{{ number_format($s['avg_order']) }}</td>
+                        <td class="sa-hide-mob" data-label="Items" style="padding:10px 12px;text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ number_format($s['items_sold']) }}</td>
+                        <td data-label="GP" style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green)">{{ number_format($s['gross_profit']) }}</td>
+                        <td data-label="Margin" style="padding:10px 12px;text-align:right">
                             <span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:var(--mono);
                                 background:{{ $s['margin_pct'] >= 30 ? 'var(--green-glow)' : ($s['margin_pct'] >= 15 ? 'rgba(251,191,36,.12)' : 'rgba(225,29,72,.08)') }};
                                 color:{{ $s['margin_pct'] >= 30 ? 'var(--green)' : ($s['margin_pct'] >= 15 ? 'var(--amber)' : 'var(--red)') }}">
                                 {{ $s['margin_pct'] }}%
                             </span>
                         </td>
-                        <td style="padding:10px 12px;text-align:right;font-family:var(--mono);color:{{ $s['total_discount'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};font-size:11px">
+                        <td class="sa-hide-mob" data-label="Discounts" style="padding:10px 12px;text-align:right;font-family:var(--mono);color:{{ $s['total_discount'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};font-size:11px">
                             {{ $s['total_discount'] > 0 ? number_format($s['total_discount']) : '—' }}
                         </td>
-                        <td style="padding:10px 12px;text-align:right">
+                        <td data-label="Overrides" style="padding:10px 12px;text-align:right">
                             @if($s['override_count'] > 0)
                                 <span style="font-size:11px;font-weight:700;font-family:var(--mono);padding:2px 7px;border-radius:10px;
                                     background:{{ $s['override_count'] > 3 ? 'rgba(217,119,6,.12)' : 'transparent' }};
@@ -764,7 +1064,7 @@
                                 <span style="color:var(--text-dim)">—</span>
                             @endif
                         </td>
-                        <td style="padding:10px 12px;text-align:right">
+                        <td data-label="Voided" style="padding:10px 12px;text-align:right">
                             @if($s['void_count'] > 0)
                                 <span style="font-size:11px;font-weight:700;font-family:var(--mono);padding:2px 7px;border-radius:10px;
                                     background:rgba(225,29,72,.08);color:var(--red)">
@@ -784,24 +1084,24 @@
     </div>
 
     {{-- Customer Repeat Analysis + Returns side-by-side --}}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="sa-two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
 
         {{-- Customer analysis --}}
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
             <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-                <div style="font-size:13px;font-weight:700;color:var(--text)">Customer Analysis</div>
-                <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Repeat rate and top spenders</div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Customer Analysis</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Repeat rate and top spenders</div>
             </div>
 
             {{-- Stats strip --}}
-            <div style="display:flex;border-bottom:1px solid var(--border)">
+            <div class="sa-customer-stats" style="display:flex;border-bottom:1px solid var(--border)">
                 @foreach([
                     ['label' => 'Known Customers', 'value' => $customers['total_customers'],                      'color' => 'var(--accent)'],
                     ['label' => 'Repeat',           'value' => $customers['repeat_customers'],                     'color' => 'var(--green)'],
                     ['label' => 'Repeat Rate',      'value' => $customers['repeat_rate'].'%',                     'color' => $customers['repeat_rate'] >= 30 ? 'var(--green)' : 'var(--text-sub)'],
                     ['label' => 'Walk-ins',         'value' => $customers['walkin_count'],                        'color' => 'var(--text-dim)'],
                 ] as $stat)
-                <div style="flex:1;padding:12px 14px;text-align:center;border-right:1px solid var(--border)">
+                <div class="sa-stat-item" style="flex:1;padding:12px 14px;text-align:center;border-right:1px solid var(--border)">
                     <div style="font-size:18px;font-weight:700;color:{{ $stat['color'] }}">{{ $stat['value'] }}</div>
                     <div style="font-size:10px;color:var(--text-dim);margin-top:2px">{{ $stat['label'] }}</div>
                 </div>
@@ -809,8 +1109,8 @@
             </div>
 
             {{-- Top customers --}}
-            <div style="overflow:auto;max-height:360px">
-                <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <div class="sa-customer-table-wrap" style="overflow:auto;max-height:360px">
+                <table class="sa-customer-table" style="width:100%;border-collapse:collapse;font-size:12px">
                     <thead style="position:sticky;top:0;background:var(--bg);z-index:1">
                         <tr style="border-bottom:1px solid var(--border)">
                             <th style="padding:8px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Customer</th>
@@ -852,17 +1152,17 @@
 
             <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
                 <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-                    <div style="font-size:13px;font-weight:700;color:var(--text)">Returns Summary</div>
-                    <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Impact on net revenue</div>
+                    <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Returns Summary</div>
+                    <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Impact on net revenue</div>
                 </div>
-                <div style="display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+                <div class="sa-returns-stats" style="display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border)">
                     @foreach([
                         ['label' => 'Returns',      'value' => $ret['returns_count'],              'color' => 'var(--text)'],
                         ['label' => 'Refunded',     'value' => number_format($ret['returned_revenue']), 'color' => 'var(--red)'],
                         ['label' => 'Exchanges',    'value' => $ret['exchange_count'],              'color' => 'var(--amber)'],
                         ['label' => 'Return Rate',  'value' => $ret['return_rate'].'%',             'color' => $ret['return_rate'] > 5 ? 'var(--red)' : 'var(--green)'],
                     ] as $stat)
-                    <div style="flex:1;min-width:80px;padding:12px 14px;text-align:center;border-right:1px solid var(--border)">
+                    <div class="sa-stat-item" style="flex:1;min-width:80px;padding:12px 14px;text-align:center;border-right:1px solid var(--border)">
                         <div style="font-size:18px;font-weight:700;color:{{ $stat['color'] }}">{{ $stat['value'] }}</div>
                         <div style="font-size:10px;color:var(--text-dim);margin-top:2px">{{ $stat['label'] }}</div>
                     </div>
@@ -870,12 +1170,12 @@
                 </div>
 
                 @if(count($ret['top_returned_products']))
-                <div style="padding:14px 20px">
+                <div class="sa-returned-products" style="padding:14px 20px">
                     <div style="font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">Most Returned Products</div>
                     @foreach($ret['top_returned_products'] as $rp)
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
-                        <span style="font-size:12px;color:var(--text)">{{ $rp['product_name'] }}</span>
-                        <span style="font-size:11px;font-family:var(--mono);font-weight:700;color:var(--red)">{{ $rp['qty_returned'] }} units</span>
+                    <div class="sa-product-row" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);gap:10px">
+                        <span style="font-size:12px;color:var(--text);flex:1;min-width:0">{{ $rp['product_name'] }}</span>
+                        <span style="font-size:11px;font-family:var(--mono);font-weight:700;color:var(--red);white-space:nowrap">{{ $rp['qty_returned'] }} units</span>
                     </div>
                     @endforeach
                 </div>
@@ -894,62 +1194,176 @@
 @php $trend = $this->revenueTrend @endphp
 <script>
     (function() {
-        const dates    = @json(array_column($trend, 'date'));
-        const revenues = @json(array_column($trend, 'revenue'));
-        const profits  = @json(array_column($trend, 'revenue')); // use gross profit if available via separate prop
+        const chartId = 'rev-trend-chart-{{ md5($dateFrom.$dateTo.$locationFilter) }}';
+        const rawDates         = @json(array_column($trend, 'date'));
+        const rawRevenues      = @json(array_column($trend, 'revenue'));
+        const rawTransactions  = @json(array_column($trend, 'transactions'));
 
-        const el = document.getElementById('rev-trend-chart');
-        if (!el || typeof ApexCharts === 'undefined') return;
+        // Sanitize data - ensure no null/undefined/NaN values
+        const dates = rawDates.filter(d => d != null);
+        const revenues = rawRevenues.map(v => (v == null || isNaN(v)) ? 0 : Number(v));
+        const transactions = rawTransactions.map(v => (v == null || isNaN(v)) ? 0 : Number(v));
 
-        new ApexCharts(el, {
-            series: [{
-                name: 'Revenue',
-                data: revenues,
-            }],
-            chart: {
-                type: 'area',
-                height: 180,
-                sparkline: { enabled: false },
-                toolbar: { show: false },
-                animations: { enabled: true, easing: 'easeinout', speed: 600 },
-                fontFamily: "'DM Mono', monospace",
-            },
-            stroke: { curve: 'smooth', width: 2 },
-            fill: {
-                type: 'gradient',
-                gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.0, stops: [0, 100] }
-            },
-            colors: ['#3b6fd4'],
-            xaxis: {
-                categories: dates,
-                labels: {
-                    style: { fontSize: '10px', colors: '#7a81a0', fontFamily: "'DM Mono', monospace" },
-                    rotate: -30,
-                    formatter: (val) => {
-                        const d = new Date(val);
-                        return d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initChart);
+        } else {
+            initChart();
+        }
+
+        function initChart() {
+            const el = document.getElementById(chartId);
+            if (!el) {
+                console.warn('Chart element not found:', chartId);
+                return;
+            }
+
+            if (typeof ApexCharts === 'undefined') {
+                console.warn('ApexCharts library not loaded');
+                return;
+            }
+
+            // Validate we have data
+            if (!dates || dates.length === 0 || revenues.length === 0) {
+                console.warn('No valid chart data available');
+                el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">No data available for chart</div>';
+                return;
+            }
+
+            // Clear any existing chart
+            el.innerHTML = '';
+
+            const chart = new ApexCharts(el, {
+                series: [{
+                    name: 'Revenue',
+                    type: 'column',
+                    data: revenues,
+                }, {
+                    name: 'Transactions',
+                    type: 'line',
+                    data: transactions,
+                }],
+                chart: {
+                    height: 240,
+                    type: 'line',
+                    sparkline: { enabled: false },
+                    toolbar: { show: false },
+                    animations: { enabled: true, easing: 'easeinout', speed: 600 },
+                    fontFamily: "'DM Mono', monospace",
+                },
+                stroke: {
+                    width: [0, 3],
+                    curve: 'smooth'
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '60%',
+                        borderRadius: 4,
                     }
                 },
-                axisBorder: { show: false },
-                axisTicks: { show: false },
-            },
-            yaxis: {
-                labels: {
-                    style: { fontSize: '10px', colors: '#7a81a0', fontFamily: "'DM Mono', monospace" },
-                    formatter: (v) => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v,
+                fill: {
+                    opacity: [0.85, 1],
+                    type: ['solid', 'solid']
+                },
+                colors: ['#3b6fd4', '#10b981'],
+                labels: dates,
+                markers: {
+                    size: [0, 4],
+                    strokeWidth: 2,
+                    hover: { size: 6 }
+                },
+                xaxis: {
+                    type: 'datetime',
+                    labels: {
+                        style: { fontSize: '11px', colors: '#7a81a0', fontFamily: "'DM Mono', monospace" },
+                        rotate: -30,
+                        formatter: (val) => {
+                            try {
+                                if (!val) return '';
+                                const d = new Date(val);
+                                if (isNaN(d.getTime())) return '';
+                                return d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+                            } catch (e) {
+                                return '';
+                            }
+                        }
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                },
+                yaxis: [{
+                    title: {
+                        text: 'Revenue',
+                        style: { fontSize: '11px', color: '#7a81a0', fontFamily: "'DM Mono', monospace" }
+                    },
+                    labels: {
+                        style: { fontSize: '11px', colors: '#7a81a0', fontFamily: "'DM Mono', monospace" },
+                        formatter: (v) => {
+                            if (v == null || isNaN(v)) return '0';
+                            return v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v.toFixed(0);
+                        },
+                    }
+                }, {
+                    opposite: true,
+                    title: {
+                        text: 'Transactions',
+                        style: { fontSize: '11px', color: '#10b981', fontFamily: "'DM Mono', monospace" }
+                    },
+                    labels: {
+                        style: { fontSize: '11px', colors: '#10b981', fontFamily: "'DM Mono', monospace" },
+                        formatter: (v) => {
+                            if (v == null || isNaN(v)) return '0';
+                            return v.toFixed(0);
+                        },
+                    }
+                }],
+                grid: {
+                    borderColor: '#e2e6f3',
+                    strokeDashArray: 4,
+                    xaxis: { lines: { show: false } },
+                    padding: {
+                        top: 0,
+                        right: 10,
+                        bottom: 0,
+                        left: 10
+                    }
+                },
+                legend: {
+                    show: true,
+                    position: 'top',
+                    horizontalAlign: 'right',
+                    fontSize: '11px',
+                    fontFamily: "'DM Mono', monospace",
+                    markers: {
+                        width: 10,
+                        height: 10,
+                        radius: 2
+                    },
+                    itemMargin: {
+                        horizontal: 10
+                    }
+                },
+                dataLabels: { enabled: false },
+                tooltip: {
+                    shared: true,
+                    intersect: false,
+                    theme: 'light',
+                    y: [{
+                        formatter: (v) => {
+                            if (v == null || isNaN(v)) return '0 RWF';
+                            return new Intl.NumberFormat().format(v) + ' RWF';
+                        }
+                    }, {
+                        formatter: (v) => {
+                            if (v == null || isNaN(v)) return '0 txns';
+                            return v + ' txns';
+                        }
+                    }]
                 }
-            },
-            grid: {
-                borderColor: '#e2e6f3',
-                strokeDashArray: 4,
-                xaxis: { lines: { show: false } }
-            },
-            dataLabels: { enabled: false },
-            tooltip: {
-                y: { formatter: (v) => new Intl.NumberFormat().format(v) + ' RWF' },
-                theme: 'light',
-            }
-        }).render();
+            });
+
+            chart.render();
+        }
     })();
 </script>
 @endif

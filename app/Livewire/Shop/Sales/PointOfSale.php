@@ -55,12 +55,37 @@ class PointOfSale extends Component
 
     // Checkout Modal
     public $showCheckoutModal = false;
-    public $paymentMethod = 'cash';
-    public $customerName = '';
-    public $customerPhone = '';
-    public $amountReceived = 0;
-    public $changeAmount = 0;
     public $notes = '';
+
+    // ── Customer selection ────────────────────────────────────────────────────
+    public string $customerSearch       = '';
+    public array  $customerResults      = [];
+    public bool   $showCustomerSearch   = false;
+    public ?int   $selectedCustomerId   = null;
+    public string $selectedCustomerName = '';
+    public string $selectedCustomerPhone = '';
+    public int    $selectedCustomerOutstandingBalance = 0;
+    public bool   $showNewCustomerForm  = false;
+    // New customer form fields:
+    public string $newCustomerName  = '';
+    public string $newCustomerPhone = '';
+    public string $newCustomerEmail = '';
+    public string $newCustomerNotes = '';
+
+    // ── Split payment — all channels always visible ───────────────────────────
+    // Keyed by method name. Amount is in RWF (integer cents).
+    public $payAmt_cash          = 0;
+    public $payAmt_card          = 0;
+    public $payAmt_mobile_money  = 0;
+    public $payAmt_bank_transfer = 0;
+    public $payAmt_credit        = 0;
+    // References (for card, mobile, bank)
+    public $payRef_card          = '';
+    public $payRef_mobile_money  = '';
+    public $payRef_bank_transfer = '';
+    // Credit warning state
+    public $creditWarningVisible  = false;
+    public $creditWarningMessage  = '';
 
     // Receipt Modal
     public $showReceiptModal = false;
@@ -719,6 +744,27 @@ class PointOfSale extends Component
     {
         $this->cart = [];
         $this->cartTotal = 0;
+
+        // Reset customer selection
+        $this->selectedCustomerId = null;
+        $this->selectedCustomerName = '';
+        $this->selectedCustomerPhone = '';
+        $this->selectedCustomerOutstandingBalance = 0;
+        $this->customerSearch = '';
+        $this->customerResults = [];
+        $this->showCustomerSearch = false;
+
+        // Reset payment amounts
+        $this->payAmt_cash = 0;
+        $this->payAmt_card = 0;
+        $this->payAmt_mobile_money = 0;
+        $this->payAmt_bank_transfer = 0;
+        $this->payAmt_credit = 0;
+        $this->payRef_card = '';
+        $this->payRef_mobile_money = '';
+        $this->payRef_bank_transfer = '';
+        $this->creditWarningVisible = false;
+        $this->creditWarningMessage = '';
     }
 
     private function calculateCartTotal()
@@ -783,6 +829,205 @@ class PointOfSale extends Component
         }
     }
 
+    // ==================== CUSTOMER SEARCH & SELECTION ====================
+
+    /**
+     * Reactive search for customers by phone or name.
+     */
+    public function updatedCustomerSearch()
+    {
+        $q = trim($this->customerSearch);
+
+        if (strlen($q) < 2) {
+            $this->customerResults = [];
+            return;
+        }
+
+        $this->customerResults = \App\Models\Customer::search($q)->toArray();
+    }
+
+    /**
+     * User clicked a customer from the dropdown.
+     */
+    public function selectCustomer(int $customerId)
+    {
+        $customer = \App\Models\Customer::find($customerId);
+        if (!$customer) {
+            return;
+        }
+
+        $this->selectedCustomerId = $customer->id;
+        $this->selectedCustomerName = $customer->name;
+        $this->selectedCustomerPhone = $customer->phone;
+        $this->selectedCustomerOutstandingBalance = $customer->outstanding_balance;
+
+        $this->customerSearch = '';
+        $this->customerResults = [];
+        $this->showCustomerSearch = false;
+        $this->showNewCustomerForm = false;
+
+        // If credit was entered and customer has outstanding balance, re-evaluate warning
+        if ($this->payAmt_credit > 0) {
+            $this->evaluateCreditWarning();
+        }
+    }
+
+    /**
+     * Clear selected customer.
+     */
+    public function clearCustomer()
+    {
+        $this->selectedCustomerId = null;
+        $this->selectedCustomerName = '';
+        $this->selectedCustomerPhone = '';
+        $this->selectedCustomerOutstandingBalance = 0;
+        $this->customerSearch = '';
+        $this->customerResults = [];
+        $this->showNewCustomerForm = false;
+
+        // If credit was allocated, clear warning since no customer is selected
+        if ($this->payAmt_credit > 0) {
+            $this->creditWarningVisible = false;
+            $this->creditWarningMessage = '';
+        }
+    }
+
+    /**
+     * Show the inline form to create a new customer.
+     */
+    public function showCreateCustomerForm()
+    {
+        $this->showNewCustomerForm = true;
+        $this->showCustomerSearch = false;
+        $this->customerResults = [];
+
+        // Pre-fill phone if user typed a phone number in search
+        if (preg_match('/^\d+$/', trim($this->customerSearch))) {
+            $this->newCustomerPhone = trim($this->customerSearch);
+        }
+    }
+
+    /**
+     * Create and auto-select a new customer.
+     */
+    public function saveNewCustomer()
+    {
+        $this->validate([
+            'newCustomerName'  => 'required|string|min:2|max:100',
+            'newCustomerPhone' => 'required|string|min:10|max:20|unique:customers,phone',
+            'newCustomerEmail' => 'nullable|email|max:100',
+            'newCustomerNotes' => 'nullable|string|max:500',
+        ]);
+
+        $customerService = new \App\Services\Sales\CustomerService();
+
+        $customer = $customerService->create([
+            'name'  => $this->newCustomerName,
+            'phone' => $this->newCustomerPhone,
+            'email' => $this->newCustomerEmail,
+            'notes' => $this->newCustomerNotes,
+        ], $this->shopId);
+
+        // Auto-select the newly created customer
+        $this->selectCustomer($customer->id);
+
+        // Reset form
+        $this->newCustomerName = '';
+        $this->newCustomerPhone = '';
+        $this->newCustomerEmail = '';
+        $this->newCustomerNotes = '';
+        $this->showNewCustomerForm = false;
+
+        $this->dispatch('notification', [
+            'type' => 'success',
+            'message' => 'Customer registered successfully'
+        ]);
+    }
+
+    /**
+     * Cancel new customer form.
+     */
+    public function cancelNewCustomer()
+    {
+        $this->showNewCustomerForm = false;
+        $this->newCustomerName = '';
+        $this->newCustomerPhone = '';
+        $this->newCustomerEmail = '';
+        $this->newCustomerNotes = '';
+    }
+
+    // ==================== PAYMENT PANEL ====================
+
+    /**
+     * Reactive hook when credit amount changes.
+     * Validates that a customer is selected and checks for outstanding balance.
+     */
+    public function updatedPayAmtCredit()
+    {
+        if ($this->payAmt_credit <= 0) {
+            $this->creditWarningVisible = false;
+            $this->creditWarningMessage = '';
+            return;
+        }
+
+        // Require customer selection for credit
+        if (!$this->selectedCustomerId) {
+            $this->dispatch('notification', [
+                'type' => 'warning',
+                'message' => 'Please select or create a customer before using credit'
+            ]);
+            return;
+        }
+
+        $this->evaluateCreditWarning();
+    }
+
+    /**
+     * Check if selected customer has outstanding balance and show warning.
+     */
+    private function evaluateCreditWarning()
+    {
+        if (!$this->selectedCustomerId || $this->payAmt_credit <= 0) {
+            $this->creditWarningVisible = false;
+            $this->creditWarningMessage = '';
+            return;
+        }
+
+        $customer = \App\Models\Customer::find($this->selectedCustomerId);
+        if (!$customer) {
+            return;
+        }
+
+        if ($customer->outstanding_balance > 0) {
+            $this->creditWarningVisible = true;
+            $this->creditWarningMessage = "Customer has outstanding credit balance of " .
+                number_format($customer->outstanding_balance, 0) . " RWF";
+        } else {
+            $this->creditWarningVisible = false;
+            $this->creditWarningMessage = '';
+        }
+    }
+
+    /**
+     * Computed: total amount allocated across all payment channels.
+     */
+    public function getTotalAllocatedProperty(): int
+    {
+        return $this->payAmt_cash
+            + $this->payAmt_card
+            + $this->payAmt_mobile_money
+            + $this->payAmt_bank_transfer
+            + $this->payAmt_credit;
+    }
+
+    /**
+     * Computed: how much is left to pay.
+     */
+    public function getRemainingBalanceProperty(): int
+    {
+        return max(0, $this->cartTotal - $this->totalAllocated);
+    }
+
     // ==================== CHECKOUT ====================
 
     public function openCheckout()
@@ -806,25 +1051,25 @@ class PointOfSale extends Component
             return;
         }
 
-        $this->paymentMethod = 'cash';
-        $this->customerName = '';
-        $this->customerPhone = '';
-        $this->amountReceived = $this->cartTotal;
+        // Reset payment panel — default cash to full total
+        $this->payAmt_cash = $this->cartTotal;
+        $this->payAmt_card = 0;
+        $this->payAmt_mobile_money = 0;
+        $this->payAmt_bank_transfer = 0;
+        $this->payAmt_credit = 0;
+        $this->payRef_card = '';
+        $this->payRef_mobile_money = '';
+        $this->payRef_bank_transfer = '';
+        $this->creditWarningVisible = false;
+        $this->creditWarningMessage = '';
         $this->notes = '';
-        $this->showCheckoutModal = true;
-    }
 
-    public function updatedAmountReceived()
-    {
-        $this->changeAmount = max(0, $this->amountReceived - $this->cartTotal);
+        $this->showCheckoutModal = true;
     }
 
     public function completeSale()
     {
         $this->validate([
-            'paymentMethod' => 'required|in:' . implode(',', array_column(PaymentMethod::cases(), 'value')),
-            'customerName' => 'nullable|string|max:255',
-            'customerPhone' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
         ]);
 
@@ -836,11 +1081,30 @@ class PointOfSale extends Component
             return;
         }
 
-        // Validate payment
-        if ($this->paymentMethod === 'cash' && $this->amountReceived < $this->cartTotal) {
+        // Validate payment coverage
+        if ($this->totalAllocated < $this->cartTotal) {
+            $shortfall = $this->cartTotal - $this->totalAllocated;
             $this->dispatch('notification', [
                 'type' => 'error',
-                'message' => 'Insufficient amount received'
+                'message' => 'Payment does not cover total. Missing ' . number_format($shortfall, 0) . ' RWF'
+            ]);
+            return;
+        }
+
+        if ($this->totalAllocated > $this->cartTotal) {
+            $overpayment = $this->totalAllocated - $this->cartTotal;
+            $this->dispatch('notification', [
+                'type' => 'error',
+                'message' => 'Payment exceeds total by ' . number_format($overpayment, 0) . ' RWF'
+            ]);
+            return;
+        }
+
+        // If credit is used, require customer selection
+        if ($this->payAmt_credit > 0 && !$this->selectedCustomerId) {
+            $this->dispatch('notification', [
+                'type' => 'error',
+                'message' => 'Please select or create a customer for credit sales'
             ]);
             return;
         }
@@ -858,6 +1122,25 @@ class PointOfSale extends Component
                 $saleType = SaleType::FULL_BOX;
             } else {
                 $saleType = SaleType::INDIVIDUAL_ITEMS;
+            }
+
+            // Build payment channels array from the five input fields
+            $payments = [];
+
+            if ($this->payAmt_cash > 0) {
+                $payments[] = ['method' => 'cash', 'amount' => $this->payAmt_cash, 'reference' => null];
+            }
+            if ($this->payAmt_card > 0) {
+                $payments[] = ['method' => 'card', 'amount' => $this->payAmt_card, 'reference' => $this->payRef_card];
+            }
+            if ($this->payAmt_mobile_money > 0) {
+                $payments[] = ['method' => 'mobile_money', 'amount' => $this->payAmt_mobile_money, 'reference' => $this->payRef_mobile_money];
+            }
+            if ($this->payAmt_bank_transfer > 0) {
+                $payments[] = ['method' => 'bank_transfer', 'amount' => $this->payAmt_bank_transfer, 'reference' => $this->payRef_bank_transfer];
+            }
+            if ($this->payAmt_credit > 0) {
+                $payments[] = ['method' => 'credit', 'amount' => $this->payAmt_credit, 'reference' => null];
             }
 
             // Prepare items for SaleService
@@ -878,16 +1161,18 @@ class PointOfSale extends Component
             })->toArray();
 
             $sale = $saleService->createSale([
-                'shop_id' => $this->shopId,
-                'type' => $saleType,
-                'payment_method' => PaymentMethod::from($this->paymentMethod),
-                'customer_name' => $this->customerName ?: null,
-                'customer_phone' => $this->customerPhone ?: null,
-                'notes' => $this->notes ?: null,
-                'items' => $items,
+                'shop_id'       => $this->shopId,
+                'type'          => $saleType,
+                'payments'      => $payments,
+                'payment_method' => count($payments) === 1 ? $payments[0]['method'] : 'cash',
+                'customer_id'   => $this->selectedCustomerId,
+                'customer_name' => $this->selectedCustomerName ?: null,
+                'customer_phone' => $this->selectedCustomerPhone ?: null,
+                'notes'         => $this->notes ?: null,
+                'items'         => $items,
             ]);
 
-            $this->completedSale = Sale::with(['items.product', 'items.box', 'soldBy', 'shop'])
+            $this->completedSale = Sale::with(['items.product', 'items.box', 'soldBy', 'shop', 'payments'])
                 ->find($sale->id);
 
             $this->clearCart();
@@ -900,6 +1185,11 @@ class PointOfSale extends Component
             ]);
 
         } catch (\Throwable $e) {
+            \Log::error('Error completing sale', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             $this->dispatch('notification', [
                 'type' => 'error',
                 'message' => 'Error completing sale: ' . $e->getMessage()

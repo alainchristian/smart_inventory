@@ -34,11 +34,45 @@ class SaleService
     {
         return DB::transaction(function () use ($data) {
 
+            // ── Resolve payment channels ──────────────────────────────────────────
+            $payments = collect($data['payments'] ?? [])
+                ->filter(fn ($p) => (int) $p['amount'] > 0)
+                ->values();
+
+            if ($payments->isEmpty()) {
+                // Backward compat: single method passed directly
+                $payments = collect([[
+                    'method'    => $data['payment_method'] instanceof PaymentMethod
+                                    ? $data['payment_method']->value
+                                    : ($data['payment_method'] ?? 'cash'),
+                    'amount'    => 0, // will be set to total after items are summed
+                    'reference' => null,
+                ]]);
+                $singleMethodFallback = true;
+            } else {
+                $singleMethodFallback = false;
+            }
+
+            $creditAmount  = (int) $payments->where('method', 'credit')->sum('amount');
+            $nonCreditPaid = (int) $payments->where('method', '!=', 'credit')->sum('amount');
+            $isSplit       = $payments->count() > 1;
+            $hasCredit     = $creditAmount > 0;
+
+            // Primary method for the sale record (single-method or first non-credit)
+            $primaryMethod = $isSplit
+                ? PaymentMethod::CASH  // placeholder for mixed; real split stored in sale_payments
+                : PaymentMethod::from(
+                    $payments->first()['method'] instanceof PaymentMethod
+                        ? $payments->first()['method']->value
+                        : $payments->first()['method']
+                  );
+
+            // ── Create the sale header ────────────────────────────────────────────
             $sale = Sale::create([
                 'sale_number'      => $this->generateSaleNumber(),
                 'shop_id'          => $data['shop_id'],
                 'type'             => $data['type'],
-                'payment_method'   => $data['payment_method'],
+                'payment_method'   => $primaryMethod,
                 'sold_by'          => auth()->id(),
                 'sale_date'        => now(),
                 'subtotal'         => 0,
@@ -46,9 +80,16 @@ class SaleService
                 'discount'         => $data['discount'] ?? 0,
                 'total'            => 0,
                 'has_price_override' => false,
+                // Customer — store both FK and denormalized strings for receipts
+                'customer_id'      => $data['customer_id'] ?? null,
                 'customer_name'    => $data['customer_name'] ?? null,
                 'customer_phone'   => $data['customer_phone'] ?? null,
                 'notes'            => $data['notes'] ?? null,
+                // Payment summary
+                'is_split_payment' => $isSplit,
+                'amount_paid'      => $nonCreditPaid,
+                'credit_amount'    => $creditAmount,
+                'has_credit'       => $hasCredit,
             ]);
 
             $subtotal         = 0;
@@ -128,6 +169,44 @@ class SaleService
                 'total'              => $total,
                 'has_price_override' => $hasPriceOverride,
             ]);
+
+            // ── Record individual payment channel rows ────────────────────────────
+            if ($singleMethodFallback) {
+                // Single-method: the one payment covers the full total
+                \App\Models\SalePayment::create([
+                    'sale_id'        => $sale->id,
+                    'payment_method' => $primaryMethod,
+                    'amount'         => $total,
+                    'reference'      => null,
+                ]);
+                $sale->update(['amount_paid' => $hasCredit ? 0 : $total]);
+            } else {
+                foreach ($payments as $pmt) {
+                    $method = PaymentMethod::from(
+                        $pmt['method'] instanceof PaymentMethod ? $pmt['method']->value : $pmt['method']
+                    );
+                    \App\Models\SalePayment::create([
+                        'sale_id'        => $sale->id,
+                        'payment_method' => $method,
+                        'amount'         => (int) $pmt['amount'],
+                        'reference'      => $pmt['reference'] ?? null,
+                    ]);
+                }
+            }
+
+            // ── Update customer credit account if credit was extended ─────────────
+            if ($hasCredit && !empty($data['customer_id'])) {
+                $customer = \App\Models\Customer::find($data['customer_id']);
+                if ($customer) {
+                    $customerService = new CustomerService();
+                    $customerService->recordSalePurchase($customer, $creditAmount);
+                }
+            } elseif (!empty($data['customer_id'])) {
+                $customer = \App\Models\Customer::find($data['customer_id']);
+                if ($customer) {
+                    $customer->update(['last_purchase_at' => now()]);
+                }
+            }
 
             // ── Primary sale log ─────────────────────────────────────────────────────
             $shop = Shop::find($sale->shop_id);
