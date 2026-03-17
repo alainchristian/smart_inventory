@@ -9,28 +9,34 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CreditRepayment extends Model
 {
     protected $fillable = [
-        'credit_account_id', 'payment_method', 'amount',
-        'sale_id', 'recorded_by', 'reference', 'notes', 'repaid_at',
+        'customer_id',
+        'shop_id',
+        'amount',
+        'payment_method',
+        'reference',
+        'notes',
+        'recorded_by',
+        'repayment_date',
     ];
 
     protected $casts = [
         'payment_method' => PaymentMethod::class,
-        'amount'         => 'integer',
-        'repaid_at'      => 'datetime',
+        'amount' => 'integer',
+        'repayment_date' => 'datetime',
     ];
 
-    public function creditAccount(): BelongsTo
+    public function customer(): BelongsTo
     {
-        return $this->belongsTo(CustomerCreditAccount::class, 'credit_account_id');
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
-    }
-
-    public function sale(): BelongsTo
-    {
-        return $this->belongsTo(Sale::class);
     }
 }

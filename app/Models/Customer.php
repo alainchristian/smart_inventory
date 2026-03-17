@@ -41,6 +41,11 @@ class Customer extends Model
         return $this->hasMany(Sale::class);
     }
 
+    public function creditRepayments(): HasMany
+    {
+        return $this->hasMany(CreditRepayment::class);
+    }
+
     public function hasOutstandingBalance(): bool
     {
         return $this->outstanding_balance > 0;

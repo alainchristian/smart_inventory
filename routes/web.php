@@ -205,6 +205,9 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/sales', function () { return view('shop.reports.sales'); })->name('sales');
         });
+
+        // Credit Repayments
+        Route::get('/credit-repayments', function () { return view('shop.credit-repayments'); })->name('credit-repayments');
     });
 
 // Shared routes (accessible by all authenticated users with proper permissions)
