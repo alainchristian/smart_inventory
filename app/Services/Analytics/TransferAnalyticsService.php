@@ -40,7 +40,8 @@ class TransferAnalyticsService
             $discrepancyQuery = Transfer::whereBetween('created_at', [$dateFrom, $dateTo])
                 ->where('has_discrepancy', true);
 
-            if ($statusFilter) {
+            if ($statusFilter && $statusFilter !== 'discrepancy') {
+                // 'discrepancy' is not an enum value; has_discrepancy filter already applied above
                 $discrepancyQuery->where('status', $statusFilter);
             }
 

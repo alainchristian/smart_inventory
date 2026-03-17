@@ -67,23 +67,74 @@ class CreditRepayments extends Component
         }
 
         DB::transaction(function () use ($customer, $amount) {
-            // Create repayment record
+            // 1. Create repayment record
             CreditRepayment::create([
-                'customer_id' => $customer->id,
-                'shop_id' => auth()->user()->location_id,
-                'amount' => $amount,
+                'customer_id'    => $customer->id,
+                'shop_id'        => auth()->user()->location_id,
+                'amount'         => $amount,
                 'payment_method' => $this->paymentMethod,
-                'reference' => $this->reference ?: null,
-                'notes' => $this->notes ?: null,
-                'recorded_by' => auth()->id(),
+                'reference'      => $this->reference ?: null,
+                'notes'          => $this->notes ?: null,
+                'recorded_by'    => auth()->id(),
                 'repayment_date' => now(),
             ]);
 
-            // Update customer balances
+            // 2. Update customer balances
+            $newBalance = max(0, $customer->outstanding_balance - $amount);
             $customer->update([
-                'total_repaid' => $customer->total_repaid + $amount,
-                'outstanding_balance' => $customer->outstanding_balance - $amount,
+                'total_repaid'        => $customer->total_repaid + $amount,
+                'outstanding_balance' => $newBalance,
             ]);
+
+            // 3. Write activity log
+            \App\Models\ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'credit_repayment_recorded',
+                'entity_type'       => 'Customer',
+                'entity_id'         => $customer->id,
+                'entity_identifier' => $customer->name . ' (' . $customer->phone . ')',
+                'details'           => [
+                    'amount'           => $amount,
+                    'payment_method'   => $this->paymentMethod,
+                    'reference'        => $this->reference ?: null,
+                    'new_balance'      => $newBalance,
+                    'previous_balance' => $customer->outstanding_balance,
+                    'fully_paid'       => $newBalance === 0,
+                    'shop_id'          => auth()->user()->location_id,
+                ],
+                'ip_address'        => request()->ip(),
+                'user_agent'        => request()->header('User-Agent'),
+            ]);
+
+            // 4. Resolve open credit alerts for this customer if fully paid
+            if ($newBalance === 0) {
+                \App\Models\Alert::where('entity_type', 'Customer')
+                    ->where('entity_id', $customer->id)
+                    ->whereNull('resolved_at')
+                    ->update([
+                        'resolved_at'      => now(),
+                        'resolution_notes' => 'Outstanding balance cleared by repayment on ' . now()->format('d M Y'),
+                    ]);
+            }
+
+            // 5. Bust analytics cache so dashboards show fresh numbers
+            try {
+                // Tag-based flush (Redis/Memcached)
+                if (method_exists(\Illuminate\Support\Facades\Cache::getStore(), 'tags')) {
+                    \Illuminate\Support\Facades\Cache::tags(['analytics'])->flush();
+                }
+                // Key-based flush for common cache keys
+                foreach ([
+                    'shop_dashboard_payment_breakdown_' . auth()->user()->location_id,
+                    'shop_dashboard_payment_breakdown_' . auth()->user()->location_id . '_' . now()->toDateString(),
+                ] as $key) {
+                    \Illuminate\Support\Facades\Cache::forget($key);
+                }
+            } catch (\Exception $e) {
+                // Cache flush failure must never break the repayment transaction
+                \Illuminate\Support\Facades\Log::warning('Cache flush failed after repayment: ' . $e->getMessage());
+            }
         });
 
         session()->flash('success', 'Credit repayment of ' . number_format($amount, 0) . ' RWF recorded successfully for ' . $customer->name);

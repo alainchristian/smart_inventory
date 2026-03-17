@@ -350,7 +350,10 @@
         'rejected'   => ['color'=>'#ef4444','bg'=>'rgba(239,68,68,.1)'],
         default      => ['color'=>'var(--text-sub)','bg'=>'rgba(128,128,128,.08)'],
       };
-      $itemsReq = $transfer->items->sum('quantity_requested');
+      $itemsReq = $transfer->items->sum(function ($item) {
+          $ipb = max(1, (int) ($item->product->items_per_box ?? 1));
+          return (int) round($item->quantity_requested / $ipb);
+      });
     @endphp
     <div class="tl-card" style="--card-color:{{ $sc['color'] }}">
       <div class="tl-card-stripe"></div>
@@ -415,7 +418,7 @@
           </div>
           <div class="tl-stat">
             <div class="tl-stat-v">{{ $itemsReq }}</div>
-            <div class="tl-stat-l">Units Req.</div>
+            <div class="tl-stat-l">Boxes Req.</div>
           </div>
         </div>
       </div>

@@ -284,7 +284,10 @@
         'rejected'   => ['color'=>'#ef4444','bg'=>'rgba(239,68,68,.1)'],
         default      => ['color'=>'var(--text-sub)','bg'=>'rgba(128,128,128,.08)'],
       };
-      $itemsReq = $transfer->items->sum('quantity_requested');
+      $itemsReq = $transfer->items->sum(function ($item) {
+          $ipb = max(1, (int) ($item->product->items_per_box ?? 1));
+          return (int) round($item->quantity_requested / $ipb);
+      });
     @endphp
     <div class="wtl-card" style="--card-color:{{ $sc['color'] }}">
       <div class="wtl-card-stripe"></div>
@@ -350,7 +353,7 @@
           </div>
           <div class="wtl-stat">
             <div class="wtl-stat-v">{{ $itemsReq }}</div>
-            <div class="wtl-stat-l">Units Req.</div>
+            <div class="wtl-stat-l">Boxes Req.</div>
           </div>
         </div>
       </div>

@@ -36,7 +36,12 @@ class TransfersList extends Component
 
         // Apply status filter
         if ($this->statusFilter !== 'all') {
-            $query->where('status', $this->statusFilter);
+            if ($this->statusFilter === 'discrepancy') {
+                // "discrepancy" is not a real enum value — filter by flag instead
+                $query->where('has_discrepancy', true);
+            } else {
+                $query->where('status', $this->statusFilter);
+            }
         }
 
         $transfers = $query->paginate(20);

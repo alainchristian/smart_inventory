@@ -536,9 +536,9 @@
               <thead>
                 <tr>
                   <th>Product</th>
-                  <th>Requested</th>
-                  <th>Shipped</th>
-                  <th>Received</th>
+                  <th>Boxes Requested</th>
+                  <th>Boxes Shipped</th>
+                  <th>Boxes Received</th>
                   <th>Discrepancy</th>
                 </tr>
               </thead>
@@ -546,32 +546,35 @@
                 @foreach($transfer->items as $item)
                   @php
                     $hasDisc = ($item->discrepancy_quantity ?? 0) != 0;
-                    $received = $item->quantity_received ?? null;
-                    $shipped = $item->quantity_shipped ?? null;
+                    $ipb = max(1, (int) ($item->product->items_per_box ?? 1));
+                    $bxReq = (int) round($item->quantity_requested / $ipb);
+                    $bxShipped = $item->quantity_shipped !== null ? (int) round($item->quantity_shipped / $ipb) : null;
+                    $bxReceived = $item->quantity_received !== null ? (int) round($item->quantity_received / $ipb) : null;
+                    $bxDisc = (int) round(($item->discrepancy_quantity ?? 0) / $ipb);
                   @endphp
                   <tr>
                     <td>
                       <div class="col-product">{{ $item->product->name ?? '—' }}</div>
                       <span class="col-sku">{{ $item->product->sku ?? '' }}</span>
                     </td>
-                    <td><span class="col-num">{{ $item->quantity_requested }}</span> <small style="color:var(--text-sub)">items</small></td>
+                    <td><span class="col-num">{{ $bxReq }}</span> <small style="color:var(--text-sub)">box{{ $bxReq === 1 ? '' : 'es' }}</small></td>
                     <td>
-                      @if($shipped !== null)
-                        <span class="col-num">{{ $shipped }}</span>
+                      @if($bxShipped !== null)
+                        <span class="col-num">{{ $bxShipped }}</span> <small style="color:var(--text-sub)">box{{ $bxShipped === 1 ? '' : 'es' }}</small>
                       @else
                         <span style="color:var(--text-sub)">—</span>
                       @endif
                     </td>
                     <td>
-                      @if($received !== null)
-                        <span class="{{ $hasDisc ? 'col-disc' : 'col-ok' }}">{{ $received }}</span>
+                      @if($bxReceived !== null)
+                        <span class="{{ $hasDisc ? 'col-disc' : 'col-ok' }}">{{ $bxReceived }}</span> <small style="color:var(--text-sub)">box{{ $bxReceived === 1 ? '' : 'es' }}</small>
                       @else
                         <span style="color:var(--text-sub)">—</span>
                       @endif
                     </td>
                     <td>
                       @if($hasDisc)
-                        <span class="col-disc">{{ $item->discrepancy_quantity > 0 ? '+' : '' }}{{ $item->discrepancy_quantity }}</span>
+                        <span class="col-disc">{{ $bxDisc > 0 ? '+' : '' }}{{ $bxDisc }} box{{ abs($bxDisc) === 1 ? '' : 'es' }}</span>
                       @else
                         <span class="col-ok">—</span>
                       @endif

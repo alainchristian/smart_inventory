@@ -43,18 +43,24 @@
                 <thead style="background: var(--surface2);">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium uppercase" style="color: var(--text-sub);">Product</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium uppercase" style="color: var(--text-sub);">Requested</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium uppercase" style="color: var(--text-sub);">Shipped</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium uppercase" style="color: var(--text-sub);">Received</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase" style="color: var(--text-sub);">Boxes Requested</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase" style="color: var(--text-sub);">Boxes Shipped</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase" style="color: var(--text-sub);">Boxes Received</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y" style="background: var(--surface); border-color: var(--border);">
                     @foreach($transfer->items as $item)
+                    @php
+                        $ipb = max(1, (int) ($item->product->items_per_box ?? 1));
+                        $bxReq = (int) round($item->quantity_requested / $ipb);
+                        $bxShipped = $item->quantity_shipped ? (int) round($item->quantity_shipped / $ipb) : 0;
+                        $bxReceived = $item->quantity_received ? (int) round($item->quantity_received / $ipb) : 0;
+                    @endphp
                     <tr>
                         <td class="px-6 py-4" style="color: var(--text);">{{ $item->product->name ?? '—' }}</td>
-                        <td class="px-6 py-4" style="color: var(--text);">{{ $item->quantity_requested }}</td>
-                        <td class="px-6 py-4" style="color: var(--text);">{{ $item->quantity_shipped ?? 0 }}</td>
-                        <td class="px-6 py-4" style="color: var(--text);">{{ $item->quantity_received ?? 0 }}</td>
+                        <td class="px-6 py-4" style="color: var(--text);">{{ $bxReq }} box{{ $bxReq === 1 ? '' : 'es' }}</td>
+                        <td class="px-6 py-4" style="color: var(--text);">{{ $bxShipped }} box{{ $bxShipped === 1 ? '' : 'es' }}</td>
+                        <td class="px-6 py-4" style="color: var(--text);">{{ $bxReceived }} box{{ $bxReceived === 1 ? '' : 'es' }}</td>
                     </tr>
                     @endforeach
                 </tbody>

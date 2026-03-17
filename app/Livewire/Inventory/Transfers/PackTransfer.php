@@ -25,6 +25,12 @@ class PackTransfer extends Component
     public bool $phoneConnected = false;
     public ?\Carbon\Carbon $lastPhoneActivity = null;
 
+    // Quantity panel properties
+    public bool $showQuantityPanel      = false;
+    public int  $pendingQty             = 1;
+    public int  $pendingMaxQty          = 0;
+    public int  $pendingAlreadyAssigned = 0;
+
     protected $listeners = [
         'barcode-scanned' => 'handleBarcodeScan',
     ];
@@ -57,10 +63,12 @@ class PackTransfer extends Component
         $this->scanProduct();
     }
 
-    public function scanProduct()
+    public function scanProduct(): void
     {
         $input = trim($this->scanInput);
+
         if (empty($input)) {
+            session()->flash('scan_error', 'Please enter a barcode.');
             return;
         }
 
@@ -82,41 +90,71 @@ class PackTransfer extends Component
             return;
         }
 
-        // Count how many boxes are available at the warehouse for this product
-        // (excluding boxes already assigned to this transfer)
-        $alreadyAssigned = TransferBox::where('transfer_id', $this->transfer->id)->pluck('box_id');
-
-        $available = \App\Models\Box::where('product_id', $product->id)
-            ->where('location_type', 'warehouse')
-            ->where('location_id', $this->transfer->from_warehouse_id)
-            ->whereIn('status', ['full', 'partial'])
-            ->where('items_remaining', '>', 0)
-            ->whereNotIn('id', $alreadyAssigned)
-            ->count();
-
-        if ($available === 0) {
-            session()->flash('scan_error', "No boxes of {$product->name} available at this warehouse");
-            $this->scanInput = '';
-            return;
-        }
-
-        // Calculate how many more boxes are still needed for this transfer item
+        // Count already packed boxes for this product
         $alreadyPacked = TransferBox::where('transfer_id', $this->transfer->id)
             ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
             ->count();
 
         $totalBoxesRequested = (int) ($transferItem->quantity_requested / $product->items_per_box);
-        $stillNeeded = max(0, $totalBoxesRequested - $alreadyPacked);
+        $remaining = max(0, $totalBoxesRequested - $alreadyPacked);
 
-        if ($stillNeeded === 0) {
+        if ($remaining <= 0) {
             session()->flash('scan_error', "All requested boxes for {$product->name} have already been packed");
             $this->scanInput = '';
             return;
         }
 
-        // Auto-pack 1 box immediately
-        $this->scanInput = '';
-        $this->packProductBoxes($input, 1);
+        // Open quantity panel
+        $this->pendingBarcode         = $input;
+        $this->pendingProductName     = $product->name;
+        $this->pendingAlreadyAssigned = $alreadyPacked;
+        $this->pendingMaxQty          = $remaining;
+        $this->pendingQty             = 1;
+        $this->showQuantityPanel      = true;
+        $this->scanInput              = '';
+        $this->resetErrorBag();
+    }
+
+    public function confirmScannedQuantity(): void
+    {
+        $qty = (int) $this->pendingQty;
+
+        if ($qty < 1) {
+            $this->addError('pendingQty', 'Quantity must be at least 1.');
+            return;
+        }
+
+        if ($qty > $this->pendingMaxQty) {
+            $this->addError('pendingQty', "Cannot exceed {$this->pendingMaxQty} box(es) remaining for this product.");
+            return;
+        }
+
+        $barcode = $this->pendingBarcode;
+        $this->closeQuantityPanel();
+        $this->packProductBoxes($barcode, $qty);
+        $this->dispatch('quantity-confirmed');
+    }
+
+    public function closeQuantityPanel(): void
+    {
+        $this->showQuantityPanel      = false;
+        $this->pendingBarcode         = null;
+        $this->pendingProductName     = null;
+        $this->pendingQty             = 1;
+        $this->pendingMaxQty          = 0;
+        $this->pendingAlreadyAssigned = 0;
+        $this->resetErrorBag('pendingQty');
+    }
+
+    public function updatedPendingQty(): void
+    {
+        // Clamp to valid range in real time
+        $qty = (int) $this->pendingQty;
+        if ($qty < 1) {
+            $this->pendingQty = 1;
+        } elseif ($qty > $this->pendingMaxQty) {
+            $this->pendingQty = $this->pendingMaxQty;
+        }
     }
 
     protected function packProductBoxes(string $barcode, int $quantity)

@@ -737,6 +737,32 @@
         $iss  = $this->itemsSoldKpi;
         $rev  = $this->revenueKpis;
         $topP = $this->topProducts;
+        // ── Credit figures for the Ledger strip ──────────────────────────────────
+        $lcShopId = $locationFilter !== 'all'
+            ? (int) str_replace('shop:', '', $locationFilter)
+            : null;
+
+        // Period credit: what was sold on credit in the selected date range
+        // (matches the sum of credit_revenue column across all product rows)
+        $periodCreditQ = \App\Models\Sale::whereNull('voided_at')
+            ->where('has_credit', true)
+            ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+        if ($lcShopId) {
+            $periodCreditQ->where('shop_id', $lcShopId);
+        }
+        $periodCreditGiven = (int) $periodCreditQ->sum('credit_amount');
+
+        // All-time outstanding: current unpaid balance across all customers
+        $custQ = \App\Models\Customer::query();
+        if ($lcShopId) {
+            $custQ->where('shop_id', $lcShopId);
+        }
+        $trueOutstanding   = (int) (clone $custQ)->sum('outstanding_balance');
+        $totalCreditRepaid = (int) (clone $custQ)->sum('total_repaid');
+        $totalCreditGiven  = (int) (clone $custQ)->sum('total_credit_given');
+        $repaymentRate     = $totalCreditGiven > 0
+            ? round(($totalCreditRepaid / $totalCreditGiven) * 100, 1)
+            : 0;
     @endphp
 
     {{-- Summary strip --}}
@@ -746,6 +772,12 @@
             ['label'=>'Total Cost',     'value'=>number_format($gp['total_cost']),   'color'=>'var(--text-sub)','sub'=>'Cost of goods'],
             ['label'=>'Gross Profit',   'value'=>number_format($gp['gross_profit']), 'color'=>'var(--green)',   'sub'=>$gp['margin_pct'].'% margin'],
             ['label'=>'Items Sold',     'value'=>number_format($iss['items_sold']),  'color'=>'var(--violet)',  'sub'=>'Units'],
+            ['label' => 'Outstanding Credit',
+             'value' => number_format($trueOutstanding),
+             'color' => 'var(--amber)',
+             'sub'   => number_format($totalCreditGiven) . ' given · '
+                      . number_format($totalCreditRepaid) . ' repaid · '
+                      . $repaymentRate . '%'],
         ] as $strip)
         <div style="flex:1;min-width:140px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px">
             <div style="font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">{{ $strip['label'] }}</div>
@@ -754,6 +786,24 @@
         </div>
         @endforeach
     </div>
+
+    {{-- Credit footnote: explains gross vs net distinction --}}
+    @if($trueOutstanding > 0 || $totalCreditGiven > 0)
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;
+                background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.2);
+                border-radius:8px;margin-bottom:16px;margin-top:-4px">
+        <span style="font-size:14px;flex-shrink:0">ℹ️</span>
+        <div style="font-size:11px;color:var(--text-sub);line-height:1.5">
+            <strong style="color:#d97706">Outstanding Credit</strong>
+            ({{ number_format($trueOutstanding) }} RWF) = current unpaid balance
+            across all customers after {{ number_format($totalCreditRepaid) }} RWF
+            repaid ({{ $repaymentRate }}% repayment rate).
+            &nbsp;·&nbsp;
+            The <strong style="color:#d97706">Credit Sales</strong> column shows
+            each product's proportional share of credit given in the selected period.
+        </div>
+    </div>
+    @endif
 
     {{-- Full product ledger table --}}
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
@@ -776,6 +826,7 @@
                     <col class="sa-hide-mob" style="width:120px">
                     <col style="width:140px">
                     <col style="width:120px">
+                    <col style="width:120px">
                 </colgroup>
                 <thead>
                     <tr style="background:var(--bg);border-bottom:1px solid var(--border)">
@@ -788,6 +839,14 @@
                         <th class="sa-hide-mob" style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Share</th>
                         <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Gross Profit</th>
                         <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap">Margin %</th>
+                        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;
+                                   color:#d97706;letter-spacing:.5px;text-transform:uppercase;
+                                   white-space:nowrap"
+                            title="Gross credit sales per product. Repayments are tracked at customer level and cannot be attributed to specific products.">
+                            Credit Sales
+                            <span style="display:block;font-size:9px;font-weight:400;color:var(--text-dim);
+                                         text-transform:none;letter-spacing:0">gross · pre-repayment</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -815,9 +874,21 @@
                                 {{ $p['margin_pct'] }}%
                             </span>
                         </td>
+                        <td style="padding:10px 14px;text-align:right;font-family:var(--mono);
+                                   font-size:12px;white-space:nowrap;
+                                   color:{{ $p['credit_revenue'] > 0 ? '#d97706' : 'var(--text-dim)' }}">
+                            @if($p['credit_revenue'] > 0)
+                                {{ number_format($p['credit_revenue']) }}
+                                <span style="font-size:10px;color:#d97706;margin-left:2px">
+                                    {{ $p['credit_pct'] }}%
+                                </span>
+                            @else
+                                <span style="color:var(--text-dim)">—</span>
+                            @endif
+                        </td>
                     </tr>
                     @empty
-                    <tr><td colspan="9" style="padding:40px;text-align:center;color:var(--text-dim)">No sales in this period</td></tr>
+                    <tr><td colspan="10" style="padding:40px;text-align:center;color:var(--text-dim)">No sales in this period</td></tr>
                     @endforelse
                 </tbody>
                 @if(count($topP))
@@ -829,6 +900,17 @@
                         <td class="sa-hide-mob" style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text-dim)">100%</td>
                         <td style="padding:10px 14px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--green);white-space:nowrap">{{ number_format(array_sum(array_column($topP, 'gross_profit'))) }}</td>
                         <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:700;font-family:var(--mono);color:var(--green);white-space:nowrap">{{ $gp['margin_pct'] }}%</td>
+                        <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:700;
+                                   font-family:var(--mono);white-space:nowrap;color:#d97706">
+                            @php $totalCredit = collect($topP)->sum('credit_revenue'); @endphp
+                            {{ $totalCredit > 0 ? number_format($totalCredit) : '—' }}
+                            @if($totalCredit > 0)
+                                <span style="display:block;font-size:10px;font-weight:400;
+                                             color:var(--text-dim);font-family:var(--font)">
+                                    gross sales
+                                </span>
+                            @endif
+                        </td>
                     </tr>
                 </tfoot>
                 @endif

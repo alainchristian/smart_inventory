@@ -313,7 +313,16 @@ class SalesAnalyticsService
                     SUM(sale_items.line_total) as revenue,
                     COUNT(DISTINCT sales.id) as transaction_count,
                     SUM(sale_items.line_total) / NULLIF(SUM(sale_items.quantity_sold), 0) as avg_selling_price,
-                    SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as gross_profit
+                    SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as gross_profit,
+                    SUM(
+                        CASE WHEN sales.has_credit = true AND sales.total > 0
+                        THEN ROUND(
+                            sale_items.line_total::numeric
+                            / NULLIF(sales.total::numeric, 0)
+                            * sales.credit_amount::numeric
+                        )
+                        ELSE 0 END
+                    ) as credit_revenue
                 ')
                 ->groupBy('products.id', 'products.name')
                 ->orderByDesc('revenue')->limit($limit);
@@ -332,6 +341,10 @@ class SalesAnalyticsService
                 'transaction_count' => (int) $item->transaction_count,
                 'avg_selling_price' => (int) $item->avg_selling_price,
                 'revenue_share'     => $totalRev > 0 ? round(($item->revenue / $totalRev) * 100, 1) : 0,
+                'credit_revenue'    => (int) $item->credit_revenue,
+                'credit_pct'        => $item->revenue > 0
+                    ? round(($item->credit_revenue / $item->revenue) * 100, 1)
+                    : 0,
             ])->toArray();
         });
     }

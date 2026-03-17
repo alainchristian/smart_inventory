@@ -82,7 +82,7 @@
     {{-- Total Outstanding --}}
     <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);box-shadow:0 4px 12px rgba(239,68,68,0.3)">
         <div class="bkpi-value" style="font-size:28px;font-weight:800;color:white;font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($summary['total_outstanding'] / 100, 0) }} RWF
+            {{ number_format($summary['total_outstanding'], 0) }} RWF
         </div>
         <div class="bkpi-label" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);text-transform:uppercase;letter-spacing:0.8px">
             Total Outstanding
@@ -102,7 +102,7 @@
     {{-- Total Credit Given --}}
     <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
         <div class="bkpi-value" style="font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($summary['total_credit_given'] / 100, 0) }} RWF
+            {{ number_format($summary['total_credit_given'], 0) }} RWF
         </div>
         <div class="bkpi-label" style="font-size:12px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.8px">
             Total Credit Given
@@ -112,7 +112,7 @@
     {{-- Total Repaid --}}
     <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
         <div class="bkpi-value" style="font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($summary['total_repaid'] / 100, 0) }} RWF
+            {{ number_format($summary['total_repaid'], 0) }} RWF
         </div>
         <div class="bkpi-label" style="font-size:12px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.8px">
             Total Repaid
@@ -192,13 +192,13 @@
                         <td data-label="Phone" style="padding:12px 16px;font-family:var(--mono);color:var(--text-sub);font-size:12px">{{ $customer->phone }}</td>
                         <td data-label="Shop" style="padding:12px 16px;color:var(--text)">{{ $customer->shop?->name ?? 'N/A' }}</td>
                         <td data-label="Outstanding" style="text-align:right;padding:12px 16px;font-family:var(--mono);font-weight:700;color:{{ $customer->outstanding_balance > 0 ? '#ef4444' : 'var(--text-sub)' }}">
-                            {{ number_format($customer->outstanding_balance / 100, 0) }} RWF
+                            {{ number_format($customer->outstanding_balance, 0) }} RWF
                         </td>
                         <td data-label="Credit Given" style="text-align:right;padding:12px 16px;font-family:var(--mono);color:var(--text)">
-                            {{ number_format($customer->total_credit_given / 100, 0) }} RWF
+                            {{ number_format($customer->total_credit_given, 0) }} RWF
                         </td>
                         <td data-label="Repaid" style="text-align:right;padding:12px 16px;font-family:var(--mono);color:#10b981">
-                            {{ number_format($customer->total_repaid / 100, 0) }} RWF
+                            {{ number_format($customer->total_repaid, 0) }} RWF
                         </td>
                         <td data-label="Last Credit" style="text-align:center;padding:12px 16px;color:var(--text-sub);font-size:12px">
                             @if($customer->last_credit_at)
@@ -266,19 +266,19 @@
                     <div>
                         <div style="font-size:11px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Outstanding Balance</div>
                         <div style="font-size:20px;font-weight:800;color:#ef4444;font-family:var(--mono)">
-                            {{ number_format($this->selectedCustomer->outstanding_balance / 100, 0) }} RWF
+                            {{ number_format($this->selectedCustomer->outstanding_balance, 0) }} RWF
                         </div>
                     </div>
                     <div>
                         <div style="font-size:11px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Total Credit Given</div>
                         <div style="font-size:20px;font-weight:800;color:var(--text);font-family:var(--mono)">
-                            {{ number_format($this->selectedCustomer->total_credit_given / 100, 0) }} RWF
+                            {{ number_format($this->selectedCustomer->total_credit_given, 0) }} RWF
                         </div>
                     </div>
                     <div>
                         <div style="font-size:11px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Total Repaid</div>
                         <div style="font-size:20px;font-weight:800;color:#10b981;font-family:var(--mono)">
-                            {{ number_format($this->selectedCustomer->total_repaid / 100, 0) }} RWF
+                            {{ number_format($this->selectedCustomer->total_repaid, 0) }} RWF
                         </div>
                     </div>
                 </div>
@@ -307,10 +307,10 @@
                         </div>
                         <div style="text-align:right">
                             <div style="font-size:18px;font-weight:800;color:var(--text);font-family:var(--mono)">
-                                {{ number_format($sale->total / 100, 0) }} RWF
+                                {{ number_format($sale->total, 0) }} RWF
                             </div>
                             <div style="font-size:11px;color:#ef4444;font-weight:600;margin-top:2px">
-                                Credit: {{ number_format($sale->credit_amount / 100, 0) }} RWF
+                                Credit: {{ number_format($sale->credit_amount, 0) }} RWF
                             </div>
                         </div>
                     </div>
@@ -319,7 +319,7 @@
                             <span style="font-size:10px;color:var(--text-sub);font-weight:600">Payments:</span>
                             @foreach($sale->payments as $payment)
                                 <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text-sub)">
-                                    {{ $payment->payment_method->label() }}: {{ number_format($payment->amount / 100, 0) }}
+                                    {{ $payment->payment_method->label() }}: {{ number_format($payment->amount, 0) }}
                                 </span>
                             @endforeach
                         </div>

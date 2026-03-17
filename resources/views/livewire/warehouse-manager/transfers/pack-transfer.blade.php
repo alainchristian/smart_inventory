@@ -254,6 +254,75 @@ use App\Enums\TransferStatus;
         </div>
     </div>
 
+    @if($showQuantityPanel)
+    <div style="margin-top:16px;padding:18px 20px;background:var(--accent-dim);
+                border:2px solid var(--accent);border-radius:14px">
+
+        {{-- Header --}}
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+            <div>
+                <div style="font-size:14px;font-weight:800;color:var(--accent)">
+                    📦 {{ $pendingProductName }}
+                </div>
+                <div style="font-size:11px;color:var(--text-sub);margin-top:3px">
+                    {{ $pendingAlreadyAssigned }} already assigned
+                    &nbsp;·&nbsp;
+                    <span style="font-weight:700;color:var(--text)">
+                        {{ $pendingMaxQty }} box{{ $pendingMaxQty === 1 ? '' : 'es' }} still needed
+                    </span>
+                </div>
+            </div>
+            <button wire:click="closeQuantityPanel"
+                    style="background:none;border:none;font-size:22px;color:var(--text-dim);
+                           cursor:pointer;line-height:1;padding:0 2px">×</button>
+        </div>
+
+        {{-- Quantity input --}}
+        <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-sub);
+                          text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">
+                How many boxes to add now?
+            </label>
+            <input wire:model.live="pendingQty"
+                   wire:keydown.enter="confirmScannedQuantity"
+                   type="number" min="1" max="{{ $pendingMaxQty }}"
+                   style="width:100%;padding:12px 14px;border:2px solid var(--accent);
+                          border-radius:10px;font-size:24px;font-weight:800;text-align:center;
+                          background:var(--surface);color:var(--text);font-family:var(--mono);
+                          outline:none;box-sizing:border-box">
+            @error('pendingQty')
+                <div style="font-size:11px;color:var(--red);margin-top:5px">{{ $message }}</div>
+            @enderror
+            @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
+            <div style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center">
+                After adding: <strong>{{ $afterAdd }}</strong> box{{ $afterAdd === 1 ? '' : 'es' }} still needed
+            </div>
+        </div>
+
+        {{-- Actions --}}
+        <div style="display:flex;gap:10px;margin-top:14px">
+            <button wire:click="closeQuantityPanel"
+                    style="flex:1;padding:11px;border-radius:10px;
+                           border:1.5px solid var(--border);background:var(--surface);
+                           font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">
+                Continue Scanning
+            </button>
+            <button wire:click="confirmScannedQuantity"
+                    wire:loading.attr="disabled"
+                    wire:target="confirmScannedQuantity"
+                    style="flex:2;padding:11px;border-radius:10px;border:none;
+                           background:var(--accent);color:#fff;
+                           font-size:13px;font-weight:800;cursor:pointer;
+                           box-shadow:0 4px 12px rgba(59,111,212,.3)">
+                <span wire:loading.remove wire:target="confirmScannedQuantity">
+                    ✓ Add {{ $pendingQty }} Box{{ (int) $pendingQty === 1 ? '' : 'es' }}
+                </span>
+                <span wire:loading wire:target="confirmScannedQuantity">Adding…</span>
+            </button>
+        </div>
+    </div>
+    @endif
+
     <!-- Flash Messages -->
     @if (session()->has('success'))
         <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">

@@ -33,6 +33,15 @@ class PackTransfer extends Component
     public bool $phoneConnected = false;
     public ?\Carbon\Carbon $lastPhoneActivity = null;
 
+    // Quantity panel properties
+    public bool    $showQuantityPanel      = false;
+    public ?string $pendingBoxCode         = null;
+    public ?int    $pendingProductId       = null;
+    public string  $pendingProductName     = '';
+    public int     $pendingQty             = 1;
+    public int     $pendingMaxQty          = 0;
+    public int     $pendingAlreadyAssigned = 0;
+
     public function mount(Transfer $transfer)
     {
         $user = auth()->user();
@@ -114,7 +123,7 @@ class PackTransfer extends Component
         }
     }
 
-    public function scanBox()
+    public function scanBox(): void
     {
         $boxCode = trim($this->scanInput);
 
@@ -123,7 +132,7 @@ class PackTransfer extends Component
             return;
         }
 
-        // Find the box
+        // Find the scanned box in this warehouse
         $box = Box::where('box_code', $boxCode)
             ->where('location_type', 'warehouse')
             ->where('location_id', $this->transfer->from_warehouse_id)
@@ -136,7 +145,7 @@ class PackTransfer extends Component
             return;
         }
 
-        // Check if box is for a product in this transfer
+        // Find the matching transfer item
         $transferItemId = null;
         foreach ($this->items as $itemId => $item) {
             if ($item['product_id'] == $box->product_id) {
@@ -146,23 +155,102 @@ class PackTransfer extends Component
         }
 
         if (!$transferItemId) {
-            $this->addError('scanInput', "Box '{$boxCode}' contains {$box->product->name}, which is not in this transfer request.");
+            $this->addError('scanInput', "Box '{$boxCode}' contains {$box->product->name}, which is not in this transfer.");
             $this->scanInput = '';
             return;
         }
 
-        // Check if already assigned
-        if (isset($this->assignedBoxes[$box->id])) {
-            $this->addError('scanInput', "Box '{$boxCode}' is already assigned to this transfer.");
+        $item            = $this->items[$transferItemId];
+        $ipb             = max(1, (int) $item['items_per_box']);
+        $boxesRequested  = (int) round($item['quantity_requested'] / $ipb);
+        $boxesAssigned   = (int) $item['boxes_assigned'];
+        $remaining       = $boxesRequested - $boxesAssigned;
+
+        if ($remaining <= 0) {
+            $this->addError('scanInput', "All {$boxesRequested} requested boxes for {$item['product_name']} are already assigned.");
             $this->scanInput = '';
             return;
         }
 
-        // Assign the box
-        $this->assignBox($box, $transferItemId);
+        // Open quantity panel
+        $this->pendingBoxCode          = $boxCode;
+        $this->pendingProductId        = $box->product_id;
+        $this->pendingProductName      = $item['product_name'];
+        $this->pendingAlreadyAssigned  = $boxesAssigned;
+        $this->pendingMaxQty           = $remaining;
+        $this->pendingQty              = 1;
+        $this->showQuantityPanel       = true;
+        $this->scanInput               = '';
+        $this->resetErrorBag();
+    }
 
-        session()->flash('success', "Box '{$boxCode}' assigned successfully.");
-        $this->scanInput = '';
+    public function confirmScannedQuantity(): void
+    {
+        $qty = (int) $this->pendingQty;
+
+        if ($qty < 1) {
+            $this->addError('pendingQty', 'Quantity must be at least 1.');
+            return;
+        }
+
+        if ($qty > $this->pendingMaxQty) {
+            $this->addError('pendingQty', "Cannot exceed {$this->pendingMaxQty} box(es) remaining for this product.");
+            return;
+        }
+
+        // Find the transfer item id
+        $transferItemId = null;
+        foreach ($this->items as $itemId => $item) {
+            if ($item['product_id'] == $this->pendingProductId) {
+                $transferItemId = $itemId;
+                break;
+            }
+        }
+
+        if (!$transferItemId) {
+            $this->closeQuantityPanel();
+            return;
+        }
+
+        // FIFO: get $qty available boxes for this product excluding already assigned
+        $alreadyAssignedIds = array_keys($this->assignedBoxes);
+
+        $boxes = Box::where('product_id', $this->pendingProductId)
+            ->where('location_type', 'warehouse')
+            ->where('location_id', $this->transfer->from_warehouse_id)
+            ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
+            ->whereNotIn('id', $alreadyAssignedIds)
+            ->orderByRaw("CASE WHEN status = 'full' THEN 0 ELSE 1 END")
+            ->orderBy('received_at', 'asc')
+            ->limit($qty)
+            ->get();
+
+        if ($boxes->isEmpty()) {
+            $this->addError('pendingQty', 'No available boxes found in warehouse for this product.');
+            return;
+        }
+
+        $actualCount = $boxes->count();
+        foreach ($boxes as $box) {
+            $this->assignBox($box, $transferItemId);
+        }
+
+        $productName = $this->pendingProductName;
+        $this->closeQuantityPanel();
+
+        session()->flash('success', "{$actualCount} box(es) of '{$productName}' added to transfer.");
+    }
+
+    public function closeQuantityPanel(): void
+    {
+        $this->showQuantityPanel      = false;
+        $this->pendingBoxCode         = null;
+        $this->pendingProductId       = null;
+        $this->pendingProductName     = '';
+        $this->pendingQty             = 1;
+        $this->pendingMaxQty          = 0;
+        $this->pendingAlreadyAssigned = 0;
+        $this->resetErrorBag('pendingQty');
     }
 
     protected function assignBox(Box $box, int $transferItemId)

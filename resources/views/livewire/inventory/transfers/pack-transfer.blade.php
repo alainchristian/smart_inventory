@@ -321,6 +321,78 @@
         </div>
     </div>
 
+    {{-- ── Quantity Popup ─────────────────────────────────────────── --}}
+    @if($showQuantityPanel)
+    <div
+        x-data
+        x-on:keydown.escape.window="$wire.closeQuantityPanel()"
+        style="position:fixed;inset:0;z-index:900;display:flex;align-items:center;
+               justify-content:center;background:rgba(15,18,36,.55);backdrop-filter:blur(3px)"
+    >
+        <div style="background:var(--surface);border-radius:18px;width:340px;max-width:92vw;
+                    padding:28px 28px 24px;box-shadow:0 24px 64px rgba(0,0,0,.26);
+                    border:1px solid var(--border)"
+             x-on:click.stop>
+
+            {{-- Product name --}}
+            <div style="font-size:16px;font-weight:800;color:var(--text);
+                        margin-bottom:4px;text-align:center">
+                📦 {{ $pendingProductName }}
+            </div>
+
+            {{-- Still needed subtitle --}}
+            <div style="font-size:12px;color:var(--text-sub);text-align:center;margin-bottom:20px">
+                {{ $pendingAlreadyAssigned }} assigned
+                &nbsp;·&nbsp;
+                <strong style="color:var(--text)">
+                    {{ $pendingMaxQty }} box{{ $pendingMaxQty === 1 ? '' : 'es' }} needed
+                </strong>
+            </div>
+
+            {{-- Number input — auto-focused, Enter confirms --}}
+            <input
+                wire:model.live="pendingQty"
+                wire:keydown.enter="confirmScannedQuantity"
+                x-on:keydown.escape.stop="$wire.closeQuantityPanel()"
+                type="number"
+                min="1"
+                max="{{ $pendingMaxQty }}"
+                x-init="$nextTick(() => $el.select())"
+                style="width:100%;padding:14px;border:2px solid var(--accent);
+                       border-radius:12px;font-size:32px;font-weight:800;text-align:center;
+                       background:var(--surface);color:var(--text);font-family:var(--mono);
+                       outline:none;box-sizing:border-box;display:block"
+            >
+
+            @error('pendingQty')
+                <div style="font-size:11px;color:var(--red);margin-top:6px;text-align:center">
+                    {{ $message }}
+                </div>
+            @enderror
+
+            {{-- Live "after adding" indicator --}}
+            @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
+            <div style="font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center">
+                After adding:
+                <strong style="color:{{ $afterAdd === 0 ? 'var(--green)' : 'var(--text)' }}">
+                    {{ $afterAdd }} box{{ $afterAdd === 1 ? '' : 'es' }} still needed
+                </strong>
+            </div>
+
+            {{-- Hint --}}
+            <div style="font-size:10px;color:var(--text-dim);text-align:center;margin-top:14px;
+                        padding-top:14px;border-top:1px solid var(--border)">
+                Press <kbd style="background:var(--surface2);border:1px solid var(--border);
+                                  border-radius:4px;padding:1px 5px;font-size:10px">Enter</kbd>
+                to confirm &nbsp;·&nbsp;
+                <kbd style="background:var(--surface2);border:1px solid var(--border);
+                            border-radius:4px;padding:1px 5px;font-size:10px">Esc</kbd>
+                to cancel
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Packing Progress per Product --}}
     @if(isset($packingSummary) && count($packingSummary) > 0)
     <div class="pt-card">
@@ -465,5 +537,18 @@
             </p>
         </div>
     </div>
+
+    <script>
+    window.addEventListener('quantity-confirmed', () => {
+        // Re-focus the scan input after popup closes
+        setTimeout(() => {
+            const scanInput = document.querySelector('[wire\\:model="scanInput"], [wire\\:model\\.live="scanInput"]');
+            if (scanInput) {
+                scanInput.focus();
+                scanInput.select();
+            }
+        }, 80);
+    });
+    </script>
 
 </div>

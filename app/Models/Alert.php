@@ -25,6 +25,7 @@ class Alert extends Model
         'dismissed_at',
         'is_resolved',
         'resolved_at',
+        'resolution_notes',
         'resolved_by',
         'action_url',
         'action_label',

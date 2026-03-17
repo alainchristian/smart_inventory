@@ -4,6 +4,7 @@ namespace App\Livewire\ShopManager;
 
 use App\Models\Sale;
 use App\Models\Transfer;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Dashboard extends Component
@@ -90,21 +91,28 @@ class Dashboard extends Component
         return $data;
     }
 
-    public function getPaymentMethodBreakdown()
+    private function getPaymentMethodBreakdown(): array
     {
-        $date = $this->selectedDate ?? today();
+        $date = $this->selectedDate ? \Carbon\Carbon::parse($this->selectedDate) : today();
 
-        $sales = Sale::notVoided()
-            ->where('shop_id', $this->shopId)
-            ->whereDate('sale_date', $date)
-            ->get();
+        // Read from sale_payments table (the correct source for split payments)
+        $rows = DB::table('sale_payments')
+            ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
+            ->whereNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->where('sales.shop_id', $this->shopId)
+            ->whereDate('sales.sale_date', $date)
+            ->selectRaw('sale_payments.payment_method::text as method, SUM(sale_payments.amount) as total')
+            ->groupBy('sale_payments.payment_method')
+            ->get()
+            ->keyBy('method');
 
         return [
-            'cash' => $sales->where('payment_method', 'cash')->sum('total'),
-            'card' => $sales->where('payment_method', 'card')->sum('total'),
-            'mobile_money' => $sales->where('payment_method', 'mobile_money')->sum('total'),
-            'bank_transfer' => $sales->where('payment_method', 'bank_transfer')->sum('total'),
-            'credit' => $sales->where('payment_method', 'credit')->sum('total'),
+            'cash'          => (int) ($rows['cash']?->total          ?? 0),
+            'card'          => (int) ($rows['card']?->total          ?? 0),
+            'mobile_money'  => (int) ($rows['mobile_money']?->total  ?? 0),
+            'bank_transfer' => (int) ($rows['bank_transfer']?->total ?? 0),
+            'credit'        => (int) ($rows['credit']?->total        ?? 0),
         ];
     }
 
@@ -118,12 +126,26 @@ class Dashboard extends Component
         return redirect()->route('transfers.show', $transferId);
     }
 
+    private function getShopCreditOutstanding(): array
+    {
+        $outstanding = \App\Models\Customer::where('shop_id', $this->shopId)
+            ->where('outstanding_balance', '>', 0)
+            ->selectRaw('COUNT(*) as customer_count, SUM(outstanding_balance) as total_outstanding')
+            ->first();
+
+        return [
+            'customer_count'    => (int) ($outstanding->customer_count   ?? 0),
+            'total_outstanding' => (int) ($outstanding->total_outstanding ?? 0),
+        ];
+    }
+
     public function render()
     {
         return view('livewire.shop-manager.dashboard', [
-            'salesToday' => $this->getSalesToday(),
-            'hourlySalesData' => $this->getHourlySalesData(),
-            'paymentBreakdown' => $this->getPaymentMethodBreakdown(),
+            'salesToday'        => $this->getSalesToday(),
+            'hourlySalesData'   => $this->getHourlySalesData(),
+            'paymentBreakdown'  => $this->getPaymentMethodBreakdown(),
+            'creditOutstanding' => $this->getShopCreditOutstanding(),
         ]);
     }
 }
