@@ -7,6 +7,7 @@
     <a href="{{ route('owner.shops.index') }}" class="card-btn">View All</a>
   </div>
 
+  <div class="card-scroll">
   @foreach($shops as $shop)
   <div class="shop-row" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
     <div class="shop-rank {{ $shop['rank_css'] }}">{{ $shop['rank'] }}</div>
@@ -52,5 +53,6 @@
       @endif
     </div>
     @endforeach
+  </div>
   </div>
 </div>

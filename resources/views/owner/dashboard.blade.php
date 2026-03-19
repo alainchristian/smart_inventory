@@ -75,118 +75,6 @@
     </div>
     @endif
 
-    {{-- ─────────────────────────────────────────────────────────────────────
-         Inventory Health (static snapshot from DashboardController $stats)
-         FIX #1  — uses active_boxes / total_items_in_stock which now both
-                    share the same Box::available() filter as BusinessKpiRow.
-         FIX #3  — total_items_in_stock no longer includes damaged/empty boxes.
-         FIX #4  — card 4 now clearly shows active_boxes (full/partial only)
-                    and separates the raw all-time count into the meta line.
-         FIX #6  — Gross Margin badge labelled "Potential margin on stock"
-                    so the owner can distinguish it from the realised margin
-                    shown in the Business Overview (Livewire) section below.
-    ───────────────────────────────────────────────────────────────────────── --}}
-    @if(isset($stats))
-    <div class="section-label">Inventory Health</div>
-    <div class="biz-kpi-grid" style="margin-bottom: 24px">
-
-        {{-- Card 1: Stock Cost Value --}}
-        <div class="bkpi violet" style="animation:fadeUp .4s ease .05s both">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <div class="bkpi-icon violet">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                        </svg>
-                    </div>
-                    <span class="bkpi-name">Stock Cost Value</span>
-                </div>
-                <span class="bkpi-pct violet">Owner</span>
-            </div>
-            <div class="bkpi-value">{{ number_format($stats['inventory_value']) }}</div>
-            <div class="bkpi-meta">What you paid · RWF</div>
-        </div>
-
-        {{-- Card 2: Retail Value
-             FIX #3: badge now shows total_items_in_stock which uses the same
-             Box::available() filter as the valuation — no more damaged items inflating the count --}}
-        <div class="bkpi blue" style="animation:fadeUp .4s ease .10s both">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <div class="bkpi-icon blue">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                    <span class="bkpi-name">Potential Retail</span>
-                </div>
-                <span class="bkpi-pct blue">{{ number_format($stats['total_items_in_stock']) }} items</span>
-            </div>
-            <div class="bkpi-value">{{ number_format($stats['retail_value']) }}</div>
-            {{-- FIX #3: items count now consistent with valuation (available boxes only) --}}
-            <div class="bkpi-meta">{{ number_format($stats['total_items_in_stock']) }} sellable items · RWF</div>
-            @if(($stats['damaged_items'] ?? 0) > 0)
-            <div class="bkpi-meta" style="color:var(--red);margin-top:4px">
-                + {{ number_format($stats['damaged_items']) }} damaged items (excluded)
-            </div>
-            @endif
-        </div>
-
-        {{-- Card 3: Potential Profit / Gross Margin
-             FIX #6: label explicitly says "Potential margin on stock" — owner
-             knows this is NOT the same as realised margin in Business Overview --}}
-        <div class="bkpi green" style="animation:fadeUp .4s ease .15s both">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <div class="bkpi-icon green">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                            <polyline points="17 6 23 6 23 12"/>
-                        </svg>
-                    </div>
-                    <span class="bkpi-name">Gross Margin</span>
-                </div>
-                @php
-                    $marginPct = $stats['retail_value'] > 0
-                        ? ($stats['potential_profit'] / $stats['retail_value']) * 100
-                        : 0;
-                @endphp
-                <span class="bkpi-pct green">{{ number_format($marginPct, 1) }}%</span>
-            </div>
-            <div class="bkpi-value" style="color:var(--green)">{{ number_format($stats['potential_profit']) }}</div>
-            {{-- FIX #6: clear label to distinguish from realised margin below --}}
-            <div class="bkpi-meta">Potential margin on stock · RWF</div>
-        </div>
-
-        {{-- Card 4: Active Boxes (sellable)
-             FIX #4: headline now shows active_boxes (full/partial, items > 0).
-             Raw total_boxes shown in meta as context for ops team. --}}
-        <div class="bkpi pink" style="animation:fadeUp .4s ease .20s both">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <div class="bkpi-icon pink">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="1" y="3" width="15" height="13" rx="2"/>
-                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-                            <circle cx="5.5" cy="18.5" r="2.5"/>
-                            <circle cx="18.5" cy="18.5" r="2.5"/>
-                        </svg>
-                    </div>
-                    <span class="bkpi-name">Active Boxes</span>
-                </div>
-                <span class="bkpi-pct pink">Full/Partial</span>
-            </div>
-            {{-- FIX #4: active_boxes (available) — not the raw all-time count --}}
-            <div class="bkpi-value">{{ number_format($stats['active_boxes']) }}</div>
-            <div class="bkpi-meta">
-                {{ number_format($stats['total_items_in_stock']) }} items ·
-                {{ number_format($stats['total_boxes']) }} total boxes on record
-            </div>
-        </div>
-
-    </div>
-    @endif
-
     {{-- Row 1: Business KPIs (Livewire — period-aware, includes realised margin) --}}
     <div class="section-label">Business Overview</div>
     <livewire:dashboard.business-kpi-row />
@@ -210,10 +98,10 @@
         <livewire:dashboard.stock-distribution />
     </div>
 
-    {{-- Row 5: Box movements + Alerts + System status --}}
-    <div class="section-label">Inventory Traceability &amp; Alerts</div>
+    {{-- Row 5: Owner Actions + Alerts + System status --}}
+    <div class="section-label">Requires Your Attention</div>
     <div class="row-trace-alerts">
-        <livewire:dashboard.recent-movements />
+        <livewire:dashboard.owner-actions />
         <div class="right-stack-panel">
             <livewire:dashboard.alerts-panel />
             <livewire:dashboard.system-status />

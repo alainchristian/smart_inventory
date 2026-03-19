@@ -15,7 +15,7 @@
     </div>
 
     <!-- Alerts List -->
-    <div class="flex flex-col gap-2">
+    <div class="card-scroll flex flex-col gap-2">
         @forelse($alerts as $alert)
             @php
                 $colors = $this->getSeverityColors($alert->severity->value);

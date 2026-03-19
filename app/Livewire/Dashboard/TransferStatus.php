@@ -7,10 +7,11 @@ use Livewire\Component;
 
 class TransferStatus extends Component
 {
-    public int $pendingApproval = 0;
-    public int $inTransit       = 0;
-    public int $discrepancies   = 0;
-    public int $deliveredToday  = 0;
+    public int $pendingApproval  = 0;
+    public int $inTransit        = 0;
+    public int $discrepancies    = 0;
+    public int $deliveredToday   = 0;
+    public array $recentTransfers = [];
 
     public function mount(): void
     {
@@ -29,6 +30,19 @@ class TransferStatus extends Component
                                          })
                                          ->whereDate('delivered_at', today())
                                          ->count();
+
+        $this->recentTransfers = \App\Models\Transfer::with(['fromWarehouse', 'toShop'])
+            ->whereIn('status', ['pending', 'approved', 'in_transit', 'delivered'])
+            ->orderByDesc('created_at')
+            ->limit(4)
+            ->get()
+            ->map(fn($t) => [
+                'id'     => $t->id,
+                'from'   => $t->fromWarehouse?->name ?? '—',
+                'to'     => $t->toShop?->name ?? '—',
+                'status' => $t->status->value,
+                'age'    => $t->created_at->diffForHumans(),
+            ])->toArray();
     }
 
     public function render()

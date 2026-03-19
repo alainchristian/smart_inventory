@@ -87,6 +87,15 @@ class PointOfSale extends Component
     public $creditWarningVisible  = false;
     public $creditWarningMessage  = '';
 
+    // ── Settings (loaded once on mount) ──────────────────────────────────────
+    public bool  $settingAllowIndividualSales    = true;
+    public array $settingIndividualCategoryIds   = [];
+    public bool  $settingAllowPriceOverride      = true;
+    public int   $settingPriceOverrideThreshold  = 20;
+    public bool  $settingAllowCreditSales        = true;
+    public bool  $settingCreditRequiresCustomer  = true;
+    public int   $settingMaxCreditPerCustomer    = 0;
+
     // Receipt Modal
     public $showReceiptModal = false;
     public $completedSale = null;
@@ -161,6 +170,16 @@ class PointOfSale extends Component
         if ($this->scannerSession) {
             $this->showScannerPanel = true;
         }
+
+        // Load operational settings
+        $settings = app(\App\Services\SettingsService::class);
+        $this->settingAllowIndividualSales   = $settings->allowIndividualItemSales();
+        $this->settingIndividualCategoryIds  = $settings->individualSaleCategoryIds();
+        $this->settingAllowPriceOverride     = $settings->allowPriceOverride();
+        $this->settingPriceOverrideThreshold = $settings->priceOverrideThreshold();
+        $this->settingAllowCreditSales       = $settings->allowCreditSales();
+        $this->settingCreditRequiresCustomer = $settings->creditRequiresCustomer();
+        $this->settingMaxCreditPerCustomer   = $settings->maxCreditPerCustomer();
     }
 
     // ==================== SEARCH ====================
@@ -300,10 +319,19 @@ class PointOfSale extends Component
             'name' => $product->name,
             'sku' => $product->sku,
             'category' => $product->category?->name,
+            'category_id' => $product->category_id,
             'selling_price' => $product->selling_price,
             'items_per_box' => $product->items_per_box,
             'box_price' => $product->effective_box_selling_price,
         ];
+
+        // Determine if individual item sales are allowed for this product's category
+        $categoryId = $product->category_id;
+        $individualAllowed = $this->settingAllowIndividualSales && (
+            empty($this->settingIndividualCategoryIds)
+            || in_array($categoryId, $this->settingIndividualCategoryIds)
+        );
+        $this->stagingProduct['individual_sale_allowed'] = $individualAllowed;
 
         $this->stagingStock = $stock;
 
@@ -586,6 +614,24 @@ class PointOfSale extends Component
             return;
         }
 
+        // Block individual item sales if setting disallows it
+        if (!($this->stagingProduct['individual_sale_allowed'] ?? true) && $this->stagingMode === 'item') {
+            $this->dispatch('notification', [
+                'type'    => 'error',
+                'message' => 'Individual item sales are not allowed for this product category',
+            ]);
+            return;
+        }
+
+        // Block price override if setting disallows it
+        if (!$this->settingAllowPriceOverride && $this->stagingPriceModified) {
+            $this->dispatch('notification', [
+                'type'    => 'error',
+                'message' => 'Price modifications are not allowed',
+            ]);
+            return;
+        }
+
         // Validate quantity
         if ($this->stagingQty < 1) {
             $this->dispatch('notification', [
@@ -659,7 +705,7 @@ class PointOfSale extends Component
         // Check if price was modified and requires approval
         if ($this->stagingPriceModified) {
             $percentageChange = (($originalPrice - $this->stagingPrice) / $originalPrice) * 100;
-            $cartItem['requires_owner_approval'] = $percentageChange > 20;
+            $cartItem['requires_owner_approval'] = $percentageChange > $this->settingPriceOverrideThreshold;
         }
 
         // If editing existing cart item, replace it
@@ -804,7 +850,7 @@ class PointOfSale extends Component
         $percentageChange = $originalPrice > 0
             ? (($originalPrice - $newPrice) / $originalPrice) * 100
             : 0;
-        $requiresApproval = $percentageChange > 20;
+        $requiresApproval = $percentageChange > $this->settingPriceOverrideThreshold;
 
         $this->cart[$index]['price'] = $newPrice;
         $this->cart[$index]['line_total'] = $newPrice * $this->cart[$index]['quantity'];
@@ -819,7 +865,7 @@ class PointOfSale extends Component
         if ($requiresApproval) {
             $this->dispatch('notification', [
                 'type' => 'warning',
-                'message' => 'Price change >20% requires owner approval'
+                'message' => 'Price change >' . $this->settingPriceOverrideThreshold . '% requires owner approval'
             ]);
         } else {
             $this->dispatch('notification', [
@@ -970,13 +1016,41 @@ class PointOfSale extends Component
             return;
         }
 
-        // Require customer selection for credit
-        if (!$this->selectedCustomerId) {
+        // Hard block: credit sales disabled by owner
+        if (!$this->settingAllowCreditSales) {
+            $this->payAmt_credit = 0;
             $this->dispatch('notification', [
-                'type' => 'warning',
-                'message' => 'Please select or create a customer before using credit'
+                'type'    => 'error',
+                'message' => 'Credit sales are disabled by the owner',
             ]);
             return;
+        }
+
+        // Hard block: customer required for credit
+        if ($this->settingCreditRequiresCustomer && !$this->selectedCustomerId) {
+            $this->payAmt_credit = 0;
+            $this->dispatch('notification', [
+                'type'    => 'warning',
+                'message' => 'A registered customer must be selected before using credit',
+            ]);
+            return;
+        }
+
+        // Hard block: max credit per customer
+        if ($this->settingMaxCreditPerCustomer > 0 && $this->selectedCustomerId) {
+            $customer = \App\Models\Customer::find($this->selectedCustomerId);
+            if ($customer) {
+                $projectedBalance = $customer->outstanding_balance + $this->payAmt_credit;
+                if ($projectedBalance > $this->settingMaxCreditPerCustomer) {
+                    $remaining = max(0, $this->settingMaxCreditPerCustomer - $customer->outstanding_balance);
+                    $this->payAmt_credit = $remaining;
+                    $this->dispatch('notification', [
+                        'type'    => 'warning',
+                        'message' => 'Credit limit reached. Maximum remaining credit for this customer: '
+                            . number_format($remaining) . ' RWF',
+                    ]);
+                }
+            }
         }
 
         $this->evaluateCreditWarning();
@@ -1057,6 +1131,11 @@ class PointOfSale extends Component
         $this->payAmt_mobile_money = 0;
         $this->payAmt_bank_transfer = 0;
         $this->payAmt_credit = 0;
+
+        // Enforce settings
+        if (!$this->settingAllowCreditSales) {
+            $this->payAmt_credit = 0;
+        }
         $this->payRef_card = '';
         $this->payRef_mobile_money = '';
         $this->payRef_bank_transfer = '';
@@ -1100,13 +1179,41 @@ class PointOfSale extends Component
             return;
         }
 
-        // If credit is used, require customer selection
-        if ($this->payAmt_credit > 0 && !$this->selectedCustomerId) {
+        // Belt-and-braces: credit disabled by setting
+        if ($this->payAmt_credit > 0 && !$this->settingAllowCreditSales) {
             $this->dispatch('notification', [
-                'type' => 'error',
-                'message' => 'Please select or create a customer for credit sales'
+                'type' => 'error', 'message' => 'Credit sales are disabled',
             ]);
             return;
+        }
+
+        // Belt-and-braces: customer required for credit
+        if ($this->payAmt_credit > 0
+            && $this->settingCreditRequiresCustomer
+            && !$this->selectedCustomerId) {
+            $this->dispatch('notification', [
+                'type' => 'error',
+                'message' => 'A registered customer must be selected for credit sales',
+            ]);
+            return;
+        }
+
+        // Belt-and-braces: max credit per customer
+        if ($this->payAmt_credit > 0
+            && $this->settingMaxCreditPerCustomer > 0
+            && $this->selectedCustomerId) {
+            $customer = \App\Models\Customer::find($this->selectedCustomerId);
+            if ($customer) {
+                $projected = $customer->outstanding_balance + $this->payAmt_credit;
+                if ($projected > $this->settingMaxCreditPerCustomer) {
+                    $this->dispatch('notification', [
+                        'type' => 'error',
+                        'message' => 'This sale would exceed the customer\'s credit limit of '
+                            . number_format($this->settingMaxCreditPerCustomer) . ' RWF',
+                    ]);
+                    return;
+                }
+            }
         }
 
         try {
@@ -1174,6 +1281,10 @@ class PointOfSale extends Component
 
             $this->completedSale = Sale::with(['items.product', 'items.box', 'soldBy', 'shop', 'payments'])
                 ->find($sale->id);
+
+            // Refresh the product list so sold-out products disappear immediately
+            $this->allStockProducts = [];
+            $this->searchResults    = [];
 
             $this->clearCart();
             $this->showCheckoutModal = false;

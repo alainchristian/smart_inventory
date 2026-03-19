@@ -14,7 +14,7 @@
     </div>
 
     {{-- Timeline --}}
-    <div class="flex flex-col overflow-y-auto" style="max-height: 340px;">
+    <div class="overflow-y-auto card-scroll">
         @forelse($activities as $activity)
             @php
                 $parsed  = $this->parseAction($activity);

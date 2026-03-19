@@ -45,13 +45,15 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
 
     // Location management
     Route::prefix('warehouses')->name('warehouses.')->group(function () {
-        Route::get('/', function () { return view('owner.warehouses.index'); })->name('index');
-        Route::get('/create', function () { return view('owner.warehouses.create'); })->name('create');
+        Route::get('/', function () {
+            return view('owner.warehouses.index');
+        })->name('index');
     });
 
     Route::prefix('shops')->name('shops.')->group(function () {
-        Route::get('/', function () { return view('owner.shops.index'); })->name('index');
-        Route::get('/create', function () { return view('owner.shops.create'); })->name('create');
+        Route::get('/', function () {
+            return view('owner.shops.index');
+        })->name('index');
     });
 
     // Products (owner can manage all)

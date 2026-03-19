@@ -1,15 +1,95 @@
+# Operations & Activity — Restore Original 3-Column Layout
+## Claude Code Instructions
+
+> Drop in project root and tell Claude Code:
+> "Read OPS_RESTORE.md and follow every step in order."
+
+---
+
+## Read these files first
+
+```bash
+cat resources/views/owner/dashboard.blade.php | grep -A10 "Operations"
+cat resources/css/app.css | grep -A8 "row-ops-activity\|oa-grid"
+```
+
+---
+
+## STEP 1 — Restore the dashboard blade to 3 components
+
+**File:** `resources/views/owner/dashboard.blade.php`
+
+Find the Operations & Activity section. Replace whatever wrapper
+currently holds the components with:
+
+```blade
+{{-- Row 4: Transfers + Activity + Stock distribution --}}
+<div class="section-label">Operations &amp; Activity</div>
+<div class="row-ops-activity">
+    <livewire:dashboard.transfer-status />
+    <livewire:dashboard.activity-feed />
+    <livewire:dashboard.stock-distribution />
+</div>
+```
+
+---
+
+## STEP 2 — Restore the CSS grid rule
+
+**File:** `resources/css/app.css`
+
+Find `.oa-grid` and any `.oa-grid > *` rules added recently.
+Delete them entirely.
+
+Find `.row-ops-activity` and make sure it reads:
+
+```css
+.row-ops-activity {
+    display: grid;
+    grid-template-columns: 1fr 1fr 300px;
+    gap: 18px;
+    margin-bottom: 26px;
+    align-items: start;
+}
+```
+
+If `.row-ops-activity` does not exist, add it.
+
+Add the mobile breakpoint right after:
+
+```css
+@media (max-width: 900px) {
+    .row-ops-activity {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+@media (max-width: 640px) {
+    .row-ops-activity {
+        grid-template-columns: 1fr;
+    }
+}
+```
+
+---
+
+## STEP 3 — Restore Transfer Status blade to its clean original
+
+**File:** `resources/views/livewire/dashboard/transfer-status.blade.php`
+
+Replace the entire file with:
+
+```blade
 <div style="background:var(--surface);border:1px solid var(--border);
-            border-radius:var(--r);overflow:hidden;
-            display:flex;flex-direction:column" wire:poll.29s>
+            border-radius:var(--r);overflow:hidden">
 
     {{-- Header --}}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;
                 padding:18px 20px;border-bottom:1px solid var(--border)">
         <div>
-            <div style="font-size:17px;font-weight:700;color:var(--text)">
+            <div style="font-size:15px;font-weight:700;color:var(--text)">
                 Transfer Status
             </div>
-            <div style="font-size:13px;color:var(--text-dim);margin-top:2px">
+            <div style="font-size:12px;color:var(--text-dim);margin-top:2px">
                 Live pipeline
             </div>
         </div>
@@ -63,7 +143,7 @@
         ];
     @endphp
 
-    <div class="card-scroll">
+    <div>
         @foreach($statuses as $s)
         <a href="{{ $s['link'] }}"
            style="display:flex;align-items:center;gap:14px;
@@ -89,7 +169,7 @@
                 <div style="font-size:14px;font-weight:600;color:var(--text)">
                     {{ $s['label'] }}
                 </div>
-                <div style="font-size:12px;color:var(--text-dim);margin-top:1px">
+                <div style="font-size:11px;color:var(--text-dim);margin-top:1px">
                     {{ $s['sub'] }}
                 </div>
             </div>
@@ -98,7 +178,7 @@
             <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;
                         background:{{ $s['bg'] }};
                         display:flex;align-items:center;justify-content:center;
-                        font-size:14px;font-weight:800;font-family:var(--mono);
+                        font-size:13px;font-weight:800;font-family:var(--mono);
                         color:{{ $s['color'] }}">
                 {{ $s['count'] }}
             </div>
@@ -107,55 +187,39 @@
         @endforeach
     </div>
 
-    {{-- Recent active transfers --}}
-    <div style="border-top:1px solid var(--border)">
-        <div style="padding:10px 20px 4px;font-size:11px;font-weight:700;
-                    letter-spacing:.5px;text-transform:uppercase;
-                    color:var(--text-dim)">
-            Recent Active
-        </div>
-
-        @forelse($recentTransfers as $t)
-        @php
-            $sc = match($t['status']) {
-                'pending'    => ['bg'=>'var(--amber-dim)',  'c'=>'var(--amber)'],
-                'approved'   => ['bg'=>'var(--accent-dim)', 'c'=>'var(--accent)'],
-                'in_transit' => ['bg'=>'var(--violet-dim)', 'c'=>'var(--violet)'],
-                'delivered'  => ['bg'=>'var(--green-dim)',  'c'=>'var(--green)'],
-                default      => ['bg'=>'var(--surface2)',   'c'=>'var(--text-dim)'],
-            };
-        @endphp
-        <a href="{{ route('owner.transfers.show', $t['id']) }}"
-           style="display:flex;align-items:center;justify-content:space-between;
-                  padding:10px 20px;text-decoration:none;gap:10px;
-                  border-top:1px solid var(--border);
-                  transition:background var(--tr)"
-           onmouseover="this.style.background='var(--surface2)'"
-           onmouseout="this.style.background='transparent'">
-            <div style="min-width:0;flex:1">
-                <div style="font-size:13px;font-weight:600;color:var(--text);
-                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                    {{ $t['from'] }}
-                    <span style="color:var(--text-dim)"> → </span>
-                    {{ $t['to'] }}
-                </div>
-                <div style="font-size:12px;color:var(--text-dim);
-                            font-family:var(--mono);margin-top:1px">
-                    {{ $t['age'] }}
-                </div>
-            </div>
-            <span style="font-size:10px;font-weight:700;padding:2px 8px;
-                         border-radius:20px;white-space:nowrap;flex-shrink:0;
-                         background:{{ $sc['bg'] }};color:{{ $sc['c'] }}">
-                {{ ucfirst(str_replace('_',' ',$t['status'])) }}
-            </span>
-        </a>
-        @empty
-        <div style="padding:12px 20px;border-top:1px solid var(--border);
-                    font-size:12px;color:var(--text-dim);text-align:center">
-            No active transfers right now
-        </div>
-        @endforelse
-    </div>
-
 </div>
+```
+
+---
+
+## STEP 4 — Restore Activity Feed scroll
+
+**File:** `resources/views/livewire/dashboard/activity-feed.blade.php`
+
+Find the scrollable inner div. Make sure it has:
+```
+style="overflow-y:auto;max-height:400px"
+```
+
+Remove `flex:1` and `min-height:0` if they were added.
+
+---
+
+## STEP 5 — Rebuild and clear
+
+```bash
+npm run build
+php artisan view:clear && php artisan cache:clear
+```
+
+---
+
+## Verification
+
+Operations & Activity shows 3 equal-width cards side by side:
+- Transfer Status (icon rows with counts)
+- Live Activity (scrollable feed)
+- Stock Distribution (donut chart)
+
+On tablet (≤900px): 2 columns.
+On mobile (≤640px): 1 column stacked.

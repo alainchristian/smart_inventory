@@ -193,8 +193,13 @@ class ProcessReturn extends Component
                 $this->existingReturnWarning = null;
             }
 
-            // Check sale age (7 days warning)
+            // Check sale age against settings
             $saleAge = $sale->sale_date->diffInDays(now());
+            $maxDays = app(\App\Services\SettingsService::class)->maxReturnDays();
+            if ($maxDays > 0 && $saleAge > $maxDays) {
+                session()->flash('error', "Returns cannot be processed for sales older than {$maxDays} days.");
+                return;
+            }
             $this->saleAgeWarning = $saleAge > 7;
 
             $this->linkedSaleId = $sale->id;
@@ -370,7 +375,14 @@ class ProcessReturn extends Component
             $estimatedRefund = $this->getEstimatedRefund();
             $requiresApproval = false;
 
-            if ($estimatedRefund > 50000 && !auth()->user()->isOwner()) { // > 500 RWF
+            $settings = app(\App\Services\SettingsService::class);
+            $threshold = $settings->returnApprovalThreshold();
+            if (!auth()->user()->isOwner()
+                && !$settings->allowSellerReturns()) {
+                session()->flash('error', 'Returns must be processed by the owner.');
+                return;
+            }
+            if ($estimatedRefund > $threshold && !auth()->user()->isOwner()) {
                 $requiresApproval = true;
             }
 

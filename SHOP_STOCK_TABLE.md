@@ -1,3 +1,30 @@
+# Shop Stock Levels — Table Layout (Replaces Card Layout)
+## Claude Code Instructions
+
+> Drop in project root and tell Claude Code:
+> "Read SHOP_STOCK_TABLE.md and follow every step in order."
+
+---
+
+## Read first
+
+```bash
+cat app/Livewire/Shop/StockLevels.php
+cat resources/views/livewire/shop/stock-levels.blade.php
+```
+
+The PHP component from SHOP_STOCK_LEVELS.md is already correct — do not
+touch it. Only replace the blade view.
+
+---
+
+## STEP 1 — Replace the blade view only
+
+**File:** `resources/views/livewire/shop/stock-levels.blade.php`
+
+Replace the entire file content with:
+
+```blade
 <div style="font-family:var(--font)">
 <style>
 /* ── KPI bar ─────────────────────────────────────────────────── */
@@ -451,3 +478,31 @@
 @endif
 
 </div>
+```
+
+---
+
+## STEP 2 — Clear caches
+
+```bash
+php artisan view:clear && php artisan cache:clear
+```
+
+---
+
+## Do NOT touch
+
+- `app/Livewire/Shop/StockLevels.php` — the PHP is already correct
+- Any other files
+
+---
+
+## Verification
+
+1. Open `/shop/inventory/stock` — a clean table appears, one row per product
+2. Each row: colored dot · product name + SKU · category · box pills (F/P) ·
+   item count (colored by health) · mini progress bar · status badge
+3. On mobile: Category and progress bar columns hide, table stays readable
+4. Low Stock tab shows only products below threshold with row counts in the tab
+5. Previously Stocked shows a simple table with "Request Stock" links
+6. Pagination appears below the table when products exceed the page size

@@ -37,22 +37,22 @@
     </div>
 </div>
 
+@script
 <script>
-function salesPerfChart() {
-    return {
-        // --- CRITICAL: chartInstance is NOT declared here. -------------------
-        //
-        // Declaring it inside return{} makes Alpine wrap it in a reactive Proxy.
-        // When Livewire morphs, it calls toRaw() to unwrap the proxy chain.
-        // Chart.js instances have a circular reference: chart.canvas.chart = chart.
-        // toRaw() recurses into that cycle forever --- "too much recursion" crash.
-        // The corrupted proxy then passes undefined to plugins --- "fullSize undefined".
-        //
-        // Fix: store the chart directly on the DOM element (this.$el._chart).
-        // DOM element properties are invisible to Alpine's reactivity system.
-        // ---------------------------------------------------------------------
+Alpine.data('salesPerfChart', () => ({
+    // --- CRITICAL: chartInstance is NOT declared here. -------------------
+    //
+    // Declaring it inside return{} makes Alpine wrap it in a reactive Proxy.
+    // When Livewire morphs, it calls toRaw() to unwrap the proxy chain.
+    // Chart.js instances have a circular reference: chart.canvas.chart = chart.
+    // toRaw() recurses into that cycle forever --- "too much recursion" crash.
+    // The corrupted proxy then passes undefined to plugins --- "fullSize undefined".
+    //
+    // Fix: store the chart directly on the DOM element (this.$el._chart).
+    // DOM element properties are invisible to Alpine's reactivity system.
+    // ---------------------------------------------------------------------
 
-        morphCleanup: null,
+    morphCleanup: null,
 
         init() {
             var self = this;
@@ -222,6 +222,6 @@ function salesPerfChart() {
                 }
             });
         }
-    };
-}
+}));
 </script>
+@endscript

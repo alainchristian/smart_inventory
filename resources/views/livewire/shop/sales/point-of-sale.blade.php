@@ -571,6 +571,7 @@
             </div>
           </div>
         </button>
+        @if($stagingProduct['individual_sale_allowed'] ?? true)
         <button wire:click="$set('stagingMode','item')"
                 style="padding:14px 12px;border-radius:10px;border:2px solid {{ $stagingMode==='item' ? 'var(--accent)' : 'var(--border)' }};
                        background:{{ $stagingMode==='item' ? 'var(--accent-dim)' : 'var(--surface2)' }};cursor:pointer">
@@ -585,6 +586,23 @@
             </div>
           </div>
         </button>
+        @else
+        {{-- Disabled state --}}
+        <div style="padding:14px 12px;border-radius:10px;border:2px solid var(--border);
+                    background:var(--surface2);opacity:.45;cursor:not-allowed;text-align:center">
+            <div style="font-size:22px;margin-bottom:4px">🏷</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-dim)">
+                Individual Items
+            </div>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:4px">
+                Not allowed for this category
+            </div>
+        </div>
+        @if(!($stagingProduct['individual_sale_allowed'] ?? true) && $stagingMode === 'item')
+            {{-- Auto-correct mode if somehow stuck on item --}}
+            <span wire:init="$set('stagingMode', 'box')"></span>
+        @endif
+        @endif
       </div>
 
       {{-- Quantity stepper --}}
@@ -614,6 +632,7 @@
       </div>
 
       {{-- Unit price --}}
+      @if($settingAllowPriceOverride)
       <div style="margin-bottom:16px">
         <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:7px;
                       display:flex;justify-content:space-between;align-items:center">
@@ -643,6 +662,20 @@
         </div>
         @endif
       </div>
+      @else
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:7px">
+          Unit Price (RWF)
+        </label>
+        <div style="padding:9px 12px;background:var(--surface2);border:1px solid var(--border);
+                    border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--text-sub)">
+          {{ number_format($stagingPrice) }} RWF
+          <span style="font-size:10px;color:var(--text-dim);margin-left:6px">
+            · price locked by owner
+          </span>
+        </div>
+      </div>
+      @endif
 
       {{-- Line total preview --}}
       <div style="background:{{ $stagingPriceModified ? 'var(--amber-dim)' : 'var(--accent-dim)' }};
@@ -952,22 +985,26 @@
           </div>
 
           {{-- Credit --}}
+          @if($settingAllowCreditSales)
           <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
                       background:{{ $payAmt_credit > 0 ? 'rgba(217,119,6,.04)' : 'transparent' }}">
             <span style="font-size:18px">📋</span>
             <div style="flex:1">
               <div style="font-size:11px;font-weight:600;color:var(--text-sub);margin-bottom:2px">
                 Credit
-                @if(!$selectedCustomerId)
-                  <span style="color:var(--amber);font-size:10px">(select customer first)</span>
+                @if(!$selectedCustomerId && $settingCreditRequiresCustomer)
+                  <span style="color:var(--amber);font-size:10px">· select customer first</span>
+                @elseif(!$selectedCustomerId && !$settingCreditRequiresCustomer)
+                  <span style="color:var(--text-dim);font-size:10px">· no customer required</span>
                 @endif
               </div>
               <input wire:model.blur="payAmt_credit" type="number" min="0" placeholder="0"
-                  {{ !$selectedCustomerId ? 'disabled' : '' }}
+                  {{ ($settingCreditRequiresCustomer && !$selectedCustomerId) ? 'disabled' : '' }}
                   style="width:100%;padding:6px 8px;border:1px solid {{ $payAmt_credit > 0 ? 'var(--amber)' : 'var(--border)' }};
                          border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;font-family:var(--mono)">
             </div>
           </div>
+          @endif
         </div>
       </div>
 

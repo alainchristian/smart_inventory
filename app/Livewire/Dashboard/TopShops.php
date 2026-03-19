@@ -11,7 +11,7 @@ class TopShops extends Component
 {
     public array  $shops      = [];
     public int    $maxRevenue = 1;
-    public string $period     = 'today';
+    public string $period     = 'week';
 
     public function mount(): void
     {
@@ -34,9 +34,10 @@ class TopShops extends Component
                 ['sales as revenue' => fn($q) => $q->notVoided()->whereBetween('sale_date', [$start, $end])],
                 'total'
             )
-            ->orderByDesc('revenue')
-            ->take(5)
             ->get()
+            ->sortByDesc(fn($shop) => $shop->revenue ?? 0)
+            ->take(5)
+            ->values()
             ->map(function ($shop, $idx) {
                 $fill = Box::where('location_type', 'shop')
                     ->where('location_id', $shop->id)
