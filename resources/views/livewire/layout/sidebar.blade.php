@@ -22,7 +22,12 @@
 
     <!-- Role/Location Badge -->
     <div class="px-4 py-2 border-b border-r border-[var(--border)]" style="background: var(--surface2); border-color: var(--border);">
-        @if(auth()->user()->isOwner())
+        @if(auth()->user()->isAdmin())
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded" style="background: var(--red-dim); color: var(--red);">Admin</span>
+                <span class="text-xs" style="color: var(--text-sub);">System Access</span>
+            </div>
+        @elseif(auth()->user()->isOwner())
             <div class="flex items-center space-x-2">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded" style="background: var(--accent-glow); color: var(--accent);">Owner</span>
                 <span class="text-xs" style="color: var(--text-sub);">Full System Access</span>
@@ -50,8 +55,8 @@
         openShopTransfers: {{ request()->routeIs('shop.transfers.*') ? 'true' : 'false' }},
         openWarehouseTransfers: {{ request()->routeIs('warehouse.transfers.*') ? 'true' : 'false' }}
     }">
-        @if(auth()->user()->isOwner())
-            {{-- OWNER MENU --}}
+        @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+            {{-- OWNER / ADMIN MENU --}}
             <!-- Overview Section -->
             <div>
                 <div class="text-[13px] font-semibold text-[var(--text-dim)] uppercase tracking-wider mb-2 px-3">Overview</div>

@@ -30,6 +30,11 @@ require __DIR__.'/auth.php';
 // Post-login redirect handler
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [LoginRedirectController::class, 'redirect'])->name('dashboard');
+
+    // Forced password change (new users)
+    Route::get('/change-password', function () {
+        return view('auth.change-password');
+    })->name('password.change');
 });
 
 // Owner routes - Full system access

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'location_id',
         'is_active',
         'last_login_at',
+        'must_change_password',
     ];
 
     protected $hidden = [
@@ -40,6 +41,7 @@ class User extends Authenticatable
         'role' => UserRole::class,
         'location_type' => LocationType::class,
         'is_active' => 'boolean',
+        'must_change_password' => 'boolean',
     ];
 
     // Relationships
@@ -91,19 +93,56 @@ class User extends Authenticatable
         return $this->role === UserRole::WAREHOUSE_MANAGER;
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::ADMIN;
+    }
+
     public function isShopManager(): bool
     {
         return $this->role === UserRole::SHOP_MANAGER;
     }
 
+    /** Admin or Owner — both have full system access. */
+    public function isSuperUser(): bool
+    {
+        return $this->isAdmin() || $this->isOwner();
+    }
+
+    /**
+     * Whether the current user can manage (create/edit/deactivate) the target user.
+     *
+     * Hierarchy:
+     *   Owner   → can manage Admin, Warehouse Manager, Shop Manager (not other owners)
+     *   Admin   → can manage Warehouse Manager, Shop Manager only
+     *   Others  → cannot manage anyone
+     */
+    public function canManageUser(self $target): bool
+    {
+        // Nobody manages themselves through this (handled separately)
+        if ($this->id === $target->id) return false;
+
+        if ($this->isOwner()) {
+            // Owner manages everyone except other owners
+            return !$target->isOwner();
+        }
+
+        if ($this->isAdmin()) {
+            // Admin manages only warehouse and shop managers — never owners or other admins
+            return $target->isWarehouseManager() || $target->isShopManager();
+        }
+
+        return false;
+    }
+
     public function canViewPurchasePrices(): bool
     {
-        return $this->isOwner();
+        return $this->isOwner() || $this->isAdmin();
     }
 
     public function canApprovePriceOverrides(): bool
     {
-        return $this->isOwner();
+        return $this->isOwner() || $this->isAdmin();
     }
 
     public function hasPermission(string $permission): bool
@@ -113,7 +152,7 @@ class User extends Authenticatable
 
     public function canManageLocation(LocationType $locationType, int $locationId): bool
     {
-        if ($this->isOwner()) {
+        if ($this->isOwner() || $this->isAdmin()) {
             return true;
         }
 
@@ -122,8 +161,8 @@ class User extends Authenticatable
 
     public function hasLocationAccess(LocationType $locationType, int $locationId): bool
     {
-        // Owner has access to all locations
-        if ($this->isOwner()) {
+        // Owner and Admin have access to all locations
+        if ($this->isOwner() || $this->isAdmin()) {
             return true;
         }
 
@@ -142,6 +181,7 @@ class User extends Authenticatable
     public function getDashboardRoute(): string
     {
         return match($this->role) {
+            UserRole::ADMIN => route('owner.dashboard'),
             UserRole::OWNER => route('owner.dashboard'),
             UserRole::WAREHOUSE_MANAGER => route('warehouse.dashboard'),
             UserRole::SHOP_MANAGER => route('shop.dashboard'),

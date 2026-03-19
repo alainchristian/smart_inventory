@@ -233,6 +233,9 @@
     </div>
     <select wire:model.live="roleFilter" class="um-select">
         <option value="all">All Roles</option>
+        @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+        <option value="admin">Admin</option>
+        @endif
         <option value="owner">Owner</option>
         <option value="warehouse_manager">Warehouse Manager</option>
         <option value="shop_manager">Shop Manager</option>
@@ -264,12 +267,14 @@
             @forelse($users as $user)
             @php
                 $roleColor = match($user->role->value) {
+                    'admin'             => ['bg'=>'var(--red-dim)',    'color'=>'var(--red)'],
                     'owner'             => ['bg'=>'var(--accent-dim)', 'color'=>'var(--accent)'],
                     'warehouse_manager' => ['bg'=>'var(--green-dim)',  'color'=>'var(--green)'],
                     'shop_manager'      => ['bg'=>'var(--violet-dim)', 'color'=>'var(--violet)'],
                     default             => ['bg'=>'var(--surface2)',   'color'=>'var(--text-sub)'],
                 };
                 $avatarBg = match($user->role->value) {
+                    'admin'             => 'var(--red)',
                     'owner'             => 'var(--accent)',
                     'warehouse_manager' => 'var(--green)',
                     'shop_manager'      => 'var(--violet)',
@@ -320,7 +325,7 @@
                         <div style="font-size:10px;color:var(--text-dim);margin-top:1px;text-transform:capitalize">
                             {{ $user->location_type?->value ?? '' }}
                         </div>
-                    @elseif($user->isOwner())
+                    @elseif($user->isOwner() || $user->isAdmin())
                         <span style="color:var(--text-dim);font-size:11px">All locations</span>
                     @else
                         <span style="color:var(--amber);font-size:11px">⚠ Unassigned</span>
@@ -511,6 +516,30 @@
             <label class="um-field-label">Role <span>*</span></label>
             <div class="um-role-cards">
 
+                {{-- Admin card: visible to owner only --}}
+                @if(auth()->user()->isOwner())
+                <div wire:click="$set('form_role','admin')"
+                     class="um-role-card {{ $form_role === 'admin' ? 'active' : '' }}">
+                    <div class="um-role-radio">
+                        @if($form_role === 'admin')
+                            <div class="um-role-radio-dot"></div>
+                        @endif
+                    </div>
+                    <div>
+                        <div class="um-role-name" style="color:var(--red)">
+                            🔐 Admin
+                        </div>
+                        <div class="um-role-desc">
+                            Full system access. Can manage warehouse and shop managers,
+                            view all reports and prices. Cannot manage Owner accounts.
+                            Managed by Owner only.
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                {{-- Owner card: visible to owner only --}}
+                @if(auth()->user()->isOwner())
                 <div wire:click="$set('form_role','owner')"
                      class="um-role-card {{ $form_role === 'owner' ? 'active' : '' }}">
                     <div class="um-role-radio">
@@ -529,6 +558,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 <div wire:click="$set('form_role','warehouse_manager')"
                      class="um-role-card {{ $form_role === 'warehouse_manager' ? 'active' : '' }}">
@@ -567,10 +597,13 @@
                 </div>
 
             </div>
+            @error('form_role')
+                <div class="um-field-error" style="margin-top:6px">{{ $message }}</div>
+            @enderror
         </div>
 
-        {{-- Location (hidden for owner) --}}
-        @if($form_role !== 'owner')
+        {{-- Location (hidden for owner and admin) --}}
+        @if($form_role !== 'owner' && $form_role !== 'admin')
         <div class="um-field">
             <label class="um-field-label">
                 Assigned {{ $form_role === 'warehouse_manager' ? 'Warehouse' : 'Shop' }}

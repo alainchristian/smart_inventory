@@ -52,7 +52,7 @@ class UserList extends Component
 
     public function mount(): void
     {
-        if (!auth()->user()->isOwner()) abort(403);
+        if (!auth()->user()->isOwner() && !auth()->user()->isAdmin()) abort(403);
     }
 
     public function updatingSearch(): void    { $this->resetPage(); }
@@ -66,7 +66,7 @@ class UserList extends Component
         $this->form_location_type = match($this->form_role) {
             'warehouse_manager' => 'warehouse',
             'shop_manager'      => 'shop',
-            default             => '',   // owner → no location
+            default             => '',   // owner / admin → no location
         };
     }
 
@@ -117,7 +117,7 @@ class UserList extends Component
             'form_email' => 'required|email|max:150|unique:users,email'
                             . ($this->isEditing ? ",{$this->editingId}" : ''),
             'form_phone' => 'nullable|string|max:20',
-            'form_role'  => 'required|in:owner,warehouse_manager,shop_manager',
+            'form_role'  => 'required|in:admin,owner,warehouse_manager,shop_manager',
             'form_is_active' => 'boolean',
         ];
 
@@ -127,8 +127,8 @@ class UserList extends Component
             $rules['form_password'] = 'nullable|string|min:8';
         }
 
-        // Location required for non-owners
-        if ($this->form_role !== 'owner') {
+        // Location required for non-owners and non-admins
+        if ($this->form_role !== 'owner' && $this->form_role !== 'admin') {
             $rules['form_location_id'] = 'required|integer';
         }
 
@@ -141,19 +141,52 @@ class UserList extends Component
             'form_location_id.required' => 'Please assign a location for this role.',
         ]);
 
+        $currentUser = auth()->user();
+
+        // Only Owner can create or assign the Admin role
+        if ($this->form_role === 'admin' && !$currentUser->isOwner()) {
+            $this->addError('form_role', 'Only an Owner can create Admin accounts.');
+            return;
+        }
+
+        // Only Owner can create or assign the Owner role
+        if ($this->form_role === 'owner' && !$currentUser->isOwner()) {
+            $this->addError('form_role', 'Only an Owner can create Owner accounts.');
+            return;
+        }
+
+        // Admin cannot edit Owner or Admin accounts
+        if ($this->isEditing && $currentUser->isAdmin()) {
+            $target = User::find($this->editingId);
+            if ($target && ($target->isOwner() || $target->isAdmin())) {
+                $this->dispatch('notification', [
+                    'type'    => 'error',
+                    'message' => 'You do not have permission to edit this account.',
+                ]);
+                $this->closeDrawer();
+                return;
+            }
+        }
+
+        $isAdminOrOwnerRole = in_array($this->form_role, ['admin', 'owner']);
+
         $data = [
             'name'          => trim($this->form_name),
             'email'         => strtolower(trim($this->form_email)),
             'phone'         => $this->form_phone ?: null,
             'role'          => UserRole::from($this->form_role),
-            'location_type' => ($this->form_role !== 'owner' && $this->form_location_type !== '')
+            'location_type' => (!$isAdminOrOwnerRole && $this->form_location_type !== '')
                                ? LocationType::from($this->form_location_type)
                                : null,
-            'location_id'   => $this->form_role !== 'owner'
+            'location_id'   => !$isAdminOrOwnerRole
                                ? $this->form_location_id
                                : null,
             'is_active'     => $this->form_is_active,
         ];
+
+        // New users must change password on first login
+        // Editing an existing user does NOT reset this flag
+        $data['must_change_password'] = $this->isEditing ? $this->getExistingFlag() : true;
 
         if ($this->form_password) {
             $data['password'] = Hash::make($this->form_password);
@@ -209,12 +242,22 @@ class UserList extends Component
 
     public function confirmToggle(int $userId): void
     {
-        $user = User::findOrFail($userId);
+        $user        = User::findOrFail($userId);
+        $currentUser = auth()->user();
 
         if ($user->id === auth()->id()) {
             $this->dispatch('notification', [
                 'type'    => 'error',
                 'message' => 'You cannot deactivate your own account.',
+            ]);
+            return;
+        }
+
+        // Admin cannot deactivate owners or other admins
+        if ($currentUser->isAdmin() && ($user->isOwner() || $user->isAdmin())) {
+            $this->dispatch('notification', [
+                'type'    => 'error',
+                'message' => 'Admins cannot deactivate Owner or Admin accounts.',
             ]);
             return;
         }
@@ -261,6 +304,12 @@ class UserList extends Component
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private function getExistingFlag(): bool
+    {
+        if (!$this->editingId) return false;
+        return (bool) User::find($this->editingId)?->must_change_password;
+    }
 
     private function resetForm(): void
     {

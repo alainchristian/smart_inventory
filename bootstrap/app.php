@@ -15,9 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Register middleware aliases
         $middleware->alias([
-            'role' => \App\Http\Middleware\CheckRole::class,
-            'location' => \App\Http\Middleware\CheckLocation::class,
+            'role'                  => \App\Http\Middleware\CheckRole::class,
+            'location'              => \App\Http\Middleware\CheckLocation::class,
+            'check.password.change' => \App\Http\Middleware\CheckPasswordChange::class,
         ]);
+
+        // Force password change wall for new users
+        $middleware->appendToGroup('web', \App\Http\Middleware\CheckPasswordChange::class);
 
         // Trust all proxies (ngrok, load balancers, etc.)
         // This fixes HTTPS detection when behind proxy
