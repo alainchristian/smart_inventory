@@ -9,54 +9,106 @@ use Livewire\Component;
 
 class InventoryValuation extends Component
 {
-    public $locationFilter = 'all';
+    // ─── Filters ──────────────────────────────────────────────────────────────
+    public string $locationFilter  = 'all';
+    public string $activeTab       = 'overview'; // overview | valuation | health | replenishment
+    public string $urgencyFilter   = 'all';      // all | critical | reorder
 
-    protected $queryString = ['locationFilter'];
+    protected $queryString = [
+        'locationFilter' => ['except' => 'all'],
+        'activeTab'      => ['except' => 'overview'],
+    ];
 
-    public function mount()
+    // ─── Lifecycle ────────────────────────────────────────────────────────────
+    public function mount(): void
     {
-        // Ensure only owners can access
-        if (!auth()->user()->isOwner()) {
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized access.');
         }
     }
 
-    public function getInventoryKpisProperty()
+    // ─── Actions ──────────────────────────────────────────────────────────────
+    public function setTab(string $tab): void
     {
-        $service = app(InventoryAnalyticsService::class);
-        return $service->getInventoryKpis($this->locationFilter);
+        $this->activeTab = $tab;
     }
 
-    public function getInventoryByLocationProperty()
+    // ─── Computed: shared (loaded on every tab) ────────────────────────────────
+    public function getInventoryKpisProperty(): array
     {
-        $service = app(InventoryAnalyticsService::class);
-        return $service->getInventoryByLocation();
+        return app(InventoryAnalyticsService::class)
+            ->getInventoryKpis($this->locationFilter);
     }
 
-    public function getAgingAnalysisProperty()
+    public function getPortfolioFillRateProperty(): ?float
     {
-        $service = app(InventoryAnalyticsService::class);
-        return $service->getAgingAnalysis($this->locationFilter);
+        return app(InventoryAnalyticsService::class)
+            ->getPortfolioFillRate($this->locationFilter);
     }
 
-    public function getExpiringStockProperty()
+    public function getShrinkageStatsProperty(): array
     {
-        $service = app(InventoryAnalyticsService::class);
-        return $service->getExpiringStock($this->locationFilter, 30);
+        return app(InventoryAnalyticsService::class)
+            ->getShrinkageStats($this->locationFilter);
     }
 
-    public function getStockHealthProperty()
+    // ─── Computed: Valuation tab ───────────────────────────────────────────────
+    public function getInventoryByLocationProperty(): array
     {
-        $service = app(InventoryAnalyticsService::class);
-        return $service->getStockHealth($this->locationFilter);
+        return app(InventoryAnalyticsService::class)->getInventoryByLocation();
     }
 
-    public function getTopProductsByValueProperty()
+    public function getTopProductsByValueProperty(): array
     {
-        $service = app(InventoryAnalyticsService::class);
-        return $service->getTopProductsByValue($this->locationFilter, 20);
+        return app(InventoryAnalyticsService::class)
+            ->getTopProductsByValue($this->locationFilter, 20);
     }
 
+    public function getCategoryConcentrationProperty(): array
+    {
+        return app(InventoryAnalyticsService::class)
+            ->getCategoryConcentration($this->locationFilter);
+    }
+
+    // ─── Computed: Health tab ─────────────────────────────────────────────────
+    public function getStockHealthProperty(): array
+    {
+        return app(InventoryAnalyticsService::class)
+            ->getStockHealth($this->locationFilter);
+    }
+
+    public function getAgingAnalysisProperty(): array
+    {
+        return app(InventoryAnalyticsService::class)
+            ->getAgingAnalysis($this->locationFilter);
+    }
+
+    public function getExpiringStockProperty(): array
+    {
+        return app(InventoryAnalyticsService::class)
+            ->getExpiringStock($this->locationFilter, 30);
+    }
+
+    public function getVelocityClassificationProperty(): array
+    {
+        return app(InventoryAnalyticsService::class)
+            ->getVelocityClassification($this->locationFilter);
+    }
+
+    public function getInventoryMovementTrendProperty(): array
+    {
+        return app(InventoryAnalyticsService::class)
+            ->getInventoryMovementTrend($this->locationFilter);
+    }
+
+    // ─── Computed: Replenishment tab ──────────────────────────────────────────
+    public function getDaysOnHandPerProductProperty(): array
+    {
+        return app(InventoryAnalyticsService::class)
+            ->getDaysOnHandPerProduct($this->locationFilter, 50);
+    }
+
+    // ─── Supporting data ──────────────────────────────────────────────────────
     public function getWarehousesProperty()
     {
         return Warehouse::orderBy('name')->get();
@@ -67,6 +119,7 @@ class InventoryValuation extends Component
         return Shop::orderBy('name')->get();
     }
 
+    // ─── Render ───────────────────────────────────────────────────────────────
     public function render()
     {
         return view('livewire.owner.reports.inventory-valuation');

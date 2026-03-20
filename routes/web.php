@@ -82,7 +82,7 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     // Boxes/Inventory
     Route::prefix('boxes')->name('boxes.')->group(function () {
         Route::get('/', function () { return view('owner.boxes.index'); })->name('index');
-        Route::get('/{box}', function ($box) { return view('owner.boxes.show', compact('box')); })->name('show');
+        Route::get('/{box}', function ($box) { return view('owner.boxes.show', ['boxId' => $box]); })->name('show');
     });
 
     // Transfers
@@ -133,6 +133,18 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/losses', function () { return view('owner.reports.losses'); })->name('losses');
         Route::get('/payment-methods', function () { return view('owner.reports.payment-methods'); })->name('payment-methods');
         Route::get('/customer-credit', function () { return view('owner.reports.customer-credit'); })->name('customer-credit');
+
+        // Custom report builder
+        Route::get('/custom',            [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'library'])->name('custom.library');
+        Route::get('/custom/builder',    [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'builder'])->name('custom.builder');
+        Route::get('/custom/{report}',   [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'view'])->name('custom.view');
+        Route::get('/custom/{report}/print', function (\App\Models\SavedReport $report) {
+            $user = auth()->user();
+            if ($report->created_by !== $user->id && !$report->is_shared) abort(403);
+            $results = $report->last_results ?? [];
+            $html = app(\App\Services\Reports\ExportReportAction::class)->toPrintHtml($report, $results);
+            return response($html)->header('Content-Type', 'text/html');
+        })->name('custom.print');
     });
 
     // System settings

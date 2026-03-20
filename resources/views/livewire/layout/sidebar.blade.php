@@ -188,6 +188,11 @@
                                   {{ request()->routeIs('owner.reports.transfers') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                             Transfers
                         </a>
+                        <a href="{{ route('owner.reports.custom.library') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.reports.custom.*') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Custom Reports
+                        </a>
                     </div>
                 </div>
 

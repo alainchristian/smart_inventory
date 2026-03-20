@@ -141,3 +141,72 @@ wire:poll.2s="checkForScans" polling, connected/disconnected pill
 * **Fully responsive** — stacks to single column at 900px,
 scan field wraps at 600px, tables scroll horizontally on mobile
 
+---
+
+## Inventory Report (owner/reports/inventory) — Completed Rebuild
+
+The following files were rebuilt as part of the inventory report upgrade:
+
+- `app/Services/Analytics/InventoryAnalyticsService.php`
+  — Bugs fixed in: getTopProductsByValue (grouping), calculateStockTurnover (warehouse filter), getAgingAnalysis (moved_at vs received_at)
+  — New methods: getPortfolioFillRate, getVelocityClassification, getDaysOnHandPerProduct, getCategoryConcentration, getInventoryMovementTrend, getShrinkageStats
+
+- `app/Livewire/Owner/Reports/InventoryValuation.php`
+  — Added activeTab property (overview | valuation | health | replenishment)
+  — Added setTab() action
+  — Added urgencyFilter property for replenishment tab
+  — Added computed properties for all new service methods
+  — Auth guard now also accepts admin role
+
+- `resources/views/livewire/owner/reports/inventory-valuation.blade.php`
+  — Full rebuild: 4 tabs, 6 headline KPIs, Chart.js movement trend,
+    ABC velocity classification, category concentration, aging analysis,
+    expiry warning, replenishment urgency table with days-on-hand,
+    dead stock capital lock section
+
+Do NOT revert or partially edit these files without reading the inventory
+report analysis notes in the project knowledge base.
+
+---
+
+## Custom Report Builder — Completed
+
+**New route prefix:** `/owner/reports/custom`
+
+### New files created
+
+**Backend**
+- `database/migrations/2026_03_20_104918_create_saved_reports_table.php` — JSONB config column
+- `app/Models/SavedReport.php` — model with `resolvedConfig()` helper
+- `app/Services/Reports/MetricRegistry.php` — catalogue of 31 metric blocks
+- `app/Services/Reports/ReportRunner.php` — executes a config against analytics services
+- `app/Http/Controllers/Owner/Reports/CustomReportController.php`
+
+**Livewire**
+- `app/Livewire/Owner/Reports/ReportLibrary.php` — list/manage saved reports
+- `app/Livewire/Owner/Reports/ReportBuilder.php` — two-panel builder UI
+- `app/Livewire/Owner/Reports/ReportViewer.php` — runs and renders a saved report
+
+**Blades**
+- `resources/views/owner/reports/custom/{library,builder,view}.blade.php`
+- `resources/views/livewire/owner/reports/report-library.blade.php`
+- `resources/views/livewire/owner/reports/report-builder.blade.php`
+- `resources/views/livewire/owner/reports/report-viewer.blade.php`
+
+### Architecture decisions
+
+- No raw SQL exposed to users. All data comes from validated analytics service methods.
+- Metric blocks are keyed by `metric_id` string. New blocks are added by adding an
+  entry to `MetricRegistry::catalogue()` and a case to `ReportRunner::resolveBlock()`.
+- `saved_reports.config` is JSONB so block order and visualization choices survive
+  schema changes with no migration needed.
+- `is_shared` flag makes reports visible to all owner/admin users without
+  introducing a separate permissions system.
+- `getPaymentMethods` does NOT exist — use `getPaymentMethodBreakdown` in SalesAnalyticsService.
+- `getRevenueKpis` returns `total_revenue` and `transactions_count` (not `current`).
+
+### To add a new metric block
+
+1. Add entry to `MetricRegistry::catalogue()` with a unique `id`
+2. Add a case to `ReportRunner::resolveBlock()` pointing to the analytics method
+3. If the block uses a new viz type, add rendering logic in `report-viewer.blade.php`

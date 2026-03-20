@@ -280,12 +280,15 @@
                     'shop_manager'      => 'var(--violet)',
                     default             => 'var(--text-dim)',
                 };
-                $isMe = $user->id === auth()->id();
+                $isMe       = $user->id === auth()->id();
+                $canManage  = auth()->user()->canManageUser($user);
+                $isRestricted = !$isMe && !$canManage;
             @endphp
 
             {{-- Normal row --}}
             @if($confirmToggleId !== $user->id)
-            <tr class="{{ !$user->is_active ? 'inactive' : '' }}">
+            <tr class="{{ !$user->is_active ? 'inactive' : '' }}"
+                style="{{ $isRestricted ? 'opacity:.4' : '' }}">
                 <td style="padding-left:16px">
                     <div class="um-avatar" style="background:{{ $avatarBg }}">
                         {{ strtoupper(substr($user->name, 0, 1)) }}
@@ -341,16 +344,23 @@
                     </div>
                 </td>
                 <td style="text-align:right">
-                    <div style="display:flex;gap:6px;justify-content:flex-end">
+                    <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
+                        @if($isMe || $canManage)
                         <button wire:click="openEdit({{ $user->id }})"
                                 class="um-action">
                             Edit
                         </button>
-                        @if(!$isMe)
+                        @endif
+                        @if(!$isMe && $canManage)
                         <button wire:click="confirmToggle({{ $user->id }})"
                                 class="um-action {{ $user->is_active ? 'danger' : 'activate' }}">
                             {{ $user->is_active ? 'Deactivate' : 'Activate' }}
                         </button>
+                        @endif
+                        @if($isRestricted)
+                        <span style="font-size:11px;color:var(--text-dim);font-style:italic">
+                            Owner-managed
+                        </span>
                         @endif
                     </div>
                 </td>

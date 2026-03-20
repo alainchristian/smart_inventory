@@ -34,6 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         // Generate system alerts every 5 minutes
         $schedule->command('alerts:generate')->everyFiveMinutes();
+        // Run scheduled custom reports every hour
+        $schedule->command('reports:run-scheduled')->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
