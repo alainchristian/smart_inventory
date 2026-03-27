@@ -40,15 +40,19 @@ yarn-error.log
 /bootstrap/cache/*
 
 # ============================================
-# Personal Deployment Scripts
+# Scripts (PowerShell & Shell)
 # ============================================
-deploy.ps1
-sync.ps1
-status.ps1
-test.ps1
-
-# Keep example scripts for team
+*.ps1
+*.sh
 !*.ps1.example
+!*.sh.example
+
+# ============================================
+# Markdown Instruction Files
+# ============================================
+*.md
+!CLAUDE.md
+!README.md
 
 # ============================================
 # Executables & Binaries
@@ -96,12 +100,6 @@ nul
 # *.avi
 # *.mov
 # *.mkv
-
-# ============================================
-# Documentation (KEEP THESE - do NOT ignore)
-# ============================================
-# DO NOT add *.md here!
-# README.md, CHANGELOG.md, docs/*.md should be tracked
 
 # ============================================
 # Temporary & Test Files
