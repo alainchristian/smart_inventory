@@ -17,10 +17,12 @@ class BusinessKpiRow extends Component
     public string  $period = 'today';
     public ?string $from   = null;
     public ?string $to     = null;
-    public array   $sales     = [];
-    public array   $profit    = [];
-    public array   $inventory = [];
-    public array   $locations = [];
+    public array   $sales          = [];
+    public array   $profit         = [];
+    public array   $inventory      = [];
+    public array   $locations      = [];
+    public array   $salesSparkline  = [];
+    public array   $profitSparkline = [];
 
     public function mount(): void
     {
@@ -128,6 +130,17 @@ class BusinessKpiRow extends Component
         $whItems   = Box::available()->where('location_type', 'warehouse')->sum('items_remaining');
         $shopItems = Box::available()->where('location_type', 'shop')->sum('items_remaining');
 
+        $whBoxes    = Box::available()->where('location_type', 'warehouse')->count();
+        $shopBoxes  = Box::available()->where('location_type', 'shop')->count();
+        $totalBoxes = $whBoxes + $shopBoxes;
+
+        $fillStats = Box::available()
+            ->selectRaw('SUM(items_remaining) as remaining, SUM(items_total) as capacity')
+            ->first();
+        $fillRate = ($fillStats && $fillStats->capacity > 0)
+            ? round(($fillStats->remaining / $fillStats->capacity) * 100, 1)
+            : 0;
+
         $this->inventory = [
             'cost'         => $cost,
             'retail'       => $retail,
@@ -137,13 +150,58 @@ class BusinessKpiRow extends Component
             'shop'         => $shopRetail,
             'wh_items'     => $whItems,
             'shop_items'   => $shopItems,
+            'wh_boxes'     => $whBoxes,
+            'shop_boxes'   => $shopBoxes,
+            'total_boxes'  => $totalBoxes,
+            'fill_rate'    => $fillRate,
         ];
 
         $this->locations = [
-            'warehouses' => Warehouse::count(),
-            'shops'      => Shop::count(),
-            'users'      => User::count(),
+            'warehouses'        => Warehouse::count(),
+            'shops'             => Shop::count(),
+            'users'             => User::count(),
+            'active_warehouses' => Warehouse::where('is_active', true)->count(),
+            'active_shops'      => Shop::where('is_active', true)->count(),
         ];
+
+        $this->salesSparkline  = $this->generateSalesSparkline();
+        $this->profitSparkline = $this->generateProfitSparkline();
+    }
+
+    private function generateSalesSparkline(int $days = 7): array
+    {
+        $rows = Sale::notVoided()
+            ->whereBetween('sale_date', [now()->subDays($days - 1)->startOfDay(), now()->endOfDay()])
+            ->selectRaw('DATE(sale_date) as day, SUM(total) as total')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->pluck('total', 'day');
+
+        $result = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $key      = now()->subDays($i)->format('Y-m-d');
+            $result[] = (float) ($rows[$key] ?? 0);
+        }
+        return $result;
+    }
+
+    private function generateProfitSparkline(int $days = 7): array
+    {
+        $rows = SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->whereNull('sales.voided_at')
+            ->whereBetween('sales.sale_date', [now()->subDays($days - 1)->startOfDay(), now()->endOfDay()])
+            ->selectRaw('DATE(sales.sale_date) as day, SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->pluck('margin', 'day');
+
+        $result = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $key      = now()->subDays($i)->format('Y-m-d');
+            $result[] = (float) ($rows[$key] ?? 0);
+        }
+        return $result;
     }
 
     private function periodRange(): array

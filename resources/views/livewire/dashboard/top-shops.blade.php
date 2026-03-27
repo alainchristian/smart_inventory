@@ -24,8 +24,13 @@
         </span>
       </div>
     </div>
-    <span class="shop-ok-badge" style="font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:10px;
-                 background:var(--success-glow);color:var(--success)">OK</span>
+    @if($shop['revenue'] > 0)
+      <span class="shop-ok-badge" style="font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:10px;
+                   background:var(--success-glow);color:var(--success)">OK</span>
+    @else
+      <span class="shop-ok-badge" style="font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:10px;
+                   background:var(--amber-dim);color:var(--amber)">Low</span>
+    @endif
   </div>
   @endforeach
 

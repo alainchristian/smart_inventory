@@ -5,7 +5,6 @@ namespace App\Livewire\Dashboard;
 use App\Models\Box;
 use App\Models\Transfer;
 use App\Models\Alert;
-use App\Models\Sale;
 use Livewire\Component;
 use Livewire\Attributes\On;
 
@@ -19,14 +18,12 @@ class OpsKpiRow extends Component
     public int $shopBoxes       = 0;
     public int $damagedBoxes    = 0;   // shown separately, not mixed in
 
-    public int   $activeTransfers = 0;
-    public int   $inTransitCount  = 0;
-    public int   $pendingCount    = 0;
-    public int   $lowStockTotal   = 0;
+    public int   $activeTransfers  = 0;
+    public int   $inTransitCount   = 0;
+    public int   $pendingCount     = 0;
+    public int   $lowStockTotal    = 0;
     public int   $lowStockCritical = 0;
-    public int   $todayCount      = 0;
-    public float $todayRevenue    = 0;
-    public float $revenueGrowth   = 0;
+    public float $fulfillmentRate  = 100.0;
 
     public function mount(): void
     {
@@ -67,14 +64,15 @@ class OpsKpiRow extends Component
                                        ->where('severity', 'critical')
                                        ->where('is_resolved', false)->count();
 
-        // ── Today's transactions ──────────────────────────────────────────────
-        $this->todayCount   = Sale::notVoided()->whereDate('sale_date', today())->count();
-        $this->todayRevenue = Sale::notVoided()->whereDate('sale_date', today())->sum('total');
-        $yesterday          = Sale::notVoided()->whereDate('sale_date', today()->subDay())->sum('total');
+        // ── Fulfillment rate ─────────────────────────────────────────────────
+        $totalReceived      = Transfer::where('status', 'received')->count();
+        $withoutDiscrepancy = Transfer::where('status', 'received')
+            ->where('has_discrepancy', false)
+            ->count();
 
-        $this->revenueGrowth = $yesterday > 0
-            ? round((($this->todayRevenue - $yesterday) / $yesterday) * 100, 1)
-            : 0;
+        $this->fulfillmentRate = $totalReceived > 0
+            ? round(($withoutDiscrepancy / $totalReceived) * 100, 1)
+            : 100.0;
     }
 
     public function render()
