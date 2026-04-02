@@ -2,9 +2,12 @@
 
 namespace App\Livewire\Owner\Reports;
 
+use App\Models\ActivityLog;
+use App\Models\Sale;
 use App\Models\Shop;
 use App\Services\Analytics\SalesAnalyticsService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class SalesAnalytics extends Component
@@ -50,6 +53,47 @@ class SalesAnalytics extends Component
     public function setTab(string $tab): void
     {
         $this->activeTab = $tab;
+    }
+
+    // ─── Actions ──────────────────────────────────────────────────────────────
+    public function approvePriceOverride(int $saleId): void
+    {
+        $user = auth()->user();
+        if (! $user->isOwner() && ! $user->isAdmin()) {
+            return;
+        }
+
+        $sale = Sale::find($saleId);
+        if (! $sale || $sale->price_override_approved_at !== null) {
+            return; // already approved or not found
+        }
+
+        $sale->update([
+            'price_override_approved_at' => now(),
+            'price_override_approved_by' => $user->id,
+        ]);
+
+        ActivityLog::create([
+            'user_id'           => $user->id,
+            'user_name'         => $user->name,
+            'action'            => 'price_override_approved',
+            'entity_type'       => 'Sale',
+            'entity_id'         => $sale->id,
+            'entity_identifier' => $sale->sale_number,
+            'details'           => [
+                'approved_at' => now()->toDateTimeString(),
+                'seller'      => $sale->soldBy?->name,
+            ],
+            'ip_address'        => request()->ip(),
+        ]);
+
+        // Bust the cached audit log for the current filter window
+        Cache::forget("analytics_price_audit_{$this->dateFrom}_{$this->dateTo}_{$this->locationFilter}");
+
+        $this->dispatch('notification', [
+            'type'    => 'success',
+            'message' => "Price override on {$sale->sale_number} approved.",
+        ]);
     }
 
     // ─── Computed: meta ───────────────────────────────────────────────────────

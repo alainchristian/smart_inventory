@@ -7,7 +7,8 @@
         <div class="card-title">Alerts &amp; Health</div>
         <div class="card-subtitle">
           @if($activeTab === 'alerts')
-            {{ $alerts->count() }} unresolved {{ $alerts->count() === 1 ? 'flag' : 'flags' }}
+            @php $totalAlerts = array_sum($alertSummary); @endphp
+            {{ $totalAlerts }} unresolved {{ $totalAlerts === 1 ? 'flag' : 'flags' }}
           @else
             Infrastructure health check
           @endif
@@ -36,10 +37,11 @@
       <button class="ah-tab-btn {{ $activeTab === 'alerts' ? 'active' : '' }}"
               wire:click="setTab('alerts')">
         Alerts
-        @if($alerts->count() > 0)
+        @php $totalAlerts = array_sum($alertSummary); @endphp
+        @if($totalAlerts > 0)
           <span style="margin-left:4px;font-size:10px;padding:1px 5px;border-radius:10px;
                        background:var(--red-dim);color:var(--red)">
-            {{ $alerts->count() }}
+            {{ $totalAlerts }}
           </span>
         @endif
       </button>
@@ -56,7 +58,40 @@
 
   {{-- Alerts Tab --}}
   @if($activeTab === 'alerts')
-  <div class="card-scroll" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+  {{-- Severity filter pills --}}
+  <div style="display:flex;align-items:center;gap:6px;padding:10px 0 4px;flex-wrap:wrap">
+    <button wire:click="setFilterSeverity(null)"
+            style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid;cursor:pointer;transition:all var(--tr);
+                   {{ $filterSeverity === null
+                      ? 'background:var(--accent);color:#fff;border-color:var(--accent)'
+                      : 'background:var(--surface2);color:var(--text-sub);border-color:var(--border)' }}">
+      All
+      @php $totalCount = array_sum($alertSummary); @endphp
+      @if($totalCount > 0)
+        <span style="margin-left:3px;font-size:10px;padding:0 4px;border-radius:8px;
+                     background:{{ $filterSeverity === null ? 'rgba(255,255,255,0.25)' : 'var(--surface3)' }};
+                     color:inherit">{{ $totalCount }}</span>
+      @endif
+    </button>
+    @foreach(['critical' => ['var(--red)', 'var(--red-dim)'], 'warning' => ['var(--amber)', 'var(--amber-dim)'], 'info' => ['var(--accent)', 'var(--accent-dim)']] as $sev => [$col, $bg])
+      @if($alertSummary[$sev] > 0 || $filterSeverity === $sev)
+      <button wire:click="setFilterSeverity('{{ $sev }}')"
+              style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid;cursor:pointer;transition:all var(--tr);
+                     {{ $filterSeverity === $sev
+                        ? 'background:' . $col . ';color:#fff;border-color:' . $col
+                        : 'background:' . $bg . ';color:' . $col . ';border-color:' . $col }}">
+        {{ ucfirst($sev) }}
+        @if($alertSummary[$sev] > 0)
+          <span style="margin-left:3px;font-size:10px;padding:0 4px;border-radius:8px;
+                       background:{{ $filterSeverity === $sev ? 'rgba(255,255,255,0.25)' : $col }};
+                       color:{{ $filterSeverity === $sev ? '#fff' : '#fff' }}">{{ $alertSummary[$sev] }}</span>
+        @endif
+      </button>
+      @endif
+    @endforeach
+  </div>
+
+  <div class="card-scroll" style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
     @forelse($alerts as $alert)
       @php
         $colors  = $this->getSeverityColors($alert->severity->value);
@@ -96,8 +131,18 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        <div style="font-size:13px;color:var(--text-dim)">No active alerts</div>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:3px">All systems operational</div>
+        @if($filterSeverity !== null)
+          <div style="font-size:13px;color:var(--text-dim)">No {{ $filterSeverity }} alerts</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:3px">
+            <button wire:click="setFilterSeverity(null)"
+                    style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:11px;padding:0">
+              View all alerts
+            </button>
+          </div>
+        @else
+          <div style="font-size:13px;color:var(--text-dim)">No active alerts</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:3px">All clear</div>
+        @endif
       </div>
     @endforelse
   </div>

@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Models\ActivityLog;
 use App\Models\Alert;
 use App\Models\Customer;
 use App\Models\DamagedGood;
+use App\Models\HeldSale;
 use App\Models\ReturnModel;
 use App\Models\Transfer;
 use App\Services\SettingsService;
@@ -150,7 +152,72 @@ class OwnerActions extends Component
             }
         }
 
-        // ── 5. Unresolved critical alerts ─────────────────────────────────────
+        // ── 5. Pending price override approvals ───────────────────────────────
+        $pendingOverrides = DB::table('sales')
+            ->join('users as seller', 'sales.sold_by', '=', 'seller.id')
+            ->join('shops', 'sales.shop_id', '=', 'shops.id')
+            ->whereNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->where('sales.has_price_override', true)
+            ->whereNull('sales.price_override_approved_at')
+            ->whereRaw("seller.role::text != 'owner'")
+            ->orderByDesc('sales.sale_date')
+            ->limit(5)
+            ->select('sales.id', 'sales.sale_number', 'sales.total', 'sales.sale_date', 'shops.name as shop_name', 'seller.name as seller_name')
+            ->get();
+
+        if ($pendingOverrides->isNotEmpty()) {
+            $sections[] = [
+                'type'  => 'price_overrides',
+                'label' => 'Price Override Approvals',
+                'icon'  => 'tag',
+                'color' => 'var(--amber)',
+                'bg'    => 'var(--amber-dim)',
+                'count' => $pendingOverrides->count(),
+                'items' => $pendingOverrides->map(fn($s) => [
+                    'id'          => $s->id,
+                    'title'       => $s->sale_number,
+                    'subtitle'    => $s->shop_name . ' · sold by ' . $s->seller_name,
+                    'value'       => number_format($s->total) . ' RWF',
+                    'value_color' => 'var(--amber)',
+                    'age'         => \Carbon\Carbon::parse($s->sale_date)->diffForHumans(),
+                    'link'        => route('owner.reports.sales') . '?activeTab=audit',
+                ])->toArray(),
+            ];
+        }
+
+        // ── 6. Held sales needing price approval ──────────────────────────────
+        $pendingHeld = HeldSale::where('needs_price_approval', true)
+            ->whereNull('override_approved_at')
+            ->whereNull('override_rejected_at')
+            ->with(['seller', 'shop'])
+            ->orderBy('created_at')
+            ->limit(5)
+            ->get();
+
+        if ($pendingHeld->isNotEmpty()) {
+            $sections[] = [
+                'type'  => 'held_approvals',
+                'label' => 'Price Approval Needed',
+                'icon'  => 'tag',
+                'color' => 'var(--amber)',
+                'bg'    => 'var(--amber-dim)',
+                'count' => $pendingHeld->count(),
+                'items' => $pendingHeld->map(fn($h) => [
+                    'id'          => $h->id,
+                    'title'       => $h->hold_reference,
+                    'subtitle'    => ($h->shop?->name ?? '—') . ' · ' . ($h->seller?->name ?? '—')
+                                   . ' · ' . $h->item_count . ' item(s)',
+                    'value'       => number_format($h->cart_total) . ' RWF',
+                    'value_color' => 'var(--amber)',
+                    'age'         => $h->created_at->diffForHumans(),
+                    'link'        => null,
+                    'cart_data'   => $h->cart_data,
+                ])->toArray(),
+            ];
+        }
+
+        // ── 7. Unresolved critical alerts ─────────────────────────────────────
         $criticalAlerts = Alert::where('severity', 'critical')
             ->where('is_resolved', false)
             ->where('is_dismissed', false)
@@ -180,6 +247,77 @@ class OwnerActions extends Component
 
         $this->sections     = $sections;
         $this->totalActions = collect($sections)->sum('count');
+    }
+
+    public function approveHeldSale(int $id): void
+    {
+        $user = auth()->user();
+        if (! $user->isOwner()) return;
+
+        $held = HeldSale::find($id);
+        if (! $held || $held->override_approved_at) return;
+
+        $held->update([
+            'override_approved_at' => now(),
+            'override_approved_by' => $user->id,
+        ]);
+
+        // Resolve the associated alert
+        Alert::where('entity_type', 'HeldSale')
+            ->where('entity_id', $held->id)
+            ->where('is_resolved', false)
+            ->each(fn($a) => $a->markAsResolved($user->id));
+
+        ActivityLog::create([
+            'user_id'           => $user->id,
+            'user_name'         => $user->name,
+            'action'            => 'held_sale_approved',
+            'entity_type'       => 'HeldSale',
+            'entity_id'         => $held->id,
+            'entity_identifier' => $held->hold_reference,
+            'details'           => ['seller' => $held->seller->name, 'cart_total' => $held->cart_total],
+            'ip_address'        => request()->ip(),
+        ]);
+
+        $this->loadActions();
+        $this->dispatch('notification', ['type' => 'success',
+            'message' => "{$held->hold_reference} approved."]);
+    }
+
+    public function rejectHeldSale(int $id, string $reason = ''): void
+    {
+        $user = auth()->user();
+        if (! $user->isOwner()) return;
+
+        $held = HeldSale::find($id);
+        if (! $held || $held->override_rejected_at) return;
+
+        $held->update([
+            'override_rejected_at' => now(),
+            'override_rejected_by' => $user->id,
+            'rejected_reason'      => $reason ?: 'Rejected by owner',
+        ]);
+
+        // Resolve the associated alert
+        Alert::where('entity_type', 'HeldSale')
+            ->where('entity_id', $held->id)
+            ->where('is_resolved', false)
+            ->each(fn($a) => $a->markAsResolved($user->id));
+
+        ActivityLog::create([
+            'user_id'           => $user->id,
+            'user_name'         => $user->name,
+            'action'            => 'held_sale_rejected',
+            'entity_type'       => 'HeldSale',
+            'entity_id'         => $held->id,
+            'entity_identifier' => $held->hold_reference,
+            'details'           => ['seller' => $held->seller->name, 'reason' => $reason],
+            'ip_address'        => request()->ip(),
+        ]);
+
+        $this->loadActions();
+        $this->dispatch('notification', ['type' => 'warning',
+            'message' => "{$held->hold_reference} rejected."]);
     }
 
     public function render()

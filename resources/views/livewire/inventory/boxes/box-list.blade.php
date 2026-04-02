@@ -107,7 +107,10 @@
 </div>
 
 {{-- ── KPI strip ───────────────────────────────────────────────── --}}
-@php $sellable = ($stats->full_count ?? 0) + ($stats->partial_count ?? 0); @endphp
+@php
+  $sellable    = ($stats->full_count ?? 0) + ($stats->partial_count ?? 0);
+  $activeTotal = $sellable + ($stats->damaged_count ?? 0);   // non-empty boxes
+@endphp
 <div class="bx-kpis">
 
     {{-- Card 1: Sellable Boxes --}}
@@ -123,7 +126,7 @@
                 </div>
                 <span class="bkpi-name">Sellable Boxes</span>
             </div>
-            <span class="bkpi-pct blue">of {{ number_format($stats->total ?? 0) }}</span>
+            <span class="bkpi-pct blue">of {{ number_format($activeTotal) }} active</span>
         </div>
         <div class="bkpi-value" style="color:var(--accent)">{{ number_format($sellable) }}</div>
         <div class="bkpi-meta">Full &amp; partial in stock &middot; boxes</div>
@@ -138,7 +141,7 @@
             </div>
             <div style="text-align:center;flex:1">
                 <div style="font-size:11px;font-weight:700;color:var(--text-dim);font-family:var(--mono)">{{ number_format($stats->empty_count ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Empty</div>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Consumed</div>
             </div>
         </div>
     </div>
@@ -162,24 +165,24 @@
                 </div>
                 <span class="bkpi-name">Fill Rate</span>
             </div>
-            <span class="bkpi-pct {{ $fillRatePctClass }}">{{ number_format($stats->total_items ?? 0) }} items</span>
+            <span class="bkpi-pct {{ $fillRatePctClass }}">{{ number_format($stats->total_items ?? 0) }} items left</span>
         </div>
         <div class="bkpi-value" style="color:{{ $fillRateColor }}">
             @if($fillRate !== null){{ $fillRate }}%@else —@endif
         </div>
-        <div class="bkpi-meta">Capacity utilisation &middot; sellable only</div>
+        <div class="bkpi-meta">Avg. fill across sellable boxes</div>
         <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
             <div style="text-align:center;flex:1">
                 <div style="font-size:11px;font-weight:700;color:var(--green);font-family:var(--mono)">{{ number_format($stats->total_items ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Items</div>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Items left</div>
             </div>
             <div style="text-align:center;flex:1">
                 <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ number_format($stats->total_capacity ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Capacity</div>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Max items</div>
             </div>
             <div style="text-align:center;flex:1">
                 <div style="font-size:11px;font-weight:700;color:var(--accent);font-family:var(--mono)">{{ number_format($sellable) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Sellable</div>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Boxes</div>
             </div>
         </div>
     </div>
@@ -188,8 +191,8 @@
     @php
         $stagnantValColor  = $stagnantCount > 0 ? 'var(--amber)' : 'var(--green)';
         $stagnantPctClass  = $stagnantCount > 0 ? 'amber' : 'green';
-        $stagnantRate      = ($stats->total ?? 0) > 0
-            ? round($stagnantCount / $stats->total * 100) : 0;
+        $stagnantRate      = $activeTotal > 0
+            ? round($stagnantCount / $activeTotal * 100) : 0;
     @endphp
     <div class="bkpi violet">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -212,7 +215,7 @@
                 <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Stagnant</div>
             </div>
             <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ number_format(max(0, ($stats->total ?? 0) - $stagnantCount)) }}</div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ number_format(max(0, $activeTotal - $stagnantCount)) }}</div>
                 <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Active</div>
             </div>
             <div style="text-align:center;flex:1">
@@ -226,8 +229,8 @@
     @php
         $damagedValColor  = ($stats->damaged_count ?? 0) > 0 ? 'var(--red)' : 'var(--green)';
         $damagedPctClass  = ($stats->damaged_count ?? 0) > 0 ? 'down' : 'green';
-        $damagedRate      = ($stats->total ?? 0) > 0
-            ? round(($stats->damaged_count ?? 0) / $stats->total * 100) : 0;
+        $damagedRate      = $activeTotal > 0
+            ? round(($stats->damaged_count ?? 0) / $activeTotal * 100) : 0;
     @endphp
     <div class="bkpi red" style="cursor:pointer" wire:click="$set('status', 'damaged')">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -251,7 +254,7 @@
                 <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Damaged</div>
             </div>
             <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--green);font-family:var(--mono)">{{ number_format(max(0, ($stats->total ?? 0) - ($stats->damaged_count ?? 0))) }}</div>
+                <div style="font-size:11px;font-weight:700;color:var(--green);font-family:var(--mono)">{{ number_format(max(0, $activeTotal - ($stats->damaged_count ?? 0))) }}</div>
                 <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Intact</div>
             </div>
             <div style="text-align:center;flex:1">
@@ -401,9 +404,9 @@
                     @endif
                 </th>
 
-                {{-- Fill — sortable --}}
+                {{-- Contents — sortable --}}
                 <th wire:click="sortColumn('items_remaining')" class="sortable">
-                    Fill
+                    Contents
                     @if($sortBy === 'items_remaining')
                         <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                     @endif
@@ -520,15 +523,20 @@
                     </span>
                 </td>
 
-                {{-- Fill --}}
-                <td style="min-width:110px">
+                {{-- Contents --}}
+                <td style="min-width:130px">
                     <div style="display:flex;align-items:center;gap:8px">
                         <div style="flex:1;height:5px;background:var(--surface3);border-radius:3px;min-width:50px">
                             <div style="height:100%;width:{{ $fillPct }}%;background:{{ $fillColor }};border-radius:3px"></div>
                         </div>
-                        <span style="font-size:12px;color:var(--text-sub);white-space:nowrap">
-                            {{ $box->items_remaining }}/{{ $box->items_total }}
-                        </span>
+                        <div style="text-align:right;flex-shrink:0">
+                            <div style="font-size:12px;font-weight:700;color:{{ $fillColor }};white-space:nowrap;line-height:1">
+                                {{ $fillPct }}%
+                            </div>
+                            <div style="font-size:10px;color:var(--text-dim);white-space:nowrap;margin-top:2px">
+                                {{ $box->items_remaining }}&nbsp;/&nbsp;{{ $box->items_total }}&nbsp;items
+                            </div>
+                        </div>
                     </div>
                 </td>
 

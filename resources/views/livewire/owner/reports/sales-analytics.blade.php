@@ -36,14 +36,18 @@
     .sa-date-btn { font-size:13px !important; }
 }
 
-/* Tab bar: scrollable, equal-width, icons only on very small screens */
+/* Tab bar: equal-width tabs on desktop, compact abbreviated labels on mobile */
+.sa-tab-bar button.sa-tab-btn { flex:1; justify-content:center; }
+.sa-tab-abbr { display:none; }
 @media(max-width:900px) {
     .sa-tab-bar { overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex-wrap:nowrap !important; }
     .sa-tab-bar::-webkit-scrollbar { display:none; }
 }
-@media(max-width:480px) {
-    .sa-tab-bar button span.sa-tab-lbl { display:none; }
-    .sa-tab-bar button { padding:10px 12px !important; }
+@media(max-width:640px) {
+    .sa-tab-bar button.sa-tab-btn { padding:8px 6px !important; gap:4px !important; }
+    .sa-tab-bar button.sa-tab-btn svg { width:13px !important; height:13px !important; }
+    .sa-tab-bar button.sa-tab-btn span.sa-tab-lbl { display:none !important; }
+    .sa-tab-abbr { display:block !important; font-size:10px !important; font-weight:700 !important; }
 }
 
 /* KPI grid: 2-col on mobile */
@@ -316,20 +320,20 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      TAB BAR
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div class="sa-tab-bar" style="display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:28px">
+<div class="sa-tab-bar" style="display:flex;border-bottom:2px solid var(--border);margin-bottom:28px">
     @php
         $tabs = [
-            'overview' => ['label' => 'Overview',  'icon' => 'M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z'],
-            'ledger'   => ['label' => 'Sales Ledger','icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
-            'audit'    => ['label' => 'Price Audit', 'icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
-            'sellers'  => ['label' => 'Sellers',    'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],
-            'payments' => ['label' => 'Payments',   'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
-            'credit'   => ['label' => 'Credit',     'icon' => 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z'],
+            'overview' => ['label' => 'Overview',    'abbr' => 'Overview', 'icon' => 'M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z'],
+            'ledger'   => ['label' => 'Sales Ledger','abbr' => 'Ledger',   'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
+            'audit'    => ['label' => 'Price Audit', 'abbr' => 'Audit',    'icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
+            'sellers'  => ['label' => 'Sellers',     'abbr' => 'Sellers',  'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],
+            'payments' => ['label' => 'Payments',    'abbr' => 'Payments', 'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
+            'credit'   => ['label' => 'Credit',      'abbr' => 'Credit',   'icon' => 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z'],
         ];
     @endphp
     @foreach($tabs as $key => $tab)
         <button type="button" wire:click="setTab('{{ $key }}')" class="sa-tab-btn"
-            style="display:flex;align-items:center;gap:7px;padding:10px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;
+            style="display:flex;align-items:center;flex:1;justify-content:center;gap:6px;padding:10px 8px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;
                    color:{{ $activeTab === $key ? 'var(--accent)' : 'var(--text-sub)' }};
                    border-bottom:2px solid {{ $activeTab === $key ? 'var(--accent)' : 'transparent' }};
                    margin-bottom:-2px;transition:color .15s">
@@ -337,6 +341,7 @@
                 <path d="{{ $tab['icon'] }}"/>
             </svg>
             <span class="sa-tab-lbl">{{ $tab['label'] }}</span>
+            <span class="sa-tab-abbr">{{ $tab['abbr'] }}</span>
         </button>
     @endforeach
 </div>
@@ -489,6 +494,86 @@
             </div>
         </div>
     </div>
+
+    {{-- ── Sales Mix: Full Box vs Individual Items ────────────────────────── --}}
+    @php $saleTypes = $this->saleTypeBreakdown @endphp
+    @if(count($saleTypes))
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;margin-bottom:24px;animation:fadeUp .4s ease .20s both">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div>
+                <div class="sa-section-title" style="font-size:13px;font-weight:700;color:var(--text)">Sales Mix</div>
+                <div class="sa-section-subtitle" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Box vs item-level sales breakdown · {{ $this->activeDateRangeLabel }}</div>
+            </div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+            @foreach($saleTypes as $st)
+            @php
+                $stColor = match($st['type']) {
+                    'FULL_BOX'         => 'var(--accent)',
+                    'INDIVIDUAL_ITEMS' => 'var(--green)',
+                    default            => 'var(--violet)',
+                };
+                $stBg = match($st['type']) {
+                    'FULL_BOX'         => 'rgba(59,111,212,.06)',
+                    'INDIVIDUAL_ITEMS' => 'rgba(14,158,134,.06)',
+                    default            => 'rgba(124,58,237,.06)',
+                };
+                $stIcon = match($st['type']) {
+                    'FULL_BOX'         => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4',
+                    'INDIVIDUAL_ITEMS' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+                    default            => 'M4 6h16M4 12h16M4 18h7',
+                };
+            @endphp
+            <div style="flex:1;min-width:160px;background:{{ $stBg }};border:1px solid color-mix(in srgb,{{ $stColor }} 20%,transparent);border-radius:10px;padding:14px 16px">
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ $stColor }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $stIcon }}"/></svg>
+                    <span style="font-size:11px;font-weight:700;color:{{ $stColor }};text-transform:uppercase;letter-spacing:.5px">{{ $st['label'] }}</span>
+                </div>
+                <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:{{ $stColor }};letter-spacing:-1px;line-height:1">
+                    {{ number_format($st['revenue']) }}
+                </div>
+                <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:4px">
+                    {{ $st['count'] }} {{ $st['count'] === 1 ? 'sale' : 'sales' }} · {{ $st['revenue_share'] }}% of revenue
+                </div>
+                <div style="margin-top:8px;height:3px;background:var(--border);border-radius:2px">
+                    <div style="height:100%;width:{{ $st['revenue_share'] }}%;background:{{ $stColor }};border-radius:2px;transition:width .6s ease"></div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- ── Price Override Alert Strip ──────────────────────────────────────── --}}
+    @if($ov['override_sales_count'] > 0)
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+                padding:13px 18px;margin-bottom:24px;border-radius:var(--r);
+                background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.25);
+                animation:fadeUp .4s ease .22s both">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(217,119,6,.15);display:grid;place-items:center;flex-shrink:0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <div>
+                <div style="font-size:12px;font-weight:700;color:#92400e">Price Overrides Detected</div>
+                <div style="font-size:11px;color:var(--text-sub);margin-top:2px;font-family:var(--mono)">
+                    <span style="color:#d97706;font-weight:700">{{ $ov['override_sales_count'] }}</span> sales ·
+                    <span style="color:#d97706;font-weight:700">{{ $ov['override_items_count'] }}</span> items ·
+                    <span style="color:var(--red);font-weight:700">{{ number_format($ov['total_discount_given']) }} RWF</span> discounted ·
+                    <span>{{ $ov['override_rate'] }}% override rate</span>
+                </div>
+            </div>
+        </div>
+        <button type="button" wire:click="setTab('audit')"
+            style="font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;border:1px solid rgba(217,119,6,.4);
+                   background:rgba(217,119,6,.1);color:#d97706;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s"
+            onmouseover="this.style.background='rgba(217,119,6,.2)'" onmouseout="this.style.background='rgba(217,119,6,.1)'">
+            View Audit Trail →
+        </button>
+    </div>
+    @endif
 
     {{-- ── Revenue Trend Chart ──────────────────────────────────────────────── --}}
     @php $trend = $this->revenueTrend @endphp
@@ -1335,18 +1420,18 @@
             </span>
         </div>
         <div class="sa-table-scroll">
-            <table class="sa-audit-table sa-table" style="min-width:1000px;width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">
+            <table class="sa-audit-table sa-table" style="min-width:1360px;width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">
                 <colgroup>
-                    <col style="width:140px">
-                    <col style="width:240px">
-                    <col style="width:160px">
-                    <col style="width:90px">
-                    <col style="width:110px">
-                    <col style="width:110px">
-                    <col style="width:110px">
-                    <col style="width:100px">
-                    <col style="width:180px">
-                    <col style="width:120px">
+                    <col style="width:130px"> {{-- Date & Time --}}
+                    <col style="width:210px"> {{-- Sale # / Product --}}
+                    <col style="width:140px"> {{-- Shop / Seller --}}
+                    <col style="width:155px"> {{-- Qty (widened for "2 boxes (20 items)") --}}
+                    <col style="width:100px"> {{-- Original --}}
+                    <col style="width:100px"> {{-- Actual --}}
+                    <col style="width:105px"> {{-- Discount --}}
+                    <col style="width:90px">  {{-- Margin --}}
+                    <col style="width:165px"> {{-- Reason --}}
+                    <col style="width:165px"> {{-- Approved / Approve button --}}
                 </colgroup>
                 <thead>
                     <tr style="background:var(--bg);border-bottom:1px solid var(--border)">
@@ -1364,7 +1449,10 @@
                 </thead>
                 <tbody>
                     @forelse($auditLog as $entry)
-                    <tr style="border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background='rgba(59,111,212,.03)'" onmouseout="this.style.background='transparent'">
+                    @php $isLargeDiscount = ($entry['discount_pct'] ?? 0) >= 20; @endphp
+                    <tr style="border-bottom:1px solid var(--border);transition:background .1s;{{ $isLargeDiscount ? 'background:rgba(217,119,6,.05);border-left:3px solid rgba(217,119,6,.5);' : '' }}"
+                        onmouseover="this.style.background='{{ $isLargeDiscount ? 'rgba(217,119,6,.10)' : 'rgba(59,111,212,.03)' }}'"
+                        onmouseout="this.style.background='{{ $isLargeDiscount ? 'rgba(217,119,6,.05)' : 'transparent' }}'">
                         <td style="padding:10px 14px;white-space:nowrap">
                             <div style="font-family:var(--mono);font-size:12px;color:var(--text);font-weight:600">{{ \Carbon\Carbon::parse($entry['sale_date'])->format('M d, Y') }}</div>
                             <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:2px">{{ \Carbon\Carbon::parse($entry['sale_date'])->format('H:i') }}</div>
@@ -1405,11 +1493,32 @@
                                 <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Ref: {{ $entry['reference'] }}</div>
                             @endif
                         </td>
-                        <td style="padding:10px 14px;white-space:nowrap">
-                            @if($entry['is_approved'])
+                        <td style="padding:10px 14px">
+                            @if(($entry['seller_role'] ?? '') === 'owner')
+                                {{-- Owner made the change — self-authorised, no approval needed --}}
+                                <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:var(--green-glow);color:var(--green)">✓ Owner</span>
+                            @elseif($entry['is_approved'])
+                                {{-- Seller change, approved by owner --}}
                                 <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:var(--green-glow);color:var(--green)">✓ {{ $entry['approved_by'] }}</span>
                             @else
-                                <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:rgba(251,191,36,.12);color:var(--amber)">Pending</span>
+                                {{-- Seller change, awaiting owner approval --}}
+                                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+                                    <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:rgba(251,191,36,.12);color:var(--amber)">Pending</span>
+                                    @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+                                    <button
+                                        wire:click="approvePriceOverride({{ $entry['sale_id'] }})"
+                                        wire:confirm="Approve price override on sale {{ $entry['sale_number'] }}?"
+                                        wire:loading.attr="disabled"
+                                        style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;
+                                               border:1px solid var(--green);background:var(--green-glow);
+                                               color:var(--green);cursor:pointer;white-space:nowrap;
+                                               transition:background .15s,color .15s"
+                                        onmouseover="this.style.background='var(--green)';this.style.color='#fff'"
+                                        onmouseout="this.style.background='var(--green-glow)';this.style.color='var(--green)'">
+                                        Approve ✓
+                                    </button>
+                                    @endif
+                                </div>
                             @endif
                         </td>
                     </tr>

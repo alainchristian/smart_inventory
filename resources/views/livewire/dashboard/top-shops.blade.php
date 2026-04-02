@@ -4,7 +4,17 @@
       <div class="card-title">Top Performing Shops</div>
       <div class="card-subtitle">Ranked by sales volume</div>
     </div>
-    <a href="{{ route('owner.shops.index') }}" class="card-btn">View All</a>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="period-tabs">
+        <button class="period-tab {{ $period === 'week' ? 'active' : '' }}"
+                wire:click="setPeriod('week')">W</button>
+        <button class="period-tab {{ $period === 'month' ? 'active' : '' }}"
+                wire:click="setPeriod('month')">M</button>
+        <button class="period-tab {{ $period === 'quarter' ? 'active' : '' }}"
+                wire:click="setPeriod('quarter')">Q</button>
+      </div>
+      <a href="{{ route('owner.shops.index') }}" class="card-btn">View All</a>
+    </div>
   </div>
 
   <div class="card-scroll">
@@ -34,28 +44,36 @@
   </div>
   @endforeach
 
-  {{-- Stock fill per shop --}}
+  {{-- Stock fill per shop (box count + low stock signal) --}}
   <div class="stock-fill-section" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-    <div class="card-subtitle" style="margin-bottom:10px">Stock fill per shop</div>
+    <div class="card-subtitle" style="margin-bottom:10px">Stock health per shop</div>
     @foreach($shops as $shop)
-    <div class="stock-fill-row" style="display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:7px">
-      <span class="stock-shop-name" style="width:130px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+    @php
+      $low = $shop['low_stock_products'];
+      $stockColor = $low === 0 ? 'var(--success)' : ($low <= 2 ? 'var(--amber)' : 'var(--red)');
+      $stockBg    = $low === 0 ? 'var(--success-glow)' : ($low <= 2 ? 'var(--amber-dim)' : 'var(--red-dim)');
+    @endphp
+    <div class="stock-fill-row" style="display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:8px">
+      <span class="stock-shop-name" style="width:120px;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+            title="{{ $shop['name'] }}">
         {{ $shop['name'] }}
       </span>
-      <div style="flex:1;height:4px;background:var(--surface3);border-radius:10px;overflow:hidden">
-        <div style="height:100%;width:{{ $shop['fill_pct'] }}%;border-radius:10px;
-                    background:{{ $shop['fill_pct'] >= 50 ? 'var(--success)' :
-                                 ($shop['fill_pct'] >= 20 ? 'var(--amber)' : 'var(--red)') }}">
-        </div>
+      <div style="flex:1;min-width:0">
+        @if($low === 0)
+          <span style="font-size:11px;font-weight:600;color:var(--success)">
+            {{ $shop['total_boxes'] }} {{ $shop['total_boxes'] === 1 ? 'box' : 'boxes' }} &middot; All stocked
+          </span>
+        @else
+          <span style="font-size:11px;font-weight:600;color:{{ $stockColor }}">
+            {{ $shop['total_boxes'] }} {{ $shop['total_boxes'] === 1 ? 'box' : 'boxes' }}
+            &middot; {{ $low }} {{ $low === 1 ? 'product needs' : 'products need' }} restocking
+          </span>
+        @endif
       </div>
-      <span class="stock-fill-pct" style="font-family:var(--mono);width:32px;text-align:right;font-weight:600;
-                   color:{{ $shop['fill_pct'] >= 50 ? 'var(--success)' :
-                           ($shop['fill_pct'] >= 20 ? 'var(--amber)' : 'var(--red)') }}">
-        {{ $shop['fill_pct'] }}%
+      <span style="font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:8px;
+                   background:{{ $stockBg }};color:{{ $stockColor }};flex-shrink:0">
+        {{ $low === 0 ? 'OK' : $low }}
       </span>
-      @if($shop['fill_pct'] < 20)
-        <span class="stock-warning" style="color:var(--red);font-size:14px" title="Critical stock level">⚠</span>
-      @endif
     </div>
     @endforeach
   </div>

@@ -658,6 +658,7 @@ class SalesAnalyticsService
                     sales.sale_number,
                     shops.name as shop_name,
                     seller.name as seller_name,
+                    seller.role::text as seller_role,
                     products.id as product_id,
                     products.name as product_name,
                     products.purchase_price,
@@ -678,7 +679,7 @@ class SalesAnalyticsService
                     approver.name as approved_by_name,
                     sales.price_override_approved_at
                 ')
-                ->groupBy('sales.id', 'sales.sale_date', 'sales.sale_number', 'shops.name', 'seller.name',
+                ->groupBy('sales.id', 'sales.sale_date', 'sales.sale_number', 'shops.name', 'seller.name', 'seller.role',
                          'products.id', 'products.name', 'products.purchase_price', 'products.items_per_box',
                          'approver.name', 'sales.price_override_approved_at')
                 ->orderByDesc('sales.sale_date');
@@ -721,10 +722,12 @@ class SalesAnalyticsService
                     : 0;
 
                 return [
+                    'sale_id'             => (int) $item->sale_id,
                     'sale_date'           => $item->sale_date,
                     'sale_number'         => $item->sale_number,
                     'shop_name'           => $item->shop_name,
                     'seller_name'         => $item->seller_name,
+                    'seller_role'         => $item->seller_role,
                     'product_name'        => $item->product_name,
                     'quantity_sold'       => $totalItems,
                     'quantity_display'    => $quantityDisplay,

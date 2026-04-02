@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Models\HeldSale;
 use App\Models\Transfer;
 use App\Models\Alert;
 use App\Models\DamagedGood;
@@ -13,6 +14,7 @@ class ActionCards extends Component
     public int $discrepancyCount     = 0;
     public int $damagedPendingCount  = 0;
     public int $criticalAlertsCount  = 0;
+    public int $pendingHeldCount     = 0;
 
     public function mount(): void
     {
@@ -30,6 +32,10 @@ class ActionCards extends Component
         $this->damagedPendingCount  = class_exists(DamagedGood::class)
             ? DamagedGood::where('disposition', 'pending')->count()
             : 0;
+        $this->pendingHeldCount = HeldSale::where('needs_price_approval', true)
+            ->whereNull('override_approved_at')
+            ->whereNull('override_rejected_at')
+            ->count();
     }
 
     public function getHasPendingActionsProperty(): bool
@@ -37,7 +43,8 @@ class ActionCards extends Component
         return ($this->pendingApprovalCount
               + $this->discrepancyCount
               + $this->criticalAlertsCount
-              + $this->damagedPendingCount) > 0;
+              + $this->damagedPendingCount
+              + $this->pendingHeldCount) > 0;
     }
 
     public function render()

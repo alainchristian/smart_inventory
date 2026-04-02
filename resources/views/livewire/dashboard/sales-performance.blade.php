@@ -39,8 +39,8 @@
     </div>
     @endif
 
-    <div wire:ignore style="padding:0 16px 16px 16px;{{ $loaded ? '' : 'display:none' }}">
-        <canvas id="salesChart" style="max-height:280px"></canvas>
+    <div class="chart-container" style="padding:0 16px 16px 16px;{{ $loaded ? '' : 'display:none' }}">
+        <canvas id="salesChart" wire:ignore style="max-height:280px"></canvas>
     </div>
 
     @php $summaries = $this->getPeriodSummaries(); @endphp
@@ -60,23 +60,41 @@
 @script
 <script>
 Alpine.data('salesPerfChart', () => ({
-    // CRITICAL: chartInstance stored on DOM element to avoid Alpine proxy recursion.
-    morphCleanup: null,
 
     init() {
         var self = this;
-        setTimeout(function() {
-            if (document.getElementById('salesChart')) {
-                self.draw();
-            } else {
-                setTimeout(function() { self.draw(); }, 300);
-            }
-        }, 150);
 
-        self.morphCleanup = Livewire.hook('morph.updated', function(payload) {
-            if (payload.el === self.$el) {
-                self.updateChart();
+        // Re-draw whenever the server updates chart data — covers:
+        //   • initial load after wire:init fires loadChart()
+        //   • every period-tab click (setChartPeriod changes chartData)
+        this.$wire.$watch('chartData', function() {
+            self._scheduleRedraw();
+        });
+
+        // Also re-draw when comparison data or the toggle changes
+        this.$wire.$watch('comparisonData', function() {
+            self._scheduleRedraw();
+        });
+
+        // Hard fallback: if the $watch callbacks never fired (e.g. cached page
+        // where chartData is already set on first tick), draw after 400 ms.
+        setTimeout(function() {
+            var canvas = document.getElementById('salesChart');
+            if (canvas && !canvas._chartInstance) {
+                self._scheduleRedraw();
             }
+        }, 400);
+    },
+
+    // Double requestAnimationFrame guarantees two things:
+    //   1. The Livewire DOM morph (which removes display:none) has been committed.
+    //   2. The browser has calculated layout, so canvas.offsetWidth > 0.
+    _scheduleRedraw() {
+        var self = this;
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                self.updateChart();
+            });
         });
     },
 
@@ -85,10 +103,6 @@ Alpine.data('salesPerfChart', () => ({
         if (canvas && canvas._chartInstance) {
             canvas._chartInstance.destroy();
             delete canvas._chartInstance;
-        }
-        if (typeof this.morphCleanup === 'function') {
-            this.morphCleanup();
-            this.morphCleanup = null;
         }
     },
 
@@ -124,6 +138,7 @@ Alpine.data('salesPerfChart', () => ({
         }
 
         try {
+            inst.resize();
             inst.update('none');
         } catch(e) {
             inst.destroy();
@@ -151,6 +166,12 @@ Alpine.data('salesPerfChart', () => ({
     draw() {
         var canvas = document.getElementById('salesChart');
         if (!canvas) return;
+
+        // Canvas is inside a display:none container while $loaded=false.
+        // Drawing on a hidden element gives Chart.js a 0×0 size it never recovers
+        // from. Bail here — updateChart() will call draw() again on the next morph
+        // (which fires when $loaded becomes true and the container becomes visible).
+        if (canvas.offsetWidth === 0) return;
 
         var raw = this.$el.dataset.chart;
         var data = raw ? JSON.parse(raw) : null;
@@ -290,6 +311,7 @@ Alpine.data('salesPerfChart', () => ({
                 }
             }
         });
+        canvas._chartInstance.resize();
     }
 }));
 </script>

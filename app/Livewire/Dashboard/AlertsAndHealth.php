@@ -9,7 +9,8 @@ use Livewire\Component;
 
 class AlertsAndHealth extends Component
 {
-    public string $activeTab = 'alerts';
+    public string  $activeTab      = 'alerts';
+    public ?string $filterSeverity = null;
 
     // System health props (from SystemStatus)
     public bool $dbOk          = true;
@@ -26,6 +27,20 @@ class AlertsAndHealth extends Component
     public function setTab(string $tab): void
     {
         $this->activeTab = $tab;
+    }
+
+    public function setFilterSeverity(?string $severity): void
+    {
+        $this->filterSeverity = $severity;
+    }
+
+    public function getAlertSummary(): array
+    {
+        return [
+            'critical' => Alert::unresolved()->notDismissed()->where('severity', 'critical')->count(),
+            'warning'  => Alert::unresolved()->notDismissed()->where('severity', 'warning')->count(),
+            'info'     => Alert::unresolved()->notDismissed()->where('severity', 'info')->count(),
+        ];
     }
 
     public function dismissAlert(int $alertId): void
@@ -106,15 +121,21 @@ class AlertsAndHealth extends Component
 
     public function render()
     {
-        $alerts = Alert::unresolved()
+        $query = Alert::unresolved()
             ->notDismissed()
             ->orderByRaw("CASE severity WHEN 'critical' THEN 1 WHEN 'warning' THEN 2 ELSE 3 END")
-            ->orderBy('created_at', 'desc')
-            ->limit(8)
-            ->get();
+            ->orderBy('created_at', 'desc');
+
+        if ($this->filterSeverity !== null) {
+            $query->where('severity', $this->filterSeverity);
+        }
+
+        $alerts       = $query->limit(12)->get();
+        $alertSummary = $this->getAlertSummary();
 
         return view('livewire.dashboard.alerts-and-health', [
-            'alerts' => $alerts,
+            'alerts'       => $alerts,
+            'alertSummary' => $alertSummary,
         ]);
     }
 }

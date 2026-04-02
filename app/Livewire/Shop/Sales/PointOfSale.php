@@ -5,7 +5,10 @@ namespace App\Livewire\Shop\Sales;
 use App\Enums\BoxStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\SaleType;
+use App\Models\ActivityLog;
+use App\Models\Alert;
 use App\Models\Box;
+use App\Models\HeldSale;
 use App\Models\Product;
 use App\Models\ProductBarcode;
 use App\Models\Sale;
@@ -96,6 +99,11 @@ class PointOfSale extends Component
     public bool  $settingCreditRequiresCustomer  = true;
     public int   $settingMaxCreditPerCustomer    = 0;
 
+    // Held Sales
+    public array $heldSales        = [];
+    public bool  $showHeldPanel    = false;
+    public ?int  $resumingFromHeld = null;
+
     // Receipt Modal
     public $showReceiptModal = false;
     public $completedSale = null;
@@ -180,6 +188,8 @@ class PointOfSale extends Component
         $this->settingAllowCreditSales       = $settings->allowCreditSales();
         $this->settingCreditRequiresCustomer = $settings->creditRequiresCustomer();
         $this->settingMaxCreditPerCustomer   = $settings->maxCreditPerCustomer();
+
+        $this->loadHeldSales();
     }
 
     // ==================== SEARCH ====================
@@ -576,13 +586,35 @@ class PointOfSale extends Component
             return;
         }
 
-        // Only update price if it hasn't been manually modified
-        if (!$this->stagingPriceModified) {
-            if ($this->stagingMode === 'box') {
-                $this->stagingPrice = $this->stagingProduct['box_price'];
-            } else {
-                $this->stagingPrice = $this->stagingProduct['selling_price'];
-            }
+        // Reset price to default for the selected mode
+        $this->stagingPrice = $this->stagingMode === 'box'
+            ? $this->stagingProduct['box_price']
+            : $this->stagingProduct['selling_price'];
+
+        // Price is always original after a mode switch
+        $this->stagingPriceModified = false;
+        $this->stagingPriceReason   = '';
+    }
+
+    /**
+     * Reactive update when the price field is edited in the staging modal.
+     * Marks the price as modified (or clears the flag if restored to original).
+     */
+    public function updatedStagingPrice(): void
+    {
+        if (! $this->stagingProduct) {
+            return;
+        }
+
+        $originalPrice = $this->stagingMode === 'box'
+            ? $this->stagingProduct['box_price']
+            : $this->stagingProduct['selling_price'];
+
+        $this->stagingPriceModified = ((int) $this->stagingPrice !== (int) $originalPrice);
+
+        // Clear the reason when price is restored to original
+        if (! $this->stagingPriceModified) {
+            $this->stagingPriceReason = '';
         }
     }
 
@@ -1115,14 +1147,25 @@ class PointOfSale extends Component
         }
 
         // Check if any items require owner approval
-        $requiresApproval = collect($this->cart)->contains('requires_owner_approval', true);
+        $needsApproval = collect($this->cart)->contains('requires_owner_approval', true);
 
-        if ($requiresApproval) {
-            $this->dispatch('notification', [
-                'type' => 'error',
-                'message' => 'Some items require owner approval before checkout'
-            ]);
-            return;
+        if ($needsApproval) {
+            // Check whether the held sale being resumed was actually approved by the owner
+            $resumeApproved = false;
+            if ($this->resumingFromHeld !== null) {
+                $heldRecord = HeldSale::find($this->resumingFromHeld);
+                $resumeApproved = $heldRecord && $heldRecord->isApproved();
+            }
+
+            if (! $resumeApproved) {
+                $this->dispatch('notification', [
+                    'type'    => 'warning',
+                    'message' => $this->resumingFromHeld
+                        ? 'This sale is still waiting for owner approval. You will be notified when it is approved.'
+                        : 'This sale has price overrides that need owner approval. Use "Hold for Approval".',
+                ]);
+                return;
+            }
         }
 
         // Reset payment panel — default cash to full total
@@ -1158,6 +1201,23 @@ class PointOfSale extends Component
                 'message' => 'Cart is empty'
             ]);
             return;
+        }
+
+        // Belt-and-braces: block if approval-required items haven't been approved
+        $needsApproval = collect($this->cart)->contains('requires_owner_approval', true);
+        if ($needsApproval) {
+            $resumeApproved = false;
+            if ($this->resumingFromHeld !== null) {
+                $heldRecord = HeldSale::find($this->resumingFromHeld);
+                $resumeApproved = $heldRecord && $heldRecord->isApproved();
+            }
+            if (! $resumeApproved) {
+                $this->dispatch('notification', [
+                    'type'    => 'error',
+                    'message' => 'Cannot complete sale: price override has not been approved by the owner.',
+                ]);
+                return;
+            }
         }
 
         // Validate payment coverage
@@ -1282,6 +1342,21 @@ class PointOfSale extends Component
             $this->completedSale = Sale::with(['items.product', 'items.box', 'soldBy', 'shop', 'payments'])
                 ->find($sale->id);
 
+            // Clean up held sale record if this was a resume; copy approval onto sale
+            if ($this->resumingFromHeld) {
+                $heldRecord = HeldSale::find($this->resumingFromHeld);
+                if ($heldRecord) {
+                    if ($heldRecord->isApproved()) {
+                        $sale->update([
+                            'price_override_approved_at' => $heldRecord->override_approved_at,
+                            'price_override_approved_by' => $heldRecord->override_approved_by,
+                        ]);
+                    }
+                    $heldRecord->delete();
+                }
+                $this->resumingFromHeld = null;
+            }
+
             // Refresh the product list so sold-out products disappear immediately
             $this->allStockProducts = [];
             $this->searchResults    = [];
@@ -1366,6 +1441,176 @@ class PointOfSale extends Component
             'type' => 'success',
             'message' => "Switched to {$this->shopName}"
         ]);
+    }
+
+    // ==================== HELD SALES ====================
+
+    public function loadHeldSales(): void
+    {
+        if (! $this->shopId) {
+            $this->heldSales = [];
+            return;
+        }
+
+        $this->heldSales = HeldSale::where('shop_id', $this->shopId)
+            ->whereNull('override_rejected_at')
+            ->with(['seller', 'approvedBy'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn($h) => [
+                'id'            => $h->id,
+                'reference'     => $h->hold_reference,
+                'item_count'    => $h->item_count,
+                'cart_total'    => $h->cart_total,
+                'customer_name' => $h->customer_name,
+                'seller_name'   => $h->seller->name,
+                'is_approved'   => $h->isApproved(),
+                'approved_by'   => $h->approvedBy?->name,
+                'approval_note' => $h->approval_note,
+                'age'           => $h->created_at->diffForHumans(),
+                'is_mine'       => $h->seller_id === auth()->id(),
+                'cart_preview'  => collect($h->cart_data ?? [])->take(3)->map(fn($item) => [
+                    'name'           => $item['product_name'] ?? '—',
+                    'qty'            => $item['quantity'] ?? 1,
+                    'is_full_box'    => $item['is_full_box'] ?? false,
+                    'price'          => $item['price'] ?? 0,
+                    'original_price' => $item['original_price'] ?? $item['price'] ?? 0,
+                    'modified'       => $item['price_modified'] ?? false,
+                ])->toArray(),
+                'cart_extra'    => max(0, count($h->cart_data ?? []) - 3),
+            ])
+            ->toArray();
+    }
+
+    public function holdSale(): void
+    {
+        if (empty($this->cart)) return;
+
+        $needsApproval = collect($this->cart)->contains('requires_owner_approval', true);
+
+        $nextId = (HeldSale::max('id') ?? 0) + 1;
+        $held = HeldSale::create([
+            'seller_id'            => auth()->id(),
+            'shop_id'              => $this->shopId,
+            'hold_reference'       => 'HOLD-' . str_pad($nextId, 4, '0', STR_PAD_LEFT),
+            'cart_data'            => $this->cart,
+            'cart_total'           => $this->cartTotal,
+            'item_count'           => count($this->cart),
+            'customer_id'          => $this->selectedCustomerId ?? null,
+            'customer_name'        => $this->selectedCustomerName ?: null,
+            'customer_phone'       => $this->selectedCustomerPhone ?: null,
+            'needs_price_approval' => $needsApproval,
+        ]);
+
+        ActivityLog::create([
+            'user_id'           => auth()->id(),
+            'user_name'         => auth()->user()->name,
+            'action'            => 'sale_held',
+            'entity_type'       => 'HeldSale',
+            'entity_id'         => $held->id,
+            'entity_identifier' => $held->hold_reference,
+            'details'           => ['cart_total' => $this->cartTotal, 'needs_approval' => $needsApproval],
+            'ip_address'        => request()->ip(),
+        ]);
+
+        // Create a persistent alert so the owner is notified even outside the dashboard
+        if ($needsApproval) {
+            Alert::create([
+                'title'        => 'Price Override Needs Approval',
+                'message'      => "{$held->hold_reference} · " . auth()->user()->name
+                                . " · {$this->shopName} · " . number_format($this->cartTotal) . ' RWF',
+                'severity'     => 'warning',
+                'entity_type'  => 'HeldSale',
+                'entity_id'    => $held->id,
+                'is_resolved'  => false,
+                'is_dismissed' => false,
+                'action_url'   => route('owner.dashboard'),
+                'action_label' => 'Review on Dashboard',
+            ]);
+        }
+
+        $this->cart              = [];
+        $this->cartTotal         = 0;
+        $this->resumingFromHeld  = null;
+        $this->showCheckoutModal = false;
+        $this->clearCart();
+        $this->loadHeldSales();
+
+        $msg = $needsApproval
+            ? "Sale held ({$held->hold_reference}). Owner has been notified for price approval."
+            : "Sale held ({$held->hold_reference}). Resume it anytime.";
+
+        $this->dispatch('notification', ['type' => 'success', 'message' => $msg]);
+    }
+
+    public function resumeHeldSale(int $id): void
+    {
+        $held = HeldSale::find($id);
+        if (! $held || $held->shop_id != $this->shopId) return;
+
+        if ($held->isRejected()) {
+            $this->dispatch('notification', [
+                'type'    => 'error',
+                'message' => "Sale {$held->hold_reference} was rejected: {$held->rejected_reason}",
+            ]);
+            return;
+        }
+
+        $cart = $held->cart_data;
+        if ($held->isApproved()) {
+            $cart = array_map(function ($item) {
+                $item['requires_owner_approval'] = false;
+                return $item;
+            }, $cart);
+        }
+
+        $this->cart                 = $cart;
+        $this->cartTotal            = $held->cart_total;
+        $this->resumingFromHeld     = $held->id;
+        $this->selectedCustomerName  = $held->customer_name ?? '';
+        $this->selectedCustomerPhone = $held->customer_phone ?? '';
+        if ($held->customer_id) {
+            $this->selectedCustomerId = $held->customer_id;
+        }
+        $this->showHeldPanel = false;
+        $this->loadHeldSales();
+    }
+
+    public function discardHeldSale(int $id): void
+    {
+        $held = HeldSale::find($id);
+        if (! $held || $held->shop_id != $this->shopId) return;
+
+        $held->delete();
+
+        if ($this->resumingFromHeld === $id) {
+            $this->resumingFromHeld = null;
+            $this->cart             = [];
+            $this->cartTotal        = 0;
+        }
+
+        $this->loadHeldSales();
+        $this->dispatch('notification', ['type' => 'info', 'message' => 'Held sale discarded.']);
+    }
+
+    public function checkApprovals(): void
+    {
+        $prevIds = collect($this->heldSales)
+            ->filter(fn($h) => ! $h['is_approved'])
+            ->pluck('id')
+            ->toArray();
+
+        $this->loadHeldSales();
+
+        $nowApproved = collect($this->heldSales)
+            ->filter(fn($h) => $h['is_approved'] && in_array($h['id'], $prevIds));
+
+        foreach ($nowApproved as $h) {
+            $this->dispatch('notification', [
+                'type'    => 'success',
+                'message' => "{$h['reference']} approved by {$h['approved_by']}! Tap to resume.",
+            ]);
+        }
     }
 
     // ==================== UI HELPERS ====================
