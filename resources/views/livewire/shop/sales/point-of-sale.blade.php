@@ -947,98 +947,234 @@
      STAGING MODAL (Add / Edit item)
 ══════════════════════════════════════════════ --}}
 @if($showAddModal && $stagingProduct)
-<div style="position:fixed;inset:0;z-index:600;display:flex;align-items:center;
-            justify-content:center;background:rgba(15,20,40,.55);backdrop-filter:blur(4px);padding:16px">
-  <div style="background:#fff;border-radius:20px;width:500px;max-width:100%;
-              max-height:94vh;overflow-y:auto;box-shadow:0 28px 72px rgba(0,0,0,.28)">
+@php
+  $stagingFullBoxes  = $stagingStock['full_boxes'] ?? 0;
+  $stagingPartBoxes  = $stagingStock['partial_boxes'] ?? 0;
+  $stagingTotalBoxes = $stagingFullBoxes + $stagingPartBoxes;
+  $stagingTotalItems = $stagingStock['total_items'] ?? 0;
+  $inStock           = $stagingTotalBoxes > 0;
+@endphp
+<style>
+/* ── Staging modal ────────────────────────────── */
+.sm-overlay {
+    position:fixed;inset:0;z-index:600;display:flex;align-items:center;
+    justify-content:center;background:rgba(10,14,35,.6);backdrop-filter:blur(6px);
+    padding:16px;
+}
+.sm-card {
+    background:var(--surface);border:1px solid var(--border);border-radius:18px;
+    width:480px;max-width:100%;max-height:92vh;display:flex;flex-direction:column;
+    box-shadow:0 24px 64px rgba(0,0,0,.32);overflow:hidden;
+}
+/* Header */
+.sm-head {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.sm-title { font-size:16px;font-weight:800;color:var(--text);line-height:1.2 }
+.sm-subtitle { font-size:12px;color:var(--text-sub);margin-top:3px;
+               white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px }
+.sm-close {
+    width:30px;height:30px;border-radius:8px;background:var(--surface2);
+    border:1px solid var(--border);cursor:pointer;display:grid;place-items:center;
+    color:var(--text-dim);flex-shrink:0;transition:all var(--tr);
+}
+.sm-close:hover { background:var(--border);color:var(--text) }
 
-    {{-- Modal header --}}
-    <div style="padding:20px 22px 16px;border-bottom:1px solid #e8ebf4;
-                display:flex;align-items:flex-start;justify-content:space-between;
-                position:sticky;top:0;background:#fff;z-index:2;
-                border-radius:20px 20px 0 0">
-      <div>
-        <div style="font-size:17px;font-weight:800;color:#1a1f36">
-          {{ $stagingCartIndex !== null ? 'Edit Cart Item' : 'Add to Cart' }}
-        </div>
-        <div style="font-size:12px;color:#6b7494;margin-top:3px">
-          {{ $stagingProduct['name'] }}
-        </div>
+/* Scrollable body */
+.sm-body { padding:18px 20px;overflow-y:auto;flex:1 }
+
+/* Info strip */
+.sm-info {
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--bg);border:1px solid var(--border);border-radius:11px;
+    padding:11px 14px;margin-bottom:16px;gap:12px;
+}
+.sm-info-left { min-width:0 }
+.sm-info-sku { font-size:10px;font-family:var(--mono);color:var(--text-dim);
+               margin-bottom:2px;text-transform:uppercase;letter-spacing:.4px }
+.sm-info-cat { font-size:12px;color:var(--text-sub) }
+.sm-info-right { text-align:right;flex-shrink:0 }
+.sm-info-label { font-size:10px;color:var(--text-dim);margin-bottom:3px }
+.sm-stock-num { font-size:19px;font-weight:800;font-family:var(--mono);line-height:1 }
+.sm-stock-detail { font-size:10px;color:var(--text-dim);margin-top:2px }
+
+/* Mode toggle */
+.sm-modes { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px }
+.sm-mode-btn {
+    padding:12px 10px 11px;border-radius:11px;cursor:pointer;text-align:center;
+    border:2px solid var(--border);background:var(--bg);transition:all .12s;
+}
+.sm-mode-btn.active { border-color:var(--accent);background:var(--surface2) }
+.sm-mode-btn:not(.active):hover { border-color:var(--accent);opacity:.8 }
+.sm-mode-btn.disabled { opacity:.4;cursor:not-allowed;pointer-events:none }
+.sm-mode-icon { font-size:20px;margin-bottom:5px;line-height:1 }
+.sm-mode-name { font-size:13px;font-weight:700;color:var(--text-sub);transition:color .12s }
+.sm-mode-btn.active .sm-mode-name { color:var(--accent) }
+.sm-mode-meta { font-size:10px;color:var(--text-dim);margin-top:2px }
+.sm-mode-price { font-size:13px;font-weight:800;font-family:var(--mono);
+                 color:var(--accent);margin-top:6px }
+
+/* Qty + price row */
+.sm-fields { display:grid;grid-template-columns:140px 1fr;gap:12px;margin-bottom:14px;align-items:start }
+
+/* Field label */
+.sm-label {
+    font-size:10px;font-weight:700;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;
+    display:flex;align-items:center;justify-content:space-between;min-height:18px;
+}
+.sm-modified-badge {
+    font-size:10px;font-weight:700;color:var(--amber);
+    background:rgba(245,158,11,.12);padding:2px 7px;border-radius:5px;
+    transition:opacity .15s;
+}
+
+/* Qty stepper */
+.sm-stepper { display:flex;align-items:center;gap:0;border:2px solid var(--accent);
+              border-radius:10px;overflow:hidden;background:var(--surface) }
+.sm-step-btn {
+    width:36px;height:44px;background:transparent;border:none;cursor:pointer;
+    font-size:18px;color:var(--accent);display:grid;place-items:center;
+    transition:background var(--tr);flex-shrink:0;
+}
+.sm-step-btn:hover { background:var(--surface2) }
+.sm-qty-input {
+    flex:1;border:none;padding:0;text-align:center;font-size:20px;font-weight:800;
+    font-family:var(--mono);color:var(--text);background:transparent;outline:none;
+    min-width:0;height:44px;
+}
+
+/* Price input */
+.sm-price-wrap { position:relative }
+.sm-price-prefix {
+    position:absolute;left:11px;top:50%;transform:translateY(-50%);
+    font-size:10px;font-weight:700;color:var(--text-dim);pointer-events:none;
+    font-family:var(--mono);
+}
+.sm-price-input {
+    width:100%;box-sizing:border-box;padding:10px 12px 10px 38px;
+    border:2px solid var(--border);border-radius:10px;
+    font-size:20px;font-weight:800;font-family:var(--mono);
+    color:var(--text);background:var(--surface);outline:none;
+    transition:border-color .15s;height:48px;
+}
+.sm-price-input:focus { border-color:var(--accent) }
+.sm-price-input.modified { border-color:var(--amber) }
+.sm-price-locked {
+    height:48px;padding:0 14px;background:var(--bg);border:2px solid var(--border);
+    border-radius:10px;font-family:var(--mono);font-size:14px;font-weight:700;
+    color:var(--text-sub);display:flex;align-items:center;justify-content:space-between;
+}
+.sm-price-locked-hint { font-size:10px;color:var(--text-dim) }
+
+/* Reason field — always rendered, shown/hidden via visibility */
+.sm-reason-wrap { margin-top:8px;overflow:hidden;transition:max-height .15s,opacity .15s }
+.sm-reason-wrap.hidden { max-height:0;opacity:0;pointer-events:none }
+.sm-reason-wrap.visible { max-height:60px;opacity:1 }
+.sm-reason-input {
+    width:100%;box-sizing:border-box;padding:9px 12px;
+    border:2px solid var(--amber);border-radius:9px;font-size:13px;
+    background:var(--surface);color:var(--text);outline:none;font-family:var(--font);
+}
+
+/* Total bar */
+.sm-total {
+    display:flex;align-items:center;justify-content:space-between;
+    border-radius:11px;padding:13px 16px;margin-bottom:18px;
+    border:1.5px solid var(--border);background:var(--bg);
+}
+.sm-total.modified { border-color:var(--amber);background:rgba(245,158,11,.06) }
+.sm-total-label { font-size:12px;color:var(--text-sub) }
+.sm-total-amount { font-size:24px;font-weight:800;font-family:var(--mono);
+                   color:var(--accent);line-height:1 }
+.sm-total.modified .sm-total-amount { color:var(--amber) }
+.sm-total-unit { font-size:11px;font-weight:600;color:var(--text-dim);margin-left:4px }
+
+/* Footer */
+.sm-footer {
+    display:grid;grid-template-columns:auto 1fr;gap:9px;
+    padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;
+    background:var(--surface);
+}
+.sm-cancel-btn {
+    padding:0 22px;height:46px;background:transparent;color:var(--text-sub);
+    border:1.5px solid var(--border);border-radius:11px;font-size:14px;
+    font-weight:700;cursor:pointer;font-family:var(--font);transition:all var(--tr);white-space:nowrap;
+}
+.sm-cancel-btn:hover { border-color:var(--accent);color:var(--accent) }
+.sm-confirm-btn {
+    height:46px;background:var(--accent);color:#fff;border:none;border-radius:11px;
+    font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font);
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    box-shadow:0 4px 14px rgba(59,111,212,.28);transition:opacity var(--tr);
+}
+.sm-confirm-btn:hover { opacity:.9 }
+.sm-confirm-btn:disabled { opacity:.55;cursor:not-allowed }
+</style>
+
+<div class="sm-overlay">
+  <div class="sm-card">
+
+    {{-- Header --}}
+    <div class="sm-head">
+      <div style="min-width:0">
+        <div class="sm-title">{{ $stagingCartIndex !== null ? 'Edit Cart Item' : 'Add to Cart' }}</div>
+        <div class="sm-subtitle">{{ $stagingProduct['name'] }}</div>
       </div>
-      <button wire:click="closeAddModal"
-              style="width:32px;height:32px;border-radius:9px;background:#f0f2f7;
-                     border:none;cursor:pointer;display:grid;place-items:center;color:#6b7494">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <button wire:click="closeAddModal" class="sm-close">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
     </div>
 
-    <div style="padding:20px 22px">
+    {{-- Scrollable body --}}
+    <div class="sm-body">
 
       {{-- Product info strip --}}
-      <div style="background:#f8f9fc;border:1.5px solid #e8ebf4;border-radius:12px;
-                  padding:13px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-size:11px;font-family:var(--mono);color:#a8aec8;margin-bottom:3px">{{ $stagingProduct['sku'] }}</div>
-          <div style="font-size:12px;color:#6b7494">{{ $stagingProduct['category'] ?? '—' }}</div>
+      <div class="sm-info">
+        <div class="sm-info-left">
+          <div class="sm-info-sku">{{ $stagingProduct['sku'] }}</div>
+          <div class="sm-info-cat">{{ $stagingProduct['category'] ?? '—' }}</div>
         </div>
-        @php
-          $stagingFullBoxes  = $stagingStock['full_boxes'] ?? 0;
-          $stagingPartBoxes  = $stagingStock['partial_boxes'] ?? 0;
-          $stagingTotalBoxes = $stagingFullBoxes + $stagingPartBoxes;
-          $stagingTotalItems = $stagingStock['total_items'] ?? 0;
-        @endphp
-        <div style="text-align:right">
-          <div style="font-size:10px;color:#a8aec8;margin-bottom:3px">In stock at this shop</div>
-          <div style="font-size:20px;font-weight:800;font-family:var(--mono);
-                      color:{{ $stagingTotalBoxes > 0 ? '#0e9e86' : '#e63946' }};line-height:1">
+        <div class="sm-info-right">
+          <div class="sm-info-label">In stock at this shop</div>
+          <div class="sm-stock-num" style="color:{{ $inStock ? 'var(--green)' : 'var(--red)' }}">
             {{ $stagingTotalBoxes }}
-            <span style="font-size:11px;font-weight:600;color:#a8aec8">{{ $stagingTotalBoxes === 1 ? 'box' : 'boxes' }}</span>
+            <span style="font-size:11px;font-weight:600;color:var(--text-dim)">
+              {{ $stagingTotalBoxes === 1 ? 'box' : 'boxes' }}
+            </span>
           </div>
-          <div style="font-size:10px;color:#a8aec8;margin-top:2px">
-            {{ $stagingFullBoxes }}&nbsp;full&nbsp;·&nbsp;{{ $stagingPartBoxes }}&nbsp;partial&nbsp;·&nbsp;{{ $stagingTotalItems }}&nbsp;items
+          <div class="sm-stock-detail">
+            {{ $stagingFullBoxes }} full · {{ $stagingPartBoxes }} partial · {{ $stagingTotalItems }} items
           </div>
         </div>
       </div>
 
       {{-- Sell mode toggle --}}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:20px">
+      <div class="sm-modes">
         <button wire:click="$set('stagingMode','box')"
-                style="padding:15px 12px;border-radius:12px;cursor:pointer;text-align:center;
-                       border:2px solid {{ $stagingMode==='box' ? '#3b6fd4' : '#e2e6f3' }};
-                       background:{{ $stagingMode==='box' ? '#eef2ff' : '#f8f9fc' }};transition:.13s">
-          <div style="font-size:24px;margin-bottom:6px">📦</div>
-          <div style="font-size:13px;font-weight:700;color:{{ $stagingMode==='box' ? '#3b6fd4' : '#6b7494' }}">
-            Full Box
-          </div>
-          <div style="font-size:10px;color:#a8aec8;margin-top:2px">
-            {{ $stagingProduct['items_per_box'] }} items / box
-          </div>
-          <div style="font-size:14px;font-weight:800;color:#3b6fd4;font-family:var(--mono);margin-top:7px">
-            {{ number_format($stagingProduct['box_price']) }} RWF
-          </div>
+                class="sm-mode-btn {{ $stagingMode === 'box' ? 'active' : '' }}">
+          <div class="sm-mode-icon">📦</div>
+          <div class="sm-mode-name">Full Box</div>
+          <div class="sm-mode-meta">{{ $stagingProduct['items_per_box'] }} items / box</div>
+          <div class="sm-mode-price">{{ number_format($stagingProduct['box_price']) }} RWF</div>
         </button>
+
         @if($stagingProduct['individual_sale_allowed'] ?? true)
         <button wire:click="$set('stagingMode','item')"
-                style="padding:15px 12px;border-radius:12px;cursor:pointer;text-align:center;
-                       border:2px solid {{ $stagingMode==='item' ? '#3b6fd4' : '#e2e6f3' }};
-                       background:{{ $stagingMode==='item' ? '#eef2ff' : '#f8f9fc' }};transition:.13s">
-          <div style="font-size:24px;margin-bottom:6px">🏷</div>
-          <div style="font-size:13px;font-weight:700;color:{{ $stagingMode==='item' ? '#3b6fd4' : '#6b7494' }}">
-            Individual Items
-          </div>
-          <div style="font-size:10px;color:#a8aec8;margin-top:2px">per item</div>
-          <div style="font-size:14px;font-weight:800;color:#3b6fd4;font-family:var(--mono);margin-top:7px">
-            {{ number_format($stagingProduct['selling_price']) }} RWF
-          </div>
+                class="sm-mode-btn {{ $stagingMode === 'item' ? 'active' : '' }}">
+          <div class="sm-mode-icon">🏷</div>
+          <div class="sm-mode-name">Individual Items</div>
+          <div class="sm-mode-meta">per item</div>
+          <div class="sm-mode-price">{{ number_format($stagingProduct['selling_price']) }} RWF</div>
         </button>
         @else
-        <div style="padding:15px 12px;border-radius:12px;text-align:center;
-                    border:2px solid #e2e6f3;background:#f8f9fc;opacity:.45;cursor:not-allowed">
-          <div style="font-size:24px;margin-bottom:6px">🏷</div>
-          <div style="font-size:13px;font-weight:700;color:#a8aec8">Individual Items</div>
-          <div style="font-size:10px;color:#c8cde0;margin-top:5px">Not allowed for this category</div>
+        <div class="sm-mode-btn disabled">
+          <div class="sm-mode-icon">🏷</div>
+          <div class="sm-mode-name">Individual Items</div>
+          <div class="sm-mode-meta" style="color:var(--text-dim)">Not available</div>
         </div>
         @if(!($stagingProduct['individual_sale_allowed'] ?? true) && $stagingMode === 'item')
         <span wire:init="$set('stagingMode', 'box')"></span>
@@ -1046,117 +1182,86 @@
         @endif
       </div>
 
-      {{-- Quantity stepper --}}
-      <div style="margin-bottom:18px">
-        <label style="display:block;font-size:12px;font-weight:700;color:#6b7494;margin-bottom:8px;
-                      text-transform:uppercase;letter-spacing:.5px">Quantity</label>
-        <div style="display:flex;align-items:center;gap:12px">
-          <button wire:click="$set('stagingQty', max(1, stagingQty - 1))"
-                  style="width:42px;height:42px;border-radius:10px;background:#f0f2f7;
-                         border:1.5px solid #e2e6f3;cursor:pointer;font-size:22px;
-                         display:grid;place-items:center;color:#6b7494;flex-shrink:0">
-            &minus;
-          </button>
-          <input wire:model.live="stagingQty" type="number" min="1"
-                 style="flex:1;padding:10px;text-align:center;border:2px solid #3b6fd4;
-                        border-radius:10px;font-size:24px;font-weight:800;
-                        background:#fff;color:#1a1f36;font-family:var(--mono);outline:none">
-          <button wire:click="$set('stagingQty', stagingQty + 1)"
-                  style="width:42px;height:42px;border-radius:10px;background:#f0f2f7;
-                         border:1.5px solid #e2e6f3;cursor:pointer;font-size:22px;
-                         display:grid;place-items:center;color:#6b7494;flex-shrink:0">
-            +
-          </button>
-        </div>
-      </div>
+      {{-- Quantity + Price row --}}
+      <div class="sm-fields">
 
-      {{-- Unit price --}}
-      @if($settingAllowPriceOverride)
-      <div style="margin-bottom:18px">
-        <label style="display:flex;justify-content:space-between;align-items:center;
-                      font-size:12px;font-weight:700;color:#6b7494;margin-bottom:8px;
-                      text-transform:uppercase;letter-spacing:.5px">
-          <span>Unit Price (RWF)</span>
-          @if($stagingPriceModified)
-          <span style="font-size:10px;font-weight:700;color:#f59e0b;background:#fffbeb;
-                       padding:2px 7px;border-radius:5px">MODIFIED</span>
+        {{-- Quantity --}}
+        <div>
+          <div class="sm-label">Qty</div>
+          <div class="sm-stepper">
+            <button wire:click="$set('stagingQty', max(1, stagingQty - 1))" class="sm-step-btn">&minus;</button>
+            <input wire:model.live="stagingQty" type="number" min="1" class="sm-qty-input">
+            <button wire:click="$set('stagingQty', stagingQty + 1)" class="sm-step-btn">+</button>
+          </div>
+        </div>
+
+        {{-- Unit price --}}
+        <div>
+          <div class="sm-label">
+            <span>Unit Price</span>
+            {{-- Badge area always rendered — opacity prevents layout jump --}}
+            <span class="sm-modified-badge"
+                  style="opacity:{{ $stagingPriceModified ? '1' : '0' }}">MODIFIED</span>
+          </div>
+
+          @if($settingAllowPriceOverride)
+          <div class="sm-price-wrap">
+            <span class="sm-price-prefix">RWF</span>
+            {{--
+              wire:model.lazy — only syncs on blur (focus-out).
+              This prevents per-keystroke re-renders that caused the field to jump.
+            --}}
+            <input wire:model.lazy="stagingPrice" type="number" min="0"
+                   class="sm-price-input {{ $stagingPriceModified ? 'modified' : '' }}">
+          </div>
+          {{-- Reason field: always in DOM, shown/hidden via CSS to avoid layout shift --}}
+          <div class="sm-reason-wrap {{ $stagingPriceModified ? 'visible' : 'hidden' }}">
+            <input wire:model.live="stagingPriceReason" type="text"
+                   class="sm-reason-input"
+                   placeholder="Reason for price change (required)…">
+          </div>
+          @else
+          <div class="sm-price-locked">
+            <span>{{ number_format($stagingPrice) }} RWF</span>
+            <span class="sm-price-locked-hint">locked by owner</span>
+          </div>
           @endif
-        </label>
-        <div style="position:relative">
-          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
-                       font-size:11px;font-weight:700;color:#a8aec8">RWF</span>
-          <input wire:model.live="stagingPrice" type="number" min="0"
-                 style="width:100%;padding:11px 12px 11px 44px;box-sizing:border-box;
-                        border:2px solid {{ $stagingPriceModified ? '#f59e0b' : '#e2e6f3' }};
-                        border-radius:10px;font-size:20px;font-weight:800;
-                        background:{{ $stagingPriceModified ? '#fffbeb' : '#fff' }};
-                        color:#1a1f36;font-family:var(--mono);outline:none;transition:.13s">
-        </div>
-        @if($stagingPriceModified)
-        <div style="margin-top:8px">
-          <input wire:model.live="stagingPriceReason" type="text"
-                 placeholder="Reason for price change (required)..."
-                 style="width:100%;padding:9px 12px;box-sizing:border-box;
-                        border:1.5px solid #f59e0b;border-radius:9px;font-size:13px;
-                        background:#fff;color:#1a1f36;outline:none">
-        </div>
-        @endif
-      </div>
-      @else
-      <div style="margin-bottom:18px">
-        <label style="display:block;font-size:12px;font-weight:700;color:#6b7494;margin-bottom:8px;
-                      text-transform:uppercase;letter-spacing:.5px">Unit Price (RWF)</label>
-        <div style="padding:11px 14px;background:#f8f9fc;border:1.5px solid #e8ebf4;
-                    border-radius:10px;font-family:var(--mono);font-size:14px;font-weight:700;
-                    color:#6b7494;display:flex;align-items:center;justify-content:space-between">
-          <span>{{ number_format($stagingPrice) }} RWF</span>
-          <span style="font-size:10px;color:#c8cde0">locked by owner</span>
         </div>
       </div>
-      @endif
 
-      {{-- Line total preview --}}
-      <div style="background:{{ $stagingPriceModified ? '#fffbeb' : '#eef2ff' }};
-                  border-radius:12px;padding:14px 18px;margin-bottom:22px;
-                  display:flex;justify-content:space-between;align-items:center;
-                  border:1.5px solid {{ $stagingPriceModified ? '#f59e0b' : 'rgba(59,111,212,.2)' }}">
-        <span style="font-size:13px;color:#6b7494">
-          {{ $stagingQty }} × {{ number_format($stagingPrice) }} RWF
+      {{-- Line total --}}
+      <div class="sm-total {{ $stagingPriceModified ? 'modified' : '' }}">
+        <div>
+          <div class="sm-total-label">Line total</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
+            {{ $stagingQty }} × {{ number_format($stagingPrice) }} RWF
+          </div>
+        </div>
+        <div>
+          <span class="sm-total-amount">{{ number_format($stagingQty * $stagingPrice) }}</span>
+          <span class="sm-total-unit">RWF</span>
+        </div>
+      </div>
+
+    </div>{{-- end sm-body --}}
+
+    {{-- Footer --}}
+    <div class="sm-footer">
+      <button wire:click="closeAddModal" class="sm-cancel-btn">Cancel</button>
+      <button wire:click="confirmAddToCart"
+              wire:loading.attr="disabled"
+              class="sm-confirm-btn">
+        <span wire:loading.remove style="display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          {{ $stagingCartIndex !== null ? 'Update Cart' : 'Add to Cart' }}
         </span>
-        <span style="font-size:26px;font-weight:800;font-family:var(--mono);
-                     color:{{ $stagingPriceModified ? '#f59e0b' : '#3b6fd4' }};line-height:1">
-          {{ number_format(($stagingQty * $stagingPrice)) }}
-          <span style="font-size:12px;font-weight:600;color:#a8aec8">RWF</span>
-        </span>
-      </div>
-
-      {{-- Buttons --}}
-      <div style="display:grid;grid-template-columns:auto 1fr;gap:9px">
-        <button wire:click="closeAddModal"
-                style="padding:13px 22px;background:#f0f2f7;color:#6b7494;
-                       border:1.5px solid #e2e6f3;border-radius:12px;font-size:14px;
-                       font-weight:700;cursor:pointer">
-          Cancel
-        </button>
-        <button wire:click="confirmAddToCart"
-                wire:loading.attr="disabled"
-                style="padding:13px 20px;background:linear-gradient(135deg,#3b6fd4,#6b8dff);
-                       color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;
-                       cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-                       box-shadow:0 4px 16px rgba(59,111,212,.32);font-family:var(--font)">
-          <span wire:loading.remove>
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"
-                 viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:5px">
-              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-            </svg>
-            {{ $stagingCartIndex !== null ? 'Update Cart' : 'Add to Cart' }}
-          </span>
-          <span wire:loading style="font-size:13px">Adding...</span>
-        </button>
-      </div>
-
+        <span wire:loading style="display:none;font-size:13px">Adding…</span>
+      </button>
     </div>
+
   </div>
 </div>
 @endif
@@ -1165,360 +1270,495 @@
      CHECKOUT MODAL
 ══════════════════════════════════════════════ --}}
 @if($showCheckoutModal)
-<div style="position:fixed;inset:0;z-index:600;display:flex;align-items:center;
-            justify-content:center;background:rgba(15,20,40,.6);backdrop-filter:blur(5px);padding:12px">
-  <div style="background:#fff;border-radius:20px;width:720px;max-width:100%;
-              max-height:96vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.28)">
+<style>
+/* ── Checkout modal ──────────────────────────── */
+.co-overlay {
+    position:fixed;inset:0;z-index:600;display:flex;align-items:center;
+    justify-content:center;background:rgba(10,14,35,.62);backdrop-filter:blur(6px);
+    padding:12px;
+}
+.co-card {
+    background:var(--surface);border:1px solid var(--border);border-radius:18px;
+    width:720px;max-width:100%;max-height:94vh;display:flex;flex-direction:column;
+    box-shadow:0 28px 72px rgba(0,0,0,.32);overflow:hidden;
+}
+
+/* Header */
+.co-head {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 22px 14px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.co-title { font-size:17px;font-weight:800;color:var(--text);line-height:1.2 }
+.co-subtitle { font-size:12px;color:var(--text-sub);margin-top:2px }
+.co-close {
+    width:32px;height:32px;border-radius:8px;background:var(--surface2);
+    border:1px solid var(--border);cursor:pointer;display:grid;place-items:center;
+    color:var(--text-dim);flex-shrink:0;transition:all var(--tr);
+}
+.co-close:hover { background:var(--border);color:var(--text) }
+
+/* Scrollable body */
+.co-body { display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;min-height:0 }
+
+/* Column shared */
+.co-col { padding:18px 20px;overflow-y:auto }
+.co-col-left { border-right:1px solid var(--border) }
+
+/* Section label */
+.co-section-label {
+    font-size:10px;font-weight:800;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;
+}
+
+/* Order summary card */
+.co-order-card {
+    background:var(--bg);border:1px solid var(--border);border-radius:12px;
+    padding:14px 16px;margin-bottom:18px;
+}
+.co-order-row {
+    display:flex;justify-content:space-between;align-items:baseline;
+    gap:8px;padding:4px 0;border-bottom:1px solid var(--border);
+}
+.co-order-row:last-of-type { border-bottom:none }
+.co-order-name { font-size:12px;color:var(--text-sub);min-width:0;flex:1 }
+.co-order-amount { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text);flex-shrink:0 }
+.co-order-total {
+    display:flex;justify-content:space-between;align-items:center;
+    padding-top:10px;border-top:2px solid var(--border);margin-top:6px;
+}
+.co-order-total-label { font-size:13px;font-weight:700;color:var(--text) }
+.co-order-total-amt { font-size:26px;font-weight:800;font-family:var(--mono);color:var(--accent);line-height:1 }
+.co-order-total-ruf { font-size:12px;font-weight:600;color:var(--text-dim);margin-left:4px }
+
+/* Customer section */
+.co-customer-selected {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 14px;background:var(--surface2);border:1.5px solid var(--accent);
+    border-radius:11px;gap:10px;
+}
+.co-customer-name { font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px }
+.co-customer-phone { font-size:11px;color:var(--text-sub);font-family:var(--mono) }
+.co-customer-credit {
+    display:inline-block;margin-left:8px;padding:1px 7px;
+    background:rgba(245,158,11,.12);color:var(--amber);
+    border-radius:5px;font-weight:700;font-size:10px;
+}
+.co-customer-clear {
+    width:26px;height:26px;border-radius:50%;border:none;
+    background:rgba(239,68,68,.1);color:var(--red);
+    cursor:pointer;display:grid;place-items:center;font-size:16px;
+    flex-shrink:0;line-height:1;padding:0;transition:background var(--tr);
+}
+.co-customer-clear:hover { background:rgba(239,68,68,.2) }
+
+/* New customer form */
+.co-new-cust-form {
+    background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:14px;
+}
+.co-new-cust-title { font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px }
+.co-field-label { display:block;font-size:10px;font-weight:700;color:var(--text-dim);
+                  text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px }
+.co-input {
+    width:100%;box-sizing:border-box;padding:9px 11px;
+    border:1.5px solid var(--border);border-radius:9px;
+    font-size:13px;background:var(--surface);color:var(--text);
+    outline:none;font-family:var(--font);transition:border-color var(--tr);
+}
+.co-input:focus { border-color:var(--accent) }
+.co-input.mono { font-family:var(--mono) }
+.co-new-cust-btns { display:flex;gap:8px;margin-top:10px }
+.co-btn-secondary {
+    flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--border);
+    background:transparent;font-size:12px;font-weight:600;cursor:pointer;
+    color:var(--text-sub);font-family:var(--font);transition:all var(--tr);
+}
+.co-btn-secondary:hover { border-color:var(--accent);color:var(--accent) }
+.co-btn-primary {
+    flex:1;padding:9px;border-radius:9px;border:none;
+    background:var(--accent);color:#fff;font-size:12px;font-weight:700;
+    cursor:pointer;font-family:var(--font);transition:opacity var(--tr);
+}
+.co-btn-primary:hover { opacity:.88 }
+
+/* Customer search */
+.co-search-wrap { position:relative }
+.co-search-input {
+    width:100%;box-sizing:border-box;padding:9px 11px;
+    border:1.5px solid var(--border);border-radius:10px;
+    font-size:13px;background:var(--surface);color:var(--text);
+    outline:none;transition:border-color var(--tr);font-family:var(--font);
+}
+.co-search-input:focus { border-color:var(--accent) }
+.co-search-dropdown {
+    position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:20;
+    background:var(--surface);border:1.5px solid var(--border);border-radius:11px;
+    box-shadow:0 10px 30px rgba(0,0,0,.18);max-height:200px;overflow-y:auto;
+}
+.co-search-result {
+    width:100%;padding:10px 13px;text-align:left;border:none;background:transparent;
+    cursor:pointer;border-bottom:1px solid var(--border);transition:background var(--tr);
+    font-family:var(--font);display:block;
+}
+.co-search-result:last-child { border-bottom:none }
+.co-search-result:hover { background:var(--surface2) }
+.co-search-result-name { font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px }
+.co-search-result-phone { font-size:11px;color:var(--text-dim);font-family:var(--mono) }
+.co-search-result-credit { margin-left:6px;color:var(--amber);font-weight:700 }
+.co-new-cust-btn {
+    width:100%;margin-top:8px;padding:8px;border-radius:10px;
+    border:1.5px dashed var(--border);background:transparent;
+    font-size:12px;font-weight:700;cursor:pointer;color:var(--text-dim);
+    transition:all var(--tr);font-family:var(--font);
+}
+.co-new-cust-btn:hover { border-color:var(--accent);color:var(--accent) }
+
+/* Balance bar */
+.co-balance-bar {
+    display:grid;grid-template-columns:1fr 1fr 1fr;
+    background:var(--bg);border:1px solid var(--border);
+    border-radius:11px;overflow:hidden;margin-bottom:12px;
+}
+.co-bal-cell { padding:9px 10px;text-align:center }
+.co-bal-cell + .co-bal-cell { border-left:1px solid var(--border) }
+.co-bal-label { font-size:10px;color:var(--text-dim);margin-bottom:3px }
+.co-bal-val { font-size:14px;font-weight:800;font-family:var(--mono);color:var(--text) }
+.co-bal-val.paid { color:var(--green) }
+.co-bal-val.due  { color:var(--red) }
+.co-bal-val.zero { color:var(--green) }
+
+/* Credit warning */
+.co-credit-warning {
+    padding:10px 13px;background:rgba(245,158,11,.08);
+    border:1.5px solid var(--amber);border-radius:10px;margin-bottom:12px;
+}
+.co-credit-warning-title { font-size:11px;font-weight:800;color:var(--amber);margin-bottom:2px }
+.co-credit-warning-msg { font-size:12px;color:var(--text-sub) }
+
+/* Payment channels */
+.co-pay-list { border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:16px }
+.co-pay-row {
+    display:flex;align-items:flex-start;gap:11px;padding:10px 13px;
+    background:var(--surface);border-bottom:1px solid var(--border);
+}
+.co-pay-row:last-child { border-bottom:none }
+.co-pay-row.has-credit { background:rgba(245,158,11,.04) }
+.co-pay-icon {
+    width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+    font-size:15px;flex-shrink:0;margin-top:2px;
+}
+.co-pay-body { flex:1;min-width:0 }
+.co-pay-label {
+    font-size:10px;font-weight:700;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;
+    display:flex;align-items:center;gap:6px;
+}
+.co-pay-hint { font-size:10px;color:var(--amber);font-weight:600;text-transform:none;letter-spacing:0 }
+.co-pay-amount {
+    width:100%;box-sizing:border-box;padding:7px 10px;
+    border:1.5px solid var(--border);border-radius:8px;
+    background:var(--surface);color:var(--text);font-size:14px;
+    font-family:var(--mono);outline:none;transition:border-color var(--tr);
+}
+.co-pay-amount:focus { border-color:var(--accent) }
+.co-pay-amount:disabled { opacity:.45;cursor:not-allowed }
+/* Reference field — always in DOM, slide in/out */
+.co-pay-ref-wrap { overflow:hidden;transition:max-height .15s,opacity .15s,margin-top .15s }
+.co-pay-ref-wrap.hidden { max-height:0;opacity:0;margin-top:0 }
+.co-pay-ref-wrap.visible { max-height:40px;opacity:1;margin-top:5px }
+.co-pay-ref {
+    width:100%;box-sizing:border-box;padding:6px 10px;
+    border:1.5px solid var(--border);border-radius:7px;
+    background:var(--surface);color:var(--text);font-size:11px;
+    font-family:var(--mono);outline:none;transition:border-color var(--tr);
+}
+.co-pay-ref:focus { border-color:var(--accent) }
+
+/* Notes */
+.co-notes {
+    width:100%;box-sizing:border-box;padding:9px 11px;
+    border:1.5px solid var(--border);border-radius:10px;
+    font-size:13px;background:var(--surface);color:var(--text);
+    outline:none;resize:none;font-family:var(--font);
+    transition:border-color var(--tr);
+}
+.co-notes:focus { border-color:var(--accent) }
+
+/* Footer */
+.co-foot {
+    padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;
+    background:var(--surface);
+}
+.co-complete-btn {
+    width:100%;height:50px;
+    background:var(--green);color:#fff;border:none;border-radius:13px;
+    font-size:16px;font-weight:800;cursor:pointer;font-family:var(--font);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 5px 18px rgba(34,197,94,.30);transition:opacity var(--tr);
+}
+.co-complete-btn:hover { opacity:.92 }
+.co-complete-btn:disabled { opacity:.5;cursor:not-allowed }
+
+/* Responsive */
+@media (max-width:680px) {
+    .co-body { grid-template-columns:1fr;overflow-y:auto }
+    .co-col-left { border-right:none;border-bottom:1px solid var(--border) }
+    .co-col { overflow-y:visible }
+}
+</style>
+
+<div class="co-overlay">
+  <div class="co-card">
 
     {{-- Header --}}
-    <div style="padding:20px 24px 16px;border-bottom:1px solid #e8ebf4;
-                display:flex;align-items:center;justify-content:space-between;
-                position:sticky;top:0;background:#fff;z-index:2;border-radius:20px 20px 0 0">
+    <div class="co-head">
       <div>
-        <div style="font-size:19px;font-weight:800;color:#1a1f36">Checkout</div>
-        <div style="font-size:12px;color:#6b7494;margin-top:2px">Review order and process payment</div>
+        <div class="co-title">Checkout</div>
+        <div class="co-subtitle">Review order and process payment</div>
       </div>
-      <button wire:click="$set('showCheckoutModal', false)"
-              style="width:34px;height:34px;border-radius:10px;background:#f0f2f7;
-                     border:none;cursor:pointer;display:grid;place-items:center;color:#6b7494">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <button wire:click="$set('showCheckoutModal', false)" class="co-close">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
     </div>
 
-    {{-- Two-column layout on desktop --}}
-    <div class="checkout-grid">
+    {{-- Two-column body --}}
+    <div class="co-body">
 
-      {{-- LEFT: Order + Customer --}}
-      <div style="padding:22px 24px;border-right:1px solid #e8ebf4">
+      {{-- LEFT: Order summary + Customer --}}
+      <div class="co-col co-col-left">
 
-        {{-- Order recap --}}
-        <div style="background:#eef2ff;border:1.5px solid rgba(59,111,212,.18);
-                    border-radius:14px;padding:16px 18px;margin-bottom:22px">
-          <div style="font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;
-                      color:#3b6fd4;margin-bottom:12px">Order Summary</div>
+        {{-- Order summary --}}
+        <div class="co-section-label">Order Summary</div>
+        <div class="co-order-card">
           @foreach($cart as $item)
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-            <span style="font-size:12px;color:#6b7494">
+          <div class="co-order-row">
+            <span class="co-order-name">
               {{ $item['product_name'] }}
               @if($item['is_full_box'])
-                × {{ $item['quantity'] }}&nbsp;{{ $item['quantity'] === 1 ? 'box' : 'boxes' }}
+                <span style="color:var(--text-dim)">× {{ $item['quantity'] }} {{ $item['quantity'] === 1 ? 'box' : 'boxes' }}</span>
               @else
-                × {{ $item['quantity'] }}&nbsp;items
+                <span style="color:var(--text-dim)">× {{ $item['quantity'] }} items</span>
+              @endif
+              @if(!empty($item['price_modified']))
+                <span style="font-size:10px;color:var(--amber);font-weight:700;margin-left:4px">↓</span>
               @endif
             </span>
-            <span style="font-size:12px;font-weight:700;font-family:var(--mono);color:#1a1f36">
-              {{ number_format($item['line_total']) }}
-            </span>
+            <span class="co-order-amount">{{ number_format($item['line_total']) }}</span>
           </div>
           @endforeach
-          <div style="display:flex;justify-content:space-between;align-items:center;
-                      padding-top:10px;border-top:1px solid rgba(59,111,212,.15);margin-top:6px">
-            <span style="font-size:14px;font-weight:700;color:#1a1f36">Total</span>
-            <span style="font-size:28px;font-weight:800;color:#3b6fd4;font-family:var(--mono);line-height:1">
-              {{ number_format($cartTotal) }}<span style="font-size:13px;font-weight:600;color:#6b7494"> RWF</span>
-            </span>
+          <div class="co-order-total">
+            <span class="co-order-total-label">Total</span>
+            <div>
+              <span class="co-order-total-amt">{{ number_format($cartTotal) }}</span>
+              <span class="co-order-total-ruf">RWF</span>
+            </div>
           </div>
         </div>
 
-        {{-- Customer Selection --}}
-        <div>
-          <div style="font-size:11px;font-weight:800;color:#a8aec8;text-transform:uppercase;
-                      letter-spacing:.6px;margin-bottom:10px">Customer</div>
+        {{-- Customer --}}
+        <div class="co-section-label">Customer</div>
 
-          @if($selectedCustomerId)
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;
-                      background:#eef2ff;border:1.5px solid rgba(59,111,212,.2);border-radius:12px">
+        @if($selectedCustomerId)
+        <div class="co-customer-selected">
+          <div style="min-width:0">
+            <div class="co-customer-name">{{ $selectedCustomerName }}</div>
+            <div class="co-customer-phone">
+              {{ $selectedCustomerPhone }}
+              @if($selectedCustomerOutstandingBalance > 0)
+              <span class="co-customer-credit">
+                Credit: {{ number_format($selectedCustomerOutstandingBalance) }} RWF
+              </span>
+              @endif
+            </div>
+          </div>
+          <button wire:click="clearCustomer" class="co-customer-clear" title="Remove customer">×</button>
+        </div>
+
+        @elseif($showNewCustomerForm)
+        <div class="co-new-cust-form">
+          <div class="co-new-cust-title">Register New Customer</div>
+          <div style="display:grid;gap:9px">
             <div>
-              <div style="font-size:14px;font-weight:700;color:#1a1f36;margin-bottom:3px">
-                {{ $selectedCustomerName }}
-              </div>
-              <div style="font-size:12px;color:#6b7494;font-family:var(--mono)">
-                {{ $selectedCustomerPhone }}
-                @if($selectedCustomerOutstandingBalance > 0)
-                <span style="margin-left:8px;padding:2px 7px;background:#fffbeb;
-                             color:#f59e0b;border-radius:6px;font-weight:700">
-                  Credit: {{ number_format($selectedCustomerOutstandingBalance) }} RWF
+              <label class="co-field-label">Name *</label>
+              <input wire:model="newCustomerName" type="text" placeholder="Full name" class="co-input">
+            </div>
+            <div>
+              <label class="co-field-label">Phone *</label>
+              <input wire:model="newCustomerPhone" type="text" placeholder="+250…" class="co-input mono">
+            </div>
+            <div>
+              <label class="co-field-label">Email</label>
+              <input wire:model="newCustomerEmail" type="email" placeholder="email@example.com" class="co-input">
+            </div>
+          </div>
+          <div class="co-new-cust-btns">
+            <button wire:click="cancelNewCustomer" class="co-btn-secondary">Cancel</button>
+            <button wire:click="saveNewCustomer" class="co-btn-primary">Save &amp; Select</button>
+          </div>
+        </div>
+
+        @else
+        <div class="co-search-wrap">
+          <input wire:model.live="customerSearch" type="text"
+                 placeholder="Search by name or phone…"
+                 class="co-search-input">
+          @if($showCustomerSearch && count($customerResults) > 0)
+          <div class="co-search-dropdown">
+            @foreach($customerResults as $customer)
+            <button wire:click="selectCustomer({{ $customer['id'] }})" class="co-search-result" type="button">
+              <div class="co-search-result-name">{{ $customer['name'] }}</div>
+              <div class="co-search-result-phone">
+                {{ $customer['phone'] }}
+                @if($customer['outstanding_balance'] > 0)
+                <span class="co-search-result-credit">
+                  Credit: {{ number_format($customer['outstanding_balance']) }}
                 </span>
                 @endif
               </div>
-            </div>
-            <button wire:click="clearCustomer"
-                    style="width:28px;height:28px;border-radius:50%;border:none;background:#fff5f5;
-                           color:#e63946;cursor:pointer;font-size:18px;display:grid;place-items:center;
-                           line-height:1;padding:0">×</button>
+            </button>
+            @endforeach
           </div>
-          @elseif($showNewCustomerForm)
-          <div style="background:#f8f9fc;border:1.5px solid #e2e6f3;border-radius:12px;padding:16px">
-            <div style="font-size:13px;font-weight:800;color:#1a1f36;margin-bottom:12px">
-              Register New Customer
-            </div>
-            <div style="display:grid;gap:10px">
-              <div>
-                <label style="display:block;font-size:11px;font-weight:600;color:#6b7494;margin-bottom:5px">
-                  Name *
-                </label>
-                <input wire:model="newCustomerName" type="text" placeholder="Full name"
-                    style="width:100%;padding:9px 12px;border:1.5px solid #e2e6f3;border-radius:9px;
-                           background:#fff;color:#1a1f36;font-size:13px;box-sizing:border-box;outline:none">
-              </div>
-              <div>
-                <label style="display:block;font-size:11px;font-weight:600;color:#6b7494;margin-bottom:5px">
-                  Phone *
-                </label>
-                <input wire:model="newCustomerPhone" type="text" placeholder="+250..."
-                    style="width:100%;padding:9px 12px;border:1.5px solid #e2e6f3;border-radius:9px;
-                           background:#fff;color:#1a1f36;font-size:13px;box-sizing:border-box;
-                           font-family:var(--mono);outline:none">
-              </div>
-              <div>
-                <label style="display:block;font-size:11px;font-weight:600;color:#6b7494;margin-bottom:5px">
-                  Email
-                </label>
-                <input wire:model="newCustomerEmail" type="email" placeholder="email@example.com"
-                    style="width:100%;padding:9px 12px;border:1.5px solid #e2e6f3;border-radius:9px;
-                           background:#fff;color:#1a1f36;font-size:13px;box-sizing:border-box;outline:none">
-              </div>
-              <div style="display:flex;gap:8px;margin-top:2px">
-                <button wire:click="cancelNewCustomer"
-                    style="flex:1;padding:9px;border-radius:9px;border:1.5px solid #e2e6f3;
-                           background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#6b7494">
-                  Cancel
-                </button>
-                <button wire:click="saveNewCustomer"
-                    style="flex:1;padding:9px;border-radius:9px;border:none;
-                           background:#3b6fd4;color:#fff;font-size:13px;font-weight:700;cursor:pointer">
-                  Save &amp; Select
-                </button>
-              </div>
-            </div>
-          </div>
-          @else
-          <div style="position:relative">
-            <input wire:model.live="customerSearch" type="text" placeholder="Search by name or phone..."
-                onfocus="@this.set('showCustomerSearch', true)"
-                style="width:100%;padding:10px 12px;border:1.5px solid #e2e6f3;
-                       border-radius:10px;font-size:13px;background:#fff;
-                       color:#1a1f36;outline:none;box-sizing:border-box;transition:.13s"
-                onfocus="this.style.borderColor='#3b6fd4'"
-                onblur="this.style.borderColor='#e2e6f3'">
-            @if($showCustomerSearch && count($customerResults) > 0)
-            <div style="position:absolute;top:100%;left:0;right:0;margin-top:5px;
-                        background:#fff;border:1.5px solid #e2e6f3;border-radius:12px;
-                        box-shadow:0 10px 30px rgba(0,0,0,.14);max-height:200px;overflow-y:auto;z-index:10">
-              @foreach($customerResults as $customer)
-              <button wire:click="selectCustomer({{ $customer['id'] }})" type="button"
-                  style="width:100%;padding:11px 14px;text-align:left;border:none;background:transparent;
-                         cursor:pointer;border-bottom:1px solid #f0f2f7;transition:.1s"
-                  onmouseover="this.style.background='#f8f9fc'"
-                  onmouseout="this.style.background='transparent'">
-                <div style="font-size:13px;font-weight:700;color:#1a1f36;margin-bottom:2px">
-                  {{ $customer['name'] }}
-                </div>
-                <div style="font-size:11px;color:#a8aec8;font-family:var(--mono)">
-                  {{ $customer['phone'] }}
-                  @if($customer['outstanding_balance'] > 0)
-                  <span style="margin-left:6px;color:#f59e0b;font-weight:700">
-                    Credit: {{ number_format($customer['outstanding_balance']) }}
-                  </span>
-                  @endif
-                </div>
-              </button>
-              @endforeach
-            </div>
-            @endif
-          </div>
-          <button wire:click="showCreateCustomerForm" type="button"
-              style="width:100%;margin-top:9px;padding:9px;border-radius:10px;
-                     border:1.5px dashed #d8dce8;background:transparent;
-                     font-size:12px;font-weight:700;cursor:pointer;color:#a8aec8;transition:.13s"
-              onmouseover="this.style.borderColor='#3b6fd4';this.style.color='#3b6fd4'"
-              onmouseout="this.style.borderColor='#d8dce8';this.style.color='#a8aec8'">
-            + Register New Customer
-          </button>
           @endif
         </div>
+        <button wire:click="showCreateCustomerForm" type="button" class="co-new-cust-btn">
+          + Register New Customer
+        </button>
+        @endif
 
-      </div>{{-- /checkout left --}}
+      </div>{{-- /co-col-left --}}
 
-      {{-- RIGHT: Payment + Notes + Complete --}}
-      <div style="padding:22px 24px">
+      {{-- RIGHT: Payment + Notes --}}
+      <div class="co-col">
 
-        {{-- Payment section --}}
-        <div style="margin-bottom:20px">
-          <div style="font-size:11px;font-weight:800;color:#a8aec8;text-transform:uppercase;
-                      letter-spacing:.6px;margin-bottom:10px">Payment</div>
-
-          {{-- Balance summary bar --}}
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
-                      background:#f8f9fc;border:1.5px solid #e8ebf4;border-radius:12px;
-                      overflow:hidden;margin-bottom:12px">
-            <div style="padding:10px 12px;text-align:center">
-              <div style="font-size:10px;color:#a8aec8;margin-bottom:3px">Total</div>
-              <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:#1a1f36">
-                {{ number_format($cartTotal) }}
-              </div>
+        {{-- Balance bar --}}
+        <div class="co-section-label">Payment</div>
+        <div class="co-balance-bar">
+          <div class="co-bal-cell">
+            <div class="co-bal-label">Total</div>
+            <div class="co-bal-val">{{ number_format($cartTotal) }}</div>
+          </div>
+          <div class="co-bal-cell">
+            <div class="co-bal-label">Allocated</div>
+            <div class="co-bal-val {{ $this->totalAllocated >= $cartTotal ? 'paid' : '' }}">
+              {{ number_format($this->totalAllocated) }}
             </div>
-            <div style="padding:10px 12px;text-align:center;border-left:1px solid #e8ebf4;border-right:1px solid #e8ebf4">
-              <div style="font-size:10px;color:#a8aec8;margin-bottom:3px">Allocated</div>
-              <div style="font-size:14px;font-weight:800;font-family:var(--mono);
-                          color:{{ $this->totalAllocated >= $cartTotal ? '#0e9e86' : '#1a1f36' }}">
-                {{ number_format($this->totalAllocated) }}
-              </div>
+          </div>
+          <div class="co-bal-cell">
+            <div class="co-bal-label">Remaining</div>
+            <div class="co-bal-val {{ $this->remainingBalance === 0 ? 'zero' : 'due' }}">
+              {{ $this->remainingBalance === 0 ? '✓ 0' : number_format($this->remainingBalance) }}
             </div>
-            <div style="padding:10px 12px;text-align:center">
-              <div style="font-size:10px;color:#a8aec8;margin-bottom:3px">Remaining</div>
-              <div style="font-size:14px;font-weight:800;font-family:var(--mono);
-                          color:{{ $this->remainingBalance === 0 ? '#0e9e86' : '#e63946' }}">
-                {{ $this->remainingBalance === 0 ? '✓ 0' : number_format($this->remainingBalance) }}
-              </div>
+          </div>
+        </div>
+
+        {{-- Credit warning (always in DOM, hidden via CSS) --}}
+        <div style="{{ $creditWarningVisible ? '' : 'display:none' }}">
+          <div class="co-credit-warning">
+            <div class="co-credit-warning-title">Outstanding Balance</div>
+            <div class="co-credit-warning-msg">{{ $creditWarningMessage ?? '' }}</div>
+          </div>
+        </div>
+
+        {{-- Payment channels --}}
+        <div class="co-pay-list">
+
+          {{-- Cash --}}
+          <div class="co-pay-row">
+            <div class="co-pay-icon" style="background:rgba(16,185,129,.1)">💵</div>
+            <div class="co-pay-body">
+              <div class="co-pay-label">Cash</div>
+              <input wire:model.blur="payAmt_cash" type="number" min="0" placeholder="0"
+                     class="co-pay-amount">
             </div>
           </div>
 
-          {{-- Credit warning --}}
-          @if($creditWarningVisible)
-          <div style="padding:11px 14px;background:#fffbeb;border:1.5px solid #f59e0b;
-                      border-radius:10px;margin-bottom:12px">
-            <div style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:3px">
-              Outstanding Balance
-            </div>
-            <div style="font-size:12px;color:#6b7494">{{ $creditWarningMessage }}</div>
-          </div>
-          @endif
-
-          {{-- Payment channel rows --}}
-          <div style="border:1.5px solid #e2e6f3;border-radius:12px;overflow:hidden">
-            {{-- Cash --}}
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #e8ebf4;background:#fff">
-              <div style="width:34px;height:34px;border-radius:9px;background:#f0fdf9;
-                          display:grid;place-items:center;flex-shrink:0;font-size:16px">💵</div>
-              <div style="flex:1">
-                <div style="font-size:11px;font-weight:700;color:#6b7494;margin-bottom:4px">Cash</div>
-                <input wire:model.blur="payAmt_cash" type="number" min="0" placeholder="0"
-                    style="width:100%;padding:7px 10px;border:1.5px solid #e2e6f3;border-radius:8px;
-                           background:#fff;color:#1a1f36;font-size:14px;font-family:var(--mono);
-                           outline:none;transition:.13s"
-                    onfocus="this.style.borderColor='#0e9e86'"
-                    onblur="this.style.borderColor='#e2e6f3'">
-              </div>
-            </div>
-            {{-- Card --}}
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #e8ebf4;background:#fff">
-              <div style="width:34px;height:34px;border-radius:9px;background:#eef2ff;
-                          display:grid;place-items:center;flex-shrink:0;font-size:16px">💳</div>
-              <div style="flex:1">
-                <div style="font-size:11px;font-weight:700;color:#6b7494;margin-bottom:4px">Card</div>
-                <input wire:model.blur="payAmt_card" type="number" min="0" placeholder="0"
-                    style="width:100%;padding:7px 10px;border:1.5px solid #e2e6f3;border-radius:8px;
-                           background:#fff;color:#1a1f36;font-size:14px;font-family:var(--mono);
-                           outline:none;transition:.13s"
-                    onfocus="this.style.borderColor='#3b6fd4'"
-                    onblur="this.style.borderColor='#e2e6f3'">
-                @if($payAmt_card > 0)
+          {{-- Card --}}
+          <div class="co-pay-row">
+            <div class="co-pay-icon" style="background:rgba(59,130,246,.1)">💳</div>
+            <div class="co-pay-body">
+              <div class="co-pay-label">Card</div>
+              <input wire:model.blur="payAmt_card" type="number" min="0" placeholder="0"
+                     class="co-pay-amount">
+              {{-- Reference always rendered, CSS-animated in/out --}}
+              <div class="co-pay-ref-wrap {{ $payAmt_card > 0 ? 'visible' : 'hidden' }}">
                 <input wire:model="payRef_card" type="text" placeholder="Reference (optional)"
-                    style="width:100%;margin-top:5px;padding:6px 10px;border:1px solid #e2e6f3;border-radius:7px;
-                           background:#fff;color:#1a1f36;font-size:11px;outline:none">
-                @endif
+                       class="co-pay-ref">
               </div>
             </div>
-            {{-- Mobile Money --}}
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #e8ebf4;background:#fff">
-              <div style="width:34px;height:34px;border-radius:9px;background:#f0fdf9;
-                          display:grid;place-items:center;flex-shrink:0;font-size:16px">📱</div>
-              <div style="flex:1">
-                <div style="font-size:11px;font-weight:700;color:#6b7494;margin-bottom:4px">Mobile Money</div>
-                <input wire:model.blur="payAmt_mobile_money" type="number" min="0" placeholder="0"
-                    style="width:100%;padding:7px 10px;border:1.5px solid #e2e6f3;border-radius:8px;
-                           background:#fff;color:#1a1f36;font-size:14px;font-family:var(--mono);
-                           outline:none;transition:.13s"
-                    onfocus="this.style.borderColor='#0e9e86'"
-                    onblur="this.style.borderColor='#e2e6f3'">
-                @if($payAmt_mobile_money > 0)
-                <input wire:model="payRef_mobile_money" type="text" placeholder="Reference (optional)"
-                    style="width:100%;margin-top:5px;padding:6px 10px;border:1px solid #e2e6f3;border-radius:7px;
-                           background:#fff;color:#1a1f36;font-size:11px;outline:none">
-                @endif
-              </div>
-            </div>
-            {{-- Bank Transfer --}}
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #e8ebf4;background:#fff">
-              <div style="width:34px;height:34px;border-radius:9px;background:#eef2ff;
-                          display:grid;place-items:center;flex-shrink:0;font-size:16px">🏦</div>
-              <div style="flex:1">
-                <div style="font-size:11px;font-weight:700;color:#6b7494;margin-bottom:4px">Bank Transfer</div>
-                <input wire:model.blur="payAmt_bank_transfer" type="number" min="0" placeholder="0"
-                    style="width:100%;padding:7px 10px;border:1.5px solid #e2e6f3;border-radius:8px;
-                           background:#fff;color:#1a1f36;font-size:14px;font-family:var(--mono);
-                           outline:none;transition:.13s"
-                    onfocus="this.style.borderColor='#3b6fd4'"
-                    onblur="this.style.borderColor='#e2e6f3'">
-                @if($payAmt_bank_transfer > 0)
-                <input wire:model="payRef_bank_transfer" type="text" placeholder="Reference (optional)"
-                    style="width:100%;margin-top:5px;padding:6px 10px;border:1px solid #e2e6f3;border-radius:7px;
-                           background:#fff;color:#1a1f36;font-size:11px;outline:none">
-                @endif
-              </div>
-            </div>
-            {{-- Credit --}}
-            @if($settingAllowCreditSales)
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;
-                        background:{{ $payAmt_credit > 0 ? '#fffbeb' : '#fff' }}">
-              <div style="width:34px;height:34px;border-radius:9px;background:#fffbeb;
-                          display:grid;place-items:center;flex-shrink:0;font-size:16px">📋</div>
-              <div style="flex:1">
-                <div style="font-size:11px;font-weight:700;color:#6b7494;margin-bottom:4px">
-                  Credit
-                  @if(!$selectedCustomerId && $settingCreditRequiresCustomer)
-                  <span style="color:#f59e0b;font-weight:600;font-size:10px"> · select customer first</span>
-                  @endif
-                </div>
-                <input wire:model.blur="payAmt_credit" type="number" min="0" placeholder="0"
-                    {{ ($settingCreditRequiresCustomer && !$selectedCustomerId) ? 'disabled' : '' }}
-                    style="width:100%;padding:7px 10px;border:1.5px solid {{ $payAmt_credit > 0 ? '#f59e0b' : '#e2e6f3' }};
-                           border-radius:8px;background:#fff;color:#1a1f36;font-size:14px;
-                           font-family:var(--mono);outline:none;transition:.13s">
-              </div>
-            </div>
-            @endif
           </div>
-        </div>
+
+          {{-- Mobile Money --}}
+          <div class="co-pay-row">
+            <div class="co-pay-icon" style="background:rgba(16,185,129,.1)">📱</div>
+            <div class="co-pay-body">
+              <div class="co-pay-label">Mobile Money</div>
+              <input wire:model.blur="payAmt_mobile_money" type="number" min="0" placeholder="0"
+                     class="co-pay-amount">
+              <div class="co-pay-ref-wrap {{ $payAmt_mobile_money > 0 ? 'visible' : 'hidden' }}">
+                <input wire:model="payRef_mobile_money" type="text" placeholder="Reference (optional)"
+                       class="co-pay-ref">
+              </div>
+            </div>
+          </div>
+
+          {{-- Bank Transfer --}}
+          <div class="co-pay-row">
+            <div class="co-pay-icon" style="background:rgba(99,102,241,.1)">🏦</div>
+            <div class="co-pay-body">
+              <div class="co-pay-label">Bank Transfer</div>
+              <input wire:model.blur="payAmt_bank_transfer" type="number" min="0" placeholder="0"
+                     class="co-pay-amount">
+              <div class="co-pay-ref-wrap {{ $payAmt_bank_transfer > 0 ? 'visible' : 'hidden' }}">
+                <input wire:model="payRef_bank_transfer" type="text" placeholder="Reference (optional)"
+                       class="co-pay-ref">
+              </div>
+            </div>
+          </div>
+
+          {{-- Credit --}}
+          @if($settingAllowCreditSales)
+          <div class="co-pay-row {{ $payAmt_credit > 0 ? 'has-credit' : '' }}">
+            <div class="co-pay-icon" style="background:rgba(245,158,11,.1)">📋</div>
+            <div class="co-pay-body">
+              <div class="co-pay-label">
+                Credit
+                @if(!$selectedCustomerId && $settingCreditRequiresCustomer)
+                <span class="co-pay-hint">· select customer first</span>
+                @endif
+              </div>
+              <input wire:model.blur="payAmt_credit" type="number" min="0" placeholder="0"
+                     class="co-pay-amount"
+                     {{ ($settingCreditRequiresCustomer && !$selectedCustomerId) ? 'disabled' : '' }}
+                     style="{{ $payAmt_credit > 0 ? 'border-color:var(--amber)' : '' }}">
+            </div>
+          </div>
+          @endif
+
+        </div>{{-- /co-pay-list --}}
 
         {{-- Notes --}}
-        <div style="margin-bottom:20px">
-          <label style="display:block;font-size:11px;font-weight:800;color:#a8aec8;
-                        text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">
-            Notes <span style="font-weight:400;text-transform:none">(optional)</span>
-          </label>
-          <textarea wire:model="notes" rows="2" placeholder="Sale notes..."
-                    style="width:100%;padding:10px 12px;border:1.5px solid #e2e6f3;
-                           border-radius:10px;font-size:13px;background:#fff;
-                           color:#1a1f36;outline:none;resize:none;box-sizing:border-box;
-                           font-family:var(--font);transition:.13s"
-                    onfocus="this.style.borderColor='#3b6fd4'"
-                    onblur="this.style.borderColor='#e2e6f3'"></textarea>
-        </div>
+        <div class="co-section-label">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+        <textarea wire:model="notes" rows="2" placeholder="Sale notes…"
+                  class="co-notes"></textarea>
 
-        {{-- Complete Sale --}}
-        <button wire:click="completeSale"
-                wire:loading.attr="disabled"
-                style="width:100%;padding:16px;background:linear-gradient(135deg,#0e9e86,#16c49a);
-                       color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;
-                       cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;
-                       box-shadow:0 6px 22px rgba(14,158,134,.40);font-family:var(--font)">
-          <span wire:loading.remove>
-            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5"
-                 viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:6px">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Complete Sale
-          </span>
-          <span wire:loading>Processing...</span>
-        </button>
+      </div>{{-- /co-col right --}}
+    </div>{{-- /co-body --}}
 
-      </div>{{-- /checkout right --}}
-
-    </div>{{-- /checkout-grid --}}
+    {{-- Footer: Complete Sale always pinned --}}
+    <div class="co-foot">
+      <button wire:click="completeSale"
+              wire:loading.attr="disabled"
+              class="co-complete-btn">
+        <span wire:loading.remove style="display:flex;align-items:center;gap:7px">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Complete Sale — {{ number_format($cartTotal) }} RWF
+        </span>
+        <span wire:loading style="display:none;font-size:14px">Processing…</span>
+      </button>
+    </div>
 
   </div>
 </div>
@@ -1528,84 +1768,319 @@
      RECEIPT MODAL
 ══════════════════════════════════════════════ --}}
 @if($showReceiptModal && $completedSale)
-<div style="position:fixed;inset:0;z-index:700;display:flex;align-items:center;
-            justify-content:center;background:rgba(15,20,40,.65);backdrop-filter:blur(6px);padding:16px">
-  <div style="background:#fff;border-radius:22px;width:420px;max-width:100%;
-              box-shadow:0 32px 80px rgba(0,0,0,.30);overflow:hidden">
+<style>
+/* ── Receipt modal (screen) ──────────────────── */
+.rc-overlay {
+    position:fixed;inset:0;z-index:700;display:flex;align-items:center;
+    justify-content:center;background:rgba(10,14,35,.68);backdrop-filter:blur(6px);
+    padding:16px;
+}
+.rc-card {
+    background:var(--surface);border:1px solid var(--border);border-radius:18px;
+    width:440px;max-width:100%;max-height:92vh;display:flex;flex-direction:column;
+    box-shadow:0 28px 72px rgba(0,0,0,.36);overflow:hidden;
+}
 
-    {{-- Green success banner --}}
-    <div style="background:linear-gradient(135deg,#0e9e86,#16c49a);padding:30px;text-align:center">
-      <div style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.22);
-                  display:grid;place-items:center;margin:0 auto 14px">
-        <svg width="30" height="30" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+/* Success banner */
+.rc-banner {
+    background:var(--green);padding:24px 24px 20px;text-align:center;flex-shrink:0;
+    position:relative;
+}
+.rc-banner-icon {
+    width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);
+    display:grid;place-items:center;margin:0 auto 12px;
+}
+.rc-banner-title { font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px }
+.rc-banner-num { font-size:11px;color:rgba(255,255,255,.75);margin-top:5px;font-family:var(--mono) }
+
+/* Scrollable receipt body */
+.rc-body { overflow-y:auto;flex:1;padding:0 }
+
+/* The inner printable area — used both on screen and in print */
+.rc-receipt {
+    padding:18px 20px;
+}
+
+/* Shop header on receipt */
+.rc-shop-name { font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px }
+.rc-shop-sub  { font-size:11px;color:var(--text-dim) }
+
+/* Dotted divider */
+.rc-divider {
+    border:none;border-top:1.5px dashed var(--border);
+    margin:12px 0;
+}
+
+/* Items list */
+.rc-items { margin:0 0 4px }
+.rc-item-row {
+    display:flex;justify-content:space-between;align-items:baseline;
+    gap:8px;padding:4px 0;
+}
+.rc-item-name { font-size:12px;color:var(--text-sub);flex:1;min-width:0 }
+.rc-item-meta { font-size:10px;color:var(--text-dim);margin-top:1px }
+.rc-item-total { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text);flex-shrink:0 }
+.rc-item-modified { font-size:10px;color:var(--amber);font-style:italic }
+
+/* Total row */
+.rc-total-row {
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0 0;
+}
+.rc-total-label { font-size:14px;font-weight:700;color:var(--text) }
+.rc-total-amount { font-size:26px;font-weight:800;font-family:var(--mono);color:var(--green);line-height:1 }
+.rc-total-currency { font-size:12px;font-weight:600;color:var(--text-dim);margin-left:3px }
+
+/* Payment breakdown */
+.rc-payments {
+    background:var(--bg);border:1px solid var(--border);border-radius:10px;
+    padding:10px 12px;margin:12px 0;
+}
+.rc-pay-section-label {
+    font-size:9px;font-weight:800;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;
+}
+.rc-pay-row {
+    display:flex;justify-content:space-between;align-items:center;padding:3px 0;
+}
+.rc-pay-method { font-size:11px;color:var(--text-sub) }
+.rc-pay-ref { font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-left:6px }
+.rc-pay-amount { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text) }
+.rc-pay-amount.credit { color:var(--amber) }
+
+/* Credit badge */
+.rc-credit-badge {
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(245,158,11,.08);border:1.5px solid var(--amber);
+    border-radius:9px;padding:9px 12px;margin:10px 0;
+}
+.rc-credit-label { font-size:11px;font-weight:700;color:var(--amber) }
+.rc-credit-amount { font-size:13px;font-weight:800;font-family:var(--mono);color:var(--amber) }
+
+/* Customer info */
+.rc-customer {
+    display:flex;align-items:center;gap:8px;
+    padding:8px 0;font-size:11px;color:var(--text-sub);
+}
+
+/* Notes */
+.rc-notes {
+    font-size:11px;color:var(--text-dim);font-style:italic;
+    padding:6px 0;border-top:1px solid var(--border);margin-top:4px;
+}
+
+/* Footer meta */
+.rc-meta {
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:10px;color:var(--text-dim);margin-top:8px;font-family:var(--mono);
+}
+
+/* Actions */
+.rc-actions {
+    display:grid;grid-template-columns:1fr 1fr;gap:9px;
+    padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;
+    background:var(--surface);
+}
+.rc-print-btn {
+    height:44px;background:transparent;color:var(--text-sub);
+    border:1.5px solid var(--border);border-radius:11px;
+    font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    transition:all var(--tr);
+}
+.rc-print-btn:hover { border-color:var(--accent);color:var(--accent) }
+.rc-new-btn {
+    height:44px;background:var(--accent);color:#fff;border:none;border-radius:11px;
+    font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    box-shadow:0 4px 14px rgba(59,111,212,.25);transition:opacity var(--tr);
+}
+.rc-new-btn:hover { opacity:.9 }
+
+/* ── Print styles ────────────────────────────── */
+@media print {
+    /* Hide everything on the page */
+    body > * { visibility:hidden !important }
+    /* Show only the receipt print area */
+    #receipt-print-area, #receipt-print-area * { visibility:visible !important }
+    #receipt-print-area {
+        position:fixed !important;
+        top:0 !important; left:0 !important;
+        width:76mm !important;
+        padding:4mm !important;
+        background:#fff !important;
+        color:#000 !important;
+    }
+    @page { size:80mm auto; margin:0 }
+    /* Override CSS variables for print (force light) */
+    #receipt-print-area { --text:#000;--text-sub:#333;--text-dim:#555;--border:#ddd;
+                          --bg:#f9f9f9;--surface:#fff;--green:#1a7a5e;--amber:#b45309;--accent:#2c5cbd }
+    .rc-banner { display:none !important }
+    .rc-actions { display:none !important }
+    .rc-receipt { padding:0 !important }
+    .rc-total-amount { font-size:18px !important }
+}
+</style>
+
+{{-- JS: listen for print-receipt event dispatched by printReceipt() --}}
+<script>
+document.addEventListener('livewire:initialized', function () {
+    Livewire.on('print-receipt', function () {
+        setTimeout(function () { window.print(); }, 120);
+    });
+}, { once: true });
+</script>
+
+<div class="rc-overlay">
+  <div class="rc-card">
+
+    {{-- Success banner --}}
+    <div class="rc-banner">
+      <div class="rc-banner-icon">
+        <svg width="26" height="26" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       </div>
-      <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:-.3px">Sale Complete!</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:6px;font-family:var(--mono)">
-        {{ $completedSale['sale_number'] ?? '' }}
-      </div>
+      <div class="rc-banner-title">Sale Complete!</div>
+      <div class="rc-banner-num">{{ $completedSale->sale_number }}</div>
     </div>
 
-    {{-- Receipt lines --}}
-    <div style="padding:22px 24px">
-      @foreach(($completedSale['items'] ?? []) as $item)
-      <div style="display:flex;justify-content:space-between;margin-bottom:7px">
-        <span style="font-size:12px;color:#6b7494">
-          {{ $item['product_name'] ?? $item['name'] ?? '' }} × {{ $item['quantity'] }}
-        </span>
-        <span style="font-size:12px;font-weight:700;font-family:var(--mono);color:#1a1f36">
-          {{ number_format(($item['line_total'] ?? 0)) }}
-        </span>
-      </div>
-      @endforeach
+    {{-- Scrollable body --}}
+    <div class="rc-body">
 
-      <div style="border-top:2px solid #e8ebf4;margin:14px 0 12px;padding-top:14px;
-                  display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:15px;font-weight:700;color:#1a1f36">Total Paid</span>
-        <span style="font-size:28px;font-weight:800;font-family:var(--mono);color:#0e9e86;line-height:1">
-          {{ number_format(($completedSale['total'] ?? 0)) }}
-          <span style="font-size:13px;font-weight:600;color:#a8aec8">RWF</span>
-        </span>
-      </div>
+      {{-- Printable receipt area --}}
+      <div class="rc-receipt" id="receipt-print-area">
 
-      {{-- Payment breakdown --}}
-      @if($completedSale->payments && $completedSale->payments->count() > 0)
-      <div style="margin:14px 0;padding:12px 14px;background:#f8f9fc;border-radius:10px">
-        <div style="font-size:10px;font-weight:800;color:#a8aec8;text-transform:uppercase;
-                    letter-spacing:.6px;margin-bottom:10px">Payment Breakdown</div>
-        @foreach($completedSale->payments as $payment)
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:12px;color:#6b7494">
-            {{ match($payment->payment_method->value) {
-              'cash' => '💵 Cash',
-              'card' => '💳 Card',
-              'mobile_money' => '📱 Mobile Money',
-              'bank_transfer' => '🏦 Bank Transfer',
-              'credit' => '📋 Credit',
-              default => $payment->payment_method->label()
-            } }}
-            @if($payment->reference)
-            <span style="color:#c8cde0;font-family:var(--mono)"> ({{ $payment->reference }})</span>
-            @endif
-          </span>
-          <span style="font-size:13px;font-weight:700;font-family:var(--mono);
-                       color:{{ $payment->payment_method->value === 'credit' ? '#f59e0b' : '#1a1f36' }}">
-            {{ number_format($payment->amount) }}
-          </span>
+        {{-- Shop header (visible on print) --}}
+        <div style="text-align:center;padding-bottom:10px">
+          <div class="rc-shop-name">{{ $completedSale->shop->name ?? config('app.name') }}</div>
+          <div class="rc-shop-sub">Point of Sale Receipt</div>
         </div>
-        @endforeach
-      </div>
-      @endif
 
-      <div style="font-size:12px;color:#c8cde0;text-align:center;margin-bottom:20px">
-        {{ now()->format('d M Y H:i') }}
-      </div>
+        <hr class="rc-divider">
 
-      <button wire:click="$set('showReceiptModal', false)"
-              style="width:100%;padding:15px;background:linear-gradient(135deg,#3b6fd4,#6b8dff);
-                     color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;
-                     cursor:pointer;box-shadow:0 4px 18px rgba(59,111,212,.32);font-family:var(--font)">
+        {{-- Items --}}
+        <div class="rc-items">
+          @foreach($completedSale->items as $item)
+          @php
+            $productName = $item->product->name ?? '—';
+            $qty         = $item->quantity_sold;
+            $unitPrice   = $item->actual_unit_price;
+            $lineTotal   = $item->line_total;
+            $isModified  = $item->price_was_modified ?? false;
+            $origPrice   = $item->original_unit_price;
+          @endphp
+          <div class="rc-item-row">
+            <div style="flex:1;min-width:0">
+              <div class="rc-item-name">{{ $productName }}</div>
+              <div class="rc-item-meta">
+                {{ $qty }} {{ $item->is_full_box ? ($qty === 1 ? 'box' : 'boxes') : 'items' }}
+                × {{ number_format($unitPrice) }} RWF
+                @if($isModified)
+                  <span class="rc-item-modified">
+                    (was {{ number_format($origPrice) }})
+                  </span>
+                @endif
+              </div>
+            </div>
+            <div class="rc-item-total">{{ number_format($lineTotal) }}</div>
+          </div>
+          @endforeach
+        </div>
+
+        <hr class="rc-divider">
+
+        {{-- Total --}}
+        <div class="rc-total-row">
+          <span class="rc-total-label">Total</span>
+          <div>
+            <span class="rc-total-amount">{{ number_format($completedSale->total) }}</span>
+            <span class="rc-total-currency">RWF</span>
+          </div>
+        </div>
+
+        {{-- Payment breakdown --}}
+        @if($completedSale->payments && $completedSale->payments->count() > 0)
+        <div class="rc-payments">
+          <div class="rc-pay-section-label">Paid via</div>
+          @foreach($completedSale->payments as $payment)
+          <div class="rc-pay-row">
+            <span class="rc-pay-method">
+              {{ match($payment->payment_method->value) {
+                'cash'          => '💵 Cash',
+                'card'          => '💳 Card',
+                'mobile_money'  => '📱 Mobile Money',
+                'bank_transfer' => '🏦 Bank Transfer',
+                'credit'        => '📋 Credit',
+                default         => ucfirst($payment->payment_method->value)
+              } }}
+              @if($payment->reference)
+              <span class="rc-pay-ref">({{ $payment->reference }})</span>
+              @endif
+            </span>
+            <span class="rc-pay-amount {{ $payment->payment_method->value === 'credit' ? 'credit' : '' }}">
+              {{ number_format($payment->amount) }}
+            </span>
+          </div>
+          @endforeach
+        </div>
+        @endif
+
+        {{-- Credit outstanding highlight --}}
+        @if($completedSale->has_credit && $completedSale->credit_amount > 0)
+        <div class="rc-credit-badge">
+          <span class="rc-credit-label">Credit recorded</span>
+          <span class="rc-credit-amount">{{ number_format($completedSale->credit_amount) }} RWF</span>
+        </div>
+        @endif
+
+        {{-- Customer --}}
+        @if($completedSale->customer_name)
+        <hr class="rc-divider">
+        <div class="rc-customer">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span>{{ $completedSale->customer_name }}</span>
+          @if($completedSale->customer_phone)
+          <span style="color:var(--text-dim)">· {{ $completedSale->customer_phone }}</span>
+          @endif
+        </div>
+        @endif
+
+        {{-- Notes --}}
+        @if($completedSale->notes)
+        <div class="rc-notes">Note: {{ $completedSale->notes }}</div>
+        @endif
+
+        {{-- Footer meta --}}
+        <hr class="rc-divider">
+        <div class="rc-meta">
+          <span>{{ ($completedSale->sale_date ?? $completedSale->created_at)->format('d M Y H:i') }}</span>
+          <span>{{ $completedSale->soldBy->name ?? '—' }}</span>
+        </div>
+        <div style="text-align:center;font-size:10px;color:var(--text-dim);margin-top:10px;padding-bottom:4px">
+          Thank you for your business
+        </div>
+
+      </div>{{-- /receipt-print-area --}}
+    </div>{{-- /rc-body --}}
+
+    {{-- Actions --}}
+    <div class="rc-actions">
+      <button wire:click="printReceipt" class="rc-print-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="6 9 6 2 18 2 18 9"/>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+          <rect x="6" y="14" width="12" height="8"/>
+        </svg>
+        Print Receipt
+      </button>
+      <button wire:click="closeReceipt" class="rc-new-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
         New Sale
       </button>
     </div>
@@ -1620,11 +2095,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
   gap: 11px;
-}
-
-.checkout-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
 }
 
 /*
@@ -1664,13 +2134,6 @@
   .pos-product-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 9px;
-  }
-  .checkout-grid {
-    grid-template-columns: 1fr;
-  }
-  .checkout-grid > div:first-child {
-    border-right: none !important;
-    border-bottom: 1px solid #e8ebf4;
   }
 }
 
