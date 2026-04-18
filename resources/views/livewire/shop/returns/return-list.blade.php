@@ -1,3 +1,10 @@
+@if($sessionBlocked)
+    <x-session-gate-blocked
+        :reason="$sessionBlockReason"
+        :session-date="$blockedSessionDate"
+        :session-id="$blockedSessionId"
+    />
+@else
 <div x-data="{ expandedRow: null }">
     <!-- KPI Summary Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -468,3 +475,4 @@
         [x-cloak] { display: none !important; }
     </style>
 </div>
+@endif

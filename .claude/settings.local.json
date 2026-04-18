@@ -7,7 +7,13 @@
       "Bash(ssh root@5.78.135.79 \"rm -f /etc/nginx/sites-enabled/default\")",
       "Bash(ssh root@5.78.135.79 \"nginx -t\")",
       "Bash(ssh root@5.78.135.79 \"systemctl reload nginx && echo ''✓ Nginx reloaded successfully''\")",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Christian\\\\Desktop\\\\projects\\\\smart-inventory\\\\resources\\\\views\\\\livewire\\\\shop\\\\sales\\\\point-of-sale.blade.php\")",
+      "Bash(Measure-Object -Line)",
+      "Bash(Select-Object Lines)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Christian\\\\Desktop\\\\projects\\\\smart-inventory\\\\resources\\\\views\\\\livewire\\\\shop\\\\returns\\\\return-list.blade.php\")",
+      "Bash(test:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

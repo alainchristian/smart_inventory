@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Livewire\Shop\DayClose;
+
+use App\Models\BankDeposit;
+use App\Models\DailySession;
+use App\Services\DayClose\BankDepositService;
+use Livewire\Component;
+
+class AddBankDeposit extends Component
+{
+    public int    $dailySessionId = 0;
+    public int    $amount         = 0;
+    public string $bankReference  = '';
+    public string $notes          = '';
+
+    public function mount(int $dailySessionId): void
+    {
+        $user    = auth()->user();
+        $session = DailySession::findOrFail($dailySessionId);
+
+        if ($session->shop_id !== $user->location_id || ! $session->isEditable()) {
+            abort(403);
+        }
+
+        $this->dailySessionId = $dailySessionId;
+    }
+
+    public function saveDeposit(): void
+    {
+        $this->validate([
+            'amount'        => 'required|integer|min:1',
+            'bankReference' => 'nullable|string|max:100',
+            'notes'         => 'nullable|string|max:500',
+        ]);
+
+        $user    = auth()->user();
+        $session = DailySession::findOrFail($this->dailySessionId);
+
+        try {
+            app(BankDepositService::class)->recordDeposit($session, [
+                'amount'         => $this->amount,
+                'bank_reference' => $this->bankReference ?: null,
+                'notes'          => $this->notes ?: null,
+            ], $user);
+
+            $this->reset(['amount', 'bankReference', 'notes']);
+            $this->dispatch('deposit-added');
+            session()->flash('success', 'Bank deposit recorded.');
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function voidDeposit(int $depositId): void
+    {
+        $deposit = BankDeposit::findOrFail($depositId);
+        $user    = auth()->user();
+
+        try {
+            app(BankDepositService::class)->voidDeposit($deposit, $user);
+            $this->dispatch('deposit-voided');
+            session()->flash('success', 'Deposit voided.');
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function render()
+    {
+        $deposits = BankDeposit::where('daily_session_id', $this->dailySessionId)
+            ->whereNull('deleted_at')
+            ->with('depositedBy')
+            ->orderByDesc('deposited_at')
+            ->get();
+
+        return view('livewire.shop.day-close.add-bank-deposit', compact('deposits'));
+    }
+}

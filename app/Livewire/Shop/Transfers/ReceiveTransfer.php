@@ -15,6 +15,8 @@ use Livewire\Component;
 
 class ReceiveTransfer extends Component
 {
+    use \App\Livewire\Concerns\RequiresOpenSession;
+
     public Transfer $transfer;
     public string $scanInput = '';
     public array $scannedBoxes = [];
@@ -39,6 +41,11 @@ class ReceiveTransfer extends Component
 
     public function mount(Transfer $transfer)
     {
+        $shopId = $this->shopId ?? auth()->user()->location_id;
+        if (!$this->checkSession($shopId)) {
+            return;
+        }
+
         $user = auth()->user();
 
         // Verify user is a shop manager

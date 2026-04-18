@@ -147,6 +147,12 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         })->name('custom.print');
     });
 
+    // Finance (Day Close)
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('/daily',    function () { return view('owner.finance.daily'); })->name('daily');
+        Route::get('/overview', function () { return view('owner.finance.overview'); })->name('overview');
+    });
+
     // System settings
     Route::get('/settings', function () { return view('owner.settings'); })->name('settings');
 });
@@ -176,6 +182,11 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckL
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/inventory', function () { return view('warehouse.reports.inventory'); })->name('inventory');
             Route::get('/transfers', function () { return view('warehouse.reports.transfers'); })->name('transfers');
+        });
+
+        // Expense Requests
+        Route::prefix('expense-requests')->name('expense-requests.')->group(function () {
+            Route::get('/', function () { return view('warehouse.expense-requests.index'); })->name('index');
         });
     });
 
@@ -227,6 +238,48 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
 
         // Credit Repayments
         Route::get('/credit-repayments', function () { return view('shop.credit-repayments'); })->name('credit-repayments');
+
+        // Day Close
+        Route::prefix('day-close')->name('day-close.')->group(function () {
+            Route::get('/',      function () { return view('shop.day-close.index'); })->name('index');
+            Route::get('/close', function () { return view('shop.day-close.close'); })->name('close');
+        });
+
+        // Session management
+        Route::prefix('session')->name('session.')->group(function () {
+            Route::get('/open', function () {
+                return view('shop.day-close.index');
+            })->name('open');
+
+            Route::get('/close/{session?}', function (?\App\Models\DailySession $session = null) {
+                return view('shop.day-close.close', compact('session'));
+            })->name('close');
+
+            Route::get('/history', function () {
+                return view('shop.day-close.history');
+            })->name('history');
+
+            Route::get('/requests', function () {
+                return view('shop.day-close.requests');
+            })->name('requests');
+        });
+
+        // Mid-day cash actions (require open session — surfaced from SessionManager action buttons)
+        Route::get('/bank-deposits', function () {
+            return view('shop.day-close.bank-deposits');
+        })->name('bank-deposits');
+
+        Route::get('/expenses/add', function () {
+            return view('shop.day-close.add-expense-page');
+        })->name('expenses.add');
+
+        Route::get('/withdrawals/add', function () {
+            return view('shop.day-close.add-withdrawal-page');
+        })->name('withdrawals.add');
+
+        Route::get('/expense-requests', function () {
+            return view('shop.day-close.requests');
+        })->name('expense-requests');
     });
 
 // Shared routes (accessible by all authenticated users with proper permissions)

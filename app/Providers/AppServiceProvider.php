@@ -24,8 +24,14 @@ class AppServiceProvider extends ServiceProvider
         // Configure morph map for polymorphic relationships
         // This maps the enum values ('warehouse', 'shop') to actual model classes
         Relation::enforceMorphMap([
-            'warehouse' => \App\Models\Warehouse::class,
-            'shop' => \App\Models\Shop::class,
+            'warehouse'        => \App\Models\Warehouse::class,
+            'shop'             => \App\Models\Shop::class,
+            'user'             => \App\Models\User::class,
+            'daily_session'    => \App\Models\DailySession::class,
+            'expense'          => \App\Models\Expense::class,
+            'expense_category' => \App\Models\ExpenseCategory::class,
+            'expense_request'   => \App\Models\ExpenseRequest::class,
+            'owner_withdrawal'  => \App\Models\OwnerWithdrawal::class,
         ]);
 
         // Force HTTPS for all URLs when behind ngrok or other proxy

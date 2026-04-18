@@ -53,7 +53,9 @@
         openReports: {{ request()->routeIs('*.reports.*') ? 'true' : 'false' }},
         openInventory: {{ request()->routeIs('*.inventory.*') ? 'true' : 'false' }},
         openShopTransfers: {{ request()->routeIs('shop.transfers.*') ? 'true' : 'false' }},
-        openWarehouseTransfers: {{ request()->routeIs('warehouse.transfers.*') ? 'true' : 'false' }}
+        openWarehouseTransfers: {{ request()->routeIs('warehouse.transfers.*') ? 'true' : 'false' }},
+        openFinance: {{ request()->routeIs('owner.finance.*') ? 'true' : 'false' }},
+        openDayClose: {{ request()->routeIs('shop.day-close.*') ? 'true' : 'false' }}
     }">
         @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
             {{-- OWNER / ADMIN MENU --}}
@@ -196,6 +198,35 @@
                     </div>
                 </div>
 
+                <!-- Finance (Collapsible) -->
+                <div>
+                    <button @click="openFinance = !openFinance"
+                            class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all
+                                   {{ request()->routeIs('owner.finance.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="text-[14px] font-medium">Finance</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="openFinance ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="openFinance" x-collapse class="ml-8 mt-1 space-y-1">
+                        <a href="{{ route('owner.finance.daily') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.finance.daily') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Daily Close Report
+                        </a>
+                        <a href="{{ route('owner.finance.overview') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.finance.overview') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Finance Overview
+                        </a>
+                    </div>
+                </div>
+
                 <a href="{{ route('owner.users.index') }}" wire:navigate
                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                           {{ request()->routeIs('owner.users.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
@@ -301,6 +332,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                         </svg>
                         <span class="text-[14px] font-medium">Transfers</span>
+                    </a>
+
+                    <a href="{{ route('warehouse.expense-requests.index') }}" wire:navigate
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('warehouse.expense-requests.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('warehouse.expense-requests.*'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">Expense Requests</span>
                     </a>
                 </div>
             </div>
@@ -417,6 +460,36 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 0h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                         <span class="text-[14px] font-medium">Credit Repayments</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cash & Day Close Section -->
+            <div>
+                <div class="text-[13px] font-semibold text-[var(--text-dim)] uppercase tracking-wider mb-2 px-3">Cash & Daily Register</div>
+                <div class="space-y-1">
+                    <a href="{{ route('shop.day-close.index') }}" wire:navigate
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('shop.day-close.index') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('shop.day-close.index'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">Daily Register</span>
+                    </a>
+
+                    <a href="{{ route('shop.day-close.close') }}" wire:navigate
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('shop.day-close.close') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('shop.day-close.close'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">Close Register</span>
                     </a>
                 </div>
             </div>

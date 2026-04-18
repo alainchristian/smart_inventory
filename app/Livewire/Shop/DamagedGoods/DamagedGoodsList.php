@@ -14,6 +14,7 @@ use Livewire\WithPagination;
 class DamagedGoodsList extends Component
 {
     use WithPagination;
+    use \App\Livewire\Concerns\RequiresOpenSession;
 
     public $locationId;
     public $locationType;
@@ -43,6 +44,11 @@ class DamagedGoodsList extends Component
 
     public function mount()
     {
+        $shopId = $this->shopId ?? auth()->user()->location_id;
+        if (!$this->checkSession($shopId)) {
+            return;
+        }
+
         $user = auth()->user();
 
         // Check authorization

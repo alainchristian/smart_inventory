@@ -20,6 +20,8 @@ use Livewire\Component;
 
 class PointOfSale extends Component
 {
+    use \App\Livewire\Concerns\RequiresOpenSession;
+
     // Shop
     public $shopId;
     public $shopName;
@@ -123,6 +125,11 @@ class PointOfSale extends Component
 
     public function mount()
     {
+        $shopId = $this->shopId ?? auth()->user()->location_id;
+        if (!$this->checkSession($shopId)) {
+            return;
+        }
+
         $user = auth()->user();
 
         // Allow shop managers and owners

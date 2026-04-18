@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 class ReturnList extends Component
 {
     use WithPagination;
+    use \App\Livewire\Concerns\RequiresOpenSession;
 
     public $shopId;
     public $shopName;
@@ -35,6 +36,11 @@ class ReturnList extends Component
 
     public function mount()
     {
+        $shopId = $this->shopId ?? auth()->user()->location_id;
+        if (!$this->checkSession($shopId)) {
+            return;
+        }
+
         $user = auth()->user();
 
         // Check authorization

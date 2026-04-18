@@ -1,3 +1,10 @@
+@if($sessionBlocked)
+    <x-session-gate-blocked
+        :reason="$sessionBlockReason"
+        :session-date="$blockedSessionDate"
+        :session-id="$blockedSessionId"
+    />
+@else
 {{--
   Point of Sale — Professional Redesign
   Mobile-first: bottom-sheet cart on small screens, FAB toggle.
@@ -2148,3 +2155,4 @@ document.addEventListener('livewire:initialized', function () {
 </style>
 
 </div>{{-- /pos-root --}}
+@endif

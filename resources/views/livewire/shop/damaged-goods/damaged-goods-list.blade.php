@@ -1,3 +1,10 @@
+@if($sessionBlocked)
+    <x-session-gate-blocked
+        :reason="$sessionBlockReason"
+        :session-date="$blockedSessionDate"
+        :session-id="$blockedSessionId"
+    />
+@else
 <div x-data="{ expandedRow: null }">
     <!-- Flash Messages -->
     @if (session()->has('success'))
@@ -509,3 +516,4 @@
         [x-cloak] { display: none !important; }
     </style>
 </div>
+@endif

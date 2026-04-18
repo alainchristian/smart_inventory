@@ -1,3 +1,10 @@
+@if($sessionBlocked)
+    <x-session-gate-blocked
+        :reason="$sessionBlockReason"
+        :session-date="$blockedSessionDate"
+        :session-id="$blockedSessionId"
+    />
+@else
 @php use App\Enums\TransferStatus; @endphp
 
 @push('styles')
@@ -603,3 +610,4 @@ window.addEventListener('quantity-confirmed', () => {
 });
 </script>
 @endpush
+@endif

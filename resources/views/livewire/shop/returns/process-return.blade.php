@@ -1,3 +1,10 @@
+@if($sessionBlocked)
+    <x-session-gate-blocked
+        :reason="$sessionBlockReason"
+        :session-date="$blockedSessionDate"
+        :session-id="$blockedSessionId"
+    />
+@else
 <div x-data x-on:keydown.ctrl.s.prevent="$wire.confirmSubmit()" x-on:keydown.escape="$wire.cancelSubmit()">
     <!-- Flash Messages - Auto-dismissing Toasts -->
     @if (session()->has('success'))
@@ -843,3 +850,4 @@
         </div>
     @endif
 </div>
+@endif

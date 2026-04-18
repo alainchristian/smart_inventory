@@ -16,6 +16,7 @@ use Livewire\WithFileUploads;
 class ProcessReturn extends Component
 {
     use WithFileUploads;
+    use \App\Livewire\Concerns\RequiresOpenSession;
     // Shop
     public $shopId;
     public $shopName;
@@ -76,6 +77,11 @@ class ProcessReturn extends Component
 
     public function mount()
     {
+        $shopId = $this->shopId ?? auth()->user()->location_id;
+        if (!$this->checkSession($shopId)) {
+            return;
+        }
+
         $user = auth()->user();
 
         if (!$user->isShopManager()) {
