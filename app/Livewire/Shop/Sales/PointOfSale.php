@@ -928,7 +928,8 @@ class PointOfSale extends Component
             return;
         }
 
-        $this->customerResults = \App\Models\Customer::search($q)->toArray();
+        $this->customerResults    = \App\Models\Customer::search($q)->toArray();
+        $this->showCustomerSearch = true;
     }
 
     /**

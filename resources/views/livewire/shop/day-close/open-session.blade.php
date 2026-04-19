@@ -53,6 +53,9 @@
                     @error('openingBalance')
                         <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div>
                     @enderror
+                    @if ($openingBalanceHint)
+                        <div class="text-xs mt-1" style="color:var(--text-faint);">{{ $openingBalanceHint }}</div>
+                    @endif
                 </div>
                 <button wire:click="openDay"
                         wire:loading.attr="disabled"

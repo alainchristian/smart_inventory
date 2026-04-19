@@ -6,11 +6,6 @@
         <div class="mb-3 px-3 py-2 rounded-lg text-xs" style="background:var(--red-dim);color:var(--red);">{{ session('error') }}</div>
     @endif
 
-    <div class="mb-3 px-3 py-2 rounded-lg text-xs" style="background:var(--accent-dim);color:var(--accent);">
-        <strong>Bank Deposit</strong> — Record cash physically deposited to the bank mid-session.
-        This reduces expected cash in the drawer.
-    </div>
-
     <div class="space-y-3">
         <div>
             <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">Amount (RWF)</label>

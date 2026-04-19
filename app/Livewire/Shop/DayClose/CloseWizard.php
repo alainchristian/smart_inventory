@@ -22,6 +22,16 @@ class CloseWizard extends Component
     public int    $cashRetained       = 0;
     public string $notes              = '';
 
+    // Step 4 — non-cash channel settlements
+    public int    $momoSettled              = 0;
+    public string $momoSettledRef           = '';
+    public int    $cardSettled              = 0;
+    public string $cardSettledRef           = '';
+    public int    $otherSettled             = 0;
+    public string $otherSettledRef          = '';
+    public int    $bankTransferSettled      = 0;
+    public string $bankTransferSettledRef   = '';
+
     // Computed
     public int $cashVariance = 0;
 
@@ -61,6 +71,12 @@ class CloseWizard extends Component
 
         $this->dailySessionId = $session->id;
         $this->summary        = app(DailySessionService::class)->computeLiveSummary($session);
+
+        // Pre-fill non-cash settlements from live summary
+        $this->momoSettled          = $this->summary['total_sales_momo']          ?? 0;
+        $this->cardSettled          = $this->summary['total_sales_card']          ?? 0;
+        $this->otherSettled         = $this->summary['total_sales_other']         ?? 0;
+        $this->bankTransferSettled  = $this->summary['total_sales_bank_transfer'] ?? 0;
     }
 
     public function nextStep(): void
@@ -120,10 +136,18 @@ class CloseWizard extends Component
             $session = DailySession::findOrFail($this->dailySessionId);
 
             app(DailySessionService::class)->closeSession($session, [
-                'actual_cash_counted'  => $this->actualCashCounted,
-                'cash_to_owner_momo'   => $this->cashToOwnerMomo,
-                'owner_momo_reference' => $this->ownerMomoReference,
-                'notes'                => $this->notes,
+                'actual_cash_counted'       => $this->actualCashCounted,
+                'cash_to_owner_momo'        => $this->cashToOwnerMomo,
+                'owner_momo_reference'      => $this->ownerMomoReference,
+                'momo_settled'              => $this->momoSettled,
+                'momo_settled_ref'          => $this->momoSettledRef,
+                'card_settled'              => $this->cardSettled,
+                'card_settled_ref'          => $this->cardSettledRef,
+                'other_settled'             => $this->otherSettled,
+                'other_settled_ref'         => $this->otherSettledRef,
+                'bank_transfer_settled'     => $this->bankTransferSettled,
+                'bank_transfer_settled_ref' => $this->bankTransferSettledRef,
+                'notes'                     => $this->notes,
             ], auth()->user());
 
             session()->flash('success', 'Day closed successfully.');

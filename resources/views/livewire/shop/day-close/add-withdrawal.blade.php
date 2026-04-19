@@ -6,11 +6,6 @@
         <div class="mb-3 px-3 py-2 rounded-lg text-xs" style="background:var(--red-dim);color:var(--red);">{{ session('error') }}</div>
     @endif
 
-    <div class="mb-3 px-3 py-2 rounded-lg text-xs" style="background:var(--accent-dim);color:var(--accent);">
-        <strong>Owner Withdrawal</strong> — Record cash taken from the drawer by the owner.
-        Fill one or both fields.
-    </div>
-
     <div class="space-y-3">
         {{-- Two amount fields side by side --}}
         <div class="grid grid-cols-2 gap-3">

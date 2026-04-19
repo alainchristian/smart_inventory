@@ -79,10 +79,12 @@ class DailySessionService
             ->whereNull('sales.deleted_at')
             ->whereDate('sales.sale_date', $date)
             ->selectRaw("
-                SUM(CASE WHEN sale_payments.payment_method = 'cash'         THEN sale_payments.amount ELSE 0 END) as cash,
-                SUM(CASE WHEN sale_payments.payment_method = 'mobile_money' THEN sale_payments.amount ELSE 0 END) as momo,
-                SUM(CASE WHEN sale_payments.payment_method = 'card'         THEN sale_payments.amount ELSE 0 END) as card,
-                SUM(CASE WHEN sale_payments.payment_method NOT IN ('cash','mobile_money','card') THEN sale_payments.amount ELSE 0 END) as other,
+                SUM(CASE WHEN sale_payments.payment_method = 'cash'          THEN sale_payments.amount ELSE 0 END) as cash,
+                SUM(CASE WHEN sale_payments.payment_method = 'mobile_money'  THEN sale_payments.amount ELSE 0 END) as momo,
+                SUM(CASE WHEN sale_payments.payment_method = 'card'          THEN sale_payments.amount ELSE 0 END) as card,
+                SUM(CASE WHEN sale_payments.payment_method = 'bank_transfer' THEN sale_payments.amount ELSE 0 END) as bank_transfer,
+                SUM(CASE WHEN sale_payments.payment_method = 'credit'        THEN sale_payments.amount ELSE 0 END) as credit_sales,
+                SUM(CASE WHEN sale_payments.payment_method NOT IN ('cash','mobile_money','card','bank_transfer','credit') THEN sale_payments.amount ELSE 0 END) as other,
                 SUM(sale_payments.amount) as total,
                 COUNT(DISTINCT sales.id) as transaction_count
             ")->first();
@@ -124,11 +126,13 @@ class DailySessionService
             - (int) $totalDeposits;
 
         return [
-            'total_sales_cash'      => (int) ($saleTotals->cash  ?? 0),
-            'total_sales_momo'      => (int) ($saleTotals->momo  ?? 0),
-            'total_sales_card'      => (int) ($saleTotals->card  ?? 0),
-            'total_sales_other'     => (int) ($saleTotals->other ?? 0),
-            'total_sales'           => (int) ($saleTotals->total ?? 0),
+            'total_sales_cash'             => (int) ($saleTotals->cash          ?? 0),
+            'total_sales_momo'             => (int) ($saleTotals->momo          ?? 0),
+            'total_sales_card'             => (int) ($saleTotals->card          ?? 0),
+            'total_sales_bank_transfer'    => (int) ($saleTotals->bank_transfer ?? 0),
+            'total_sales_credit'           => (int) ($saleTotals->credit_sales  ?? 0),
+            'total_sales_other'            => (int) ($saleTotals->other         ?? 0),
+            'total_sales'                  => (int) ($saleTotals->total         ?? 0),
             'transaction_count'     => (int) ($saleTotals->transaction_count ?? 0),
             'total_refunds_cash'    => (int) $cashRefunds,
             'total_expenses'        => $totalExpenses,
@@ -179,12 +183,14 @@ class DailySessionService
             $variance = $actualCash - $summary['expected_cash'];
 
             $session->update([
-                'transaction_count'      => $summary['transaction_count'],
-                'total_sales_cash'       => $summary['total_sales_cash'],
-                'total_sales_momo'       => $summary['total_sales_momo'],
-                'total_sales_card'       => $summary['total_sales_card'],
-                'total_sales_other'      => $summary['total_sales_other'],
-                'total_sales'            => $summary['total_sales'],
+                'transaction_count'           => $summary['transaction_count'],
+                'total_sales_cash'            => $summary['total_sales_cash'],
+                'total_sales_momo'            => $summary['total_sales_momo'],
+                'total_sales_card'            => $summary['total_sales_card'],
+                'total_sales_bank_transfer'   => $summary['total_sales_bank_transfer'],
+                'total_sales_credit'          => $summary['total_sales_credit'],
+                'total_sales_other'           => $summary['total_sales_other'],
+                'total_sales'                 => $summary['total_sales'],
                 'total_refunds_cash'     => $summary['total_refunds_cash'],
                 'total_expenses'         => $summary['total_expenses'],
                 'total_expenses_cash'    => $summary['total_expenses_cash'],
@@ -199,7 +205,15 @@ class DailySessionService
                 'cash_variance'          => $variance,
                 'cash_to_owner_momo'     => $cashToOwnerMomo,
                 'owner_momo_reference'   => $data['owner_momo_reference'] ?? null,
-                'cash_retained'          => $cashRetained,
+                'momo_settled'           => (int) ($data['momo_settled'] ?? 0),
+                'momo_settled_ref'       => $data['momo_settled_ref'] ?? null,
+                'card_settled'           => (int) ($data['card_settled'] ?? 0),
+                'card_settled_ref'       => $data['card_settled_ref'] ?? null,
+                'other_settled'              => (int) ($data['other_settled'] ?? 0),
+                'other_settled_ref'          => $data['other_settled_ref'] ?? null,
+                'bank_transfer_settled'      => (int) ($data['bank_transfer_settled'] ?? 0),
+                'bank_transfer_settled_ref'  => $data['bank_transfer_settled_ref'] ?? null,
+                'cash_retained'              => $cashRetained,
                 'notes'                  => $data['notes'] ?? null,
                 'status'                 => 'closed',
                 'closed_by'              => $user->id,

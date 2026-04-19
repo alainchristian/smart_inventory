@@ -251,6 +251,38 @@
                                 @endif
                             </div>
 
+                            {{-- Revenue by Channel --}}
+                            <div>
+                                <div class="text-xs font-semibold mb-2 uppercase tracking-wide" style="color:var(--text-faint);">Revenue by Channel</div>
+                                <div class="rounded-xl overflow-hidden" style="border:1px solid var(--border);">
+                                    @php
+                                        $revChannels = [
+                                            ['Cash',          $session->total_sales_cash             ?? 0, 'var(--green)'],
+                                            ['Mobile Money',  $session->total_sales_momo              ?? 0, 'var(--accent)'],
+                                            ['Card',          $session->total_sales_card              ?? 0, 'var(--text)'],
+                                            ['Bank Transfer', $session->total_sales_bank_transfer     ?? 0, 'var(--text)'],
+                                            ['Credit',        $session->total_sales_credit            ?? 0, 'var(--amber)'],
+                                        ];
+                                        $revTotal = $session->total_sales ?? 0;
+                                    @endphp
+                                    @foreach ($revChannels as [$ch, $amt, $color])
+                                        <div class="flex items-center justify-between px-3 py-2" style="border-bottom:1px solid var(--border);">
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-xs" style="color:var(--text-dim);">{{ $ch }}</div>
+                                                @if ($ch === 'Credit' && $amt > 0)
+                                                    <div class="text-xs" style="color:var(--amber);">Owed by customers</div>
+                                                @endif
+                                            </div>
+                                            <div class="font-mono text-xs font-semibold" style="color:{{ $color }};">{{ number_format($amt) }} RWF</div>
+                                        </div>
+                                    @endforeach
+                                    <div class="flex items-center justify-between px-3 py-2" style="background:var(--surface-raised);border-top:2px solid var(--border);">
+                                        <div class="text-xs font-bold" style="color:var(--text);">Total</div>
+                                        <div class="font-mono text-xs font-bold" style="color:var(--accent);">{{ number_format($revTotal) }} RWF</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Cash reconciliation --}}
                             <div>
                                 <div class="text-xs font-semibold mb-2 uppercase tracking-wide" style="color:var(--text-faint);">Cash Reconciliation</div>
@@ -296,6 +328,88 @@
                                     @endif
                                 </div>
                             </div>
+
+                            {{-- Non-cash channel settlements --}}
+                            @php
+                                $reportSettlements = [
+                                    ['Mobile Money',  $session->total_sales_momo          ?? 0, $session->momo_settled          ?? 0, $session->momo_settled_ref,          'var(--accent)'],
+                                    ['Card',          $session->total_sales_card          ?? 0, $session->card_settled          ?? 0, $session->card_settled_ref,          'var(--text)'],
+                                    ['Bank Transfer', $session->total_sales_bank_transfer ?? 0, $session->bank_transfer_settled ?? 0, $session->bank_transfer_settled_ref, 'var(--text)'],
+                                    ['Other',         $session->total_sales_other         ?? 0, $session->other_settled         ?? 0, $session->other_settled_ref,         'var(--text)'],
+                                ];
+                                $creditAmt        = $session->total_sales_credit ?? 0;
+                                $hasAnyNonCash    = collect($reportSettlements)->contains(fn ($r) => $r[1] > 0) || $creditAmt > 0;
+                            @endphp
+                            @if ($hasAnyNonCash)
+                                <div>
+                                    <div class="text-xs font-semibold mb-2 uppercase tracking-wide" style="color:var(--text-faint);">Non-Cash Channel Settlement</div>
+                                    <div class="rounded-xl overflow-hidden" style="border:1px solid var(--border);">
+                                        @foreach ($reportSettlements as [$ch, $salesAmt, $settledAmt, $ref, $color])
+                                            @if ($salesAmt > 0)
+                                                <div class="px-3 py-2.5 flex items-start justify-between gap-3" style="border-bottom:1px solid var(--border);">
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="text-xs font-medium" style="color:var(--text);">{{ $ch }}</div>
+                                                        <div class="text-xs mt-0.5" style="color:var(--text-dim);">
+                                                            Sales: {{ number_format($salesAmt) }} RWF
+                                                            @if ($ref) · Ref: {{ $ref }} @endif
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-right flex-shrink-0">
+                                                        <div class="font-mono text-xs font-semibold" style="color:{{ $color }};">
+                                                            {{ number_format($settledAmt) }} RWF
+                                                        </div>
+                                                        @if ($settledAmt < $salesAmt)
+                                                            <div class="text-xs mt-0.5" style="color:var(--red);">
+                                                                −{{ number_format($salesAmt - $settledAmt) }} unaccounted
+                                                            </div>
+                                                        @elseif ($settledAmt > 0)
+                                                            <div class="text-xs mt-0.5" style="color:var(--green);">Settled</div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endforeach
+
+                                        {{-- Credit: informational only --}}
+                                        @if ($creditAmt > 0)
+                                            <div class="px-3 py-2.5 flex items-start justify-between gap-3" style="background:var(--amber-dim);">
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="text-xs font-medium" style="color:var(--amber);">Credit</div>
+                                                    <div class="text-xs mt-0.5" style="color:var(--text-dim);">Owed by customers — tracked via credit accounts</div>
+                                                </div>
+                                                <div class="font-mono text-xs font-semibold flex-shrink-0" style="color:var(--amber);">{{ number_format($creditAmt) }} RWF</div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Where is the Money? --}}
+                            @if ($session->status !== 'open')
+                                @php
+                                    $whereRows = [
+                                        ['Cash in drawer',      $session->actual_cash_counted ?? $session->expected_cash ?? 0, 'var(--green)'],
+                                        ['MoMo (settled)',      $session->momo_settled          ?? 0, 'var(--accent)'],
+                                        ['Card (settled)',      $session->card_settled          ?? 0, 'var(--text)'],
+                                        ['Bank Transfer',       $session->bank_transfer_settled ?? 0, 'var(--text)'],
+                                        ['Credit outstanding',  $session->total_sales_credit    ?? 0, 'var(--amber)'],
+                                    ];
+                                    $whereHasData = collect($whereRows)->contains(fn ($r) => $r[1] > 0);
+                                @endphp
+                                @if ($whereHasData)
+                                    <div>
+                                        <div class="text-xs font-semibold mb-2 uppercase tracking-wide" style="color:var(--text-faint);">Where is the Money?</div>
+                                        <div class="rounded-xl overflow-hidden" style="border:1px solid var(--border);">
+                                            @foreach ($whereRows as [$loc, $amt, $color])
+                                                <div class="flex items-center justify-between px-3 py-2" style="border-bottom:1px solid var(--border);">
+                                                    <div class="text-xs" style="color:var(--text-dim);">{{ $loc }}</div>
+                                                    <div class="font-mono text-xs font-semibold" style="color:{{ $color }};">{{ number_format($amt) }} RWF</div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            @endif
 
                             {{-- Expenses + Withdrawals row --}}
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">

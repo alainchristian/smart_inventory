@@ -1,3 +1,4 @@
+@php use App\Enums\TransferStatus; @endphp
 @if($sessionBlocked)
     <x-session-gate-blocked
         :reason="$sessionBlockReason"
@@ -5,7 +6,6 @@
         :session-id="$blockedSessionId"
     />
 @else
-@php use App\Enums\TransferStatus; @endphp
 
 @push('styles')
 <style>

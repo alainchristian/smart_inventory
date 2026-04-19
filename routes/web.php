@@ -89,6 +89,9 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     Route::prefix('transfers')->name('transfers.')->group(function () {
         Route::get('/', function () { return view('owner.transfers.index'); })->name('index');
         Route::get('/{transfer}', function (Transfer $transfer) { return view('owner.transfers.show', compact('transfer')); })->name('show');
+        Route::get('/{transfer}/delivery-note', function (Transfer $transfer) {
+            return view('transfers.delivery-note', compact('transfer'));
+        })->name('delivery-note');
     });
 
     // Sales
@@ -176,6 +179,9 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckL
             Route::get('/', function () { return view('warehouse.transfers.index'); })->name('index');
             Route::get('/{transfer}', function (\App\Models\Transfer $transfer) { return view('warehouse.transfers.show', compact('transfer')); })->name('show');
             Route::get('/{transfer}/pack', function (\App\Models\Transfer $transfer) { return view('warehouse.transfers.pack', compact('transfer')); })->name('pack');
+            Route::get('/{transfer}/delivery-note', function (Transfer $transfer) {
+                return view('transfers.delivery-note', compact('transfer'));
+            })->name('delivery-note');
         });
 
         // Reports

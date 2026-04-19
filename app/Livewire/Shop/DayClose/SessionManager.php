@@ -15,6 +15,7 @@ class SessionManager extends Component
     public array         $liveSummary       = [];
     public int           $pendingRequestsCount = 0;
     public int           $openingBalance    = 0;
+    public string        $openingBalanceHint = '';
     public bool          $showOpenForm      = false;
 
     public function mount(): void
@@ -44,6 +45,19 @@ class SessionManager extends Component
         if ($this->todaySession && $this->todaySession->isOpen()) {
             $this->liveSummary = app(DailySessionService::class)
                 ->computeLiveSummary($this->todaySession);
+        }
+
+        // Pre-fill opening balance from last closed session's retained cash
+        if (! $this->todaySession) {
+            $lastClosed = DailySession::forShop($shopId)
+                ->whereIn('status', ['closed', 'locked'])
+                ->orderByDesc('session_date')
+                ->first();
+
+            if ($lastClosed && $lastClosed->cash_retained !== null) {
+                $this->openingBalance    = $lastClosed->cash_retained;
+                $this->openingBalanceHint = 'Carried forward from ' . $lastClosed->session_date->format('d M Y');
+            }
         }
 
         $this->pendingRequestsCount = ExpenseRequest::pending()->forShop($shopId)->count();

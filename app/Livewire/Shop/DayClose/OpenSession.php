@@ -8,13 +8,24 @@ use Livewire\Component;
 
 class OpenSession extends Component
 {
-    public int $openingBalance = 0;
+    public int    $openingBalance     = 0;
+    public string $openingBalanceHint = '';
 
     public function mount(): void
     {
         $user = auth()->user();
         if (! $user->isShopManager()) {
             abort(403);
+        }
+
+        $lastClosed = DailySession::forShop($user->location_id)
+            ->whereIn('status', ['closed', 'locked'])
+            ->orderByDesc('session_date')
+            ->first();
+
+        if ($lastClosed && $lastClosed->cash_retained !== null) {
+            $this->openingBalance     = $lastClosed->cash_retained;
+            $this->openingBalanceHint = 'Carried forward from ' . $lastClosed->session_date->format('d M Y');
         }
     }
 
