@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component
+new #[Layout('layouts.login')] class extends Component
 {
     public LoginForm $form;
 
@@ -25,47 +25,80 @@ new #[Layout('layouts.guest')] class extends Component
 }; ?>
 
 <div>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    {{-- Session status --}}
+    @if (session('status'))
+        <div class="auth-status">{{ session('status') }}</div>
+    @endif
 
-    <form wire:submit="login">
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="form.email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
+    <div class="form-eyebrow">Inventory System</div>
+    <h1 class="form-heading">Welcome back</h1>
+    <p class="form-subheading">Sign in to your account to continue</p>
+
+    <form wire:submit="login" novalidate>
+
+        {{-- Email --}}
+        <div class="field-group">
+            <label for="email" class="field-label">Email address</label>
+            <input wire:model="form.email"
+                   id="email"
+                   type="email"
+                   name="email"
+                   class="field-input"
+                   placeholder="you@example.com"
+                   required
+                   autofocus
+                   autocomplete="username">
+            @error('form.email')
+                <div class="field-error">{{ $message }}</div>
+            @enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input wire:model="form.password" id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
+        {{-- Password --}}
+        <div class="field-group">
+            <label for="password" class="field-label">Password</label>
+            <input wire:model="form.password"
+                   id="password"
+                   type="password"
+                   name="password"
+                   class="field-input"
+                   placeholder="••••••••"
+                   required
+                   autocomplete="current-password">
+            @error('form.password')
+                <div class="field-error">{{ $message }}</div>
+            @enderror
         </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember" class="inline-flex items-center">
-                <input wire:model="form.remember" id="remember" type="checkbox" class="rounded shadow-sm" style="border-color: var(--border); color: var(--accent);" name="remember">
-                <span class="ms-2 text-sm" style="color: var(--text-sub);">{{ __('Remember me') }}</span>
+        {{-- Remember / forgot --}}
+        <div class="form-meta">
+            <label class="remember-label" for="remember">
+                <input wire:model="form.remember" id="remember" type="checkbox" name="remember">
+                Remember me
             </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm rounded-md" style="color: var(--accent);" href="{{ route('password.request') }}" wire:navigate>
-                    {{ __('Forgot your password?') }}
+                <a class="forgot-link" href="{{ route('password.request') }}" wire:navigate>
+                    Forgot password?
                 </a>
             @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
         </div>
+
+        {{-- Submit --}}
+        <button type="submit" class="btn-login" wire:loading.attr="disabled">
+            <span wire:loading.remove wire:target="login">
+                Sign In
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="margin-left:4px">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+            </span>
+            <span wire:loading wire:target="login" style="display:none">
+                Signing in…
+            </span>
+        </button>
+
     </form>
+
+    <div class="form-footer">
+        <strong>New Shoes Ltd</strong> &mdash; Wholesale Shoes &amp; Groceries<br>
+        Powered by Smart Inventory &copy; {{ date('Y') }}
+    </div>
 </div>
