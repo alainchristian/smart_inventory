@@ -142,6 +142,21 @@
   </div>
   @endif
 
+  {{-- Receipts link --}}
+  <a href="{{ route('shop.receipts') }}"
+     style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:8px;
+            font-size:12px;font-weight:600;cursor:pointer;transition:.15s;text-decoration:none;
+            background:var(--surface2);color:var(--text-sub);border:1px solid var(--border);"
+     onmouseover="this.style.background='var(--accent-dim)';this.style.color='var(--accent)'"
+     onmouseout="this.style.background='var(--surface2)';this.style.color='var(--text-sub)'">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <polyline points="6 9 6 2 18 2 18 9"/>
+      <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+      <rect x="6" y="14" width="12" height="8"/>
+    </svg>
+    <span class="pos-scan-label">Receipts</span>
+  </a>
+
   {{-- Phone scanner toggle --}}
   <button wire:click="{{ $showScannerPanel ? 'disablePhoneScanner' : 'enablePhoneScanner' }}"
           style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:8px;
@@ -1419,20 +1434,6 @@
 }
 .co-new-cust-btn:hover { border-color:var(--accent);color:var(--accent) }
 
-/* Balance bar */
-.co-balance-bar {
-    display:grid;grid-template-columns:1fr 1fr 1fr;
-    background:var(--bg);border:1px solid var(--border);
-    border-radius:11px;overflow:hidden;margin-bottom:12px;
-}
-.co-bal-cell { padding:9px 10px;text-align:center }
-.co-bal-cell + .co-bal-cell { border-left:1px solid var(--border) }
-.co-bal-label { font-size:10px;color:var(--text-dim);margin-bottom:3px }
-.co-bal-val { font-size:14px;font-weight:800;font-family:var(--mono);color:var(--text) }
-.co-bal-val.paid { color:var(--green) }
-.co-bal-val.due  { color:var(--red) }
-.co-bal-val.zero { color:var(--green) }
-
 /* Credit warning */
 .co-credit-warning {
     padding:10px 13px;background:rgba(245,158,11,.08);
@@ -1441,44 +1442,81 @@
 .co-credit-warning-title { font-size:11px;font-weight:800;color:var(--amber);margin-bottom:2px }
 .co-credit-warning-msg { font-size:12px;color:var(--text-sub) }
 
-/* Payment channels */
-.co-pay-list { border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:16px }
+/* Payment channels — redesigned */
+.co-pay-list { border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:14px }
 .co-pay-row {
-    display:flex;align-items:flex-start;gap:11px;padding:10px 13px;
+    display:flex;align-items:center;gap:11px;padding:9px 13px;
     background:var(--surface);border-bottom:1px solid var(--border);
+    transition:background .12s;
 }
 .co-pay-row:last-child { border-bottom:none }
-.co-pay-row.has-credit { background:rgba(245,158,11,.04) }
+.co-pay-row.is-active { background:var(--surface-raised) }
+.co-pay-row.is-overalloc .co-pay-amount { border-color:var(--red) }
 .co-pay-icon {
-    width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
-    font-size:15px;flex-shrink:0;margin-top:2px;
+    width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+    font-size:14px;flex-shrink:0;
 }
-.co-pay-body { flex:1;min-width:0 }
+.co-pay-meta { flex:1;min-width:0 }
 .co-pay-label {
     font-size:10px;font-weight:700;color:var(--text-dim);
-    text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;
-    display:flex;align-items:center;gap:6px;
+    text-transform:uppercase;letter-spacing:.5px;
+    display:flex;align-items:center;gap:5px;line-height:1;
 }
-.co-pay-hint { font-size:10px;color:var(--amber);font-weight:600;text-transform:none;letter-spacing:0 }
+.co-pay-hint { font-size:9px;color:var(--amber);font-weight:600;text-transform:none;letter-spacing:0 }
+.co-pay-amount-wrap { position:relative;width:130px;flex-shrink:0 }
 .co-pay-amount {
-    width:100%;box-sizing:border-box;padding:7px 10px;
+    width:100%;box-sizing:border-box;padding:7px 36px 7px 10px;
     border:1.5px solid var(--border);border-radius:8px;
     background:var(--surface);color:var(--text);font-size:14px;
-    font-family:var(--mono);outline:none;transition:border-color var(--tr);
+    font-family:var(--mono);outline:none;transition:border-color .15s;text-align:right;
 }
-.co-pay-amount:focus { border-color:var(--accent) }
-.co-pay-amount:disabled { opacity:.45;cursor:not-allowed }
-/* Reference field — always in DOM, slide in/out */
+.co-pay-amount:focus { border-color:var(--accent);background:var(--surface-raised) }
+.co-pay-amount:disabled { opacity:.4;cursor:not-allowed }
+.co-pay-amount-unit {
+    position:absolute;right:9px;top:50%;transform:translateY(-50%);
+    font-size:10px;font-weight:700;color:var(--text-faint);pointer-events:none;
+}
+/* Cash row — auto-computed display */
+.co-cash-row {
+    display:flex;align-items:center;gap:11px;padding:10px 13px;
+    background:var(--surface-raised);border-top:2px solid var(--border);
+}
+.co-cash-display {
+    width:130px;flex-shrink:0;padding:7px 10px;
+    border:1.5px solid var(--green);border-radius:8px;
+    background:rgba(16,185,129,.06);color:var(--green);
+    font-size:14px;font-family:var(--mono);font-weight:700;
+    text-align:right;display:flex;align-items:center;justify-content:space-between;
+    gap:4px;
+}
+.co-cash-badge {
+    font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
+    background:var(--green);color:#fff;padding:2px 5px;border-radius:4px;
+    flex-shrink:0;
+}
+/* Reference field */
 .co-pay-ref-wrap { overflow:hidden;transition:max-height .15s,opacity .15s,margin-top .15s }
 .co-pay-ref-wrap.hidden { max-height:0;opacity:0;margin-top:0 }
 .co-pay-ref-wrap.visible { max-height:40px;opacity:1;margin-top:5px }
 .co-pay-ref {
-    width:100%;box-sizing:border-box;padding:6px 10px;
+    width:100%;box-sizing:border-box;padding:5px 9px;
     border:1.5px solid var(--border);border-radius:7px;
     background:var(--surface);color:var(--text);font-size:11px;
     font-family:var(--mono);outline:none;transition:border-color var(--tr);
 }
 .co-pay-ref:focus { border-color:var(--accent) }
+/* Balance progress strip */
+.co-bal-strip {
+    border:1px solid var(--border);border-radius:11px;
+    overflow:hidden;margin-bottom:13px;padding:11px 13px;
+    background:var(--bg);
+}
+.co-bal-strip-nums { display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px }
+.co-bal-total { font-size:24px;font-weight:800;font-family:var(--mono);color:var(--text);line-height:1 }
+.co-bal-unit { font-size:11px;font-weight:600;color:var(--text-dim);margin-left:3px }
+.co-bal-status { font-size:12px;font-weight:700 }
+.co-bal-bar-wrap { height:5px;border-radius:99px;background:var(--border);overflow:hidden }
+.co-bal-bar { height:100%;border-radius:99px;transition:width .2s,background .2s }
 
 /* Notes */
 .co-notes {
@@ -1490,11 +1528,7 @@
 }
 .co-notes:focus { border-color:var(--accent) }
 
-/* Footer */
-.co-foot {
-    padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;
-    background:var(--surface);
-}
+/* Complete button */
 .co-complete-btn {
     width:100%;height:50px;
     background:var(--green);color:#fff;border:none;border-radius:13px;
@@ -1502,7 +1536,7 @@
     display:flex;align-items:center;justify-content:center;gap:8px;
     box-shadow:0 5px 18px rgba(34,197,94,.30);transition:opacity var(--tr);
 }
-.co-complete-btn:hover { opacity:.92 }
+.co-complete-btn:hover:not(:disabled) { opacity:.92 }
 .co-complete-btn:disabled { opacity:.5;cursor:not-allowed }
 
 /* Responsive */
@@ -1636,30 +1670,43 @@
       </div>{{-- /co-col-left --}}
 
       {{-- RIGHT: Payment + Notes --}}
-      <div class="co-col">
+      <div class="co-col"
+           x-data="{
+               total:  {{ (int) $cartTotal }},
+               card:   {{ (int) $payAmt_card }},
+               momo:   {{ (int) $payAmt_mobile_money }},
+               bank:   {{ (int) $payAmt_bank_transfer }},
+               credit: {{ (int) $payAmt_credit }},
+               get nonCash()  { return this.card + this.momo + this.bank + this.credit },
+               get cash()     { return Math.max(0, this.total - this.nonCash) },
+               get fillPct()  { return this.total > 0 ? Math.min(100, Math.round(this.nonCash / this.total * 100)) : 0 },
+               get isOver()   { return this.nonCash > this.total },
+               get isOk()     { return !this.isOver }
+           }">
 
-        {{-- Balance bar --}}
         <div class="co-section-label">Payment</div>
-        <div class="co-balance-bar">
-          <div class="co-bal-cell">
-            <div class="co-bal-label">Total</div>
-            <div class="co-bal-val">{{ number_format($cartTotal) }}</div>
-          </div>
-          <div class="co-bal-cell">
-            <div class="co-bal-label">Allocated</div>
-            <div class="co-bal-val {{ $this->totalAllocated >= $cartTotal ? 'paid' : '' }}">
-              {{ number_format($this->totalAllocated) }}
+
+        {{-- Balance strip --}}
+        <div class="co-bal-strip">
+          <div class="co-bal-strip-nums">
+            <div>
+              <span class="co-bal-total">{{ number_format($cartTotal) }}</span>
+              <span class="co-bal-unit">RWF</span>
+            </div>
+            <div class="co-bal-status"
+                 :style="isOver ? 'color:var(--red)' : 'color:var(--green)'">
+              <span x-show="isOk">✓ Balanced</span>
+              <span x-show="isOver" x-cloak>⚠ Over-allocated</span>
             </div>
           </div>
-          <div class="co-bal-cell">
-            <div class="co-bal-label">Remaining</div>
-            <div class="co-bal-val {{ $this->remainingBalance === 0 ? 'zero' : 'due' }}">
-              {{ $this->remainingBalance === 0 ? '✓ 0' : number_format($this->remainingBalance) }}
+          <div class="co-bal-bar-wrap">
+            <div class="co-bal-bar"
+                 :style="`width:${fillPct}%;background:${isOver ? 'var(--red)' : (fillPct >= 100 ? 'var(--green)' : 'var(--accent)')}`">
             </div>
           </div>
         </div>
 
-        {{-- Credit warning (always in DOM, hidden via CSS) --}}
+        {{-- Credit warning --}}
         <div style="{{ $creditWarningVisible ? '' : 'display:none' }}">
           <div class="co-credit-warning">
             <div class="co-credit-warning-title">Outstanding Balance</div>
@@ -1667,105 +1714,135 @@
           </div>
         </div>
 
-        {{-- Payment channels --}}
+        {{-- Payment channels (non-cash, user-entered) --}}
         <div class="co-pay-list">
 
-          {{-- Cash --}}
-          <div class="co-pay-row">
-            <div class="co-pay-icon" style="background:rgba(16,185,129,.1)">💵</div>
-            <div class="co-pay-body">
-              <div class="co-pay-label">Cash</div>
-              <input wire:model.blur="payAmt_cash" type="number" min="0" placeholder="0"
-                     class="co-pay-amount">
-            </div>
-          </div>
-
           {{-- Card --}}
-          <div class="co-pay-row">
-            <div class="co-pay-icon" style="background:rgba(59,130,246,.1)">💳</div>
-            <div class="co-pay-body">
+          <div class="co-pay-row" :class="card > 0 ? 'is-active' : ''">
+            <div class="co-pay-icon" style="background:rgba(59,130,246,.12)">
+              <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="co-pay-meta">
               <div class="co-pay-label">Card</div>
-              <input wire:model.blur="payAmt_card" type="number" min="0" placeholder="0"
-                     class="co-pay-amount">
-              {{-- Reference always rendered, CSS-animated in/out --}}
               <div class="co-pay-ref-wrap {{ $payAmt_card > 0 ? 'visible' : 'hidden' }}">
-                <input wire:model="payRef_card" type="text" placeholder="Reference (optional)"
-                       class="co-pay-ref">
+                <input wire:model="payRef_card" type="text" placeholder="Reference (optional)" class="co-pay-ref">
               </div>
+            </div>
+            <div class="co-pay-amount-wrap">
+              <input wire:model.blur="payAmt_card" type="number" min="0" placeholder="0"
+                     class="co-pay-amount" x-model.number="card">
+              <span class="co-pay-amount-unit">RWF</span>
             </div>
           </div>
 
           {{-- Mobile Money --}}
-          <div class="co-pay-row">
-            <div class="co-pay-icon" style="background:rgba(16,185,129,.1)">📱</div>
-            <div class="co-pay-body">
+          <div class="co-pay-row" :class="momo > 0 ? 'is-active' : ''">
+            <div class="co-pay-icon" style="background:rgba(16,185,129,.12)">
+              <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-linecap="round" stroke-width="2.5"/></svg>
+            </div>
+            <div class="co-pay-meta">
               <div class="co-pay-label">Mobile Money</div>
-              <input wire:model.blur="payAmt_mobile_money" type="number" min="0" placeholder="0"
-                     class="co-pay-amount">
               <div class="co-pay-ref-wrap {{ $payAmt_mobile_money > 0 ? 'visible' : 'hidden' }}">
-                <input wire:model="payRef_mobile_money" type="text" placeholder="Reference (optional)"
-                       class="co-pay-ref">
+                <input wire:model="payRef_mobile_money" type="text" placeholder="Reference (optional)" class="co-pay-ref">
               </div>
+            </div>
+            <div class="co-pay-amount-wrap">
+              <input wire:model.blur="payAmt_mobile_money" type="number" min="0" placeholder="0"
+                     class="co-pay-amount" x-model.number="momo">
+              <span class="co-pay-amount-unit">RWF</span>
             </div>
           </div>
 
           {{-- Bank Transfer --}}
-          <div class="co-pay-row">
-            <div class="co-pay-icon" style="background:rgba(99,102,241,.1)">🏦</div>
-            <div class="co-pay-body">
+          <div class="co-pay-row" :class="bank > 0 ? 'is-active' : ''">
+            <div class="co-pay-icon" style="background:rgba(99,102,241,.12)">
+              <svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10h16v11H4zM2 7l10-4 10 4M8 14v3m4-3v3m4-3v3"/></svg>
+            </div>
+            <div class="co-pay-meta">
               <div class="co-pay-label">Bank Transfer</div>
-              <input wire:model.blur="payAmt_bank_transfer" type="number" min="0" placeholder="0"
-                     class="co-pay-amount">
               <div class="co-pay-ref-wrap {{ $payAmt_bank_transfer > 0 ? 'visible' : 'hidden' }}">
-                <input wire:model="payRef_bank_transfer" type="text" placeholder="Reference (optional)"
-                       class="co-pay-ref">
+                <input wire:model="payRef_bank_transfer" type="text" placeholder="Reference (optional)" class="co-pay-ref">
               </div>
+            </div>
+            <div class="co-pay-amount-wrap">
+              <input wire:model.blur="payAmt_bank_transfer" type="number" min="0" placeholder="0"
+                     class="co-pay-amount" x-model.number="bank">
+              <span class="co-pay-amount-unit">RWF</span>
             </div>
           </div>
 
           {{-- Credit --}}
           @if($settingAllowCreditSales)
-          <div class="co-pay-row {{ $payAmt_credit > 0 ? 'has-credit' : '' }}">
-            <div class="co-pay-icon" style="background:rgba(245,158,11,.1)">📋</div>
-            <div class="co-pay-body">
+          <div class="co-pay-row" :class="credit > 0 ? 'is-active' : ''">
+            <div class="co-pay-icon" style="background:rgba(245,158,11,.12)">
+              <svg width="14" height="14" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <div class="co-pay-meta">
               <div class="co-pay-label">
                 Credit
                 @if(!$selectedCustomerId && $settingCreditRequiresCustomer)
-                <span class="co-pay-hint">· select customer first</span>
+                  <span class="co-pay-hint">select customer first</span>
                 @endif
               </div>
+            </div>
+            <div class="co-pay-amount-wrap">
               <input wire:model.blur="payAmt_credit" type="number" min="0" placeholder="0"
-                     class="co-pay-amount"
+                     class="co-pay-amount" x-model.number="credit"
                      {{ ($settingCreditRequiresCustomer && !$selectedCustomerId) ? 'disabled' : '' }}
-                     style="{{ $payAmt_credit > 0 ? 'border-color:var(--amber)' : '' }}">
+                     style="{{ $payAmt_credit > 0 ? 'border-color:var(--amber);' : '' }}">
+              <span class="co-pay-amount-unit">RWF</span>
             </div>
           </div>
           @endif
 
         </div>{{-- /co-pay-list --}}
 
+        {{-- Cash (auto-computed, pinned at bottom of list) --}}
+        <div class="co-cash-row" style="border:1px solid var(--border);border-radius:13px;margin-bottom:14px;">
+          <div class="co-pay-icon" style="background:rgba(16,185,129,.12)">
+            <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M6 10h.01M18 14h.01"/></svg>
+          </div>
+          <div class="co-pay-meta">
+            <div class="co-pay-label" style="color:var(--green);">Cash</div>
+            <div style="font-size:10px;color:var(--text-faint);margin-top:1px;">Remainder — auto-calculated</div>
+          </div>
+          <div class="co-cash-display" :style="cash < 0 ? 'border-color:var(--red);color:var(--red);background:rgba(239,68,68,.06)' : ''">
+            <span x-text="new Intl.NumberFormat().format(cash)" style="font-size:14px;"></span>
+            <span class="co-cash-badge" :style="cash > 0 ? '' : 'background:var(--text-faint)'">AUTO</span>
+          </div>
+        </div>
+
+        {{-- Over-allocation error --}}
+        <div x-show="isOver" x-cloak
+             style="margin-bottom:12px;padding:9px 12px;background:rgba(239,68,68,.07);border:1.5px solid var(--red);border-radius:10px;font-size:12px;color:var(--red);">
+          <strong>Over-allocated:</strong> non-cash methods exceed the total by
+          <span x-text="new Intl.NumberFormat().format(nonCash - total)"></span> RWF.
+          Reduce one of the amounts above.
+        </div>
+
         {{-- Notes --}}
         <div class="co-section-label">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
-        <textarea wire:model="notes" rows="2" placeholder="Sale notes…"
-                  class="co-notes"></textarea>
+        <textarea wire:model="notes" rows="2" placeholder="Sale notes…" class="co-notes"></textarea>
+
+        {{-- Footer: Complete Sale (inside the Alpine scope so we can use isOver) --}}
+        <div style="padding-top:12px;">
+          <button wire:click="completeSale"
+                  wire:loading.attr="disabled"
+                  :disabled="isOver"
+                  class="co-complete-btn"
+                  :style="isOver ? 'opacity:.4;cursor:not-allowed;box-shadow:none' : ''">
+            <span wire:loading.remove style="display:flex;align-items:center;gap:7px">
+              <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Complete Sale — {{ number_format($cartTotal) }} RWF
+            </span>
+            <span wire:loading style="display:none;font-size:14px">Processing…</span>
+          </button>
+        </div>
 
       </div>{{-- /co-col right --}}
     </div>{{-- /co-body --}}
-
-    {{-- Footer: Complete Sale always pinned --}}
-    <div class="co-foot">
-      <button wire:click="completeSale"
-              wire:loading.attr="disabled"
-              class="co-complete-btn">
-        <span wire:loading.remove style="display:flex;align-items:center;gap:7px">
-          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          Complete Sale — {{ number_format($cartTotal) }} RWF
-        </span>
-        <span wire:loading style="display:none;font-size:14px">Processing…</span>
-      </button>
-    </div>
 
   </div>
 </div>
@@ -1929,11 +2006,11 @@
 }
 </style>
 
-{{-- JS: listen for print-receipt event dispatched by printReceipt() --}}
+{{-- JS: open isolated print window --}}
 <script>
 document.addEventListener('livewire:initialized', function () {
-    Livewire.on('print-receipt', function () {
-        setTimeout(function () { window.print(); }, 120);
+    Livewire.on('open-print-window', function (params) {
+        window.open(params.url, '_blank', 'width=420,height=700,menubar=no,toolbar=no,scrollbars=yes');
     });
 }, { once: true });
 </script>
@@ -1966,31 +2043,34 @@ document.addEventListener('livewire:initialized', function () {
 
         <hr class="rc-divider">
 
-        {{-- Items --}}
+        {{-- Items — grouped by product+price so qty is aggregated --}}
+        @php
+          $rcGrouped = $completedSale->items
+            ->groupBy(fn($i) => $i->product_id.'_'.$i->actual_unit_price.'_'.($i->is_full_box?'b':'i'))
+            ->map(fn($g) => (object)[
+              'name'     => $g->first()->product->name ?? '—',
+              'qty'      => $g->sum('quantity_sold'),
+              'price'    => $g->first()->actual_unit_price,
+              'total'    => $g->sum('line_total'),
+              'full_box' => $g->first()->is_full_box,
+              'modified' => $g->contains('price_was_modified', true),
+              'orig'     => $g->first()->original_unit_price,
+            ])->values();
+        @endphp
         <div class="rc-items">
-          @foreach($completedSale->items as $item)
-          @php
-            $productName = $item->product->name ?? '—';
-            $qty         = $item->quantity_sold;
-            $unitPrice   = $item->actual_unit_price;
-            $lineTotal   = $item->line_total;
-            $isModified  = $item->price_was_modified ?? false;
-            $origPrice   = $item->original_unit_price;
-          @endphp
+          @foreach($rcGrouped as $item)
           <div class="rc-item-row">
             <div style="flex:1;min-width:0">
-              <div class="rc-item-name">{{ $productName }}</div>
+              <div class="rc-item-name">{{ $item->name }}</div>
               <div class="rc-item-meta">
-                {{ $qty }} {{ $item->is_full_box ? ($qty === 1 ? 'box' : 'boxes') : 'items' }}
-                × {{ number_format($unitPrice) }} RWF
-                @if($isModified)
-                  <span class="rc-item-modified">
-                    (was {{ number_format($origPrice) }})
-                  </span>
+                {{ $item->qty }} {{ $item->full_box ? ($item->qty === 1 ? 'box' : 'boxes') : 'items' }}
+                × {{ number_format($item->price) }} RWF
+                @if($item->modified)
+                  <span class="rc-item-modified">(was {{ number_format($item->orig) }})</span>
                 @endif
               </div>
             </div>
-            <div class="rc-item-total">{{ number_format($lineTotal) }}</div>
+            <div class="rc-item-total">{{ number_format($item->total) }}</div>
           </div>
           @endforeach
         </div>

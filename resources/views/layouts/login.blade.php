@@ -57,6 +57,7 @@
             border-radius: 50%;
             background: radial-gradient(circle, rgba(59,111,212,.22) 0%, transparent 70%);
             pointer-events: none;
+            animation: glowPulse 6s ease-in-out infinite;
         }
         /* Subtle grid pattern */
         .brand-panel::after {
@@ -74,6 +75,7 @@
             position: relative;
             z-index: 1;
             max-width: 460px;
+            animation: fadeInUp .45s .1s ease both;
         }
 
         /* Logo mark — uses app accent blue */
@@ -212,6 +214,7 @@
             border-radius: 16px;
             padding: 36px 32px;
             box-shadow: 0 2px 12px rgba(26,31,54,.07), 0 8px 32px rgba(26,31,54,.05);
+            animation: fadeInUp .35s ease both;
         }
 
         .form-eyebrow {
@@ -268,6 +271,52 @@
             color: #e11d48; /* --red */
             margin-top: 5px;
         }
+
+        /* Error state — field border turns red */
+        .field-input.has-error {
+            border-color: #e11d48;
+            background: #fff;
+        }
+        .field-input.has-error:focus {
+            border-color: #e11d48;
+            box-shadow: 0 0 0 3px rgba(225,29,72,.12);
+        }
+
+        /* Autofill override — prevent browser yellow/blue backgrounds */
+        .field-input:-webkit-autofill,
+        .field-input:-webkit-autofill:hover,
+        .field-input:-webkit-autofill:focus {
+            -webkit-text-fill-color: #1a1f36;
+            -webkit-box-shadow: 0 0 0 1000px #f4f6fb inset;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Password show/hide wrapper */
+        .field-input-wrap {
+            position: relative;
+        }
+        .field-input-wrap .field-input {
+            padding-right: 42px;
+        }
+        .field-eye {
+            position: absolute;
+            right: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: #7a81a0; /* --text-dim */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: color .15s;
+            line-height: 0;
+        }
+        .field-eye:hover { color: #1a1f36; }
+        .field-eye svg   { width: 16px; height: 16px; }
 
         /* Remember / forgot row */
         .form-meta {
@@ -329,6 +378,24 @@
         .btn-login:active { transform: scale(0.99); }
         .btn-login:disabled { opacity: .65; cursor: not-allowed; }
 
+        /* Loading spinner */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            flex-shrink: 0;
+        }
+        /* Spinner + label row — display:none is set by Livewire as inline style,
+           which wins while hidden; when Livewire removes it this class takes effect */
+        .btn-loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         /* Auth status */
         .auth-status {
             padding: 10px 13px;
@@ -349,6 +416,21 @@
             line-height: 1.6;
         }
         .form-footer strong { color: #4a5372; }
+
+        /* ════════════════════════════════
+           KEYFRAMES
+        ════════════════════════════════ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glowPulse {
+            0%, 100% { opacity: 1;  transform: scale(1); }
+            50%       { opacity: .55; transform: scale(1.1); }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
         /* ════════════════════════════════
            RESPONSIVE

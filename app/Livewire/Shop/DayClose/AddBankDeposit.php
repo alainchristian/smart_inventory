@@ -5,12 +5,15 @@ namespace App\Livewire\Shop\DayClose;
 use App\Models\BankDeposit;
 use App\Models\DailySession;
 use App\Services\DayClose\BankDepositService;
+use App\Services\DayClose\DailySessionService;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class AddBankDeposit extends Component
 {
     public int    $dailySessionId = 0;
     public int    $amount         = 0;
+    public string $source         = 'cash';
     public string $bankReference  = '';
     public string $notes          = '';
 
@@ -30,6 +33,7 @@ class AddBankDeposit extends Component
     {
         $this->validate([
             'amount'        => 'required|integer|min:1',
+            'source'        => 'required|in:cash,mobile_money',
             'bankReference' => 'nullable|string|max:100',
             'notes'         => 'nullable|string|max:500',
         ]);
@@ -40,6 +44,7 @@ class AddBankDeposit extends Component
         try {
             app(BankDepositService::class)->recordDeposit($session, [
                 'amount'         => $this->amount,
+                'source'         => $this->source,
                 'bank_reference' => $this->bankReference ?: null,
                 'notes'          => $this->notes ?: null,
             ], $user);
@@ -50,6 +55,18 @@ class AddBankDeposit extends Component
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
         }
+    }
+
+    #[On('expense-added')]
+    #[On('expense-voided')]
+    #[On('withdrawal-added')]
+    #[On('withdrawal-voided')]
+    #[On('deposit-added')]
+    #[On('deposit-voided')]
+    #[On('sale-completed')]
+    public function refreshBalances(): void
+    {
+        // Summary is recomputed fresh in render() — this just triggers a re-render.
     }
 
     public function voidDeposit(int $depositId): void
@@ -68,12 +85,15 @@ class AddBankDeposit extends Component
 
     public function render()
     {
+        $session  = DailySession::findOrFail($this->dailySessionId);
+        $summary  = app(DailySessionService::class)->computeLiveSummary($session);
+
         $deposits = BankDeposit::where('daily_session_id', $this->dailySessionId)
             ->whereNull('deleted_at')
             ->with('depositedBy')
             ->orderByDesc('deposited_at')
             ->get();
 
-        return view('livewire.shop.day-close.add-bank-deposit', compact('deposits'));
+        return view('livewire.shop.day-close.add-bank-deposit', compact('deposits', 'summary'));
     }
 }

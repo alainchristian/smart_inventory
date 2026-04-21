@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="py-6 sm:py-8">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-6 sm:mb-8 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-bold" style="color:var(--text);">Finance Overview</h1>

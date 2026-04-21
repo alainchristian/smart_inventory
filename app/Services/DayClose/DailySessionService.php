@@ -5,6 +5,7 @@ namespace App\Services\DayClose;
 use App\Enums\AlertSeverity;
 use App\Models\ActivityLog;
 use App\Models\Alert;
+use App\Models\CreditRepayment;
 use App\Models\DailySession;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
@@ -111,21 +112,38 @@ class DailySessionService
         $momoWithdrawals    = (int) (clone $withdrawalQuery)->where('method', 'mobile_money')->sum('amount');
         $withdrawalCount    = (int) $withdrawalQuery->count();
 
-        // Bank deposits (mid-day)
-        $depositsQuery    = $session->bankDeposits()->whereNull('deleted_at');
-        $totalDeposits    = (int) $depositsQuery->sum('amount');
-        $depositCount     = (int) $depositsQuery->count();
+        // Bank deposits split by source (cash drawer vs MoMo wallet)
+        $depositsQuery = $session->bankDeposits()->whereNull('deleted_at');
+        $cashDeposits  = (int) (clone $depositsQuery)->where('source', 'cash')->sum('amount');
+        $momoDeposits  = (int) (clone $depositsQuery)->where('source', 'mobile_money')->sum('amount');
+        $totalDeposits = $cashDeposits + $momoDeposits;
+        $depositCount  = (int) $depositsQuery->count();
 
-        // expected_cash: only cash-method items affect physical drawer
-        // MoMo sales, MoMo expenses, MoMo withdrawals do NOT touch cash
+        // Credit repayments received today (split by payment method)
+        $repaymentQuery  = CreditRepayment::where('shop_id', $shopId)
+            ->whereDate('repayment_date', $date);
+        $cashRepayments  = (int) (clone $repaymentQuery)->where('payment_method', 'cash')->sum('amount');
+        $momoRepayments  = (int) (clone $repaymentQuery)->where('payment_method', 'mobile_money')->sum('amount');
+        $totalRepayments = (int) $repaymentQuery->sum('amount');
+
+        // expected_cash: cash sales + cash repayments in; refunds/expenses/withdrawals/deposits out
         $expectedCash = $session->opening_balance
-            + (int) ($saleTotals->cash  ?? 0)
+            + (int) ($saleTotals->cash ?? 0)
+            + $cashRepayments
             - (int) $cashRefunds
             - (int) $cashExpenses
             - (int) $cashWithdrawals
-            - (int) $totalDeposits;
+            - (int) $cashDeposits;
+
+        // MoMo available balance (for deposit validation)
+        $momoAvailable = (int) ($saleTotals->momo ?? 0)
+            + $momoRepayments
+            - $momoExpenses
+            - $momoWithdrawals
+            - $momoDeposits;
 
         return [
+            'opening_balance'              => (int) $session->opening_balance,
             'total_sales_cash'             => (int) ($saleTotals->cash          ?? 0),
             'total_sales_momo'             => (int) ($saleTotals->momo          ?? 0),
             'total_sales_card'             => (int) ($saleTotals->card          ?? 0),
@@ -144,8 +162,14 @@ class DailySessionService
             'total_withdrawals_momo'=> $momoWithdrawals,
             'withdrawal_count'      => $withdrawalCount,
             'total_bank_deposits'   => $totalDeposits,
+            'cash_deposits'         => $cashDeposits,
+            'momo_deposits'         => $momoDeposits,
             'bank_deposit_count'    => $depositCount,
+            'total_repayments'      => $totalRepayments,
+            'total_repayments_cash' => $cashRepayments,
+            'total_repayments_momo' => $momoRepayments,
             'expected_cash'         => (int) $expectedCash,
+            'momo_available'        => (int) $momoAvailable,
         ];
     }
 
@@ -200,6 +224,11 @@ class DailySessionService
                 'total_withdrawals_momo' => $summary['total_withdrawals_momo'],
                 'total_bank_deposits'    => $summary['total_bank_deposits'],
                 'bank_deposit_count'     => $summary['bank_deposit_count'],
+                'cash_deposits'          => $summary['cash_deposits'],
+                'momo_deposits'          => $summary['momo_deposits'],
+                'total_repayments'       => $summary['total_repayments'],
+                'total_repayments_cash'  => $summary['total_repayments_cash'],
+                'total_repayments_momo'  => $summary['total_repayments_momo'],
                 'expected_cash'          => $summary['expected_cash'],
                 'actual_cash_counted'    => $actualCash,
                 'cash_variance'          => $variance,

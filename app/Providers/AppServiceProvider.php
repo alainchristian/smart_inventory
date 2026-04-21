@@ -30,8 +30,10 @@ class AppServiceProvider extends ServiceProvider
             'daily_session'    => \App\Models\DailySession::class,
             'expense'          => \App\Models\Expense::class,
             'expense_category' => \App\Models\ExpenseCategory::class,
-            'expense_request'   => \App\Models\ExpenseRequest::class,
-            'owner_withdrawal'  => \App\Models\OwnerWithdrawal::class,
+            'expense_request'  => \App\Models\ExpenseRequest::class,
+            'owner_withdrawal' => \App\Models\OwnerWithdrawal::class,
+            'customer'         => \App\Models\Customer::class,
+            'sale'             => \App\Models\Sale::class,
         ]);
 
         // Force HTTPS for all URLs when behind ngrok or other proxy

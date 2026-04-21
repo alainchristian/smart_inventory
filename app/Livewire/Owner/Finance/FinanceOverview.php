@@ -132,14 +132,16 @@ class FinanceOverview extends Component
         $labels   = [];
         $revenue  = [];
         $expenses = [];
+        $net      = [];
 
         foreach ($byDate->sortKeys() as $date => $rows) {
             $labels[]   = \Carbon\Carbon::parse($date)->format('d M');
             $revenue[]  = (int) $rows->sum('revenue');
             $expenses[] = (int) $rows->sum('expenses');
+            $net[]      = (int) $rows->sum('revenue') - (int) $rows->sum('expenses');
         }
 
-        $this->chartData = compact('labels', 'revenue', 'expenses');
+        $this->chartData = compact('labels', 'revenue', 'expenses', 'net');
     }
 
     public function render()

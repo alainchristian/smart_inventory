@@ -1094,6 +1094,7 @@ class PointOfSale extends Component
         }
 
         $this->evaluateCreditWarning();
+        $this->autoAdjustCash();
     }
 
     /**
@@ -1120,6 +1121,35 @@ class PointOfSale extends Component
             $this->creditWarningVisible = false;
             $this->creditWarningMessage = '';
         }
+    }
+
+    /**
+     * Auto-set cash to cover whatever non-cash methods don't cover.
+     * Called every time card, MoMo, bank, or credit changes.
+     */
+    private function autoAdjustCash(): void
+    {
+        $nonCash = (int) $this->payAmt_card
+            + (int) $this->payAmt_mobile_money
+            + (int) $this->payAmt_bank_transfer
+            + (int) $this->payAmt_credit;
+
+        $this->payAmt_cash = max(0, $this->cartTotal - $nonCash);
+    }
+
+    public function updatedPayAmtCard(): void
+    {
+        $this->autoAdjustCash();
+    }
+
+    public function updatedPayAmtMobileMoney(): void
+    {
+        $this->autoAdjustCash();
+    }
+
+    public function updatedPayAmtBankTransfer(): void
+    {
+        $this->autoAdjustCash();
     }
 
     /**
@@ -1393,8 +1423,11 @@ class PointOfSale extends Component
 
     public function printReceipt()
     {
-        // Trigger browser print dialog via JavaScript
-        $this->dispatch('print-receipt');
+        if (! $this->completedSale) {
+            return;
+        }
+        $url = route('shop.receipt.print', $this->completedSale->id);
+        $this->dispatch('open-print-window', url: $url);
     }
 
     public function closeReceipt()

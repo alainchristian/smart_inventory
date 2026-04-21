@@ -5,13 +5,14 @@ namespace App\Services\DayClose;
 use App\Models\BankDeposit;
 use App\Models\DailySession;
 use App\Models\User;
+use App\Services\DayClose\DailySessionService;
 
 class BankDepositService
 {
     /**
      * Record a bank deposit mid-session.
      *
-     * @param  array{amount: int, bank_reference?: string|null, notes?: string|null}  $data
+     * @param  array{amount: int, source: string, bank_reference?: string|null, notes?: string|null}  $data
      */
     public function recordDeposit(DailySession $session, array $data, User $user): BankDeposit
     {
@@ -29,10 +30,36 @@ class BankDepositService
             throw new \Exception('Deposit amount must be greater than zero.');
         }
 
+        $source = in_array($data['source'] ?? '', ['cash', 'mobile_money'])
+            ? $data['source']
+            : 'cash';
+
+        // Validate against available balance for the chosen source
+        $summary = app(DailySessionService::class)->computeLiveSummary($session);
+
+        if ($source === 'cash') {
+            $available = $summary['expected_cash'];
+            if ($amount > $available) {
+                throw new \Exception(
+                    'Deposit of ' . number_format($amount) . ' RWF exceeds available cash balance of ' .
+                    number_format($available) . ' RWF.'
+                );
+            }
+        } else {
+            $available = $summary['momo_available'];
+            if ($amount > $available) {
+                throw new \Exception(
+                    'Deposit of ' . number_format($amount) . ' RWF exceeds available Mobile Money balance of ' .
+                    number_format($available) . ' RWF.'
+                );
+            }
+        }
+
         return BankDeposit::create([
             'daily_session_id' => $session->id,
             'shop_id'          => $session->shop_id,
             'amount'           => $amount,
+            'source'           => $source,
             'bank_reference'   => $data['bank_reference'] ?? null,
             'notes'            => $data['notes'] ?? null,
             'deposited_by'     => $user->id,

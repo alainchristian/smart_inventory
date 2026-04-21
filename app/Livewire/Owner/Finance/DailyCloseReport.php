@@ -2,16 +2,22 @@
 
 namespace App\Livewire\Owner\Finance;
 
+use App\Models\Customer;
+use App\Models\CreditRepayment;
 use App\Models\DailySession;
+use App\Models\Sale;
 use App\Services\DayClose\DailySessionService;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class DailyCloseReport extends Component
 {
-    public string     $reportDate       = '';
+    public string     $reportDate        = '';
     public Collection $sessions;
     public ?int       $expandedSessionId = null;
+    public Collection $overdueCustomers;
+    public Collection $todaySales;
+    public int        $creditRepaidToday = 0;
 
     public function mount(): void
     {
@@ -20,8 +26,10 @@ class DailyCloseReport extends Component
             abort(403);
         }
 
-        $this->reportDate = today()->toDateString();
-        $this->sessions   = new Collection();
+        $this->reportDate       = today()->toDateString();
+        $this->sessions         = new Collection();
+        $this->overdueCustomers = new Collection();
+        $this->todaySales       = new Collection();
         $this->loadSessions();
     }
 
@@ -70,6 +78,28 @@ class DailyCloseReport extends Component
             ->forDate($this->reportDate)
             ->orderBy('shop_id')
             ->get();
+
+        $shopIds = $this->sessions->pluck('shop_id')->filter()->unique();
+
+        $this->overdueCustomers = Customer::where('outstanding_balance', '>', 0)
+            ->orderByDesc('outstanding_balance')
+            ->limit(15)
+            ->get();
+
+        if ($shopIds->isNotEmpty()) {
+            $this->todaySales = Sale::whereIn('shop_id', $shopIds)
+                ->whereDate('sale_date', $this->reportDate)
+                ->whereNull('voided_at')
+                ->orderByDesc('sale_date')
+                ->limit(50)
+                ->get();
+        } else {
+            $this->todaySales = new Collection();
+        }
+
+        $this->creditRepaidToday = (int) CreditRepayment::when($shopIds->isNotEmpty(), fn ($q) => $q->whereIn('shop_id', $shopIds))
+            ->whereDate('created_at', $this->reportDate)
+            ->sum('amount');
     }
 
     public function lockSession(int $id): void

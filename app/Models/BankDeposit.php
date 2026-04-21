@@ -15,6 +15,7 @@ class BankDeposit extends Model
         'daily_session_id',
         'shop_id',
         'amount',
+        'source',
         'bank_reference',
         'notes',
         'deposited_by',

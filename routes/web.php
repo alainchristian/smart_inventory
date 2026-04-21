@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginRedirectController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
+use App\Http\Controllers\Shop\ReceiptController;
 use App\Http\Controllers\ShopManager\DashboardController as ShopDashboardController;
 use App\Http\Controllers\WarehouseManager\DashboardController as WarehouseDashboardController;
 use App\Http\Middleware\CheckLocation;
@@ -206,11 +207,17 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
         // Point of Sale
         Route::get('/pos', function () { return view('shop.pos'); })->name('pos');
 
+        // Receipts — print view (standalone, no layout)
+        Route::get('/receipt/{sale}/print', [ReceiptController::class, 'print'])->name('receipt.print');
+
+        // Receipt search / reprint page
+        Route::get('/receipts', function () { return view('shop.receipts'); })->name('receipts');
+
         // Sales
         Route::prefix('sales')->name('sales.')->group(function () {
             Route::get('/', function () { return view('shop.sales.index'); })->name('index');
             Route::get('/{sale}', function ($sale) { return view('shop.sales.show', compact('sale')); })->name('show');
-            Route::get('/{sale}/receipt', function ($sale) { return view('shop.sales.receipt', compact('sale')); })->name('receipt');
+            Route::get('/{sale}/receipt', [ReceiptController::class, 'print'])->name('receipt');
         });
 
         // Transfers
