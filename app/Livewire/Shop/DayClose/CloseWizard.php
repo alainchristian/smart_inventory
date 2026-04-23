@@ -4,6 +4,7 @@ namespace App\Livewire\Shop\DayClose;
 
 use App\Models\DailySession;
 use App\Services\DayClose\DailySessionService;
+use App\Services\SettingsService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -21,6 +22,10 @@ class CloseWizard extends Component
     public string $ownerMomoReference = '';
     public int    $cashRetained       = 0;
     public string $notes              = '';
+
+    // Payment channel settings
+    public bool $settingAllowCard         = false;
+    public bool $settingAllowBankTransfer = false;
 
     // Step 4 — non-cash channel settlements
     public int    $momoSettled              = 0;
@@ -71,6 +76,10 @@ class CloseWizard extends Component
 
         $this->dailySessionId = $session->id;
         $this->summary        = app(DailySessionService::class)->computeLiveSummary($session);
+
+        $svc = app(SettingsService::class);
+        $this->settingAllowCard         = $svc->allowCardPayment();
+        $this->settingAllowBankTransfer = $svc->allowBankTransferPayment();
 
         // Pre-fill non-cash settlements from live summary
         $this->momoSettled          = $this->summary['total_sales_momo']          ?? 0;

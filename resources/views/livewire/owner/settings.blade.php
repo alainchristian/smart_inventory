@@ -466,6 +466,50 @@
     </div>
 </div>
 
+{{-- ── SECTION 5: Payment Methods ───────────────────────────────────── --}}
+<div class="st-card">
+    <div class="st-card-head">
+        <div class="st-card-icon" style="background:rgba(99,102,241,.1)">
+            <svg width="18" height="18" fill="none" stroke="#6366f1" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="1" y="4" width="22" height="16" rx="2"/>
+                <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+        </div>
+        <div>
+            <div class="st-card-title">Payment Methods</div>
+            <div class="st-card-desc">Choose which payment channels are available at point of sale. Cash and Mobile Money are always on.</div>
+        </div>
+    </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Allow card payment</div>
+            <div class="st-hint">
+                When enabled, sellers can accept debit/credit card payments at checkout.
+                Disabled by default — turn on only if a card terminal is in use.
+            </div>
+        </div>
+        <label class="st-toggle">
+            <input type="checkbox" wire:model.live="allowCardPayment">
+            <div class="st-toggle-track"><div class="st-toggle-knob"></div></div>
+        </label>
+    </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Allow bank transfer payment</div>
+            <div class="st-hint">
+                When enabled, sellers can record bank transfer payments and enter a reference number.
+                Disabled by default — turn on only if your shop accepts direct transfers.
+            </div>
+        </div>
+        <label class="st-toggle">
+            <input type="checkbox" wire:model.live="allowBankTransferPayment">
+            <div class="st-toggle-track"><div class="st-toggle-knob"></div></div>
+        </label>
+    </div>
+</div>
+
 {{-- ── Save bar ─────────────────────────────────────────────────────── --}}
 <div class="st-save-bar">
     <div class="st-save-hint">

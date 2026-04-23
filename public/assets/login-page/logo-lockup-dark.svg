@@ -1,0 +1,28 @@
+<svg width="720" height="180" viewBox="0 0 720 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="720" height="180" rx="26" fill="#09172C"/>
+  <defs>
+    <linearGradient id="darkNavy" x1="33" y1="26" x2="131" y2="140" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EAF0F9"/>
+    </linearGradient>
+    <linearGradient id="darkGold" x1="99" y1="31" x2="120" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2C87E"/>
+      <stop offset="1" stop-color="#D39B4D"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(18 18) scale(0.8)">
+    <rect x="12" y="12" width="156" height="156" rx="38" fill="#FFFFFF" fill-opacity="0.1"/>
+    <path d="M35 42C35 33.163 42.163 26 51 26H65.185C69.563 26 73.67 28.065 76.253 31.573L101.5 65.86V42C101.5 33.163 108.663 26 117.5 26H124C132.837 26 140 33.163 140 42V118C140 126.837 132.837 134 124 134H111.282C106.903 134 102.797 131.935 100.213 128.427L73.5 92.14V118C73.5 126.837 66.337 134 57.5 134H51C42.163 134 35 126.837 35 118V42Z" fill="url(#darkNavy)"/>
+    <path d="M109 44.626L126.969 31L130.5 36.118V134H109V44.626Z" fill="url(#darkGold)"/>
+    <circle cx="109.5" cy="31.5" r="7.5" fill="#F2C87E"/>
+    <circle cx="109.5" cy="31.5" r="3.2" fill="#FFF7EC"/>
+    <path d="M33 140C52.88 132.793 81.665 132.537 122 141.5" stroke="#D39B4D" stroke-width="7" stroke-linecap="round"/>
+    <path d="M34 109.818C42.254 106.891 49.738 105.427 56.451 105.427C61.026 105.427 65.24 106.24 69.092 107.866C72.944 109.492 77.772 111.925 83.575 115.167C86.756 116.95 89.695 117.842 92.392 117.842C95.089 117.842 98.205 116.889 101.741 114.985C105.276 113.08 108.19 111.418 110.484 109.998C112.778 108.578 115.568 107.867 118.854 107.867C123.155 107.867 127.537 109.207 132 111.887L129.366 119.163C124.906 118.014 121.425 117.439 118.925 117.439C116.425 117.439 113.097 118.49 108.942 120.592C101.576 124.318 95.745 126.181 91.449 126.181C86.823 126.181 80.422 123.88 72.246 119.277C64.676 115.009 58.329 112.875 53.207 112.875C49.907 112.875 45.176 113.844 39.013 115.783L34 109.818Z" fill="#FFFFFF"/>
+    <path d="M44.4 103.338C49.134 101.857 54.168 101.117 59.5 101.117C64.833 101.117 70.239 102.566 75.718 105.463C81.198 108.361 86.174 109.809 90.649 109.809C94.579 109.809 99.298 108.124 104.807 104.754C110.315 101.384 115.703 99.699 120.971 99.699C124.336 99.699 128.346 100.661 133 102.585" stroke="#09172C" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M52.381 97.885L61.244 85.449L70.582 97.179" stroke="#09172C" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M74.447 95.998L81.587 84.392L88.901 95.998" stroke="#09172C" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="188" y="82" fill="#FFFFFF" font-family="Manrope, Arial, sans-serif" font-size="56" font-weight="800" letter-spacing="-1.6">NEW SHOES</text>
+  <text x="523" y="82" fill="#D39B4D" font-family="Manrope, Arial, sans-serif" font-size="56" font-weight="800" letter-spacing="-1.6">LTD</text>
+  <text x="190" y="118" fill="#E0E6F0" font-family="Manrope, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="2.1">SHOES &amp; ACCESSORIES WHOLESALE</text>
+</svg>

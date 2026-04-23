@@ -10,9 +10,12 @@ class ReprintSearch extends Component
 {
     use WithPagination;
 
-    public string $search     = '';
-    public string $dateFrom   = '';
-    public string $dateTo     = '';
+    public string  $search           = '';
+    public string  $dateFrom         = '';
+    public string  $dateTo           = '';
+    public bool    $showReceiptModal  = false;
+    public ?int    $selectedSaleId    = null;
+    public ?Sale   $selectedSale      = null;
 
     protected $queryString = [
         'search'   => ['except' => ''],
@@ -26,9 +29,23 @@ class ReprintSearch extends Component
         $this->dateTo   = today()->toDateString();
     }
 
-    public function updatingSearch(): void  { $this->resetPage(); }
+    public function updatingSearch(): void   { $this->resetPage(); }
     public function updatingDateFrom(): void { $this->resetPage(); }
     public function updatingDateTo(): void   { $this->resetPage(); }
+
+    public function viewSale(int $id): void
+    {
+        $this->selectedSale      = Sale::with(['shop', 'soldBy', 'payments', 'items.product'])->find($id);
+        $this->selectedSaleId    = $id;
+        $this->showReceiptModal  = true;
+    }
+
+    public function closeReceiptModal(): void
+    {
+        $this->showReceiptModal = false;
+        $this->selectedSale     = null;
+        $this->selectedSaleId   = null;
+    }
 
     public function render()
     {

@@ -100,6 +100,8 @@ class PointOfSale extends Component
     public bool  $settingAllowCreditSales        = true;
     public bool  $settingCreditRequiresCustomer  = true;
     public int   $settingMaxCreditPerCustomer    = 0;
+    public bool  $settingAllowCardPayment        = false;
+    public bool  $settingAllowBankTransfer       = false;
 
     // Held Sales
     public array $heldSales        = [];
@@ -195,6 +197,8 @@ class PointOfSale extends Component
         $this->settingAllowCreditSales       = $settings->allowCreditSales();
         $this->settingCreditRequiresCustomer = $settings->creditRequiresCustomer();
         $this->settingMaxCreditPerCustomer   = $settings->maxCreditPerCustomer();
+        $this->settingAllowCardPayment       = $settings->allowCardPayment();
+        $this->settingAllowBankTransfer      = $settings->allowBankTransferPayment();
 
         $this->loadHeldSales();
     }
@@ -350,6 +354,13 @@ class PointOfSale extends Component
         );
         $this->stagingProduct['individual_sale_allowed'] = $individualAllowed;
 
+        $hasFullBox = Box::where('product_id', $product->id)
+            ->where('location_type', 'shop')
+            ->where('location_id', $this->shopId)
+            ->where('status', BoxStatus::FULL)
+            ->exists();
+        $this->stagingProduct['has_full_box'] = $hasFullBox;
+
         $this->stagingStock = $stock;
 
         // Check if product already in cart
@@ -359,17 +370,20 @@ class PointOfSale extends Component
             // Pre-fill with existing cart values (edit mode)
             $existingItem = $this->cart[$existingIndex];
             $this->stagingCartIndex = $existingIndex;
-            $this->stagingMode = $existingItem['is_full_box'] ? 'box' : 'item';
+            // If item was full-box but no full boxes remain, switch to item mode
+            $this->stagingMode = ($existingItem['is_full_box'] && $hasFullBox) ? 'box' : 'item';
             $this->stagingQty = $existingItem['quantity'];
             $this->stagingPrice = $existingItem['price'];
             $this->stagingPriceModified = $existingItem['price_modified'] ?? false;
             $this->stagingPriceReason = $existingItem['price_modification_reason'] ?? '';
         } else {
-            // New item defaults
+            // New item defaults — box mode only when full boxes exist
             $this->stagingCartIndex = null;
-            $this->stagingMode = 'box'; // default to boxes
-            $this->stagingQty = 1;
-            $this->stagingPrice = $product->effective_box_selling_price;
+            $this->stagingMode  = $hasFullBox ? 'box' : 'item';
+            $this->stagingQty   = 1;
+            $this->stagingPrice = $hasFullBox
+                ? $product->effective_box_selling_price
+                : $product->selling_price;
             $this->stagingPriceModified = false;
             $this->stagingPriceReason = '';
         }
@@ -699,12 +713,18 @@ class PointOfSale extends Component
 
         // Validate quantity against box availability
         if ($this->stagingMode === 'box') {
-            // For box mode, quantity represents number of full boxes
-            $totalItemsNeeded = $this->stagingQty * $this->stagingProduct['items_per_box'];
-            if ($totalItemsNeeded > $this->stagingStock['total_items']) {
+            // Only full boxes can be sold as a box unit — partial boxes must be sold as individual items
+            $availableFullBoxes = Box::where('product_id', $this->stagingProduct['id'])
+                ->where('location_type', 'shop')
+                ->where('location_id', $this->shopId)
+                ->where('status', BoxStatus::FULL)
+                ->count();
+            if ($this->stagingQty > $availableFullBoxes) {
                 $this->dispatch('notification', [
-                    'type' => 'error',
-                    'message' => 'Insufficient stock for requested boxes'
+                    'type'    => 'error',
+                    'message' => $availableFullBoxes === 0
+                        ? 'No full boxes available — sell remaining items individually'
+                        : 'Only ' . $availableFullBoxes . ' full box' . ($availableFullBoxes === 1 ? '' : 'es') . ' available',
                 ]);
                 return;
             }
@@ -1153,6 +1173,19 @@ class PointOfSale extends Component
     }
 
     /**
+     * Single-request checkout: sync Alpine payment amounts then complete the sale.
+     */
+    public function checkout(int $card, int $momo, int $bank, int $credit): void
+    {
+        $this->payAmt_card          = max(0, $card);
+        $this->payAmt_mobile_money  = max(0, $momo);
+        $this->payAmt_bank_transfer = max(0, $bank);
+        $this->payAmt_credit        = max(0, $credit);
+        $this->autoAdjustCash();
+        $this->completeSale();
+    }
+
+    /**
      * Computed: total amount allocated across all payment channels.
      */
     public function getTotalAllocatedProperty(): int
@@ -1499,17 +1532,18 @@ class PointOfSale extends Component
             ->orderByDesc('created_at')
             ->get()
             ->map(fn($h) => [
-                'id'            => $h->id,
-                'reference'     => $h->hold_reference,
-                'item_count'    => $h->item_count,
-                'cart_total'    => $h->cart_total,
-                'customer_name' => $h->customer_name,
-                'seller_name'   => $h->seller->name,
-                'is_approved'   => $h->isApproved(),
-                'approved_by'   => $h->approvedBy?->name,
-                'approval_note' => $h->approval_note,
-                'age'           => $h->created_at->diffForHumans(),
-                'is_mine'       => $h->seller_id === auth()->id(),
+                'id'              => $h->id,
+                'reference'       => $h->hold_reference,
+                'item_count'      => $h->item_count,
+                'cart_total'      => $h->cart_total,
+                'customer_name'   => $h->customer_name,
+                'seller_name'     => $h->seller->name,
+                'needs_approval'  => $h->needs_price_approval,
+                'is_approved'     => $h->isApproved(),
+                'approved_by'     => $h->approvedBy?->name,
+                'approval_note'   => $h->approval_note,
+                'age'             => $h->created_at->diffForHumans(),
+                'is_mine'         => $h->seller_id === auth()->id(),
                 'cart_preview'  => collect($h->cart_data ?? [])->take(3)->map(fn($item) => [
                     'name'           => $item['product_name'] ?? '—',
                     'qty'            => $item['quantity'] ?? 1,
@@ -1521,6 +1555,30 @@ class PointOfSale extends Component
                 'cart_extra'    => max(0, count($h->cart_data ?? []) - 3),
             ])
             ->toArray();
+    }
+
+    public function saveCart(): void
+    {
+        if (empty($this->cart)) return;
+
+        $nextId = (HeldSale::max('id') ?? 0) + 1;
+        HeldSale::create([
+            'seller_id'            => auth()->id(),
+            'shop_id'              => $this->shopId,
+            'hold_reference'       => 'SAVE-' . str_pad($nextId, 4, '0', STR_PAD_LEFT),
+            'cart_data'            => $this->cart,
+            'cart_total'           => $this->cartTotal,
+            'item_count'           => count($this->cart),
+            'customer_id'          => $this->selectedCustomerId ?? null,
+            'customer_name'        => $this->selectedCustomerName ?: null,
+            'customer_phone'       => $this->selectedCustomerPhone ?: null,
+            'needs_price_approval' => false,
+        ]);
+
+        $this->cart = [];
+        $this->resumingFromHeld = null;
+        $this->loadHeldSales();
+        $this->dispatch('notification', ['type' => 'success', 'message' => 'Cart saved — resume it from the held sales panel.']);
     }
 
     public function holdSale(): void

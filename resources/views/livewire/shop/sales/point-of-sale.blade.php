@@ -319,43 +319,53 @@
     {{-- ── Parked Carts panel ── --}}
     @if(!empty($heldSales))
     @php
-        $anyApproved  = collect($heldSales)->contains('is_approved', true);
-        $pendingCount = collect($heldSales)->where('is_approved', false)->count();
+        $savedCarts   = collect($heldSales)->where('needs_approval', false);
+        $heldForApproval = collect($heldSales)->where('needs_approval', true);
+        $anyApproved  = $heldForApproval->contains('is_approved', true);
+        $savedCount   = $savedCarts->count();
+        $heldCount    = $heldForApproval->count();
+        // Strip colour: green if anything approved, blue if only saved carts, amber if pending approval
+        $stripBg      = $anyApproved ? 'var(--green-glow)' : ($heldCount === 0 ? 'rgba(59,111,212,.06)' : 'var(--surface2)');
+        $stripColor   = $anyApproved ? 'var(--green)' : ($heldCount === 0 ? '#3b6fd4' : 'var(--amber)');
     @endphp
     <div style="border-bottom:1px solid var(--border);flex-shrink:0">
 
       {{-- Strip header --}}
       <button wire:click="$toggle('showHeldPanel')"
               style="width:100%;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;
-                     background:{{ $anyApproved ? 'var(--green-glow)' : 'var(--surface2)' }};
-                     border:none;cursor:pointer;text-align:left">
+                     background:{{ $stripBg }};border:none;cursor:pointer;text-align:left">
         <div style="display:flex;align-items:center;gap:8px">
-          {{-- Pulsing dot when approved --}}
           @if($anyApproved)
           <span style="position:relative;display:inline-flex">
             <span style="width:10px;height:10px;border-radius:50%;background:var(--green);display:block"></span>
             <span style="position:absolute;inset:0;border-radius:50%;background:var(--green);
                          animation:ping 1.2s cubic-bezier(0,0,.2,1) infinite;opacity:.6"></span>
           </span>
+          @elseif($savedCount > 0 && $heldCount === 0)
+          <svg width="13" height="13" fill="none" stroke="#3b6fd4" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+          </svg>
           @else
           <svg width="13" height="13" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24">
             <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
           </svg>
           @endif
-          <span style="font-size:12px;font-weight:700;
-                       color:{{ $anyApproved ? 'var(--green)' : 'var(--amber)' }}">
+          <span style="font-size:12px;font-weight:700;color:{{ $stripColor }}">
             @if($anyApproved)
-              Approved — ready to resume
+              Cart approved — ready to complete
+            @elseif($savedCount > 0 && $heldCount === 0)
+              {{ $savedCount }} saved {{ $savedCount === 1 ? 'cart' : 'carts' }} — click to resume
+            @elseif($savedCount > 0)
+              {{ $savedCount }} saved · {{ $heldCount }} awaiting approval
             @else
-              {{ count($heldSales) }} parked {{ count($heldSales) === 1 ? 'cart' : 'carts' }} · awaiting approval
+              {{ $heldCount }} {{ $heldCount === 1 ? 'cart' : 'carts' }} awaiting approval
             @endif
           </span>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;
-                       font-family:var(--mono);
-                       background:{{ $anyApproved ? 'var(--green-glow)' : 'var(--amber-dim)' }};
-                       color:{{ $anyApproved ? 'var(--green)' : 'var(--amber)' }}">
+                       font-family:var(--mono);background:{{ $stripBg }};color:{{ $stripColor }}">
             {{ count($heldSales) }}
           </span>
           <svg width="12" height="12" fill="none" stroke="var(--text-dim)" stroke-width="2" viewBox="0 0 24 24"
@@ -376,30 +386,56 @@
                     background:var(--surface)">
 
           {{-- Card header --}}
-          <div style="padding:9px 12px;background:{{ $h['is_approved'] ? 'var(--green-glow)' : 'var(--surface2)' }};
-                      display:flex;align-items:center;justify-content:space-between">
-            <div style="display:flex;align-items:center;gap:7px">
-              <span style="font-size:12px;font-weight:800;font-family:var(--mono);
-                           color:{{ $h['is_approved'] ? 'var(--green)' : 'var(--text)' }}">
+          @php
+            $cardBg    = $h['is_approved'] ? 'var(--green-glow)' : ($h['needs_approval'] ? 'var(--surface2)' : 'rgba(59,111,212,.05)');
+            $refColor  = $h['is_approved'] ? 'var(--green)' : ($h['needs_approval'] ? 'var(--text)' : '#3b6fd4');
+          @endphp
+          {{-- Card header with inline action buttons --}}
+          <div style="padding:8px 10px;background:{{ $cardBg }};
+                      display:flex;align-items:center;gap:8px">
+            {{-- Left: reference + badge --}}
+            <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+              <span style="font-size:12px;font-weight:800;font-family:var(--mono);color:{{ $refColor }};white-space:nowrap">
                 {{ $h['reference'] }}
               </span>
               @if($h['is_approved'])
-              <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;
-                           background:var(--green-glow);color:var(--green)">
-                ✓ {{ $h['approved_by'] }}
+              <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;
+                           background:var(--green-glow);color:var(--green);white-space:nowrap">
+                ✓ Approved
+              </span>
+              @elseif(!$h['needs_approval'])
+              <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;
+                           background:rgba(59,111,212,.10);color:#3b6fd4;white-space:nowrap">
+                Saved
               </span>
               @else
-              <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;
-                           background:var(--amber-dim);color:var(--amber)">
+              <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;
+                           background:var(--amber-dim);color:var(--amber);white-space:nowrap">
                 Pending
               </span>
               @endif
+              <span style="font-size:10px;color:var(--text-dim);white-space:nowrap">{{ $h['age'] }}</span>
             </div>
-            <span style="font-size:10px;color:var(--text-dim)">{{ $h['age'] }}</span>
+            {{-- Right: Resume + Discard buttons always visible --}}
+            <button wire:click="resumeHeldSale({{ $h['id'] }})"
+                    style="padding:5px 12px;border-radius:7px;border:none;cursor:pointer;
+                           font-size:11px;font-weight:700;color:#fff;white-space:nowrap;
+                           background:{{ $h['is_approved'] ? 'var(--green)' : ($h['needs_approval'] ? 'var(--accent)' : '#3b6fd4') }}">
+              @if($h['is_approved']) ▶ Complete
+              @elseif(!$h['needs_approval']) ▶ Resume
+              @else ▶ Resume
+              @endif
+            </button>
+            <button wire:click="discardHeldSale({{ $h['id'] }})"
+                    wire:confirm="Discard {{ $h['reference'] }}?"
+                    style="padding:5px 9px;border-radius:7px;border:1px solid var(--border);
+                           background:transparent;color:var(--text-dim);cursor:pointer;font-size:11px">
+              ✕
+            </button>
           </div>
 
           {{-- Meta + total --}}
-          <div style="padding:7px 12px;display:flex;align-items:center;justify-content:space-between;
+          <div style="padding:6px 12px;display:flex;align-items:center;justify-content:space-between;
                       border-bottom:1px solid var(--border)">
             <div style="font-size:11px;color:var(--text-dim)">
               {{ $h['seller_name'] }}
@@ -414,57 +450,27 @@
 
           {{-- Cart preview --}}
           @if(!empty($h['cart_preview']))
-          <div style="padding:6px 12px;border-bottom:1px solid var(--border)">
+          <div style="padding:5px 12px">
             @foreach($h['cart_preview'] as $ci)
             <div style="display:flex;align-items:center;justify-content:space-between;
-                        padding:3px 0;font-size:11px">
+                        padding:2px 0;font-size:11px">
               <div style="display:flex;align-items:center;gap:5px;min-width:0;flex:1">
                 @if($ci['modified'])
-                <span style="width:5px;height:5px;border-radius:50%;background:var(--amber);
-                             flex-shrink:0"></span>
+                <span style="width:5px;height:5px;border-radius:50%;background:var(--amber);flex-shrink:0"></span>
                 @endif
-                <span style="color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;
-                             white-space:nowrap">{{ $ci['name'] }}</span>
-                <span style="color:var(--text-dim);flex-shrink:0">
-                  × {{ $ci['qty'] }}{{ $ci['is_full_box'] ? ' box' : '' }}
-                </span>
+                <span style="color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $ci['name'] }}</span>
+                <span style="color:var(--text-dim);flex-shrink:0">× {{ $ci['qty'] }}{{ $ci['is_full_box'] ? ' box' : '' }}</span>
               </div>
-              <div style="flex-shrink:0;margin-left:8px;font-family:var(--mono)">
-                @if($ci['modified'])
-                <span style="color:var(--text-dim);text-decoration:line-through;font-size:10px;margin-right:3px">
-                  {{ number_format($ci['original_price']) }}
-                </span>
-                <span style="color:var(--amber);font-weight:700">{{ number_format($ci['price']) }}</span>
-                @else
-                <span style="color:var(--text-sub)">{{ number_format($ci['price']) }}</span>
-                @endif
-              </div>
+              <span style="flex-shrink:0;margin-left:8px;font-family:var(--mono);color:var(--text-sub)">
+                {{ number_format($ci['price']) }}
+              </span>
             </div>
             @endforeach
             @if($h['cart_extra'] > 0)
-            <div style="font-size:10px;color:var(--text-dim);padding-top:2px">
-              + {{ $h['cart_extra'] }} more
-            </div>
+            <div style="font-size:10px;color:var(--text-dim);padding-top:1px">+ {{ $h['cart_extra'] }} more</div>
             @endif
           </div>
           @endif
-
-          {{-- Actions --}}
-          <div style="padding:8px 10px;display:flex;gap:6px">
-            <button wire:click="resumeHeldSale({{ $h['id'] }})"
-                    style="flex:1;padding:7px 0;border-radius:8px;border:none;cursor:pointer;
-                           font-size:12px;font-weight:700;color:#fff;
-                           background:{{ $h['is_approved'] ? 'var(--green)' : 'var(--accent)' }}">
-              {{ $h['is_approved'] ? '▶ Resume & Complete' : '▶ Resume' }}
-            </button>
-            <button wire:click="discardHeldSale({{ $h['id'] }})"
-                    wire:confirm="Discard {{ $h['reference'] }}?"
-                    style="padding:7px 11px;border-radius:8px;border:1px solid var(--border);
-                           background:var(--surface2);color:var(--text-dim);cursor:pointer;
-                           font-size:12px;font-weight:600">
-              ✕
-            </button>
-          </div>
 
         </div>
         @endforeach
@@ -744,6 +750,22 @@
       </div>
       @endif
 
+      @if(!empty($cart))
+      <button wire:click="saveCart"
+              style="width:100%;padding:10px 16px;margin-bottom:8px;
+                     background:var(--surface2);color:var(--text-sub);
+                     border:1.5px solid var(--border);border-radius:12px;
+                     font-size:13px;font-weight:700;cursor:pointer;
+                     display:flex;align-items:center;justify-content:center;gap:7px;
+                     font-family:var(--font);transition:.15s">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Save Cart for Later
+      </button>
+      @endif
       <button wire:click="openCheckout"
               @if(empty($cart)) disabled @endif
               style="width:100%;padding:14px 16px;
@@ -944,6 +966,15 @@
           {{ number_format($cartTotal) }}<span style="font-size:12px;color:#6b7494"> RWF</span>
         </span>
       </div>
+      @endif
+      @if(!empty($cart))
+      <button wire:click="saveCart" @click="cartOpen = false"
+              style="width:100%;padding:12px;margin-bottom:8px;
+                     background:var(--surface2);color:var(--text-sub);
+                     border:1.5px solid var(--border);border-radius:12px;
+                     font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">
+        Save Cart for Later
+      </button>
       @endif
       <button wire:click="openCheckout" @click="cartOpen = false"
               @if(empty($cart)) disabled @endif
@@ -1176,6 +1207,7 @@
 
       {{-- Sell mode toggle --}}
       <div class="sm-modes">
+        @if($stagingProduct['has_full_box'] ?? false)
         <button wire:click="$set('stagingMode','box')"
                 class="sm-mode-btn {{ $stagingMode === 'box' ? 'active' : '' }}">
           <div class="sm-mode-icon">📦</div>
@@ -1183,6 +1215,14 @@
           <div class="sm-mode-meta">{{ $stagingProduct['items_per_box'] }} items / box</div>
           <div class="sm-mode-price">{{ number_format($stagingProduct['box_price']) }} RWF</div>
         </button>
+        @else
+        <div class="sm-mode-btn" style="opacity:.45;cursor:not-allowed;pointer-events:none">
+          <div class="sm-mode-icon">📦</div>
+          <div class="sm-mode-name">Full Box</div>
+          <div class="sm-mode-meta" style="color:var(--red)">No full boxes</div>
+          <div class="sm-mode-price" style="color:var(--text-dim)">{{ number_format($stagingProduct['box_price']) }} RWF</div>
+        </div>
+        @endif
 
         @if($stagingProduct['individual_sale_allowed'] ?? true)
         <button wire:click="$set('stagingMode','item')"
@@ -1620,18 +1660,9 @@
         <div class="co-new-cust-form">
           <div class="co-new-cust-title">Register New Customer</div>
           <div style="display:grid;gap:9px">
-            <div>
-              <label class="co-field-label">Name *</label>
-              <input wire:model="newCustomerName" type="text" placeholder="Full name" class="co-input">
-            </div>
-            <div>
-              <label class="co-field-label">Phone *</label>
-              <input wire:model="newCustomerPhone" type="text" placeholder="+250…" class="co-input mono">
-            </div>
-            <div>
-              <label class="co-field-label">Email</label>
-              <input wire:model="newCustomerEmail" type="email" placeholder="email@example.com" class="co-input">
-            </div>
+            <input wire:model="newCustomerName" type="text" placeholder="Full name *" class="co-input">
+            <input wire:model="newCustomerPhone" type="text" placeholder="+250… (phone) *" class="co-input mono">
+            <input wire:model="newCustomerEmail" type="email" placeholder="email@example.com (optional)" class="co-input">
           </div>
           <div class="co-new-cust-btns">
             <button wire:click="cancelNewCustomer" class="co-btn-secondary">Cancel</button>
@@ -1673,15 +1704,22 @@
       <div class="co-col"
            x-data="{
                total:  {{ (int) $cartTotal }},
-               card:   {{ (int) $payAmt_card }},
-               momo:   {{ (int) $payAmt_mobile_money }},
-               bank:   {{ (int) $payAmt_bank_transfer }},
-               credit: {{ (int) $payAmt_credit }},
-               get nonCash()  { return this.card + this.momo + this.bank + this.credit },
+               card:   null,
+               momo:   null,
+               bank:   null,
+               credit: null,
+               get c()        { return Number(this.card)   || 0 },
+               get m()        { return Number(this.momo)   || 0 },
+               get b()        { return Number(this.bank)   || 0 },
+               get cr()       { return Number(this.credit) || 0 },
+               get nonCash()  { return this.c + this.m + this.b + this.cr },
                get cash()     { return Math.max(0, this.total - this.nonCash) },
                get fillPct()  { return this.total > 0 ? Math.min(100, Math.round(this.nonCash / this.total * 100)) : 0 },
                get isOver()   { return this.nonCash > this.total },
-               get isOk()     { return !this.isOver }
+               get isOk()     { return !this.isOver },
+               submit() {
+                   $wire.checkout(this.c, this.m, this.b, this.cr);
+               }
            }">
 
         <div class="co-section-label">Payment</div>
@@ -1718,22 +1756,24 @@
         <div class="co-pay-list">
 
           {{-- Card --}}
+          @if($settingAllowCardPayment)
           <div class="co-pay-row" :class="card > 0 ? 'is-active' : ''">
             <div class="co-pay-icon" style="background:rgba(59,130,246,.12)">
               <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             </div>
             <div class="co-pay-meta">
               <div class="co-pay-label">Card</div>
-              <div class="co-pay-ref-wrap {{ $payAmt_card > 0 ? 'visible' : 'hidden' }}">
+              <div class="co-pay-ref-wrap" :class="card > 0 ? 'visible' : 'hidden'">
                 <input wire:model="payRef_card" type="text" placeholder="Reference (optional)" class="co-pay-ref">
               </div>
             </div>
             <div class="co-pay-amount-wrap">
-              <input wire:model.blur="payAmt_card" type="number" min="0" placeholder="0"
-                     class="co-pay-amount" x-model.number="card">
+              <input x-model.number="card" type="number" min="0" placeholder="0"
+                     class="co-pay-amount">
               <span class="co-pay-amount-unit">RWF</span>
             </div>
           </div>
+          @endif
 
           {{-- Mobile Money --}}
           <div class="co-pay-row" :class="momo > 0 ? 'is-active' : ''">
@@ -1742,34 +1782,36 @@
             </div>
             <div class="co-pay-meta">
               <div class="co-pay-label">Mobile Money</div>
-              <div class="co-pay-ref-wrap {{ $payAmt_mobile_money > 0 ? 'visible' : 'hidden' }}">
+              <div class="co-pay-ref-wrap" :class="momo > 0 ? 'visible' : 'hidden'">
                 <input wire:model="payRef_mobile_money" type="text" placeholder="Reference (optional)" class="co-pay-ref">
               </div>
             </div>
             <div class="co-pay-amount-wrap">
-              <input wire:model.blur="payAmt_mobile_money" type="number" min="0" placeholder="0"
-                     class="co-pay-amount" x-model.number="momo">
+              <input x-model.number="momo" type="number" min="0" placeholder="0"
+                     class="co-pay-amount">
               <span class="co-pay-amount-unit">RWF</span>
             </div>
           </div>
 
           {{-- Bank Transfer --}}
+          @if($settingAllowBankTransfer)
           <div class="co-pay-row" :class="bank > 0 ? 'is-active' : ''">
             <div class="co-pay-icon" style="background:rgba(99,102,241,.12)">
               <svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10h16v11H4zM2 7l10-4 10 4M8 14v3m4-3v3m4-3v3"/></svg>
             </div>
             <div class="co-pay-meta">
               <div class="co-pay-label">Bank Transfer</div>
-              <div class="co-pay-ref-wrap {{ $payAmt_bank_transfer > 0 ? 'visible' : 'hidden' }}">
+              <div class="co-pay-ref-wrap" :class="bank > 0 ? 'visible' : 'hidden'">
                 <input wire:model="payRef_bank_transfer" type="text" placeholder="Reference (optional)" class="co-pay-ref">
               </div>
             </div>
             <div class="co-pay-amount-wrap">
-              <input wire:model.blur="payAmt_bank_transfer" type="number" min="0" placeholder="0"
-                     class="co-pay-amount" x-model.number="bank">
+              <input x-model.number="bank" type="number" min="0" placeholder="0"
+                     class="co-pay-amount">
               <span class="co-pay-amount-unit">RWF</span>
             </div>
           </div>
+          @endif
 
           {{-- Credit --}}
           @if($settingAllowCreditSales)
@@ -1786,10 +1828,10 @@
               </div>
             </div>
             <div class="co-pay-amount-wrap">
-              <input wire:model.blur="payAmt_credit" type="number" min="0" placeholder="0"
-                     class="co-pay-amount" x-model.number="credit"
-                     {{ ($settingCreditRequiresCustomer && !$selectedCustomerId) ? 'disabled' : '' }}
-                     style="{{ $payAmt_credit > 0 ? 'border-color:var(--amber);' : '' }}">
+              <input x-model.number="credit" type="number" min="0" placeholder="0"
+                     class="co-pay-amount"
+                     :disabled="{{ $settingCreditRequiresCustomer ? 'true' : 'false' }} && !$wire.selectedCustomerId"
+                     :style="credit > 0 ? 'border-color:var(--amber);' : ''">
               <span class="co-pay-amount-unit">RWF</span>
             </div>
           </div>
@@ -1826,7 +1868,7 @@
 
         {{-- Footer: Complete Sale (inside the Alpine scope so we can use isOver) --}}
         <div style="padding-top:12px;">
-          <button wire:click="completeSale"
+          <button @click="submit()"
                   wire:loading.attr="disabled"
                   :disabled="isOver"
                   class="co-complete-btn"
@@ -1961,15 +2003,15 @@
 
 /* Actions */
 .rc-actions {
-    display:grid;grid-template-columns:1fr 1fr;gap:9px;
+    display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px;
     padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;
     background:var(--surface);
 }
 .rc-print-btn {
     height:44px;background:transparent;color:var(--text-sub);
     border:1.5px solid var(--border);border-radius:11px;
-    font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);
-    display:flex;align-items:center;justify-content:center;gap:7px;
+    font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
+    display:flex;align-items:center;justify-content:center;gap:6px;
     transition:all var(--tr);
 }
 .rc-print-btn:hover { border-color:var(--accent);color:var(--accent) }
@@ -2156,14 +2198,25 @@ document.addEventListener('livewire:initialized', function () {
 
     {{-- Actions --}}
     <div class="rc-actions">
+      {{-- View Receipt --}}
+      <a href="{{ route('shop.receipt.print', $completedSale->id) }}" target="_blank"
+         class="rc-print-btn" style="text-decoration:none">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        View
+      </a>
+      {{-- Print Receipt --}}
       <button wire:click="printReceipt" class="rc-print-btn">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <polyline points="6 9 6 2 18 2 18 9"/>
           <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
           <rect x="6" y="14" width="12" height="8"/>
         </svg>
-        Print Receipt
+        Print
       </button>
+      {{-- New Sale --}}
       <button wire:click="closeReceipt" class="rc-new-btn">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>

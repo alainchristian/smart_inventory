@@ -77,13 +77,15 @@
     @if ($currentStep === 1)
         @php
             $total    = max(1, $summary['total_sales'] ?? 0);
-            $channels = [
-                ['Cash',          $summary['total_sales_cash']          ?? 0, '#10b981', '#d1fae5'],
-                ['Mobile Money',  $summary['total_sales_momo']          ?? 0, '#6366f1', '#e0e7ff'],
-                ['Card',          $summary['total_sales_card']          ?? 0, '#64748b', '#f1f5f9'],
-                ['Bank Transfer', $summary['total_sales_bank_transfer'] ?? 0, '#0ea5e9', '#e0f2fe'],
-                ['Credit',        $summary['total_sales_credit']        ?? 0, '#f59e0b', '#fef3c7'],
-            ];
+            $cardAmt  = $summary['total_sales_card'] ?? 0;
+            $bankAmt  = $summary['total_sales_bank_transfer'] ?? 0;
+            $channels = array_filter([
+                ['Cash',          $summary['total_sales_cash']  ?? 0, '#10b981', '#d1fae5', true],
+                ['Mobile Money',  $summary['total_sales_momo']  ?? 0, '#6366f1', '#e0e7ff', true],
+                ['Card',          $cardAmt,                           '#64748b', '#f1f5f9', $settingAllowCard || $cardAmt > 0],
+                ['Bank Transfer', $bankAmt,                           '#0ea5e9', '#e0f2fe', $settingAllowBankTransfer || $bankAmt > 0],
+                ['Credit',        $summary['total_sales_credit'] ?? 0,'#f59e0b', '#fef3c7', true],
+            ], fn($c) => $c[4]);
             $activeChannels = array_filter($channels, fn($c) => $c[1] > 0);
         @endphp
 
@@ -121,7 +123,7 @@
                 <span class="text-xs font-semibold" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;">By Payment Channel</span>
             </div>
             <div style="background:var(--surface);">
-                @foreach ($channels as [$method, $amount, $color, $bg])
+                @foreach ($channels as [$method, $amount, $color, $bg, $_show])
                     @php $pct = $total > 0 ? round($amount / $total * 100, 1) : 0; @endphp
                     <div class="px-4 py-3" style="border-bottom:1px solid var(--border);">
                         <div class="flex items-center justify-between mb-1.5">
@@ -421,15 +423,17 @@
                 </summary>
                 <div style="background:var(--surface);">
                     @php
-                        $channelRef = [
-                            ['Cash',          $summary['total_sales_cash'] ?? 0,          '#10b981', 'Adds to cash drawer'],
-                            ['Mobile Money',  $summary['total_sales_momo'] ?? 0,          '#6366f1', 'Not in cash drawer'],
-                            ['Card',          $summary['total_sales_card'] ?? 0,          '#64748b', 'Not in cash drawer'],
-                            ['Bank Transfer', $summary['total_sales_bank_transfer'] ?? 0, '#0ea5e9', 'Not in cash drawer'],
-                            ['Credit',        $summary['total_sales_credit'] ?? 0,        '#f59e0b', 'Owed by customers'],
-                        ];
+                        $cardRef = $summary['total_sales_card'] ?? 0;
+                        $bankRef = $summary['total_sales_bank_transfer'] ?? 0;
+                        $channelRef = array_filter([
+                            ['Cash',          $summary['total_sales_cash'] ?? 0, '#10b981', 'Adds to cash drawer',   true],
+                            ['Mobile Money',  $summary['total_sales_momo'] ?? 0, '#6366f1', 'Not in cash drawer',    true],
+                            ['Card',          $cardRef,                          '#64748b', 'Not in cash drawer',    $settingAllowCard || $cardRef > 0],
+                            ['Bank Transfer', $bankRef,                          '#0ea5e9', 'Not in cash drawer',    $settingAllowBankTransfer || $bankRef > 0],
+                            ['Credit',        $summary['total_sales_credit'] ?? 0,'#f59e0b','Owed by customers',    true],
+                        ], fn($c) => $c[4]);
                     @endphp
-                    @foreach ($channelRef as [$ch, $amt, $clr, $note])
+                    @foreach ($channelRef as [$ch, $amt, $clr, $note, $_show])
                         <div class="flex items-center justify-between px-4 py-2.5" style="border-bottom:1px solid var(--border);">
                             <div>
                                 <span class="text-sm" style="color:var(--text);">{{ $ch }}</span>
@@ -575,12 +579,14 @@
 
             {{-- Non-cash settlement --}}
             @php
-                $ncChannels = [
-                    ['Mobile Money',  'momoSettled',        'momoSettledRef',        $summary['total_sales_momo']          ?? 0, '#6366f1'],
-                    ['Card',          'cardSettled',         'cardSettledRef',         $summary['total_sales_card']          ?? 0, '#64748b'],
-                    ['Bank Transfer', 'bankTransferSettled', 'bankTransferSettledRef', $summary['total_sales_bank_transfer'] ?? 0, '#0ea5e9'],
-                    ['Other',         'otherSettled',        'otherSettledRef',        $summary['total_sales_other']         ?? 0, '#94a3b8'],
-                ];
+                $ncCard = $summary['total_sales_card'] ?? 0;
+                $ncBank = $summary['total_sales_bank_transfer'] ?? 0;
+                $ncChannels = array_filter([
+                    ['Mobile Money',  'momoSettled',        'momoSettledRef',        $summary['total_sales_momo'] ?? 0, '#6366f1', true],
+                    ['Card',          'cardSettled',        'cardSettledRef',        $ncCard,                          '#64748b', $settingAllowCard || $ncCard > 0],
+                    ['Bank Transfer', 'bankTransferSettled','bankTransferSettledRef',$ncBank,                          '#0ea5e9', $settingAllowBankTransfer || $ncBank > 0],
+                    ['Other',         'otherSettled',       'otherSettledRef',       $summary['total_sales_other'] ?? 0,'#94a3b8', true],
+                ], fn($c) => $c[5]);
                 $creditSales = $summary['total_sales_credit'] ?? 0;
                 $hasNonCash  = collect($ncChannels)->contains(fn ($c) => $c[3] > 0) || $creditSales > 0;
             @endphp
@@ -591,7 +597,7 @@
                         <div class="text-xs mt-0.5" style="color:var(--text-dim);">Record how each channel's revenue was settled or transferred to the owner</div>
                     </div>
                     <div style="background:var(--surface);">
-                        @foreach ($ncChannels as [$label, $field, $refField, $total, $color])
+                        @foreach ($ncChannels as [$label, $field, $refField, $total, $color, $_show])
                             @if ($total > 0)
                                 <div class="px-4 py-3.5" style="border-bottom:1px solid var(--border);">
                                     <div class="flex items-center justify-between mb-3">

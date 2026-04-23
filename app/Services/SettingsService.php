@@ -104,4 +104,14 @@ class SettingsService
     {
         return (bool) $this->get('allow_price_override', true);
     }
+
+    public function allowCardPayment(): bool
+    {
+        return (bool) $this->get('allow_card_payment', false);
+    }
+
+    public function allowBankTransferPayment(): bool
+    {
+        return (bool) $this->get('allow_bank_transfer_payment', false);
+    }
 }

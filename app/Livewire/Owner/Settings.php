@@ -26,6 +26,10 @@ class Settings extends Component
     public bool $allowPriceOverride       = true;
     public int  $priceOverrideThreshold   = 20;
 
+    // Payment methods
+    public bool $allowCardPayment         = false;
+    public bool $allowBankTransferPayment = false;
+
     public function mount(): void
     {
         if (!auth()->user()->isOwner()) abort(403);
@@ -42,6 +46,8 @@ class Settings extends Component
         $this->maxCreditPerCustomer      = $svc->maxCreditPerCustomer();
         $this->allowPriceOverride        = $svc->allowPriceOverride();
         $this->priceOverrideThreshold    = $svc->priceOverrideThreshold();
+        $this->allowCardPayment          = $svc->allowCardPayment();
+        $this->allowBankTransferPayment  = $svc->allowBankTransferPayment();
     }
 
     public function save(): void
@@ -65,6 +71,8 @@ class Settings extends Component
         $svc->set('max_credit_per_customer',      $this->maxCreditPerCustomer);
         $svc->set('allow_price_override',         $this->allowPriceOverride);
         $svc->set('price_override_threshold',     $this->priceOverrideThreshold);
+        $svc->set('allow_card_payment',           $this->allowCardPayment);
+        $svc->set('allow_bank_transfer_payment',  $this->allowBankTransferPayment);
 
         $this->dispatch('notification', [
             'type'    => 'success',
