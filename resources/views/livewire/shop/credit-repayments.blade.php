@@ -1,4 +1,8 @@
 <div>
+    @if ($sessionBlocked)
+        @include('components.session-gate-blocked')
+    @else
+
     {{-- Success Message --}}
     @if (session()->has('success'))
         <div style="margin-bottom:20px;padding:16px 20px;border-radius:12px;background:#10b98120;border:1px solid #10b981;color:#10b981;font-size:14px;font-weight:600">
@@ -215,4 +219,6 @@
             </div>
         </div>
     @endif
+
+    @endif {{-- end session gate --}}
 </div>

@@ -7,6 +7,7 @@ use App\Models\CreditRepayment;
 use App\Models\DailySession;
 use App\Models\Sale;
 use App\Services\DayClose\DailySessionService;
+use App\Services\SettingsService;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -19,12 +20,20 @@ class DailyCloseReport extends Component
     public Collection $todaySales;
     public int        $creditRepaidToday = 0;
 
+    // Payment method settings — controls channel visibility everywhere
+    public bool $settingAllowCard         = false;
+    public bool $settingAllowBankTransfer = false;
+
     public function mount(): void
     {
         $user = auth()->user();
         if (! $user->isOwner() && ! $user->isAdmin()) {
             abort(403);
         }
+
+        $svc = app(SettingsService::class);
+        $this->settingAllowCard         = $svc->allowCardPayment();
+        $this->settingAllowBankTransfer = $svc->allowBankTransferPayment();
 
         $this->reportDate       = today()->toDateString();
         $this->sessions         = new Collection();
@@ -50,7 +59,7 @@ class DailyCloseReport extends Component
     {
         $next = \Carbon\Carbon::parse($this->reportDate)->addDay();
         if ($next->isFuture()) {
-            return; // don't navigate into the future
+            return;
         }
         $this->reportDate        = $next->toDateString();
         $this->expandedSessionId = null;

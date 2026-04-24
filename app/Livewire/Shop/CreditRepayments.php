@@ -3,6 +3,7 @@
 namespace App\Livewire\Shop;
 
 use App\Enums\PaymentMethod;
+use App\Livewire\Concerns\RequiresOpenSession;
 use App\Models\CreditRepayment;
 use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,7 @@ use Livewire\WithPagination;
 
 class CreditRepayments extends Component
 {
-    use WithPagination;
+    use WithPagination, RequiresOpenSession;
 
     // Search and selection
     public string $searchQuery = '';
@@ -25,6 +26,14 @@ class CreditRepayments extends Component
 
     // UI state
     public bool $showRepaymentForm = false;
+
+    public function mount(): void
+    {
+        $user = auth()->user();
+        if ($user->isShopManager()) {
+            $this->checkSession($user->location_id);
+        }
+    }
 
     protected $rules = [
         'amount' => 'required|numeric|min:1',
@@ -67,16 +76,17 @@ class CreditRepayments extends Component
         }
 
         DB::transaction(function () use ($customer, $amount) {
-            // 1. Create repayment record
+            // 1. Create repayment record — link to active session when available
             CreditRepayment::create([
-                'customer_id'    => $customer->id,
-                'shop_id'        => auth()->user()->location_id,
-                'amount'         => $amount,
-                'payment_method' => $this->paymentMethod,
-                'reference'      => $this->reference ?: null,
-                'notes'          => $this->notes ?: null,
-                'recorded_by'    => auth()->id(),
-                'repayment_date' => now(),
+                'customer_id'      => $customer->id,
+                'shop_id'          => auth()->user()->location_id,
+                'daily_session_id' => $this->activeSession?->id,
+                'amount'           => $amount,
+                'payment_method'   => $this->paymentMethod,
+                'reference'        => $this->reference ?: null,
+                'notes'            => $this->notes ?: null,
+                'recorded_by'      => auth()->id(),
+                'repayment_date'   => now(),
             ]);
 
             // 2. Update customer balances

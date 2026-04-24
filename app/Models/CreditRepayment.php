@@ -11,6 +11,7 @@ class CreditRepayment extends Model
     protected $fillable = [
         'customer_id',
         'shop_id',
+        'daily_session_id',
         'amount',
         'payment_method',
         'reference',
@@ -33,6 +34,11 @@ class CreditRepayment extends Model
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    public function dailySession(): BelongsTo
+    {
+        return $this->belongsTo(DailySession::class);
     }
 
     public function recordedBy(): BelongsTo

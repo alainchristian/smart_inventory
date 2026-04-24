@@ -470,10 +470,12 @@
                                   + ($summary['total_sales_bank_transfer'] ?? 0)
                                   + ($summary['total_sales_credit'] ?? 0);
 
+                    $_ncCard = $summary['total_sales_card'] ?? 0;
+                    $_ncBank = $summary['total_sales_bank_transfer'] ?? 0;
                     $nonCashChannels = array_filter([
                         'Mobile Money'  => $summary['total_sales_momo'] ?? 0,
-                        'Card'          => $summary['total_sales_card'] ?? 0,
-                        'Bank Transfer' => $summary['total_sales_bank_transfer'] ?? 0,
+                        'Card'          => ($settingAllowCard || $_ncCard > 0) ? $_ncCard : null,
+                        'Bank Transfer' => ($settingAllowBankTransfer || $_ncBank > 0) ? $_ncBank : null,
                         'Credit'        => $summary['total_sales_credit'] ?? 0,
                     ]);
 

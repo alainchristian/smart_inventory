@@ -107,11 +107,18 @@ class FinanceOverview extends Component
                 'daily_sessions.session_date',
                 'shops.name as shop_name',
                 'shops.id as shop_id',
-                DB::raw('SUM(COALESCE(daily_sessions.total_sales, 0))       as revenue'),
-                DB::raw('SUM(COALESCE(daily_sessions.total_expenses, 0))    as expenses'),
-                DB::raw('SUM(COALESCE(daily_sessions.total_withdrawals, 0)) as withdrawals'),
-                DB::raw('SUM(COALESCE(daily_sessions.total_bank_deposits, 0)) as cash_banked'),
-                DB::raw('SUM(COALESCE(daily_sessions.cash_variance, 0))     as total_variance'),
+                DB::raw('SUM(COALESCE(daily_sessions.opening_balance, 0))        as opening_balance'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_sales, 0))            as revenue'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_repayments, 0))       as repayments'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_refunds_cash, 0))     as refunds'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_expenses, 0))         as expenses'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_withdrawals, 0))      as withdrawals'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_bank_deposits, 0))    as cash_banked'),
+                DB::raw('SUM(COALESCE(daily_sessions.cash_variance, 0))          as total_variance'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_sales_cash, 0))       as sales_cash'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_sales_momo, 0))       as sales_momo'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_sales_card, 0))       as sales_card'),
+                DB::raw('SUM(COALESCE(daily_sessions.total_sales_credit, 0))     as sales_credit'),
                 DB::raw('COUNT(*) as session_count'),
                 DB::raw("SUM(CASE WHEN daily_sessions.status IN ('closed','locked') THEN 1 ELSE 0 END) as closed_count"),
             )
@@ -128,20 +135,29 @@ class FinanceOverview extends Component
         $this->rows = $results->map(fn ($r) => (array) $r)->toArray();
 
         // Chart — aggregate by date across all shops
-        $byDate   = $results->groupBy('session_date');
-        $labels   = [];
-        $revenue  = [];
-        $expenses = [];
-        $net      = [];
+        $byDate     = $results->groupBy('session_date');
+        $labels     = [];
+        $revenue    = [];
+        $repayments = [];
+        $refunds    = [];
+        $expenses   = [];
+        $net        = [];
 
         foreach ($byDate->sortKeys() as $date => $rows) {
-            $labels[]   = \Carbon\Carbon::parse($date)->format('d M');
-            $revenue[]  = (int) $rows->sum('revenue');
-            $expenses[] = (int) $rows->sum('expenses');
-            $net[]      = (int) $rows->sum('revenue') - (int) $rows->sum('expenses');
+            $labels[]     = \Carbon\Carbon::parse($date)->format('d M');
+            $rev          = (int) $rows->sum('revenue');
+            $rep          = (int) $rows->sum('repayments');
+            $ref          = (int) $rows->sum('refunds');
+            $exp          = (int) $rows->sum('expenses');
+            $wdl          = (int) $rows->sum('withdrawals');
+            $revenue[]    = $rev;
+            $repayments[] = $rep;
+            $refunds[]    = $ref;
+            $expenses[]   = $exp;
+            $net[]        = $rev - $ref - $exp - $wdl;
         }
 
-        $this->chartData = compact('labels', 'revenue', 'expenses', 'net');
+        $this->chartData = compact('labels', 'revenue', 'repayments', 'refunds', 'expenses', 'net');
     }
 
     public function render()
