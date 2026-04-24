@@ -5,474 +5,490 @@
         :session-id="$blockedSessionId"
     />
 @else
-<div x-data="{ expandedRow: null }">
-    <!-- KPI Summary Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <!-- Total Returns -->
-        <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div class="flex items-center space-x-2 mb-2">
-                <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                </div>
-                <span class="text-xs font-bold text-gray-500 uppercase">Total Returns</span>
-            </div>
-            <p class="text-2xl font-bold text-gray-900">{{ number_format($kpiStats['total_returns']) }}</p>
-            <p class="text-xs text-gray-500 mt-0.5">In selected period</p>
-        </div>
+<div style="font-family:var(--font);color:var(--text);">
 
-        <!-- Pending Approval -->
-        <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div class="flex items-center space-x-2 mb-2">
-                <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <span class="text-xs font-bold text-gray-500 uppercase">Pending</span>
-            </div>
-            <p class="text-2xl font-bold {{ $kpiStats['pending_count'] > 0 ? 'text-amber-600' : 'text-gray-900' }}">{{ number_format($kpiStats['pending_count']) }}</p>
-            <p class="text-xs text-gray-500 mt-0.5">Awaiting approval</p>
+    {{-- Flash messages --}}
+    @if (session()->has('error'))
+        <div style="margin-bottom:16px;padding:12px 16px;border-radius:10px;
+                    background:var(--red-dim);border:1px solid var(--red);
+                    font-size:13px;font-weight:600;color:var(--red);">
+            {{ session('error') }}
         </div>
+    @endif
+    @if (session()->has('success'))
+        <div style="margin-bottom:16px;padding:12px 16px;border-radius:10px;
+                    background:var(--green-dim);border:1px solid var(--green);
+                    font-size:13px;font-weight:600;color:var(--green);">
+            {{ session('success') }}
+        </div>
+    @endif
 
-        <!-- Total Refunds -->
-        <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div class="flex items-center space-x-2 mb-2">
-                <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <span class="text-xs font-bold text-gray-500 uppercase">Refunds</span>
-            </div>
-            <p class="text-2xl font-bold text-pink-600">
-                @if($kpiStats['total_refunds'] >= 1000000)
-                    {{ number_format($kpiStats['total_refunds']0000, 1) }}M
-                @elseif($kpiStats['total_refunds'] >= 1000)
-                    {{ number_format($kpiStats['total_refunds']0, 0) }}K
-                @else
-                    {{ number_format($kpiStats['total_refunds']) }}
-                @endif
+    {{-- ── HEADER ──────────────────────────────────────────────────────── --}}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+            <h1 style="font-size:22px;font-weight:800;color:var(--text);margin:0;">Returns</h1>
+            <p style="font-size:13px;color:var(--text-dim);margin:4px 0 0;">
+                @if ($isOwner) All shops · @endif
+                Refunds and exchanges
             </p>
-            <p class="text-xs text-gray-500 mt-0.5">Total refund value • RWF</p>
         </div>
-
-        <!-- Exchanges -->
-        <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div class="flex items-center space-x-2 mb-2">
-                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                    </svg>
-                </div>
-                <span class="text-xs font-bold text-gray-500 uppercase">Exchanges</span>
-            </div>
-            <p class="text-2xl font-bold text-blue-600">{{ number_format($kpiStats['exchange_count']) }}</p>
-            <p class="text-xs text-gray-500 mt-0.5">Product exchanges</p>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{{ $isOwner ? '6' : '5' }} gap-4">
-            <!-- Search -->
-            <div>
-                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Search</label>
-                <div class="relative">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input
-                        type="text"
-                        wire:model.live.debounce.300ms="search"
-                        placeholder="Return #, customer..."
-                        class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                    >
-                </div>
-            </div>
-
-            <!-- Status Filter -->
-            <div>
-                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Status</label>
-                <select
-                    wire:model.live="statusFilter"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                >
-                    <option value="all">All Statuses</option>
-                    <option value="pending">Pending Approval</option>
-                    <option value="approved">Approved</option>
-                </select>
-            </div>
-
-            <!-- Type Filter -->
-            <div>
-                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Type</label>
-                <select
-                    wire:model.live="typeFilter"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                >
-                    <option value="all">All Types</option>
-                    <option value="refund">Refunds Only</option>
-                    <option value="exchange">Exchanges Only</option>
-                </select>
-            </div>
-
-            <!-- Shop Filter (Owner Only) -->
-            @if($isOwner)
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Shop</label>
-                    <select
-                        wire:model.live="shopFilter"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                    >
-                        <option value="all">All Shops</option>
-                        @foreach($shops as $shop)
-                            <option value="{{ $shop->id }}">{{ $shop->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            @endif
-
-            <!-- Date From -->
-            <div>
-                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">From Date</label>
-                <input
-                    type="date"
-                    wire:model.live="dateFrom"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                >
-            </div>
-
-            <!-- Date To -->
-            <div>
-                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">To Date</label>
-                <input
-                    type="date"
-                    wire:model.live="dateTo"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                >
-            </div>
-        </div>
-
-        <!-- Reset Button -->
-        <div class="mt-4 flex justify-end">
-            <button
-                wire:click="resetFilters"
-                class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        @if (!$isOwner)
+            <a href="{{ route('shop.returns.create') }}"
+               style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;
+                      border-radius:10px;background:var(--accent);color:white;font-size:13px;
+                      font-weight:700;text-decoration:none;font-family:var(--font);">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor"
+                     viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-                Reset Filters
-            </button>
-        </div>
-    </div>
-
-    <!-- Returns Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Return #</th>
-                        @if($isOwner)
-                            <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden xl:table-cell">Shop</th>
-                        @endif
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Sale #</th>
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Customer</th>
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden md:table-cell">Reason</th>
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden lg:table-cell">Items</th>
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Refund</th>
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden md:table-cell">Date</th>
-                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($returns as $return)
-                        <tr class="hover:bg-gray-50 transition-colors cursor-pointer" @click="expandedRow === {{ $return->id }} ? expandedRow = null : expandedRow = {{ $return->id }}">
-                            <!-- Return Number -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap">
-                                <div class="text-sm font-bold text-gray-900">{{ $return->return_number }}</div>
-                            </td>
-
-                            <!-- Shop Name (Owner Only) -->
-                            @if($isOwner)
-                                <td class="px-4 lg:px-6 py-3 whitespace-nowrap hidden xl:table-cell">
-                                    <div class="text-sm font-medium text-gray-900">{{ $return->shop->name ?? 'Unknown' }}</div>
-                                </td>
-                            @endif
-
-                            <!-- Sale Number -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap hidden sm:table-cell">
-                                @if($return->sale_id && $return->sale)
-                                    <a href="{{ route('shop.sales.show', $return->sale_id) }}" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium" @click.stop>
-                                        {{ $return->sale->sale_number }}
-                                    </a>
-                                @else
-                                    <span class="text-sm text-gray-400">—</span>
-                                @endif
-                            </td>
-
-                            <!-- Customer -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $return->customer_name ?? 'Walk-in' }}</div>
-                                @if($return->customer_phone)
-                                    <div class="text-xs text-gray-500">{{ $return->customer_phone }}</div>
-                                @endif
-                            </td>
-
-                            <!-- Reason -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap hidden md:table-cell">
-                                @php
-                                    $reasonColors = [
-                                        'defective' => 'bg-red-100 text-red-700 border-red-300',
-                                        'wrong_item' => 'bg-orange-100 text-orange-700 border-orange-300',
-                                        'damaged' => 'bg-red-100 text-red-700 border-red-300',
-                                        'expired' => 'bg-gray-100 text-gray-700 border-gray-300',
-                                        'customer_request' => 'bg-blue-100 text-blue-700 border-blue-300',
-                                        'other' => 'bg-gray-100 text-gray-700 border-gray-300',
-                                    ];
-                                    $reasonColor = $reasonColors[$return->reason->value] ?? 'bg-gray-100 text-gray-700 border-gray-300';
-                                @endphp
-                                <span class="inline-flex px-2 py-0.5 rounded text-xs font-bold border {{ $reasonColor }}">
-                                    {{ $return->reason->label() }}
-                                </span>
-                            </td>
-
-                            <!-- Items Count -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap hidden lg:table-cell">
-                                <div class="text-sm font-medium text-gray-900">{{ $return->items->count() }} items</div>
-                                <div class="text-xs text-gray-500">{{ $return->items->sum('quantity_returned') }} qty</div>
-                            </td>
-
-                            <!-- Refund Amount -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap">
-                                @if($return->is_exchange)
-                                    <span class="inline-flex px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300">
-                                        Exchange
-                                    </span>
-                                @else
-                                    <div class="text-sm font-bold text-gray-900">RWF {{ number_format($return->refund_amount) }}</div>
-                                @endif
-                            </td>
-
-                            <!-- Status -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap">
-                                @if($return->approved_at)
-                                    <span class="inline-flex px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700 border border-green-300">
-                                        Approved
-                                    </span>
-                                @else
-                                    <span class="inline-flex px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300">
-                                        Pending
-                                    </span>
-                                @endif
-                            </td>
-
-                            <!-- Date -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap text-xs text-gray-600 hidden md:table-cell">
-                                {{ $return->processed_at->format('M d, Y') }}
-                                <div class="text-gray-400">{{ $return->processed_at->format('g:i A') }}</div>
-                            </td>
-
-                            <!-- Actions -->
-                            <td class="px-4 lg:px-6 py-3 whitespace-nowrap text-sm" @click.stop>
-                                <div class="flex items-center space-x-2">
-                                    <button
-                                        @click="expandedRow === {{ $return->id }} ? expandedRow = null : expandedRow = {{ $return->id }}"
-                                        class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
-                                    >
-                                        <span x-text="expandedRow === {{ $return->id }} ? 'Hide' : 'View'">View</span>
-                                        <svg class="w-3.5 h-3.5 ml-1 transition-transform" :class="{ 'rotate-180': expandedRow === {{ $return->id }} }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                        </svg>
-                                    </button>
-
-                                    @if(!$return->approved_at)
-                                        @php
-                                            $canApprove = auth()->user()->isOwner() ||
-                                                         (auth()->user()->isShopManager() && $return->refund_amount < 50000);
-                                        @endphp
-                                        @if($canApprove)
-                                            <button
-                                                wire:click="approveReturn({{ $return->id }})"
-                                                wire:loading.attr="disabled"
-                                                wire:target="approveReturn({{ $return->id }})"
-                                                class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-                                                title="{{ $return->refund_amount >= 50000 ? 'Owner approval required' : 'Approve return' }}"
-                                            >
-                                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                                <span wire:loading.remove wire:target="approveReturn({{ $return->id }})">Approve</span>
-                                                <span wire:loading wire:target="approveReturn({{ $return->id }})">...</span>
-                                            </button>
-                                        @endif
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- Expandable Detail Row -->
-                        <tr x-show="expandedRow === {{ $return->id }}" x-collapse x-cloak>
-                            <td colspan="{{ $isOwner ? '10' : '9' }}" class="px-4 lg:px-6 py-4 bg-gray-50 border-b border-gray-200">
-                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                                    <!-- Return Items -->
-                                    <div class="lg:col-span-2">
-                                        <h4 class="text-xs font-bold text-gray-600 uppercase mb-2">Returned Items</h4>
-                                        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                                            <table class="min-w-full divide-y divide-gray-200">
-                                                <thead class="bg-gray-50">
-                                                    <tr>
-                                                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600">Product</th>
-                                                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600">Returned</th>
-                                                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600">Good</th>
-                                                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600">Damaged</th>
-                                                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600">Type</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="divide-y divide-gray-100">
-                                                    @foreach($return->items as $item)
-                                                        <tr>
-                                                            <td class="px-3 py-2 text-sm text-gray-900 font-medium">{{ $item->product->name ?? 'Unknown' }}</td>
-                                                            <td class="px-3 py-2 text-sm text-gray-900">{{ $item->quantity_returned }}</td>
-                                                            <td class="px-3 py-2 text-sm text-green-600 font-medium">{{ $item->quantity_good }}</td>
-                                                            <td class="px-3 py-2 text-sm text-red-600 font-medium">{{ $item->quantity_damaged }}</td>
-                                                            <td class="px-3 py-2 text-sm">
-                                                                @if($item->is_replacement)
-                                                                    <span class="px-1.5 py-0.5 text-xs font-bold bg-blue-100 text-blue-700 rounded">Exchange</span>
-                                                                @else
-                                                                    <span class="px-1.5 py-0.5 text-xs font-bold bg-gray-100 text-gray-700 rounded">Refund</span>
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <!-- Return Details -->
-                                    <div class="space-y-3">
-                                        <h4 class="text-xs font-bold text-gray-600 uppercase mb-2">Details</h4>
-                                        <div class="bg-white rounded-lg border border-gray-200 p-3 space-y-2">
-                                            <div class="flex justify-between text-sm">
-                                                <span class="text-gray-500">Processed by</span>
-                                                <span class="font-medium text-gray-900">{{ $return->processedBy->name }}</span>
-                                            </div>
-                                            <div class="flex justify-between text-sm">
-                                                <span class="text-gray-500">Processed at</span>
-                                                <span class="font-medium text-gray-900">{{ $return->processed_at->format('M d, Y g:i A') }}</span>
-                                            </div>
-                                            @if($return->approved_at)
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-500">Approved by</span>
-                                                    <span class="font-medium text-gray-900">{{ $return->approvedBy->name ?? '—' }}</span>
-                                                </div>
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-500">Approved at</span>
-                                                    <span class="font-medium text-gray-900">{{ $return->approved_at->format('M d, Y g:i A') }}</span>
-                                                </div>
-                                            @endif
-                                            @if($return->notes)
-                                                <div class="pt-2 border-t border-gray-100">
-                                                    <span class="text-xs font-bold text-gray-500 uppercase">Notes</span>
-                                                    <p class="text-sm text-gray-700 mt-1">{{ $return->notes }}</p>
-                                                </div>
-                                            @endif
-                                        </div>
-
-                                        <!-- Approval Actions -->
-                                        @if(!$return->approved_at)
-                                            @php
-                                                $canApprove = auth()->user()->isOwner() ||
-                                                             (auth()->user()->isShopManager() && $return->refund_amount < 50000);
-                                                $requiresOwner = $return->refund_amount >= 50000;
-                                            @endphp
-
-                                            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
-                                                <div class="flex items-start space-x-2">
-                                                    <svg class="w-4 h-4 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                    </svg>
-                                                    <div class="flex-1">
-                                                        <p class="text-xs font-bold text-amber-800 uppercase mb-1">Pending Approval</p>
-                                                        @if($requiresOwner && !auth()->user()->isOwner())
-                                                            <p class="text-xs text-amber-700">
-                                                                Large refund (RWF {{ number_format($return->refund_amount) }}) requires owner approval.
-                                                            </p>
-                                                        @elseif($canApprove)
-                                                            <p class="text-xs text-amber-700 mb-2">
-                                                                @if($requiresOwner)
-                                                                    Large refund - owner approval required
-                                                                @else
-                                                                    This return is ready for approval
-                                                                @endif
-                                                            </p>
-                                                            <button
-                                                                wire:click="approveReturn({{ $return->id }})"
-                                                                wire:loading.attr="disabled"
-                                                                wire:target="approveReturn({{ $return->id }})"
-                                                                class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-                                                            >
-                                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                                </svg>
-                                                                <span wire:loading.remove wire:target="approveReturn({{ $return->id }})">Approve Return</span>
-                                                                <span wire:loading wire:target="approveReturn({{ $return->id }})">Approving...</span>
-                                                            </button>
-                                                        @else
-                                                            <p class="text-xs text-amber-700">
-                                                                Waiting for {{ $requiresOwner ? 'owner' : 'manager' }} approval.
-                                                            </p>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ $isOwner ? '10' : '9' }}" class="px-6 py-16 text-center">
-                                <div class="flex flex-col items-center">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                        </svg>
-                                    </div>
-                                    <h3 class="text-sm font-bold text-gray-900">No returns found</h3>
-                                    <p class="mt-1 text-sm text-gray-500">No returns match your current filters.</p>
-                                    <div class="mt-4">
-                                        <a href="{{ route('shop.returns.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                            </svg>
-                                            Process Return
-                                        </a>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination -->
-        @if($returns->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200">
-                {{ $returns->links() }}
-            </div>
+                Process Return
+            </a>
         @endif
     </div>
 
+    {{-- ── KPI STRIP ────────────────────────────────────────────────────── --}}
+    <div class="rl-kpi" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        @foreach ([
+            ['Total Returns',    $kpiStats['total_returns']    ?? 0, null,  'var(--text)'],
+            ['Cash Refunds',     $kpiStats['total_refunds']    ?? 0, 'RWF', 'var(--red)'],
+            ['Exchanges',        $kpiStats['exchange_count']   ?? 0, null,  'var(--accent)'],
+            ['Pending Approval', $kpiStats['pending_approval'] ?? 0, null,  'var(--amber)'],
+        ] as [$label, $value, $unit, $color])
+            <div style="background:var(--surface-raised);border:1px solid var(--border);
+                        border-radius:12px;padding:14px 16px;">
+                <div style="font-size:11px;font-weight:600;color:var(--text-dim);
+                            text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+                    {{ $label }}
+                </div>
+                <div style="font-size:22px;font-weight:800;color:{{ $color }};
+                            font-family:var(--font-mono);letter-spacing:-0.5px;">
+                    {{ $unit === 'RWF' ? number_format($value) : $value }}
+                    @if ($unit)
+                        <span style="font-size:12px;font-weight:400;color:var(--text-dim);">
+                            {{ $unit }}
+                        </span>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- ── PENDING APPROVALS BANNER (owner only) ───────────────────────── --}}
+    @if ($isOwner && ($kpiStats['pending_approval'] ?? 0) > 0)
+        <div style="padding:12px 16px;border-radius:10px;background:var(--amber-dim);
+                    border:1px solid var(--amber);margin-bottom:16px;
+                    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <svg style="width:18px;height:18px;color:var(--amber);flex-shrink:0;"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-1.964-1.333-2.732 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span style="font-size:13px;font-weight:600;color:var(--amber);">
+                    {{ $kpiStats['pending_approval'] }} return(s) waiting for your approval
+                </span>
+            </div>
+            <button wire:click="$set('statusFilter', 'pending_approval')"
+                    style="font-size:12px;font-weight:600;color:var(--amber);
+                           background:transparent;border:1.5px solid var(--amber);
+                           border-radius:6px;padding:5px 12px;cursor:pointer;font-family:var(--font);">
+                View Pending
+            </button>
+        </div>
+    @endif
+
+    {{-- ── FILTER BAR ───────────────────────────────────────────────────── --}}
+    <div class="rl-filters" style="display:grid;
+                grid-template-columns:2fr 1fr 1fr 1fr{{ $isOwner ? ' 1fr' : '' }};
+                gap:10px;margin-bottom:16px;align-items:end;">
+
+        <div style="position:relative;">
+            <input type="text"
+                   wire:model.live.debounce.300ms="search"
+                   placeholder="Return number, customer..."
+                   style="width:100%;padding:9px 12px 9px 36px;border-radius:8px;font-size:13px;
+                          background:var(--surface-raised);border:1px solid var(--border);
+                          color:var(--text);box-sizing:border-box;transition:border-color 0.15s;"
+                   onfocus="this.style.borderColor='var(--accent)';"
+                   onblur="this.style.borderColor='var(--border)';">
+            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+                        width:15px;height:15px;color:var(--text-dim);" fill="none"
+                 stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </div>
+
+        <select wire:model.live="statusFilter"
+                style="padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;
+                       background:var(--surface-raised);border:1px solid var(--border);
+                       color:var(--text);cursor:pointer;font-family:var(--font);
+                       transition:border-color 0.15s;"
+                onfocus="this.style.borderColor='var(--accent)';"
+                onblur="this.style.borderColor='var(--border)';">
+            <option value="all">All Status</option>
+            <option value="pending_approval">Pending Approval</option>
+            <option value="approved">Approved</option>
+        </select>
+
+        <select wire:model.live="typeFilter"
+                style="padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;
+                       background:var(--surface-raised);border:1px solid var(--border);
+                       color:var(--text);cursor:pointer;font-family:var(--font);
+                       transition:border-color 0.15s;"
+                onfocus="this.style.borderColor='var(--accent)';"
+                onblur="this.style.borderColor='var(--border)';">
+            <option value="all">All Types</option>
+            <option value="refund">Refunds</option>
+            <option value="exchange">Exchanges</option>
+        </select>
+
+        <input type="date"
+               wire:model.live="dateFrom"
+               style="padding:9px 12px;border-radius:8px;font-size:12px;
+                      background:var(--surface-raised);border:1px solid var(--border);
+                      color:var(--text);transition:border-color 0.15s;"
+               onfocus="this.style.borderColor='var(--accent)';"
+               onblur="this.style.borderColor='var(--border)';">
+
+        @if ($isOwner)
+            <select wire:model.live="shopFilter"
+                    style="padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;
+                           background:var(--surface-raised);border:1px solid var(--border);
+                           color:var(--text);cursor:pointer;font-family:var(--font);
+                           transition:border-color 0.15s;"
+                    onfocus="this.style.borderColor='var(--accent)';"
+                    onblur="this.style.borderColor='var(--border)';">
+                <option value="all">All Shops</option>
+                @foreach ($shops as $shop)
+                    <option value="{{ $shop->id }}">{{ $shop->name }}</option>
+                @endforeach
+            </select>
+        @endif
+    </div>
+
+    {{-- ── RETURNS TABLE ────────────────────────────────────────────────── --}}
+    <div style="background:var(--surface-raised);border:1px solid var(--border);
+                border-radius:14px;overflow:hidden;"
+         x-data="{ expandedRow: null }">
+
+        {{-- Column header --}}
+        <div class="rl-row-grid" style="display:grid;
+                    grid-template-columns:140px {{ $isOwner ? '120px ' : '' }}1fr 90px 110px 70px 80px 110px;
+                    padding:10px 16px;border-bottom:2px solid var(--border);
+                    background:var(--surface);">
+            @foreach (array_filter([
+                'Return #',
+                $isOwner ? 'Shop' : null,
+                'Customer',
+                'Type',
+                'Refund',
+                'Items',
+                'Date',
+                'Actions',
+            ]) as $col)
+                <div style="font-size:10px;font-weight:700;color:var(--text-dim);
+                            text-transform:uppercase;letter-spacing:0.5px;">
+                    {{ $col }}
+                </div>
+            @endforeach
+        </div>
+
+        {{-- Rows --}}
+        @forelse ($returns as $return)
+            @php
+                $reasonStyles = [
+                    'defective'        => 'background:var(--red-dim);color:var(--red);',
+                    'damaged'          => 'background:var(--red-dim);color:var(--red);',
+                    'wrong_item'       => 'background:var(--amber-dim);color:var(--amber);',
+                    'expired'          => 'background:var(--surface);color:var(--text-dim);border:1px solid var(--border);',
+                    'customer_request' => 'background:var(--accent-dim);color:var(--accent);',
+                    'other'            => 'background:var(--surface);color:var(--text-dim);border:1px solid var(--border);',
+                ];
+            @endphp
+
+            <div style="border-bottom:1px solid var(--border);">
+
+                {{-- Main row --}}
+                <div class="rl-row-grid" style="display:grid;
+                            grid-template-columns:140px {{ $isOwner ? '120px ' : '' }}1fr 90px 110px 70px 80px 110px;
+                            padding:12px 16px;cursor:pointer;transition:background 0.1s;"
+                     onmouseover="this.style.background='var(--surface)';"
+                     onmouseout="this.style.background='transparent';"
+                     @click="expandedRow === {{ $return->id }} ? expandedRow = null : expandedRow = {{ $return->id }}">
+
+                    {{-- Return number --}}
+                    <div style="font-size:12px;font-weight:700;color:var(--text);
+                                font-family:var(--font-mono);">
+                        {{ $return->return_number }}
+                    </div>
+
+                    {{-- Shop (owner only) --}}
+                    @if ($isOwner)
+                        <div style="font-size:12px;color:var(--text-dim);">
+                            {{ $return->shop->name ?? '—' }}
+                        </div>
+                    @endif
+
+                    {{-- Customer --}}
+                    <div>
+                        <div style="font-size:12px;font-weight:600;color:var(--text);">
+                            {{ $return->customer_name ?? 'Walk-in' }}
+                        </div>
+                        @if ($return->customer_phone)
+                            <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">
+                                {{ $return->customer_phone }}
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Type badge --}}
+                    <div>
+                        <span style="padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;
+                                     {{ $return->is_exchange
+                                         ? 'background:var(--accent-dim);color:var(--accent);'
+                                         : 'background:var(--green-dim);color:var(--green);' }}">
+                            {{ $return->is_exchange ? 'Exchange' : 'Refund' }}
+                        </span>
+                    </div>
+
+                    {{-- Refund amount --}}
+                    <div style="font-size:12px;font-weight:700;
+                                color:{{ $return->is_exchange ? 'var(--text-dim)' : 'var(--red)' }};
+                                font-family:var(--font-mono);">
+                        @if ($return->is_exchange)
+                            —
+                        @else
+                            {{ number_format($return->refund_amount) }}
+                            <span style="font-size:10px;font-weight:400;font-family:var(--font);
+                                         color:var(--text-dim);">RWF</span>
+                        @endif
+                    </div>
+
+                    {{-- Items --}}
+                    <div style="font-size:12px;color:var(--text-dim);">
+                        {{ $return->items->count() }}
+                    </div>
+
+                    {{-- Date --}}
+                    <div>
+                        <div style="font-size:11px;color:var(--text);">
+                            {{ $return->processed_at->format('d M Y') }}
+                        </div>
+                        <div style="font-size:10px;color:var(--text-faint);margin-top:1px;">
+                            {{ $return->processed_at->format('H:i') }}
+                        </div>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div @click.stop style="display:flex;align-items:center;gap:6px;">
+                        @if ($isOwner && !$return->approved_at)
+                            <button wire:click="approveReturn({{ $return->id }})"
+                                    wire:confirm="Approve return {{ $return->return_number }}?"
+                                    wire:loading.attr="disabled"
+                                    wire:target="approveReturn({{ $return->id }})"
+                                    style="padding:5px 10px;border-radius:6px;font-size:11px;
+                                           font-weight:700;border:1.5px solid var(--green);
+                                           color:var(--green);background:var(--green-dim);
+                                           cursor:pointer;font-family:var(--font);">
+                                <span wire:loading.remove wire:target="approveReturn({{ $return->id }})">Approve</span>
+                                <span wire:loading wire:target="approveReturn({{ $return->id }})" style="display:none;">…</span>
+                            </button>
+                        @elseif ($return->approved_at)
+                            <span style="font-size:10px;font-weight:600;color:var(--green);">
+                                ✓ Approved
+                            </span>
+                        @else
+                            <span style="font-size:10px;color:var(--text-faint);">
+                                Pending
+                            </span>
+                        @endif
+                        <button @click="expandedRow === {{ $return->id }} ? expandedRow = null : expandedRow = {{ $return->id }}"
+                                style="width:24px;height:24px;border-radius:6px;border:1px solid var(--border);
+                                       background:transparent;display:flex;align-items:center;justify-content:center;
+                                       cursor:pointer;color:var(--text-dim);">
+                            <svg style="width:12px;height:12px;transition:transform 0.2s;"
+                                 :style="expandedRow === {{ $return->id }} ? 'transform:rotate(180deg)' : ''"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                </div>{{-- end main row --}}
+
+                {{-- Expanded detail --}}
+                <div x-show="expandedRow === {{ $return->id }}"
+                     x-cloak
+                     style="padding:14px 16px 16px;background:var(--surface);
+                            border-top:1px solid var(--border);">
+
+                    <div class="rl-detail" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+
+                        {{-- Items breakdown --}}
+                        <div>
+                            <div style="font-size:10px;font-weight:700;color:var(--text-dim);
+                                        text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+                                Returned Items
+                            </div>
+                            @foreach ($return->items as $item)
+                                <div style="display:flex;justify-content:space-between;
+                                            padding:6px 0;border-bottom:1px solid var(--border);
+                                            font-size:12px;">
+                                    <span style="color:var(--text);">
+                                        {{ $item->product->name ?? '—' }}
+                                    </span>
+                                    <div style="text-align:right;flex-shrink:0;">
+                                        <span style="color:var(--text);font-weight:600;">
+                                            ×{{ $item->quantity_returned }}
+                                        </span>
+                                        @if ($item->quantity_damaged > 0)
+                                            <span style="color:var(--red);font-size:10px;margin-left:4px;">
+                                                ({{ $item->quantity_damaged }} dmg)
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Return info --}}
+                        <div>
+                            <div style="font-size:10px;font-weight:700;color:var(--text-dim);
+                                        text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+                                Details
+                            </div>
+                            <div style="font-size:12px;color:var(--text-dim);line-height:1.8;">
+                                <div>Reason:
+                                    <span style="color:var(--text);font-weight:600;">
+                                        {{ ucfirst(str_replace('_', ' ', $return->reason->value ?? $return->reason)) }}
+                                    </span>
+                                </div>
+                                @if (!$return->is_exchange)
+                                    <div>Refund via:
+                                        <span style="color:var(--text);font-weight:600;">
+                                            {{ ucfirst(str_replace('_', ' ', $return->refund_method ?? '—')) }}
+                                        </span>
+                                    </div>
+                                @endif
+                                @if ($return->sale)
+                                    <div>Sale:
+                                        <span style="color:var(--accent);font-weight:600;">
+                                            {{ $return->sale->sale_number }}
+                                        </span>
+                                    </div>
+                                @endif
+                                <div>By:
+                                    <span style="color:var(--text);font-weight:600;">
+                                        {{ $return->processedBy->name ?? '—' }}
+                                    </span>
+                                </div>
+                                @if ($return->notes)
+                                    <div style="margin-top:6px;padding:6px 8px;border-radius:6px;
+                                                background:var(--surface-raised);color:var(--text-dim);
+                                                font-size:11px;line-height:1.5;">
+                                        {{ $return->notes }}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Approval status --}}
+                        <div>
+                            <div style="font-size:10px;font-weight:700;color:var(--text-dim);
+                                        text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+                                Approval
+                            </div>
+                            @if ($return->approved_at)
+                                <div style="padding:10px 12px;border-radius:8px;
+                                            background:var(--green-dim);border:1px solid var(--green);">
+                                    <div style="font-size:12px;font-weight:700;color:var(--green);">
+                                        ✓ Approved
+                                    </div>
+                                    <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">
+                                        By {{ $return->approvedBy->name ?? '—' }}
+                                        · {{ $return->approved_at->format('d M Y') }}
+                                    </div>
+                                </div>
+                            @else
+                                <div style="padding:10px 12px;border-radius:8px;
+                                            background:var(--amber-dim);border:1px solid var(--amber);">
+                                    <div style="font-size:12px;font-weight:600;color:var(--amber);">
+                                        Pending approval
+                                    </div>
+                                    @if ($isOwner)
+                                        <button wire:click="approveReturn({{ $return->id }})"
+                                                wire:confirm="Approve this return?"
+                                                wire:loading.attr="disabled"
+                                                wire:target="approveReturn({{ $return->id }})"
+                                                style="margin-top:8px;width:100%;padding:7px;
+                                                       border-radius:6px;font-size:11px;font-weight:700;
+                                                       border:1.5px solid var(--green);color:var(--green);
+                                                       background:var(--green-dim);cursor:pointer;
+                                                       font-family:var(--font);">
+                                            <span wire:loading.remove wire:target="approveReturn({{ $return->id }})">Approve Now</span>
+                                            <span wire:loading wire:target="approveReturn({{ $return->id }})" style="display:none;">Approving…</span>
+                                        </button>
+                                    @else
+                                        <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">
+                                            Awaiting owner review
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>{{-- end row wrapper --}}
+
+        @empty
+            <div style="padding:48px;text-align:center;">
+                <div style="font-size:32px;margin-bottom:12px;">📦</div>
+                <div style="font-size:14px;font-weight:600;color:var(--text);">No returns found</div>
+                <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">
+                    No returns match your current filters.
+                </div>
+                @if (!$isOwner)
+                    <a href="{{ route('shop.returns.create') }}"
+                       style="display:inline-flex;align-items:center;gap:6px;margin-top:16px;
+                              padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;
+                              background:var(--accent);color:white;text-decoration:none;">
+                        <svg style="width:13px;height:13px;" fill="none" stroke="currentColor"
+                             viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Process Return
+                    </a>
+                @endif
+            </div>
+        @endforelse
+
+        {{-- Pagination --}}
+        @if ($returns->hasPages())
+            <div style="padding:14px 16px;border-top:1px solid var(--border);">
+                {{ $returns->links() }}
+            </div>
+        @endif
+
+    </div>{{-- end table container --}}
+
     <style>
         [x-cloak] { display: none !important; }
+
+        @media (max-width: 1024px) {
+            .rl-kpi { grid-template-columns: repeat(2,1fr) !important; }
+            .rl-filters { grid-template-columns: 1fr 1fr !important; }
+            .rl-row-grid { grid-template-columns: 130px 1fr 90px 110px 80px 110px !important; }
+        }
+        @media (max-width: 640px) {
+            .rl-kpi { grid-template-columns: repeat(2,1fr) !important; }
+            .rl-filters { grid-template-columns: 1fr !important; }
+            .rl-row-grid { grid-template-columns: 120px 1fr 90px 80px !important; }
+            .rl-detail { grid-template-columns: 1fr !important; }
+        }
     </style>
+
 </div>
 @endif

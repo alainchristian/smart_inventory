@@ -4,7 +4,6 @@ namespace App\Livewire\Shop\Returns;
 
 use App\Models\ReturnModel;
 use App\Models\Shop;
-use App\Services\Returns\ReturnService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -115,33 +114,23 @@ class ReturnList extends Component
         $this->resetPage();
     }
 
-    public function approveReturn($returnId)
+    public function approveReturn(int $returnId): void
     {
-        $return = ReturnModel::findOrFail($returnId);
-
-        // Check authorization
         $user = auth()->user();
 
-        // Shop managers can approve small returns (<50,000 RWF)
-        // Only owners can approve large returns (>=50,000 RWF)
-        if ($return->refund_amount >= 50000 && !$user->isOwner()) {
-            session()->flash('error', 'Only the owner can approve large refunds (>=RWF 500).');
-            return;
+        if (! $user->isOwner()) {
+            abort(403);
         }
 
-        // Verify return belongs to this shop (only for shop managers)
-        if (!$this->isOwner && $return->shop_id !== $this->shopId) {
-            session()->flash('error', 'You can only approve returns from your shop.');
-            return;
-        }
+        $return = ReturnModel::findOrFail($returnId);
 
         try {
-            $returnService = app(ReturnService::class);
-            $returnService->approveReturn($return, $user);
+            app(\App\Services\Returns\ReturnService::class)
+                ->approveReturn($return, $user);
 
-            session()->flash('success', "Return {$return->return_number} approved successfully.");
+            session()->flash('success', 'Return ' . $return->return_number . ' approved.');
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to approve return: ' . $e->getMessage());
+            session()->flash('error', $e->getMessage());
         }
     }
 
@@ -170,10 +159,11 @@ class ReturnList extends Component
         }
 
         return [
-            'total_returns' => (clone $baseQuery)->count(),
-            'pending_count' => (clone $baseQuery)->pendingApproval()->count(),
-            'total_refunds' => (clone $baseQuery)->refunds()->sum('refund_amount'),
-            'exchange_count' => (clone $baseQuery)->exchanges()->count(),
+            'total_returns'    => (clone $baseQuery)->count(),
+            'pending_count'    => (clone $baseQuery)->pendingApproval()->count(),
+            'pending_approval' => (clone $baseQuery)->whereNull('approved_at')->whereNull('approved_by')->count(),
+            'total_refunds'    => (clone $baseQuery)->refunds()->sum('refund_amount'),
+            'exchange_count'   => (clone $baseQuery)->exchanges()->count(),
         ];
     }
 
@@ -196,8 +186,8 @@ class ReturnList extends Component
         }
 
         // Apply status filter
-        if ($this->statusFilter === 'pending') {
-            $query->pendingApproval();
+        if ($this->statusFilter === 'pending_approval' || $this->statusFilter === 'pending') {
+            $query->whereNull('approved_at')->whereNull('approved_by');
         } elseif ($this->statusFilter === 'approved') {
             $query->approved();
         }

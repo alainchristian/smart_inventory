@@ -11,11 +11,9 @@ use App\Models\Alert;
 use App\Models\ReturnModel;
 use App\Services\Returns\ReturnService;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 class ProcessReturn extends Component
 {
-    use WithFileUploads;
     use \App\Livewire\Concerns\RequiresOpenSession;
     // Shop
     public $shopId;
@@ -34,9 +32,6 @@ class ProcessReturn extends Component
 
     // Return items — selected from the sale
     public $items = [];
-
-    // Photo uploads for damaged items (indexed by item index)
-    public $itemPhotos = [];
 
     // Return details
     public $reason = 'customer_request';
@@ -66,7 +61,6 @@ class ProcessReturn extends Component
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.quantity_returned' => 'required|integer|min:1',
         'items.*.quantity_damaged' => 'required|integer|min:0',
-        'itemPhotos.*' => 'nullable|image|max:2048', // Max 2MB per photo
     ];
 
     protected $messages = [
@@ -236,7 +230,6 @@ class ProcessReturn extends Component
         $this->showSaleSearchDropdown = false;
         $this->showQuickSales = false;
         $this->items = [];
-        $this->itemPhotos = [];
         $this->saleAgeWarning = false;
         $this->existingReturnWarning = null;
         $this->currentStep = 1;
@@ -254,11 +247,9 @@ class ProcessReturn extends Component
         });
 
         if ($existingIndex !== false) {
-            // Remove it and its photo
+            // Remove it
             unset($this->items[$existingIndex]);
-            unset($this->itemPhotos[$existingIndex]);
             $this->items = array_values($this->items);
-            $this->itemPhotos = array_values($this->itemPhotos);
         } else {
             // Load sale fresh to get the item
             $sale = $this->getLinkedSale();
@@ -311,19 +302,6 @@ class ProcessReturn extends Component
     {
         if (isset($this->items[$index])) {
             $this->items[$index]['condition_notes'] = $value;
-        }
-    }
-
-    public function updatedItemPhotos($value, $key)
-    {
-        // Validate photo when uploaded
-        $this->validateOnly("itemPhotos.{$key}");
-    }
-
-    public function removePhoto($index)
-    {
-        if (isset($this->itemPhotos[$index])) {
-            unset($this->itemPhotos[$index]);
         }
     }
 
@@ -394,17 +372,9 @@ class ProcessReturn extends Component
 
             $returnService = app(ReturnService::class);
 
-            // Process photos and add paths to items
             $itemsWithPhotos = $this->items;
-            foreach ($itemsWithPhotos as $index => &$item) {
-                if (isset($this->itemPhotos[$index]) && $this->itemPhotos[$index]) {
-                    // Store photo in public/storage/returns folder
-                    $photo = $this->itemPhotos[$index];
-                    $path = $photo->store('returns', 'public');
-                    $item['photo_path'] = $path;
-                } else {
-                    $item['photo_path'] = null;
-                }
+            foreach ($itemsWithPhotos as &$item) {
+                $item['photo_path'] = null;
             }
 
             $data = [

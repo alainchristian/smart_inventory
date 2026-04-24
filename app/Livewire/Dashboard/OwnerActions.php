@@ -197,6 +197,41 @@ class OwnerActions extends Component
             }
         }
 
+        // ── 5b. Pending return approvals (all, not threshold-filtered) ───────
+        $allPendingReturns = \App\Models\ReturnModel::with(['shop', 'processedBy'])
+            ->whereNull('approved_at')
+            ->whereNull('approved_by')
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+
+        if ($allPendingReturns->isNotEmpty()) {
+            $sections[] = [
+                'type'  => 'pending_returns',
+                'label' => 'Returns Awaiting Approval',
+                'icon'  => 'return',
+                'color' => 'var(--amber)',
+                'bg'    => 'var(--amber-dim)',
+                'count' => \App\Models\ReturnModel::whereNull('approved_at')
+                               ->whereNull('approved_by')->count(),
+                'items' => $allPendingReturns->map(fn($r) => [
+                    'id'          => $r->id,
+                    'title'       => $r->return_number,
+                    'subtitle'    => ($r->shop->name ?? '—')
+                                   . ' · '
+                                   . ($r->customer_name ?? 'Walk-in')
+                                   . ' · '
+                                   . $r->created_at->diffForHumans(),
+                    'value'       => $r->is_exchange
+                                     ? 'Exchange'
+                                     : number_format($r->refund_amount) . ' RWF',
+                    'value_color' => $r->is_exchange ? 'var(--accent)' : 'var(--red)',
+                    'age'         => $r->created_at->diffForHumans(),
+                    'link'        => route('shop.returns.index') . '?statusFilter=pending_approval',
+                ])->toArray(),
+            ];
+        }
+
         // ── 6. Pending price override approvals (was 5) ──────────────────────
         $pendingOverrides = DB::table('sales')
             ->join('users as seller', 'sales.sold_by', '=', 'seller.id')
