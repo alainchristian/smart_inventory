@@ -79,6 +79,14 @@ class SettingsSeeder extends Seeder
                 'label'       => 'Maximum outstanding credit per customer (RWF)',
                 'description' => 'Block new credit sales if customer already owes this amount. Set to 0 for no limit.',
             ],
+            [
+                'key'         => 'overdue_credit_days',
+                'value'       => '14',
+                'type'        => 'integer',
+                'group'       => 'credit',
+                'label'       => 'Overdue credit threshold (days)',
+                'description' => 'Flag a customer as overdue if they have an outstanding balance and no repayment activity in this many days. Set to 0 to disable overdue flagging.',
+            ],
 
             // ── Price Override ──────────────────────────────────────────────
             [

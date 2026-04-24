@@ -1251,9 +1251,9 @@
         <div>
           <div class="sm-label">Qty</div>
           <div class="sm-stepper">
-            <button wire:click="$set('stagingQty', max(1, stagingQty - 1))" class="sm-step-btn">&minus;</button>
+            <button wire:click="decrementStagingQty" class="sm-step-btn">&minus;</button>
             <input wire:model.live="stagingQty" type="number" min="1" class="sm-qty-input">
-            <button wire:click="$set('stagingQty', stagingQty + 1)" class="sm-step-btn">+</button>
+            <button wire:click="incrementStagingQty" class="sm-step-btn">+</button>
           </div>
         </div>
 
@@ -1673,8 +1673,10 @@
         @else
         <div class="co-search-wrap">
           <input wire:model.live="customerSearch" type="text"
+                 wire:focus="openCustomerSearch"
                  placeholder="Search by name or phone…"
-                 class="co-search-input">
+                 class="co-search-input"
+                 autocomplete="off">
           @if($showCustomerSearch && count($customerResults) > 0)
           <div class="co-search-dropdown">
             @foreach($customerResults as $customer)

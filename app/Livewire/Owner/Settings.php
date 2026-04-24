@@ -21,6 +21,7 @@ class Settings extends Component
     public bool $allowCreditSales       = true;
     public bool $creditRequiresCustomer = true;
     public int  $maxCreditPerCustomer   = 0;
+    public int  $overdueCreditDays      = 14;
 
     // Price
     public bool $allowPriceOverride       = true;
@@ -44,6 +45,7 @@ class Settings extends Component
         $this->allowCreditSales          = $svc->allowCreditSales();
         $this->creditRequiresCustomer    = $svc->creditRequiresCustomer();
         $this->maxCreditPerCustomer      = $svc->maxCreditPerCustomer();
+        $this->overdueCreditDays         = $svc->overdueCreditDays();
         $this->allowPriceOverride        = $svc->allowPriceOverride();
         $this->priceOverrideThreshold    = $svc->priceOverrideThreshold();
         $this->allowCardPayment          = $svc->allowCardPayment();
@@ -56,6 +58,7 @@ class Settings extends Component
             'returnApprovalThreshold' => 'required|integer|min:0',
             'maxReturnDays'           => 'required|integer|min:0',
             'maxCreditPerCustomer'    => 'required|integer|min:0',
+            'overdueCreditDays'       => 'required|integer|min:0|max:365',
             'priceOverrideThreshold'  => 'required|integer|min:1|max:100',
         ]);
 
@@ -69,6 +72,7 @@ class Settings extends Component
         $svc->set('allow_credit_sales',           $this->allowCreditSales);
         $svc->set('credit_requires_customer',     $this->creditRequiresCustomer);
         $svc->set('max_credit_per_customer',      $this->maxCreditPerCustomer);
+        $svc->set('overdue_credit_days',          $this->overdueCreditDays);
         $svc->set('allow_price_override',         $this->allowPriceOverride);
         $svc->set('price_override_threshold',     $this->priceOverrideThreshold);
         $svc->set('allow_card_payment',           $this->allowCardPayment);

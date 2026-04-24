@@ -114,4 +114,9 @@ class SettingsService
     {
         return (bool) $this->get('allow_bank_transfer_payment', false);
     }
+
+    public function overdueCreditDays(): int
+    {
+        return (int) $this->get('overdue_credit_days', 14);
+    }
 }

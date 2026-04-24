@@ -657,6 +657,17 @@ class PointOfSale extends Component
         }
     }
 
+    public function incrementStagingQty(): void
+    {
+        $this->stagingQty++;
+        $this->updatedStagingQty();
+    }
+
+    public function decrementStagingQty(): void
+    {
+        $this->stagingQty = max(1, $this->stagingQty - 1);
+    }
+
     /**
      * Commit the staged product to the cart.
      * Called when user clicks "Add to Cart" in the modal.
@@ -939,12 +950,28 @@ class PointOfSale extends Component
     /**
      * Reactive search for customers by phone or name.
      */
-    public function updatedCustomerSearch()
+    public function openCustomerSearch(): void
+    {
+        $this->showCustomerSearch = true;
+
+        if (count($this->customerResults) === 0) {
+            $this->customerResults = \App\Models\Customer::orderBy('name')
+                ->limit(20)
+                ->get(['id', 'name', 'phone', 'outstanding_balance'])
+                ->toArray();
+        }
+    }
+
+    public function updatedCustomerSearch(): void
     {
         $q = trim($this->customerSearch);
 
-        if (strlen($q) < 2) {
-            $this->customerResults = [];
+        if (strlen($q) < 1) {
+            $this->customerResults = \App\Models\Customer::orderBy('name')
+                ->limit(20)
+                ->get(['id', 'name', 'phone', 'outstanding_balance'])
+                ->toArray();
+            $this->showCustomerSearch = true;
             return;
         }
 

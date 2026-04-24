@@ -12,7 +12,7 @@ use Livewire\Component;
 class AddBankDeposit extends Component
 {
     public int    $dailySessionId = 0;
-    public int    $amount         = 0;
+    public string $amount         = '';
     public string $source         = 'cash';
     public string $bankReference  = '';
     public string $notes          = '';
@@ -32,7 +32,7 @@ class AddBankDeposit extends Component
     public function saveDeposit(): void
     {
         $this->validate([
-            'amount'        => 'required|integer|min:1',
+            'amount'        => 'required|numeric|min:1',
             'source'        => 'required|in:cash,mobile_money',
             'bankReference' => 'nullable|string|max:100',
             'notes'         => 'nullable|string|max:500',
@@ -43,7 +43,7 @@ class AddBankDeposit extends Component
 
         try {
             app(BankDepositService::class)->recordDeposit($session, [
-                'amount'         => $this->amount,
+                'amount'         => (int) $this->amount,
                 'source'         => $this->source,
                 'bank_reference' => $this->bankReference ?: null,
                 'notes'          => $this->notes ?: null,

@@ -10,8 +10,8 @@ use Livewire\Component;
 class AddWithdrawal extends Component
 {
     public int    $dailySessionId = 0;
-    public int    $cashAmount     = 0;
-    public int    $momoAmount     = 0;
+    public string $cashAmount     = '';
+    public string $momoAmount     = '';
     public string $momoReference  = '';
     public string $reason         = '';
 
@@ -30,13 +30,13 @@ class AddWithdrawal extends Component
     public function saveWithdrawal(): void
     {
         $this->validate([
-            'cashAmount'    => 'integer|min:0',
-            'momoAmount'    => 'integer|min:0',
+            'cashAmount'    => 'nullable|numeric|min:0',
+            'momoAmount'    => 'nullable|numeric|min:0',
             'momoReference' => 'nullable|string|max:100',
             'reason'        => 'required|string|max:500',
         ]);
 
-        if ($this->cashAmount === 0 && $this->momoAmount === 0) {
+        if ((int) $this->cashAmount === 0 && (int) $this->momoAmount === 0) {
             $this->addError('cashAmount', 'Enter at least one amount (cash or MoMo).');
             return;
         }
@@ -47,17 +47,17 @@ class AddWithdrawal extends Component
 
         try {
             DB::transaction(function () use ($session, $user, $svc) {
-                if ($this->cashAmount > 0) {
+                if ((int) $this->cashAmount > 0) {
                     $svc->recordWithdrawal($session, [
-                        'amount' => $this->cashAmount,
+                        'amount' => (int) $this->cashAmount,
                         'reason' => $this->reason,
                         'method' => 'cash',
                     ], $user);
                 }
 
-                if ($this->momoAmount > 0) {
+                if ((int) $this->momoAmount > 0) {
                     $svc->recordWithdrawal($session, [
-                        'amount'         => $this->momoAmount,
+                        'amount'         => (int) $this->momoAmount,
                         'reason'         => $this->reason,
                         'method'         => 'mobile_money',
                         'momo_reference' => $this->momoReference ?: null,

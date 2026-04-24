@@ -11,7 +11,7 @@ class AddExpense extends Component
 {
     public int $dailySessionId = 0;
     public int $categoryId = 0;
-    public int $amount = 0;
+    public string $amount = '';
     public string $description = '';
     public string $paymentMethod = 'cash';
     public string $receiptReference = '';
@@ -32,7 +32,7 @@ class AddExpense extends Component
     {
         $this->validate([
             'categoryId'    => 'required|integer|min:1',
-            'amount'        => 'required|integer|min:1',
+            'amount'        => 'required|numeric|min:1',
             'description'   => 'required|string|max:500',
             'paymentMethod' => 'required|in:cash,mobile_money,bank_transfer,other',
         ]);
@@ -43,7 +43,7 @@ class AddExpense extends Component
         try {
             app(ExpenseService::class)->addExpense($session, [
                 'expense_category_id' => $this->categoryId,
-                'amount'              => $this->amount,
+                'amount'              => (int) $this->amount,
                 'description'         => $this->description,
                 'payment_method'      => $this->paymentMethod,
                 'receipt_reference'   => $this->receiptReference,

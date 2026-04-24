@@ -410,6 +410,29 @@
             @enderror
         </div>
     </div>
+
+    <div class="st-row {{ !$allowCreditSales ? 'disabled' : '' }}">
+        <div>
+            <div class="st-label">Overdue credit threshold</div>
+            <div class="st-hint">
+                Flag a customer as overdue if they have an outstanding balance
+                with no repayment in this many days. Set to 0 to disable
+                overdue alerts entirely.
+            </div>
+        </div>
+        <div>
+            <div class="st-input-wrap">
+                <input wire:model="overdueCreditDays"
+                       type="number" min="0" max="365" class="st-input"
+                       placeholder="14"
+                       {{ !$allowCreditSales ? 'disabled' : '' }}>
+                <span class="st-input-unit">days</span>
+            </div>
+            @error('overdueCreditDays')
+                <div class="st-input-error">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
 </div>
 
 {{-- ── SECTION 4: Price Override ────────────────────────────────────── --}}

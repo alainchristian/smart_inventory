@@ -6,6 +6,7 @@ use App\Enums\AlertSeverity;
 use App\Enums\TransferStatus;
 use App\Models\Alert;
 use App\Models\Box;
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Transfer;
 use Illuminate\Console\Command;
@@ -43,6 +44,9 @@ class GenerateSystemAlerts extends Command
 
         // Generate pending transfer alerts
         $alertsCreated += $this->generatePendingTransferAlerts();
+
+        // Generate overdue credit alerts
+        $alertsCreated += $this->generateOverdueCreditAlerts();
 
         // Resolve alerts for issues that have been fixed
         $alertsResolved = $this->resolveFixedIssues();
@@ -175,6 +179,62 @@ class GenerateSystemAlerts extends Command
                 ]);
                 $count++;
             }
+        }
+
+        return $count;
+    }
+
+    private function generateOverdueCreditAlerts(): int
+    {
+        $overdueDays = app(\App\Services\SettingsService::class)->overdueCreditDays();
+
+        if ($overdueDays <= 0) {
+            return 0;
+        }
+
+        $count  = 0;
+        $cutoff = now()->subDays($overdueDays);
+
+        $overdueCustomers = Customer::where('outstanding_balance', '>', 0)
+            ->whereNull('deleted_at')
+            ->where(function ($q) use ($cutoff) {
+                $q->whereNull('last_repayment_at')
+                  ->where('last_credit_at', '<', $cutoff);
+            })
+            ->orWhere(function ($q) use ($cutoff) {
+                $q->where('outstanding_balance', '>', 0)
+                  ->whereNull('deleted_at')
+                  ->where('last_repayment_at', '<', $cutoff);
+            })
+            ->get();
+
+        foreach ($overdueCustomers as $customer) {
+            $exists = Alert::where('entity_type', 'Customer')
+                ->where('entity_id', $customer->id)
+                ->where('title', 'like', 'Overdue Credit%')
+                ->unresolved()
+                ->exists();
+
+            if ($exists) {
+                continue;
+            }
+
+            $daysSinceActivity = $customer->last_repayment_at
+                ? (int) now()->diffInDays($customer->last_repayment_at)
+                : (int) now()->diffInDays($customer->last_credit_at ?? $customer->created_at);
+
+            Alert::create([
+                'title'        => 'Overdue Credit — ' . $customer->name,
+                'message'      => number_format($customer->outstanding_balance) . ' RWF outstanding.'
+                               . ' No repayment in ' . $daysSinceActivity . ' days.',
+                'severity'     => $customer->outstanding_balance >= 100000 ? AlertSeverity::CRITICAL : AlertSeverity::WARNING,
+                'entity_type'  => 'Customer',
+                'entity_id'    => $customer->id,
+                'action_url'   => route('owner.credit.writeoffs'),
+                'action_label' => 'View Write-offs',
+            ]);
+
+            $count++;
         }
 
         return $count;

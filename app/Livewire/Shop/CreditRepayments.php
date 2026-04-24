@@ -94,6 +94,7 @@ class CreditRepayments extends Component
             $customer->update([
                 'total_repaid'        => $customer->total_repaid + $amount,
                 'outstanding_balance' => $newBalance,
+                'last_repayment_at'   => now(),
             ]);
 
             // 3. Write activity log

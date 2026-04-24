@@ -15,12 +15,12 @@ class CloseWizard extends Component
     public array $summary = [];
 
     // Step 3 inputs
-    public int $actualCashCounted = 0;
+    public string $actualCashCounted = '';
 
     // Step 4 inputs — disposition
-    public int    $cashToOwnerMomo   = 0;
+    public string $cashToOwnerMomo   = '';
     public string $ownerMomoReference = '';
-    public int    $cashRetained       = 0;
+    public int    $cashRetained       = 0;  // auto-computed, never user-input
     public string $notes              = '';
 
     // Payment channel settings
@@ -28,13 +28,13 @@ class CloseWizard extends Component
     public bool $settingAllowBankTransfer = false;
 
     // Step 4 — non-cash channel settlements
-    public int    $momoSettled              = 0;
+    public ?int   $momoSettled              = null;
     public string $momoSettledRef           = '';
-    public int    $cardSettled              = 0;
+    public ?int   $cardSettled              = null;
     public string $cardSettledRef           = '';
-    public int    $otherSettled             = 0;
+    public ?int   $otherSettled             = null;
     public string $otherSettledRef          = '';
-    public int    $bankTransferSettled      = 0;
+    public ?int   $bankTransferSettled      = null;
     public string $bankTransferSettledRef   = '';
 
     // Computed
@@ -81,7 +81,7 @@ class CloseWizard extends Component
         $this->settingAllowCard         = $svc->allowCardPayment();
         $this->settingAllowBankTransfer = $svc->allowBankTransferPayment();
 
-        // Pre-fill non-cash settlements from live summary
+        // Pre-fill non-cash settlements from live summary (intentionally pre-filled)
         $this->momoSettled          = $this->summary['total_sales_momo']          ?? 0;
         $this->cardSettled          = $this->summary['total_sales_card']          ?? 0;
         $this->otherSettled         = $this->summary['total_sales_other']         ?? 0;
@@ -91,12 +91,12 @@ class CloseWizard extends Component
     public function nextStep(): void
     {
         if ($this->currentStep === 3) {
-            $this->validate(['actualCashCounted' => 'required|integer|min:0']);
-            $this->cashVariance = $this->actualCashCounted - ($this->summary['expected_cash'] ?? 0);
+            $this->validate(['actualCashCounted' => 'required|numeric|min:0']);
+            $this->cashVariance = (int) $this->actualCashCounted - ($this->summary['expected_cash'] ?? 0);
         }
 
         if ($this->currentStep === 4) {
-            if ($this->cashToOwnerMomo > $this->actualCashCounted) {
+            if ((int) $this->cashToOwnerMomo > (int) $this->actualCashCounted) {
                 $this->addError('cashToOwnerMomo', 'MoMo transfer cannot exceed actual cash counted.');
                 return;
             }
@@ -116,13 +116,14 @@ class CloseWizard extends Component
 
     public function updatedActualCashCounted(): void
     {
-        $this->cashVariance  = $this->actualCashCounted - ($this->summary['expected_cash'] ?? 0);
-        $this->cashRetained  = max(0, $this->actualCashCounted - $this->cashToOwnerMomo);
+        $counted = (int) $this->actualCashCounted;
+        $this->cashVariance = $counted - ($this->summary['expected_cash'] ?? 0);
+        $this->cashRetained = max(0, $counted - (int) $this->cashToOwnerMomo);
     }
 
     public function updatedCashToOwnerMomo(): void
     {
-        $this->cashRetained = max(0, $this->actualCashCounted - $this->cashToOwnerMomo);
+        $this->cashRetained = max(0, (int) $this->actualCashCounted - (int) $this->cashToOwnerMomo);
     }
 
     public function submitClose(): void
@@ -132,11 +133,11 @@ class CloseWizard extends Component
         }
 
         $this->validate([
-            'actualCashCounted' => 'required|integer|min:0',
-            'cashToOwnerMomo'   => 'required|integer|min:0',
+            'actualCashCounted' => 'required|numeric|min:0',
+            'cashToOwnerMomo'   => 'required|numeric|min:0',
         ]);
 
-        if ($this->cashToOwnerMomo > $this->actualCashCounted) {
+        if ((int) $this->cashToOwnerMomo > (int) $this->actualCashCounted) {
             $this->addError('cashToOwnerMomo', 'MoMo transfer cannot exceed actual cash counted.');
             return;
         }
@@ -145,8 +146,8 @@ class CloseWizard extends Component
             $session = DailySession::findOrFail($this->dailySessionId);
 
             app(DailySessionService::class)->closeSession($session, [
-                'actual_cash_counted'       => $this->actualCashCounted,
-                'cash_to_owner_momo'        => $this->cashToOwnerMomo,
+                'actual_cash_counted'       => (int) $this->actualCashCounted,
+                'cash_to_owner_momo'        => (int) $this->cashToOwnerMomo,
                 'owner_momo_reference'      => $this->ownerMomoReference,
                 'momo_settled'              => $this->momoSettled,
                 'momo_settled_ref'          => $this->momoSettledRef,
@@ -177,8 +178,17 @@ class CloseWizard extends Component
         $session = DailySession::find($this->dailySessionId);
         if ($session) {
             $this->summary      = app(DailySessionService::class)->computeLiveSummary($session);
-            $this->cashVariance = $this->actualCashCounted - ($this->summary['expected_cash'] ?? 0);
-            $this->cashRetained = max(0, $this->actualCashCounted - $this->cashToOwnerMomo);
+            $this->cashVariance = (int) $this->actualCashCounted - ($this->summary['expected_cash'] ?? 0);
+            $this->cashRetained = max(0, (int) $this->actualCashCounted - (int) $this->cashToOwnerMomo);
+
+            $cashBase = (int) $this->actualCashCounted > 0
+                ? (int) $this->actualCashCounted
+                : (int) ($this->summary['expected_cash'] ?? 0);
+
+            $this->dispatch('balance-updated',
+                cashBase:    $cashBase,
+                momoBalance: (int) ($this->summary['momo_available'] ?? 0),
+            );
         }
     }
 

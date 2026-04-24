@@ -89,30 +89,43 @@
         $peakHour   = $hourlyCounts->sortDesc()->keys()->first();
         $peakHourFmt = $peakHour !== null ? str_pad($peakHour,2,'0',STR_PAD_LEFT).':00' : '—';
 
-        $marginPct  = $dayRevenue > 0 ? round($operatingProfit / $dayRevenue * 100, 1) : 0;
         $pTotal     = $dayRevenue ?: 1;
     @endphp
 
     {{-- ── Balance Statement ── --}}
     @php
-        $totalIn  = $dayOpening + $dayRevenue + $dayRepayments;
-        $totalOut = $dayRefunds + $dayExpenses + $dayWithdrawals + $dayBanked + $cashRetained + $momoAvailable + $pCredit;
+        $totalIn  = $dayOpening + $pCash + $pMomo + $pCard + $pBank + $pCredit + $dayRepayments;
+        $totalOut = $dayRefunds + $dayExpenses + $dayWithdrawals + $dayBanked
+                  + $cashRetained + $momoAvailable + $pCredit;
         $balanceDiff = $totalIn - $totalOut;
-        $isBalanced  = $balanceDiff === 0;
+        $isBalanced  = abs($balanceDiff) <= 1;
 
         $inRows = [
-            ['Opening balance',  $dayOpening,    '#475569', 'Cash in drawer at start of day'],
-            ['Sales revenue',    $dayRevenue,    '#0f766e', 'All payment methods combined'],
-            ['Repayments in',    $dayRepayments, '#0891b2', 'Credit debt collected from customers'],
+            ['Opening balance',      $dayOpening, '#475569', 'Cash float at start of day'],
+            ['Sales — Cash',         $pCash,      '#0f766e', 'Cash collected at point of sale'],
+            ['Sales — Mobile Money', $pMomo,      '#0891b2', 'MoMo payments received'],
         ];
+        if ($showCard || $pCard > 0) {
+            $inRows[] = ['Sales — Card',          $pCard, '#6366f1', 'Card payments received'];
+        }
+        if ($showBank || $pBank > 0) {
+            $inRows[] = ['Sales — Bank transfer',  $pBank, '#7c3aed', 'Bank transfer payments'];
+        }
+        if ($pCredit > 0) {
+            $inRows[] = ['Sales — Credit (owed)',  $pCredit, '#f59e0b', 'Goods sold on credit today — not yet collected'];
+        }
+        if ($dayRepayments > 0) {
+            $inRows[] = ['Credit repayments in',   $dayRepayments, '#0891b2', 'Debt collected from customers today'];
+        }
+
         $outRows = [
             ['Refunds paid out',   $dayRefunds,    '#d97706', 'Cash returned to customers'],
             ['Expenses paid',      $dayExpenses,   '#e11d48', 'Operational costs'],
             ['Owner withdrawals',  $dayWithdrawals,'#7c3aed', 'Cash + MoMo taken by owner'],
-            ['Deposited to bank',  $dayBanked,     '#6366f1', 'Sent to bank account'],
-            ['Cash on hand',       $cashRetained,  '#14b8a6', 'Physical cash still in shop'],
-            ['MoMo on hand',       $momoAvailable, '#0284c7', 'Mobile money balance'],
-            ['Credit (owed)',      $pCredit,       '#f59e0b', 'Sold on credit — not yet collected'],
+            ['Deposited to bank',  $dayBanked,     '#6366f1', 'Sent to bank during the day'],
+            ['Cash on hand',       $cashRetained,  '#14b8a6', 'Physical cash remaining in shop'],
+            ['MoMo on hand',       $momoAvailable, '#0284c7', 'Mobile money wallet balance'],
+            ['Credit outstanding', $pCredit,       '#f59e0b', 'Sold on credit — awaiting collection'],
         ];
     @endphp
 
@@ -203,11 +216,11 @@
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;" class="metrics-strip">
         <style>.metrics-strip{grid-template-columns:repeat(3,1fr);} @media(max-width:600px){.metrics-strip{grid-template-columns:1fr!important;}}</style>
 
-        {{-- Operating Profit --}}
+        {{-- Revenue After Expenses --}}
         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-            <div style="font-size:10px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Operating Profit</div>
+            <div style="font-size:10px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Revenue After Expenses</div>
             <div style="font-size:22px;font-weight:700;color:#0f766e;margin-bottom:3px;">{{ number_format($operatingProfit) }} <span style="font-size:11px;font-weight:400;color:#94a3b8;">RWF</span></div>
-            <div style="font-size:11px;color:#94a3b8;">Revenue − Expenses · {{ $marginPct }}% margin</div>
+            <div style="font-size:11px;color:#94a3b8;">Revenue minus refunds and operational expenses</div>
         </div>
 
         {{-- Cash Variance --}}

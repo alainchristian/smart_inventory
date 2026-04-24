@@ -14,7 +14,7 @@ class Customer extends Model
     protected $fillable = [
         'name', 'phone', 'email', 'notes',
         'total_credit_given', 'total_repaid', 'outstanding_balance',
-        'last_purchase_at', 'last_credit_at',
+        'last_purchase_at', 'last_credit_at', 'last_repayment_at',
         'registered_by', 'shop_id',
     ];
 
@@ -24,6 +24,7 @@ class Customer extends Model
         'outstanding_balance' => 'integer',
         'last_purchase_at'    => 'datetime',
         'last_credit_at'      => 'datetime',
+        'last_repayment_at'   => 'datetime',
     ];
 
     public function registeredBy(): BelongsTo
@@ -44,6 +45,11 @@ class Customer extends Model
     public function creditRepayments(): HasMany
     {
         return $this->hasMany(CreditRepayment::class);
+    }
+
+    public function writeoffs(): HasMany
+    {
+        return $this->hasMany(CreditWriteoff::class);
     }
 
     public function hasOutstandingBalance(): bool

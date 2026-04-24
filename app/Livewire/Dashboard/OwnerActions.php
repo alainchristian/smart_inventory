@@ -152,7 +152,52 @@ class OwnerActions extends Component
             }
         }
 
-        // ── 5. Pending price override approvals ───────────────────────────────
+        // ── 5. Overdue credit customers ───────────────────────────────────────
+        $overdueDays = $settings->overdueCreditDays();
+
+        if ($overdueDays > 0) {
+            $cutoff = now()->subDays($overdueDays);
+
+            $overdueCustomers = Customer::where('outstanding_balance', '>', 0)
+                ->whereNull('deleted_at')
+                ->where(function ($q) use ($cutoff) {
+                    $q->whereNull('last_repayment_at')
+                      ->where('last_credit_at', '<', $cutoff);
+                })
+                ->orWhere(function ($q) use ($cutoff) {
+                    $q->where('outstanding_balance', '>', 0)
+                      ->whereNull('deleted_at')
+                      ->where('last_repayment_at', '<', $cutoff);
+                })
+                ->orderByDesc('outstanding_balance')
+                ->limit(5)
+                ->get();
+
+            if ($overdueCustomers->isNotEmpty()) {
+                $sections[] = [
+                    'type'  => 'overdue_credit',
+                    'label' => 'Overdue Credit — No Recent Repayment',
+                    'icon'  => 'clock',
+                    'color' => 'var(--red)',
+                    'bg'    => 'var(--red-dim)',
+                    'count' => $overdueCustomers->count(),
+                    'items' => $overdueCustomers->map(fn ($c) => [
+                        'id'          => $c->id,
+                        'title'       => $c->name,
+                        'subtitle'    => $c->phone . ' · '
+                                       . ($c->last_repayment_at
+                                           ? 'Last paid ' . $c->last_repayment_at->diffForHumans()
+                                           : 'Never repaid'),
+                        'value'       => number_format($c->outstanding_balance) . ' RWF owed',
+                        'value_color' => 'var(--red)',
+                        'age'         => $c->last_repayment_at?->diffForHumans() ?? 'Never',
+                        'link'        => route('owner.credit.writeoffs'),
+                    ])->toArray(),
+                ];
+            }
+        }
+
+        // ── 6. Pending price override approvals (was 5) ──────────────────────
         $pendingOverrides = DB::table('sales')
             ->join('users as seller', 'sales.sold_by', '=', 'seller.id')
             ->join('shops', 'sales.shop_id', '=', 'shops.id')

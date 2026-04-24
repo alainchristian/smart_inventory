@@ -75,6 +75,8 @@ class DailyCloseReport extends Component
 
     public function loadSessions(): void
     {
+        $sessionService = app(DailySessionService::class);
+
         $this->sessions = DailySession::with([
             'shop',
             'openedBy',
@@ -86,7 +88,15 @@ class DailyCloseReport extends Component
         ])
             ->forDate($this->reportDate)
             ->orderBy('shop_id')
-            ->get();
+            ->get()
+            ->map(function ($session) use ($sessionService) {
+                if ($session->isOpen()) {
+                    foreach ($sessionService->computeLiveSummary($session) as $key => $value) {
+                        $session->$key = $value;
+                    }
+                }
+                return $session;
+            });
 
         $shopIds = $this->sessions->pluck('shop_id')->filter()->unique();
 

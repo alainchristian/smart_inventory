@@ -1,69 +1,91 @@
 <div>
     @if (session()->has('success'))
-        <div class="mb-4 px-4 py-3 rounded-lg text-sm" style="background:var(--green-dim);color:var(--green);">
+        <div style="margin-bottom:12px;padding:10px 14px;border-radius:10px;font-size:12px;
+                    background:var(--green-dim);color:var(--green);border:1px solid var(--green);">
             {{ session('success') }}
         </div>
     @endif
     @if (session()->has('error'))
-        <div class="mb-4 px-4 py-3 rounded-lg text-sm" style="background:var(--red-dim);color:var(--red);">
+        <div style="margin-bottom:12px;padding:10px 14px;border-radius:10px;font-size:12px;
+                    background:var(--red-dim);color:var(--red);border:1px solid var(--red);">
             {{ session('error') }}
         </div>
     @endif
 
     @if ($todaySession)
-        {{-- Session already open --}}
-        <div class="rounded-xl p-5 sm:p-6 flex items-center gap-4" style="background:var(--green-dim);border:1px solid var(--green);">
-            <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style="background:var(--green);color:white;">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
-            </div>
-            <div>
-                <div class="font-semibold" style="color:var(--green);">Session Active</div>
-                <div class="text-sm mt-0.5" style="color:var(--text-dim);">
-                    Opened at {{ $todaySession->opened_at->format('H:i') }}
-                    · Opening balance: <span class="font-mono font-medium">{{ number_format($todaySession->opening_balance) }} RWF</span>
+        {{-- ── Session Active ── --}}
+        <div style="border-radius:16px;overflow:hidden;border:1px solid var(--green);background:var(--green-dim);">
+            <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:40px;height:40px;border-radius:12px;background:var(--green);
+                                display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size:14px;font-weight:700;color:var(--green);">Session Active</div>
+                        <div style="font-size:12px;color:var(--text-dim);margin-top:1px;">
+                            Opened at {{ $todaySession->opened_at->format('H:i') }}
+                            · <span style="font-family:var(--font-mono);font-weight:600;color:var(--text);">{{ number_format($todaySession->opening_balance) }} RWF</span> opening balance
+                        </div>
+                    </div>
                 </div>
+                <span style="font-size:11px;padding:4px 12px;border-radius:999px;font-weight:700;
+                             background:var(--green);color:white;white-space:nowrap;">
+                    {{ $todaySession->opened_at->diffForHumans(null, true) }} ago
+                </span>
             </div>
         </div>
     @else
-        {{-- No session yet --}}
-        <div class="rounded-xl p-5 sm:p-6" style="background:var(--amber-dim);border:1px solid var(--amber);">
-            <div class="flex items-start gap-3 mb-5">
-                <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style="background:var(--amber);color:white;">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                </div>
-                <div>
-                    <div class="font-semibold" style="color:var(--amber);">No Active Session</div>
-                    <div class="text-sm mt-0.5" style="color:var(--text-dim);">Open today's session to start recording expenses and close cash at end of day.</div>
-                </div>
+        {{-- ── No Session ── --}}
+        <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);">
+            <div style="padding:14px 18px;background:var(--surface-raised);border-bottom:1px solid var(--border);
+                        display:flex;align-items:center;gap:8px;">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);"></div>
+                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">No Active Session</span>
             </div>
-
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
-                <div class="flex-1">
-                    <label class="block text-sm font-medium mb-1.5" style="color:var(--text-dim);">Opening Cash Balance (RWF)</label>
-                    <input type="number"
-                           wire:model="openingBalance"
-                           min="0"
-                           class="w-full px-4 py-3 rounded-lg text-base"
-                           style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);"
-                           placeholder="0">
-                    @error('openingBalance')
-                        <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div>
-                    @enderror
-                    @if ($openingBalanceHint)
-                        <div class="text-xs mt-1" style="color:var(--text-faint);">{{ $openingBalanceHint }}</div>
-                    @endif
+            <div style="background:var(--surface);padding:20px;">
+                <p style="font-size:13px;color:var(--text-dim);margin:0 0 18px;">
+                    Open today's session to start recording sales, expenses, and cash movements.
+                </p>
+                <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:160px;">
+                        <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;
+                                      letter-spacing:0.5px;color:var(--text-dim);margin-bottom:6px;">
+                            Opening Cash Balance (RWF)
+                        </label>
+                        <input type="number"
+                               wire:model="openingBalance"
+                               min="0"
+                               style="width:100%;padding:10px 14px;border-radius:10px;font-size:18px;font-weight:700;
+                                      font-family:var(--font-mono);text-align:right;background:var(--surface-raised);
+                                      border:1.5px solid var(--border);color:var(--text);box-sizing:border-box;
+                                      -moz-appearance:textfield;"
+                               placeholder="0"
+                               onfocus="this.style.borderColor='var(--accent)';"
+                               onblur="this.style.borderColor='var(--border)';">
+                        @error('openingBalance')
+                            <div style="font-size:11px;margin-top:4px;color:var(--red);">{{ $message }}</div>
+                        @enderror
+                        @if ($openingBalanceHint)
+                            <div style="font-size:11px;margin-top:4px;color:var(--text-faint);">{{ $openingBalanceHint }}</div>
+                        @endif
+                    </div>
+                    <button wire:click="openDay"
+                            wire:loading.attr="disabled"
+                            style="padding:10px 22px;border-radius:10px;font-size:13px;font-weight:700;
+                                   background:var(--accent);color:white;border:none;cursor:pointer;
+                                   display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
+                        <span wire:loading.remove wire:target="openDay">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:4px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                            </svg>
+                            Open Session
+                        </span>
+                        <span wire:loading wire:target="openDay" style="display:none;">Opening…</span>
+                    </button>
                 </div>
-                <button wire:click="openDay"
-                        wire:loading.attr="disabled"
-                        class="w-full sm:w-auto px-6 py-3 rounded-lg text-sm font-semibold flex-shrink-0"
-                        style="background:var(--accent);color:white;">
-                    <span wire:loading.remove wire:target="openDay">Open Today's Session</span>
-                    <span wire:loading wire:target="openDay" style="display:none;">Opening…</span>
-                </button>
             </div>
         </div>
     @endif

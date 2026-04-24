@@ -54,7 +54,7 @@
         openInventory: {{ request()->routeIs('*.inventory.*') ? 'true' : 'false' }},
         openShopTransfers: {{ request()->routeIs('shop.transfers.*') ? 'true' : 'false' }},
         openWarehouseTransfers: {{ request()->routeIs('warehouse.transfers.*') ? 'true' : 'false' }},
-        openFinance: {{ request()->routeIs('owner.finance.*') ? 'true' : 'false' }},
+        openFinance: {{ (request()->routeIs('owner.finance.*') || request()->routeIs('owner.credit.*')) ? 'true' : 'false' }},
         openDayClose: {{ request()->routeIs('shop.day-close.*') ? 'true' : 'false' }}
     }">
         @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
@@ -223,6 +223,11 @@
                            class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
                                   {{ request()->routeIs('owner.finance.overview') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                             Finance Overview
+                        </a>
+                        <a href="{{ route('owner.credit.writeoffs') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.credit.writeoffs') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Credit Write-offs
                         </a>
                     </div>
                 </div>

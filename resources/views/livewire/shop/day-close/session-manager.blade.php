@@ -95,6 +95,12 @@
                                     <span class="text-xs font-mono font-bold" style="color:var(--amber);">{{ number_format($liveSummary['total_sales_credit']) }}</span>
                                 </div>
                             @endif
+                            @if (($liveSummary['total_repayments_cash'] ?? 0) > 0)
+                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--accent-dim);">
+                                    <span class="text-xs font-medium" style="color:var(--accent);">Repaid</span>
+                                    <span class="text-xs font-mono font-bold" style="color:var(--accent);">{{ number_format($liveSummary['total_repayments_cash']) }}</span>
+                                </div>
+                            @endif
                             @if (($liveSummary['total_sales_other'] ?? 0) > 0)
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface-overlay);">
                                     <span class="text-xs font-medium" style="color:var(--text-dim);">Other</span>
@@ -108,7 +114,7 @@
                     </div>
 
                     {{-- Secondary metrics row --}}
-                    <div class="grid grid-cols-3 gap-3">
+                    <div class="grid gap-3" style="grid-template-columns: repeat({{ ($liveSummary['total_repayments'] ?? 0) > 0 ? 4 : 3 }}, 1fr);">
                         <div class="rounded-xl p-3 text-center" style="background:var(--surface-raised);border:1px solid var(--border);">
                             <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Cash in Drawer</div>
                             <div class="font-mono font-bold text-base" style="color:var(--accent);">{{ number_format($liveSummary['expected_cash']) }}</div>
@@ -124,6 +130,13 @@
                             <div class="font-mono font-bold text-base" style="color:var(--amber);">{{ number_format($liveSummary['total_withdrawals']) }}</div>
                             <div class="text-xs mt-0.5" style="color:var(--text-faint);">{{ $liveSummary['withdrawal_count'] }} items</div>
                         </div>
+                        @if (($liveSummary['total_repayments'] ?? 0) > 0)
+                            <div class="rounded-xl p-3 text-center" style="background:var(--surface-raised);border:1px solid var(--border);">
+                                <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Repayments</div>
+                                <div class="font-mono font-bold text-base" style="color:var(--accent);">{{ number_format($liveSummary['total_repayments']) }}</div>
+                                <div class="text-xs mt-0.5" style="color:var(--text-faint);">Credit collected</div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif

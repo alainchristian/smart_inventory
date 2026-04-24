@@ -3,6 +3,7 @@
 namespace App\Livewire\Shop\DayClose;
 
 use App\Models\BankDeposit;
+use App\Models\CreditRepayment;
 use App\Models\DailySession;
 use App\Models\Expense;
 use App\Models\OwnerWithdrawal;
@@ -151,6 +152,22 @@ class SessionActivityFeed extends Component
                     'id'        => $withdrawal->id,
                     'voidable'  => $isOpen,
                     'system'    => false,
+                ]);
+            });
+
+        // Credit repayments
+        CreditRepayment::where('daily_session_id', $this->dailySessionId)
+            ->with('customer')
+            ->get()
+            ->each(function ($repayment) use (&$activities) {
+                $activities->push([
+                    'type'     => 'repayment',
+                    'time'     => $repayment->created_at,
+                    'label'    => 'Repayment' . ($repayment->customer ? ' — ' . $repayment->customer->name : ''),
+                    'amount'   => $repayment->amount,
+                    'id'       => $repayment->id,
+                    'voidable' => false,
+                    'system'   => false,
                 ]);
             });
 
