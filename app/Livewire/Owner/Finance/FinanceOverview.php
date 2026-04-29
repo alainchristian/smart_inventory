@@ -24,6 +24,12 @@ class FinanceOverview extends Component
     public ?string    $expandedKey      = null;
     public Collection $expandedSessions;
 
+    public bool   $showTxModal    = false;
+    public string $txFilter       = 'summary';
+    public array  $transactions   = [];
+    public array  $txSummary      = [];
+
+
     public function mount(): void
     {
         $user = auth()->user();
@@ -101,6 +107,255 @@ class FinanceOverview extends Component
     {
         $this->expandedKey      = null;
         $this->expandedSessions = new Collection();
+    }
+
+    public function openTxModal(): void
+    {
+        $this->txFilter    = 'summary';
+        $this->loadSummary();
+        $this->showTxModal = true;
+    }
+
+    public function closeTxModal(): void
+    {
+        $this->showTxModal = false;
+    }
+
+    public function setTxFilter(string $filter): void
+    {
+        $this->txFilter = $filter;
+        if ($filter === 'summary') {
+            $this->loadSummary();
+        } else {
+            $this->loadTransactions();
+        }
+    }
+
+    private function loadSummary(): void
+    {
+        $from   = $this->dateFrom;
+        $to     = $this->dateTo;
+        $shopId = $this->shopFilter !== 'all' ? (int) $this->shopFilter : null;
+
+        // Aggregate session totals
+        $sessQ = DB::table('daily_sessions')
+            ->whereBetween('session_date', [$from, $to])
+            ->select(
+                DB::raw('SUM(COALESCE(opening_balance, 0))           as opening_balance'),
+                DB::raw('SUM(COALESCE(total_sales, 0))               as total_sales'),
+                DB::raw('SUM(COALESCE(total_sales_cash, 0))          as total_sales_cash'),
+                DB::raw('SUM(COALESCE(total_sales_momo, 0))          as total_sales_momo'),
+                DB::raw('SUM(COALESCE(total_sales_card, 0))          as total_sales_card'),
+                DB::raw('SUM(COALESCE(total_sales_credit, 0))        as total_sales_credit'),
+                DB::raw('SUM(COALESCE(total_sales_bank_transfer, 0)) as total_sales_bank_transfer'),
+                DB::raw('SUM(COALESCE(total_repayments, 0))          as total_repayments'),
+                DB::raw('SUM(COALESCE(total_repayments_cash, 0))     as total_repayments_cash'),
+                DB::raw('SUM(COALESCE(total_repayments_momo, 0))     as total_repayments_momo'),
+                DB::raw('SUM(COALESCE(total_refunds_cash, 0))        as total_refunds_cash'),
+                DB::raw('SUM(COALESCE(total_expenses, 0))            as total_expenses'),
+                DB::raw('SUM(COALESCE(total_expenses_cash, 0))       as total_expenses_cash'),
+                DB::raw('SUM(COALESCE(total_withdrawals, 0))         as total_withdrawals'),
+                DB::raw('SUM(COALESCE(total_withdrawals_cash, 0))    as total_withdrawals_cash'),
+                DB::raw('SUM(COALESCE(total_bank_deposits, 0))       as total_bank_deposits'),
+                DB::raw('SUM(COALESCE(cash_deposits, 0))             as cash_deposits'),
+                DB::raw('SUM(COALESCE(expected_cash, 0))             as expected_cash'),
+                DB::raw('SUM(COALESCE(actual_cash_counted, 0))       as actual_cash_counted'),
+                DB::raw('SUM(COALESCE(cash_variance, 0))             as cash_variance'),
+                DB::raw('SUM(COALESCE(cash_retained, 0))             as cash_retained'),
+                DB::raw('COUNT(*) as session_count'),
+                DB::raw("SUM(CASE WHEN status::text IN ('closed','locked') THEN 1 ELSE 0 END) as closed_count"),
+                DB::raw("SUM(CASE WHEN status::text = 'open' THEN 1 ELSE 0 END) as open_count"),
+                // Variance breakdown — only closed/locked sessions have meaningful variance
+                DB::raw("SUM(CASE WHEN status::text != 'open' AND COALESCE(cash_variance,0) < 0 THEN ABS(COALESCE(cash_variance,0)) ELSE 0 END) as total_shortage"),
+                DB::raw("SUM(CASE WHEN status::text != 'open' AND COALESCE(cash_variance,0) > 0 THEN COALESCE(cash_variance,0) ELSE 0 END) as total_surplus"),
+                DB::raw("SUM(CASE WHEN status::text != 'open' AND COALESCE(cash_variance,0) != 0 THEN 1 ELSE 0 END) as sessions_with_variance"),
+            );
+        if ($shopId) {
+            $sessQ->where('shop_id', $shopId);
+        }
+        $sessData = (array) $sessQ->first();
+
+        // Expenses grouped by category
+        $expQ = DB::table('expenses')
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+            ->leftJoin('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
+            ->whereNull('expenses.deleted_at')
+            ->whereBetween('daily_sessions.session_date', [$from, $to])
+            ->select(
+                DB::raw("COALESCE(expense_categories.name, 'Uncategorized') as category_name"),
+                DB::raw("expenses.payment_method::text as payment_method"),
+                DB::raw('SUM(COALESCE(expenses.amount, 0)) as total_amount'),
+            )
+            ->groupBy('expense_categories.name', DB::raw('expenses.payment_method::text'))
+            ->orderByDesc('total_amount');
+        if ($shopId) {
+            $expQ->where('daily_sessions.shop_id', $shopId);
+        }
+        $expensesByCategory = $expQ->get()->map(fn ($r) => (array) $r)->toArray();
+
+        // Owner withdrawals
+        $wdQ = DB::table('owner_withdrawals')
+            ->join('daily_sessions', 'owner_withdrawals.daily_session_id', '=', 'daily_sessions.id')
+            ->whereNull('owner_withdrawals.deleted_at')
+            ->whereBetween('daily_sessions.session_date', [$from, $to])
+            ->select(
+                DB::raw("COALESCE(owner_withdrawals.reason, 'Owner withdrawal') as reason"),
+                DB::raw("owner_withdrawals.method::text as method"),
+                DB::raw('owner_withdrawals.amount'),
+                DB::raw('owner_withdrawals.recorded_at'),
+            )
+            ->orderByDesc('owner_withdrawals.recorded_at');
+        if ($shopId) {
+            $wdQ->where('owner_withdrawals.shop_id', $shopId);
+        }
+        $withdrawals = $wdQ->get()->map(fn ($r) => (array) $r)->toArray();
+
+        // Bank deposits
+        $depQ = DB::table('bank_deposits')
+            ->join('daily_sessions', 'bank_deposits.daily_session_id', '=', 'daily_sessions.id')
+            ->whereBetween('daily_sessions.session_date', [$from, $to])
+            ->select(
+                DB::raw('bank_deposits.deposited_at'),
+                DB::raw('bank_deposits.amount'),
+                DB::raw("bank_deposits.source::text as source"),
+                DB::raw('bank_deposits.bank_reference'),
+            )
+            ->orderByDesc('bank_deposits.deposited_at');
+        if ($shopId) {
+            $depQ->where('bank_deposits.shop_id', $shopId);
+        }
+        $deposits = $depQ->get()->map(fn ($r) => (array) $r)->toArray();
+
+        $this->txSummary = [
+            'sessions'             => $sessData,
+            'expenses_by_category' => $expensesByCategory,
+            'withdrawals'          => $withdrawals,
+            'bank_deposits'        => $deposits,
+        ];
+    }
+
+    private function loadTransactions(): void
+    {
+        $from   = $this->dateFrom;
+        $to     = $this->dateTo;
+        $shopId = $this->shopFilter !== 'all' ? (int) $this->shopFilter : null;
+        $types  = $this->txFilter === 'all'
+            ? ['sale', 'expense', 'withdrawal', 'deposit', 'repayment']
+            : [$this->txFilter];
+
+        $all = collect();
+
+        if (in_array('sale', $types)) {
+            $q = DB::table('sales')
+                ->join('shops', 'sales.shop_id', '=', 'shops.id')
+                ->leftJoin('customers', 'sales.customer_id', '=', 'customers.id')
+                ->whereNull('sales.deleted_at')
+                ->whereNull('sales.voided_at')
+                ->whereBetween(DB::raw('sales.sale_date::date'), [$from, $to])
+                ->select(
+                    DB::raw("'sale' as type"),
+                    DB::raw('sales.sale_date as occurred_at'),
+                    DB::raw('shops.name as shop_name'),
+                    DB::raw("COALESCE(customers.name, 'Walk-in') as description"),
+                    DB::raw('COALESCE(sales.total, 0) as amount'),
+                    DB::raw("sales.payment_method::text as payment_method"),
+                    DB::raw('sales.sale_number as reference'),
+                );
+            if ($shopId) {
+                $q->where('sales.shop_id', $shopId);
+            }
+            $all = $all->merge($q->get());
+        }
+
+        if (in_array('expense', $types)) {
+            $q = DB::table('expenses')
+                ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+                ->join('shops', 'daily_sessions.shop_id', '=', 'shops.id')
+                ->leftJoin('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
+                ->whereNull('expenses.deleted_at')
+                ->whereBetween('daily_sessions.session_date', [$from, $to])
+                ->select(
+                    DB::raw("'expense' as type"),
+                    DB::raw('expenses.recorded_at as occurred_at'),
+                    DB::raw('shops.name as shop_name'),
+                    DB::raw("COALESCE(expense_categories.name, 'Uncategorized') as description"),
+                    DB::raw('COALESCE(expenses.amount, 0) as amount'),
+                    DB::raw("expenses.payment_method::text as payment_method"),
+                    DB::raw('expenses.receipt_reference as reference'),
+                );
+            if ($shopId) {
+                $q->where('daily_sessions.shop_id', $shopId);
+            }
+            $all = $all->merge($q->get());
+        }
+
+        if (in_array('withdrawal', $types)) {
+            $q = DB::table('owner_withdrawals')
+                ->join('shops', 'owner_withdrawals.shop_id', '=', 'shops.id')
+                ->join('daily_sessions', 'owner_withdrawals.daily_session_id', '=', 'daily_sessions.id')
+                ->whereNull('owner_withdrawals.deleted_at')
+                ->whereBetween('daily_sessions.session_date', [$from, $to])
+                ->select(
+                    DB::raw("'withdrawal' as type"),
+                    DB::raw('owner_withdrawals.recorded_at as occurred_at'),
+                    DB::raw('shops.name as shop_name'),
+                    DB::raw("COALESCE(owner_withdrawals.reason, 'Owner withdrawal') as description"),
+                    DB::raw('COALESCE(owner_withdrawals.amount, 0) as amount'),
+                    DB::raw("owner_withdrawals.method::text as payment_method"),
+                    DB::raw('owner_withdrawals.momo_reference as reference'),
+                );
+            if ($shopId) {
+                $q->where('owner_withdrawals.shop_id', $shopId);
+            }
+            $all = $all->merge($q->get());
+        }
+
+        if (in_array('deposit', $types)) {
+            $q = DB::table('bank_deposits')
+                ->join('shops', 'bank_deposits.shop_id', '=', 'shops.id')
+                ->join('daily_sessions', 'bank_deposits.daily_session_id', '=', 'daily_sessions.id')
+                ->whereBetween('daily_sessions.session_date', [$from, $to])
+                ->select(
+                    DB::raw("'deposit' as type"),
+                    DB::raw('bank_deposits.deposited_at as occurred_at'),
+                    DB::raw('shops.name as shop_name'),
+                    DB::raw("CONCAT('Bank deposit — ', bank_deposits.source::text) as description"),
+                    DB::raw('COALESCE(bank_deposits.amount, 0) as amount'),
+                    DB::raw("bank_deposits.source::text as payment_method"),
+                    DB::raw('bank_deposits.bank_reference as reference'),
+                );
+            if ($shopId) {
+                $q->where('bank_deposits.shop_id', $shopId);
+            }
+            $all = $all->merge($q->get());
+        }
+
+        if (in_array('repayment', $types)) {
+            $q = DB::table('credit_repayments')
+                ->join('shops', 'credit_repayments.shop_id', '=', 'shops.id')
+                ->leftJoin('customers', 'credit_repayments.customer_id', '=', 'customers.id')
+                ->whereBetween(DB::raw('credit_repayments.repayment_date::date'), [$from, $to])
+                ->select(
+                    DB::raw("'repayment' as type"),
+                    DB::raw('credit_repayments.repayment_date as occurred_at'),
+                    DB::raw('shops.name as shop_name'),
+                    DB::raw("COALESCE(customers.name, 'Customer') as description"),
+                    DB::raw('COALESCE(credit_repayments.amount, 0) as amount'),
+                    DB::raw("credit_repayments.payment_method::text as payment_method"),
+                    DB::raw('credit_repayments.reference as reference'),
+                );
+            if ($shopId) {
+                $q->where('credit_repayments.shop_id', $shopId);
+            }
+            $all = $all->merge($q->get());
+        }
+
+        $this->transactions = $all
+            ->sortByDesc('occurred_at')
+            ->values()
+            ->take(500)
+            ->map(fn ($r) => (array) $r)
+            ->toArray();
     }
 
     /**
