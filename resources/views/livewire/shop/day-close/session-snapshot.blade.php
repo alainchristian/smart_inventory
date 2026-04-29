@@ -1,8 +1,8 @@
 <style>
 .dc-snap-tile     { padding:12px 14px; }
-.dc-snap-label    { font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-faint);margin-bottom:4px; }
-.dc-snap-num      { font-size:16px;font-weight:800;font-family:var(--font-mono);line-height:1.1; }
-.dc-snap-sub      { font-size:9px;color:var(--text-faint);margin-top:2px; }
+.dc-snap-label    { font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px; }
+.dc-snap-num      { font-size:16px;font-weight:800;font-family:var(--mono);line-height:1.1; }
+.dc-snap-sub      { font-size:9px;color:var(--text-dim);margin-top:2px; }
 .dc-snap-brk      { font-size:9px; }
 
 /* Tiles that have a right-side breakdown */
@@ -45,7 +45,7 @@
         </div>
         @if ($session && ! $session->isOpen())
             <span style="font-size:9px;padding:1px 7px;border-radius:999px;font-weight:600;
-                         background:var(--surface-raised);color:var(--text-faint);border:1px solid var(--border);">
+                         background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">
                 {{ ucfirst($session->status) }}
             </span>
         @endif
@@ -85,12 +85,12 @@
                 <div class="dc-snap-brkwrap">
                     @if ($bankCash > 0)
                         <div class="dc-snap-brk" style="color:var(--green);">
-                            Cash <span style="font-family:var(--font-mono);font-weight:600;">{{ number_format($bankCash) }}</span>
+                            Cash <span style="font-family:var(--mono);font-weight:600;">{{ number_format($bankCash) }}</span>
                         </div>
                     @endif
                     @if ($bankMomo > 0)
                         <div class="dc-snap-brk" style="color:#0ea5e9;">
-                            MoMo <span style="font-family:var(--font-mono);font-weight:600;">{{ number_format($bankMomo) }}</span>
+                            MoMo <span style="font-family:var(--mono);font-weight:600;">{{ number_format($bankMomo) }}</span>
                         </div>
                     @endif
                 </div>
@@ -121,24 +121,24 @@
         <div class="dc-snap-tile dc-snap-tile-brk" style="border-right:1px solid var(--border);">
             <div>
                 <div class="dc-snap-label">Expenses</div>
-                <div class="dc-snap-num" style="color:{{ $exp > 0 ? 'var(--red)' : 'var(--text-faint)' }};">{{ number_format($exp) }}</div>
+                <div class="dc-snap-num" style="color:{{ $exp > 0 ? 'var(--red)' : 'var(--text-dim)' }};">{{ number_format($exp) }}</div>
                 <div class="dc-snap-sub">{{ $ec }} {{ $ec === 1 ? 'entry' : 'entries' }}</div>
             </div>
             @if ($exp > 0)
                 <div class="dc-snap-brkwrap">
                     @if ($expCash > 0)
                         <div class="dc-snap-brk" style="color:var(--green);">
-                            Cash <span style="font-family:var(--font-mono);font-weight:600;">{{ number_format($expCash) }}</span>
+                            Cash <span style="font-family:var(--mono);font-weight:600;">{{ number_format($expCash) }}</span>
                         </div>
                     @endif
                     @if ($expMomo > 0)
                         <div class="dc-snap-brk" style="color:#0ea5e9;">
-                            MoMo <span style="font-family:var(--font-mono);font-weight:600;">{{ number_format($expMomo) }}</span>
+                            MoMo <span style="font-family:var(--mono);font-weight:600;">{{ number_format($expMomo) }}</span>
                         </div>
                     @endif
                     @if ($expBank > 0)
                         <div class="dc-snap-brk" style="color:#7c3aed;">
-                            Bank <span style="font-family:var(--font-mono);font-weight:600;">{{ number_format($expBank) }}</span>
+                            Bank <span style="font-family:var(--mono);font-weight:600;">{{ number_format($expBank) }}</span>
                         </div>
                     @endif
                 </div>
@@ -155,19 +155,19 @@
         <div class="dc-snap-tile dc-snap-tile-brk">
             <div>
                 <div class="dc-snap-label">Withdrawals</div>
-                <div class="dc-snap-num" style="color:{{ $wd > 0 ? 'var(--amber)' : 'var(--text-faint)' }};">{{ number_format($wd) }}</div>
+                <div class="dc-snap-num" style="color:{{ $wd > 0 ? 'var(--amber)' : 'var(--text-dim)' }};">{{ number_format($wd) }}</div>
                 <div class="dc-snap-sub">{{ $wc }} {{ $wc === 1 ? 'entry' : 'entries' }}</div>
             </div>
             @if ($wd > 0)
                 <div class="dc-snap-brkwrap">
                     @if ($wdCash > 0)
                         <div class="dc-snap-brk" style="color:var(--green);">
-                            Cash <span style="font-family:var(--font-mono);font-weight:600;">{{ number_format($wdCash) }}</span>
+                            Cash <span style="font-family:var(--mono);font-weight:600;">{{ number_format($wdCash) }}</span>
                         </div>
                     @endif
                     @if ($wdMomo > 0)
                         <div class="dc-snap-brk" style="color:#0ea5e9;">
-                            MoMo <span style="font-family:var(--font-mono);font-weight:600;">{{ number_format($wdMomo) }}</span>
+                            MoMo <span style="font-family:var(--mono);font-weight:600;">{{ number_format($wdMomo) }}</span>
                         </div>
                     @endif
                 </div>

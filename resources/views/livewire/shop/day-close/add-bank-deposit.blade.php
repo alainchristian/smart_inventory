@@ -24,7 +24,7 @@
                min="1"
                placeholder="0"
                style="width:100%;padding:12px 14px;border-radius:10px;
-                      font-size:22px;font-weight:700;font-family:var(--font-mono);
+                      font-size:22px;font-weight:700;font-family:var(--mono);
                       text-align:right;background:var(--surface);
                       border:1.5px solid var(--border);color:var(--text);
                       transition:border-color 0.15s;box-sizing:border-box;
@@ -106,13 +106,13 @@
                                          color:{{ ($deposit->source ?? 'cash') === 'mobile_money' ? 'var(--accent)' : 'var(--green)' }};">
                                 {{ ($deposit->source ?? 'cash') === 'mobile_money' ? 'MoMo' : 'Cash' }}
                             </span>
-                            <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text);">
+                            <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">
                                 {{ number_format($deposit->amount) }} RWF
                             </span>
                             @if($deposit->bank_reference)
                                 <span style="font-size:11px;color:var(--text-dim);">{{ $deposit->bank_reference }}</span>
                             @endif
-                            <span style="font-size:11px;color:var(--text-faint);">
+                            <span style="font-size:11px;color:var(--text-dim);">
                                 {{ $deposit->deposited_at->format('H:i') }}
                             </span>
                         </div>

@@ -88,7 +88,8 @@ class FinanceOverview extends Component
 
         $this->expandedKey = $key;
         $this->expandedSessions = DailySession::with([
-            'openedBy', 'closedBy', 'shop', 'expenses.category', 'ownerWithdrawals.recordedBy',
+            'openedBy', 'closedBy', 'lockedBy', 'shop',
+            'expenses.category', 'ownerWithdrawals.recordedBy', 'bankDeposits',
         ])
             ->where('shop_id', $shopId)
             ->forDate($date)

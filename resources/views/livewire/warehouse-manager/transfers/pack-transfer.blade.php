@@ -27,7 +27,47 @@
     }
 }
 
-</style>
+
+/* 2A - Transfer List Fixes */
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+}
+\n
+/* 2B - Request Form Fixes */
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
+}
+@media(max-width:600px) {
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+\n</style>
 @php
 use App\Enums\TransferStatus;
 @endphp
@@ -261,10 +301,10 @@ use App\Enums\TransferStatus;
         {{-- Header --}}
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
             <div>
-                <div style="font-size:14px;font-weight:800;color:var(--accent)">
+                <div style="font-size:17px;font-weight:800;color:var(--accent)">
                     📦 {{ $pendingProductName }}
                 </div>
-                <div style="font-size:11px;color:var(--text-sub);margin-top:3px">
+                <div style="font-size:13px;color:var(--text-sub);margin-top:3px">
                     {{ $pendingAlreadyAssigned }} already assigned
                     &nbsp;·&nbsp;
                     <span style="font-weight:700;color:var(--text)">
@@ -273,13 +313,13 @@ use App\Enums\TransferStatus;
                 </div>
             </div>
             <button wire:click="closeQuantityPanel"
-                    style="background:none;border:none;font-size:22px;color:var(--text-dim);
+                    style="background:none;border:none;font-size:26px;color:var(--text-dim);
                            cursor:pointer;line-height:1;padding:0 2px">×</button>
         </div>
 
         {{-- Quantity input --}}
         <div>
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-sub);
+            <label style="display:block;font-size:13px;font-weight:700;color:var(--text-sub);
                           text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">
                 How many boxes to add now?
             </label>
@@ -287,14 +327,14 @@ use App\Enums\TransferStatus;
                    wire:keydown.enter="confirmScannedQuantity"
                    type="number" min="1" max="{{ $pendingMaxQty }}"
                    style="width:100%;padding:12px 14px;border:2px solid var(--accent);
-                          border-radius:10px;font-size:24px;font-weight:800;text-align:center;
+                          border-radius:10px;font-size:29px;font-weight:800;text-align:center;
                           background:var(--surface);color:var(--text);font-family:var(--mono);
                           outline:none;box-sizing:border-box">
             @error('pendingQty')
-                <div style="font-size:11px;color:var(--red);margin-top:5px">{{ $message }}</div>
+                <div style="font-size:13px;color:var(--red);margin-top:5px">{{ $message }}</div>
             @enderror
             @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
-            <div style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center">
+            <div style="font-size:13px;color:var(--text-dim);margin-top:6px;text-align:center">
                 After adding: <strong>{{ $afterAdd }}</strong> box{{ $afterAdd === 1 ? '' : 'es' }} still needed
             </div>
         </div>
@@ -304,7 +344,7 @@ use App\Enums\TransferStatus;
             <button wire:click="closeQuantityPanel"
                     style="flex:1;padding:11px;border-radius:10px;
                            border:1.5px solid var(--border);background:var(--surface);
-                           font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">
+                           font-size:16px;font-weight:700;cursor:pointer;color:var(--text)">
                 Continue Scanning
             </button>
             <button wire:click="confirmScannedQuantity"
@@ -312,7 +352,7 @@ use App\Enums\TransferStatus;
                     wire:target="confirmScannedQuantity"
                     style="flex:2;padding:11px;border-radius:10px;border:none;
                            background:var(--accent);color:#fff;
-                           font-size:13px;font-weight:800;cursor:pointer;
+                           font-size:16px;font-weight:800;cursor:pointer;
                            box-shadow:0 4px 12px rgba(59,111,212,.3)">
                 <span wire:loading.remove wire:target="confirmScannedQuantity">
                     ✓ Add {{ $pendingQty }} Box{{ (int) $pendingQty === 1 ? '' : 'es' }}

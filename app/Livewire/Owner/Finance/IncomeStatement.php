@@ -36,9 +36,19 @@ class IncomeStatement extends Component
         }
     }
 
-    public function applyDates(): void
+    public function updatedDateFrom(): void
     {
         $this->period = 'custom';
+    }
+
+    public function updatedDateTo(): void
+    {
+        $this->period = 'custom';
+    }
+
+    public function updatedLocationFilter(): void
+    {
+        // statement is #[Computed] — re-renders automatically
     }
 
     private function applyPreset(): void
@@ -79,6 +89,23 @@ class IncomeStatement extends Component
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    public function priorPeriodLabel(): string
+    {
+        if (! $this->dateFrom || ! $this->dateTo) {
+            return 'prior period';
+        }
+        $from    = \Carbon\Carbon::parse($this->dateFrom);
+        $to      = \Carbon\Carbon::parse($this->dateTo);
+        $daySpan = $from->diffInDays($to) + 1;
+        $prevFrom = $from->copy()->subDays($daySpan);
+        $prevTo   = $from->copy()->subDay();
+
+        if ($prevFrom->month === $prevTo->month && $prevFrom->year === $prevTo->year) {
+            return $prevFrom->format('M Y');
+        }
+        return $prevFrom->format('d M') . ' – ' . $prevTo->format('d M Y');
+    }
+
     public function periodLabel(): string
     {
         if (! $this->dateFrom || ! $this->dateTo) {
@@ -101,9 +128,10 @@ class IncomeStatement extends Component
             : (collect($this->shops)->firstWhere('id', (int) explode(':', $this->locationFilter)[1])['name'] ?? '—');
 
         return view('livewire.owner.finance.income-statement', [
-            'statement'   => $this->statement,
-            'periodLabel' => $this->periodLabel(),
-            'shopName'    => $shopName,
+            'statement'        => $this->statement,
+            'periodLabel'      => $this->periodLabel(),
+            'priorPeriodLabel' => $this->priorPeriodLabel(),
+            'shopName'         => $shopName,
         ]);
     }
 }

@@ -1,10 +1,10 @@
 <div>
 <style>
 /* ─── Request Transfer Form ───────────────────────── */
-.rf-breadcrumb { font-size:12px; color:var(--text-sub); margin-bottom:16px; }
+.rf-breadcrumb { font-size:14px; color:var(--text-sub); margin-bottom:16px; }
 .rf-breadcrumb a { color:var(--accent); text-decoration:none; }
-.rf-page-head h1 { font-size:22px; font-weight:800; letter-spacing:-.4px; color:var(--text); margin:0 0 3px; }
-.rf-page-head p  { font-size:13px; color:var(--text-sub); margin:0 0 24px; }
+.rf-page-head h1 { font-size:26px; font-weight:800; letter-spacing:-.4px; color:var(--text); margin:0 0 3px; }
+.rf-page-head p  { font-size:16px; color:var(--text-sub); margin:0 0 24px; }
 
 /* Two-column layout */
 .rf-layout { display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start; }
@@ -22,29 +22,29 @@
     background:var(--icon-bg,rgba(99,102,241,.12)); color:var(--icon-c,var(--accent));
     flex-shrink:0;
 }
-.rf-card-head-text h3 { font-size:13px; font-weight:700; color:var(--text); margin:0; }
-.rf-card-head-text p  { font-size:11px; color:var(--text-sub); margin:0; }
+.rf-card-head-text h3 { font-size:16px; font-weight:700; color:var(--text); margin:0; }
+.rf-card-head-text p  { font-size:13px; color:var(--text-sub); margin:0; }
 .rf-card-body { padding:18px; }
 
 /* Form fields */
 .rf-row2   { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .rf-field  { display:flex; flex-direction:column; gap:5px; }
-.rf-label  { font-size:10px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--text-sub); }
+.rf-label  { font-size:12px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--text-sub); }
 .rf-select, .rf-input, .rf-textarea {
     padding:9px 11px; border-radius:var(--rsm,6px);
     border:1px solid var(--border); background:var(--surface2); color:var(--text);
-    font-size:13px; outline:none; transition:border-color .15s; font-family:inherit; width:100%; box-sizing:border-box;
+    font-size:16px; outline:none; transition:border-color .15s; font-family:inherit; width:100%; box-sizing:border-box;
 }
 .rf-select:focus,.rf-input:focus,.rf-textarea:focus { border-color:var(--accent); }
 .rf-textarea { min-height:72px; resize:vertical; }
-.rf-error { font-size:11px; color:#ef4444; margin-top:2px; }
+.rf-error { font-size:13px; color:#ef4444; margin-top:2px; }
 
 /* Product search */
 .rf-search-wrap { position:relative; margin-bottom:14px; }
 .rf-search-wrap input {
     width:100%; padding:9px 11px 9px 36px; border-radius:var(--rsm,6px);
     border:1px solid var(--border); background:var(--surface2); color:var(--text);
-    font-size:13px; outline:none; transition:border-color .15s; box-sizing:border-box;
+    font-size:16px; outline:none; transition:border-color .15s; box-sizing:border-box;
 }
 .rf-search-wrap input:focus { border-color:var(--accent); }
 .rf-search-ico { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-sub); pointer-events:none; }
@@ -61,22 +61,22 @@
 .rf-prod-row.is-added    { border-color:var(--green); background:rgba(16,185,129,.04); }
 .rf-prod-row.no-stock    { opacity:.55; }
 .rf-prod-info            { flex:1; min-width:0; }
-.rf-prod-name            { font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rf-prod-name            { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rf-prod-meta            { display:flex; align-items:center; gap:6px; margin-top:2px; }
-.rf-prod-sku             { font-size:10px; color:var(--text-sub); }
-.rf-prod-cat             { font-size:10px; color:var(--text-sub); background:var(--surface); padding:1px 5px; border-radius:3px; border:1px solid var(--border); }
+.rf-prod-sku             { font-size:12px; color:var(--text-sub); }
+.rf-prod-cat             { font-size:12px; color:var(--text-sub); background:var(--surface); padding:1px 5px; border-radius:3px; border:1px solid var(--border); }
 
 /* Stock info */
 .rf-stock { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
 .rf-stock-pill {
-    font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px;
+    font-size:12px; font-weight:700; padding:2px 7px; border-radius:4px;
     background:var(--sp-bg); color:var(--sp-c);
 }
-.rf-stock-detail { font-size:9px; color:var(--text-sub); text-align:right; }
+.rf-stock-detail { font-size:11px; color:var(--text-sub); text-align:right; }
 
 /* Add button */
 .rf-add-btn {
-    padding:6px 12px; border-radius:var(--rsm,6px); font-size:11px; font-weight:700;
+    padding:6px 12px; border-radius:var(--rsm,6px); font-size:13px; font-weight:700;
     border:1.5px solid var(--accent); color:var(--accent); background:transparent;
     cursor:pointer; flex-shrink:0; display:inline-flex; align-items:center; gap:4px;
     transition:all .15s; white-space:nowrap;
@@ -94,35 +94,35 @@
     background:var(--surface2); border:1px solid var(--border);
 }
 .rf-item-top  { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; }
-.rf-item-name { font-size:12px; font-weight:600; color:var(--text); }
-.rf-item-sku  { font-size:10px; color:var(--text-sub); }
-.rf-item-rm   { background:none; border:none; color:var(--text-sub); cursor:pointer; font-size:15px; line-height:1; padding:0; transition:color .12s; }
+.rf-item-name { font-size:14px; font-weight:600; color:var(--text); }
+.rf-item-sku  { font-size:12px; color:var(--text-sub); }
+.rf-item-rm   { background:none; border:none; color:var(--text-sub); cursor:pointer; font-size:18px; line-height:1; padding:0; transition:color .12s; }
 .rf-item-rm:hover { color:#ef4444; }
 .rf-qty-ctrl  { display:flex; align-items:center; gap:6px; }
 .rf-qty-input {
     width:60px; text-align:center; padding:5px; border-radius:5px;
     border:1px solid var(--border); background:var(--surface); color:var(--text);
-    font-size:13px; font-weight:700; outline:none;
+    font-size:16px; font-weight:700; outline:none;
 }
 .rf-qty-input:focus { border-color:var(--accent); }
 .rf-qty-input.over { border-color:#ef4444; background:rgba(239,68,68,.06); color:#ef4444; }
-.rf-qty-label { font-size:10px; color:var(--text-sub); }
-.rf-qty-avail { font-size:9px; color:var(--text-sub); margin-top:3px; }
+.rf-qty-label { font-size:12px; color:var(--text-sub); }
+.rf-qty-avail { font-size:11px; color:var(--text-sub); margin-top:3px; }
 .rf-overstock-warn {
-    font-size:10px; font-weight:600; color:#ef4444;
+    font-size:12px; font-weight:600; color:#ef4444;
     display:flex; align-items:center; gap:4px; margin-top:4px;
 }
 
 /* Totals */
 .rf-totals { border-top:1px solid var(--border); padding:12px 0; margin-bottom:12px; display:flex; flex-direction:column; gap:5px; }
 .rf-total-row { display:flex; justify-content:space-between; align-items:center; }
-.rf-total-row .l { font-size:11px; color:var(--text-sub); }
-.rf-total-row .v { font-size:13px; font-weight:700; color:var(--text); }
-.rf-total-row.big .v { font-size:18px; font-weight:800; color:var(--accent); }
+.rf-total-row .l { font-size:13px; color:var(--text-sub); }
+.rf-total-row .v { font-size:16px; font-weight:700; color:var(--text); }
+.rf-total-row.big .v { font-size:22px; font-weight:800; color:var(--accent); }
 
 /* Route preview */
 .rf-route-preview {
-    display:flex; align-items:center; gap:8px; font-size:11px;
+    display:flex; align-items:center; gap:8px; font-size:13px;
     padding:8px 10px; background:var(--surface2); border-radius:var(--rsm,6px);
     margin-bottom:12px; color:var(--text-sub);
 }
@@ -132,7 +132,7 @@
 /* Submit */
 .rf-submit {
     width:100%; padding:12px; border-radius:var(--r); border:none; cursor:pointer;
-    background:var(--accent); color:#fff; font-size:14px; font-weight:800;
+    background:var(--accent); color:#fff; font-size:17px; font-weight:800;
     letter-spacing:.2px; transition:opacity .15s; display:flex; align-items:center;
     justify-content:center; gap:8px;
 }
@@ -141,20 +141,87 @@
 
 .rf-empty-cart { text-align:center; padding:28px 12px; color:var(--text-sub); }
 .rf-empty-cart svg { display:block; margin:0 auto 10px; opacity:.3; }
-.rf-empty-cart p { font-size:12px; margin:0; }
+.rf-empty-cart p { font-size:14px; margin:0; }
 
-.rf-flash-ok  { padding:9px 12px; border-radius:var(--rsm,6px); font-size:12px; font-weight:600; background:rgba(16,185,129,.1); border:1px solid var(--green); color:var(--green); margin-top:10px; }
-.rf-flash-err { padding:9px 12px; border-radius:var(--rsm,6px); font-size:12px; font-weight:600; background:rgba(239,68,68,.08); border:1px solid #ef4444; color:#ef4444; margin-top:10px; }
+.rf-flash-ok  { padding:9px 12px; border-radius:var(--rsm,6px); font-size:14px; font-weight:600; background:rgba(16,185,129,.1); border:1px solid var(--green); color:var(--green); margin-top:10px; }
+.rf-flash-err { padding:9px 12px; border-radius:var(--rsm,6px); font-size:14px; font-weight:600; background:rgba(239,68,68,.08); border:1px solid #ef4444; color:#ef4444; margin-top:10px; }
 .rf-no-wh-notice {
     text-align:center; padding:28px; border:1px dashed var(--border);
-    border-radius:var(--rsm,6px); color:var(--text-sub); font-size:12px;
+    border-radius:var(--rsm,6px); color:var(--text-sub); font-size:14px;
 }
 
 /* Livewire loading safety */
 [wire\:loading] { display: none !important; }
 @keyframes rf-spin { to { transform: rotate(360deg); } }
 .rf-spin { animation: rf-spin .8s linear infinite; }
-</style>
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+\n
+/* 2A - Transfer List Fixes */
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+}
+\n
+/* 2B - Request Form Fixes */
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
+}
+@media(max-width:600px) {
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+\n</style>
 
 <div class="rf-breadcrumb">
   <a href="{{ route('shop.transfers.index') }}">← Transfer Requests</a>
@@ -285,7 +352,7 @@
               @endif
             </div>
             @empty
-            <div style="text-align:center;padding:28px;font-size:12px;color:var(--text-sub)">No products match your search.</div>
+            <div style="text-align:center;padding:28px;font-size:14px;color:var(--text-sub)">No products match your search.</div>
             @endforelse
           </div>
         @endif
@@ -368,7 +435,7 @@
               <span class="v">{{ $totalBoxes }}</span>
             </div>
             <div class="rf-total-row big">
-              <span class="l" style="font-size:12px;color:var(--text);font-weight:600">Est. items</span>
+              <span class="l" style="font-size:14px;color:var(--text);font-weight:600">Est. items</span>
               <span class="v">~{{ number_format($estItems) }}</span>
             </div>
           </div>

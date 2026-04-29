@@ -1,7 +1,7 @@
 @props(['reason', 'sessionDate' => null, 'sessionId' => null])
 
 <div class="flex justify-center py-8">
-    <div class="w-full rounded-xl p-6" style="max-width:480px;background:var(--surface-raised);border:1px solid var(--border);">
+    <div class="w-full rounded-xl p-6" style="max-width:480px;background:var(--surface2);border:1px solid var(--border);">
 
         @if ($reason === 'no_session')
             {{-- Amber clock icon --}}

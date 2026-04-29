@@ -5,7 +5,7 @@
     @endif
 
     @if ($activities->isEmpty())
-        <div style="text-align:center;padding:24px 0;font-size:12px;color:var(--text-faint);">
+        <div style="text-align:center;padding:24px 0;font-size:12px;color:var(--text-dim);">
             No activity yet today
         </div>
     @else
@@ -19,12 +19,12 @@
                         'return'       => ['bg' => 'var(--red-dim)',    'color' => 'var(--red)',    'label' => 'Return'],
                         'expense'      => ['bg' => 'var(--amber-dim)',  'color' => 'var(--amber)',  'label' => 'Expense'],
                         'bank_deposit' => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)', 'label' => 'Deposit'],
-                        'withdrawal'   => ['bg' => 'var(--surface-raised)', 'color' => 'var(--text-dim)', 'label' => 'Withdrawal'],
-                        default        => ['bg' => 'var(--surface-raised)', 'color' => 'var(--text-dim)', 'label' => ucfirst($item['type'])],
+                        'withdrawal'   => ['bg' => 'var(--surface2)', 'color' => 'var(--text-dim)', 'label' => 'Withdrawal'],
+                        default        => ['bg' => 'var(--surface2)', 'color' => 'var(--text-dim)', 'label' => ucfirst($item['type'])],
                     };
                 @endphp
                 <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;
-                            background:var(--surface-raised);">
+                            background:var(--surface2);">
 
                     {{-- Type pill --}}
                     <span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;flex-shrink:0;
@@ -33,7 +33,7 @@
                     </span>
 
                     {{-- Time --}}
-                    <span style="font-size:10px;font-family:var(--font-mono);color:var(--text-faint);flex-shrink:0;">
+                    <span style="font-size:10px;font-family:var(--mono);color:var(--text-dim);flex-shrink:0;">
                         {{ $item['time']?->format('H:i') }}
                     </span>
 
@@ -49,7 +49,7 @@
                     </span>
 
                     {{-- Amount --}}
-                    <span style="font-size:12px;font-weight:700;font-family:var(--font-mono);flex-shrink:0;
+                    <span style="font-size:12px;font-weight:700;font-family:var(--mono);flex-shrink:0;
                                  color:{{ $isIn ? 'var(--green)' : 'var(--red)' }};">
                         {{ $isIn ? '+' : '−' }}{{ number_format($item['amount']) }}
                     </span>

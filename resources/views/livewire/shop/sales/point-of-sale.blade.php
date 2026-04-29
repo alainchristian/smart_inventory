@@ -1490,7 +1490,7 @@
     transition:background .12s;
 }
 .co-pay-row:last-child { border-bottom:none }
-.co-pay-row.is-active { background:var(--surface-raised) }
+.co-pay-row.is-active { background:var(--surface2) }
 .co-pay-row.is-overalloc .co-pay-amount { border-color:var(--red) }
 .co-pay-icon {
     width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
@@ -1510,16 +1510,16 @@
     background:var(--surface);color:var(--text);font-size:14px;
     font-family:var(--mono);outline:none;transition:border-color .15s;text-align:right;
 }
-.co-pay-amount:focus { border-color:var(--accent);background:var(--surface-raised) }
+.co-pay-amount:focus { border-color:var(--accent);background:var(--surface2) }
 .co-pay-amount:disabled { opacity:.4;cursor:not-allowed }
 .co-pay-amount-unit {
     position:absolute;right:9px;top:50%;transform:translateY(-50%);
-    font-size:10px;font-weight:700;color:var(--text-faint);pointer-events:none;
+    font-size:10px;font-weight:700;color:var(--text-dim);pointer-events:none;
 }
 /* Cash row — auto-computed display */
 .co-cash-row {
     display:flex;align-items:center;gap:11px;padding:10px 13px;
-    background:var(--surface-raised);border-top:2px solid var(--border);
+    background:var(--surface2);border-top:2px solid var(--border);
 }
 .co-cash-display {
     width:130px;flex-shrink:0;padding:7px 10px;
@@ -1848,11 +1848,11 @@
           </div>
           <div class="co-pay-meta">
             <div class="co-pay-label" style="color:var(--green);">Cash</div>
-            <div style="font-size:10px;color:var(--text-faint);margin-top:1px;">Remainder — auto-calculated</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">Remainder — auto-calculated</div>
           </div>
           <div class="co-cash-display" :style="cash < 0 ? 'border-color:var(--red);color:var(--red);background:rgba(239,68,68,.06)' : ''">
             <span x-text="new Intl.NumberFormat().format(cash)" style="font-size:14px;"></span>
-            <span class="co-cash-badge" :style="cash > 0 ? '' : 'background:var(--text-faint)'">AUTO</span>
+            <span class="co-cash-badge" :style="cash > 0 ? '' : 'background:var(--text-dim)'">AUTO</span>
           </div>
         </div>
 

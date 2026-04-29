@@ -54,14 +54,14 @@
             ['Exchanges',        $kpiStats['exchange_count']   ?? 0, null,  'var(--accent)'],
             ['Pending Approval', $kpiStats['pending_approval'] ?? 0, null,  'var(--amber)'],
         ] as [$label, $value, $unit, $color])
-            <div style="background:var(--surface-raised);border:1px solid var(--border);
+            <div style="background:var(--surface2);border:1px solid var(--border);
                         border-radius:12px;padding:14px 16px;">
                 <div style="font-size:11px;font-weight:600;color:var(--text-dim);
                             text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
                     {{ $label }}
                 </div>
                 <div style="font-size:22px;font-weight:800;color:{{ $color }};
-                            font-family:var(--font-mono);letter-spacing:-0.5px;">
+                            font-family:var(--mono);letter-spacing:-0.5px;">
                     {{ $unit === 'RWF' ? number_format($value) : $value }}
                     @if ($unit)
                         <span style="font-size:12px;font-weight:400;color:var(--text-dim);">
@@ -107,7 +107,7 @@
                    wire:model.live.debounce.300ms="search"
                    placeholder="Return number, customer..."
                    style="width:100%;padding:9px 12px 9px 36px;border-radius:8px;font-size:13px;
-                          background:var(--surface-raised);border:1px solid var(--border);
+                          background:var(--surface2);border:1px solid var(--border);
                           color:var(--text);box-sizing:border-box;transition:border-color 0.15s;"
                    onfocus="this.style.borderColor='var(--accent)';"
                    onblur="this.style.borderColor='var(--border)';">
@@ -121,7 +121,7 @@
 
         <select wire:model.live="statusFilter"
                 style="padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;
-                       background:var(--surface-raised);border:1px solid var(--border);
+                       background:var(--surface2);border:1px solid var(--border);
                        color:var(--text);cursor:pointer;font-family:var(--font);
                        transition:border-color 0.15s;"
                 onfocus="this.style.borderColor='var(--accent)';"
@@ -133,7 +133,7 @@
 
         <select wire:model.live="typeFilter"
                 style="padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;
-                       background:var(--surface-raised);border:1px solid var(--border);
+                       background:var(--surface2);border:1px solid var(--border);
                        color:var(--text);cursor:pointer;font-family:var(--font);
                        transition:border-color 0.15s;"
                 onfocus="this.style.borderColor='var(--accent)';"
@@ -146,7 +146,7 @@
         <input type="date"
                wire:model.live="dateFrom"
                style="padding:9px 12px;border-radius:8px;font-size:12px;
-                      background:var(--surface-raised);border:1px solid var(--border);
+                      background:var(--surface2);border:1px solid var(--border);
                       color:var(--text);transition:border-color 0.15s;"
                onfocus="this.style.borderColor='var(--accent)';"
                onblur="this.style.borderColor='var(--border)';">
@@ -154,7 +154,7 @@
         @if ($isOwner)
             <select wire:model.live="shopFilter"
                     style="padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;
-                           background:var(--surface-raised);border:1px solid var(--border);
+                           background:var(--surface2);border:1px solid var(--border);
                            color:var(--text);cursor:pointer;font-family:var(--font);
                            transition:border-color 0.15s;"
                     onfocus="this.style.borderColor='var(--accent)';"
@@ -168,7 +168,7 @@
     </div>
 
     {{-- ── RETURNS TABLE ────────────────────────────────────────────────── --}}
-    <div style="background:var(--surface-raised);border:1px solid var(--border);
+    <div style="background:var(--surface2);border:1px solid var(--border);
                 border-radius:14px;overflow:hidden;"
          x-data="{ expandedRow: null }">
 
@@ -219,7 +219,7 @@
 
                     {{-- Return number --}}
                     <div style="font-size:12px;font-weight:700;color:var(--text);
-                                font-family:var(--font-mono);">
+                                font-family:var(--mono);">
                         {{ $return->return_number }}
                     </div>
 
@@ -255,7 +255,7 @@
                     {{-- Refund amount --}}
                     <div style="font-size:12px;font-weight:700;
                                 color:{{ $return->is_exchange ? 'var(--text-dim)' : 'var(--red)' }};
-                                font-family:var(--font-mono);">
+                                font-family:var(--mono);">
                         @if ($return->is_exchange)
                             —
                         @else
@@ -275,7 +275,7 @@
                         <div style="font-size:11px;color:var(--text);">
                             {{ $return->processed_at->format('d M Y') }}
                         </div>
-                        <div style="font-size:10px;color:var(--text-faint);margin-top:1px;">
+                        <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">
                             {{ $return->processed_at->format('H:i') }}
                         </div>
                     </div>
@@ -299,7 +299,7 @@
                                 ✓ Approved
                             </span>
                         @else
-                            <span style="font-size:10px;color:var(--text-faint);">
+                            <span style="font-size:10px;color:var(--text-dim);">
                                 Pending
                             </span>
                         @endif
@@ -385,7 +385,7 @@
                                 </div>
                                 @if ($return->notes)
                                     <div style="margin-top:6px;padding:6px 8px;border-radius:6px;
-                                                background:var(--surface-raised);color:var(--text-dim);
+                                                background:var(--surface2);color:var(--text-dim);
                                                 font-size:11px;line-height:1.5;">
                                         {{ $return->notes }}
                                     </div>

@@ -30,7 +30,7 @@
                    enterkeyhint="next"
                    min="1"
                    class="w-full px-3 py-2.5 rounded-lg text-sm"
-                   style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);text-align:right;"
+                   style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);text-align:right;"
                    placeholder="0"
                    onfocus="this.style.borderColor='var(--accent)';if(this.value==='0')this.value='';"
                    onblur="this.style.borderColor='var(--border)';">
@@ -80,7 +80,7 @@
                    wire:keydown.enter="saveExpense"
                    enterkeyhint="done"
                    class="w-full px-3 py-2.5 rounded-lg text-sm"
-                   style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);"
+                   style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);"
                    placeholder="Receipt or reference number">
         </div>
     </div>

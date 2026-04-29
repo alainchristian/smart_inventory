@@ -7,7 +7,7 @@
     @endif
 
     {{-- Request Form --}}
-    <div class="rounded-xl p-5 mb-6" style="background:var(--surface-raised);border:1px solid var(--border);">
+    <div class="rounded-xl p-5 mb-6" style="background:var(--surface2);border:1px solid var(--border);">
         <div class="text-sm font-semibold mb-4" style="color:var(--text);">New Expense Request</div>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -28,7 +28,7 @@
                 <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">Amount (RWF)</label>
                 <input type="number" wire:model="amount" min="1"
                        class="w-full px-3 py-2 rounded-lg text-sm"
-                       style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);"
+                       style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);"
                        placeholder="0">
                 @error('amount') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
             </div>
@@ -59,12 +59,12 @@
         <div class="text-sm font-semibold mb-3" style="color:var(--text);">My Request History</div>
 
         @if ($myRequests->isEmpty())
-            <div class="text-center py-6 text-sm" style="color:var(--text-faint);">No requests yet.</div>
+            <div class="text-center py-6 text-sm" style="color:var(--text-dim);">No requests yet.</div>
         @else
             <div class="space-y-2">
                 @foreach ($myRequests as $req)
                     <div class="rounded-lg p-3 flex items-center justify-between gap-3"
-                         style="background:var(--surface-raised);border:1px solid var(--border);">
+                         style="background:var(--surface2);border:1px solid var(--border);">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-mono" style="color:var(--accent);">{{ $req->reference_number }}</span>
@@ -75,7 +75,7 @@
                                         'rejected' => ['bg' => 'var(--red-dim)',    'text' => 'var(--red)'],
                                         'approved' => ['bg' => 'var(--accent-dim)', 'text' => 'var(--accent)'],
                                     ];
-                                    $sc = $statusColors[$req->status] ?? ['bg' => 'var(--surface-raised)', 'text' => 'var(--text-dim)'];
+                                    $sc = $statusColors[$req->status] ?? ['bg' => 'var(--surface2)', 'text' => 'var(--text-dim)'];
                                 @endphp
                                 <span class="text-xs px-2 py-0.5 rounded"
                                       style="background:{{ $sc['bg'] }};color:{{ $sc['text'] }};">
@@ -88,7 +88,7 @@
                         </div>
                         <div class="text-right flex-shrink-0">
                             <div class="font-mono font-semibold text-sm" style="color:var(--text);">{{ number_format($req->amount) }} RWF</div>
-                            <div class="text-xs" style="color:var(--text-faint);">{{ $req->created_at->format('d M') }}</div>
+                            <div class="text-xs" style="color:var(--text-dim);">{{ $req->created_at->format('d M') }}</div>
                         </div>
                     </div>
                 @endforeach

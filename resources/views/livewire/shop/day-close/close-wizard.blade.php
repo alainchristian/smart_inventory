@@ -76,7 +76,7 @@
                                 @elseif ($currentStep === $n)
                                     background:var(--accent);color:#fff;box-shadow:0 0 0 4px var(--accent-dim);
                                 @else
-                                    background:var(--surface-raised);color:var(--text-faint);border:2px solid var(--border);
+                                    background:var(--surface2);color:var(--text-dim);border:2px solid var(--border);
                                 @endif
                              ">
                             @if ($currentStep > $n)
@@ -89,7 +89,7 @@
                         </div>
                         {{-- Label --}}
                         <span class="absolute -bottom-5 text-xs font-semibold whitespace-nowrap wiz-step-label"
-                              style="@if($currentStep === $n) color:var(--accent); @elseif($currentStep > $n) color:var(--green); @else color:var(--text-faint); @endif">
+                              style="@if($currentStep === $n) color:var(--accent); @elseif($currentStep > $n) color:var(--green); @else color:var(--text-dim); @endif">
                             {{ $label }}
                         </span>
                     </div>
@@ -113,7 +113,7 @@
         [$stepTitle, $stepSub] = $stepHeaders[$currentStep];
     @endphp
     <div class="mb-5 mt-8">
-        <div class="wiz-mobile-step text-xs font-semibold mb-1" style="color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;">Step {{ $currentStep }} of 4</div>
+        <div class="wiz-mobile-step text-xs font-semibold mb-1" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Step {{ $currentStep }} of 4</div>
         <h2 class="text-lg font-bold" style="color:var(--text);letter-spacing:-0.3px;">{{ $stepTitle }}</h2>
         <p class="text-sm mt-0.5" style="color:var(--text-dim);">{{ $stepSub }}</p>
     </div>
@@ -137,18 +137,18 @@
         @endphp
 
         {{-- Total sales hero --}}
-        <div class="rounded-2xl mb-4" style="border:1px solid var(--border);background:var(--surface-raised);">
+        <div class="rounded-2xl mb-4" style="border:1px solid var(--border);background:var(--surface2);">
             <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid var(--border);">
                 <div>
-                    <div class="text-xs font-semibold mb-1" style="color:var(--text-faint);text-transform:uppercase;letter-spacing:0.8px;">Total Sales Today</div>
+                    <div class="text-xs font-semibold mb-1" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;">Total Sales Today</div>
                     <div class="font-mono font-bold" style="font-size:28px;letter-spacing:-1px;color:var(--text);">
                         {{ number_format($summary['total_sales'] ?? 0) }}
                         <span style="font-size:13px;color:var(--text-dim);font-weight:500;">RWF</span>
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="text-2xl font-bold" style="color:var(--text-faint);">{{ $summary['transaction_count'] ?? 0 }}</div>
-                    <div class="text-xs mt-0.5" style="color:var(--text-faint);">transactions</div>
+                    <div class="text-2xl font-bold" style="color:var(--text-dim);">{{ $summary['transaction_count'] ?? 0 }}</div>
+                    <div class="text-xs mt-0.5" style="color:var(--text-dim);">transactions</div>
                 </div>
             </div>
             {{-- Mini channel dots --}}
@@ -167,7 +167,7 @@
 
         {{-- Channel breakdown --}}
         <div class="rounded-2xl overflow-hidden mb-4" style="border:1px solid var(--border);">
-            <div class="px-4 py-3" style="background:var(--surface-raised);border-bottom:1px solid var(--border);">
+            <div class="px-4 py-3" style="background:var(--surface2);border-bottom:1px solid var(--border);">
                 <span class="text-xs font-semibold" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;">By Payment Channel</span>
             </div>
             <div style="background:var(--surface);">
@@ -181,10 +181,10 @@
                                 <span class="text-sm" style="color:var(--text);">{{ $method }}</span>
                             </div>
                             <div class="text-right">
-                                <span class="font-mono font-semibold text-sm" style="color:{{ $amount > 0 ? $color : 'var(--text-faint)' }};">
+                                <span class="font-mono font-semibold text-sm" style="color:{{ $amount > 0 ? $color : 'var(--text-dim)' }};">
                                     {{ number_format($amount) }} RWF
                                 </span>
-                                <span class="text-xs ml-1.5" style="color:var(--text-faint);">{{ $pct }}%</span>
+                                <span class="text-xs ml-1.5" style="color:var(--text-dim);">{{ $pct }}%</span>
                             </div>
                         </div>
                         <div class="h-1 rounded-full overflow-hidden" style="background:var(--border);">
@@ -202,7 +202,7 @@
         @endphp
         @if ($hasCashRefunds || $hasRepayments)
             <div class="rounded-2xl overflow-hidden" style="border:1px solid var(--border);">
-                <div class="px-4 py-3" style="background:var(--surface-raised);border-bottom:1px solid var(--border);">
+                <div class="px-4 py-3" style="background:var(--surface2);border-bottom:1px solid var(--border);">
                     <span class="text-xs font-semibold" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;">Adjustments</span>
                 </div>
                 <div style="background:var(--surface);">
@@ -274,7 +274,7 @@
             {{-- Bank Deposits --}}
             <div @click="activeTab = 'deposits'"
                  class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:var(--surface-raised);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
+                 style="border-radius:12px;padding:14px 16px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
                  x-bind:style="{ 'border-color': activeTab === 'deposits' ? 'var(--accent)' : 'var(--border)', 'box-shadow': activeTab === 'deposits' ? '0 0 0 3px var(--accent-dim)' : 'none' }">
                 <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -284,11 +284,11 @@
                     </div>
                     <span class="wiz-strip-label" style="font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Deposits</span>
                 </div>
-                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--font-mono);color:var(--accent);letter-spacing:-0.5px;">
+                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--accent);letter-spacing:-0.5px;">
                     {{ number_format($summary['total_bank_deposits'] ?? 0) }}
                     <span style="font-size:11px;font-weight:400;color:var(--text-dim);">RWF</span>
                 </div>
-                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-faint);margin-top:2px;">
+                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-dim);margin-top:2px;">
                     {{ $summary['bank_deposit_count'] ?? 0 }} deposit{{ ($summary['bank_deposit_count'] ?? 0) !== 1 ? 's' : '' }}
                 </div>
             </div>
@@ -296,7 +296,7 @@
             {{-- Expenses --}}
             <div @click="activeTab = 'expenses'"
                  class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:var(--surface-raised);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
+                 style="border-radius:12px;padding:14px 16px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
                  x-bind:style="{ 'border-color': activeTab === 'expenses' ? 'var(--red)' : 'var(--border)', 'box-shadow': activeTab === 'expenses' ? '0 0 0 3px var(--red-dim)' : 'none' }">
                 <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <div style="width:28px;height:28px;border-radius:8px;background:var(--red-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -306,11 +306,11 @@
                     </div>
                     <span class="wiz-strip-label" style="font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Expenses</span>
                 </div>
-                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--font-mono);color:var(--red);letter-spacing:-0.5px;">
+                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--red);letter-spacing:-0.5px;">
                     {{ number_format($summary['total_expenses'] ?? 0) }}
                     <span style="font-size:11px;font-weight:400;color:var(--text-dim);">RWF</span>
                 </div>
-                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-faint);margin-top:2px;">
+                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-dim);margin-top:2px;">
                     {{ $summary['expense_count'] ?? 0 }} item{{ ($summary['expense_count'] ?? 0) !== 1 ? 's' : '' }}
                 </div>
             </div>
@@ -318,7 +318,7 @@
             {{-- Withdrawals --}}
             <div @click="activeTab = 'withdrawals'"
                  class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:var(--surface-raised);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
+                 style="border-radius:12px;padding:14px 16px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
                  x-bind:style="{ 'border-color': activeTab === 'withdrawals' ? 'var(--amber)' : 'var(--border)', 'box-shadow': activeTab === 'withdrawals' ? '0 0 0 3px var(--amber-dim)' : 'none' }">
                 <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <div style="width:28px;height:28px;border-radius:8px;background:var(--amber-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -328,11 +328,11 @@
                     </div>
                     <span class="wiz-strip-label" style="font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Withdrawals</span>
                 </div>
-                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--font-mono);color:var(--amber);letter-spacing:-0.5px;">
+                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--amber);letter-spacing:-0.5px;">
                     {{ number_format($summary['total_withdrawals'] ?? 0) }}
                     <span style="font-size:11px;font-weight:400;color:var(--text-dim);">RWF</span>
                 </div>
-                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-faint);margin-top:2px;">
+                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-dim);margin-top:2px;">
                     {{ $summary['withdrawal_count'] ?? 0 }} item{{ ($summary['withdrawal_count'] ?? 0) !== 1 ? 's' : '' }}
                 </div>
             </div>
@@ -340,13 +340,13 @@
         </div>{{-- end summary strip --}}
 
         {{-- Tab content panel --}}
-        <div style="background:var(--surface-raised);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
 
             {{-- Tab bar — explicit separators --}}
             <div style="display:flex;background:var(--surface);border-bottom:1px solid var(--border);">
                 <button type="button"
                         @click="activeTab = 'deposits'"
-                        x-bind:style="{ 'color': activeTab === 'deposits' ? 'var(--accent)' : 'var(--text-dim)', 'border-bottom': activeTab === 'deposits' ? '2px solid var(--accent)' : '2px solid transparent', 'background': activeTab === 'deposits' ? 'var(--surface-raised)' : 'transparent' }"
+                        x-bind:style="{ 'color': activeTab === 'deposits' ? 'var(--accent)' : 'var(--text-dim)', 'border-bottom': activeTab === 'deposits' ? '2px solid var(--accent)' : '2px solid transparent', 'background': activeTab === 'deposits' ? 'var(--surface2)' : 'transparent' }"
                         style="flex:1;padding:11px 0;font-size:12px;font-weight:600;
                                border:none;cursor:pointer;font-family:var(--font);
                                border-right:1px solid var(--border);
@@ -355,7 +355,7 @@
                 </button>
                 <button type="button"
                         @click="activeTab = 'expenses'"
-                        x-bind:style="{ 'color': activeTab === 'expenses' ? 'var(--red)' : 'var(--text-dim)', 'border-bottom': activeTab === 'expenses' ? '2px solid var(--red)' : '2px solid transparent', 'background': activeTab === 'expenses' ? 'var(--surface-raised)' : 'transparent' }"
+                        x-bind:style="{ 'color': activeTab === 'expenses' ? 'var(--red)' : 'var(--text-dim)', 'border-bottom': activeTab === 'expenses' ? '2px solid var(--red)' : '2px solid transparent', 'background': activeTab === 'expenses' ? 'var(--surface2)' : 'transparent' }"
                         style="flex:1;padding:11px 0;font-size:12px;font-weight:600;
                                border:none;cursor:pointer;font-family:var(--font);
                                border-right:1px solid var(--border);
@@ -364,7 +364,7 @@
                 </button>
                 <button type="button"
                         @click="activeTab = 'withdrawals'"
-                        x-bind:style="{ 'color': activeTab === 'withdrawals' ? 'var(--amber)' : 'var(--text-dim)', 'border-bottom': activeTab === 'withdrawals' ? '2px solid var(--amber)' : '2px solid transparent', 'background': activeTab === 'withdrawals' ? 'var(--surface-raised)' : 'transparent' }"
+                        x-bind:style="{ 'color': activeTab === 'withdrawals' ? 'var(--amber)' : 'var(--text-dim)', 'border-bottom': activeTab === 'withdrawals' ? '2px solid var(--amber)' : '2px solid transparent', 'background': activeTab === 'withdrawals' ? 'var(--surface2)' : 'transparent' }"
                         style="flex:1;padding:11px 0;font-size:12px;font-weight:600;
                                border:none;cursor:pointer;font-family:var(--font);
                                transition:color 0.15s,background 0.15s;">
@@ -406,7 +406,7 @@
     <style>@media(max-width:640px){ .cash-count-grid{ grid-template-columns:1fr !important; } }</style>
 
         {{-- LEFT — Cash ledger --}}
-        <div style="background:var(--surface-raised);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
 
             <div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface);">
                 <span style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.7px;">Cash Drawer</span>
@@ -430,7 +430,7 @@
                     @if ($val > 0 || $sign === null)
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);">
                         <span style="font-size:13px;color:var(--text-dim);">{{ $lbl }}</span>
-                        <span style="font-size:13px;font-weight:600;font-family:var(--font-mono);color:{{ $color }};white-space:nowrap;">
+                        <span style="font-size:13px;font-weight:600;font-family:var(--mono);color:{{ $color }};white-space:nowrap;">
                             @if($sign) {{ $sign }} @endif{{ number_format($val) }} RWF
                         </span>
                     </div>
@@ -441,7 +441,7 @@
             <div style="padding:14px 16px;background:var(--surface);">
                 <div style="display:flex;align-items:center;justify-content:space-between;">
                     <span style="font-size:13px;font-weight:600;color:var(--text);">Expected cash</span>
-                    <span style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:var(--accent);letter-spacing:-0.5px;">
+                    <span style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--accent);letter-spacing:-0.5px;">
                         {{ number_format($summary['expected_cash'] ?? 0) }}
                         <span style="font-size:12px;font-weight:400;color:var(--text-dim);">RWF</span>
                     </span>
@@ -453,7 +453,7 @@
         {{-- RIGHT — Counting input --}}
         <div style="display:flex;flex-direction:column;gap:16px;">
 
-            <div style="background:var(--surface-raised);border:1px solid var(--border);border-radius:16px;padding:20px;">
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:20px;">
                 <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">
                     Count the physical cash
                 </label>
@@ -467,7 +467,7 @@
                            min="0"
                            placeholder="0"
                            class="wiz-cash-input"
-                       style="width:100%;padding:16px 56px 16px 16px;border-radius:12px;font-size:28px;font-weight:800;font-family:var(--font-mono);text-align:right;background:var(--surface);border:2px solid var(--border);color:var(--text);transition:border-color 0.2s;-moz-appearance:textfield;box-sizing:border-box;"
+                       style="width:100%;padding:16px 56px 16px 16px;border-radius:12px;font-size:28px;font-weight:800;font-family:var(--mono);text-align:right;background:var(--surface);border:2px solid var(--border);color:var(--text);transition:border-color 0.2s;-moz-appearance:textfield;box-sizing:border-box;"
                            onfocus="this.style.borderColor='var(--accent)';"
                            onblur="this.style.borderColor='var(--border)';">
                     <span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-dim);font-weight:500;pointer-events:none;">RWF</span>
@@ -489,7 +489,7 @@
 
                 @if (!$hasInput)
                     <div style="padding:16px 20px;background:var(--surface);text-align:center;">
-                        <div style="font-size:12px;color:var(--text-faint);">
+                        <div style="font-size:12px;color:var(--text-dim);">
                             Enter the cash count above to see the variance
                         </div>
                     </div>
@@ -522,7 +522,7 @@
                                 </div>
                             </div>
                             <div style="text-align:right;flex-shrink:0;">
-                                <div style="font-size:20px;font-weight:800;color:var(--amber);font-family:var(--font-mono);">+{{ number_format($variance) }}</div>
+                                <div style="font-size:20px;font-weight:800;color:var(--amber);font-family:var(--mono);">+{{ number_format($variance) }}</div>
                                 <div style="font-size:10px;color:var(--text-dim);">RWF over</div>
                             </div>
                         </div>
@@ -542,7 +542,7 @@
                                 </div>
                             </div>
                             <div style="text-align:right;flex-shrink:0;">
-                                <div style="font-size:20px;font-weight:800;color:var(--red);font-family:var(--font-mono);">−{{ number_format(abs($variance)) }}</div>
+                                <div style="font-size:20px;font-weight:800;color:var(--red);font-family:var(--mono);">−{{ number_format(abs($variance)) }}</div>
                                 <div style="font-size:10px;color:var(--text-dim);">RWF short</div>
                             </div>
                         </div>
@@ -628,7 +628,7 @@
                     </div>
                     <div>
                         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:{{ $vColor }};margin-bottom:2px;">{{ $vLabel }}</div>
-                        <div style="font-size:26px;font-weight:800;font-family:var(--font-mono);color:{{ $vColor }};line-height:1;">
+                        <div style="font-size:26px;font-weight:800;font-family:var(--mono);color:{{ $vColor }};line-height:1;">
                             {{ $v >= 0 ? '+' : '' }}{{ number_format($v) }}
                             <span style="font-size:13px;font-weight:600;opacity:0.75;"> RWF</span>
                         </div>
@@ -636,16 +636,16 @@
                 </div>
                 <div style="text-align:right;flex-shrink:0;">
                     <div style="font-size:10px;color:{{ $vColor }};opacity:0.75;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Expected</div>
-                    <div style="font-size:14px;font-weight:700;font-family:var(--font-mono);color:{{ $vColor }};">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
+                    <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:{{ $vColor }};">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
                     <div style="font-size:10px;color:{{ $vColor }};opacity:0.75;margin:4px 0 2px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Counted</div>
-                    <div style="font-size:14px;font-weight:700;font-family:var(--font-mono);color:{{ $vColor }};">{{ number_format((int) $actualCashCounted) }}</div>
+                    <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:{{ $vColor }};">{{ number_format((int) $actualCashCounted) }}</div>
                 </div>
             </div>
 
             {{-- ── 2. SESSION SUMMARY ── --}}
             <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);">
                 {{-- Header --}}
-                <div style="padding:12px 16px;background:var(--surface-raised);border-bottom:1px solid var(--border);
+                <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
                             display:flex;align-items:center;gap:8px;">
                     <svg style="width:14px;height:14px;color:var(--text-dim);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -664,7 +664,7 @@
                                     <div style="width:3px;height:14px;border-radius:2px;background:{{ $clr }};flex-shrink:0;"></div>
                                     <span style="font-size:12px;color:var(--text-dim);">{{ $lbl }}</span>
                                 </div>
-                                <span style="font-size:12px;font-weight:600;font-family:var(--font-mono);color:{{ $clr }};">
+                                <span style="font-size:12px;font-weight:600;font-family:var(--mono);color:{{ $clr }};">
                                     {{ $sign }}{{ number_format($val) }} <span style="font-size:10px;opacity:0.7;">RWF</span>
                                 </span>
                             </div>
@@ -681,7 +681,7 @@
                                     <div style="width:3px;height:14px;border-radius:2px;background:{{ $clr }};flex-shrink:0;"></div>
                                     <span style="font-size:12px;color:var(--text-dim);">{{ $lbl }}</span>
                                 </div>
-                                <span style="font-size:12px;font-weight:600;font-family:var(--font-mono);color:{{ $clr }};">
+                                <span style="font-size:12px;font-weight:600;font-family:var(--mono);color:{{ $clr }};">
                                     {{ $sign }}{{ number_format($val) }} <span style="font-size:10px;opacity:0.7;">RWF</span>
                                 </span>
                             </div>
@@ -689,9 +689,9 @@
                                 @foreach ($nonCashChannels as $chName => $chAmt)
                                     <div style="display:flex;align-items:center;justify-content:space-between;
                                                 padding:6px 16px 6px 28px;border-bottom:1px solid var(--border);
-                                                background:var(--surface-raised);">
-                                        <span style="font-size:11px;color:var(--text-faint);">↳ {{ $chName }}</span>
-                                        <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-faint);">{{ number_format($chAmt) }} RWF</span>
+                                                background:var(--surface2);">
+                                        <span style="font-size:11px;color:var(--text-dim);">↳ {{ $chName }}</span>
+                                        <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim);">{{ number_format($chAmt) }} RWF</span>
                                     </div>
                                 @endforeach
                             @endif
@@ -700,19 +700,19 @@
                 </div>
 
                 {{-- Expected / Counted / Variance footer --}}
-                <div style="background:var(--surface-raised);">
+                <div style="background:var(--surface2);">
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:2px solid var(--border);">
                         <div style="padding:12px 14px;border-right:1px solid var(--border);">
-                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-faint);margin-bottom:3px;">Expected</div>
-                            <div style="font-size:13px;font-weight:700;font-family:var(--font-mono);color:var(--accent);">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
+                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:3px;">Expected</div>
+                            <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--accent);">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
                         </div>
                         <div style="padding:12px 14px;border-right:1px solid var(--border);">
-                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-faint);margin-bottom:3px;">Counted</div>
-                            <div style="font-size:13px;font-weight:700;font-family:var(--font-mono);color:var(--text);">{{ number_format((int) $actualCashCounted) }}</div>
+                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:3px;">Counted</div>
+                            <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);">{{ number_format((int) $actualCashCounted) }}</div>
                         </div>
                         <div style="padding:12px 14px;">
-                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-faint);margin-bottom:3px;">Variance</div>
-                            <div style="font-size:13px;font-weight:700;font-family:var(--font-mono);color:{{ $vColor }};">{{ $v >= 0 ? '+' : '' }}{{ number_format($v) }}</div>
+                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:3px;">Variance</div>
+                            <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:{{ $vColor }};">{{ $v >= 0 ? '+' : '' }}{{ number_format($v) }}</div>
                         </div>
                     </div>
                 </div>
@@ -720,7 +720,7 @@
 
             {{-- ── 3. CASH DISPOSITION ── --}}
             <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);">
-                <div style="padding:12px 16px;background:var(--surface-raised);border-bottom:1px solid var(--border);
+                <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
                             display:flex;align-items:center;gap:8px;">
                     <svg style="width:14px;height:14px;" fill="none" stroke="var(--amber)" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -740,8 +740,8 @@
                         <input type="number" wire:model.live="cashToOwnerMomo" min="0"
                                @input="$dispatch('momo-deduction-changed', { val: parseInt($event.target.value) || 0 })"
                                style="width:100%;padding:12px 16px;border-radius:10px;
-                                      font-size:22px;font-weight:700;font-family:var(--font-mono);text-align:right;
-                                      background:var(--surface-raised);border:1.5px solid var(--border);
+                                      font-size:22px;font-weight:700;font-family:var(--mono);text-align:right;
+                                      background:var(--surface2);border:1.5px solid var(--border);
                                       color:var(--text);transition:border-color 0.2s;
                                       -moz-appearance:textfield;box-sizing:border-box;"
                                placeholder="0"
@@ -756,21 +756,21 @@
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;">MoMo Reference</label>
                             <input type="text" wire:model="ownerMomoReference"
-                                   style="width:100%;padding:9px 12px;border-radius:8px;font-size:13px;font-family:var(--font-mono);
-                                          background:var(--surface-raised);border:1px solid var(--border);color:var(--text);box-sizing:border-box;"
+                                   style="width:100%;padding:9px 12px;border-radius:8px;font-size:13px;font-family:var(--mono);
+                                          background:var(--surface2);border:1px solid var(--border);color:var(--text);box-sizing:border-box;"
                                    placeholder="Transaction ID or confirmation code">
                         </div>
                     @endif
 
                     {{-- Retained display --}}
                     <div style="border-radius:12px;padding:14px 16px;
-                                background:var(--surface-raised);border:1px solid var(--border);
+                                background:var(--surface2);border:1px solid var(--border);
                                 display:flex;align-items:center;justify-content:space-between;">
                         <div>
-                            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-faint);margin-bottom:3px;">Retained in Shop</div>
+                            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);margin-bottom:3px;">Retained in Shop</div>
                             <div style="font-size:11px;color:var(--text-dim);">Cash stays in the register</div>
                         </div>
-                        <div style="font-size:22px;font-weight:800;font-family:var(--font-mono);
+                        <div style="font-size:22px;font-weight:800;font-family:var(--mono);
                                     color:{{ $cashRetained >= 0 ? 'var(--text)' : 'var(--red)' }};">
                             {{ number_format($cashRetained) }}
                             <span style="font-size:12px;font-weight:600;color:var(--text-dim);"> RWF</span>
@@ -782,7 +782,7 @@
                         <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;">Notes <span style="font-weight:400;opacity:0.6;">(optional)</span></label>
                         <textarea wire:model="notes" rows="2"
                                   style="width:100%;padding:9px 12px;border-radius:8px;font-size:13px;resize:none;
-                                         background:var(--surface-raised);border:1px solid var(--border);color:var(--text);
+                                         background:var(--surface2);border:1px solid var(--border);color:var(--text);
                                          box-sizing:border-box;font-family:var(--font);"
                                   placeholder="Any notes for the owner…"></textarea>
                     </div>
@@ -792,14 +792,14 @@
             {{-- ── 4. NON-CASH SETTLEMENT ── --}}
             @if ($hasNonCash)
                 <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);">
-                    <div style="padding:12px 16px;background:var(--surface-raised);border-bottom:1px solid var(--border);">
+                    <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);">
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="#6366f1" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                             </svg>
                             <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">Non-Cash Settlement</span>
                         </div>
-                        <div style="font-size:11px;color:var(--text-faint);padding-left:22px;">Confirm how each channel's collections were transferred to the owner</div>
+                        <div style="font-size:11px;color:var(--text-dim);padding-left:22px;">Confirm how each channel's collections were transferred to the owner</div>
                     </div>
 
                     <div style="background:var(--surface);">
@@ -814,7 +814,7 @@
                                                         box-shadow:0 0 0 3px {{ $color }}22;"></div>
                                             <span style="font-size:13px;font-weight:600;color:var(--text);">{{ $label }}</span>
                                         </div>
-                                        <span style="font-size:11px;font-family:var(--font-mono);font-weight:700;
+                                        <span style="font-size:11px;font-family:var(--mono);font-weight:700;
                                                      padding:3px 10px;border-radius:999px;
                                                      background:{{ $color }}18;color:{{ $color }};">
                                             {{ number_format($total) }} RWF
@@ -824,11 +824,11 @@
                                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                                         <div>
                                             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;
-                                                        color:var(--text-faint);margin-bottom:4px;">Settled (RWF)</div>
+                                                        color:var(--text-dim);margin-bottom:4px;">Settled (RWF)</div>
                                             <input type="number" wire:model.blur="{{ $field }}" min="0"
                                                    style="width:100%;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:700;
-                                                          font-family:var(--font-mono);text-align:right;
-                                                          background:var(--surface-raised);border:1px solid var(--border);
+                                                          font-family:var(--mono);text-align:right;
+                                                          background:var(--surface2);border:1px solid var(--border);
                                                           color:var(--text);box-sizing:border-box;-moz-appearance:textfield;"
                                                    placeholder="0"
                                                    onfocus="if(this.value==='0')this.value='';this.style.borderColor='{{ $color }}';"
@@ -836,10 +836,10 @@
                                         </div>
                                         <div>
                                             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;
-                                                        color:var(--text-faint);margin-bottom:4px;">Reference</div>
+                                                        color:var(--text-dim);margin-bottom:4px;">Reference</div>
                                             <input type="text" wire:model="{{ $refField }}"
                                                    style="width:100%;padding:8px 10px;border-radius:8px;font-size:12px;
-                                                          background:var(--surface-raised);border:1px solid var(--border);
+                                                          background:var(--surface2);border:1px solid var(--border);
                                                           color:var(--text);box-sizing:border-box;"
                                                    placeholder="Txn ID…">
                                         </div>
@@ -857,7 +857,7 @@
                                         <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">Tracked on customer accounts — no settlement needed</div>
                                     </div>
                                 </div>
-                                <span style="font-size:13px;font-family:var(--font-mono);font-weight:700;color:var(--amber);white-space:nowrap;">
+                                <span style="font-size:13px;font-family:var(--mono);font-weight:700;color:var(--amber);white-space:nowrap;">
                                     {{ number_format($creditSales) }} RWF
                                 </span>
                             </div>
@@ -875,7 +875,7 @@
             @if ($currentStep > 1)
                 <button wire:click="prevStep"
                         class="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
-                        style="background:var(--surface-raised);color:var(--text-dim);border:1px solid var(--border);">
+                        style="background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -911,7 +911,7 @@
                     <span wire:loading wire:target="submitClose" style="display:none;">Closing…</span>
                 </button>
                 <div class="wiz-nav-hint text-right w-full mt-2">
-                    <p class="text-xs inline-block" style="color:var(--text-faint);">Re-openable until owner locks the session</p>
+                    <p class="text-xs inline-block" style="color:var(--text-dim);">Re-openable until owner locks the session</p>
                 </div>
             @endif
         </div>
@@ -962,7 +962,7 @@
             <span class="w-2 h-2 rounded-full inline-block" :style="momoBalance >= 0 ? 'background:var(--accent)' : 'background:var(--red)'"></span>
             <span class="font-mono text-xs font-bold" :style="momoBalance >= 0 ? 'color:var(--accent)' : 'color:var(--red)'" x-text="momoBalance.toLocaleString()"></span>
         </span>
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="color:var(--text-faint);">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="color:var(--text-dim);">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
         </svg>
     </div>
@@ -981,7 +981,7 @@
         <div style="padding:9px 12px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
             <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-dim);">Live Balances</span>
             <button @click="open = false" style="background:none;border:none;cursor:pointer;padding:2px;line-height:0;">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="color:var(--text-faint);">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="color:var(--text-dim);">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                 </svg>
             </button>
@@ -1033,7 +1033,7 @@
 
         {{-- Footer hint --}}
         <div style="padding:5px 12px 8px;text-align:center;">
-            <span style="font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;">Updates as you record · RWF</span>
+            <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Updates as you record · RWF</span>
         </div>
     </div>
 </div>

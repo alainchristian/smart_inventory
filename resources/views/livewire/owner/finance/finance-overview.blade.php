@@ -1,7 +1,281 @@
 <div>
-    {{-- ── Preset Period Buttons ── --}}
-    <div class="flex flex-wrap gap-2 mb-4">
-        @foreach ([
+<style>
+/* ── Page ── */
+.fo-wrap { font-family:var(--font); }
+
+/* ── Header ── */
+.fo-page-head {
+    display:flex;align-items:flex-start;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;margin-bottom:20px;
+}
+.fo-page-title { font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.3px; }
+.fo-page-sub   { font-size:13px;color:var(--text-dim);margin-top:2px; }
+
+/* ── Filter bar ── */
+.fo-filters {
+    display:flex;flex-direction:column;gap:8px;margin-bottom:20px;
+}
+.fo-presets-row {
+    display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;
+}
+.fo-presets-row::-webkit-scrollbar { display:none; }
+.fo-controls-row {
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+}
+.fo-preset-btn {
+    padding:6px 12px;border-radius:8px;border:1px solid var(--border);
+    background:var(--surface2);color:var(--text-dim);font-size:12px;
+    font-weight:600;cursor:pointer;font-family:var(--font);transition:all 0.15s;
+    white-space:nowrap;flex-shrink:0;
+}
+.fo-preset-btn.fo-active,
+.fo-preset-btn:hover {
+    background:var(--accent);color:white;border-color:var(--accent);
+}
+.fo-date-input, .fo-shop-select {
+    padding:7px 10px;border-radius:8px;border:1.5px solid var(--border);
+    background:var(--surface2);color:var(--text);font-size:13px;
+    font-family:var(--font);cursor:pointer;
+}
+.fo-date-input:focus, .fo-shop-select:focus {
+    outline:none;border-color:var(--accent);
+}
+
+/* ── KPI strip ── */
+.fo-kpis {
+    display:grid;grid-template-columns:repeat(6,1fr);
+    gap:1px;background:var(--border);
+    border-radius:16px;overflow:hidden;border:1px solid var(--border);
+    margin-bottom:20px;
+}
+.fo-kpi {
+    background:var(--surface2);padding:16px 14px;
+}
+.fo-kpi-label {
+    font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.6px;color:var(--text-dim);margin-bottom:6px;
+}
+.fo-kpi-val {
+    font-size:18px;font-weight:800;font-family:var(--mono);
+    line-height:1;letter-spacing:-0.5px;
+}
+.fo-kpi-sub { font-size:10px;color:var(--text-dim);margin-top:4px; }
+
+/* ── Shop ranking ── */
+.fo-ranking { margin-bottom:20px; }
+.fo-ranking-label {
+    font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.6px;color:var(--text-dim);margin-bottom:10px;
+}
+.fo-rank-row {
+    display:flex;align-items:center;gap:12px;padding:12px 16px;
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:12px;margin-bottom:8px;
+}
+.fo-rank-num {
+    width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    background:var(--surface);color:var(--text-dim);border:1px solid var(--border);
+}
+.fo-rank-num.fo-rank-1 { background:var(--accent);color:white;border-color:var(--accent); }
+.fo-rank-shop { font-size:13px;font-weight:600;color:var(--text);flex:1; }
+.fo-rank-bar-wrap { flex:2;height:5px;background:var(--border);border-radius:3px;overflow:hidden; }
+.fo-rank-bar { height:100%;background:var(--accent);border-radius:3px; }
+.fo-rank-val { font-size:13px;font-weight:800;font-family:var(--mono);flex-shrink:0; }
+.fo-rank-margin { font-size:10px;color:var(--text-dim);white-space:nowrap; }
+
+/* ── Chart grid ── */
+.fo-charts {
+    display:grid;grid-template-columns:1.6fr 1fr;
+    gap:16px;margin-bottom:20px;
+}
+.fo-chart-card {
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:14px;padding:18px 20px;
+}
+.fo-chart-title { font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px; }
+.fo-chart-sub   { font-size:11px;color:var(--text-dim);margin-bottom:14px; }
+.fo-chart-legend {
+    display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;
+}
+.fo-legend-dot {
+    width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;flex-shrink:0;
+}
+.fo-legend-item { font-size:11px;color:var(--text-dim);display:flex;align-items:center; }
+
+/* ── Sessions table ── */
+.fo-table-wrap {
+    border:1px solid var(--border);border-radius:14px;overflow:hidden;
+}
+.fo-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+.fo-table {
+    width:100%;border-collapse:collapse;min-width:820px;font-size:12px;
+}
+.fo-table thead tr {
+    background:var(--surface);border-bottom:2px solid var(--border);
+}
+.fo-table thead th {
+    padding:10px 14px;font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);
+    text-align:left;white-space:nowrap;
+}
+.fo-table thead th.fo-num { text-align:right; }
+.fo-table tbody tr {
+    border-bottom:1px solid var(--border);transition:background 0.1s;cursor:pointer;
+}
+.fo-table tbody tr:last-child { border-bottom:none; }
+.fo-table tbody tr:hover { background:var(--surface); }
+.fo-table td { padding:11px 14px;color:var(--text);vertical-align:middle; }
+.fo-table td.fo-num {
+    text-align:right;font-family:var(--mono);font-weight:600;white-space:nowrap;
+}
+.fo-table tfoot tr { background:var(--surface);border-top:2px solid var(--border); }
+.fo-table tfoot td {
+    padding:10px 14px;font-size:13px;font-weight:700;
+    font-family:var(--mono);
+}
+
+/* Expanded detail — 3-column layout (Revenue | Expenses+Withdrawals | Cash Reconciliation) */
+.fo-expanded-detail {
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+}
+.fo-exp-col {
+    padding:20px 22px;
+}
+.fo-exp-col:not(:last-child) { border-right:1px solid var(--border); }
+.fo-exp-col-title {
+    font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.5px;color:var(--text-dim);margin-bottom:10px;
+}
+.fo-exp-line {
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);gap:12px;
+}
+.fo-exp-line:last-child { border-bottom:none; }
+.fo-exp-line-label { color:var(--text-dim);overflow:hidden;text-overflow:ellipsis; }
+.fo-exp-line-val { font-family:var(--mono);font-weight:600;white-space:nowrap;flex-shrink:0; }
+
+/* Status badges */
+.fo-badge {
+    padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;display:inline-block;
+}
+.fo-badge-open   { background:var(--green-dim);color:var(--green); }
+.fo-badge-closed { background:var(--amber-dim);color:var(--amber); }
+.fo-badge-locked { background:var(--surface);color:var(--text-dim);border:1px solid var(--border); }
+
+/* Details button */
+.fo-detail-btn {
+    padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;
+    border:1px solid var(--accent);color:var(--accent);background:var(--accent-dim);
+    cursor:pointer;font-family:var(--font);white-space:nowrap;
+}
+
+/* ── Detail modal ── */
+.fo-modal-wrap {
+    position:fixed;inset:0;z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    background:rgba(10,15,30,0.5);backdrop-filter:blur(3px);
+}
+.fo-modal {
+    background:var(--surface);border-radius:16px;
+    box-shadow:0 24px 80px rgba(0,0,0,0.25);
+    width:100%;max-width:900px;max-height:88vh;
+    display:flex;flex-direction:column;overflow:hidden;
+}
+.fo-modal-header {
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 20px;border-bottom:1px solid var(--border);
+    background:var(--surface);flex-shrink:0;
+}
+.fo-modal-body { overflow-y:auto;flex:1;overscroll-behavior:contain;background:var(--surface); }
+.fo-modal-close {
+    display:flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:8px;border:1px solid var(--border);
+    background:var(--surface2);color:var(--text-dim);font-size:20px;
+    cursor:pointer;font-family:var(--font);line-height:1;flex-shrink:0;transition:all 0.15s;
+}
+.fo-modal-close:hover { border-color:var(--red);color:var(--red); }
+
+/* Empty shop row */
+.fo-rank-row-empty { opacity:0.55; }
+
+/* ── Modal verdict + formula strip ── */
+.fo-verdict {
+    display:flex;align-items:center;gap:10px;padding:10px 20px;
+    font-size:12px;font-weight:600;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.fo-verdict-ok   { background:var(--green-dim);color:var(--green); }
+.fo-verdict-err  { background:var(--red-dim);color:var(--red); }
+.fo-verdict-warn { background:var(--amber-dim);color:var(--amber); }
+.fo-verdict-seal { background:var(--surface2);color:var(--text-dim); }
+.fo-verdict-live { background:var(--accent-dim);color:var(--accent); }
+.fo-recon-strip {
+    padding:10px 20px 12px;background:var(--surface2);
+    border-bottom:1px solid var(--border);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.fo-recon-strip::-webkit-scrollbar { height:3px; }
+.fo-recon-strip::-webkit-scrollbar-thumb { background:var(--border);border-radius:2px; }
+.fo-recon-eq {
+    display:flex;align-items:flex-end;gap:6px;min-width:max-content;
+}
+.fo-recon-item { display:flex;flex-direction:column;align-items:center;gap:2px; }
+.fo-recon-label {
+    font-size:9px;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.4px;color:var(--text-dim);font-family:var(--font);
+}
+.fo-recon-val { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text); }
+.fo-recon-op { font-size:14px;font-weight:600;color:var(--text-dim);padding-bottom:2px;flex-shrink:0; }
+.fo-recon-eq-sign { font-size:16px;font-weight:700;padding-bottom:2px;flex-shrink:0; }
+/* Variance highlight inside the 3-col grid */
+.fo-variance-alert {
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:6px 10px;margin:3px -10px;border-radius:6px;font-size:12px;
+}
+
+/* ── Responsive ── */
+@media(max-width:1100px) {
+    .fo-kpis { grid-template-columns:repeat(3,1fr); }
+}
+@media(max-width:900px) {
+    .fo-charts { grid-template-columns:1fr; }
+    .fo-kpis   { grid-template-columns:repeat(3,1fr); }
+}
+@media(max-width:640px) {
+    .fo-kpis { grid-template-columns:repeat(2,1fr); }
+    .fo-kpi  { padding:12px; }
+    .fo-kpi-val { font-size:16px; }
+    .fo-rank-bar-wrap { display:none; }
+    /* Modal 3-col → single column stack on mobile */
+    .fo-expanded-detail { grid-template-columns:1fr; }
+    .fo-exp-col { border-right:none !important;padding:14px 16px; }
+    .fo-exp-col:not(:last-child) { border-right:none;border-bottom:1px solid var(--border); }
+    .fo-controls-row { flex-direction:column;align-items:stretch; }
+    .fo-date-input, .fo-shop-select { width:100%;box-sizing:border-box;flex:none; }
+    .fo-preset-btn { font-size:11px;padding:5px 9px; }
+    .fo-page-title { font-size:18px; }
+    .fo-modal-wrap { padding:0;align-items:flex-end; }
+    .fo-modal { border-radius:16px 16px 0 0;max-height:90vh;max-width:100%; }
+    .fo-modal-header { padding:12px 16px; }
+}
+</style>
+
+<div class="fo-wrap">
+
+{{-- ── Period sub-header ── --}}
+<div class="fo-page-sub" style="margin-bottom:16px;">
+    {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }}
+    – {{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}
+    @if($shopFilter !== 'all')
+        · {{ $shops->firstWhere('id', $shopFilter)?->name ?? 'Shop' }}
+    @endif
+</div>
+
+{{-- ── Filter bar ── --}}
+<div class="fo-filters">
+    {{-- Period presets — horizontally scrollable, no wrap --}}
+    <div class="fo-presets-row">
+        @foreach([
             'today'      => 'Today',
             'yesterday'  => 'Yesterday',
             'this_week'  => 'This Week',
@@ -9,628 +283,694 @@
             'last_month' => 'Last Month',
             'last_30'    => 'Last 30 Days',
         ] as $key => $label)
-            <button wire:click="setPreset('{{ $key }}')"
-                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                    style="{{ $preset === $key
-                        ? 'background:#0f766e;color:#fff;border:1px solid #0f766e;'
-                        : 'background:var(--surface-raised);color:var(--text-dim);border:1px solid var(--border);' }}">
+            <button class="fo-preset-btn {{ $preset === $key ? 'fo-active' : '' }}"
+                    wire:click="setPreset('{{ $key }}')">
                 {{ $label }}
             </button>
         @endforeach
     </div>
-
-    {{-- ── Filters ── --}}
-    <div class="flex flex-wrap items-center gap-3 mb-6">
-        <div class="flex items-center gap-2">
-            <label class="text-xs font-medium flex-shrink-0" style="color:var(--text-dim);">From</label>
-            <input type="date" wire:model.live="dateFrom"
-                   class="px-3 py-2 rounded-lg text-sm"
-                   style="background:var(--surface-raised);border:1px solid var(--border);color:var(--text);">
-        </div>
-        <div class="flex items-center gap-2">
-            <label class="text-xs font-medium flex-shrink-0" style="color:var(--text-dim);">To</label>
-            <input type="date" wire:model.live="dateTo"
-                   class="px-3 py-2 rounded-lg text-sm"
-                   style="background:var(--surface-raised);border:1px solid var(--border);color:var(--text);">
-        </div>
-        <select wire:model.live="shopFilter"
-                class="px-3 py-2 rounded-lg text-sm"
-                style="background:var(--surface-raised);border:1px solid var(--border);color:var(--text);">
+    {{-- Date range + shop — stacks vertically on mobile --}}
+    <div class="fo-controls-row">
+        <input type="date" wire:model.live="dateFrom" class="fo-date-input">
+        <span style="font-size:12px;color:var(--text-dim);flex-shrink:0;">to</span>
+        <input type="date" wire:model.live="dateTo" class="fo-date-input">
+        <select wire:model.live="shopFilter" class="fo-shop-select">
             <option value="all">All Shops</option>
             @foreach ($shops as $shop)
                 <option value="{{ $shop->id }}">{{ $shop->name }}</option>
             @endforeach
         </select>
     </div>
+</div>
 
-    {{-- ── KPI Cards ── --}}
-    @php
-        $rows_col            = collect($rows);
-        $totalOpeningBalance = $rows_col->sum('opening_balance');
-        $totalRevenue        = $rows_col->sum('revenue');
-        $totalRepayments     = $rows_col->sum('repayments');
-        $totalRefunds        = $rows_col->sum('refunds');
-        $totalExpenses       = $rows_col->sum('expenses');
-        $totalWithdrawals    = $rows_col->sum('withdrawals');
-        $totalBanked         = $rows_col->sum('cash_banked');
-        $totalVariance       = $rows_col->sum('total_variance');
-        $sessionCount        = $rows_col->sum('session_count');
-        $closedCount         = $rows_col->sum('closed_count');
-        // Net Operating: revenue after refunds, expenses, and owner withdrawals
-        $netOperating        = $totalRevenue - $totalRefunds - $totalExpenses - $totalWithdrawals;
-        $totalCogs           = $rows_col->sum('total_cogs');
-        $netProfit           = $totalRevenue - $totalCogs - $totalExpenses;
-        $days                = $rows_col->pluck('session_date')->unique()->count() ?: 1;
-        $avgDailyVariance    = $days > 0 ? round($totalVariance / $days) : 0;
-        $totalCashIn         = $totalOpeningBalance + $totalRevenue + $totalRepayments;
-    @endphp
+{{-- ── Computation block ── --}}
+@php
+    $rows_col            = collect($rows);
+    $totalOpeningBalance = $rows_col->sum('opening_balance');
+    $totalRevenue        = $rows_col->sum('revenue');
+    $totalRepayments     = $rows_col->sum('repayments');
+    $totalRefunds        = $rows_col->sum('refunds');
+    $totalExpenses       = $rows_col->sum('expenses');
+    $totalWithdrawals    = $rows_col->sum('withdrawals');
+    $totalBanked         = $rows_col->sum('cash_banked');
+    $totalVariance       = $rows_col->sum('total_variance');
+    $sessionCount        = $rows_col->sum('session_count');
+    $closedCount         = $rows_col->sum('closed_count');
+    $days                = $rows_col->pluck('session_date')->unique()->count() ?: 1;
+    $avgDailyVariance    = $days > 0 ? round($totalVariance / $days) : 0;
+    $totalCashIn         = $totalOpeningBalance + $totalRevenue + $totalRepayments;
+    // Use service data for KPI cards (cached, consistent with report builder)
+    $svcRevenue     = $netResult['revenue']        ?? $totalRevenue;
+    $svcGross       = $netResult['gross_profit']   ?? 0;
+    $svcExpenses    = $netResult['total_expenses'] ?? $totalExpenses;
+    $svcNetResult   = $netResult['net_result']     ?? 0;
+    $svcWithdrawals = $withdrawalSummary['total_withdrawals'] ?? $totalWithdrawals;
+    $svcVariance    = $cashVariance['net_variance']   ?? $totalVariance;
+    $svcShortage    = $cashVariance['total_shortage'] ?? 0;
+    // Table totals (from raw query — per-row detail, session breakdown)
+    $totalOpProfit  = $totalRevenue - $totalRefunds - $totalExpenses;
+    $totalNetResult = $totalOpProfit - $totalWithdrawals;
+    // Expense ratio KPI
+    $expenseRatio = $totalRevenue > 0
+        ? round(($totalExpenses / $totalRevenue) * 100, 1)
+        : 0;
+    $expenseRatioColor = $expenseRatio < 15 ? 'var(--green)'
+        : ($expenseRatio < 30 ? 'var(--amber)' : 'var(--red)');
+@endphp
 
-    {{-- Row 1: Starting point + inflows --}}
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:12px;" class="kpi-row1-grid">
-        <style>
-            .kpi-row1-grid{grid-template-columns:repeat(4,1fr);}
-            .kpi-row2-grid{grid-template-columns:repeat(3,1fr);}
-            @media(max-width:1100px){.kpi-row1-grid{grid-template-columns:repeat(2,1fr)!important;}}
-            @media(max-width:900px){.kpi-row2-grid{grid-template-columns:repeat(2,1fr)!important;}}
-            @media(max-width:500px){.kpi-row1-grid,.kpi-row2-grid{grid-template-columns:1fr!important;}}
-        </style>
+{{-- ── KPI strip (6 cards) ── --}}
+<div class="fo-kpis">
+    @foreach([
+        ['Revenue',          $totalRevenue,    'var(--accent)',  'Total sales · RWF'],
+        ['Operating Profit', $totalOpProfit,   $totalOpProfit  >= 0 ? 'var(--green)' : 'var(--red)', 'Revenue − refunds − expenses · RWF'],
+        ['Net Result',       $totalNetResult,  $totalNetResult >= 0 ? 'var(--green)' : 'var(--red)', 'After owner withdrawals · RWF'],
+        ['Cash Banked',      $totalBanked,     'var(--accent)', 'Deposited to bank · RWF'],
+        ['Withdrawals',      $totalWithdrawals,'var(--amber)',   'Owner drawings · RWF'],
+        ['Variance',         $totalVariance,   $totalVariance < 0 ? 'var(--red)' : ($totalVariance > 0 ? 'var(--amber)' : 'var(--text-dim)'), 'Cash shortages / surpluses'],
+    ] as [$kl, $kv, $kc, $ks])
+    <div class="fo-kpi">
+        <div class="fo-kpi-label">{{ $kl }}</div>
+        <div class="fo-kpi-val" style="color:{{ $kc }};">{{ number_format($kv) }}</div>
+        <div class="fo-kpi-sub">{{ $ks }}</div>
+    </div>
+    @endforeach
+</div>
 
-        {{-- Opening Balance --}}
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Opening Balance</div>
-            <div style="font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.5px;color:#475569;">
-                {{ number_format($totalOpeningBalance) }}
-                <span style="font-size:13px;font-weight:500;color:#94a3b8;">RWF</span>
-            </div>
-            <div style="font-size:12px;color:#475569;">{{ $days }} day{{ $days !== 1 ? 's' : '' }} · {{ $sessionCount }} session{{ $sessionCount !== 1 ? 's' : '' }}</div>
-            <div style="height:4px;border-radius:2px;background:#f1f5f9;overflow:hidden;margin-top:12px;">
-                <div style="height:100%;border-radius:2px;width:100%;background:#94a3b8;"></div>
-            </div>
+{{-- ── Cross-shop ranking (always shown — all shops) ── --}}
+@php
+    $shopRanked = $shops->map(function ($shop) use ($rows) {
+        $shopRows = collect($rows)->where('shop_id', $shop->id);
+        $rev = (int) $shopRows->sum('revenue');
+        $ref = (int) $shopRows->sum('refunds');
+        $exp = (int) $shopRows->sum('expenses');
+        $wd  = (int) $shopRows->sum('withdrawals');
+        $op  = $rev - $ref - $exp;
+        return [
+            'name'     => $shop->name,
+            'shop_id'  => $shop->id,
+            'revenue'  => $rev,
+            'op'       => $op,
+            'net'      => $op - $wd,
+            'margin'   => $rev > 0 ? round(($op / $rev) * 100, 1) : 0,
+            'has_data' => $rev > 0 || $exp > 0,
+        ];
+    })->sortByDesc('op')->values();
+    $maxRev = max($shopRanked->max('revenue'), 1);
+@endphp
+<div class="fo-ranking">
+    <div class="fo-ranking-label">Shop Performance</div>
+    @foreach($shopRanked as $i => $sh)
+    <div class="fo-rank-row {{ !$sh['has_data'] ? 'fo-rank-row-empty' : '' }}">
+        <div class="fo-rank-num {{ $i === 0 && $sh['has_data'] ? 'fo-rank-1' : '' }}">{{ $i + 1 }}</div>
+        <div class="fo-rank-shop">{{ $sh['name'] }}</div>
+        <div class="fo-rank-bar-wrap">
+            <div class="fo-rank-bar" style="width:{{ $sh['has_data'] ? round(($sh['revenue'] / $maxRev) * 100) : 0 }}%;"></div>
         </div>
+        @if($sh['has_data'])
+            <div class="fo-rank-val" style="color:{{ $sh['op'] >= 0 ? 'var(--accent)' : 'var(--red)' }};">
+                {{ number_format($sh['op']) }}
+            </div>
+            <div class="fo-rank-margin">{{ $sh['margin'] }}% margin</div>
+        @else
+            <div class="fo-rank-val" style="color:var(--text-dim);">—</div>
+            <div class="fo-rank-margin" style="color:var(--text-dim);">No sessions</div>
+        @endif
+    </div>
+    @endforeach
+</div>
 
-        {{-- Gross Revenue --}}
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Gross Revenue</div>
-            <div style="font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.5px;color:#0f766e;">
-                {{ number_format($totalRevenue) }}
-                <span style="font-size:13px;font-weight:500;color:#94a3b8;">RWF</span>
-            </div>
-            <div style="font-size:12px;color:#475569;">cash in from sales</div>
-            <div style="height:4px;border-radius:2px;background:#f1f5f9;overflow:hidden;margin-top:12px;">
-                <div style="height:100%;border-radius:2px;width:100%;background:#0f766e;"></div>
-            </div>
+{{-- ── Dual Chart Row ── --}}
+@if(!empty($chartData['labels']))
+<div class="fo-charts">
+    {{-- Line trend chart --}}
+    <div class="fo-chart-card">
+        <div class="fo-chart-title">Revenue & Expense Trend</div>
+        <div class="fo-chart-sub">Daily movement across all shops · RWF</div>
+        <div class="fo-chart-legend">
+            <span class="fo-legend-item">
+                <span class="fo-legend-dot" style="background:var(--accent);"></span>Revenue
+            </span>
+            <span class="fo-legend-item">
+                <span class="fo-legend-dot" style="background:var(--accent);border:1px dashed var(--accent);"></span>Repayments
+            </span>
+            <span class="fo-legend-item">
+                <span class="fo-legend-dot" style="background:var(--red);"></span>Expenses
+            </span>
+            <span class="fo-legend-item">
+                <span class="fo-legend-dot" style="background:var(--green);"></span>Net
+            </span>
         </div>
-
-        {{-- Credit Repayments --}}
-        @php $repPct = $totalRevenue > 0 ? min(100, round($totalRepayments / ($totalRevenue ?: 1) * 100)) : 0; @endphp
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Repayments Collected</div>
-            <div style="font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.5px;color:#0891b2;">
-                {{ number_format($totalRepayments) }}
-                <span style="font-size:13px;font-weight:500;color:#94a3b8;">RWF</span>
-            </div>
-            <div style="font-size:12px;color:#475569;">{{ $repPct }}% of revenue · debt collected</div>
-            <div style="height:4px;border-radius:2px;background:#f1f5f9;overflow:hidden;margin-top:12px;">
-                <div style="height:100%;border-radius:2px;width:{{ $repPct }}%;background:#0891b2;"></div>
-            </div>
-        </div>
-
-        {{-- Cash Refunds --}}
-        @php $refPct = $totalRevenue > 0 ? min(100, round($totalRefunds / ($totalRevenue ?: 1) * 100)) : 0; @endphp
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Cash Refunds (Returns)</div>
-            <div style="font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.5px;color:#d97706;">
-                {{ number_format($totalRefunds) }}
-                <span style="font-size:13px;font-weight:500;color:#94a3b8;">RWF</span>
-            </div>
-            <div style="font-size:12px;color:#475569;">{{ $refPct }}% of revenue · cash out</div>
-            <div style="height:4px;border-radius:2px;background:#f1f5f9;overflow:hidden;margin-top:12px;">
-                <div style="height:100%;border-radius:2px;width:{{ $refPct }}%;background:#d97706;"></div>
-            </div>
+        <div style="position:relative;height:200px;">
+            <canvas id="finance-trend-chart"
+                    data-chart='@json($chartData)'></canvas>
         </div>
     </div>
 
-    {{-- Row 2: Outflows + Net --}}
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;" class="kpi-row2-grid">
-        {{-- Total Expenses --}}
-        @php $expPct = $totalRevenue > 0 ? min(100, round($totalExpenses / ($totalRevenue ?: 1) * 100)) : 0; @endphp
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Total Expenses</div>
-            <div style="font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.5px;color:#e11d48;">
-                {{ number_format($totalExpenses) }}
-                <span style="font-size:13px;font-weight:500;color:#94a3b8;">RWF</span>
-            </div>
-            <div style="font-size:12px;color:#475569;">{{ $expPct }}% of revenue</div>
-            <div style="height:4px;border-radius:2px;background:#f1f5f9;overflow:hidden;margin-top:12px;">
-                <div style="height:100%;border-radius:2px;width:{{ $expPct }}%;background:#e11d48;"></div>
-            </div>
+    {{-- Grouped bar chart --}}
+    <div class="fo-chart-card">
+        <div class="fo-chart-title">Revenue vs Expenses</div>
+        <div class="fo-chart-sub">Grouped by period · RWF</div>
+        <div class="fo-chart-legend">
+            <span class="fo-legend-item">
+                <span class="fo-legend-dot" style="background:var(--accent);"></span>Revenue
+            </span>
+            <span class="fo-legend-item">
+                <span class="fo-legend-dot" style="background:var(--red-dim);border:1px solid var(--red);"></span>Expenses
+            </span>
         </div>
-
-        {{-- Owner Withdrawals --}}
-        @php $wdlPct = $totalRevenue > 0 ? min(100, round($totalWithdrawals / ($totalRevenue ?: 1) * 100)) : 0; @endphp
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Owner Withdrawals</div>
-            <div style="font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.5px;color:#7c3aed;">
-                {{ number_format($totalWithdrawals) }}
-                <span style="font-size:13px;font-weight:500;color:#94a3b8;">RWF</span>
-            </div>
-            <div style="font-size:12px;color:#475569;">{{ $wdlPct }}% of revenue</div>
-            <div style="height:4px;border-radius:2px;background:#f1f5f9;overflow:hidden;margin-top:12px;">
-                <div style="height:100%;border-radius:2px;width:{{ $wdlPct }}%;background:#7c3aed;"></div>
-            </div>
-        </div>
-
-        {{-- Net Operating --}}
-        @php $netPct = $totalRevenue > 0 ? min(100, max(0, round($netOperating / ($totalRevenue ?: 1) * 100))) : 0; @endphp
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Net Operating</div>
-            <div style="font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.5px;color:#0284c7;">
-                {{ number_format($netOperating) }}
-                <span style="font-size:13px;font-weight:500;color:#94a3b8;">RWF</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:12px;color:#475569;">Margin {{ $netPct }}%</span>
-                <span style="font-size:12px;padding:2px 8px;border-radius:20px;font-weight:500;background:{{ $closedCount >= $sessionCount && $sessionCount > 0 ? '#ccfbf1' : '#fef3c7' }};color:{{ $closedCount >= $sessionCount && $sessionCount > 0 ? '#0f766e' : '#d97706' }};">
-                    {{ $closedCount }}/{{ $sessionCount }} closed
-                </span>
-            </div>
-            <div style="height:4px;border-radius:2px;background:#f1f5f9;overflow:hidden;margin-top:12px;">
-                <div style="height:100%;border-radius:2px;width:{{ $netPct }}%;background:#0284c7;"></div>
-            </div>
+        <div style="position:relative;height:200px;">
+            <canvas id="finance-bar-chart"
+                    data-chart='@json($chartData)'></canvas>
         </div>
     </div>
+</div>
 
-    {{-- ── Dual Chart Row ── --}}
-    @if(!empty($chartData['labels']))
-    <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:20px;" class="chart-row-grid">
-        <style>.chart-row-grid{grid-template-columns:1.6fr 1fr;} @media(max-width:900px){.chart-row-grid{grid-template-columns:1fr!important;}}</style>
+@script
+<script>
+(function() {
+    let trendChart = null;
+    let barChart   = null;
 
-        {{-- Line trend chart --}}
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                <span style="font-size:15px;font-weight:600;color:#0f172a;letter-spacing:-0.2px;">Revenue & expense trend</span>
-                <span style="font-size:12px;color:#475569;">RWF</span>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
-                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#475569;"><span style="width:10px;height:10px;border-radius:3px;background:#0f766e;flex-shrink:0;"></span>Revenue</span>
-                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#475569;"><span style="width:10px;height:10px;border-radius:3px;background:#0891b2;flex-shrink:0;"></span>Repayments</span>
-                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#475569;"><span style="width:10px;height:10px;border-radius:3px;background:#e11d48;flex-shrink:0;"></span>Expenses</span>
-                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#475569;"><span style="width:10px;height:10px;border-radius:3px;background:#0284c7;flex-shrink:0;"></span>Net operating</span>
-            </div>
-            <div style="position:relative;height:200px;">
-                <script id="finance-trend-data" type="application/json">@json($chartData)</script>
-                <canvas id="finance-trend-chart"></canvas>
-            </div>
-        </div>
+    function getChartData() {
+        const el = document.getElementById('finance-trend-chart');
+        if (!el) return null;
+        try { return JSON.parse(el.getAttribute('data-chart') || 'null'); }
+        catch (e) { return null; }
+    }
 
-        {{-- Grouped bar chart --}}
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                <span style="font-size:15px;font-weight:600;color:#0f172a;letter-spacing:-0.2px;">Revenue vs expenses</span>
-                <span style="font-size:12px;color:#475569;">Grouped</span>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
-                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#475569;"><span style="width:10px;height:10px;border-radius:3px;background:#0f766e;flex-shrink:0;"></span>Revenue</span>
-                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#475569;"><span style="width:10px;height:10px;border-radius:3px;background:#ffe4e6;border:1px solid #e11d48;flex-shrink:0;"></span>Expenses</span>
-            </div>
-            <div style="position:relative;height:200px;">
-                <canvas id="finance-bar-chart"></canvas>
-            </div>
-        </div>
-    </div>
+    function drawCharts() {
+        const trendCanvas = document.getElementById('finance-trend-chart');
+        const barCanvas   = document.getElementById('finance-bar-chart');
 
-    @script
-    <script>
-    (function() {
-        let trendChart = null;
-        let barChart = null;
+        // Canvas gone (filter hid the chart block) — clean up instances
+        if (!trendCanvas) { trendChart = null; barChart = null; return; }
 
-        function getChartData() {
-            const el = document.getElementById('finance-trend-data');
-            return el ? JSON.parse(el.textContent) : { labels: [], revenue: [], expenses: [], net: [] };
+        const data = getChartData();
+        if (!data || !data.labels || !data.labels.length) return;
+
+        const cs     = getComputedStyle(document.documentElement);
+        const accent = cs.getPropertyValue('--accent').trim() || '#0f766e';
+        const red    = cs.getPropertyValue('--red').trim()    || '#e11d48';
+        const redDim = cs.getPropertyValue('--red-dim').trim()|| '#fee2e2';
+        const green  = cs.getPropertyValue('--green').trim()  || '#10b981';
+        const grid   = 'rgba(0,0,0,0.04)';
+        const txt    = 'var(--text-dim)';
+
+        // Destroy stale instances whose canvas was replaced by Livewire's DOM morph
+        if (trendChart && !trendChart.canvas.isConnected) { trendChart.destroy(); trendChart = null; }
+        if (barChart   && !barChart.canvas.isConnected)   { barChart.destroy();   barChart   = null; }
+
+        // ── Trend line chart ──────────────────────────────────────────
+        if (trendChart) {
+            trendChart.data.labels            = data.labels;
+            trendChart.data.datasets[0].data  = data.revenue;
+            trendChart.data.datasets[1].data  = data.repayments || [];
+            trendChart.data.datasets[2].data  = data.expenses;
+            trendChart.data.datasets[3].data  = data.net || [];
+            trendChart.update('none');
+        } else {
+            trendChart = new Chart(trendCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label:'Revenue',    data: data.revenue,          borderColor: accent, backgroundColor:'rgba(15,118,110,0.05)', borderWidth:2.5, pointBackgroundColor:accent, pointRadius:3, tension:0.4, fill:true },
+                        { label:'Repayments', data: data.repayments || [], borderColor: accent, borderWidth:2, pointBackgroundColor:accent, pointRadius:3, tension:0.4, borderDash:[6,3], fill:false },
+                        { label:'Expenses',   data: data.expenses,         borderColor: red,    borderWidth:2, pointBackgroundColor:red,    pointRadius:3, tension:0.4, borderDash:[4,3], fill:false },
+                        { label:'Net',        data: data.net || [],        borderColor: green,  borderWidth:2, pointBackgroundColor:green,  pointRadius:3, tension:0.4, borderDash:[2,3], fill:false },
+                    ]
+                },
+                options: {
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: {
+                        legend: { display:false },
+                        tooltip: { mode:'index', intersect:false, backgroundColor:'rgba(15,23,42,0.9)', titleFont:{size:13}, bodyFont:{size:12}, padding:10, cornerRadius:8 }
+                    },
+                    scales: {
+                        x: { grid:{display:false}, ticks:{color:txt, font:{size:11}} },
+                        y: { grid:{color:grid}, border:{display:false}, ticks:{color:txt, font:{size:11}} }
+                    }
+                }
+            });
         }
 
-        function drawCharts() {
-            const data = getChartData();
-            const grid = 'rgba(0,0,0,0.04)';
-            const txt  = '#64748b';
-
-            // Line trend chart
-            const trendCanvas = document.getElementById('finance-trend-chart');
-            if (trendCanvas) {
-                if (trendChart) {
-                    trendChart.data.labels = data.labels;
-                    trendChart.data.datasets[0].data = data.revenue;
-                    trendChart.data.datasets[1].data = data.repayments || [];
-                    trendChart.data.datasets[2].data = data.expenses;
-                    trendChart.data.datasets[3].data = data.net || [];
-                    trendChart.update();
-                } else {
-                    trendChart = new Chart(trendCanvas.getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: data.labels,
-                            datasets: [
-                                { label: 'Revenue',    data: data.revenue,          borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,0.05)', borderWidth: 2.5, pointBackgroundColor: '#0f766e', pointRadius: 3, tension: 0.4, fill: true },
-                                { label: 'Repayments', data: data.repayments || [], borderColor: '#0891b2', borderWidth: 2, pointBackgroundColor: '#0891b2', pointRadius: 3, tension: 0.4, borderDash: [6,3], fill: false },
-                                { label: 'Expenses',   data: data.expenses,         borderColor: '#e11d48', borderWidth: 2, pointBackgroundColor: '#e11d48', pointRadius: 3, tension: 0.4, borderDash: [4,3], fill: false },
-                                { label: 'Net',        data: data.net || [],        borderColor: '#0284c7', borderWidth: 2, pointBackgroundColor: '#0284c7', pointRadius: 3, tension: 0.4, borderDash: [2,3], fill: false },
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(15,23,42,0.9)', titleFont: { size: 13 }, bodyFont: { size: 12 }, padding: 10, cornerRadius: 8 }
-                            },
-                            scales: {
-                                x: { grid: { display: false }, ticks: { color: txt, font: { size: 11 } } },
-                                y: { grid: { color: grid }, border: { display: false }, ticks: { color: txt, font: { size: 11 } } }
-                            }
-                        }
-                    });
+        // ── Bar chart ─────────────────────────────────────────────────
+        if (!barCanvas) return;
+        if (barChart) {
+            barChart.data.labels           = data.labels;
+            barChart.data.datasets[0].data = data.revenue;
+            barChart.data.datasets[1].data = data.expenses;
+            barChart.update('none');
+        } else {
+            barChart = new Chart(barCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label:'Revenue',  data:data.revenue,  backgroundColor:accent, borderRadius:4, categoryPercentage:0.75, barPercentage:0.6 },
+                        { label:'Expenses', data:data.expenses, backgroundColor:redDim, borderColor:red, borderWidth:1, borderRadius:4, categoryPercentage:0.75, barPercentage:0.6 },
+                    ]
+                },
+                options: {
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: {
+                        legend: { display:false },
+                        tooltip: { backgroundColor:'rgba(15,23,42,0.9)', padding:10, cornerRadius:8, mode:'index' }
+                    },
+                    scales: {
+                        x: { grid:{display:false}, border:{display:false}, ticks:{color:txt, font:{size:11}} },
+                        y: { grid:{color:grid},    border:{display:false}, ticks:{color:txt, font:{size:11}} }
+                    }
                 }
-            }
-
-            // Bar chart
-            const barCanvas = document.getElementById('finance-bar-chart');
-            if (barCanvas) {
-                if (barChart) {
-                    barChart.data.labels = data.labels;
-                    barChart.data.datasets[0].data = data.revenue;
-                    barChart.data.datasets[1].data = data.expenses;
-                    barChart.update();
-                } else {
-                    barChart = new Chart(barCanvas.getContext('2d'), {
-                        type: 'bar',
-                        data: {
-                            labels: data.labels,
-                            datasets: [
-                                { label: 'Revenue',  data: data.revenue,  backgroundColor: '#0f766e', borderRadius: 4, categoryPercentage: 0.75, barPercentage: 0.6 },
-                                { label: 'Expenses', data: data.expenses, backgroundColor: '#ffe4e6', borderColor: '#e11d48', borderWidth: 1, borderRadius: 4, categoryPercentage: 0.75, barPercentage: 0.6 },
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { backgroundColor: 'rgba(15,23,42,0.9)', padding: 10, cornerRadius: 8, mode: 'index' }
-                            },
-                            scales: {
-                                x: { grid: { display: false }, border: { display: false }, ticks: { color: txt, font: { size: 11 } } },
-                                y: { grid: { color: grid }, border: { display: false }, ticks: { color: txt, font: { size: 11 } } }
-                            }
-                        }
-                    });
-                }
-            }
+            });
         }
+    }
 
-        drawCharts();
-        Livewire.hook('commit', ({ succeed }) => { succeed(() => { setTimeout(drawCharts, 0); }); });
-    })();
-    </script>
-    @endscript
-    @endif
+    drawCharts();
+    Livewire.hook('commit', ({ succeed }) => { succeed(() => { setTimeout(drawCharts, 50); }); });
+})();
+</script>
+@endscript
+@endif
 
-    {{-- ── No data ── --}}
-    @if(empty($rows))
-        <div class="text-center py-12 rounded-xl" style="background:var(--surface-raised);border:1px solid var(--border);">
-            <div class="text-sm" style="color:var(--text-dim);">No sessions found for this period.</div>
+{{-- ── No data ── --}}
+@if(empty($rows))
+    <div class="fo-table-wrap" style="border:1px solid var(--border);border-radius:14px;">
+        <div style="padding:48px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:12px;">📊</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);">No data for this period</div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">
+                Try a different date range or shop filter.
+            </div>
         </div>
-    @else
+    </div>
+@else
 
-    {{-- ── Table (all screen sizes — horizontal scroll on mobile) ── --}}
-    <div class="rounded-xl overflow-hidden" style="border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-            <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                <thead>
-                    <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
-                        <th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
-                        <th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Shop</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Opening</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Revenue</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#0891b2;text-transform:uppercase;letter-spacing:0.5px;">Repayments</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#d97706;text-transform:uppercase;letter-spacing:0.5px;">Refunds</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Expenses</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Withdrawals</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Banked</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Variance</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#0f766e;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Net Operating</th>
-                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#6d28d9;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Net Profit</th>
-                        <th style="text-align:center;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Sessions</th>
-                        <th style="padding:10px 14px;"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($rows as $row)
-                        @php
-                            $rowKey     = $row['session_date'] . ':' . $row['shop_id'];
-                            $isExpanded = $expandedKey === $rowKey;
-                            $rv         = $row['total_variance'];
-                            $rowNetOp   = $row['revenue'] - $row['refunds'] - $row['expenses'] - $row['withdrawals'];
-                            $rowNetPr   = $row['revenue'] - ($row['total_cogs'] ?? 0) - $row['expenses'];
-                        @endphp
-                        <tr style="border-bottom:1px solid #e2e8f0;background:#fff;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-                            <td style="padding:10px 14px;white-space:nowrap;">
-                                <div style="font-size:12px;font-weight:600;color:#0f172a;">{{ \Carbon\Carbon::parse($row['session_date'])->format('d M Y') }}</div>
-                                <div style="font-size:11px;color:#94a3b8;">{{ \Carbon\Carbon::parse($row['session_date'])->format('D') }}</div>
-                            </td>
-                            <td style="padding:10px 14px;font-size:12px;font-weight:500;color:#0f172a;white-space:nowrap;">{{ $row['shop_name'] }}</td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;color:#64748b;">{{ number_format($row['opening_balance']) }}</td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#0f766e;">{{ number_format($row['revenue']) }}</td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;color:{{ $row['repayments'] > 0 ? '#0891b2' : '#94a3b8' }};">{{ number_format($row['repayments']) }}</td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;color:{{ $row['refunds'] > 0 ? '#d97706' : '#94a3b8' }};">{{ number_format($row['refunds']) }}</td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;color:#e11d48;">{{ number_format($row['expenses']) }}</td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;color:#7c3aed;">{{ number_format($row['withdrawals']) }}</td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;color:#0284c7;">{{ number_format($row['cash_banked']) }}</td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:{{ $rv < 0 ? '#e11d48' : ($rv > 0 ? '#d97706' : '#94a3b8') }};">
-                                {{ $rv >= 0 ? '+' : '' }}{{ number_format($rv) }}
-                            </td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:700;color:{{ $rowNetOp >= 0 ? '#0284c7' : '#e11d48' }};">
-                                {{ number_format($rowNetOp) }}
-                            </td>
-                            <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:700;color:{{ $rowNetPr >= 0 ? '#0f766e' : '#e11d48' }};">
-                                {{ number_format($rowNetPr) }}
-                            </td>
-                            <td style="padding:10px 14px;text-align:center;font-size:12px;">
-                                <span style="color:{{ $row['closed_count'] >= $row['session_count'] ? '#0f766e' : '#d97706' }};">{{ $row['closed_count'] }}</span><span style="color:#94a3b8;">/{{ $row['session_count'] }}</span>
-                            </td>
-                            <td style="padding:10px 14px;text-align:right;">
-                                <button wire:click="toggleRow('{{ $row['session_date'] }}', {{ $row['shop_id'] }})"
-                                        style="font-size:12px;padding:4px 10px;border-radius:6px;color:#0f766e;border:1px solid #ccfbf1;background:#ccfbf1;cursor:pointer;white-space:nowrap;">
-                                    Details
-                                </button>
-                            </td>
-                        </tr>
+{{-- ── Sessions table ── --}}
+<div class="fo-table-wrap">
+    <div class="fo-table-scroll">
+        <table class="fo-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Shop</th>
+                    <th class="fo-num">Revenue</th>
+                    <th class="fo-num" style="color:var(--amber);">Refunds</th>
+                    <th class="fo-num" style="color:var(--red);">Expenses</th>
+                    <th class="fo-num">Withdrawals</th>
+                    <th class="fo-num">Banked</th>
+                    <th class="fo-num" style="color:var(--accent);">Op. Profit</th>
+                    <th class="fo-num" style="color:var(--green);">Net Result</th>
+                    <th class="fo-num">Variance</th>
+                    <th style="text-align:center;">Sessions</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($rows as $row)
+                @php
+                    $rowKey     = $row['session_date'] . ':' . $row['shop_id'];
+                    $isExpanded = $expandedKey === $rowKey;
+                    $rv           = (int)($row['total_variance'] ?? 0);
+                    $rowOpProfit  = (int)$row['revenue'] - (int)$row['refunds'] - (int)$row['expenses'];
+                    $rowNetResult = $rowOpProfit - (int)$row['withdrawals'];
+                @endphp
+                <tr wire:click="toggleRow('{{ $row['session_date'] }}', {{ $row['shop_id'] }})">
+                    <td style="white-space:nowrap;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text);">{{ \Carbon\Carbon::parse($row['session_date'])->format('d M Y') }}</div>
+                        <div style="font-size:11px;color:var(--text-dim);">{{ \Carbon\Carbon::parse($row['session_date'])->format('D') }}</div>
+                    </td>
+                    <td style="font-size:12px;font-weight:500;">{{ $row['shop_name'] }}</td>
+                    <td class="fo-num" style="color:var(--accent);">{{ number_format($row['revenue']) }}</td>
+                    <td class="fo-num" style="color:{{ $row['refunds'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};">{{ number_format($row['refunds']) }}</td>
+                    <td class="fo-num" style="color:var(--red);">{{ number_format($row['expenses']) }}</td>
+                    <td class="fo-num" style="color:var(--accent);">{{ number_format($row['withdrawals']) }}</td>
+                    <td class="fo-num" style="color:var(--accent);">{{ number_format($row['cash_banked']) }}</td>
+                    <td class="fo-num" style="color:{{ $rowOpProfit >= 0 ? 'var(--accent)' : 'var(--red)' }};">{{ number_format($rowOpProfit) }}</td>
+                    <td class="fo-num" style="color:{{ $rowNetResult >= 0 ? 'var(--green)' : 'var(--red)' }};">{{ number_format($rowNetResult) }}</td>
+                    <td class="fo-num" style="color:{{ $rv < 0 ? 'var(--red)' : ($rv > 0 ? 'var(--amber)' : 'var(--text-dim)') }};">
+                        {{ $rv >= 0 ? '+' : '' }}{{ number_format($rv) }}
+                    </td>
+                    <td style="text-align:center;font-size:12px;">
+                        <span style="color:{{ $row['closed_count'] >= $row['session_count'] ? 'var(--green)' : 'var(--amber)' }};">{{ $row['closed_count'] }}</span><span style="color:var(--text-dim);">/{{ $row['session_count'] }}</span>
+                    </td>
+                    <td style="text-align:right;">
+                        <button class="fo-detail-btn"
+                                wire:click.stop="toggleRow('{{ $row['session_date'] }}', {{ $row['shop_id'] }})">
+                            {{ $isExpanded ? '↑ Hide' : '↓ Details' }}
+                        </button>
+                    </td>
+                </tr>
 
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--text-dim);">
+                        Totals · {{ $days }} day{{ $days !== 1 ? 's' : '' }}
+                    </td>
+                    <td class="fo-num" style="color:var(--accent);">{{ number_format($totalRevenue) }}</td>
+                    <td class="fo-num" style="color:var(--amber);">{{ number_format($rows_col->sum('refunds')) }}</td>
+                    <td class="fo-num" style="color:var(--red);">{{ number_format($totalExpenses) }}</td>
+                    <td class="fo-num" style="color:var(--amber);">{{ number_format($totalWithdrawals) }}</td>
+                    <td class="fo-num" style="color:var(--accent);">{{ number_format($totalBanked) }}</td>
+                    <td class="fo-num" style="color:{{ $totalOpProfit >= 0 ? 'var(--accent)' : 'var(--red)' }};">{{ number_format($totalOpProfit) }}</td>
+                    <td class="fo-num" style="color:{{ $totalNetResult >= 0 ? 'var(--green)' : 'var(--red)' }};">{{ number_format($totalNetResult) }}</td>
+                    <td class="fo-num">
+                        <div style="color:{{ $totalVariance < 0 ? 'var(--red)' : ($totalVariance > 0 ? 'var(--amber)' : 'var(--text-dim)') }};">
+                            {{ $totalVariance >= 0 ? '+' : '' }}{{ number_format($totalVariance) }}
+                        </div>
+                        <div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-weight:400;">
+                            avg/day {{ $avgDailyVariance >= 0 ? '+' : '' }}{{ number_format($avgDailyVariance) }}
+                        </div>
+                    </td>
+                    <td style="text-align:center;font-size:12px;font-weight:600;color:var(--text-dim);">{{ $closedCount }}/{{ $sessionCount }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+{{-- ── Session detail modal ── --}}
+@if($expandedKey && $expandedSessions->isNotEmpty())
+@php
+    [$_mDate, $_mShopId] = explode(':', $expandedKey, 2);
+    $_mRow      = collect($rows)->first(fn($r) => $r['session_date'] === $_mDate && (string)$r['shop_id'] === $_mShopId);
+    $_mAnyOpen  = $expandedSessions->contains(fn($s) => $s->isOpen());
+    $_mAllLocked= $expandedSessions->every(fn($s) => $s->isLocked());
+    $_mTotalVar = (int) $expandedSessions->sum('cash_variance');
+    $_mHasVar   = $expandedSessions->contains(fn($s) => !$s->isOpen() && ($s->cash_variance ?? 0) !== 0);
+@endphp
+<div class="fo-modal-wrap" wire:click="closeExpanded">
+    <div class="fo-modal" wire:click.stop>
+
+        {{-- ── Header ── --}}
+        <div class="fo-modal-header">
+            <div>
+                <div style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.2px;">
+                    {{ $_mRow['shop_name'] ?? '' }}
+                </div>
+                <div style="font-size:12px;color:var(--text-dim);margin-top:4px;
+                            display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span>{{ \Carbon\Carbon::parse($_mDate)->format('d M Y') }}</span>
+                    <span>·</span>
+                    <span>{{ $expandedSessions->count() }} session{{ $expandedSessions->count() !== 1 ? 's' : '' }}</span>
+                </div>
+            </div>
+            <button class="fo-modal-close" wire:click="closeExpanded">×</button>
+        </div>
+
+        {{-- ── Aggregate verdict ── --}}
+        @if($_mAnyOpen)
+            <div class="fo-verdict fo-verdict-live">
+                <svg style="width:13px;height:13px;flex-shrink:0;" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
+                One or more sessions still open — figures are live and may change
+            </div>
+        @elseif($_mHasVar && $_mTotalVar < 0)
+            <div class="fo-verdict fo-verdict-err">
+                <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                Cash shortage of {{ number_format(abs($_mTotalVar)) }} RWF — counted less than expected
+            </div>
+        @elseif($_mHasVar && $_mTotalVar > 0)
+            <div class="fo-verdict fo-verdict-warn">
+                <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                Cash surplus of {{ number_format($_mTotalVar) }} RWF — counted more than expected
+            </div>
+        @elseif($_mAllLocked)
+            <div class="fo-verdict fo-verdict-seal">
+                🔒 All sessions sealed and balanced — records are immutable
+            </div>
+        @else
+            <div class="fo-verdict fo-verdict-ok">
+                <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                Cash balanced — all money accounted for
+            </div>
+        @endif
+
+        {{-- ── Modal body — one block per session ── --}}
+        <div class="fo-modal-body">
+            @foreach($expandedSessions as $sess)
+            @php
+                $sv       = $sess->cash_variance ?? 0;
+                $sessOpen = $sess->isOpen();
+            @endphp
+
+            {{-- Session separator (multi-session days) --}}
+            @if($expandedSessions->count() > 1)
+            <div style="display:flex;align-items:center;gap:10px;
+                        padding:9px 20px;font-size:10px;font-weight:700;
+                        text-transform:uppercase;letter-spacing:0.5px;
+                        color:var(--text-dim);background:var(--surface2);
+                        border-bottom:1px solid var(--border);">
+                <span>Session {{ $loop->iteration }} — opened {{ $sess->opened_at?->format('H:i') }}</span>
+                <span class="fo-badge fo-badge-{{ $sess->status }}">{{ ucfirst($sess->status) }}</span>
+                @if(!$sessOpen && $sv !== 0)
+                    <span style="margin-left:auto;font-family:var(--mono);font-weight:700;
+                                 color:{{ $sv < 0 ? 'var(--red)' : 'var(--amber)' }};">
+                        {{ $sv > 0 ? '+' : '' }}{{ number_format($sv) }} RWF
+                    </span>
+                @elseif(!$sessOpen)
+                    <span style="margin-left:auto;color:var(--green);font-weight:600;">✓ Balanced</span>
+                @endif
+            </div>
+            @endif
+
+            {{-- Cash drawer formula strip (closed & locked sessions only) --}}
+            @if(!$sessOpen)
+            @php
+                $fCashSales = $sess->total_sales_cash      ?? 0;
+                $fCashRep   = $sess->total_repayments_cash  ?? 0;
+                $fCashRef   = $sess->total_refunds_cash     ?? 0;
+                $fCashExp   = $sess->total_expenses_cash    ?? 0;
+                $fCashWd    = $sess->total_withdrawals_cash ?? 0;
+                $fCashDep   = $sess->cash_deposits          ?? 0;
+                $fExpected  = $sess->expected_cash          ?? 0;
+                $fCounted   = $sess->actual_cash_counted;
+                $fOpening   = $sess->opening_balance        ?? 0;
+            @endphp
+            <div class="fo-recon-strip">
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+                            letter-spacing:0.5px;color:var(--text-dim);margin-bottom:8px;">
+                    Cash drawer formula
+                </div>
+                <div class="fo-recon-eq">
+                    <div class="fo-recon-item">
+                        <span class="fo-recon-label">Opening</span>
+                        <span class="fo-recon-val">{{ number_format($fOpening) }}</span>
+                    </div>
+                    @if($fCashSales > 0)
+                        <span class="fo-recon-op" style="color:var(--accent);">+</span>
+                        <div class="fo-recon-item">
+                            <span class="fo-recon-label">Cash Sales</span>
+                            <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($fCashSales) }}</span>
+                        </div>
+                    @endif
+                    @if($fCashRep > 0)
+                        <span class="fo-recon-op" style="color:var(--accent);">+</span>
+                        <div class="fo-recon-item">
+                            <span class="fo-recon-label">Repayments</span>
+                            <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($fCashRep) }}</span>
+                        </div>
+                    @endif
+                    @if($fCashRef > 0)
+                        <span class="fo-recon-op" style="color:var(--amber);">−</span>
+                        <div class="fo-recon-item">
+                            <span class="fo-recon-label">Refunds</span>
+                            <span class="fo-recon-val" style="color:var(--amber);">{{ number_format($fCashRef) }}</span>
+                        </div>
+                    @endif
+                    @if($fCashExp > 0)
+                        <span class="fo-recon-op" style="color:var(--red);">−</span>
+                        <div class="fo-recon-item">
+                            <span class="fo-recon-label">Expenses</span>
+                            <span class="fo-recon-val" style="color:var(--red);">{{ number_format($fCashExp) }}</span>
+                        </div>
+                    @endif
+                    @if($fCashWd > 0)
+                        <span class="fo-recon-op" style="color:var(--amber);">−</span>
+                        <div class="fo-recon-item">
+                            <span class="fo-recon-label">Withdrawals</span>
+                            <span class="fo-recon-val" style="color:var(--amber);">{{ number_format($fCashWd) }}</span>
+                        </div>
+                    @endif
+                    @if($fCashDep > 0)
+                        <span class="fo-recon-op" style="color:var(--accent);">−</span>
+                        <div class="fo-recon-item">
+                            <span class="fo-recon-label">Banked</span>
+                            <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($fCashDep) }}</span>
+                        </div>
+                    @endif
+                    <span class="fo-recon-eq-sign" style="color:var(--text-dim);">=</span>
+                    <div class="fo-recon-item">
+                        <span class="fo-recon-label">Expected</span>
+                        <span class="fo-recon-val" style="font-size:13px;">{{ number_format($fExpected) }}</span>
+                    </div>
+                    <span class="fo-recon-eq-sign"
+                          style="color:{{ $sv === 0 ? 'var(--green)' : ($sv < 0 ? 'var(--red)' : 'var(--amber)') }};">
+                        {{ $sv === 0 ? '=' : '≠' }}
+                    </span>
+                    <div class="fo-recon-item">
+                        <span class="fo-recon-label">Counted</span>
+                        <span class="fo-recon-val" style="font-size:13px;
+                              color:{{ $sv === 0 ? 'var(--green)' : ($sv < 0 ? 'var(--red)' : 'var(--amber)') }};">
+                            {{ $fCounted !== null ? number_format($fCounted) : '—' }}
+                        </span>
+                    </div>
+                    @if($sv !== 0)
+                        <span class="fo-recon-eq-sign" style="color:var(--text-dim);">·</span>
+                        <div class="fo-recon-item">
+                            <span class="fo-recon-label">{{ $sv < 0 ? 'Shortage' : 'Surplus' }}</span>
+                            <span class="fo-recon-val" style="font-size:13px;font-weight:800;
+                                  color:{{ $sv < 0 ? 'var(--red)' : 'var(--amber)' }};">
+                                {{ ($sv > 0 ? '+' : '') . number_format($sv) }}
+                            </span>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            @endif
+
+            {{-- ── 3-column detail grid ── --}}
+            <div class="fo-expanded-detail"
+                 style="{{ !$loop->last ? 'border-bottom:2px solid var(--border);' : '' }}">
+
+                {{-- Revenue by channel --}}
+                <div class="fo-exp-col">
+                    <div class="fo-exp-col-title">Revenue by Channel</div>
+                    @foreach([
+                        ['Cash',          $sess->total_sales_cash          ?? 0],
+                        ['Mobile Money',  $sess->total_sales_momo          ?? 0],
+                        ['Card',          $sess->total_sales_card          ?? 0],
+                        ['Credit',        $sess->total_sales_credit        ?? 0],
+                        ['Bank Transfer', $sess->total_sales_bank_transfer ?? 0],
+                    ] as [$ch, $chv])
+                    @if($chv > 0)
+                    <div class="fo-exp-line">
+                        <span style="color:var(--text-dim);">{{ $ch }}</span>
+                        <span style="font-weight:600;font-family:var(--mono);color:var(--accent);">{{ number_format($chv) }}</span>
+                    </div>
+                    @endif
                     @endforeach
-                </tbody>
-                <tfoot>
-                    <tr style="border-top:2px solid #e2e8f0;background:#f8fafc;">
-                        <td colspan="2" style="padding:10px 14px;font-size:12px;font-weight:600;color:#475569;">Totals</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;color:#64748b;">{{ number_format($totalOpeningBalance) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;color:#0f766e;">{{ number_format($totalRevenue) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;color:#0891b2;">{{ number_format($totalRepayments) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;color:#d97706;">{{ number_format($totalRefunds) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;color:#e11d48;">{{ number_format($totalExpenses) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;color:#7c3aed;">{{ number_format($totalWithdrawals) }}</td>
-                        <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;color:#0284c7;">{{ number_format($totalBanked) }}</td>
-                        <td style="padding:10px 14px;text-align:right;">
-                            <div style="font-size:13px;font-weight:700;color:{{ $totalVariance < 0 ? '#e11d48' : ($totalVariance > 0 ? '#d97706' : '#94a3b8') }};">
-                                {{ $totalVariance >= 0 ? '+' : '' }}{{ number_format($totalVariance) }}
-                            </div>
-                            <div style="font-size:10px;color:#94a3b8;margin-top:2px;">
-                                avg/day {{ $avgDailyVariance >= 0 ? '+' : '' }}{{ number_format($avgDailyVariance) }}
-                            </div>
-                        </td>
-                        <td style="padding:10px 14px;text-align:right;">
-                            <div style="font-size:13px;font-weight:700;color:{{ $netOperating >= 0 ? '#0284c7' : '#e11d48' }};">{{ number_format($netOperating) }}</div>
-                            <div style="font-size:10px;color:#94a3b8;margin-top:2px;">rev − ref − exp − w/d</div>
-                        </td>
-                        <td style="padding:10px 14px;text-align:right;">
-                            <div style="font-size:13px;font-weight:700;color:{{ $netProfit >= 0 ? '#0f766e' : '#e11d48' }};">{{ number_format($netProfit) }}</div>
-                            <div style="font-size:10px;color:#94a3b8;margin-top:2px;">rev − cogs − exp</div>
-                        </td>
-                        <td style="padding:10px 14px;text-align:center;font-size:12px;font-weight:600;color:#475569;">{{ $closedCount }}/{{ $sessionCount }}</td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-    </div>
-    @endif
-
-    {{-- ── Session Details Modal ── --}}
-    @if ($expandedKey && $expandedSessions->isNotEmpty())
-        @php $sessCount = $expandedSessions->count(); @endphp
-
-        <style>
-            .fo-backdrop { position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:50;backdrop-filter:blur(2px); }
-            .fo-modal-wrap { position:fixed;inset:0;z-index:51;display:flex;align-items:center;justify-content:center;padding:16px; }
-            .fo-modal { background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.2);width:100%;max-width:760px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden; }
-            .fo-modal-header { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#f8fafc;flex-shrink:0; }
-            .fo-modal-drag { display:none; }
-            .fo-modal-body { overflow-y:auto;flex:1; }
-            .fo-modal-session { padding:16px 20px; }
-            .fo-kpi-strip { display:flex;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:14px;background:#f8fafc; }
-            .fo-kpi-cell { flex:1;padding:10px 8px;text-align:center; }
-            .fo-breakdown { display:flex;gap:16px;flex-wrap:wrap; }
-            .fo-breakdown-col { flex:1;min-width:160px; }
-            @media (max-width:640px) {
-                .fo-modal-wrap { align-items:flex-end;padding:0; }
-                .fo-modal { border-radius:20px 20px 0 0;max-height:85vh;max-width:100%; }
-                .fo-modal-drag { display:flex;justify-content:center;padding:10px 0 4px;flex-shrink:0; }
-                .fo-modal-header { padding:4px 16px 12px; }
-                .fo-modal-session { padding:12px 16px; }
-                .fo-kpi-strip { overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;border-radius:8px; }
-                .fo-kpi-cell { flex-shrink:0;min-width:72px; }
-                .fo-breakdown { flex-direction:column;gap:12px; }
-                .fo-breakdown-col { min-width:0 !important; }
-            }
-        </style>
-
-        {{-- Backdrop --}}
-        <div class="fo-backdrop" wire:click="closeExpanded"></div>
-
-        {{-- Modal --}}
-        <div class="fo-modal-wrap">
-            <div class="fo-modal">
-
-                {{-- Drag handle (mobile only) --}}
-                <div class="fo-modal-drag">
-                    <div style="width:36px;height:4px;border-radius:2px;background:#cbd5e1;"></div>
+                    <div class="fo-exp-line" style="border-top:1.5px solid var(--border);margin-top:4px;">
+                        <span style="font-weight:700;color:var(--text);">Total</span>
+                        <span style="font-family:var(--mono);font-weight:700;color:var(--accent);">{{ number_format($sess->total_sales ?? 0) }}</span>
+                    </div>
                 </div>
 
-                {{-- Header --}}
-                <div class="fo-modal-header">
-                    <div>
-                        <div style="font-size:15px;font-weight:700;color:#0f172a;">
-                            {{ \Carbon\Carbon::parse($expandedSessions->first()->session_date)->format('d M Y') }}
-                            &nbsp;·&nbsp;
-                            {{ $expandedSessions->first()->shop->name ?? '' }}
-                        </div>
-                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
-                            {{ $sessCount }} session{{ $sessCount !== 1 ? 's' : '' }}
+                {{-- Expenses + Owner Withdrawals --}}
+                <div class="fo-exp-col">
+                    <div class="fo-exp-col-title">Expenses</div>
+                    @forelse($sess->expenses->whereNull('deleted_at') as $exp)
+                    <div class="fo-exp-line">
+                        <span style="color:var(--text-dim);">
+                            @if($exp->is_system_generated)
+                                <span style="font-size:9px;padding:1px 4px;border-radius:3px;
+                                             background:var(--amber-dim);color:var(--amber);margin-right:2px;">auto</span>
+                            @endif
+                            {{ $exp->category->name ?? '—' }}
+                            @if($exp->description)
+                                <span> — {{ Str::limit($exp->description, 18) }}</span>
+                            @endif
+                        </span>
+                        <span style="font-weight:600;font-family:var(--mono);color:var(--red);">{{ number_format($exp->amount) }}</span>
+                    </div>
+                    @empty
+                    <div style="font-size:11px;color:var(--text-dim);padding:4px 0;">None recorded</div>
+                    @endforelse
+                    @if($sess->expenses->whereNull('deleted_at')->count() > 0)
+                    <div class="fo-exp-line" style="border-top:1.5px solid var(--border);margin-top:4px;">
+                        <span style="font-weight:700;color:var(--text);">Total</span>
+                        <span style="font-family:var(--mono);font-weight:700;color:var(--red);">{{ number_format($sess->total_expenses ?? 0) }}</span>
+                    </div>
+                    @endif
+
+                    <div class="fo-exp-col-title" style="margin-top:18px;">Owner Withdrawals</div>
+                    @forelse($sess->ownerWithdrawals->whereNull('deleted_at') as $wd)
+                    <div class="fo-exp-line">
+                        <span style="color:var(--text-dim);">
+                            {{ Str::limit($wd->reason ?? '—', 22) }}
+                            <span style="font-size:10px;"> ({{ ucfirst($wd->isCash() ? 'Cash' : 'MoMo') }})</span>
+                        </span>
+                        <span style="font-weight:600;font-family:var(--mono);color:var(--amber);">{{ number_format($wd->amount) }}</span>
+                    </div>
+                    @empty
+                    <div style="font-size:11px;color:var(--text-dim);padding:4px 0;">None recorded</div>
+                    @endforelse
+                    @if($sess->ownerWithdrawals->whereNull('deleted_at')->count() > 0)
+                    <div class="fo-exp-line" style="border-top:1.5px solid var(--border);margin-top:4px;">
+                        <span style="font-weight:700;color:var(--text);">Total</span>
+                        <span style="font-family:var(--mono);font-weight:700;color:var(--amber);">{{ number_format($sess->total_withdrawals ?? 0) }}</span>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Cash Reconciliation --}}
+                <div class="fo-exp-col">
+                    <div class="fo-exp-col-title">Cash Reconciliation</div>
+                    @foreach([
+                        ['Opening',  $sess->opening_balance     ?? null, 'var(--text-dim)', false],
+                        ['Expected', $sess->expected_cash       ?? null, 'var(--text)',     false],
+                        ['Counted',  $sess->actual_cash_counted ?? null, 'var(--text)',     false],
+                        ['Variance', $sv, $sv < 0 ? 'var(--red)' : ($sv > 0 ? 'var(--amber)' : 'var(--text-dim)'), $sv !== 0],
+                        ['Banked',   $sess->total_bank_deposits ?? 0,   'var(--accent)',   false],
+                        ['Retained', $sess->cash_retained       ?? 0,   'var(--text)',     false],
+                    ] as [$rl, $rlv, $rlc, $isAlert])
+                        @if($isAlert)
+                            <div class="fo-variance-alert"
+                                 style="background:{{ $sv < 0 ? 'var(--red-dim)' : 'var(--amber-dim)' }};">
+                                <span style="font-weight:700;color:{{ $rlc }};">{{ $rl }}</span>
+                                <span style="font-weight:700;font-family:var(--mono);font-size:13px;color:{{ $rlc }};">
+                                    {{ ($sv > 0 ? '+' : '') . number_format($sv) }}
+                                    <span style="font-size:10px;font-weight:500;"> RWF</span>
+                                </span>
+                            </div>
+                        @else
+                            <div class="fo-exp-line">
+                                <span style="color:var(--text-dim);">{{ $rl }}</span>
+                                <span style="font-weight:600;font-family:var(--mono);color:{{ $rlc }};">
+                                    {{ $rlv !== null ? number_format($rlv) : '—' }}
+                                    @if($rlv !== null)<span style="font-size:10px;font-weight:400;color:var(--text-dim);"> RWF</span>@endif
+                                </span>
+                            </div>
+                        @endif
+                    @endforeach
+
+                    @if(isset($sess->bankDeposits) && $sess->bankDeposits->isNotEmpty())
+                    <div class="fo-exp-col-title" style="margin-top:14px;">Bank Deposits</div>
+                    @foreach($sess->bankDeposits as $dep)
+                    <div class="fo-exp-line">
+                        <span style="color:var(--text-dim);">{{ $dep->deposited_at?->format('H:i') ?? '—' }}</span>
+                        <span style="font-weight:600;font-family:var(--mono);color:var(--accent);">
+                            {{ number_format($dep->amount) }}
+                            <span style="font-size:10px;font-weight:400;color:var(--text-dim);"> RWF</span>
+                        </span>
+                    </div>
+                    @endforeach
+                    @endif
+
+                    @if($sess->isLocked())
+                    <div style="margin-top:12px;padding:8px 10px;border-radius:7px;
+                                background:var(--surface2);border:1px solid var(--border);">
+                        <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+                                    letter-spacing:0.4px;color:var(--text-dim);">Locked by</div>
+                        <div style="font-size:12px;color:var(--text);margin-top:3px;">
+                            {{ $sess->lockedBy->name ?? '—' }}
+                            · {{ $sess->locked_at?->format('d M Y H:i') }}
                         </div>
                     </div>
-                    <button wire:click="closeExpanded"
-                            style="width:32px;height:32px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"
-                            onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">
-                        &times;
-                    </button>
+                    @endif
                 </div>
 
-                {{-- Body --}}
-                <div class="fo-modal-body">
-                    @foreach ($expandedSessions as $sIdx => $s)
-                        @php
-                            $sv      = $s->cash_variance ?? 0;
-                            $sNetOp  = ($s->total_sales ?? 0) - ($s->total_refunds_cash ?? 0) - ($s->total_expenses ?? 0) - ($s->total_withdrawals ?? 0);
-                            $sCogs   = \Illuminate\Support\Facades\DB::table('sale_items as si')
-                                ->join('sales as s2', 'si.sale_id', '=', 's2.id')
-                                ->join('products as p', 'si.product_id', '=', 'p.id')
-                                ->where('s2.shop_id', $s->shop_id)
-                                ->whereRaw('s2.sale_date::date = ?', [$s->session_date])
-                                ->whereNull('s2.voided_at')
-                                ->whereNull('s2.deleted_at')
-                                ->sum(\Illuminate\Support\Facades\DB::raw('p.purchase_price * si.quantity_sold'));
-                            $sNetPr  = ($s->total_sales ?? 0) - $sCogs - ($s->total_expenses ?? 0);
-                            $isLast  = $sIdx === $sessCount - 1;
-                        @endphp
-                        <div class="fo-modal-session" style="{{ $isLast ? '' : 'border-bottom:1px solid #e2e8f0;' }}">
+            </div>
+            @endforeach
+        </div>
 
-                            {{-- Session header --}}
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-                                <span style="font-size:14px;font-weight:700;font-family:monospace;color:#0f172a;">
-                                    {{ $s->opened_at?->format('H:i') }} – {{ $s->closed_at?->format('H:i') ?? 'open' }}
-                                </span>
-                                <span style="font-size:11px;padding:2px 9px;border-radius:20px;font-weight:600;
-                                    {{ $s->isLocked() ? 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;' : ($s->isClosed() ? 'background:#fef3c7;color:#92400e;' : 'background:#d1fae5;color:#065f46;') }}">
-                                    {{ ucfirst($s->status) }}
-                                </span>
-                                <span style="font-size:11px;color:#64748b;">
-                                    <strong style="color:#334155;">{{ $s->openedBy->name ?? '—' }}</strong>
-                                    @if($s->closedBy && $s->closedBy->id !== $s->openedBy?->id)
-                                        <span style="color:#cbd5e1;"> → </span><strong style="color:#334155;">{{ $s->closedBy->name }}</strong>
-                                    @endif
-                                </span>
-                            </div>
+    </div>
+</div>
+@endif
 
-                            {{-- KPI strip --}}
-                            <div class="fo-kpi-strip">
-                                @php
-                                    $kpis = [
-                                        ['Opening',    $s->opening_balance ?? 0, '#64748b'],
-                                        ['Revenue',    $s->total_sales ?? 0,      '#0f766e'],
-                                        ['Expenses',   $s->total_expenses ?? 0,   '#e11d48'],
-                                        ['Net Op.',    $sNetOp,                   $sNetOp >= 0 ? '#0284c7' : '#e11d48'],
-                                        ['Net Profit', $sNetPr,                   $sNetPr >= 0 ? '#6d28d9' : '#e11d48'],
-                                        ['Variance',   $sv,                       $sv < 0 ? '#e11d48' : ($sv > 0 ? '#d97706' : '#94a3b8')],
-                                    ];
-                                @endphp
-                                @foreach($kpis as $kIdx => $kpi)
-                                @php [$kLabel, $kVal, $kClr] = $kpi; @endphp
-                                <div class="fo-kpi-cell" style="{{ $kIdx < count($kpis) - 1 ? 'border-right:1px solid #e2e8f0;' : '' }}">
-                                    <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;margin-bottom:4px;white-space:nowrap;">{{ $kLabel }}</div>
-                                    <div style="font-size:13px;font-weight:700;font-family:monospace;color:{{ $kClr }};white-space:nowrap;">
-                                        @if($kLabel === 'Variance') {{ $sv >= 0 ? '+' : '' }} @endif{{ number_format($kVal) }}
-                                    </div>
-                                </div>
-                                @endforeach
-                            </div>
+@endif {{-- end empty($rows) --}}
 
-                            {{-- Breakdown columns --}}
-                            <div class="fo-breakdown">
-
-                                {{-- Cash Flow --}}
-                                <div class="fo-breakdown-col">
-                                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:8px;">Cash Flow</div>
-                                    @php
-                                        $cfRows = [
-                                            ['+', 'Opening balance', $s->opening_balance ?? 0,     '#475569', false],
-                                            ['+', 'Cash sales',      $s->total_sales ?? 0,         '#0f766e', false],
-                                            ['+', 'Repayments',      $s->total_repayments ?? 0,    '#0891b2', ($s->total_repayments ?? 0) === 0],
-                                            ['−', 'Cash refunds',    $s->total_refunds_cash ?? 0,  '#d97706', ($s->total_refunds_cash ?? 0) === 0],
-                                            ['−', 'Expenses',        $s->total_expenses ?? 0,      '#e11d48', false],
-                                            ['−', 'Withdrawals',     $s->total_withdrawals ?? 0,   '#7c3aed', ($s->total_withdrawals ?? 0) === 0],
-                                            ['−', 'Bank deposits',   $s->total_bank_deposits ?? 0, '#0284c7', ($s->total_bank_deposits ?? 0) === 0],
-                                        ];
-                                    @endphp
-                                    @foreach($cfRows as $cfRow)
-                                    @php [$cfSign, $cfLbl, $cfVal, $cfClr, $cfSkip] = $cfRow; @endphp
-                                    @if(!$cfSkip)
-                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f1f5f9;gap:8px;">
-                                        <div style="display:flex;align-items:center;gap:5px;">
-                                            <span style="font-size:10px;font-weight:700;width:10px;flex-shrink:0;color:{{ $cfSign === '+' ? '#0f766e' : '#e11d48' }};">{{ $cfSign }}</span>
-                                            <span style="font-size:11px;color:#475569;white-space:nowrap;">{{ $cfLbl }}</span>
-                                        </div>
-                                        <span style="font-size:12px;font-weight:600;font-family:monospace;white-space:nowrap;color:{{ $cfClr }};">{{ number_format($cfVal) }}</span>
-                                    </div>
-                                    @endif
-                                    @endforeach
-                                    @if($sv !== 0)
-                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0 2px;border-top:2px solid #e2e8f0;margin-top:3px;gap:8px;">
-                                        <span style="font-size:11px;font-weight:700;color:#0f172a;">Cash variance</span>
-                                        <span style="font-size:12px;font-weight:700;font-family:monospace;color:{{ $sv < 0 ? '#e11d48' : '#d97706' }};">{{ $sv >= 0 ? '+' : '' }}{{ number_format($sv) }}</span>
-                                    </div>
-                                    @endif
-                                </div>
-
-                                {{-- Expense Breakdown --}}
-                                @if($s->expenses->whereNull('deleted_at')->isNotEmpty())
-                                <div class="fo-breakdown-col">
-                                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:8px;">Expense Breakdown</div>
-                                    @foreach($s->expenses->whereNull('deleted_at') as $exp)
-                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f1f5f9;gap:8px;">
-                                        <div style="display:flex;align-items:center;gap:5px;min-width:0;">
-                                            @if($exp->is_system_generated)
-                                                <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#fef3c7;color:#92400e;flex-shrink:0;white-space:nowrap;">auto</span>
-                                            @else
-                                                <span style="width:5px;height:5px;border-radius:50%;background:#e11d48;flex-shrink:0;"></span>
-                                            @endif
-                                            <span style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $exp->category->name ?? '—' }}</span>
-                                        </div>
-                                        <span style="font-size:12px;font-weight:600;font-family:monospace;white-space:nowrap;color:#e11d48;">{{ number_format($exp->amount) }}</span>
-                                    </div>
-                                    @endforeach
-                                    <div style="display:flex;justify-content:space-between;padding:5px 0 2px;border-top:2px solid #e2e8f0;margin-top:3px;">
-                                        <span style="font-size:11px;font-weight:700;color:#0f172a;">Total</span>
-                                        <span style="font-size:12px;font-weight:700;font-family:monospace;color:#e11d48;">{{ number_format($s->total_expenses ?? 0) }}</span>
-                                    </div>
-                                </div>
-                                @endif
-
-                                {{-- Withdrawals --}}
-                                @if($s->ownerWithdrawals->whereNull('deleted_at')->isNotEmpty())
-                                <div class="fo-breakdown-col">
-                                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:8px;">Withdrawals</div>
-                                    @foreach($s->ownerWithdrawals->whereNull('deleted_at') as $w)
-                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f1f5f9;gap:8px;">
-                                        <div style="display:flex;align-items:center;gap:5px;min-width:0;">
-                                            <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ede9fe;color:#5b21b6;flex-shrink:0;white-space:nowrap;">{{ $w->isCash() ? 'cash' : 'momo' }}</span>
-                                            <span style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $w->reason }}</span>
-                                        </div>
-                                        <span style="font-size:12px;font-weight:600;font-family:monospace;white-space:nowrap;color:#7c3aed;">{{ number_format($w->amount) }}</span>
-                                    </div>
-                                    @endforeach
-                                    <div style="display:flex;justify-content:space-between;padding:5px 0 2px;border-top:2px solid #e2e8f0;margin-top:3px;">
-                                        <span style="font-size:11px;font-weight:700;color:#0f172a;">Total</span>
-                                        <span style="font-size:12px;font-weight:700;font-family:monospace;color:#7c3aed;">{{ number_format($s->total_withdrawals ?? 0) }}</span>
-                                    </div>
-                                </div>
-                                @endif
-
-                            </div>{{-- /breakdown --}}
-                        </div>{{-- /session --}}
-                    @endforeach
-                </div>{{-- /body --}}
-
-            </div>{{-- /modal --}}
-        </div>{{-- /wrap --}}
-    @endif
-
-</div>{{-- /livewire root --}}
+</div>
+</div>

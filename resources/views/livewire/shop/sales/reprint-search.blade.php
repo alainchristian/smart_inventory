@@ -13,7 +13,7 @@
 }
 .rl-header-row {
     padding:9px 16px;
-    background:var(--surface-raised);
+    background:var(--surface2);
     border-bottom:1px solid var(--border);
 }
 .rl-col-label {
@@ -26,7 +26,7 @@
     display:inline-flex;align-items:center;gap:4px;
     padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;
     text-decoration:none;cursor:pointer;border:1.5px solid var(--border);
-    background:var(--surface-raised);color:var(--text-dim);
+    background:var(--surface2);color:var(--text-dim);
     transition:all .15s;
 }
 .rl-act-btn:hover  { border-color:var(--accent);color:var(--accent); }
@@ -46,7 +46,7 @@
     .rl-mc-amt  { font-size:14px;font-weight:800;font-family:monospace;color:var(--accent);white-space:nowrap; }
     .rl-mc-mid  { font-size:11px;color:var(--text-dim);margin-bottom:8px; }
     .rl-mc-bot  { display:flex;gap:8px;align-items:center;justify-content:space-between; }
-    .rl-mc-date { font-size:10px;color:var(--text-faint); }
+    .rl-mc-date { font-size:10px;color:var(--text-dim); }
     .rl-mc-actions { display:flex;gap:6px; }
 }
 
@@ -101,7 +101,7 @@
 .rm-footer {
     padding:14px 22px;border-top:1px solid var(--border);
     display:grid;grid-template-columns:1fr 1fr;gap:10px;flex-shrink:0;
-    background:var(--surface-raised);
+    background:var(--surface2);
 }
 .rm-footer-btn {
     display:flex;align-items:center;justify-content:center;gap:6px;
@@ -135,7 +135,7 @@
 }
 .rl-filter-input:focus { border-color:var(--accent); }
 .rl-search-wrap { position:relative; }
-.rl-search-icon { position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-faint); }
+.rl-search-icon { position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-dim); }
 .rl-search-input { padding-left:30px !important; }
 @media(max-width:600px){
     .rl-filters {
@@ -191,7 +191,7 @@
             <div>
                 <div style="font-size:12px;font-weight:700;font-family:monospace;color:var(--text);">{{ $sale->sale_number }}</div>
                 @if($sale->shop)
-                    <div style="font-size:10px;color:var(--text-faint);">{{ $sale->shop->name }}</div>
+                    <div style="font-size:10px;color:var(--text-dim);">{{ $sale->shop->name }}</div>
                 @endif
             </div>
 
@@ -199,10 +199,10 @@
                 @if($sale->customer_name)
                     <div style="font-size:12px;color:var(--text);">{{ $sale->customer_name }}</div>
                     @if($sale->customer_phone)
-                        <div style="font-size:10px;font-family:monospace;color:var(--text-faint);">{{ $sale->customer_phone }}</div>
+                        <div style="font-size:10px;font-family:monospace;color:var(--text-dim);">{{ $sale->customer_phone }}</div>
                     @endif
                 @else
-                    <span style="font-size:11px;color:var(--text-faint);">Walk-in</span>
+                    <span style="font-size:11px;color:var(--text-dim);">Walk-in</span>
                 @endif
             </div>
 
@@ -221,7 +221,7 @@
 
             <div style="font-size:11px;color:var(--text-dim);">
                 {{ ($sale->sale_date ?? $sale->created_at)->format('d M Y') }}<br>
-                <span style="color:var(--text-faint);font-size:10px;">{{ ($sale->sale_date ?? $sale->created_at)->format('H:i') }}</span>
+                <span style="color:var(--text-dim);font-size:10px;">{{ ($sale->sale_date ?? $sale->created_at)->format('H:i') }}</span>
             </div>
 
             <div style="display:flex;gap:6px;align-items:center;">
@@ -241,7 +241,7 @@
 
         </div>
         @empty
-        <div style="padding:40px;text-align:center;color:var(--text-faint);font-size:13px;">
+        <div style="padding:40px;text-align:center;color:var(--text-dim);font-size:13px;">
             No receipts found. Try adjusting the filters.
         </div>
         @endforelse
@@ -255,7 +255,7 @@
                 <div>
                     <div class="rl-mc-num">{{ $sale->sale_number }}</div>
                     @if($sale->shop)
-                        <div style="font-size:10px;color:var(--text-faint);margin-top:1px;">{{ $sale->shop->name }}</div>
+                        <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">{{ $sale->shop->name }}</div>
                     @endif
                 </div>
                 <div class="rl-mc-amt">{{ number_format($sale->total) }} <span style="font-size:10px;font-weight:500;color:var(--text-dim);">RWF</span></div>
@@ -295,7 +295,7 @@
             </div>
         </div>
         @empty
-        <div style="padding:40px;text-align:center;color:var(--text-faint);font-size:13px;">
+        <div style="padding:40px;text-align:center;color:var(--text-dim);font-size:13px;">
             No receipts found. Try adjusting the filters.
         </div>
         @endforelse
@@ -344,7 +344,7 @@
 
             {{-- Served by --}}
             @if($selectedSale->soldBy)
-            <div style="font-size:11px;color:var(--text-faint);margin-bottom:14px;">
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:14px;">
                 Served by <strong style="color:var(--text-dim);">{{ $selectedSale->soldBy->name }}</strong>
             </div>
             @endif

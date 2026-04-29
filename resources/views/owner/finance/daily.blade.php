@@ -8,7 +8,7 @@
                 </div>
                 <a href="{{ route('owner.finance.overview') }}"
                    class="px-4 py-2 rounded-lg text-sm font-medium"
-                   style="background:var(--surface-raised);color:var(--text-dim);border:1px solid var(--border);">
+                   style="background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">
                     Finance Overview →
                 </a>
             </div>

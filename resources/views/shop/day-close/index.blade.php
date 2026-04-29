@@ -8,8 +8,8 @@
 .dc-header-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
 
 /* ── Cards ── */
-.dc-card-head     { padding:11px 14px; background:var(--surface-raised); border-bottom:1px solid var(--border); }
-.dc-card-head-row { padding:11px 14px; background:var(--surface-raised); border-bottom:1px solid var(--border);
+.dc-card-head     { padding:11px 14px; background:var(--surface2); border-bottom:1px solid var(--border); }
+.dc-card-head-row { padding:11px 14px; background:var(--surface2); border-bottom:1px solid var(--border);
                     display:flex; align-items:center; justify-content:space-between; }
 .dc-section-lbl   { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
 .dc-left-col      { display:flex; flex-direction:column; gap:20px; }
@@ -75,7 +75,7 @@
                         </span>
                     @elseif ($sessStatus === 'closed')
                         <span style="padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;
-                                     background:var(--surface-raised);color:var(--text-dim);border:1px solid var(--border);">
+                                     background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">
                             Closed
                         </span>
                     @endif
@@ -86,7 +86,7 @@
                 <a href="{{ route('shop.session.history') }}"
                    class="dc-header-hist-btn"
                    style="padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;
-                          background:var(--surface-raised);color:var(--text-dim);border:1px solid var(--border);
+                          background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);
                           text-decoration:none;transition:border-color 0.15s;"
                    onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                     History
@@ -156,13 +156,13 @@
                                 </div>
                                 Close Today's Session
                             </div>
-                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color:var(--text-faint);">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color:var(--text-dim);">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                             </svg>
                         </a>
                         <a href="{{ route('shop.session.history') }}" class="dc-quick-link">
                             <div style="display:flex;align-items:center;gap:8px;">
-                                <div style="width:28px;height:28px;border-radius:8px;background:var(--surface-raised);
+                                <div style="width:28px;height:28px;border-radius:8px;background:var(--surface2);
                                             display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border);">
                                     <svg width="13" height="13" fill="none" stroke="var(--text-dim)" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -170,7 +170,7 @@
                                 </div>
                                 Session History
                             </div>
-                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color:var(--text-faint);">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color:var(--text-dim);">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                             </svg>
                         </a>
@@ -184,7 +184,7 @@
                                 </div>
                                 Expense Requests
                             </div>
-                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color:var(--text-faint);">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color:var(--text-dim);">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                             </svg>
                         </a>
@@ -197,7 +197,7 @@
                     <div style="border-radius:14px;overflow:hidden;border:1px solid var(--border);">
                         <div class="dc-card-head-row">
                             <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">Activity History</span>
-                            <span style="font-size:10px;color:var(--text-faint);">Last 10 sessions</span>
+                            <span style="font-size:10px;color:var(--text-dim);">Last 10 sessions</span>
                         </div>
                         <div style="background:var(--surface);">
                             <livewire:shop.day-close.session-activity-panel :shopId="$shopId" />

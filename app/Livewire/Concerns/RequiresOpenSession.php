@@ -26,29 +26,17 @@ trait RequiresOpenSession
             return true;
         }
 
-        // Is there any open session for this shop (could be a past date)?
-        $anyOpen = DailySession::forShop($shopId)->open()->orderByDesc('session_date')->first();
-
-        // Is there a session specifically for today?
+        // Only today's session matters for the gate
         $todaySession = DailySession::forShop($shopId)->forDate(today()->toDateString())->first();
 
-        // Case 1: An old session is still open — must close it first
-        if ($anyOpen && $anyOpen->session_date->toDateString() !== today()->toDateString()) {
-            $this->sessionBlocked     = true;
-            $this->sessionBlockReason = 'previous_open';
-            $this->blockedSessionDate = $anyOpen->session_date->format('d M Y');
-            $this->blockedSessionId   = $anyOpen->id;
-            return false;
-        }
-
-        // Case 2: No session at all for today
+        // Case 1: No session at all for today
         if (! $todaySession) {
             $this->sessionBlocked     = true;
             $this->sessionBlockReason = 'no_session';
             return false;
         }
 
-        // Case 3: Today's session exists but is closed or locked
+        // Case 2: Today's session exists but is closed or locked
         if (! $todaySession->isOpen()) {
             $this->sessionBlocked     = true;
             $this->sessionBlockReason = 'session_closed';

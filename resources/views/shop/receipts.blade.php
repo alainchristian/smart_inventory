@@ -8,7 +8,7 @@
                 <p style="font-size:13px;color:var(--text-dim);margin:3px 0 0;">Find and reprint receipts by date, customer, sale number or product</p>
             </div>
             <a href="{{ route('shop.pos') }}"
-               style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;color:var(--text-dim);text-decoration:none;background:var(--surface-raised);white-space:nowrap;flex-shrink:0;">
+               style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;color:var(--text-dim);text-decoration:none;background:var(--surface2);white-space:nowrap;flex-shrink:0;">
                 ← Back to POS
             </a>
         </div>

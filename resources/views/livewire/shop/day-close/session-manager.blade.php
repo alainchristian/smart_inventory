@@ -33,7 +33,7 @@
         <div wire:poll.30s="refreshSummary">
 
             {{-- Session status bar --}}
-            <div class="rounded-xl px-4 py-3 mb-3 flex items-center justify-between gap-3" style="background:var(--surface-raised);border:1px solid var(--border);">
+            <div class="rounded-xl px-4 py-3 mb-3 flex items-center justify-between gap-3" style="background:var(--surface2);border:1px solid var(--border);">
                 <div class="min-w-0">
                     <div class="text-xs" style="color:var(--text-dim);">
                         {{ $todaySession->session_date->format('d M Y') }}
@@ -50,7 +50,7 @@
                 <div class="space-y-3 mb-3">
 
                     {{-- Sales card — full width, shows channel breakdown --}}
-                    <div class="rounded-xl p-4" style="background:var(--surface-raised);border:1px solid var(--border);">
+                    <div class="rounded-xl p-4" style="background:var(--surface2);border:1px solid var(--border);">
                         <div class="flex items-start justify-between gap-3 mb-3">
                             <div>
                                 <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Total Sales</div>
@@ -60,7 +60,7 @@
                                 </div>
                             </div>
                             <div class="text-right flex-shrink-0">
-                                <div class="text-xs" style="color:var(--text-faint);">{{ $liveSummary['transaction_count'] }} transactions</div>
+                                <div class="text-xs" style="color:var(--text-dim);">{{ $liveSummary['transaction_count'] }} transactions</div>
                             </div>
                         </div>
                         {{-- Channel pills --}}
@@ -78,13 +78,13 @@
                                 </div>
                             @endif
                             @if ($liveSummary['total_sales_card'] > 0)
-                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface-overlay);">
+                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);">
                                     <span class="text-xs font-medium" style="color:var(--text-dim);">Card</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--text);">{{ number_format($liveSummary['total_sales_card']) }}</span>
                                 </div>
                             @endif
                             @if (($liveSummary['total_sales_bank_transfer'] ?? 0) > 0)
-                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface-overlay);">
+                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);">
                                     <span class="text-xs font-medium" style="color:var(--text-dim);">Bank Txfr</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--text);">{{ number_format($liveSummary['total_sales_bank_transfer']) }}</span>
                                 </div>
@@ -102,39 +102,39 @@
                                 </div>
                             @endif
                             @if (($liveSummary['total_sales_other'] ?? 0) > 0)
-                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface-overlay);">
+                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);">
                                     <span class="text-xs font-medium" style="color:var(--text-dim);">Other</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--text);">{{ number_format($liveSummary['total_sales_other']) }}</span>
                                 </div>
                             @endif
                             @if ($liveSummary['total_sales'] === 0)
-                                <span class="text-xs" style="color:var(--text-faint);">No sales yet</span>
+                                <span class="text-xs" style="color:var(--text-dim);">No sales yet</span>
                             @endif
                         </div>
                     </div>
 
                     {{-- Secondary metrics row --}}
                     <div class="grid gap-3" style="grid-template-columns: repeat({{ ($liveSummary['total_repayments'] ?? 0) > 0 ? 4 : 3 }}, 1fr);">
-                        <div class="rounded-xl p-3 text-center" style="background:var(--surface-raised);border:1px solid var(--border);">
+                        <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                             <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Cash in Drawer</div>
                             <div class="font-mono font-bold text-base" style="color:var(--accent);">{{ number_format($liveSummary['expected_cash']) }}</div>
-                            <div class="text-xs mt-0.5" style="color:var(--text-faint);">Expected</div>
+                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">Expected</div>
                         </div>
-                        <div class="rounded-xl p-3 text-center" style="background:var(--surface-raised);border:1px solid var(--border);">
+                        <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                             <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Expenses</div>
                             <div class="font-mono font-bold text-base" style="color:var(--red);">{{ number_format($liveSummary['total_expenses']) }}</div>
-                            <div class="text-xs mt-0.5" style="color:var(--text-faint);">{{ $liveSummary['expense_count'] }} items</div>
+                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ $liveSummary['expense_count'] }} items</div>
                         </div>
-                        <div class="rounded-xl p-3 text-center" style="background:var(--surface-raised);border:1px solid var(--border);">
+                        <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                             <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Withdrawn</div>
                             <div class="font-mono font-bold text-base" style="color:var(--amber);">{{ number_format($liveSummary['total_withdrawals']) }}</div>
-                            <div class="text-xs mt-0.5" style="color:var(--text-faint);">{{ $liveSummary['withdrawal_count'] }} items</div>
+                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ $liveSummary['withdrawal_count'] }} items</div>
                         </div>
                         @if (($liveSummary['total_repayments'] ?? 0) > 0)
-                            <div class="rounded-xl p-3 text-center" style="background:var(--surface-raised);border:1px solid var(--border);">
+                            <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                                 <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Repayments</div>
                                 <div class="font-mono font-bold text-base" style="color:var(--accent);">{{ number_format($liveSummary['total_repayments']) }}</div>
-                                <div class="text-xs mt-0.5" style="color:var(--text-faint);">Credit collected</div>
+                                <div class="text-xs mt-0.5" style="color:var(--text-dim);">Credit collected</div>
                             </div>
                         @endif
                     </div>
@@ -158,7 +158,7 @@
             <div class="grid grid-cols-2 gap-2">
                 <a href="{{ route('shop.expenses.add') }}"
                    class="flex items-center gap-2 px-3 py-3 rounded-xl font-semibold transition-opacity hover:opacity-80"
-                   style="background:var(--surface-raised);border:1px solid var(--border);color:var(--text);">
+                   style="background:var(--surface2);border:1px solid var(--border);color:var(--text);">
                     <span class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--amber-dim);">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--amber);" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -169,7 +169,7 @@
 
                 <a href="{{ route('shop.bank-deposits') }}"
                    class="flex items-center gap-2 px-3 py-3 rounded-xl font-semibold transition-opacity hover:opacity-80"
-                   style="background:var(--surface-raised);border:1px solid var(--border);color:var(--text);">
+                   style="background:var(--surface2);border:1px solid var(--border);color:var(--text);">
                     <span class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--accent-dim);">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--accent);" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l9-3 9 3M3 6v12l9 3 9-3V6M12 3v18"/>
@@ -180,7 +180,7 @@
 
                 <a href="{{ route('shop.withdrawals.add') }}"
                    class="flex items-center gap-2 px-3 py-3 rounded-xl font-semibold transition-opacity hover:opacity-80"
-                   style="background:var(--surface-raised);border:1px solid var(--border);color:var(--text);">
+                   style="background:var(--surface2);border:1px solid var(--border);color:var(--text);">
                     <span class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--red-dim);">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--red);" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -204,7 +204,7 @@
         </div>
 
     @elseif ($todaySession && ! $todaySession->isOpen())
-        <div class="rounded-xl p-6 text-center" style="background:var(--surface-raised);border:1px solid var(--border);">
+        <div class="rounded-xl p-6 text-center" style="background:var(--surface2);border:1px solid var(--border);">
             <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background:var(--green-dim);">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--green);">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -216,7 +216,7 @@
         </div>
 
     @else
-        <div class="rounded-xl p-5" style="background:var(--surface-raised);border:1px solid var(--border);">
+        <div class="rounded-xl p-5" style="background:var(--surface2);border:1px solid var(--border);">
             <div class="text-sm font-semibold mb-4" style="color:var(--text);">Open Today's Session</div>
 
             @if (! $showOpenForm)
@@ -231,11 +231,11 @@
                         <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">Opening cash balance (RWF)</label>
                         <input type="number" wire:model="openingBalance" min="0"
                                class="w-full px-4 py-3 rounded-lg text-base"
-                               style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);"
+                               style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);"
                                placeholder="0" autofocus>
                         @error('openingBalance') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
                         @if ($openingBalanceHint)
-                            <div class="text-xs mt-1" style="color:var(--text-faint);">{{ $openingBalanceHint }}</div>
+                            <div class="text-xs mt-1" style="color:var(--text-dim);">{{ $openingBalanceHint }}</div>
                         @endif
                     </div>
                     <div class="flex gap-2">

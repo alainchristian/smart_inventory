@@ -10,6 +10,8 @@ class OpenSession extends Component
 {
     public int    $openingBalance     = 0;
     public string $openingBalanceHint = '';
+    public string $errorMessage       = '';
+    public ?int   $suggestedBalance   = null;
 
     public function mount(): void
     {
@@ -24,8 +26,10 @@ class OpenSession extends Component
             ->first();
 
         if ($lastClosed && $lastClosed->cash_retained !== null) {
-            $this->openingBalance     = $lastClosed->cash_retained;
-            $this->openingBalanceHint = 'Carried forward from ' . $lastClosed->session_date->format('d M Y');
+            $retained = (int) $lastClosed->cash_retained;
+            $this->openingBalance     = $retained;
+            $this->suggestedBalance   = $retained;
+            $this->openingBalanceHint = 'Carried forward from ' . $lastClosed->session_date->format('d M Y') . ' — ' . number_format($retained) . ' RWF';
         }
     }
 
@@ -36,6 +40,7 @@ class OpenSession extends Component
         ]);
 
         $user = auth()->user();
+        $this->errorMessage = '';
 
         try {
             app(DailySessionService::class)->openSession(
@@ -46,19 +51,28 @@ class OpenSession extends Component
             );
 
             $this->dispatch('session-opened');
-            session()->flash('success', 'Day opened successfully.');
+            $this->redirect(route('shop.day-close.index'), navigate: true);
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->errorMessage = $e->getMessage();
         }
     }
 
     public function render()
     {
         $user = auth()->user();
-        $todaySession = DailySession::forShop($user->location_id)
+        $shopId = $user->location_id;
+
+        $todaySession = DailySession::forShop($shopId)
             ->forDate(today()->toDateString())
             ->first();
 
-        return view('livewire.shop.day-close.open-session', compact('todaySession'));
+        // Any open session from a previous date that is blocking new sessions
+        $blockerSession = DailySession::forShop($shopId)
+            ->open()
+            ->where('session_date', '<', today()->toDateString())
+            ->orderByDesc('session_date')
+            ->first();
+
+        return view('livewire.shop.day-close.open-session', compact('todaySession', 'blockerSession'));
     }
 }

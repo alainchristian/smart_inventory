@@ -6,7 +6,7 @@
             </a>
             @if (in_array($transfer->status, [\App\Enums\TransferStatus::IN_TRANSIT, \App\Enums\TransferStatus::DELIVERED, \App\Enums\TransferStatus::RECEIVED]))
             <a href="{{ route('owner.transfers.delivery-note', $transfer) }}" target="_blank"
-               style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;background:var(--surface-overlay);color:var(--text);border:1px solid var(--border);">
+               style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;background:var(--surface2);color:var(--text);border:1px solid var(--border);">
                 <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>

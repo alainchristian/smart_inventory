@@ -4,7 +4,7 @@
             <div class="mb-6 flex items-center gap-3">
                 <a href="{{ route('shop.session.open') }}"
                    class="p-2 rounded-lg transition-colors"
-                   style="background:var(--surface-raised);color:var(--text-dim);border:1px solid var(--border);">
+                   style="background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -27,7 +27,7 @@
             @endphp
 
             @if ($activeSession)
-                <div class="rounded-xl p-5 sm:p-6" style="background:var(--surface-raised);border:1px solid var(--border);">
+                <div class="rounded-xl p-5 sm:p-6" style="background:var(--surface2);border:1px solid var(--border);">
                     <livewire:shop.day-close.add-bank-deposit :dailySessionId="$activeSession->id" />
                 </div>
 
@@ -42,7 +42,7 @@
                     </div>
                 @endif
             @else
-                <div class="rounded-xl p-8 text-center" style="background:var(--surface-raised);border:1px solid var(--border);">
+                <div class="rounded-xl p-8 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                     <div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--amber-dim);">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--amber);">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>

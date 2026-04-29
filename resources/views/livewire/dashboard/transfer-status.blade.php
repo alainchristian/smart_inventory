@@ -9,12 +9,12 @@
             <div style="font-size:17px;font-weight:700;color:var(--text)">
                 Transfer Status
             </div>
-            <div style="font-size:13px;color:var(--text-dim);margin-top:2px">
+            <div style="font-size:16px;color:var(--text-dim);margin-top:2px">
                 Live pipeline
             </div>
         </div>
         <a href="{{ route('owner.transfers.index') }}"
-           style="font-size:12px;font-weight:600;color:var(--accent);
+           style="font-size:14px;font-weight:600;color:var(--accent);
                   text-decoration:none;padding:4px 10px;border-radius:7px;
                   background:var(--accent-dim)">
             Manage
@@ -86,10 +86,10 @@
 
             {{-- Label --}}
             <div style="flex:1;min-width:0">
-                <div style="font-size:14px;font-weight:600;color:var(--text)">
+                <div style="font-size:17px;font-weight:600;color:var(--text)">
                     {{ $s['label'] }}
                 </div>
-                <div style="font-size:12px;color:var(--text-dim);margin-top:1px">
+                <div style="font-size:14px;color:var(--text-dim);margin-top:1px">
                     {{ $s['sub'] }}
                 </div>
             </div>
@@ -98,7 +98,7 @@
             <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;
                         background:{{ $s['bg'] }};
                         display:flex;align-items:center;justify-content:center;
-                        font-size:14px;font-weight:800;font-family:var(--mono);
+                        font-size:17px;font-weight:800;font-family:var(--mono);
                         color:{{ $s['color'] }}">
                 {{ $s['count'] }}
             </div>
@@ -109,7 +109,7 @@
 
     {{-- Recent active transfers --}}
     <div style="border-top:1px solid var(--border)">
-        <div style="padding:10px 20px 4px;font-size:11px;font-weight:700;
+        <div style="padding:10px 20px 4px;font-size:13px;font-weight:700;
                     letter-spacing:.5px;text-transform:uppercase;
                     color:var(--text-dim)">
             Recent Active
@@ -133,18 +133,18 @@
            onmouseover="this.style.background='var(--surface2)'"
            onmouseout="this.style.background='transparent'">
             <div style="min-width:0;flex:1">
-                <div style="font-size:13px;font-weight:600;color:var(--text);
+                <div style="font-size:16px;font-weight:600;color:var(--text);
                             white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                     {{ $t['from'] }}
                     <span style="color:var(--text-dim)"> → </span>
                     {{ $t['to'] }}
                 </div>
-                <div style="font-size:12px;color:var(--text-dim);
+                <div style="font-size:14px;color:var(--text-dim);
                             font-family:var(--mono);margin-top:1px">
                     {{ $t['age'] }}
                 </div>
             </div>
-            <span style="font-size:10px;font-weight:700;padding:2px 8px;
+            <span style="font-size:12px;font-weight:700;padding:2px 8px;
                          border-radius:20px;white-space:nowrap;flex-shrink:0;
                          background:{{ $sc['bg'] }};color:{{ $sc['c'] }}">
                 {{ ucfirst(str_replace('_',' ',$t['status'])) }}
@@ -152,7 +152,7 @@
         </a>
         @empty
         <div style="padding:12px 20px;border-top:1px solid var(--border);
-                    font-size:12px;color:var(--text-dim);text-align:center">
+                    font-size:14px;color:var(--text-dim);text-align:center">
             No active transfers right now
         </div>
         @endforelse

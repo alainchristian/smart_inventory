@@ -54,10 +54,20 @@ class SessionHistory extends Component
         }
 
         $sessions = $query
-            ->with(['openedBy', 'closedBy', 'lockedBy', 'expenses.category', 'ownerWithdrawals.recordedBy', 'shop'])
+            ->with(['openedBy', 'closedBy', 'lockedBy', 'shop'])
             ->orderByDesc('session_date')
             ->paginate(20);
 
-        return view('livewire.shop.day-close.session-history', compact('sessions'));
+        // Load the full expanded session separately so it's always available
+        $expandedSession = null;
+        if ($this->expandedId) {
+            $expandedSession = DailySession::with([
+                'openedBy', 'closedBy', 'lockedBy',
+                'expenses.category', 'ownerWithdrawals.recordedBy',
+                'bankDeposits',
+            ])->find($this->expandedId);
+        }
+
+        return view('livewire.shop.day-close.session-history', compact('sessions', 'expandedSession'));
     }
 }

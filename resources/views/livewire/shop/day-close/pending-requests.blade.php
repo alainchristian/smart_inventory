@@ -32,7 +32,7 @@
     @endif
 
     @if ($requests->isEmpty())
-        <div style="padding:4px 2px;font-size:12px;color:var(--text-faint);
+        <div style="padding:4px 2px;font-size:12px;color:var(--text-dim);
                     display:flex;align-items:center;gap:7px;">
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                  stroke-width="2" style="color:var(--green);flex-shrink:0;">
@@ -54,10 +54,10 @@
                 <div style="border-radius:14px;overflow:hidden;border:1px solid {{ $isStale ? 'var(--amber)' : 'var(--border)' }};">
 
                     {{-- Card header --}}
-                    <div style="padding:12px 16px;background:var(--surface-raised);border-bottom:1px solid var(--border);
+                    <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
                                 display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <span style="font-size:11px;font-family:var(--font-mono);font-weight:700;color:var(--accent);">
+                            <span style="font-size:11px;font-family:var(--mono);font-weight:700;color:var(--accent);">
                                 {{ $request->reference_number }}
                             </span>
                             <span style="padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;
@@ -73,7 +73,7 @@
                                 </span>
                             @endif
                         </div>
-                        <span style="font-size:14px;font-weight:800;font-family:var(--font-mono);color:var(--text);">
+                        <span style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--text);">
                             {{ number_format($request->amount) }}
                             <span style="font-size:11px;font-weight:600;color:var(--text-dim);">RWF</span>
                         </span>
@@ -93,7 +93,7 @@
 
                     {{-- Actions / rejection form --}}
                     @if ($rejectingId === $request->id)
-                        <div style="padding:12px 16px;background:var(--surface-raised);border-top:1px solid var(--border);">
+                        <div style="padding:12px 16px;background:var(--surface2);border-top:1px solid var(--border);">
                             <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:5px;">
                                 Rejection Reason
                             </label>
@@ -120,7 +120,7 @@
                             </div>
                         </div>
                     @else
-                        <div style="padding:10px 16px;background:var(--surface-raised);border-top:1px solid var(--border);
+                        <div style="padding:10px 16px;background:var(--surface2);border-top:1px solid var(--border);
                                     display:flex;gap:8px;align-items:center;">
                             <button wire:click="payRequest({{ $request->id }})"
                                     wire:confirm="Pay {{ number_format($request->amount) }} RWF from today's session cash?"
@@ -142,7 +142,7 @@
                                 Reject
                             </button>
                             @if (! $canAct)
-                                <span style="font-size:11px;color:var(--text-faint);margin-left:4px;">Open today's session first</span>
+                                <span style="font-size:11px;color:var(--text-dim);margin-left:4px;">Open today's session first</span>
                             @endif
                         </div>
                     @endif

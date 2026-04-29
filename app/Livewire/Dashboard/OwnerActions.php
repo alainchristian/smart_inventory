@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Alert;
 use App\Models\Customer;
 use App\Models\DamagedGood;
+use App\Models\DailySession;
 use App\Models\HeldSale;
 use App\Models\ReturnModel;
 use App\Models\Transfer;
@@ -27,6 +28,39 @@ class OwnerActions extends Component
     {
         $settings = app(SettingsService::class);
         $sections = [];
+
+        // ── 0. Unclosed sessions from previous days ───────────────────────────
+        $unclosedPrevious = DailySession::with('shop')
+            ->where('status', 'open')
+            ->where('session_date', '<', today()->toDateString())
+            ->orderBy('session_date')
+            ->get();
+
+        if ($unclosedPrevious->isNotEmpty()) {
+            $sections[] = [
+                'type'     => 'unclosed_sessions',
+                'label'    => 'Sessions Not Closed',
+                'icon'     => 'warning',
+                'color'    => 'var(--red)',
+                'bg'       => 'var(--red-dim)',
+                'count'    => $unclosedPrevious->count(),
+                'priority' => 0,
+                'items'    => $unclosedPrevious->map(fn ($s) => [
+                    'id'          => $s->id,
+                    'title'       => $s->shop->name ?? '—',
+                    'subtitle'    => 'Session for '
+                                   . $s->session_date->format('d M Y')
+                                   . ' was never closed ('
+                                   . $s->session_date->diffInDays(today())
+                                   . ' day(s) ago)',
+                    'value'       => 'OPEN',
+                    'value_color' => 'var(--red)',
+                    'age'         => $s->opened_at->diffForHumans(),
+                    'link'        => route('owner.finance.daily')
+                                   . '?date=' . $s->session_date->toDateString(),
+                ])->toArray(),
+            ];
+        }
 
         // ── 1. Return approvals pending ───────────────────────────────────────
         $returnThreshold = $settings->returnApprovalThreshold();

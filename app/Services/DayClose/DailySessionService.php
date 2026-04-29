@@ -28,14 +28,6 @@ class DailySessionService
             abort(403, 'You can only open a session for your own shop.');
         }
 
-        // Check for any open session across any date (not just today)
-        $anyOpen = DailySession::forShop($shopId)->open()->first();
-        if ($anyOpen) {
-            throw new \Exception(
-                'Session for ' . $anyOpen->session_date->format('d M Y') . ' is still open. Close it first.'
-            );
-        }
-
         if (DailySession::forShop($shopId)->forDate($date)->exists()) {
             throw new \Exception('A session already exists for today.');
         }
@@ -326,6 +318,42 @@ class DailySessionService
 
             return $session->fresh();
         });
+    }
+
+    /**
+     * Reopen a closed session (owner only). Cannot reopen locked sessions.
+     */
+    public function reopenSession(DailySession $session, User $user): DailySession
+    {
+        if (! $user->isOwner()) {
+            abort(403, 'Only the owner can reopen sessions.');
+        }
+
+        if ($session->isLocked()) {
+            throw new \Exception('Locked sessions cannot be reopened.');
+        }
+
+        if ($session->isOpen()) {
+            throw new \Exception('Session is already open.');
+        }
+
+        $session->update([
+            'status'    => 'open',
+            'closed_by' => null,
+            'closed_at' => null,
+        ]);
+
+        ActivityLog::create([
+            'user_id'           => $user->id,
+            'user_name'         => $user->name,
+            'action'            => 'daily_session_reopened',
+            'entity_type'       => 'daily_session',
+            'entity_id'         => $session->id,
+            'entity_identifier' => $session->session_date->format('Y-m-d'),
+            'details'           => ['reason' => 'Owner override reopen'],
+        ]);
+
+        return $session->fresh();
     }
 
     /**

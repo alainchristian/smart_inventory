@@ -17,11 +17,11 @@
                        enterkeyhint="next"
                        min="0"
                        class="w-full px-3 py-2 rounded-lg text-sm"
-                       style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);text-align:right;"
+                       style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);text-align:right;"
                        placeholder="0"
                        onfocus="this.style.borderColor='var(--accent)';if(this.value==='0')this.value='';"
                        onblur="this.style.borderColor='var(--border)';if(this.value==='')this.value='';">
-                <div style="font-size:10px;margin-top:3px;color:{{ $summary['expected_cash'] > 0 ? 'var(--green)' : 'var(--text-faint)' }};">
+                <div style="font-size:10px;margin-top:3px;color:{{ $summary['expected_cash'] > 0 ? 'var(--green)' : 'var(--text-dim)' }};">
                     {{ number_format($summary['expected_cash']) }} RWF available
                 </div>
                 @error('cashAmount') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
@@ -35,11 +35,11 @@
                        enterkeyhint="next"
                        min="0"
                        class="w-full px-3 py-2 rounded-lg text-sm"
-                       style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);text-align:right;"
+                       style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);text-align:right;"
                        placeholder="0"
                        onfocus="this.style.borderColor='var(--accent)';if(this.value==='0')this.value='';"
                        onblur="this.style.borderColor='var(--border)';if(this.value==='')this.value='';">
-                <div style="font-size:10px;margin-top:3px;color:{{ $summary['momo_available'] > 0 ? '#0ea5e9' : 'var(--text-faint)' }};">
+                <div style="font-size:10px;margin-top:3px;color:{{ $summary['momo_available'] > 0 ? '#0ea5e9' : 'var(--text-dim)' }};">
                     {{ number_format($summary['momo_available']) }} RWF available
                 </div>
                 @error('momoAmount') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror

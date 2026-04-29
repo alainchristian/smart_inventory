@@ -65,7 +65,7 @@
                                             ? 'background:var(--green);color:white;'
                                             : ($currentStep === $stepNum
                                                 ? 'background:var(--accent);color:white;'
-                                                : 'background:var(--surface-raised);color:var(--text-faint);border:1.5px solid var(--border);') }}">
+                                                : 'background:var(--surface2);color:var(--text-dim);border:1.5px solid var(--border);') }}">
                                 @if ($currentStep > $stepNum)
                                     <svg style="width:13px;height:13px;" fill="none" stroke="currentColor"
                                          viewBox="0 0 24 24" stroke-width="3">
@@ -91,7 +91,7 @@
                  STEP 1 — Find Sale
             ============================================================ --}}
             @if ($currentStep === 1)
-                <div style="background:var(--surface-raised);border:1px solid var(--border);
+                <div style="background:var(--surface2);border:1px solid var(--border);
                             border-radius:16px;padding:20px;">
                     <div style="font-size:14px;font-weight:700;color:var(--text);">Find Sale</div>
                     <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">
@@ -119,7 +119,7 @@
                     {{-- Search results dropdown --}}
                     @if ($showSaleSearchDropdown && count($saleSearchResults) > 0)
                         <div style="margin-top:4px;border-radius:10px;border:1px solid var(--border);
-                                    background:var(--surface-raised);overflow:hidden;
+                                    background:var(--surface2);overflow:hidden;
                                     box-shadow:0 4px 16px rgba(0,0,0,0.08);">
                             @foreach ($saleSearchResults as $result)
                                 <button type="button"
@@ -157,7 +157,7 @@
                             </svg>
                             Today's Sales
                         </button>
-                        <span style="font-size:11px;color:var(--text-faint);">or search above</span>
+                        <span style="font-size:11px;color:var(--text-dim);">or search above</span>
                     </div>
 
                     @if ($saleAgeWarning)
@@ -197,7 +197,7 @@
                  STEP 2 — Select Items
             ============================================================ --}}
             @if ($currentStep === 2)
-                <div style="background:var(--surface-raised);border:1px solid var(--border);
+                <div style="background:var(--surface2);border:1px solid var(--border);
                             border-radius:16px;padding:20px;">
                     <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;">
                         Select Items to Return
@@ -280,7 +280,7 @@
                                                    min="1"
                                                    max="{{ $saleItem->quantity_sold }}"
                                                    style="width:100%;padding:8px 10px;border-radius:8px;font-size:14px;
-                                                          font-weight:700;font-family:var(--font-mono);text-align:right;
+                                                          font-weight:700;font-family:var(--mono);text-align:right;
                                                           background:var(--surface);border:1.5px solid var(--border);
                                                           color:var(--text);box-sizing:border-box;"
                                                    @click.stop>
@@ -295,7 +295,7 @@
                                                    min="0"
                                                    max="{{ $item['quantity_returned'] ?? $saleItem->quantity_sold }}"
                                                    style="width:100%;padding:8px 10px;border-radius:8px;font-size:14px;
-                                                          font-weight:700;font-family:var(--font-mono);text-align:right;
+                                                          font-weight:700;font-family:var(--mono);text-align:right;
                                                           background:var(--surface);border:1.5px solid var(--red);
                                                           color:var(--red);box-sizing:border-box;"
                                                    @click.stop>
@@ -321,7 +321,7 @@
                  STEP 3 — Return Details
             ============================================================ --}}
             @if ($currentStep === 3)
-                <div style="background:var(--surface-raised);border:1px solid var(--border);
+                <div style="background:var(--surface2);border:1px solid var(--border);
                             border-radius:16px;padding:20px;">
                     <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;">
                         Return Details
@@ -375,7 +375,7 @@
                                 <div style="font-size:24px;margin-bottom:6px;">💵</div>
                                 <div style="font-size:13px;font-weight:700;
                                             color:{{ !$isExchange ? 'var(--green)' : 'var(--text-dim)' }};">Refund</div>
-                                <div style="font-size:11px;color:var(--text-faint);margin-top:2px;">
+                                <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">
                                     Return money to customer
                                 </div>
                             </button>
@@ -388,7 +388,7 @@
                                 <div style="font-size:24px;margin-bottom:6px;">🔄</div>
                                 <div style="font-size:13px;font-weight:700;
                                             color:{{ $isExchange ? 'var(--accent)' : 'var(--text-dim)' }};">Exchange</div>
-                                <div style="font-size:11px;color:var(--text-faint);margin-top:2px;">
+                                <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">
                                     Replace with another item
                                 </div>
                             </button>
@@ -487,7 +487,7 @@
         {{-- ============================================================
              SUMMARY CARD (sticky right column)
         ============================================================ --}}
-        <div class="pr-summary" style="position:sticky;top:24px;background:var(--surface-raised);
+        <div class="pr-summary" style="position:sticky;top:24px;background:var(--surface2);
                     border:1px solid var(--border);border-radius:16px;overflow:hidden;">
 
             <div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface);">
@@ -533,13 +533,13 @@
                         <div style="padding:8px;border-radius:8px;background:var(--surface);
                                     border:1px solid var(--border);text-align:center;">
                             <div style="font-size:18px;font-weight:800;color:var(--text);
-                                        font-family:var(--font-mono);">{{ $sumQty }}</div>
+                                        font-family:var(--mono);">{{ $sumQty }}</div>
                             <div style="font-size:10px;color:var(--text-dim);">Items</div>
                         </div>
                         <div style="padding:8px;border-radius:8px;background:var(--surface);
                                     border:1px solid var(--border);text-align:center;">
                             <div style="font-size:18px;font-weight:800;color:var(--red);
-                                        font-family:var(--font-mono);">{{ $sumDamaged }}</div>
+                                        font-family:var(--mono);">{{ $sumDamaged }}</div>
                             <div style="font-size:10px;color:var(--text-dim);">Damaged</div>
                         </div>
                     </div>
@@ -563,7 +563,7 @@
                             <div style="font-size:10px;font-weight:600;color:var(--text-dim);
                                         text-transform:uppercase;letter-spacing:0.5px;">Est. Refund</div>
                             <div style="font-size:20px;font-weight:800;color:var(--green);
-                                        font-family:var(--font-mono);margin-top:2px;">
+                                        font-family:var(--mono);margin-top:2px;">
                                 {{ number_format($sumRefund) }} RWF
                             </div>
                             @if ($sumRefund > 50000)
