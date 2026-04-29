@@ -1,7 +1,7 @@
 <x-app-layout>
-    <div class="py-6">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-6 flex items-center gap-3">
+    <div class="py-2 sm:py-6">
+        <div class="max-w-3xl mx-auto px-0 sm:px-4 lg:px-8">
+            <div class="mb-4 sm:mb-6 flex items-center gap-3">
                 <a href="{{ route('shop.day-close.index') }}"
                    class="p-2 rounded-lg transition-colors"
                    style="background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">

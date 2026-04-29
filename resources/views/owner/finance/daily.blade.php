@@ -1,19 +1,19 @@
 <x-app-layout>
-    <div class="py-6 sm:py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-6 sm:mb-8 flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold" style="color:var(--text);">Daily Close Report</h1>
-                    <p class="mt-1 text-sm" style="color:var(--text-dim);">Review and lock daily sessions by date</p>
-                </div>
-                <a href="{{ route('owner.finance.overview') }}"
-                   class="px-4 py-2 rounded-lg text-sm font-medium"
-                   style="background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">
-                    Finance Overview →
-                </a>
-            </div>
-
-            <livewire:owner.finance.daily-close-report />
-        </div>
+<style>
+.fn-dy-head { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap; }
+@media(max-width:640px) { .fn-dy-head { margin-bottom:12px; } }
+</style>
+<div class="fn-dy-head">
+    <div>
+        <h1 style="font-size:22px;font-weight:800;color:var(--text);margin:0 0 2px;letter-spacing:-0.3px;">Daily Close Report</h1>
+        <p style="font-size:13px;color:var(--text-dim);margin:0;">Review and lock daily sessions by date</p>
     </div>
+    <a href="{{ route('owner.finance.overview') }}"
+       style="padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;
+              background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);
+              text-decoration:none;white-space:nowrap;flex-shrink:0;">
+        Finance Overview →
+    </a>
+</div>
+<livewire:owner.finance.daily-close-report />
 </x-app-layout>

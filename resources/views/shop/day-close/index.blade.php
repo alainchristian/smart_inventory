@@ -2,8 +2,8 @@
 <style>
 /* ── Layout ── */
 .dc-index-grid  { display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start; }
-.dc-page-outer  { padding:28px 0 80px; }
-.dc-page-inner  { max-width:1100px; margin:0 auto; padding:0 20px; }
+.dc-page-outer  { padding:20px 0 80px; }
+.dc-page-inner  { max-width:1100px; margin:0 auto; padding:0 16px; }
 .dc-header      { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:28px; }
 .dc-header-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
 
@@ -29,8 +29,8 @@
 
 /* ── Responsive: mobile ── */
 @media (max-width:640px) {
-    .dc-page-outer        { padding:14px 0 60px; }
-    .dc-page-inner        { padding:0 12px; }
+    .dc-page-outer        { padding:8px 0 60px; }
+    .dc-page-inner        { padding:0 8px; }
     .dc-header            { margin-bottom:16px; gap:10px; flex-wrap:wrap; }
     .dc-header h1         { font-size:18px; }
     .dc-header-actions    { gap:6px; }

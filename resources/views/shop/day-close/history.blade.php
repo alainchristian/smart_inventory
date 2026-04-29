@@ -13,9 +13,9 @@
 .sh-back-btn:hover { border-color:var(--accent); }
 
 @media (max-width:480px) {
-    .sh-page  { padding:14px 0 60px; }
-    .sh-inner { padding:0 12px; }
-    .sh-header { margin-bottom:16px; }
+    .sh-page  { padding:8px 0 60px; }
+    .sh-inner { padding:0 8px; }
+    .sh-header { margin-bottom:12px; }
 }
 </style>
 

@@ -61,8 +61,8 @@
     .is-col-num { font-family: 'Courier New', monospace !important; }
 }
 @media (max-width:640px) {
-    .is-page       { padding:14px 0 60px; }
-    .is-inner      { padding:0 12px; }
+    .is-page       { padding:8px 0 60px; }
+    .is-inner      { padding:0 8px; }
     .is-header     { margin-bottom:14px; }
     .is-col-bar    { display:none; }
     .is-col-prev   { display:table-cell; min-width:90px; }

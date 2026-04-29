@@ -54,7 +54,7 @@
     <div class="lg:ml-[var(--sidebar-width)]">
         <livewire:layout.topbar />
         <main class="min-h-screen" style="background-color: var(--bg); padding-top: var(--topbar-height); overflow-anchor: none;">
-            <div class="p-5 sm:p-6 lg:p-8 xl:p-10">
+            <div class="p-2 sm:p-5 lg:p-8 xl:p-10">
                 {{ $slot }}
             </div>
         </main>
