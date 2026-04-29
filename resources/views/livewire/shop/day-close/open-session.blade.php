@@ -1,3 +1,13 @@
+<style>
+.dc-sess-body { padding:16px 20px; }
+.dc-sess-head { padding:14px 18px; }
+.dc-sess-form { padding:20px; }
+@media (max-width:640px) {
+    .dc-sess-body { padding:11px 14px; }
+    .dc-sess-head { padding:9px 12px; }
+    .dc-sess-form { padding:14px; }
+}
+</style>
 <div>
     @if (session()->has('success'))
         <div style="margin-bottom:12px;padding:10px 14px;border-radius:10px;font-size:12px;
@@ -15,7 +25,7 @@
     @if ($todaySession)
         {{-- ── Session Active ── --}}
         <div style="border-radius:16px;overflow:hidden;border:1px solid var(--green);background:var(--green-dim);">
-            <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div class="dc-sess-body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
                 <div style="display:flex;align-items:center;gap:12px;">
                     <div style="width:40px;height:40px;border-radius:12px;background:var(--green);
                                 display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -40,12 +50,12 @@
     @else
         {{-- ── No Session ── --}}
         <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);">
-            <div style="padding:14px 18px;background:var(--surface-raised);border-bottom:1px solid var(--border);
+            <div class="dc-sess-head" style="background:var(--surface-raised);border-bottom:1px solid var(--border);
                         display:flex;align-items:center;gap:8px;">
                 <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);"></div>
                 <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">No Active Session</span>
             </div>
-            <div style="background:var(--surface);padding:20px;">
+            <div class="dc-sess-form" style="background:var(--surface);">
                 <p style="font-size:13px;color:var(--text-dim);margin:0 0 18px;">
                     Open today's session to start recording sales, expenses, and cash movements.
                 </p>

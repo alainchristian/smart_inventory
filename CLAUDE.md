@@ -412,3 +412,48 @@ expected_cash = opening_balance
 - Partial write-offs supported — owner enters any amount up to full balance
 - Two-step confirmation required before any write-off is submitted
 - Alert model has no `type` field — use title matching for overdue credit alerts
+
+## Finance Analytics Integration (added 2026-04-27)
+
+### New service:
+- `app/Services/Analytics/FinanceAnalyticsService.php`
+  Methods: getExpenseSummary, getExpenseTrend, getWithdrawalSummary,
+           getCashVarianceSummary, getNetOperatingResult
+  Pattern: identical to SalesAnalyticsService (cacheTtl, location filter,
+           integer casts, Cache::remember)
+
+### New metric blocks (added to MetricRegistry):
+- `finance_expense_summary`    — expenses by category, table + bar_chart
+- `finance_expense_trend`      — daily expense line chart
+- `finance_withdrawal_summary` — owner withdrawals KPI + table
+- `finance_cash_variance`      — shortage/surplus summary KPI + table
+- `finance_net_operating`      — true P&L: Revenue − COGS − Expenses, kpi_card
+
+### New ReportRunner cases:
+All 5 finance metrics now resolved in resolveBlock() via FinanceAnalyticsService.
+FinanceAnalyticsService injected into ReportRunner constructor.
+
+### New ReportTemplates entry:
+`business_pl` — "Business P&L Summary" template using all 5 finance metrics
+plus sales_revenue, sales_gross_profit, sales_revenue_trend, loss_total.
+
+### FinanceOverview updated:
+Now uses FinanceAnalyticsService for computed properties (expenseSummary,
+withdrawalSummary, cashVariance, netResult) passed to view.
+Net Operating Result strip added at top of /owner/finance/overview.
+
+### Naming fix:
+daily-close-report.blade.php: "OPERATING PROFIT" renamed to "REVENUE AFTER EXPENSES".
+Margin percentage removed from that card — it was Revenue-COGS-free and misleading.
+
+### P&L hierarchy (important for future work):
+  Gross Profit          = Revenue − COGS              (SalesAnalyticsService::getGrossProfitKpis)
+  Revenue After Expenses = Revenue − Expenses         (Finance daily report, operational view)
+  Net Operating Result   = Revenue − COGS − Expenses  (FinanceAnalyticsService::getNetOperatingResult)
+  These are three distinct metrics. Never conflate them.
+
+### Key technical notes:
+- daily_sessions.session_date is DATE (not DATETIME) — no startOfDay/endOfDay needed
+- expenses.payment_method is a PG enum — cast with ::text in raw SQL
+- finance_net_operating uses sale_items + products for COGS (same as getGrossProfitKpis)
+  to avoid inconsistency with SalesAnalyticsService calculations

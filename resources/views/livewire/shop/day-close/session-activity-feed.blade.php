@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.30s="refresh">
     @if (session()->has('error'))
         <div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;font-size:11px;
                     background:var(--red-dim);color:var(--red);">{{ session('error') }}</div>

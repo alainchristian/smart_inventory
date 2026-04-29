@@ -47,7 +47,7 @@ class SessionHistory extends Component
             ? (request()->query('shop_id') ? (int) request()->query('shop_id') : null)
             : $user->location_id;
 
-        $query = DailySession::query()->where('status', '!=', 'open');
+        $query = DailySession::query();
 
         if ($shopId !== null) {
             $query->forShop($shopId);

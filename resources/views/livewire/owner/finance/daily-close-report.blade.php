@@ -159,7 +159,8 @@
                 <div style="font-size:10px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ccfbf1;">
                     Money In
                 </div>
-                @foreach($inRows as [$label, $amt, $color, $note])
+                @foreach($inRows as $__inRow)
+                @php [$label, $amt, $color, $note] = $__inRow; @endphp
                 <div style="display:flex;align-items:start;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9;">
                     <div>
                         <div style="font-size:13px;font-weight:500;color:#334155;">{{ $label }}</div>
@@ -184,7 +185,8 @@
                 <div style="font-size:10px;font-weight:700;color:#e11d48;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ffe4e6;">
                     Where It Went
                 </div>
-                @foreach($outRows as [$label, $amt, $color, $note])
+                @foreach($outRows as $__outRow)
+                @php [$label, $amt, $color, $note] = $__outRow; @endphp
                 <div style="display:flex;align-items:start;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9;">
                     <div>
                         <div style="font-size:13px;font-weight:500;color:#334155;">{{ $label }}</div>
@@ -264,7 +266,8 @@
             <div style="position:relative;height:160px;margin-bottom:14px;">
                 <canvas id="daily-donut-chart"></canvas>
             </div>
-            @foreach($channels as [$chName, $chAmt, $chColor, $chVisible])
+            @foreach($channels as $__chRow)
+            @php [$chName, $chAmt, $chColor, $chVisible] = $__chRow; @endphp
             @if($chVisible)
             <div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px;">
                 <span style="width:10px;height:10px;border-radius:3px;flex-shrink:0;background:{{ $chColor }};"></span>
@@ -434,7 +437,8 @@
                                 ['− Cash deposits to bank',     $session->cash_deposits              ?? ($session->total_bank_deposits ?? 0), '#6366f1', ($session->cash_deposits ?? $session->total_bank_deposits ?? 0) === 0],
                             ];
                         @endphp
-                        @foreach ($recon as [$rl, $ra, $rc, $rskip])
+                        @foreach ($recon as $__rcRow)
+                        @php [$rl, $ra, $rc, $rskip] = $__rcRow; @endphp
                         @if(!$rskip)
                         <div style="display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid #e2e8f0;font-size:12px;">
                             <span style="color:#475569;">{{ $rl }}</span>
@@ -495,7 +499,8 @@
                                 ];
                                 $revTotal = $session->total_sales ?? 0;
                             @endphp
-                            @foreach($revCh as [$rChName, $rChAmt, $rChColor, $rChVisible])
+                            @foreach($revCh as $__rchRow)
+                            @php [$rChName, $rChAmt, $rChColor, $rChVisible] = $__rchRow; @endphp
                             @if($rChVisible)
                             <div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #e2e8f0;font-size:12px;">
                                 <span style="color:#475569;">{{ $rChName }}</span>
@@ -523,7 +528,8 @@
                     <div>
                         <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:10px;">Non-cash settlement</div>
                         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
-                            @foreach($settlements as [$sChName, $sChSales, $sChSettled, $sChRef, $sChColor, $_])
+                            @foreach($settlements as $__stRow)
+                            @php [$sChName, $sChSales, $sChSettled, $sChRef, $sChColor, $_] = $__stRow; @endphp
                             <div style="padding:9px 14px;display:flex;justify-content:space-between;align-items:start;gap:12px;border-bottom:1px solid #e2e8f0;">
                                 <div>
                                     <div style="font-size:12px;font-weight:600;color:#0f172a;">{{ $sChName }}</div>

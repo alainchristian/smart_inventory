@@ -224,6 +224,11 @@
                                   {{ request()->routeIs('owner.finance.overview') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                             Finance Overview
                         </a>
+                        <a href="{{ route('owner.finance.income-statement') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.finance.income-statement') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Income Statement
+                        </a>
                         <a href="{{ route('owner.credit.writeoffs') }}" wire:navigate
                            class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
                                   {{ request()->routeIs('owner.credit.writeoffs') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">

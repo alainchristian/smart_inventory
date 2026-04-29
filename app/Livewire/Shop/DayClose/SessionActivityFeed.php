@@ -30,6 +30,8 @@ class SessionActivityFeed extends Component
     #[On('withdrawal-voided')]
     #[On('deposit-added')]
     #[On('deposit-voided')]
+    #[On('sale-completed')]
+    #[On('repayment-recorded')]
     public function refresh(): void
     {
         // Re-render loads fresh data from render()

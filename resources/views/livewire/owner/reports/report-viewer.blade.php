@@ -79,6 +79,11 @@ function extractKpiValue(string $metricId, array $data): string {
         'sales_voided'            => number_format($data['voided_count'] ?? 0) . ' transactions',
         'replenishment_critical'  => count($data) . ' products',
         'transfers_kpis'          => number_format($data['total_transfers'] ?? 0) . ' transfers',
+        'finance_expense_summary'    => number_format($data['total_expenses'] ?? 0) . ' RWF',
+        'finance_expense_trend'      => number_format(array_sum(array_column($data, 'total_expenses'))) . ' RWF',
+        'finance_withdrawal_summary' => number_format($data['total_withdrawals'] ?? 0) . ' RWF',
+        'finance_cash_variance'      => number_format($data['total_shortage'] ?? 0) . ' RWF',
+        'finance_net_operating'      => number_format($data['net_result'] ?? 0) . ' RWF',
         default                   => (string) (collect($data)->first(fn($v) => is_numeric($v)) ?? '—'),
     };
 }
@@ -98,6 +103,11 @@ function extractKpiSub(string $metricId, array $data): string {
         'loss_shrinkage'          => number_format($data['items_damaged_90d'] ?? 0) . ' items damaged in 90 days',
         'ops_stock_turnover'      => 'Annual COGS ÷ avg inventory',
         'transfers_kpis'          => 'Discrepancy rate: ' . round($data['discrepancy_rate'] ?? 0, 1) . '%',
+        'finance_expense_summary'    => 'vs prior: ' . ($data['previous_total'] > 0 ? number_format($data['previous_total']) . ' RWF' : '—'),
+        'finance_withdrawal_summary' => 'Cash: ' . number_format($data['cash_withdrawals'] ?? 0) . ' · MoMo: ' . number_format($data['momo_withdrawals'] ?? 0),
+        'finance_cash_variance'      => ($data['sessions_with_shortage'] ?? 0) . ' session(s) with shortage',
+        'finance_net_operating'      => 'Margin: ' . ($data['net_margin_pct'] ?? 0) . '% · Gross: ' . number_format($data['gross_profit'] ?? 0) . ' RWF',
+        'finance_expense_trend'      => 'Daily average: ' . (count($data) > 0 ? number_format(array_sum(array_column($data, 'total_expenses')) / count($data)) : 0) . ' RWF',
         default                   => '',
     };
 }
@@ -344,7 +354,7 @@ function extractKpiSub(string $metricId, array $data): string {
                 @elseif ($viz === 'table')
                 @php
                     $rows = is_array($data) && isset($data[0]) ? $data : [$data];
-                    $keys = !empty($rows[0]) && is_array($rows[0]) ? array_filter(array_keys((array)$rows[0]), fn($k)=>!str_starts_with($k,'_')) : [];
+                    $keys = !empty($rows[0]) && is_array($rows[0]) ? array_filter(array_keys((array)$rows[0]), fn($k)=>!str_starts_with($k,'_') && !is_array($rows[0][$k])) : [];
                 @endphp
                 @if (empty($rows) || empty($keys))
                 <div style="font-size:13px;color:var(--text-dim);padding:8px 0">No data available</div>
@@ -364,7 +374,8 @@ function extractKpiSub(string $metricId, array $data): string {
                                 @foreach ($keys as $k)
                                 <td>
                                     @php $v = is_array($row) ? ($row[$k] ?? '—') : (is_object($row) ? ($row->$k ?? '—') : '—') @endphp
-                                    @if (is_numeric($v) && !is_bool($v)) {{ number_format((float)$v) }}
+                                    @if (is_array($v)) [{{ count($v) }} items]
+                                    @elseif (is_numeric($v) && !is_bool($v)) {{ number_format((float)$v) }}
                                     @elseif (is_bool($v)) {{ $v ? 'Yes' : 'No' }}
                                     @elseif (is_null($v)) —
                                     @else {{ $v }}

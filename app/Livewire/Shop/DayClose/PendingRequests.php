@@ -4,12 +4,19 @@ namespace App\Livewire\Shop\DayClose;
 
 use App\Models\ExpenseRequest;
 use App\Services\DayClose\ExpenseRequestService;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class PendingRequests extends Component
 {
     public ?int $rejectingId = null;
     public string $rejectionReason = '';
+
+    #[On('session-opened')]
+    public function refreshOnSessionOpen(): void
+    {
+        // triggers re-render automatically
+    }
 
     public function mount(): void
     {
@@ -64,12 +71,23 @@ class PendingRequests extends Component
 
     public function render()
     {
+        $shopId = auth()->user()->location_id;
+
         $requests = ExpenseRequest::pending()
-            ->forShop(auth()->user()->location_id)
+            ->forShop($shopId)
             ->with('warehouse', 'requestedBy')
             ->orderByDesc('created_at')
             ->get();
 
-        return view('livewire.shop.day-close.pending-requests', compact('requests'));
+        $openSession = \App\Models\DailySession::open()
+            ->forShop($shopId)
+            ->forDate(today()->toDateString())
+            ->first();
+
+        return view('livewire.shop.day-close.pending-requests', [
+            'requests'    => $requests,
+            'openSession' => $openSession,
+            'canAct'      => $openSession !== null,
+        ]);
     }
 }

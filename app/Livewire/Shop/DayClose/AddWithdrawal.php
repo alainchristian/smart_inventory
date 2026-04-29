@@ -3,6 +3,7 @@
 namespace App\Livewire\Shop\DayClose;
 
 use App\Models\DailySession;
+use App\Services\DayClose\DailySessionService;
 use App\Services\DayClose\OwnerWithdrawalService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -43,6 +44,17 @@ class AddWithdrawal extends Component
 
         $user    = auth()->user();
         $session = DailySession::findOrFail($this->dailySessionId);
+
+        // Balance checks
+        $summary = app(DailySessionService::class)->computeLiveSummary($session);
+        if ((int) $this->cashAmount > $summary['expected_cash']) {
+            $this->addError('cashAmount', 'Exceeds cash in drawer (' . number_format($summary['expected_cash']) . ' RWF).');
+            return;
+        }
+        if ((int) $this->momoAmount > $summary['momo_available']) {
+            $this->addError('momoAmount', 'Exceeds MoMo balance (' . number_format($summary['momo_available']) . ' RWF).');
+            return;
+        }
         $svc     = app(OwnerWithdrawalService::class);
 
         try {
@@ -75,6 +87,9 @@ class AddWithdrawal extends Component
 
     public function render()
     {
-        return view('livewire.shop.day-close.add-withdrawal');
+        $session = DailySession::findOrFail($this->dailySessionId);
+        $summary = app(DailySessionService::class)->computeLiveSummary($session);
+
+        return view('livewire.shop.day-close.add-withdrawal', compact('summary'));
     }
 }

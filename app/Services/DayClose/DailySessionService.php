@@ -99,18 +99,21 @@ class DailySessionService
             ->sum('refund_amount');
 
         // Expenses in this session
+        // payment_method is a PG native enum — use ::text cast to avoid PDO binding type mismatch
         $expensesQuery = $session->expenses()->whereNull('deleted_at');
         $totalExpenses = (int) (clone $expensesQuery)->sum('amount');
-        $cashExpenses  = (int) (clone $expensesQuery)->where('payment_method', 'cash')->sum('amount');
-        $momoExpenses  = (int) (clone $expensesQuery)->where('payment_method', 'mobile_money')->sum('amount');
+        $cashExpenses  = (int) (clone $expensesQuery)->whereRaw("payment_method::text = 'cash'")->sum('amount');
+        $momoExpenses  = (int) (clone $expensesQuery)->whereRaw("payment_method::text = 'mobile_money'")->sum('amount');
+        $bankExpenses  = (int) (clone $expensesQuery)->whereRaw("payment_method::text = 'bank_transfer'")->sum('amount');
         $expenseCount  = (int) (clone $expensesQuery)->count();
 
         // Owner withdrawals
-        $withdrawalQuery    = $session->ownerWithdrawals()->whereNull('deleted_at');
-        $totalWithdrawals   = (int) $withdrawalQuery->sum('amount');
-        $cashWithdrawals    = (int) (clone $withdrawalQuery)->where('method', 'cash')->sum('amount');
-        $momoWithdrawals    = (int) (clone $withdrawalQuery)->where('method', 'mobile_money')->sum('amount');
-        $withdrawalCount    = (int) $withdrawalQuery->count();
+        // method is a PG native enum (withdrawal_method) — use ::text cast
+        $withdrawalQuery = $session->ownerWithdrawals()->whereNull('deleted_at');
+        $totalWithdrawals = (int) $withdrawalQuery->sum('amount');
+        $cashWithdrawals  = (int) (clone $withdrawalQuery)->whereRaw("method::text = 'cash'")->sum('amount');
+        $momoWithdrawals  = (int) (clone $withdrawalQuery)->whereRaw("method::text = 'mobile_money'")->sum('amount');
+        $withdrawalCount  = (int) $withdrawalQuery->count();
 
         // Bank deposits split by source (cash drawer vs MoMo wallet)
         $depositsQuery = $session->bankDeposits()->whereNull('deleted_at');
@@ -135,12 +138,17 @@ class DailySessionService
             - (int) $cashWithdrawals
             - (int) $cashDeposits;
 
-        // MoMo available balance (for deposit validation)
+        // MoMo available balance
         $momoAvailable = (int) ($saleTotals->momo ?? 0)
             + $momoRepayments
             - $momoExpenses
             - $momoWithdrawals
             - $momoDeposits;
+
+        // Bank available balance = bank transfer sales + deposits moved to bank - bank transfer expenses
+        $bankAvailable = (int) ($saleTotals->bank_transfer ?? 0)
+            + $totalDeposits
+            - $bankExpenses;
 
         return [
             'opening_balance'              => (int) $session->opening_balance,
@@ -170,6 +178,8 @@ class DailySessionService
             'total_repayments_momo' => $momoRepayments,
             'expected_cash'         => (int) $expectedCash,
             'momo_available'        => (int) $momoAvailable,
+            'bank_available'        => (int) $bankAvailable,
+            'total_expenses_bank'   => $bankExpenses,
         ];
     }
 

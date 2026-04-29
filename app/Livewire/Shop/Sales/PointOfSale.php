@@ -1468,6 +1468,8 @@ class PointOfSale extends Component
                 'message' => 'Sale completed successfully!'
             ]);
 
+            $this->dispatch('sale-completed');
+
         } catch (\Throwable $e) {
             \Log::error('Error completing sale', [
                 'error' => $e->getMessage(),

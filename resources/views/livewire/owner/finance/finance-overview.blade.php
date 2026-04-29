@@ -58,6 +58,8 @@
         $closedCount         = $rows_col->sum('closed_count');
         // Net Operating: revenue after refunds, expenses, and owner withdrawals
         $netOperating        = $totalRevenue - $totalRefunds - $totalExpenses - $totalWithdrawals;
+        $totalCogs           = $rows_col->sum('total_cogs');
+        $netProfit           = $totalRevenue - $totalCogs - $totalExpenses;
         $days                = $rows_col->pluck('session_date')->unique()->count() ?: 1;
         $avgDailyVariance    = $days > 0 ? round($totalVariance / $days) : 0;
         $totalCashIn         = $totalOpeningBalance + $totalRevenue + $totalRepayments;
@@ -320,104 +322,9 @@
         </div>
     @else
 
-    {{-- ── MOBILE: card layout ── --}}
-    <div class="space-y-3 sm:hidden">
-        @foreach ($rows as $row)
-            @php
-                $rowKey = $row['session_date'] . ':' . $row['shop_id'];
-                $isExpanded = $expandedKey === $rowKey;
-                $rv = $row['total_variance'];
-            @endphp
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div class="px-4 pt-4 pb-3">
-                    <div class="flex items-start justify-between gap-2">
-                        <div>
-                            <div class="font-semibold" style="color:var(--text);">{{ $row['shop_name'] }}</div>
-                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">
-                                {{ \Carbon\Carbon::parse($row['session_date'])->format('d M Y · D') }}
-                            </div>
-                        </div>
-                        <span class="text-xs px-2 py-0.5 rounded flex-shrink-0"
-                              style="{{ $row['closed_count'] >= $row['session_count'] ? 'background:#ccfbf1;color:#0f766e' : 'background:#fef3c7;color:#d97706' }}">
-                            {{ $row['closed_count'] }}/{{ $row['session_count'] }} closed
-                        </span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3" style="border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
-                    <div class="px-3 py-2.5 text-center" style="border-right:1px solid #e2e8f0;">
-                        <div class="text-xs mb-0.5" style="color:#475569;">Opening</div>
-                        <div class="font-mono font-semibold text-sm" style="color:#64748b;">{{ number_format($row['opening_balance']) }}</div>
-                    </div>
-                    <div class="px-3 py-2.5 text-center" style="border-right:1px solid #e2e8f0;">
-                        <div class="text-xs mb-0.5" style="color:#475569;">Revenue</div>
-                        <div class="font-mono font-semibold text-sm" style="color:#0f766e;">{{ number_format($row['revenue']) }}</div>
-                    </div>
-                    <div class="px-3 py-2.5 text-center">
-                        <div class="text-xs mb-0.5" style="color:#475569;">Variance</div>
-                        <div class="font-mono font-semibold text-sm"
-                             style="color:{{ $rv < 0 ? '#e11d48' : ($rv > 0 ? '#d97706' : '#94a3b8') }};">
-                            {{ $rv >= 0 ? '+' : '' }}{{ number_format($rv) }}
-                        </div>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between px-4 py-2.5">
-                    <div class="text-xs" style="color:#475569;">
-                        Exp: <span class="font-mono" style="color:#e11d48;">{{ number_format($row['expenses']) }}</span>
-                        · Banked: <span class="font-mono" style="color:#0284c7;">{{ number_format($row['cash_banked']) }}</span>
-                        @if($row['repayments'] > 0)
-                            · Rep: <span class="font-mono" style="color:#0891b2;">{{ number_format($row['repayments']) }}</span>
-                        @endif
-                        @if($row['withdrawals'] > 0)
-                            · W/D: <span class="font-mono" style="color:#7c3aed;">{{ number_format($row['withdrawals']) }}</span>
-                        @endif
-                    </div>
-                    <button wire:click="toggleRow('{{ $row['session_date'] }}', {{ $row['shop_id'] }})"
-                            class="text-xs px-2.5 py-1.5 rounded-lg font-medium"
-                            style="color:#0f766e;background:#ccfbf1;border:none;cursor:pointer;">
-                        {{ $isExpanded ? 'Hide ▲' : 'Details ▾' }}
-                    </button>
-                </div>
-
-                @if ($isExpanded && $expandedSessions->isNotEmpty())
-                    <div class="px-4 pb-4 space-y-3" style="border-top:1px solid #e2e8f0;background:#f8fafc;">
-                        <div class="pt-3 text-xs font-semibold uppercase tracking-wide" style="color:#94a3b8;">Sessions</div>
-                        @foreach ($expandedSessions as $s)
-                            @php $sv = $s->cash_variance ?? 0; @endphp
-                            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="text-xs font-medium" style="color:#0f172a;">
-                                        {{ $s->opened_at?->format('H:i') }} – {{ $s->closed_at?->format('H:i') ?? '—' }}
-                                        <span style="color:#475569;">· {{ $s->openedBy->name ?? '—' }}</span>
-                                    </div>
-                                    <span class="text-xs px-2 py-0.5 rounded"
-                                          style="{{ $s->isLocked() ? 'color:#475569;border:1px solid #e2e8f0' : 'background:#ccfbf1;color:#0f766e' }}">
-                                        {{ ucfirst($s->status) }}
-                                    </span>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2 text-xs">
-                                    <div><span style="color:#475569;">Opening</span> <span class="font-mono" style="color:#64748b;">{{ number_format($s->opening_balance ?? 0) }}</span></div>
-                                    <div><span style="color:#475569;">Sales</span> <span class="font-mono" style="color:#0f766e;">{{ number_format($s->total_sales ?? 0) }}</span></div>
-                                    <div><span style="color:#475569;">Repayments</span> <span class="font-mono" style="color:#0891b2;">{{ number_format($s->total_repayments ?? 0) }}</span></div>
-                                    <div><span style="color:#475569;">Refunds</span> <span class="font-mono" style="color:#d97706;">{{ number_format($s->total_refunds_cash ?? 0) }}</span></div>
-                                    <div><span style="color:#475569;">Expenses</span> <span class="font-mono" style="color:#e11d48;">{{ number_format($s->total_expenses ?? 0) }}</span></div>
-                                    <div><span style="color:#475569;">Banked</span> <span class="font-mono" style="color:#0284c7;">{{ number_format($s->total_bank_deposits ?? 0) }}</span></div>
-                                    <div><span style="color:#475569;">Variance</span>
-                                        <span class="font-mono" style="color:{{ $sv < 0 ? '#e11d48' : ($sv > 0 ? '#d97706' : '#94a3b8') }};">
-                                            {{ $sv >= 0 ? '+' : '' }}{{ number_format($sv) }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-        @endforeach
-    </div>
-
-    {{-- ── DESKTOP: table layout ── --}}
-    <div class="hidden sm:block rounded-xl overflow-hidden" style="border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-        <div class="overflow-x-auto">
+    {{-- ── Table (all screen sizes — horizontal scroll on mobile) ── --}}
+    <div class="rounded-xl overflow-hidden" style="border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
                     <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
@@ -431,6 +338,8 @@
                         <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Withdrawals</th>
                         <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Banked</th>
                         <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Variance</th>
+                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#0f766e;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Net Operating</th>
+                        <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:600;color:#6d28d9;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Net Profit</th>
                         <th style="text-align:center;padding:10px 14px;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Sessions</th>
                         <th style="padding:10px 14px;"></th>
                     </tr>
@@ -441,13 +350,15 @@
                             $rowKey     = $row['session_date'] . ':' . $row['shop_id'];
                             $isExpanded = $expandedKey === $rowKey;
                             $rv         = $row['total_variance'];
+                            $rowNetOp   = $row['revenue'] - $row['refunds'] - $row['expenses'] - $row['withdrawals'];
+                            $rowNetPr   = $row['revenue'] - ($row['total_cogs'] ?? 0) - $row['expenses'];
                         @endphp
                         <tr style="border-bottom:1px solid #e2e8f0;background:#fff;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-                            <td style="padding:10px 14px;">
+                            <td style="padding:10px 14px;white-space:nowrap;">
                                 <div style="font-size:12px;font-weight:600;color:#0f172a;">{{ \Carbon\Carbon::parse($row['session_date'])->format('d M Y') }}</div>
                                 <div style="font-size:11px;color:#94a3b8;">{{ \Carbon\Carbon::parse($row['session_date'])->format('D') }}</div>
                             </td>
-                            <td style="padding:10px 14px;font-size:12px;font-weight:500;color:#0f172a;">{{ $row['shop_name'] }}</td>
+                            <td style="padding:10px 14px;font-size:12px;font-weight:500;color:#0f172a;white-space:nowrap;">{{ $row['shop_name'] }}</td>
                             <td style="padding:10px 14px;text-align:right;font-size:12px;color:#64748b;">{{ number_format($row['opening_balance']) }}</td>
                             <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#0f766e;">{{ number_format($row['revenue']) }}</td>
                             <td style="padding:10px 14px;text-align:right;font-size:12px;color:{{ $row['repayments'] > 0 ? '#0891b2' : '#94a3b8' }};">{{ number_format($row['repayments']) }}</td>
@@ -458,100 +369,23 @@
                             <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:{{ $rv < 0 ? '#e11d48' : ($rv > 0 ? '#d97706' : '#94a3b8') }};">
                                 {{ $rv >= 0 ? '+' : '' }}{{ number_format($rv) }}
                             </td>
+                            <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:700;color:{{ $rowNetOp >= 0 ? '#0284c7' : '#e11d48' }};">
+                                {{ number_format($rowNetOp) }}
+                            </td>
+                            <td style="padding:10px 14px;text-align:right;font-size:12px;font-weight:700;color:{{ $rowNetPr >= 0 ? '#0f766e' : '#e11d48' }};">
+                                {{ number_format($rowNetPr) }}
+                            </td>
                             <td style="padding:10px 14px;text-align:center;font-size:12px;">
                                 <span style="color:{{ $row['closed_count'] >= $row['session_count'] ? '#0f766e' : '#d97706' }};">{{ $row['closed_count'] }}</span><span style="color:#94a3b8;">/{{ $row['session_count'] }}</span>
                             </td>
                             <td style="padding:10px 14px;text-align:right;">
                                 <button wire:click="toggleRow('{{ $row['session_date'] }}', {{ $row['shop_id'] }})"
-                                        style="font-size:12px;padding:4px 10px;border-radius:6px;color:#0f766e;border:1px solid #ccfbf1;background:#ccfbf1;cursor:pointer;">
-                                    {{ $isExpanded ? 'Hide ▲' : 'Details ▾' }}
+                                        style="font-size:12px;padding:4px 10px;border-radius:6px;color:#0f766e;border:1px solid #ccfbf1;background:#ccfbf1;cursor:pointer;white-space:nowrap;">
+                                    Details
                                 </button>
                             </td>
                         </tr>
 
-                        @if ($isExpanded)
-                            <tr style="background:#f8fafc;">
-                                <td colspan="12" style="padding:16px 20px;">
-                                    @if ($expandedSessions->isEmpty())
-                                        <div style="font-size:12px;color:#94a3b8;">No sessions found.</div>
-                                    @else
-                                        <div style="display:grid;gap:12px;grid-template-columns:repeat(3,1fr);" class="session-drill-grid">
-                                            <style>.session-drill-grid{grid-template-columns:repeat(3,1fr);} @media(max-width:900px){.session-drill-grid{grid-template-columns:1fr 1fr!important;}} @media(max-width:600px){.session-drill-grid{grid-template-columns:1fr!important;}}</style>
-                                            @foreach ($expandedSessions as $s)
-                                                @php $sv = $s->cash_variance ?? 0; @endphp
-                                                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;">
-                                                    <div style="display:flex;align-items:start;justify-content:space-between;gap:8px;margin-bottom:12px;">
-                                                        <div>
-                                                            <div style="font-size:12px;font-weight:600;color:#0f172a;">
-                                                                {{ $s->opened_at?->format('H:i') }} – {{ $s->closed_at?->format('H:i') ?? 'open' }}
-                                                            </div>
-                                                            <div style="font-size:11px;margin-top:2px;color:#475569;">
-                                                                {{ $s->openedBy->name ?? '—' }}
-                                                                @if($s->closedBy && $s->closedBy->id !== $s->openedBy?->id)
-                                                                    → {{ $s->closedBy->name }}
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                        <span style="font-size:11px;padding:2px 8px;border-radius:20px;flex-shrink:0;{{ $s->isLocked() ? 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;' : ($s->isClosed() ? 'background:#fef3c7;color:#d97706;' : 'background:#ccfbf1;color:#0f766e;') }}">
-                                                            {{ ucfirst($s->status) }}
-                                                        </span>
-                                                    </div>
-
-                                                    <div style="space-y:6px;">
-                                                        @foreach([
-                                                            ['Opening balance',  $s->opening_balance ?? 0,      '#64748b', false],
-                                                            ['Revenue',          $s->total_sales ?? 0,          '#0f766e', false],
-                                                            ['Repayments in',    $s->total_repayments ?? 0,     '#0891b2', ($s->total_repayments ?? 0) === 0],
-                                                            ['Cash refunds',     $s->total_refunds_cash ?? 0,   '#d97706', ($s->total_refunds_cash ?? 0) === 0],
-                                                            ['Expenses',         $s->total_expenses ?? 0,       '#e11d48', false],
-                                                            ['Withdrawals',      $s->total_withdrawals ?? 0,    '#7c3aed', ($s->total_withdrawals ?? 0) === 0],
-                                                            ['Bank deposits',    $s->total_bank_deposits ?? 0,  '#0284c7', ($s->total_bank_deposits ?? 0) === 0],
-                                                        ] as [$lbl, $val, $clr, $skip])
-                                                        @if(!$skip)
-                                                        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #e2e8f0;font-size:12px;">
-                                                            <span style="color:#475569;">{{ $lbl }}</span>
-                                                            <span style="font-weight:600;color:{{ $clr }};">{{ number_format($val) }}</span>
-                                                        </div>
-                                                        @endif
-                                                        @endforeach
-                                                        <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:2px solid #e2e8f0;font-size:12px;margin-top:4px;">
-                                                            <span style="color:#0f172a;font-weight:600;">Variance</span>
-                                                            <span style="font-weight:700;color:{{ $sv < 0 ? '#e11d48' : ($sv > 0 ? '#d97706' : '#94a3b8') }};">
-                                                                {{ $sv >= 0 ? '+' : '' }}{{ number_format($sv) }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    @if($s->expenses->isNotEmpty())
-                                                        <div style="margin-top:10px;">
-                                                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:6px;">Expenses</div>
-                                                            @foreach($s->expenses as $exp)
-                                                            <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-top:1px solid #e2e8f0;">
-                                                                <span style="color:#475569;">{{ $exp->category->name ?? '—' }}</span>
-                                                                <span style="font-weight:500;color:#e11d48;">{{ number_format($exp->amount) }}</span>
-                                                            </div>
-                                                            @endforeach
-                                                        </div>
-                                                    @endif
-
-                                                    @if($s->ownerWithdrawals->isNotEmpty())
-                                                        <div style="margin-top:10px;">
-                                                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:6px;">Withdrawals</div>
-                                                            @foreach($s->ownerWithdrawals as $w)
-                                                            <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-top:1px solid #e2e8f0;">
-                                                                <span style="color:#475569;">{{ $w->reason }}</span>
-                                                                <span style="font-weight:500;color:#d97706;">{{ number_format($w->amount) }}</span>
-                                                            </div>
-                                                            @endforeach
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endif
                     @endforeach
                 </tbody>
                 <tfoot>
@@ -572,12 +406,231 @@
                                 avg/day {{ $avgDailyVariance >= 0 ? '+' : '' }}{{ number_format($avgDailyVariance) }}
                             </div>
                         </td>
+                        <td style="padding:10px 14px;text-align:right;">
+                            <div style="font-size:13px;font-weight:700;color:{{ $netOperating >= 0 ? '#0284c7' : '#e11d48' }};">{{ number_format($netOperating) }}</div>
+                            <div style="font-size:10px;color:#94a3b8;margin-top:2px;">rev − ref − exp − w/d</div>
+                        </td>
+                        <td style="padding:10px 14px;text-align:right;">
+                            <div style="font-size:13px;font-weight:700;color:{{ $netProfit >= 0 ? '#0f766e' : '#e11d48' }};">{{ number_format($netProfit) }}</div>
+                            <div style="font-size:10px;color:#94a3b8;margin-top:2px;">rev − cogs − exp</div>
+                        </td>
                         <td style="padding:10px 14px;text-align:center;font-size:12px;font-weight:600;color:#475569;">{{ $closedCount }}/{{ $sessionCount }}</td>
                         <td></td>
                     </tr>
                 </tfoot>
             </table>
         </div>
+
     </div>
     @endif
-</div>
+
+    {{-- ── Session Details Modal ── --}}
+    @if ($expandedKey && $expandedSessions->isNotEmpty())
+        @php $sessCount = $expandedSessions->count(); @endphp
+
+        <style>
+            .fo-backdrop { position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:50;backdrop-filter:blur(2px); }
+            .fo-modal-wrap { position:fixed;inset:0;z-index:51;display:flex;align-items:center;justify-content:center;padding:16px; }
+            .fo-modal { background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.2);width:100%;max-width:760px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden; }
+            .fo-modal-header { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#f8fafc;flex-shrink:0; }
+            .fo-modal-drag { display:none; }
+            .fo-modal-body { overflow-y:auto;flex:1; }
+            .fo-modal-session { padding:16px 20px; }
+            .fo-kpi-strip { display:flex;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:14px;background:#f8fafc; }
+            .fo-kpi-cell { flex:1;padding:10px 8px;text-align:center; }
+            .fo-breakdown { display:flex;gap:16px;flex-wrap:wrap; }
+            .fo-breakdown-col { flex:1;min-width:160px; }
+            @media (max-width:640px) {
+                .fo-modal-wrap { align-items:flex-end;padding:0; }
+                .fo-modal { border-radius:20px 20px 0 0;max-height:85vh;max-width:100%; }
+                .fo-modal-drag { display:flex;justify-content:center;padding:10px 0 4px;flex-shrink:0; }
+                .fo-modal-header { padding:4px 16px 12px; }
+                .fo-modal-session { padding:12px 16px; }
+                .fo-kpi-strip { overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;border-radius:8px; }
+                .fo-kpi-cell { flex-shrink:0;min-width:72px; }
+                .fo-breakdown { flex-direction:column;gap:12px; }
+                .fo-breakdown-col { min-width:0 !important; }
+            }
+        </style>
+
+        {{-- Backdrop --}}
+        <div class="fo-backdrop" wire:click="closeExpanded"></div>
+
+        {{-- Modal --}}
+        <div class="fo-modal-wrap">
+            <div class="fo-modal">
+
+                {{-- Drag handle (mobile only) --}}
+                <div class="fo-modal-drag">
+                    <div style="width:36px;height:4px;border-radius:2px;background:#cbd5e1;"></div>
+                </div>
+
+                {{-- Header --}}
+                <div class="fo-modal-header">
+                    <div>
+                        <div style="font-size:15px;font-weight:700;color:#0f172a;">
+                            {{ \Carbon\Carbon::parse($expandedSessions->first()->session_date)->format('d M Y') }}
+                            &nbsp;·&nbsp;
+                            {{ $expandedSessions->first()->shop->name ?? '' }}
+                        </div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
+                            {{ $sessCount }} session{{ $sessCount !== 1 ? 's' : '' }}
+                        </div>
+                    </div>
+                    <button wire:click="closeExpanded"
+                            style="width:32px;height:32px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"
+                            onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">
+                        &times;
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="fo-modal-body">
+                    @foreach ($expandedSessions as $sIdx => $s)
+                        @php
+                            $sv      = $s->cash_variance ?? 0;
+                            $sNetOp  = ($s->total_sales ?? 0) - ($s->total_refunds_cash ?? 0) - ($s->total_expenses ?? 0) - ($s->total_withdrawals ?? 0);
+                            $sCogs   = \Illuminate\Support\Facades\DB::table('sale_items as si')
+                                ->join('sales as s2', 'si.sale_id', '=', 's2.id')
+                                ->join('products as p', 'si.product_id', '=', 'p.id')
+                                ->where('s2.shop_id', $s->shop_id)
+                                ->whereRaw('s2.sale_date::date = ?', [$s->session_date])
+                                ->whereNull('s2.voided_at')
+                                ->whereNull('s2.deleted_at')
+                                ->sum(\Illuminate\Support\Facades\DB::raw('p.purchase_price * si.quantity_sold'));
+                            $sNetPr  = ($s->total_sales ?? 0) - $sCogs - ($s->total_expenses ?? 0);
+                            $isLast  = $sIdx === $sessCount - 1;
+                        @endphp
+                        <div class="fo-modal-session" style="{{ $isLast ? '' : 'border-bottom:1px solid #e2e8f0;' }}">
+
+                            {{-- Session header --}}
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                                <span style="font-size:14px;font-weight:700;font-family:monospace;color:#0f172a;">
+                                    {{ $s->opened_at?->format('H:i') }} – {{ $s->closed_at?->format('H:i') ?? 'open' }}
+                                </span>
+                                <span style="font-size:11px;padding:2px 9px;border-radius:20px;font-weight:600;
+                                    {{ $s->isLocked() ? 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;' : ($s->isClosed() ? 'background:#fef3c7;color:#92400e;' : 'background:#d1fae5;color:#065f46;') }}">
+                                    {{ ucfirst($s->status) }}
+                                </span>
+                                <span style="font-size:11px;color:#64748b;">
+                                    <strong style="color:#334155;">{{ $s->openedBy->name ?? '—' }}</strong>
+                                    @if($s->closedBy && $s->closedBy->id !== $s->openedBy?->id)
+                                        <span style="color:#cbd5e1;"> → </span><strong style="color:#334155;">{{ $s->closedBy->name }}</strong>
+                                    @endif
+                                </span>
+                            </div>
+
+                            {{-- KPI strip --}}
+                            <div class="fo-kpi-strip">
+                                @php
+                                    $kpis = [
+                                        ['Opening',    $s->opening_balance ?? 0, '#64748b'],
+                                        ['Revenue',    $s->total_sales ?? 0,      '#0f766e'],
+                                        ['Expenses',   $s->total_expenses ?? 0,   '#e11d48'],
+                                        ['Net Op.',    $sNetOp,                   $sNetOp >= 0 ? '#0284c7' : '#e11d48'],
+                                        ['Net Profit', $sNetPr,                   $sNetPr >= 0 ? '#6d28d9' : '#e11d48'],
+                                        ['Variance',   $sv,                       $sv < 0 ? '#e11d48' : ($sv > 0 ? '#d97706' : '#94a3b8')],
+                                    ];
+                                @endphp
+                                @foreach($kpis as $kIdx => $kpi)
+                                @php [$kLabel, $kVal, $kClr] = $kpi; @endphp
+                                <div class="fo-kpi-cell" style="{{ $kIdx < count($kpis) - 1 ? 'border-right:1px solid #e2e8f0;' : '' }}">
+                                    <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;margin-bottom:4px;white-space:nowrap;">{{ $kLabel }}</div>
+                                    <div style="font-size:13px;font-weight:700;font-family:monospace;color:{{ $kClr }};white-space:nowrap;">
+                                        @if($kLabel === 'Variance') {{ $sv >= 0 ? '+' : '' }} @endif{{ number_format($kVal) }}
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+
+                            {{-- Breakdown columns --}}
+                            <div class="fo-breakdown">
+
+                                {{-- Cash Flow --}}
+                                <div class="fo-breakdown-col">
+                                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:8px;">Cash Flow</div>
+                                    @php
+                                        $cfRows = [
+                                            ['+', 'Opening balance', $s->opening_balance ?? 0,     '#475569', false],
+                                            ['+', 'Cash sales',      $s->total_sales ?? 0,         '#0f766e', false],
+                                            ['+', 'Repayments',      $s->total_repayments ?? 0,    '#0891b2', ($s->total_repayments ?? 0) === 0],
+                                            ['−', 'Cash refunds',    $s->total_refunds_cash ?? 0,  '#d97706', ($s->total_refunds_cash ?? 0) === 0],
+                                            ['−', 'Expenses',        $s->total_expenses ?? 0,      '#e11d48', false],
+                                            ['−', 'Withdrawals',     $s->total_withdrawals ?? 0,   '#7c3aed', ($s->total_withdrawals ?? 0) === 0],
+                                            ['−', 'Bank deposits',   $s->total_bank_deposits ?? 0, '#0284c7', ($s->total_bank_deposits ?? 0) === 0],
+                                        ];
+                                    @endphp
+                                    @foreach($cfRows as $cfRow)
+                                    @php [$cfSign, $cfLbl, $cfVal, $cfClr, $cfSkip] = $cfRow; @endphp
+                                    @if(!$cfSkip)
+                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f1f5f9;gap:8px;">
+                                        <div style="display:flex;align-items:center;gap:5px;">
+                                            <span style="font-size:10px;font-weight:700;width:10px;flex-shrink:0;color:{{ $cfSign === '+' ? '#0f766e' : '#e11d48' }};">{{ $cfSign }}</span>
+                                            <span style="font-size:11px;color:#475569;white-space:nowrap;">{{ $cfLbl }}</span>
+                                        </div>
+                                        <span style="font-size:12px;font-weight:600;font-family:monospace;white-space:nowrap;color:{{ $cfClr }};">{{ number_format($cfVal) }}</span>
+                                    </div>
+                                    @endif
+                                    @endforeach
+                                    @if($sv !== 0)
+                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0 2px;border-top:2px solid #e2e8f0;margin-top:3px;gap:8px;">
+                                        <span style="font-size:11px;font-weight:700;color:#0f172a;">Cash variance</span>
+                                        <span style="font-size:12px;font-weight:700;font-family:monospace;color:{{ $sv < 0 ? '#e11d48' : '#d97706' }};">{{ $sv >= 0 ? '+' : '' }}{{ number_format($sv) }}</span>
+                                    </div>
+                                    @endif
+                                </div>
+
+                                {{-- Expense Breakdown --}}
+                                @if($s->expenses->whereNull('deleted_at')->isNotEmpty())
+                                <div class="fo-breakdown-col">
+                                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:8px;">Expense Breakdown</div>
+                                    @foreach($s->expenses->whereNull('deleted_at') as $exp)
+                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f1f5f9;gap:8px;">
+                                        <div style="display:flex;align-items:center;gap:5px;min-width:0;">
+                                            @if($exp->is_system_generated)
+                                                <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#fef3c7;color:#92400e;flex-shrink:0;white-space:nowrap;">auto</span>
+                                            @else
+                                                <span style="width:5px;height:5px;border-radius:50%;background:#e11d48;flex-shrink:0;"></span>
+                                            @endif
+                                            <span style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $exp->category->name ?? '—' }}</span>
+                                        </div>
+                                        <span style="font-size:12px;font-weight:600;font-family:monospace;white-space:nowrap;color:#e11d48;">{{ number_format($exp->amount) }}</span>
+                                    </div>
+                                    @endforeach
+                                    <div style="display:flex;justify-content:space-between;padding:5px 0 2px;border-top:2px solid #e2e8f0;margin-top:3px;">
+                                        <span style="font-size:11px;font-weight:700;color:#0f172a;">Total</span>
+                                        <span style="font-size:12px;font-weight:700;font-family:monospace;color:#e11d48;">{{ number_format($s->total_expenses ?? 0) }}</span>
+                                    </div>
+                                </div>
+                                @endif
+
+                                {{-- Withdrawals --}}
+                                @if($s->ownerWithdrawals->whereNull('deleted_at')->isNotEmpty())
+                                <div class="fo-breakdown-col">
+                                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:8px;">Withdrawals</div>
+                                    @foreach($s->ownerWithdrawals->whereNull('deleted_at') as $w)
+                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f1f5f9;gap:8px;">
+                                        <div style="display:flex;align-items:center;gap:5px;min-width:0;">
+                                            <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ede9fe;color:#5b21b6;flex-shrink:0;white-space:nowrap;">{{ $w->isCash() ? 'cash' : 'momo' }}</span>
+                                            <span style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $w->reason }}</span>
+                                        </div>
+                                        <span style="font-size:12px;font-weight:600;font-family:monospace;white-space:nowrap;color:#7c3aed;">{{ number_format($w->amount) }}</span>
+                                    </div>
+                                    @endforeach
+                                    <div style="display:flex;justify-content:space-between;padding:5px 0 2px;border-top:2px solid #e2e8f0;margin-top:3px;">
+                                        <span style="font-size:11px;font-weight:700;color:#0f172a;">Total</span>
+                                        <span style="font-size:12px;font-weight:700;font-family:monospace;color:#7c3aed;">{{ number_format($s->total_withdrawals ?? 0) }}</span>
+                                    </div>
+                                </div>
+                                @endif
+
+                            </div>{{-- /breakdown --}}
+                        </div>{{-- /session --}}
+                    @endforeach
+                </div>{{-- /body --}}
+
+            </div>{{-- /modal --}}
+        </div>{{-- /wrap --}}
+    @endif
+
+</div>{{-- /livewire root --}}

@@ -153,8 +153,9 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
 
     // Finance (Day Close)
     Route::prefix('finance')->name('finance.')->group(function () {
-        Route::get('/daily',    function () { return view('owner.finance.daily'); })->name('daily');
-        Route::get('/overview', function () { return view('owner.finance.overview'); })->name('overview');
+        Route::get('/daily',            function () { return view('owner.finance.daily'); })->name('daily');
+        Route::get('/overview',         function () { return view('owner.finance.overview'); })->name('overview');
+        Route::get('/income-statement', function () { return view('owner.finance.income-statement'); })->name('income-statement');
     });
 
     // Credit write-offs

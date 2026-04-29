@@ -4,6 +4,7 @@ namespace App\Livewire\Shop\DayClose;
 
 use App\Models\DailySession;
 use App\Models\ExpenseCategory;
+use App\Services\DayClose\DailySessionService;
 use App\Services\DayClose\ExpenseService;
 use Livewire\Component;
 
@@ -40,6 +41,23 @@ class AddExpense extends Component
         $user    = auth()->user();
         $session = DailySession::findOrFail($this->dailySessionId);
 
+        // Balance check — cannot spend more than available in each channel
+        $amount  = (int) $this->amount;
+        $summary = app(DailySessionService::class)->computeLiveSummary($session);
+
+        if ($this->paymentMethod === 'cash' && $amount > $summary['expected_cash']) {
+            $this->addError('amount', 'Insufficient cash in drawer. Available: ' . number_format($summary['expected_cash']) . ' RWF.');
+            return;
+        }
+        if ($this->paymentMethod === 'mobile_money' && $amount > $summary['momo_available']) {
+            $this->addError('amount', 'Insufficient MoMo balance. Available: ' . number_format($summary['momo_available']) . ' RWF.');
+            return;
+        }
+        if ($this->paymentMethod === 'bank_transfer' && $amount > $summary['bank_available']) {
+            $this->addError('amount', 'Insufficient bank balance. Available: ' . number_format($summary['bank_available']) . ' RWF.');
+            return;
+        }
+
         try {
             app(ExpenseService::class)->addExpense($session, [
                 'expense_category_id' => $this->categoryId,
@@ -60,10 +78,11 @@ class AddExpense extends Component
 
     public function render()
     {
-        $categories = ExpenseCategory::userSelectable()
-            ->forLocation('shop')
-            ->get();
+        $categories = ExpenseCategory::userSelectable()->forLocation('shop')->get();
 
-        return view('livewire.shop.day-close.add-expense', compact('categories'));
+        $session = DailySession::findOrFail($this->dailySessionId);
+        $summary = app(DailySessionService::class)->computeLiveSummary($session);
+
+        return view('livewire.shop.day-close.add-expense', compact('categories', 'summary'));
     }
 }

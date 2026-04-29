@@ -41,6 +41,18 @@ class AddBankDeposit extends Component
         $user    = auth()->user();
         $session = DailySession::findOrFail($this->dailySessionId);
 
+        // Balance check — can only deposit from a channel that has funds
+        $summary = app(DailySessionService::class)->computeLiveSummary($session);
+        $amount  = (int) $this->amount;
+        if ($this->source === 'cash' && $amount > $summary['expected_cash']) {
+            $this->addError('amount', 'Exceeds cash in drawer (' . number_format($summary['expected_cash']) . ' RWF).');
+            return;
+        }
+        if ($this->source === 'mobile_money' && $amount > $summary['momo_available']) {
+            $this->addError('amount', 'Exceeds MoMo balance (' . number_format($summary['momo_available']) . ' RWF).');
+            return;
+        }
+
         try {
             app(BankDepositService::class)->recordDeposit($session, [
                 'amount'         => (int) $this->amount,

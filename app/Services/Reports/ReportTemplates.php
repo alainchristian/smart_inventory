@@ -84,6 +84,23 @@ class ReportTemplates
                 ['metric_id' => 'transfers_routes',        'width' => 'full', 'viz' => 'table'],
             ],
         ],
+        'business_pl' => [
+            'name'            => 'Business P&L Summary',
+            'description'     => 'True profit and loss: Revenue, Cost of Goods, Expenses, and Net Result',
+            'date_range'      => 'month',
+            'location_filter' => 'all',
+            'blocks'          => [
+                ['metric_id' => 'finance_net_operating',      'width' => 'full',  'viz' => 'kpi_card'],
+                ['metric_id' => 'sales_revenue',              'width' => 'half',  'viz' => 'kpi_card'],
+                ['metric_id' => 'sales_gross_profit',         'width' => 'half',  'viz' => 'kpi_card'],
+                ['metric_id' => 'finance_expense_summary',    'width' => 'half',  'viz' => 'bar_chart'],
+                ['metric_id' => 'finance_withdrawal_summary', 'width' => 'half',  'viz' => 'kpi_card'],
+                ['metric_id' => 'sales_revenue_trend',        'width' => 'full',  'viz' => 'line_chart'],
+                ['metric_id' => 'finance_expense_trend',      'width' => 'full',  'viz' => 'line_chart'],
+                ['metric_id' => 'finance_cash_variance',      'width' => 'half',  'viz' => 'table'],
+                ['metric_id' => 'loss_total',                 'width' => 'half',  'viz' => 'kpi_card'],
+            ],
+        ],
     ];
 
     /** Return all template keys with name and description */

@@ -5,6 +5,7 @@ use App\Services\Analytics\SalesAnalyticsService;
 use App\Services\Analytics\InventoryAnalyticsService;
 use App\Services\Analytics\LossAnalyticsService;
 use App\Services\Analytics\TransferAnalyticsService;
+use App\Services\Analytics\FinanceAnalyticsService;
 
 class ReportRunner
 {
@@ -13,6 +14,7 @@ class ReportRunner
         private InventoryAnalyticsService $inventory,
         private LossAnalyticsService      $loss,
         private TransferAnalyticsService  $transfers,
+        private FinanceAnalyticsService   $finance,
         private MetricRegistry            $registry,
     ) {}
 
@@ -183,6 +185,13 @@ class ReportRunner
             'ops_low_stock_count'  => $this->inventory->getStockHealth($locationFilter),
             'ops_damaged_pending'  => ['count' => \App\Models\DamagedGood::where('disposition', 'pending')->whereNull('deleted_at')->count()],
             'ops_stock_turnover'   => ['turnover_rate' => $this->inventory->calculateStockTurnover($locationFilter)],
+
+            // ── Finance ────────────────────────────────────────────────────
+            'finance_expense_summary'    => $this->finance->getExpenseSummary($dateFrom, $dateTo, $locationFilter),
+            'finance_expense_trend'      => $this->finance->getExpenseTrend($dateFrom, $dateTo, $locationFilter),
+            'finance_withdrawal_summary' => $this->finance->getWithdrawalSummary($dateFrom, $dateTo, $locationFilter),
+            'finance_cash_variance'      => $this->finance->getCashVarianceSummary($dateFrom, $dateTo, $locationFilter),
+            'finance_net_operating'      => $this->finance->getNetOperatingResult($dateFrom, $dateTo, $locationFilter),
 
             default => throw new \InvalidArgumentException("Unknown metric: {$metricId}"),
         };

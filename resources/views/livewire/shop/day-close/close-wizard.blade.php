@@ -153,7 +153,8 @@
             </div>
             {{-- Mini channel dots --}}
             <div class="flex px-5 py-3 gap-4">
-                @foreach ([['Cash',$summary['total_sales_cash']??0,'#10b981'],['MoMo',$summary['total_sales_momo']??0,'#6366f1'],['Card',$summary['total_sales_card']??0,'#64748b'],['Credit',$summary['total_sales_credit']??0,'#f59e0b']] as [$lbl,$amt,$clr])
+                @foreach ([['Cash',$summary['total_sales_cash']??0,'#10b981'],['MoMo',$summary['total_sales_momo']??0,'#6366f1'],['Card',$summary['total_sales_card']??0,'#64748b'],['Credit',$summary['total_sales_credit']??0,'#f59e0b']] as $__cRow)
+                @php [$lbl,$amt,$clr] = $__cRow; @endphp
                     @if ($amt > 0)
                         <div class="flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{{ $clr }};"></span>
@@ -170,7 +171,8 @@
                 <span class="text-xs font-semibold" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;">By Payment Channel</span>
             </div>
             <div style="background:var(--surface);">
-                @foreach ($channels as [$method, $amount, $color, $bg, $_show])
+                @foreach ($channels as $__chRow)
+                @php [$method, $amount, $color, $bg, $_show] = $__chRow; @endphp
                     @php $pct = $total > 0 ? round($amount / $total * 100, 1) : 0; @endphp
                     <div class="px-4 py-3" style="border-bottom:1px solid var(--border);">
                         <div class="flex items-center justify-between mb-1.5">
@@ -423,7 +425,8 @@
             @endphp
 
             <div>
-                @foreach ($reconLines as [$lbl, $val, $sign, $color])
+                @foreach ($reconLines as $__rlRow)
+                @php [$lbl, $val, $sign, $color] = $__rlRow; @endphp
                     @if ($val > 0 || $sign === null)
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);">
                         <span style="font-size:13px;color:var(--text-dim);">{{ $lbl }}</span>
@@ -652,7 +655,8 @@
 
                 {{-- Inflow rows --}}
                 <div style="background:var(--surface);">
-                    @foreach ($inflows as [$lbl, $val, $clr, $sign])
+                    @foreach ($inflows as $__inRow)
+                    @php [$lbl, $val, $clr, $sign] = $__inRow; @endphp
                         @if ($val > 0 || $sign === null)
                             <div style="display:flex;align-items:center;justify-content:space-between;
                                         padding:10px 16px;border-bottom:1px solid var(--border);">
@@ -668,7 +672,8 @@
                     @endforeach
 
                     {{-- Outflows with divider --}}
-                    @foreach ($outflows as [$lbl, $val, $clr, $sign])
+                    @foreach ($outflows as $__outRow)
+                    @php [$lbl, $val, $clr, $sign] = $__outRow; @endphp
                         @if ($val > 0)
                             <div style="display:flex;align-items:center;justify-content:space-between;
                                         padding:10px 16px;border-bottom:1px solid var(--border);">
@@ -798,7 +803,8 @@
                     </div>
 
                     <div style="background:var(--surface);">
-                        @foreach ($ncChannels as [$label, $field, $refField, $total, $color, $_show])
+                        @foreach ($ncChannels as $__ncRow)
+                        @php [$label, $field, $refField, $total, $color, $_show] = $__ncRow; @endphp
                             @if ($total > 0)
                                 <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
                                     {{-- Channel header --}}
