@@ -261,7 +261,7 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
         // Day Close
         Route::prefix('day-close')->name('day-close.')->group(function () {
             Route::get('/',      function () { return view('shop.day-close.index'); })->name('index');
-            Route::get('/close', function () { return view('shop.day-close.close'); })->name('close');
+            Route::get('/close', function () { return view('shop.day-close.close', ['session' => null]); })->name('close');
         });
 
         // Session management
