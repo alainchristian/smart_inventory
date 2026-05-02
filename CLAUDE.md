@@ -493,3 +493,103 @@ All finance blades must use CSS variables exclusively — no hardcoded hex anywh
 Allowed palette: `--surface`, `--surface-raised`, `--border`, `--text`, `--text-dim`, `--text-faint`,
 `--accent`, `--accent-dim`, `--red`, `--red-dim`, `--amber`, `--amber-dim`, `--green`, `--green-dim`.
 Exception: Chart.js dataset color arrays inside `<script>` blocks may use hex or rgba.
+
+---
+
+## Dashboard Redesign (Shop & Warehouse Manager) — completed 2026-05-01
+- Both dashboards now use CSS custom properties (var(--surface), var(--text), etc.)
+  instead of raw Tailwind color classes — matching the owner dashboard design system.
+- Section labels (class="section-label") added before each logical group.
+- Tables already had overflow-x:auto wrappers — confirmed no bare tables remain.
+- KPI cards separated: "Today's Performance" vs "Period Summary" strip.
+- Transfer pipeline rendered as a horizontal 4-stage stepper (pending→approved→in transit→to receive).
+- Low stock rows include inline "Request →" (shop) / "Reorder →" (warehouse) action buttons.
+- Warehouse dashboard adds "Received Today" and "Dispatched Today" KPI cards; grid changed to lg:grid-cols-6.
+- animate-pulse removed everywhere; replaced with static colored dot indicators.
+- Quick Navigation strip added at page bottom (4 buttons) on both dashboards.
+- Owner warehouse selector moved inline into the page header (compact select, no full-width card).
+- Last sync displayed as a colored dot + relative time (green if < 5 min, amber otherwise).
+- Shop subtitle typo fixed: "managements" → "management".
+- Shop quick actions remain in the existing FAB component (no standalone card existed to remove).
+
+---
+
+## Shop Dashboard v2 (Full Redesign) — completed 2026-05-01, updated 2026-05-02
+
+### Files
+- `app/Livewire/Shop/Dashboard.php` — component
+- `resources/views/livewire/shop/dashboard.blade.php` — Livewire template
+- `resources/views/shop/dashboard.blade.php` — wrapper (CSS + Chart.js JS)
+
+### Period filter
+- Default period: `today` (was `this_week`)
+- Periods: today | yesterday | this_week | this_month | last_month | last_30 | custom
+- `sale_date` is a **TIMESTAMP** — always pass Carbon objects to `whereBetween`, never raw date strings
+
+### Charts — reliability rules
+- Chart.js loaded once in `<head>` (no defer/async) via CDN
+- Init order: `livewire:initialized` → `livewire:navigated` → `commit` hook (filter changes) → DOMContentLoaded fallback
+- All re-renders use `chart.update('none')` — no animations on filter change
+- Sparklines use `canvas.classList.remove/add('db-spark-refresh')` for a brief pop-in on each redraw
+- `animation: false` set on all Chart.js instances
+
+### Sales Trend chart
+- **Single-day (today/yesterday):** queries individual sales at exact timestamps → one point per sale, line chart, no previous-period overlay, `tension: 0.3`
+- **Multi-day:** time-bucketed points (one per day or evenly-spaced), line chart with previous-period dashed overlay
+- `$isSingleDay` must be in `compact()` and passed via `data-is-single-day` on the data div (currently unused in JS but kept for future use)
+
+### Sparklines (KPI cards)
+- Always bucket-based (7 slots for single-day, one per day for multi-day)
+- Single-day hourly slots cover **full 24h with no gaps**: `[[0,3],[4,7],[8,10],[11,13],[14,16],[17,19],[20,23]]`
+- Use `sale_date` (not `created_at`) for all sale queries
+
+### Cash Flow donut
+- Replaced the SVG bracket flow diagram with a Chart.js doughnut
+- Canvas: `width=150 height=150`, `responsive: false`, `cutout: '72%'`
+- Segments: Cash (#1d9e75) · MoMo (#3b6bd4) · Bank (#8b5cf6) · Card (#f59e0b)
+- Bank and Card segments are **omitted** when `allowBankTransferPayment()` / `allowCardPayment()` return false
+  — PHP passes `-1` as sentinel; JS skips any segment with value < 0
+- Right column: inflow legend + 2×2 deductions grid (Refunds, Withdrawals, Expenses, Credit)
+- **Net In Hand** strip at bottom: `cfTotal − cfReturns − cfWithdrawals − cfExpenses`
+  — green background when ≥ 0, red when negative
+  — Credit is shown in deductions for awareness but NOT subtracted (it was never in cfTotal)
+- `$cfCard` is included in `$cfTotal` when card is enabled
+- All CF variables passed via `compact()`: `cfCash, cfMomo, cfBank, cfCard, cfTotal, cfReturns, cfWithdrawals, cfCredit, cfExpenses, cfNet, allowCard, allowBankTransfer`
+
+### Payment method settings (SettingsService)
+- `allowCardPayment()` — default false
+- `allowBankTransferPayment()` — default false
+- Controlled via owner settings page → Payment Methods section (toggles already present)
+- Applied in: POS blade (`@if($settingAllowCardPayment)`), Dashboard donut (segment gating)
+
+### Key variable notes
+- `$topProducts` — DB stdClass objects with `revenue`, `units_sold` (not Eloquent models)
+- `shop.inventory.stock` is the correct route name (not `stock-levels`)
+- `shop.alerts.index` does not exist — alert bell links to `'#'`
+
+---
+
+## Sales History Page — completed 2026-05-02
+
+### Files
+- `app/Livewire/Shop/Sales/SalesIndex.php` — component
+- `resources/views/livewire/shop/sales/sales-index.blade.php` — Livewire template
+- `resources/views/shop/sales/index.blade.php` — wrapper (CSS, `sli-` prefix)
+
+### Route
+- `shop.sales.index` → GET `/shop/sales`
+
+### Features
+- **KPI cards** (5): Total Revenue, Transactions, Avg. Transaction, Cash Collected, Credit Issued — all react to active date + payment filter
+- **Filters**: Period (segmented pills, horizontal scroll) + Payment method (segmented pills, horizontal scroll on ≤660px)
+- **Search**: sale number, customer name, customer phone (`ilike`)
+- **Infinite scroll**: `$perPage` increments by 20 via `loadMore()`; Alpine `IntersectionObserver` sentinel with `rootMargin: '300px'`; no pagination component
+- **Expandable rows**: items sold, payment breakdown, sale metadata, print receipt link
+- **Sortable columns**: sale_number, sale_date, total
+
+### Key rules
+- `$sales` is a **Collection** (not LengthAwarePaginator) — use `$totalFiltered` for count, never `$sales->total()`
+- Payment filter `credit` must use `where('has_credit', true)` — NOT `where('payment_method', 'credit')`
+- `$summaryCash` query uses `sales.has_credit = true` condition when filter is `credit` (not `sales.payment_method`)
+- `applyPaymentFilter()` is called on BOTH the main query and the summary base query so KPI cards always match table results
+- Filter resets `$perPage = 20` in `updatingSearch`, `updatingDateFilter`, `updatingPaymentFilter`, `sort()`

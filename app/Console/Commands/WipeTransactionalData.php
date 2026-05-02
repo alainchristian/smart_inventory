@@ -8,128 +8,171 @@ use Illuminate\Support\Facades\DB;
 class WipeTransactionalData extends Command
 {
     protected $signature = 'db:wipe-data {--force : Skip confirmation}';
-    protected $description = 'Wipe all transactional data (keeps users and locations)';
+    protected $description = 'Wipe all transactional data — keeps users, locations, categories, transporters, customers (credit zeroed), settings, expense_categories';
 
-    public function handle()
+    public function handle(): int
     {
-        $this->warn('⚠️  WARNING: This will DELETE ALL transactional data!');
+        $this->warn('WARNING: This will DELETE transactional data. This cannot be undone.');
         $this->newLine();
 
-        $this->info('📋 What will be DELETED:');
-        $this->line('  - All customers and credit records');
-        $this->line('  - All products and categories');
-        $this->line('  - All boxes and inventory');
-        $this->line('  - All sales and sale items');
-        $this->line('  - All transfers');
-        $this->line('  - All returns and damaged goods');
-        $this->line('  - All transporters');
-        $this->line('  - All activity logs and alerts');
+        $this->info('What will be KEPT:');
+        $this->line('  - users, warehouses, shops');
+        $this->line('  - categories, transporters');
+        $this->line('  - customers (outstanding_balance / credit totals reset to 0)');
+        $this->line('  - settings, expense_categories');
         $this->newLine();
 
-        $this->info('✅ What will be KEPT:');
-        $this->line('  - Users (login accounts)');
-        $this->line('  - Warehouses and Shops (locations)');
+        $this->info('What will be DELETED:');
+        $this->line('  - products, product_barcodes');
+        $this->line('  - boxes, box_movements, inventory_snapshots');
+        $this->line('  - transfers, transfer_items, transfer_boxes');
+        $this->line('  - sales, sale_items, sale_payments, held_sales');
+        $this->line('  - returns, return_items');
+        $this->line('  - damaged_goods');
+        $this->line('  - daily_sessions, expenses, expense_requests, owner_withdrawals, bank_deposits');
+        $this->line('  - credit_repayments, credit_writeoffs, customer_credit_accounts');
+        $this->line('  - activity_logs, alerts, scanner_sessions');
+        $this->line('  - saved_reports, report_run_histories, report_annotations, report_view_logs');
         $this->newLine();
 
-        if (!$this->option('force')) {
-            if (!$this->confirm('Are you ABSOLUTELY SURE you want to proceed?', false)) {
-                $this->error('Operation cancelled.');
+        if (! $this->option('force')) {
+            if (! $this->confirm('Are you ABSOLUTELY SURE you want to proceed?', false)) {
+                $this->error('Cancelled.');
                 return 1;
             }
-
-            if (!$this->confirm('This action CANNOT be undone. Final confirmation?', false)) {
-                $this->error('Operation cancelled.');
+            if (! $this->confirm('Final confirmation — this cannot be undone?', false)) {
+                $this->error('Cancelled.');
                 return 1;
             }
         }
 
         $this->newLine();
-        $this->info('🗑️  Starting data deletion...');
-        $this->newLine();
+        $this->line('Starting wipe...');
+
+        // Snapshot counts for summary
+        $counts = [
+            'products'    => DB::table('products')->count(),
+            'boxes'       => DB::table('boxes')->count(),
+            'transfers'   => DB::table('transfers')->count(),
+            'sales'       => DB::table('sales')->count(),
+            'sale_items'  => DB::table('sale_items')->count(),
+            'customers'   => DB::table('customers')->count(),
+        ];
 
         DB::statement('SET CONSTRAINTS ALL DEFERRED');
 
-        // Track counts before deletion
-        $counts = [
-            'customers' => DB::table('customers')->count(),
-            'sale_items' => DB::table('sale_items')->count(),
-            'sales' => DB::table('sales')->count(),
-            'boxes' => DB::table('boxes')->count(),
-            'products' => DB::table('products')->count(),
-            'transfers' => DB::table('transfers')->count(),
+        $wipe = function (string $table): void {
+            try {
+                DB::table($table)->delete();
+            } catch (\Exception) {
+                // table doesn't exist — skip
+            }
+        };
+
+        // ── 1. Report system ──────────────────────────────────────────────────
+        $this->line('  [1/9] Report history & annotations...');
+        $wipe('report_annotations');
+        $wipe('report_view_logs');
+        $wipe('report_run_histories');
+        $wipe('saved_reports');
+
+        // ── 2. Sales ─────────────────────────────────────────────────────────
+        $this->line('  [2/9] Sales...');
+        $wipe('sale_items');
+        $wipe('sale_payments');
+        $wipe('held_sales');
+
+        // ── 3. Returns ───────────────────────────────────────────────────────
+        $this->line('  [3/9] Returns...');
+        $wipe('return_items');
+        $wipe('returns');
+        $wipe('sales');
+
+        // ── 4. Transfers ─────────────────────────────────────────────────────
+        $this->line('  [4/9] Transfers...');
+        $wipe('transfer_items');
+        $wipe('transfer_boxes');
+        $wipe('transfers');
+
+        // ── 5. Inventory ─────────────────────────────────────────────────────
+        $this->line('  [5/9] Inventory & boxes...');
+        $wipe('damaged_goods');
+        $wipe('box_movements');
+        $wipe('boxes');
+        $wipe('inventory_snapshots');
+
+        // ── 6. Products ──────────────────────────────────────────────────────
+        $this->line('  [6/9] Products...');
+        $wipe('product_barcodes');
+        $wipe('products');
+
+        // ── 7. Finance / day-close ───────────────────────────────────────────
+        $this->line('  [7/9] Daily sessions & finance...');
+        $wipe('bank_deposits');
+        $wipe('owner_withdrawals');
+        $wipe('expense_requests');
+        $wipe('expenses');
+        $wipe('daily_sessions');
+
+        // ── 8. Credit ────────────────────────────────────────────────────────
+        $this->line('  [8/9] Credit records...');
+        $wipe('credit_writeoffs');
+        $wipe('credit_repayments');
+        $wipe('customer_credit_accounts');
+
+        // Zero out credit balances on customers (keep the rows)
+        DB::table('customers')->update([
+            'outstanding_balance' => 0,
+            'total_credit_given'  => 0,
+            'total_repaid'        => 0,
+            'last_repayment_at'   => null,
+        ]);
+
+        // ── 9. Logs / alerts / scanner ───────────────────────────────────────
+        $this->line('  [9/9] Logs, alerts, scanner sessions...');
+        $wipe('alerts');
+        $wipe('activity_logs');
+        $wipe('scanner_sessions');
+
+        // ── Reset sequences ──────────────────────────────────────────────────
+        $sequences = [
+            'report_annotations', 'report_view_logs', 'report_run_histories', 'saved_reports',
+            'sale_items', 'sale_payments', 'held_sales',
+            'return_items', 'returns', 'sales',
+            'transfer_items', 'transfer_boxes', 'transfers',
+            'damaged_goods', 'box_movements', 'boxes', 'inventory_snapshots',
+            'product_barcodes', 'products',
+            'bank_deposits', 'owner_withdrawals', 'expense_requests', 'expenses', 'daily_sessions',
+            'credit_writeoffs', 'credit_repayments',
+            'alerts', 'activity_logs', 'scanner_sessions',
         ];
 
-        $this->info('1️⃣  Deleting sale and return details...');
-        DB::table('sale_items')->delete();
-        DB::table('sale_payments')->delete();
-        DB::table('return_items')->delete();
-        DB::table('transfer_items')->delete();
-        DB::table('transfer_boxes')->delete();
-
-        $this->info('2️⃣  Deleting transactional headers...');
-        DB::table('returns')->delete();
-        DB::table('sales')->delete();
-        DB::table('transfers')->delete();
-        DB::table('damaged_goods')->delete();
-
-        $this->info('3️⃣  Deleting inventory records...');
-        DB::table('box_movements')->delete();
-        DB::table('boxes')->delete();
-        DB::table('inventory_snapshots')->delete();
-
-        $this->info('4️⃣  Deleting product data...');
-        DB::table('product_barcodes')->delete();
-        DB::table('products')->delete();
-        DB::table('categories')->delete();
-
-        $this->info('5️⃣  Deleting customers...');
-        DB::table('customers')->delete();
-
-        $this->info('6️⃣  Deleting transporters...');
-        DB::table('transporters')->delete();
-
-        $this->info('7️⃣  Deleting logs and alerts...');
-        DB::table('alerts')->delete();
-        DB::table('activity_logs')->delete();
-
-        $this->info('8️⃣  Resetting ID sequences...');
-        $tables = [
-            'sale_items', 'sale_payments', 'return_items', 'transfer_items', 'transfer_boxes',
-            'sales', 'returns', 'transfers', 'damaged_goods',
-            'box_movements', 'boxes', 'inventory_snapshots',
-            'product_barcodes', 'products', 'categories',
-            'customers', 'transporters', 'alerts', 'activity_logs'
-        ];
-
-        foreach ($tables as $table) {
+        foreach ($sequences as $table) {
             try {
                 DB::statement("ALTER SEQUENCE {$table}_id_seq RESTART WITH 1");
-            } catch (\Exception $e) {
-                // Some sequences might not exist, that's ok
+            } catch (\Exception) {
+                // sequence may not exist — safe to ignore
             }
         }
 
         $this->newLine();
-        $this->info('✅ Data deletion completed!');
+        $this->info('Done.');
         $this->newLine();
 
         $this->table(
-            ['Data Type', 'Records Deleted'],
+            ['Table', 'Rows deleted'],
             [
-                ['Customers', number_format($counts['customers'])],
-                ['Sales', number_format($counts['sales'])],
-                ['Sale Items', number_format($counts['sale_items'])],
-                ['Boxes', number_format($counts['boxes'])],
-                ['Products', number_format($counts['products'])],
-                ['Transfers', number_format($counts['transfers'])],
+                ['products',   number_format($counts['products'])],
+                ['boxes',      number_format($counts['boxes'])],
+                ['transfers',  number_format($counts['transfers'])],
+                ['sales',      number_format($counts['sales'])],
+                ['sale_items', number_format($counts['sale_items'])],
+                ['customers (credit zeroed)', number_format($counts['customers']) . ' rows kept'],
             ]
         );
 
         $this->newLine();
-        $this->info('🎯 Next steps:');
-        $this->line('  1. Upload your data file (products, inventory, etc.)');
-        $this->line('  2. Verify all data imported correctly');
-        $this->line('  3. Test a sample sale to confirm everything works');
+        $this->line('Next: import your new products, then run a test sale to verify.');
         $this->newLine();
 
         return 0;

@@ -1,9 +1,9 @@
 <x-app-layout>
 <style>
-.sh-page  { padding:24px 0 80px; }
-.sh-inner { max-width:900px;margin:0 auto;padding:0 16px; }
+.sh-page  { padding:12px 0 60px; }
+.sh-inner { max-width:1200px;margin:0 auto;padding:0 16px; }
 
-.sh-header { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px;flex-wrap:wrap; }
+.sh-header { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap; }
 .sh-header-left  { display:flex;align-items:center;gap:12px; }
 .sh-back-btn {
     width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;

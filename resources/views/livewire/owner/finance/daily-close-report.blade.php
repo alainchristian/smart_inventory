@@ -6,7 +6,9 @@
 
 /* ── Date navigation bar ── */
 .dcr-datebar      { display:flex;align-items:center;justify-content:space-between;
-                    gap:10px;flex-wrap:wrap;margin-bottom:20px; }
+                    gap:10px;flex-wrap:wrap;margin-bottom:20px;
+                    background:white;border:1px solid var(--border);border-radius:12px;
+                    padding:10px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .dcr-nav-group    { display:flex;align-items:center;gap:6px; }
 .dcr-nav-btn      { display:flex;align-items:center;justify-content:center;
                     width:32px;height:32px;border-radius:8px;
@@ -41,9 +43,12 @@
 
 /* ── KPI strip ── */
 .dcr-kpis         { display:grid;grid-template-columns:repeat(4,1fr);
-                    gap:1px;background:var(--border);border-radius:14px;
-                    overflow:hidden;border:1px solid var(--border);margin-bottom:20px; }
-.dcr-kpi          { background:var(--surface2);padding:14px 16px; }
+                    gap:0;background:white;border-radius:14px;
+                    overflow:hidden;border:1px solid var(--border);
+                    box-shadow:0 1px 4px rgba(0,0,0,0.05);margin-bottom:20px; }
+.dcr-kpi          { background:white;padding:14px 16px;
+                    border-right:1px solid var(--border); }
+.dcr-kpi:last-child { border-right:none; }
 .dcr-kpi-label    { font-size:10px;font-weight:700;text-transform:uppercase;
                     letter-spacing:0.6px;color:var(--text-dim);margin-bottom:6px; }
 .dcr-kpi-val      { font-size:20px;font-weight:800;font-family:var(--mono);
@@ -51,11 +56,12 @@
 .dcr-kpi-sub      { font-size:11px;color:var(--text-dim);margin-top:4px; }
 
 /* ── Balance statement card ── */
-.dcr-balance      { background:var(--surface2);border:1px solid var(--border);
-                    border-radius:16px;overflow:hidden;margin-bottom:20px; }
+.dcr-balance      { background:white;border:1px solid var(--border);
+                    border-radius:16px;overflow:hidden;margin-bottom:20px;
+                    box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .dcr-balance-head { display:flex;align-items:center;justify-content:space-between;
                     padding:13px 18px;border-bottom:1px solid var(--border);
-                    background:var(--surface); }
+                    background:var(--surface2); }
 .dcr-balance-title{ font-size:13px;font-weight:700;color:var(--text); }
 .dcr-badge        { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
                     border-radius:20px;font-size:11px;font-weight:700; }
@@ -71,18 +77,18 @@
 .dcr-tacol:first-child { border-right:1px solid var(--border); }
 .dcr-tacol-head   { padding:8px 18px;font-size:10px;font-weight:700;
                     text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);
-                    border-bottom:1px solid var(--border);background:var(--surface); }
+                    border-bottom:1px solid var(--border);background:var(--surface2); }
 .dcr-tarow        { display:flex;justify-content:space-between;align-items:center;
                     padding:9px 18px;border-bottom:1px solid var(--border);
                     transition:background 0.1s; }
 .dcr-tarow:last-child { border-bottom:none; }
-.dcr-tarow:hover  { background:var(--surface); }
+.dcr-tarow:hover  { background:var(--surface2); }
 .dcr-tarow-lbl    { font-size:12px;color:var(--text-dim); }
 .dcr-tarow-hint   { font-size:10px;color:var(--text-dim);margin-top:1px; }
 .dcr-tarow-val    { font-size:12px;font-weight:700;font-family:var(--mono);
                     white-space:nowrap; }
 .dcr-tatotal      { display:flex;justify-content:space-between;align-items:center;
-                    padding:11px 18px;background:var(--surface);
+                    padding:11px 18px;background:var(--surface2);
                     border-top:2px solid var(--border); }
 .dcr-tatotal-lbl  { font-size:12px;font-weight:700;color:var(--text); }
 .dcr-tatotal-val  { font-size:20px;font-weight:800;font-family:var(--mono);
@@ -91,11 +97,12 @@
 
 /* ── Lower 2-col grid ── */
 .dcr-lower        { display:grid;grid-template-columns:1fr 1.5fr;gap:14px;margin-bottom:20px; }
-.dcr-panel        { background:var(--surface2);border:1px solid var(--border);
-                    border-radius:14px;overflow:hidden; }
+.dcr-panel        { background:white;border:1px solid var(--border);
+                    border-radius:14px;overflow:hidden;
+                    box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .dcr-panel-head   { display:flex;align-items:center;justify-content:space-between;
                     padding:11px 14px;border-bottom:1px solid var(--border);
-                    background:var(--surface); }
+                    background:var(--surface2); }
 .dcr-panel-lbl    { font-size:10px;font-weight:700;text-transform:uppercase;
                     letter-spacing:0.6px;color:var(--text-dim); }
 .dcr-panel-body   { padding:14px; }
@@ -116,7 +123,7 @@
 .dcr-feed-row     { display:flex;align-items:center;gap:8px;padding:8px 14px;
                     border-bottom:1px solid var(--border);transition:background 0.1s; }
 .dcr-feed-row:last-child { border-bottom:none; }
-.dcr-feed-row:hover { background:var(--surface); }
+.dcr-feed-row:hover { background:var(--surface2); }
 .dcr-feed-dot     { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
 .dcr-feed-time    { font-size:10px;color:var(--text-dim);font-family:var(--mono);
                     white-space:nowrap;width:30px;flex-shrink:0; }
@@ -138,14 +145,14 @@
 /* ── Session cards ── */
 .dcr-session-label{ font-size:10px;font-weight:700;text-transform:uppercase;
                     letter-spacing:0.6px;color:var(--text-dim);margin-bottom:10px; }
-.dcr-session      { background:var(--surface2);border:1px solid var(--border);
+.dcr-session      { background:white;border:1px solid var(--border);
                     border-radius:14px;overflow:hidden;margin-bottom:10px;
-                    transition:box-shadow 0.15s; }
+                    box-shadow:0 1px 4px rgba(0,0,0,0.05);transition:box-shadow 0.15s; }
 .dcr-session:last-child { margin-bottom:0; }
 .dcr-session.dcr-session-open { border-color:var(--red); }
 .dcr-session-head { display:flex;align-items:center;gap:10px;padding:13px 16px;
                     cursor:pointer;user-select:none;transition:background 0.1s; }
-.dcr-session-head:hover { background:var(--surface); }
+.dcr-session-head:hover { background:var(--surface2); }
 .dcr-session-shop { font-size:13px;font-weight:700;color:var(--text);flex:1;
                     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0; }
 .dcr-session-who  { font-size:11px;color:var(--text-dim);white-space:nowrap; }
@@ -169,7 +176,7 @@
 .dcr-skpi-val     { font-size:12px;font-weight:700;font-family:var(--mono); }
 
 /* Session expanded detail */
-.dcr-detail       { border-top:1px solid var(--border);background:var(--surface);
+.dcr-detail       { border-top:1px solid var(--border);background:white;
                     padding:0; }
 .dcr-detail-grid  { display:grid;grid-template-columns:repeat(3,1fr);gap:0; }
 .dcr-detail-grid > div { padding:20px 22px; }
@@ -185,7 +192,8 @@
 
 /* ── Empty state ── */
 .dcr-empty        { text-align:center;padding:52px 24px;border-radius:14px;
-                    border:1px solid var(--border);background:var(--surface2); }
+                    border:1px solid var(--border);background:white;
+                    box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .dcr-empty-icon   { font-size:32px;margin-bottom:12px; }
 .dcr-empty-title  { font-size:14px;font-weight:600;color:var(--text-dim); }
 .dcr-empty-sub    { font-size:12px;color:var(--text-dim);margin-top:4px; }
@@ -205,6 +213,8 @@
     .dcr-datebar    { gap:8px; }
     .dcr-day-label  { display:none; }
     .dcr-kpis       { grid-template-columns:repeat(2,1fr); }
+    .dcr-kpi:nth-child(even) { border-right:none; }
+    .dcr-kpi:nth-child(1),.dcr-kpi:nth-child(2) { border-bottom:1px solid var(--border); }
     .dcr-kpi-val    { font-size:17px; }
     .dcr-taccounts  { grid-template-columns:1fr; }
     .dcr-tacol:first-child { border-right:none;border-bottom:1px solid var(--border); }
@@ -229,7 +239,7 @@
     background:rgba(10,15,30,0.5);backdrop-filter:blur(3px);
 }
 .dcr-modal {
-    background:var(--surface);border-radius:16px;
+    background:white;border-radius:16px;
     box-shadow:0 24px 80px rgba(0,0,0,0.25);
     width:100%;max-width:760px;max-height:88vh;
     display:flex;flex-direction:column;overflow:hidden;
@@ -237,9 +247,9 @@
 .dcr-modal-head {
     display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:14px 20px;border-bottom:1px solid var(--border);
-    background:var(--surface);flex-shrink:0;
+    background:var(--surface2);flex-shrink:0;
 }
-.dcr-modal-body { overflow-y:auto;flex:1;overscroll-behavior:contain;background:var(--surface); }
+.dcr-modal-body { overflow-y:auto;flex:1;overscroll-behavior:contain;background:white; }
 .dcr-modal-close {
     display:flex;align-items:center;justify-content:center;
     width:28px;height:28px;border-radius:7px;border:1px solid var(--border);
@@ -290,7 +300,7 @@
 .dcr-modal-footer {
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     padding:12px 18px;border-top:1px solid var(--border);
-    background:var(--surface);flex-shrink:0;
+    background:var(--surface2);flex-shrink:0;
 }
 .dcr-footer-note { font-size:11px;color:var(--text-dim);flex:1; }
 .dcr-btn-lock {
@@ -581,8 +591,9 @@
          SALES SNAPSHOT
          ════════════════════════════════════════ --}}
     @if($todaySales->isNotEmpty())
-    <div style="background:var(--surface2);border:1px solid var(--border);
-                border-radius:14px;overflow:hidden;margin-bottom:20px;">
+    <div style="background:white;border:1px solid var(--border);
+                border-radius:14px;overflow:hidden;margin-bottom:20px;
+                box-shadow:0 1px 4px rgba(0,0,0,0.05);">
         <div class="dcr-panel-head">
             <span class="dcr-panel-lbl">Sales Snapshot</span>
             <span style="font-size:10px;color:var(--text-dim);">
@@ -635,8 +646,9 @@
          CREDIT OUTSTANDING
          ════════════════════════════════════════ --}}
     @if($overdueCustomers->isNotEmpty())
-    <div style="background:var(--surface2);border:1px solid var(--amber);
-                border-radius:14px;overflow:hidden;margin-bottom:20px;">
+    <div style="background:white;border:1px solid var(--amber);
+                border-radius:14px;overflow:hidden;margin-bottom:20px;
+                box-shadow:0 1px 4px rgba(0,0,0,0.05);">
         <div class="dcr-panel-head" style="background:var(--amber-dim);">
             <span class="dcr-panel-lbl" style="color:var(--amber);">Outstanding Credit</span>
             <span style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--amber);">

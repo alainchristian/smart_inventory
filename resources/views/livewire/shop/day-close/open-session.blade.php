@@ -20,7 +20,7 @@
             <div style="flex:1;min-width:0;">
                 <span style="font-size:12px;font-weight:700;color:var(--amber);">Unclosed session from {{ $blockerSession->session_date->format('d M Y') }}</span>
                 <span style="font-size:12px;color:var(--text-dim);"> — remember to close it when you get a chance.</span>
-                <a href="{{ route('shop.day-close.close', ['session' => $blockerSession->id]) }}"
+                <a href="{{ route('shop.session.close', ['session' => $blockerSession->id]) }}"
                    style="display:inline-block;margin-top:4px;font-size:12px;font-weight:600;color:var(--amber);text-decoration:underline;">
                     Close it now →
                 </a>

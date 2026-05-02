@@ -1,33 +1,35 @@
 <div>
 <style>
 /* ── KPI strip ── */
-.sh-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);
-           border-radius:14px;overflow:hidden;border:1px solid var(--border);margin-bottom:20px; }
-.sh-kpi  { padding:14px 18px;background:var(--surface2); }
-.sh-kpi-lbl { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);margin-bottom:5px; }
-.sh-kpi-val { font-size:21px;font-weight:800;font-family:var(--mono);line-height:1; }
-.sh-kpi-sub { font-size:10px;color:var(--text-dim);margin-top:3px; }
+.sh-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:white;
+           border-radius:12px;overflow:hidden;border:1px solid var(--border);
+           box-shadow:0 1px 4px rgba(0,0,0,0.05);margin-bottom:12px; }
+.sh-kpi  { padding:10px 14px;background:white;border-right:1px solid var(--border); }
+.sh-kpi:last-child { border-right:none; }
+.sh-kpi-lbl { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);margin-bottom:3px; }
+.sh-kpi-val { font-size:17px;font-weight:800;font-family:var(--mono);line-height:1; }
+.sh-kpi-sub { font-size:10px;color:var(--text-dim);margin-top:2px; }
 
 /* ── Table ── */
-.fo-table-wrap   { border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px; }
+.fo-table-wrap   { border:1px solid var(--border);border-radius:12px;overflow:hidden;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.05);margin-bottom:10px; }
 .fo-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border) transparent; }
 .fo-table-scroll::-webkit-scrollbar { height:4px; }
 .fo-table-scroll::-webkit-scrollbar-thumb { background:var(--border);border-radius:2px; }
-.fo-table { width:100%;border-collapse:collapse;min-width:780px;font-size:12px; }
-.fo-table thead tr { background:var(--surface2);border-bottom:2px solid var(--border); }
+.fo-table { width:100%;border-collapse:collapse;min-width:780px;font-size:12px;background:white; }
+.fo-table thead tr { background:var(--surface2);border-bottom:1px solid var(--border); }
 .fo-table thead th {
-    padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;
-    letter-spacing:0.5px;color:var(--text-dim);text-align:left;white-space:nowrap;
+    padding:8px 12px;font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.6px;color:var(--text-dim);text-align:left;white-space:nowrap;
 }
 .fo-table thead th.fo-num { text-align:right; }
-.fo-table tbody tr { border-bottom:1px solid var(--border);transition:background 0.1s;cursor:pointer; }
+.fo-table tbody tr { border-bottom:1px solid var(--border);transition:background 0.08s;cursor:pointer;background:white; }
 .fo-table tbody tr:last-child { border-bottom:none; }
 .fo-table tbody tr:hover { background:var(--surface2); }
 .fo-table tbody tr.sh-row-active { background:var(--surface2); }
-.fo-table td { padding:11px 14px;color:var(--text);vertical-align:middle; }
-.fo-table td.fo-num { text-align:right;font-family:var(--mono);font-weight:600;white-space:nowrap; }
-.fo-table tfoot tr { background:var(--surface2);border-top:2px solid var(--border); }
-.fo-table tfoot td { padding:10px 14px;font-size:11px;font-weight:700;font-family:var(--mono); }
+.fo-table td { padding:10px 12px;color:var(--text);vertical-align:middle; }
+.fo-table td.fo-num { text-align:right;font-family:var(--mono);font-weight:700;white-space:nowrap;font-size:13px; }
+.fo-table tfoot tr { background:var(--surface2);border-top:1px solid var(--border); }
+.fo-table tfoot td { padding:8px 12px;font-size:12px;font-weight:700;font-family:var(--mono); }
 
 /* ── Status badges ── */
 .sh-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap; }
@@ -135,13 +137,15 @@
 .sh-btn-lock:hover { opacity:0.8; }
 
 /* ── Empty ── */
-.sh-empty { text-align:center;padding:56px 20px;border-radius:14px;border:1px solid var(--border);background:var(--surface2); }
+.sh-empty { text-align:center;padding:56px 20px;border-radius:14px;border:1px solid var(--border);background:white;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 
 /* ── Responsive ── */
 @media (max-width:640px) {
     .sh-kpis { grid-template-columns:repeat(2,1fr); }
-    .sh-kpi  { padding:11px 12px; }
-    .sh-kpi-val { font-size:17px; }
+    .sh-kpi  { padding:8px 10px; }
+    .sh-kpi:nth-child(even) { border-right:none; }
+    .sh-kpi:nth-child(1),.sh-kpi:nth-child(2) { border-bottom:1px solid var(--border); }
+    .sh-kpi-val { font-size:15px; }
     .fo-expanded-detail { grid-template-columns:1fr; }
     .fo-exp-col { border-right:none !important;padding:14px 16px; }
     .fo-exp-col:not(:last-child) { border-right:none;border-bottom:1px solid var(--border); }
@@ -246,12 +250,12 @@
                     wire:click="toggleExpand({{ $session->id }})">
 
                     {{-- Date --}}
-                    <td>
-                        <div style="font-weight:700;font-size:12px;color:var(--text);white-space:nowrap;">
+                    <td style="white-space:nowrap;">
+                        <div style="font-weight:700;font-size:13px;color:var(--text);">
                             {{ $session->session_date->format('d M Y') }}
                         </div>
-                        <div style="font-size:11px;color:var(--text-dim);margin-top:2px;white-space:nowrap;">
-                            {{ $session->session_date->format('l') }}
+                        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">
+                            {{ $session->session_date->format('D') }}
                             @if ($session->opened_at)
                                 · {{ $session->opened_at->format('H:i') }}
                                 @if ($session->closed_at) –{{ $session->closed_at->format('H:i') }} @endif
@@ -281,17 +285,17 @@
                     </td>
 
                     {{-- Sales --}}
-                    <td class="fo-num" style="color:var(--green);font-weight:700;">
+                    <td class="fo-num" style="color:{{ ($session->total_sales ?? 0) > 0 ? 'var(--green)' : 'var(--text-dim)' }};">
                         {{ number_format($session->total_sales ?? 0) }}
                     </td>
 
                     {{-- Expenses --}}
-                    <td class="fo-num" style="color:var(--red);">
+                    <td class="fo-num" style="color:{{ ($session->total_expenses ?? 0) > 0 ? 'var(--red)' : 'var(--text-dim)' }};">
                         {{ number_format($session->total_expenses ?? 0) }}
                     </td>
 
                     {{-- Withdrawals --}}
-                    <td class="fo-num" style="color:var(--amber);">
+                    <td class="fo-num" style="color:{{ ($session->total_withdrawals ?? 0) > 0 ? 'var(--amber)' : 'var(--text-dim)' }};">
                         {{ number_format($session->total_withdrawals ?? 0) }}
                     </td>
 

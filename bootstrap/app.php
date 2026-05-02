@@ -38,5 +38,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('reports:run-scheduled')->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Redirect cleanly to login on session/CSRF expiry instead of showing 419
+        $exceptions->render(function (
+            \Illuminate\Session\TokenMismatchException $e,
+            \Illuminate\Http\Request $request
+        ) {
+            if ($request->expectsJson() || $request->hasHeader('X-Livewire')) {
+                return response()->json(['message' => 'Session expired.'], 419);
+            }
+            return redirect()->route('login')->with('status', 'Your session has expired. Please sign in again.');
+        });
     })->create();

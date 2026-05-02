@@ -13,8 +13,9 @@
 
 /* ── Filter bar ── */
 .fo-filters {
-    background:var(--surface2);border:1px solid var(--border);
+    background:white;border:1px solid var(--border);
     border-radius:14px;overflow:hidden;margin-bottom:20px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.05);
 }
 /* Top row: period presets */
 .fo-presets-row {
@@ -75,13 +76,16 @@
 /* ── KPI strip ── */
 .fo-kpis {
     display:grid;grid-template-columns:repeat(6,1fr);
-    gap:1px;background:var(--border);
+    gap:0;background:white;
     border-radius:16px;overflow:hidden;border:1px solid var(--border);
+    box-shadow:0 1px 4px rgba(0,0,0,0.05);
     margin-bottom:20px;
 }
 .fo-kpi {
-    background:var(--surface2);padding:16px 14px;
+    background:white;padding:16px 14px;
+    border-right:1px solid var(--border);
 }
+.fo-kpi:last-child { border-right:none; }
 .fo-kpi-label {
     font-size:10px;font-weight:700;text-transform:uppercase;
     letter-spacing:0.6px;color:var(--text-dim);margin-bottom:6px;
@@ -93,16 +97,19 @@
 .fo-kpi-sub { font-size:10px;color:var(--text-dim);margin-top:4px; }
 
 /* ── Shop ranking ── */
-.fo-ranking { margin-bottom:20px; }
-.fo-ranking-label {
-    font-size:10px;font-weight:700;text-transform:uppercase;
-    letter-spacing:0.6px;color:var(--text-dim);margin-bottom:10px;
+.fo-ranking {
+    margin-bottom:20px;border:1px solid var(--border);border-radius:14px;
+    overflow:hidden;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.05);
+}
+.fo-ranking-header {
+    padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
+    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);
 }
 .fo-rank-row {
-    display:flex;align-items:center;gap:12px;padding:12px 16px;
-    background:var(--surface2);border:1px solid var(--border);
-    border-radius:12px;margin-bottom:8px;
+    display:flex;align-items:center;gap:12px;padding:11px 16px;
+    background:white;border-bottom:1px solid var(--border);
 }
+.fo-rank-row:last-child { border-bottom:none; }
 .fo-rank-num {
     width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:800;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -121,8 +128,9 @@
     gap:16px;margin-bottom:20px;
 }
 .fo-chart-card {
-    background:var(--surface2);border:1px solid var(--border);
+    background:white;border:1px solid var(--border);
     border-radius:14px;padding:18px 20px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.05);
 }
 .fo-chart-title { font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px; }
 .fo-chart-sub   { font-size:11px;color:var(--text-dim);margin-bottom:14px; }
@@ -137,33 +145,33 @@
 /* ── Sessions table ── */
 .fo-table-wrap {
     border:1px solid var(--border);border-radius:14px;overflow:hidden;
+    background:white;box-shadow:0 1px 4px rgba(0,0,0,0.05);
 }
 .fo-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
 .fo-table {
-    width:100%;border-collapse:collapse;min-width:820px;font-size:12px;
+    width:100%;border-collapse:collapse;min-width:820px;font-size:12px;background:white;
 }
 .fo-table thead tr {
-    background:var(--surface);border-bottom:2px solid var(--border);
+    background:var(--surface2);border-bottom:1px solid var(--border);
 }
 .fo-table thead th {
-    padding:10px 14px;font-size:10px;font-weight:700;
-    text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);
+    padding:9px 14px;font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);
     text-align:left;white-space:nowrap;
 }
 .fo-table thead th.fo-num { text-align:right; }
 .fo-table tbody tr {
-    border-bottom:1px solid var(--border);transition:background 0.1s;cursor:pointer;
+    border-bottom:1px solid var(--border);transition:background 0.08s;cursor:pointer;background:white;
 }
 .fo-table tbody tr:last-child { border-bottom:none; }
-.fo-table tbody tr:hover { background:var(--surface); }
+.fo-table tbody tr:hover { background:var(--surface2); }
 .fo-table td { padding:11px 14px;color:var(--text);vertical-align:middle; }
 .fo-table td.fo-num {
-    text-align:right;font-family:var(--mono);font-weight:600;white-space:nowrap;
+    text-align:right;font-family:var(--mono);font-weight:700;white-space:nowrap;font-size:13px;
 }
-.fo-table tfoot tr { background:var(--surface);border-top:2px solid var(--border); }
+.fo-table tfoot tr { background:var(--surface2);border-top:1px solid var(--border); }
 .fo-table tfoot td {
-    padding:10px 14px;font-size:13px;font-weight:700;
-    font-family:var(--mono);
+    padding:10px 14px;font-size:12px;font-weight:700;font-family:var(--mono);
 }
 
 /* Expanded detail — 3-column layout (Revenue | Expenses+Withdrawals | Cash Reconciliation) */
@@ -267,6 +275,8 @@
 /* ── Responsive ── */
 @media(max-width:1100px) {
     .fo-kpis { grid-template-columns:repeat(3,1fr); }
+    .fo-kpi:nth-child(3) { border-right:none; }
+    .fo-kpi:nth-child(1),.fo-kpi:nth-child(2),.fo-kpi:nth-child(3) { border-bottom:1px solid var(--border); }
 }
 @media(max-width:900px) {
     .fo-charts { grid-template-columns:1fr; }
@@ -275,6 +285,9 @@
 @media(max-width:640px) {
     .fo-kpis { grid-template-columns:repeat(2,1fr); }
     .fo-kpi  { padding:12px; }
+    .fo-kpi:nth-child(even) { border-right:none; }
+    .fo-kpi:nth-child(1),.fo-kpi:nth-child(2) { border-bottom:1px solid var(--border); }
+    .fo-kpi:nth-child(3),.fo-kpi:nth-child(4) { border-bottom:1px solid var(--border); }
     .fo-kpi-val { font-size:16px; }
     .fo-rank-bar-wrap { display:none; }
     /* Modal 3-col → single column stack on mobile */
@@ -449,7 +462,7 @@
     $maxRev = max($shopRanked->max('revenue'), 1);
 @endphp
 <div class="fo-ranking">
-    <div class="fo-ranking-label">Shop Performance</div>
+    <div class="fo-ranking-header">Shop Performance</div>
     @foreach($shopRanked as $i => $sh)
     <div class="fo-rank-row {{ !$sh['has_data'] ? 'fo-rank-row-empty' : '' }}">
         <div class="fo-rank-num {{ $i === 0 && $sh['has_data'] ? 'fo-rank-1' : '' }}">{{ $i + 1 }}</div>
@@ -645,10 +658,10 @@
                 <tr>
                     <th>Date</th>
                     <th>Shop</th>
-                    <th class="fo-num">Revenue</th>
+                    <th class="fo-num" style="color:var(--accent);">Revenue</th>
                     <th class="fo-num" style="color:var(--amber);">Refunds</th>
                     <th class="fo-num" style="color:var(--red);">Expenses</th>
-                    <th class="fo-num">Withdrawals</th>
+                    <th class="fo-num" style="color:var(--amber);">Withdrawals</th>
                     <th class="fo-num">Banked</th>
                     <th class="fo-num" style="color:var(--accent);">Op. Profit</th>
                     <th class="fo-num" style="color:var(--green);">Net Result</th>
@@ -668,17 +681,17 @@
                 @endphp
                 <tr wire:click="toggleRow('{{ $row['session_date'] }}', {{ $row['shop_id'] }})">
                     <td style="white-space:nowrap;">
-                        <div style="font-size:12px;font-weight:600;color:var(--text);">{{ \Carbon\Carbon::parse($row['session_date'])->format('d M Y') }}</div>
-                        <div style="font-size:11px;color:var(--text-dim);">{{ \Carbon\Carbon::parse($row['session_date'])->format('D') }}</div>
+                        <div style="font-size:13px;font-weight:700;color:var(--text);">{{ \Carbon\Carbon::parse($row['session_date'])->format('d M Y') }}</div>
+                        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">{{ \Carbon\Carbon::parse($row['session_date'])->format('D') }}</div>
                     </td>
-                    <td style="font-size:12px;font-weight:500;">{{ $row['shop_name'] }}</td>
-                    <td class="fo-num" style="color:var(--accent);">{{ number_format($row['revenue']) }}</td>
-                    <td class="fo-num" style="color:{{ $row['refunds'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};">{{ number_format($row['refunds']) }}</td>
-                    <td class="fo-num" style="color:var(--red);">{{ number_format($row['expenses']) }}</td>
-                    <td class="fo-num" style="color:var(--accent);">{{ number_format($row['withdrawals']) }}</td>
-                    <td class="fo-num" style="color:var(--accent);">{{ number_format($row['cash_banked']) }}</td>
-                    <td class="fo-num" style="color:{{ $rowOpProfit >= 0 ? 'var(--accent)' : 'var(--red)' }};">{{ number_format($rowOpProfit) }}</td>
-                    <td class="fo-num" style="color:{{ $rowNetResult >= 0 ? 'var(--green)' : 'var(--red)' }};">{{ number_format($rowNetResult) }}</td>
+                    <td style="font-size:12px;font-weight:500;color:var(--text);">{{ $row['shop_name'] }}</td>
+                    <td class="fo-num" style="color:{{ (int)$row['revenue'] > 0 ? 'var(--accent)' : 'var(--text-dim)' }};">{{ number_format($row['revenue']) }}</td>
+                    <td class="fo-num" style="color:{{ (int)$row['refunds'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};">{{ number_format($row['refunds']) }}</td>
+                    <td class="fo-num" style="color:{{ (int)$row['expenses'] > 0 ? 'var(--red)' : 'var(--text-dim)' }};">{{ number_format($row['expenses']) }}</td>
+                    <td class="fo-num" style="color:{{ (int)$row['withdrawals'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};">{{ number_format($row['withdrawals']) }}</td>
+                    <td class="fo-num" style="color:{{ (int)$row['cash_banked'] > 0 ? 'var(--accent)' : 'var(--text-dim)' }};">{{ number_format($row['cash_banked']) }}</td>
+                    <td class="fo-num" style="color:{{ $rowOpProfit > 0 ? 'var(--accent)' : ($rowOpProfit < 0 ? 'var(--red)' : 'var(--text-dim)') }};">{{ number_format($rowOpProfit) }}</td>
+                    <td class="fo-num" style="color:{{ $rowNetResult > 0 ? 'var(--green)' : ($rowNetResult < 0 ? 'var(--red)' : 'var(--text-dim)') }};">{{ number_format($rowNetResult) }}</td>
                     <td class="fo-num" style="color:{{ $rv < 0 ? 'var(--red)' : ($rv > 0 ? 'var(--amber)' : 'var(--text-dim)') }};">
                         {{ $rv >= 0 ? '+' : '' }}{{ number_format($rv) }}
                     </td>

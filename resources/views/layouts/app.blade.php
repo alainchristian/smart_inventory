@@ -63,5 +63,19 @@
     @livewireScripts
 
     @stack('scripts')
+
+    <script>
+    // Redirect to login silently on session expiry (419) instead of showing error dialogs
+    document.addEventListener('livewire:init', function () {
+        Livewire.hook('request', ({ fail }) => {
+            fail(({ status, preventDefault }) => {
+                if (status === 419) {
+                    preventDefault();
+                    window.location.href = '{{ route('login') }}';
+                }
+            });
+        });
+    });
+    </script>
 </body>
 </html>

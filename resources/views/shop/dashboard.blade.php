@@ -1,514 +1,459 @@
-{{--
-    Enhanced Shop Dashboard for Smart Inventory
-
-    This Blade view refactors the standard shop dashboard into a more actionable
-    interface with trend indicators, risk summaries and improved quick actions.  It
-    expects additional variables to be provided by the controller or Livewire
-    component:
-
-    - $todaySales['total_sales'], ['transaction_count'], ['items_sold'], ['average_transaction']
-    - $todaySalesChange (float): percentage change vs yesterday (sales)
-    - $todayTransactionsChange (float): percentage change vs yesterday (transactions)
-    - $todayItemsChange (float): percentage change vs yesterday (items sold)
-    - $todayAvgTxnChange (float): percentage change vs yesterday (avg transaction)
-    - $weekSales, $monthSales, $stockStats['total_items'], $stockStats['total_boxes']
-    - $lowStockProducts (collection), $pendingReturns, $pendingTransfers, $incomingTransfers
-    - $recentSales, $recentReturns
-    - $alerts (collection)
-    - $lastSync (Carbon): last system sync time
-
-    This file maintains the existing sections (sales performance, pending actions,
-    low stock products, top products, recent sales/returns) but enhances KPI cards
-    with trend indicators and introduces a compact risk summary card after the
-    quick actions.
---}}
-
+{{-- Shop Dashboard — Livewire-powered with dynamic period filter --}}
 <x-app-layout>
-    <!-- Page Header -->
-    <div class="mb-4 flex flex-col lg:flex-row lg:items-end lg:justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ $shop->name }}</h1>
-            <p class="text-gray-600 text-sm">Sales and inventory managements</p>
-        </div>
-        <div class="mt-2 lg:mt-0 text-sm text-gray-500">Last sync: {{ $lastSync ? $lastSync->diffForHumans() : 'Never' }}</div>
-    </div>
 
-    <!-- Today's Sales Overview - Compact KPIs -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <!-- Today's Revenue with trend -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ $todaySalesChange >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                    {{ $todaySalesChange >= 0 ? '▲' : '▼' }} {{ number_format(abs($todaySalesChange), 1) }}%
-                </span>
-            </div>
-            <p class="text-xs text-gray-600 mb-0.5">Today's Sales</p>
-            <p class="text-2xl font-bold text-gray-900">{{ number_format($todaySales['total_sales'], 0) }}</p>
-            <p class="text-xs text-gray-500">RWF</p>
-        </div>
+@push('styles')
+<style>
+/* ══════════════════════════════════════════════════════
+   PERIOD FILTER BAR
+══════════════════════════════════════════════════════ */
+.db-period-bar {
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+/* Grouped pill container — single rounded box */
+.db-period-pills {
+    display:flex; align-items:center;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:3px; gap:2px;
+}
+.db-period-pill {
+    font-size:13px; font-weight:500; color:var(--text-sub);
+    padding:6px 14px; border-radius:6px;
+    border:none; background:transparent;
+    cursor:pointer; transition:all .15s; white-space:nowrap;
+    line-height:1.4;
+}
+.db-period-pill:hover { color:var(--text); background:rgba(0,0,0,.04); }
+.db-period-pill.active { background:#3b6bd4; color:#fff; font-weight:600; }
+/* Separate Custom Range button */
+.db-period-custom {
+    display:flex; align-items:center; gap:6px;
+    font-size:13px; font-weight:500; color:var(--text-sub);
+    padding:7px 14px; border-radius:8px;
+    border:1px solid var(--border); background:var(--surface);
+    cursor:pointer; transition:all .15s; white-space:nowrap;
+    line-height:1.4;
+}
+.db-period-custom svg { flex-shrink:0; }
+.db-period-custom:hover { color:var(--text); border-color:#3b6bd4; }
+.db-period-custom.active { background:#3b6bd4; color:#fff; border-color:#3b6bd4; }
+.db-custom-picker {
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:8px 12px; border-radius:10px;
+    background:var(--surface); border:1px solid var(--border);
+}
+.db-date-input {
+    font-size:12px; color:var(--text); padding:5px 8px;
+    border:1px solid var(--border); border-radius:6px;
+    background:var(--surface); outline:none;
+}
+.db-date-input:focus { border-color:#3b6bd4; }
+.db-period-label {
+    margin-left:auto; display:flex; align-items:center; gap:6px;
+    font-size:12px; color:var(--text-dim); white-space:nowrap;
+}
+.db-period-label svg { flex-shrink:0; }
+.db-sync-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.db-sync-dot.green { background:#10b981; }
+.db-sync-dot.amber { background:#f59e0b; }
 
-        <!-- Transactions Today with trend -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                    </svg>
-                </div>
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ $todayTransactionsChange >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                    {{ $todayTransactionsChange >= 0 ? '▲' : '▼' }} {{ number_format(abs($todayTransactionsChange), 1) }}%
-                </span>
-            </div>
-            <p class="text-xs text-gray-600 mb-0.5">Transactions</p>
-            <p class="text-2xl font-bold text-gray-900">{{ number_format($todaySales['transaction_count']) }}</p>
-            <p class="text-xs text-gray-500">Today</p>
-        </div>
+@keyframes db-spark-pop { 0%{opacity:.25;transform:scaleY(.85);} 100%{opacity:1;transform:scaleY(1);} }
+.db-spark-refresh { animation: db-spark-pop .35s ease-out; transform-origin: bottom; }
+@media(max-width:768px) {
+    .db-period-bar { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; gap:8px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .db-period-bar::-webkit-scrollbar { display:none; }
+    .db-period-pills { flex-shrink:0; }
+    .db-period-custom { flex-shrink:0; }
+    .db-period-label { display:none; }
+}
+@media(max-width:480px) {
+    .db-period-pill { font-size:12px; padding:5px 10px; }
+    .db-period-custom { font-size:12px; padding:6px 10px; }
+}
 
-        <!-- Items Sold with trend -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-                <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                </div>
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ $todayItemsChange >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                    {{ $todayItemsChange >= 0 ? '▲' : '▼' }} {{ number_format(abs($todayItemsChange), 1) }}%
-                </span>
-            </div>
-            <p class="text-xs text-gray-600 mb-0.5">Items Sold</p>
-            <p class="text-2xl font-bold text-gray-900">{{ number_format($todaySales['items_sold']) }}</p>
-            <p class="text-xs text-gray-500">Today</p>
-        </div>
+/* ══════════════════════════════════════════════════════
+   PAGE SHELL
+══════════════════════════════════════════════════════ */
+.db-page { display:flex; flex-direction:column; gap:20px; padding-bottom:32px; }
 
-        <!-- Average Transaction with trend -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ $todayAvgTxnChange >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                    {{ $todayAvgTxnChange >= 0 ? '▲' : '▼' }} {{ number_format(abs($todayAvgTxnChange), 1) }}%
-                </span>
-            </div>
-            <p class="text-xs text-gray-600 mb-0.5">Avg Transaction</p>
-            <p class="text-2xl font-bold text-gray-900">{{ number_format($todaySales['average_transaction'], 0) }}</p>
-            <p class="text-xs text-gray-500">RWF</p>
-        </div>
-    </div>
+/* ══════════════════════════════════════════════════════
+   KPI CARDS ROW
+══════════════════════════════════════════════════════ */
+.db-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+@media(max-width:900px){ .db-kpi-row{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:520px){ .db-kpi-row{ grid-template-columns:1fr; } }
 
-    <!-- Sales Performance & Stock Summary - Horizontal Compact Cards -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-        <!-- This Week -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs text-gray-600">This Week</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($weekSales, 0) }}</p>
-                    <p class="text-xs text-gray-500">RWF</p>
-                </div>
-            </div>
-        </div>
+.db-kpi {
+    background:var(--surface); border:1px solid rgba(0,0,0,0.06);
+    border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02);
+    display:flex; flex-direction:column; gap:20px;
+}
+.db-kpi-top  { display:flex; align-items:center; gap:14px; }
+.db-kpi-circle {
+    width:48px; height:48px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+}
+.db-kpi-circle svg { width:22px; height:22px; }
+.db-kpi-meta   { display:flex; flex-direction:column; gap:2px; }
+.db-kpi-label  { font-size:12px; color:var(--text-sub); font-weight:500; }
+.db-kpi-value  { font-size:22px; font-weight:700; color:var(--text); line-height:1.2; }
+.db-kpi-unit   { font-size:11px; font-weight:600; color:var(--text-dim); margin-left:4px; text-transform:uppercase; }
+.db-kpi-bottom { display:flex; align-items:flex-end; justify-content:space-between; }
+.db-kpi-stats  { display:flex; flex-direction:column; gap:4px; margin-bottom:2px; }
+.db-change-text { font-size:13px; font-weight:600; display:flex; align-items:center; gap:4px; }
+.db-change-text.up   { color:#10b981; }
+.db-change-text.down { color:#ef4444; }
+.db-change-text.warn { color:#f59e0b; }
+.db-kpi-vs   { font-size:10px; color:var(--text-dim); }
+.db-kpi-spark { flex-shrink:0; display:flex; align-items:flex-end; }
+.db-kpi-spark canvas { width:90px !important; height:36px !important; display:block; }
 
-        <!-- This Month -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs text-gray-600">This Month</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($monthSales, 0) }}</p>
-                    <p class="text-xs text-gray-500">RWF</p>
-                </div>
-            </div>
-        </div>
+/* ══════════════════════════════════════════════════════
+   TWO-COLUMN ROW
+══════════════════════════════════════════════════════ */
+.db-row-60-40 { display:grid; grid-template-columns:1.5fr 1fr; gap:16px; }
+@media(max-width:900px){ .db-row-60-40{ grid-template-columns:1fr; } }
 
-        <!-- Stock Summary -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                    </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs text-gray-600">Current Stock</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ number_format($stockStats['total_items']) }}</p>
-                    <p class="text-xs text-gray-500">{{ $stockStats['total_boxes'] }} boxes</p>
-                </div>
-            </div>
-        </div>
-    </div>
+/* ══════════════════════════════════════════════════════
+   CARD SHELL
+══════════════════════════════════════════════════════ */
+.db-card { background:var(--surface); border:0.5px solid var(--border); border-radius:14px; padding:20px; }
+.db-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.db-card-title { font-size:14px; font-weight:600; color:var(--text); }
+.db-view-all   { font-size:12px; color:var(--accent); text-decoration:none; font-weight:500; }
+.db-view-all:hover { text-decoration:underline; }
 
-    <!-- Pending Actions - Compact Style -->
-    @if($pendingReturns->count() > 0 || $pendingTransfers->count() > 0 || $incomingTransfers->count() > 0)
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-            <!-- Pending Returns -->
-            @if($pendingReturns->count() > 0)
-                <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-gray-900">Pending Returns</h2>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                            {{ $pendingReturns->count() }}
-                        </span>
-                    </div>
-                    <div class="space-y-2">
-                        @foreach($pendingReturns as $return)
-                            <div class="p-2 bg-gray-50 rounded border-l-2 border-orange-400">
-                                <p class="text-sm font-medium text-gray-900">Return #{{ $return->id }}</p>
-                                <p class="text-xs text-gray-600">{{ $return->items->count() }} items</p>
-                                <p class="text-xs text-gray-500">{{ $return->processed_at ? $return->processed_at->diffForHumans() : 'Pending' }}</p>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
+.db-trend-legend { display:flex; align-items:center; gap:14px; font-size:11px; color:var(--text-sub); }
+.db-legend-dot-solid { display:inline-block; width:22px; height:3px; background:#3b6bd4; border-radius:2px; vertical-align:middle; }
+.db-legend-dot-dash  { display:inline-block; width:22px; height:0; border-top:2px dashed #b4b2a9; vertical-align:middle; }
 
-            <!-- Pending Transfer Requests -->
-            @if($pendingTransfers->count() > 0)
-                <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-gray-900">Pending Transfers</h2>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            {{ $pendingTransfers->count() }}
-                        </span>
-                    </div>
-                    <div class="space-y-2">
-                        @foreach($pendingTransfers as $transfer)
-                            <div class="p-2 bg-gray-50 rounded border-l-2 border-yellow-400">
-                                <p class="text-sm font-medium text-gray-900">{{ $transfer->transfer_number }}</p>
-                                <p class="text-xs text-gray-600">From: {{ $transfer->fromWarehouse->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $transfer->requested_at ? $transfer->requested_at->diffForHumans() : 'Recently' }}</p>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
+/* ── Top Products ── */
+.db-prod-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:0.5px solid var(--border); }
+.db-prod-row:last-child { border-bottom:none; }
+.db-prod-thumb { width:36px; height:36px; border-radius:8px; background:var(--surface2); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.db-prod-thumb svg { width:20px; height:20px; color:var(--text-dim); }
+.db-prod-name { font-size:12px; font-weight:500; color:var(--text); width:110px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.db-prod-bar-wrap { flex:1; min-width:0; }
+.db-prod-bar-bg   { height:7px; border-radius:10px; background:var(--surface2); overflow:hidden; }
+.db-prod-bar-fill { height:100%; border-radius:10px; background:#3b6bd4; }
+.db-prod-val { font-size:12px; font-weight:600; color:var(--text); font-family:var(--mono); white-space:nowrap; width:90px; text-align:right; flex-shrink:0; }
 
-            <!-- Incoming Transfers -->
-            @if($incomingTransfers->count() > 0)
-                <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-gray-900">Incoming</h2>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {{ $incomingTransfers->count() }}
-                        </span>
-                    </div>
-                    <div class="space-y-2">
-                        @foreach($incomingTransfers as $transfer)
-                            <div class="p-2 bg-gray-50 rounded border-l-2 border-blue-400">
-                                <p class="text-sm font-medium text-gray-900">{{ $transfer->transfer_number }}</p>
-                                <p class="text-xs text-gray-600">From: {{ $transfer->fromWarehouse->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $transfer->status->label() }} • {{ $transfer->shipped_at ? $transfer->shipped_at->diffForHumans() : 'Not shipped' }}</p>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-        </div>
-    @endif
+/* ══════════════════════════════════════════════════════
+   CASH FLOW DONUT
+══════════════════════════════════════════════════════ */
+.db-donut-body {
+    display:flex; align-items:stretch; gap:16px; padding:4px 0 0;
+}
+.db-donut-wrap {
+    position:relative; flex-shrink:0; width:150px; height:150px;
+}
+.db-donut-wrap canvas { display:block; }
+.db-donut-center {
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center; pointer-events:none; width:80px;
+}
+.db-donut-lbl  { font-size:8px; font-weight:700; letter-spacing:.08em; color:var(--text-dim); text-transform:uppercase; }
+.db-donut-val  { font-size:17px; font-weight:800; color:var(--text); line-height:1.1; margin-top:1px; }
+.db-donut-unit { font-size:8px; font-weight:600; color:var(--text-dim); text-transform:uppercase; }
 
-    <!-- Low Stock Products & Top Products - Compact -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <!-- Low Stock Products -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-sm font-semibold text-gray-900">Low Stock Products</h2>
-                @if($lowStockProducts->count() > 0)
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                    {{ $lowStockProducts->count() }}
-                </span>
-                @endif
-            </div>
-            <div class="space-y-2 max-h-64 overflow-y-auto">
-                @forelse($lowStockProducts as $product)
-                    <div class="flex items-center justify-between p-2 bg-orange-50 rounded border-l-2 border-orange-400">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">{{ $product->name }}</p>
-                            <p class="text-xs text-gray-600">SKU: {{ $product->sku }}</p>
-                        </div>
-                        <div class="text-right ml-2">
-                            <p class="text-lg font-bold text-orange-600">{{ $product->current_stock }}</p>
-                            <p class="text-xs text-gray-500">of {{ $product->low_stock_threshold }}</p>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-6">
-                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <p class="text-sm text-gray-500">All products well stocked</p>
-                    </div>
-                @endforelse
-            </div>
-        </div>
+/* Right column: legend + deductions stacked */
+.db-donut-right {
+    flex:1; min-width:0; display:flex; flex-direction:column; gap:0; justify-content:center;
+}
+.db-donut-legend { display:flex; flex-direction:column; gap:6px; }
+.db-donut-leg-row { display:flex; align-items:center; gap:7px; }
+.db-donut-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.db-donut-leg-name { font-size:11px; color:var(--text-dim); flex:1; }
+.db-donut-leg-amt  { font-size:11px; font-weight:600; color:var(--text); font-family:var(--mono); white-space:nowrap; }
 
-        <!-- Top Products This Month -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-sm font-semibold text-gray-900">Top Products (This Month)</h2>
-                @if($topProducts->count() > 0)
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {{ $topProducts->count() }}
-                </span>
-                @endif
-            </div>
-            <div class="space-y-2 max-h-64 overflow-y-auto">
-                @forelse($topProducts as $product)
-                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">{{ $product->name }}</p>
-                            <p class="text-xs text-gray-600">SKU: {{ $product->sku }}</p>
-                        </div>
-                        <div class="text-right ml-2">
-                            <p class="text-lg font-bold text-green-600">{{ $product->sale_items_count }}</p>
-                            <p class="text-xs text-gray-500">sold</p>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-6">
-                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                        </svg>
-                        <p class="text-sm text-gray-500">No sales yet</p>
-                    </div>
-                @endforelse
-            </div>
-        </div>
-    </div>
+.db-deductions {
+    display:grid; grid-template-columns:repeat(2,1fr);
+    gap:5px 10px; border-top:1px solid var(--border);
+    padding-top:8px; margin-top:8px;
+}
+.db-ded-item  { display:flex; flex-direction:column; gap:1px; }
+.db-ded-label { font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.03em; }
+.db-ded-val   { font-size:11px; font-weight:700; font-family:var(--mono); }
+.db-ded--red  { color:#e24b4a; }
+.db-ded--amber{ color:#ba7517; }
 
-    <!-- Recent Sales - Compact Table -->
-    <div class="bg-white rounded-lg shadow-sm p-3 mb-4 border border-gray-200">
-        <h2 class="text-sm font-semibold text-gray-900 mb-3">Recent Sales</h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sale #</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-                        <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sold By</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($recentSales as $sale)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-3 py-2 text-sm font-medium text-gray-900">{{ $sale->sale_number }}</td>
-                            <td class="px-3 py-2 text-sm text-gray-600">{{ $sale->items->sum('quantity_sold') }} items</td>
-                            <td class="px-3 py-2 text-sm font-semibold text-gray-900 text-right">{{ number_format($sale->total, 0) }} RWF</td>
-                            <td class="px-3 py-2 text-sm text-gray-600">{{ $sale->soldBy->name }}</td>
-                            <td class="px-3 py-2 text-sm text-gray-600">{{ $sale->sale_date->format('M d, H:i') }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-3 py-8 text-center">
-                                <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                                <p class="text-sm text-gray-500">No sales yet</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+.db-inhand {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:10px; padding:8px 12px; border-radius:9px;
+    border:1px solid transparent;
+}
+.db-inhand--pos { background:rgba(29,158,117,.08); border-color:rgba(29,158,117,.25); }
+.db-inhand--neg { background:rgba(226,75,74,.08);  border-color:rgba(226,75,74,.25);  }
+.db-inhand-left { display:flex; align-items:center; gap:6px; }
+.db-inhand--pos .db-inhand-left { color:#1d9e75; }
+.db-inhand--neg .db-inhand-left { color:#e24b4a; }
+.db-inhand-label  { font-size:11px; font-weight:600; }
+.db-inhand-amount { font-size:14px; font-weight:800; font-family:var(--mono); }
+.db-inhand--pos .db-inhand-amount { color:#1d9e75; }
+.db-inhand--neg .db-inhand-amount { color:#e24b4a; }
+.db-inhand-amount small { font-size:9px; font-weight:600; opacity:.7; }
 
-    <!-- Recent Returns - Compact Table -->
-    @if($recentReturns->count() > 0)
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200 mb-4">
-            <h2 class="text-sm font-semibold text-gray-900 mb-3">Recent Returns</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Return #</th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Processed By</th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($recentReturns as $return)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-3 py-2 text-sm font-medium text-gray-900">#{{ $return->id }}</td>
-                                <td class="px-3 py-2 text-sm text-gray-600">{{ $return->items->count() }} items</td>
-                                <td class="px-3 py-2 text-sm text-gray-600 truncate max-w-xs">{{ $return->reason }}</td>
-                                <td class="px-3 py-2 text-sm text-gray-600">{{ $return->processedBy->name }}</td>
-                                <td class="px-3 py-2 text-sm text-gray-600">{{ $return->processed_at->format('M d, H:i') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    @endif
+@media(max-width:600px){
+    .db-donut-body { flex-direction:column; align-items:center; }
+    .db-donut-right { width:100%; }
+}
 
-    <!-- System Status Footer -->
-    <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200 mb-20">
-        <div class="flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center space-x-2">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-xs text-gray-600">System Status: <span class="font-semibold text-green-600">Online</span></span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span class="text-xs text-gray-500">Last updated: {{ $lastSync->format('M d, Y H:i:s') }}</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <span class="text-xs text-gray-500">{{ auth()->user()->name }}</span>
-            </div>
-        </div>
-    </div>
+/* ══════════════════════════════════════════════════════
+   THREE-COLUMN ROW (CF + Low Stock + Transactions)
+══════════════════════════════════════════════════════ */
+.db-row-cf-side { display:grid; grid-template-columns:1.8fr 1fr 1fr; gap:16px; align-items:start; }
+@media(max-width:1200px){ .db-row-cf-side{ grid-template-columns:1.35fr 1fr; } }
+@media(max-width:900px){ .db-row-cf-side{ grid-template-columns:1fr; } }
 
-    <!-- Floating Action Button (FAB) with Quick Actions -->
-    <x-floating-action-button>
-        <x-slot name="actions">
-            <a href="{{ route('shop.pos') }}"
-               class="flex items-center space-x-3 px-5 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-100 transition-all duration-200 group border-b border-gray-100">
-                <div class="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">Point of Sale</p>
-                    <p class="text-xs text-gray-500">Create new sale</p>
-                </div>
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
+/* ── Low Stock ── */
+.db-stock-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:0.5px solid var(--border); }
+.db-stock-row:last-child { border-bottom:none; }
+.db-stock-thumb { width:36px; height:36px; border-radius:8px; background:var(--surface2); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.db-stock-thumb svg { width:18px; height:18px; color:var(--text-dim); }
+.db-stock-name  { flex:1; font-size:13px; font-weight:500; color:var(--text); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.db-stock-count { font-size:13px; font-weight:700; color:#e24b4a; white-space:nowrap; }
+.db-stock-unit  { font-size:11px; font-weight:400; color:var(--text-dim); }
 
-            <a href="{{ route('shop.transfers.request') }}"
-               class="flex items-center space-x-3 px-5 py-3 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 transition-all duration-200 group border-b border-gray-100">
-                <div class="w-11 h-11 bg-gradient-to-br from-gray-600 to-gray-700 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-gray-900 group-hover:text-gray-700 transition-colors">Request Transfer</p>
-                    <p class="text-xs text-gray-500">Order from warehouse</p>
-                </div>
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
+/* ── Recent Transactions ── */
+.db-txn-row { display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:0.5px solid var(--border); }
+.db-txn-row:last-child { border-bottom:none; }
+.db-txn-icon { width:34px; height:34px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.db-txn-icon svg { width:16px; height:16px; }
+.db-txn-info  { flex:1; min-width:0; }
+.db-txn-title { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.db-txn-date  { font-size:11px; color:var(--text-dim); margin-top:1px; }
+.db-txn-amount { font-size:13px; font-weight:700; font-family:var(--mono); white-space:nowrap; }
+.db-txn-amount.credit { color:#0f6e56; }
+.db-txn-amount.debit  { color:#a32d2d; }
 
-            <a href="{{ route('shop.returns.create') }}"
-               class="flex items-center space-x-3 px-5 py-3 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-100 transition-all duration-200 group border-b border-gray-100">
-                <div class="w-11 h-11 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-gray-900 group-hover:text-red-700 transition-colors">Process Return</p>
-                    <p class="text-xs text-gray-500">Handle customer returns</p>
-                </div>
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
+/* ══════════════════════════════════════════════════════
+   BUSINESS INSIGHTS
+══════════════════════════════════════════════════════ */
+.db-insights-wrap  { display:flex; align-items:stretch; gap:16px; }
+.db-insights-left  { flex:1; }
+.db-insights-head  { display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+.db-insights-star  { width:32px; height:32px; border-radius:8px; background:rgba(83,74,183,.12); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.db-insights-star svg { width:16px; height:16px; color:var(--accent); }
+.db-insights-title { font-size:14px; font-weight:600; color:var(--text); }
+.db-insight-line   { font-size:13px; color:var(--text-sub); line-height:1.65; padding:4px 0; border-bottom:0.5px solid var(--border); }
+.db-insight-line:last-child { border-bottom:none; }
+.db-insights-right { width:140px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:flex-end; }
+</style>
+@endpush
 
-            <a href="{{ route('shop.reports.sales') }}"
-               class="flex items-center space-x-3 px-5 py-3 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-100 transition-all duration-200 group border-b border-gray-100">
-                <div class="w-11 h-11 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-gray-900 group-hover:text-purple-700 transition-colors">Sales Report</p>
-                    <p class="text-xs text-gray-500">View analytics</p>
-                </div>
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
+<livewire:shop.dashboard :shopId="$shopId" />
 
-            @if($lowStockProducts->count() > 0 || $pendingReturns->count() > 0 || $pendingTransfers->count() > 0)
-            <div class="px-5 py-2 bg-gray-100">
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Attention Required</p>
-            </div>
+@push('scripts')
+<script>
+(function () {
+    // ─── Sparkline renderer ───────────────────────────────────────────────
+    function drawSparkline(id, data, color) {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        const W = canvas.width  = canvas.offsetWidth  || 90;
+        const H = canvas.height = canvas.offsetHeight || 36;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+        if (!data || data.length < 2) return;
+        const max = Math.max(...data, 1);
+        const min = Math.min(...data, 0);
+        const range = max - min || 1;
+        const pts = data.map((v, i) => ({
+            x: (i / (data.length - 1)) * W,
+            y: H - 4 - ((v - min) / range) * (H - 8),
+        }));
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, color + '44');
+        grad.addColorStop(1, color + '00');
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, H);
+        pts.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.lineTo(pts[pts.length - 1].x, H);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.beginPath();
+        pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = ctx.lineCap = 'round';
+        ctx.stroke();
 
-            @if($lowStockProducts->count() > 0)
-            <a href="#"
-               class="flex items-center space-x-3 px-5 py-3 bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 transition-all duration-200 group border-b border-orange-200">
-                <div class="w-11 h-11 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 shadow-md animate-pulse">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-orange-900 group-hover:text-orange-700 transition-colors">Low Stock</p>
-                    <p class="text-xs text-orange-700 font-semibold">{{ $lowStockProducts->count() }} products low</p>
-                </div>
-                <svg class="w-5 h-5 text-orange-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
-            @endif
+        // Brief pop-in to confirm the sparkline just refreshed with new data
+        canvas.classList.remove('db-spark-refresh');
+        void canvas.offsetWidth; // force reflow so animation restarts
+        canvas.classList.add('db-spark-refresh');
+    }
 
-            @if($pendingReturns->count() > 0)
-            <a href="#"
-               class="flex items-center space-x-3 px-5 py-3 bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 transition-all duration-200 group border-b border-yellow-200">
-                <div class="w-11 h-11 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-yellow-900 group-hover:text-yellow-700 transition-colors">Pending Returns</p>
-                    <p class="text-xs text-yellow-700 font-semibold">{{ $pendingReturns->count() }} pending</p>
-                </div>
-                <svg class="w-5 h-5 text-yellow-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
-            @endif
+    // ─── Trend chart instance ─────────────────────────────────────────────
+    let trendChart = null;
 
-            @if($pendingTransfers->count() > 0)
-            <a href="#"
-               class="flex items-center space-x-3 px-5 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 transition-all duration-200 group">
-                <div class="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 shadow-md">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-blue-900 group-hover:text-blue-700 transition-colors">Pending Transfers</p>
-                    <p class="text-xs text-blue-700 font-semibold">{{ $pendingTransfers->count() }} awaiting approval</p>
-                </div>
-                <svg class="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
-            @endif
-            @endif
-        </x-slot>
-    </x-floating-action-button>
+    function buildTrendChart(labels, current, prev) {
+        const el = document.getElementById('salesTrendChart');
+        if (!el || typeof Chart === 'undefined') return;
+
+        const yFmt   = v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v;
+        const tooltip = {
+            backgroundColor:'#fff', titleColor:'#3d3d3a', bodyColor:'#73726c',
+            borderColor:'#d3d1c7', borderWidth:0.5, padding:10,
+            callbacks: { label: c => ' ' + Number(c.raw).toLocaleString() + ' RWF' },
+        };
+        const hasPrev = prev && prev.length > 0;
+
+        // Silent in-place update — no re-animation on filter/period change
+        if (trendChart) {
+            trendChart.data.labels           = labels;
+            trendChart.data.datasets[0].data = current;
+            trendChart.data.datasets[1].data = hasPrev ? prev : [];
+            trendChart.data.datasets[1].hidden = !hasPrev;
+            trendChart.update('none');
+            return;
+        }
+
+        // First render — always a line chart, animations disabled
+        trendChart = new Chart(el, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'This Period',
+                        data: current,
+                        borderColor: '#3b6bd4',
+                        backgroundColor: 'rgba(59,107,212,.08)',
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#3b6bd4',
+                        tension: 0.3,
+                        fill: true,
+                    },
+                    {
+                        label: 'Previous Period',
+                        data: hasPrev ? prev : [],
+                        hidden: !hasPrev,
+                        borderColor: '#b4b2a9',
+                        borderDash: [5, 4],
+                        borderWidth: 1.5,
+                        pointRadius: 2,
+                        tension: 0.3,
+                        fill: false,
+                    },
+                ],
+            },
+            options: {
+                animation: false,
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#888780' } },
+                    y: { grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 11 }, color: '#888780', callback: yFmt } },
+                },
+            },
+        });
+    }
+
+    // ─── Cash Flow donut ─────────────────────────────────────────────────
+    let cfDonut = null;
+
+    function buildCfDonut(cash, momo, rawBank, rawCard) {
+        const el = document.getElementById('cfDonutChart');
+        if (!el || typeof Chart === 'undefined') return;
+        el.width  = 150;
+        el.height = 150;
+
+        // -1 means the method is disabled — omit from chart
+        const segments = [
+            { label:'Cash',  value: cash,    color:'#1d9e75' },
+            { label:'MoMo',  value: momo,    color:'#3b6bd4' },
+            ...(rawBank >= 0 ? [{ label:'Bank', value: rawBank, color:'#8b5cf6' }] : []),
+            ...(rawCard >= 0 ? [{ label:'Card', value: rawCard, color:'#f59e0b' }] : []),
+        ];
+        const total  = segments.reduce((s, x) => s + x.value, 0);
+        const data   = total > 0 ? segments.map(x => x.value) : segments.map(() => 1);
+        const colors = total > 0 ? segments.map(x => x.color) : segments.map(() => '#e5e4e0');
+        const labels = segments.map(x => x.label);
+
+        if (cfDonut) {
+            cfDonut.data.labels                      = labels;
+            cfDonut.data.datasets[0].data            = data;
+            cfDonut.data.datasets[0].backgroundColor = colors;
+            cfDonut.update('none');
+            return;
+        }
+        cfDonut = new Chart(el, {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data, backgroundColor: colors, borderColor:'#fff', borderWidth:3, hoverBorderWidth:3 }] },
+            options: {
+                animation: false, responsive: false, cutout: '72%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: total > 0,
+                        backgroundColor:'#fff', titleColor:'#3d3d3a', bodyColor:'#73726c',
+                        borderColor:'#d3d1c7', borderWidth:0.5, padding:10,
+                        callbacks: { label: c => ' ' + Number(c.raw).toLocaleString() + ' RWF' },
+                    },
+                },
+            },
+        });
+    }
+
+    // ─── Master init — reads data from the hidden div ─────────────────────
+    function initDashboard() {
+        const el = document.getElementById('db-chart-data');
+        if (!el) return;
+
+        const sparkSales   = JSON.parse(el.dataset.sparkSales   || '[]');
+        const sparkTxns    = JSON.parse(el.dataset.sparkTxns    || '[]');
+        const sparkReturns = JSON.parse(el.dataset.sparkReturns || '[]');
+        const trendLabels  = JSON.parse(el.dataset.trendLabels  || '[]');
+        const trendCurrent = JSON.parse(el.dataset.trendCurrent || '[]');
+        const trendPrev    = JSON.parse(el.dataset.trendPrev    || '[]');
+        const cfCash = parseFloat(el.dataset.cfCash || '0');
+        const cfMomo = parseFloat(el.dataset.cfMomo || '0');
+        const cfBank = parseFloat(el.dataset.cfBank || '0');
+        const cfCard = parseFloat(el.dataset.cfCard || '-1');
+
+        drawSparkline('sp-sales',   sparkSales,   '#3b82f6');
+        drawSparkline('sp-txns',    sparkTxns,    '#10b981');
+        drawSparkline('sp-returns', sparkReturns, '#f97316');
+        buildTrendChart(trendLabels, trendCurrent, trendPrev);
+        buildCfDonut(cfCash, cfMomo, cfBank, cfCard);
+    }
+
+    // Schedules initDashboard safely past Livewire's DOM morph cycle
+    function scheduleInit() {
+        requestAnimationFrame(() => requestAnimationFrame(initDashboard));
+    }
+
+    // Initial page load — fire after Livewire has hydrated the component
+    document.addEventListener('livewire:initialized', scheduleInit);
+
+    // SPA navigation (Livewire navigate) — re-init on every page arrival
+    document.addEventListener('livewire:navigated', scheduleInit);
+
+    // Filter changes — re-draw after every Livewire commit
+    document.addEventListener('livewire:init', () => {
+        Livewire.hook('commit', ({ succeed }) => {
+            succeed(() => {
+                if (document.getElementById('db-chart-data')) {
+                    scheduleInit();
+                }
+            });
+        });
+    });
+
+    // Fallback: plain DOMContentLoaded in case livewire:initialized already fired
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scheduleInit);
+    } else {
+        scheduleInit();
+    }
+
+})();
+</script>
+@endpush
+
 </x-app-layout>

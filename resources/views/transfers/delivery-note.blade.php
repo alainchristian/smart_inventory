@@ -9,7 +9,7 @@
 
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 13px;
+            font-size:16px;
             color: #1a1a2e;
             background: #fff;
             padding: 0;
@@ -30,16 +30,16 @@
             padding-bottom: 18px;
             margin-bottom: 20px;
         }
-        .doc-header .brand { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+        .doc-header .brand { font-size:26px; font-weight: 800; letter-spacing: -0.5px; }
         .doc-header .doc-type { text-align: right; }
-        .doc-header .doc-type .title { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .doc-header .doc-type .number { font-size: 13px; color: #555; margin-top: 3px; font-family: monospace; }
+        .doc-header .doc-type .title { font-size:24px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .doc-header .doc-type .number { font-size:16px; color: #555; margin-top: 3px; font-family: monospace; }
         .doc-header .doc-type .status-badge {
             display: inline-block;
             margin-top: 6px;
             padding: 3px 10px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size:13px;
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -63,7 +63,7 @@
         .info-card .card-head {
             background: #f5f5f5;
             padding: 8px 14px;
-            font-size: 10px;
+            font-size:12px;
             font-weight: 700;
             letter-spacing: 0.8px;
             text-transform: uppercase;
@@ -71,8 +71,8 @@
             border-bottom: 1px solid #e0e0e0;
         }
         .info-card .card-body { padding: 12px 14px; }
-        .info-card .location-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
-        .info-card .location-detail { font-size: 12px; color: #555; line-height: 1.5; }
+        .info-card .location-name { font-size:18px; font-weight: 700; margin-bottom: 3px; }
+        .info-card .location-detail { font-size:14px; color: #555; line-height: 1.5; }
 
         /* ── Transporter card ── */
         .transporter-row {
@@ -94,12 +94,12 @@
             border: 1px solid #e0e0e0;
         }
         .meta-item { }
-        .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #888; }
-        .meta-value { font-size: 13px; font-weight: 600; color: #1a1a2e; margin-top: 2px; }
+        .meta-label { font-size:12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #888; }
+        .meta-value { font-size:16px; font-weight: 600; color: #1a1a2e; margin-top: 2px; }
 
         /* ── Section heading ── */
         .section-heading {
-            font-size: 11px;
+            font-size:13px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
@@ -121,7 +121,7 @@
             color: #fff;
             padding: 9px 12px;
             text-align: left;
-            font-size: 11px;
+            font-size:13px;
             font-weight: 600;
             letter-spacing: 0.4px;
         }
@@ -170,8 +170,8 @@
             height: 44px;
             margin-bottom: 8px;
         }
-        .sig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #444; }
-        .sig-name  { font-size: 12px; color: #666; margin-top: 3px; }
+        .sig-label { font-size:13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #444; }
+        .sig-name  { font-size:14px; color: #666; margin-top: 3px; }
 
         /* ── Footer ── */
         .doc-footer {
@@ -179,7 +179,7 @@
             padding-top: 12px;
             border-top: 1px solid #ddd;
             text-align: center;
-            font-size: 11px;
+            font-size:13px;
             color: #999;
         }
 
@@ -192,7 +192,7 @@
             color: white;
             border: none;
             border-radius: 6px;
-            font-size: 14px;
+            font-size:17px;
             font-weight: 600;
             cursor: pointer;
             letter-spacing: 0.3px;
@@ -206,7 +206,34 @@
             thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             tfoot td  { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
-    </style>
+    
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+</style>
 </head>
 <body>
 @php
@@ -228,7 +255,7 @@
     <div class="doc-header">
         <div>
             <div class="brand">Smart Inventory</div>
-            <div style="font-size:12px;color:#666;margin-top:4px;">Warehouse Management System</div>
+            <div style="font-size:14px;color:#666;margin-top:4px;">Warehouse Management System</div>
         </div>
         <div class="doc-type">
             <div class="title">Delivery Note</div>
@@ -346,7 +373,7 @@
             @forelse ($transfer->boxes as $i => $tb)
             @php $box = $tb->box; @endphp
             <tr>
-                <td style="color:#999;font-size:11px">{{ $i + 1 }}</td>
+                <td style="color:#999;font-size:13px">{{ $i + 1 }}</td>
                 <td style="font-family:monospace;font-weight:600;">{{ $box?->box_code ?? '—' }}</td>
                 <td>{{ $box?->product?->name ?? '—' }}</td>
                 <td>
@@ -433,7 +460,7 @@
         <button class="print-btn" onclick="window.print()">
             Print / Save as PDF
         </button>
-        <div style="margin-top:10px;font-size:12px;color:#999">Use your browser's Print function to save as PDF</div>
+        <div style="margin-top:10px;font-size:14px;color:#999">Use your browser's Print function to save as PDF</div>
     </div>
 
 </div>

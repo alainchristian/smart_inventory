@@ -2,21 +2,38 @@
 @push('styles')
 <style>
 .is-page        { padding:28px 0 80px; }
-.is-inner       { max-width:960px; margin:0 auto; padding:0 20px; }
+.is-inner       { max-width:1200px; margin:0 auto; padding:0 20px; }
 .is-header      { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
-.is-filters     { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
-.is-presets     { display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
+.is-filters     { background:white; border:1px solid var(--border); border-radius:14px;
+                  overflow:hidden; margin-bottom:20px;
+                  box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+.is-presets     { display:flex; gap:4px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+                  padding:10px 14px; border-bottom:1px solid var(--border); }
 .is-presets::-webkit-scrollbar { display:none; }
-.is-preset-btn  { padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;
-                  border:1px solid var(--border); background:var(--surface2); color:var(--text-dim);
-                  transition:all 0.15s; white-space:nowrap; flex-shrink:0; }
-.is-preset-btn.active, .is-preset-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
-.is-filter-row  { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.is-date-input  { padding:7px 10px; border-radius:8px; font-size:12px; border:1px solid var(--border);
-                  background:var(--surface2); color:var(--text); flex:1; min-width:120px; }
-.is-shop-select { padding:7px 10px; border-radius:8px; font-size:12px; border:1px solid var(--border);
-                  background:var(--surface2); color:var(--text); cursor:pointer; flex:1; min-width:140px; }
-.is-card        { border-radius:14px; overflow:hidden; border:1px solid var(--border); background:var(--surface); }
+.is-preset-btn  { padding:5px 11px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;
+                  border:1px solid transparent; background:transparent; color:var(--text-dim);
+                  transition:all 0.12s; white-space:nowrap; flex-shrink:0; font-family:var(--font); }
+.is-preset-btn:hover { background:var(--surface2); color:var(--text); border-color:var(--border); }
+.is-preset-btn.active { background:var(--accent); color:white; border-color:var(--accent);
+                        box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+.is-filter-row  { display:flex; gap:0; align-items:center; }
+.is-filter-seg  { display:flex; align-items:center; gap:6px; padding:8px 14px;
+                  border-right:1px solid var(--border); flex-shrink:0; }
+.is-filter-seg-grow { flex:1; min-width:0; }
+.is-filter-seg:last-child { border-right:none; }
+.is-date-input  { padding:0; border:none; background:transparent; color:var(--text);
+                  font-size:13px; font-weight:600; font-family:var(--font); cursor:pointer;
+                  width:110px; outline:none; }
+.is-date-input::-webkit-calendar-picker-indicator { opacity:0.4; cursor:pointer; margin-left:2px; }
+.is-date-input:focus { color:var(--accent); }
+.is-shop-select { padding:0; border:none; background:transparent; color:var(--text);
+                  font-size:13px; font-weight:600; font-family:var(--font); cursor:pointer;
+                  outline:none; flex:1; min-width:0; }
+.is-shop-select:focus { color:var(--accent); }
+.is-seg-label   { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+                  color:var(--text-dim); white-space:nowrap; }
+.is-card        { border-radius:14px; overflow:hidden; border:1px solid var(--border); background:white;
+                  box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .is-card-head   { padding:14px 20px; background:var(--surface2); border-bottom:1px solid var(--border);
                   display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .is-table       { width:100%; border-collapse:collapse; }
@@ -72,9 +89,11 @@
     .is-section-hd { padding:6px 12px 3px; }
     .is-row-indent { padding-left:22px !important; }
     .is-col-num    { width:120px; }
-    .is-filter-row { flex-direction:column; align-items:stretch; }
-    .is-date-input,
-    .is-shop-select { min-width:0; width:100%; flex:none; box-sizing:border-box; }
+    .is-filter-row { flex-wrap:wrap; }
+    .is-filter-seg { border-right:none; border-bottom:1px solid var(--border); width:100%; }
+    .is-filter-seg:last-child { border-bottom:none; }
+    .is-date-input { width:auto; }
+    .is-shop-select { min-width:0; }
 }
 </style>
 @endpush
@@ -132,19 +151,30 @@
 
         {{-- Date range + shop filter --}}
         <div class="is-filter-row">
-            <input type="date" wire:model.live="dateFrom"
-                   class="is-date-input"
-                   onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-            <span class="is-date-sep" style="font-size:12px;color:var(--text-dim);flex-shrink:0;">to</span>
-            <input type="date" wire:model.live="dateTo"
-                   class="is-date-input"
-                   onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-            <select wire:model.live="locationFilter" class="is-shop-select">
-                <option value="all">All Shops</option>
-                @foreach ($shops as $shop)
-                    <option value="shop:{{ $shop['id'] }}">{{ $shop['name'] }}</option>
-                @endforeach
-            </select>
+            <div class="is-filter-seg">
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     stroke-width="2" style="flex-shrink:0;color:var(--text-dim);">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <input type="date" wire:model.live="dateFrom" class="is-date-input">
+                <span style="font-size:13px;color:var(--text-dim);flex-shrink:0;">→</span>
+                <input type="date" wire:model.live="dateTo" class="is-date-input">
+            </div>
+            <div class="is-filter-seg is-filter-seg-grow">
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     stroke-width="2" style="flex-shrink:0;color:var(--text-dim);">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                    <polyline stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <select wire:model.live="locationFilter" class="is-shop-select">
+                    <option value="all">All Shops</option>
+                    @foreach ($shops as $shop)
+                        <option value="shop:{{ $shop['id'] }}">{{ $shop['name'] }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
 
     </div>
@@ -341,7 +371,7 @@
                 <tr><td colspan="4" class="is-section-hd">Operating Expenses</td></tr>
 
                 @forelse ($s['expenses_by_category'] as $exp)
-                <tr style="border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+                <tr style="border-bottom:1px solid var(--border);background:white;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='white'">
                     <td class="is-row-label is-row-indent">
                         {{ $exp['category'] }}
                         <span style="font-size:11px;color:var(--text-dim);margin-left:4px;">({{ $exp['count'] }})</span>

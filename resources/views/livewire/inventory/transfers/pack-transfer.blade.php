@@ -21,7 +21,7 @@
     background:var(--surface);
 }
 .pt-card-title {
-    font-size:13px;font-weight:700;letter-spacing:.6px;
+    font-size:16px;font-weight:700;letter-spacing:.6px;
     text-transform:uppercase;color:var(--text-sub);
     display:flex;align-items:center;gap:6px;
 }
@@ -34,8 +34,8 @@
     padding:14px 18px;border:1px solid var(--border);gap:0;
 }
 .pt-route-node  { flex:1; }
-.pt-route-label { font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim); }
-.pt-route-name  { font-size:17px;font-weight:700;color:var(--text);margin-top:3px; }
+.pt-route-label { font-size:14px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim); }
+.pt-route-name  { font-size:20px;font-weight:700;color:var(--text);margin-top:3px; }
 .pt-route-arrow {
     width:34px;height:34px;border-radius:50%;
     background:var(--accent-dim);color:var(--accent);
@@ -52,14 +52,14 @@
     flex:1;padding:11px 14px;
     background:var(--surface);color:var(--text);
     border:1.5px solid var(--border-hi);border-radius:8px;
-    font-size:18px;font-family:var(--mono);font-weight:600;outline:none;
+    font-size:22px;font-family:var(--mono);font-weight:600;outline:none;
     transition:border-color var(--tr),box-shadow var(--tr);
 }
 .pt-scan-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow); }
 .pt-scan-input::placeholder { color:var(--text-dim);font-weight:500; }
 .pt-scan-btn {
     padding:11px 20px;background:var(--accent);color:#fff;
-    border:none;border-radius:8px;font-size:17px;font-weight:700;
+    border:none;border-radius:8px;font-size:20px;font-weight:700;
     font-family:var(--font);cursor:pointer;white-space:nowrap;
     transition:background var(--tr),transform var(--tr);
     box-shadow:0 2px 6px var(--accent-glow);
@@ -77,7 +77,7 @@
     display:flex;align-items:center;justify-content:space-between;
     padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
 }
-.pt-product-name { font-size:17px;font-weight:700;color:var(--text);line-height:1.4; }
+.pt-product-name { font-size:20px;font-weight:700;color:var(--text);line-height:1.4; }
 .pt-progress-wrap {
     display:flex;align-items:center;gap:10px;
     padding:14px 16px;
@@ -92,7 +92,7 @@
 .pt-progress-bar.partial  { background:linear-gradient(90deg, var(--amber) 0%, #f59e0b 100%); }
 .pt-progress-bar.empty    { background:var(--surface3); }
 .pt-progress-label {
-    font-size:14px;font-weight:700;font-family:var(--mono);
+    font-size:17px;font-weight:700;font-family:var(--mono);
     color:var(--text-sub);white-space:nowrap;
     padding:2px 8px;background:var(--surface2);border-radius:6px;
 }
@@ -106,18 +106,18 @@
 .pt-box-item:last-child { border-bottom:none; }
 .pt-box-item:hover { background:var(--surface2); }
 .pt-box-code {
-    font-size:14px;font-family:var(--mono);font-weight:700;
+    font-size:17px;font-family:var(--mono);font-weight:700;
     color:var(--accent);background:var(--accent-dim);
     padding:4px 10px;border-radius:6px;white-space:nowrap;
     border:1px solid rgba(59,111,212,.15);
 }
-.pt-box-product { font-size:16px;color:var(--text);font-weight:600;flex:1;line-height:1.4; }
-.pt-box-items   { font-size:14px;color:var(--text-dim);font-family:var(--mono);font-weight:600; }
+.pt-box-product { font-size:19px;color:var(--text);font-weight:600;flex:1;line-height:1.4; }
+.pt-box-items   { font-size:17px;color:var(--text-dim);font-family:var(--mono);font-weight:600; }
 
 /* Flash */
 .pt-flash {
     display:flex;align-items:flex-start;gap:10px;
-    padding:12px 16px;border-radius:10px;border:1px solid;font-size:17px;
+    padding:12px 16px;border-radius:10px;border:1px solid;font-size:20px;
     line-height:1.5;
 }
 .pt-flash svg { flex-shrink:0; }
@@ -129,7 +129,7 @@
     width:100%;padding:11px 14px;
     background:var(--surface);color:var(--text);
     border:1.5px solid var(--border-hi);border-radius:8px;
-    font-size:17px;font-family:var(--font);outline:none;
+    font-size:20px;font-family:var(--font);outline:none;
     transition:border-color var(--tr),box-shadow var(--tr);
 }
 .pt-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow); }
@@ -143,7 +143,7 @@
 .pt-btn {
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
     padding:11px 24px;border-radius:9px;border:none;cursor:pointer;
-    font-size:17px;font-weight:700;font-family:var(--font);
+    font-size:20px;font-weight:700;font-family:var(--font);
     transition:background var(--tr),box-shadow var(--tr),transform var(--tr),opacity var(--tr);
 }
 .pt-btn:active { transform:scale(.97); }
@@ -157,43 +157,43 @@
 .pt-btn-primary:active:not(:disabled) { transform:scale(.98); }
 
 .pt-field-label {
-    font-size:13px;font-weight:700;letter-spacing:.5px;
+    font-size:16px;font-weight:700;letter-spacing:.5px;
     text-transform:uppercase;color:var(--text-sub);margin-bottom:6px;display:block;
 }
-.pt-field-error { font-size:14px;color:var(--red);margin-top:4px;font-weight:600; }
+.pt-field-error { font-size:17px;color:var(--red);margin-top:4px;font-weight:600; }
 
 @media(max-width:768px) {
     .pt-card { border-radius:10px; }
     .pt-card-head { padding:16px; flex-wrap:wrap; gap:10px; }
     .pt-card-body { padding:18px; }
-    .pt-card-title { font-size:14px; }
+    .pt-card-title { font-size:17px; }
 
     /* Route */
     .pt-route { flex-direction:column; gap:14px; text-align:center; padding:16px; }
     .pt-route-node { text-align:center !important; }
     .pt-route-arrow { transform:rotate(90deg); margin:4px auto; }
-    .pt-route-label { font-size:13px; }
-    .pt-route-name { font-size:18px; }
+    .pt-route-label { font-size:16px; }
+    .pt-route-name { font-size:22px; }
 
     /* Scan section */
     .pt-scan-bar { gap:10px; padding:16px; }
-    .pt-scan-input { font-size:19px; padding:12px 14px; }
-    .pt-scan-btn { padding:12px 20px; font-size:18px; font-weight:700; }
+    .pt-scan-input { font-size:23px; padding:12px 14px; }
+    .pt-scan-btn { padding:12px 20px; font-size:22px; font-weight:700; }
 
     /* Progress */
     .pt-product-head { padding:14px 16px; flex-wrap:wrap; gap:10px; }
-    .pt-product-name { font-size:18px; }
+    .pt-product-name { font-size:22px; }
     .pt-progress-wrap { flex-direction:column; gap:10px; align-items:stretch; }
-    .pt-progress-label { text-align:right; font-size:16px; }
+    .pt-progress-label { text-align:right; font-size:19px; }
 
     /* Packed boxes */
     .pt-box-item { padding:12px 14px; flex-wrap:wrap; gap:10px; }
-    .pt-box-code { font-size:14px; padding:4px 10px; }
-    .pt-box-product { font-size:17px; }
-    .pt-box-items { font-size:16px; }
+    .pt-box-code { font-size:17px; padding:4px 10px; }
+    .pt-box-product { font-size:20px; }
+    .pt-box-items { font-size:19px; }
 
     /* Buttons */
-    .pt-btn-primary { width:100%; font-size:19px; padding:13px 24px; }
+    .pt-btn-primary { width:100%; font-size:23px; padding:13px 24px; }
 }
 
 @media(max-width:640px) {
@@ -203,41 +203,41 @@
     .pt-card-body { padding:16px; }
 
     /* Header */
-    .pt-card-head > div > span:first-child { font-size:22px; }
-    .pt-card-head > div > span:nth-child(2) { font-size:12px; padding:3px 10px; }
-    .pt-card-head > span { font-size:13px; }
+    .pt-card-head > div > span:first-child { font-size:26px; }
+    .pt-card-head > div > span:nth-child(2) { font-size:14px; padding:3px 10px; }
+    .pt-card-head > span { font-size:16px; }
 
     /* Route */
     .pt-route { padding:14px; gap:10px; }
-    .pt-route-label { font-size:12px; }
-    .pt-route-name { font-size:17px; }
+    .pt-route-label { font-size:14px; }
+    .pt-route-name { font-size:20px; }
 
     /* Scan */
     .pt-scan-bar { padding:14px; gap:10px; }
-    .pt-scan-input { font-size:18px; padding:11px 13px; }
-    .pt-scan-btn { padding:11px 18px; font-size:17px; }
+    .pt-scan-input { font-size:22px; padding:11px 13px; }
+    .pt-scan-btn { padding:11px 18px; font-size:20px; }
 
     /* Flash messages */
-    .pt-flash { font-size:16px; padding:10px 14px; }
+    .pt-flash { font-size:19px; padding:10px 14px; }
 
     /* Progress */
-    .pt-product-name { font-size:17px; }
-    .pt-product-head span { font-size:13px !important; }
-    .pt-progress-label { font-size:14px; }
+    .pt-product-name { font-size:20px; }
+    .pt-product-head span { font-size:16px !important; }
+    .pt-progress-label { font-size:17px; }
 
     /* Boxes */
     .pt-box-item { padding:10px 12px; gap:8px; }
-    .pt-box-code { font-size:13px; padding:3px 9px; }
-    .pt-box-product { font-size:16px; }
-    .pt-box-items { font-size:14px; }
+    .pt-box-code { font-size:16px; padding:3px 9px; }
+    .pt-box-product { font-size:19px; }
+    .pt-box-items { font-size:17px; }
 
     /* Ship section */
-    .pt-select { font-size:18px; padding:11px 13px; }
-    .pt-field-label { font-size:12px; }
-    .pt-btn-primary { font-size:18px; padding:12px 22px; }
+    .pt-select { font-size:22px; padding:11px 13px; }
+    .pt-field-label { font-size:14px; }
+    .pt-btn-primary { font-size:22px; padding:12px 22px; }
 
     /* Helper text */
-    div[style*="font-size:14px"] p { font-size:16px !important; line-height:1.5; }
+    div[style*="font-size:17px"] p { font-size:19px !important; line-height:1.5; }
 }
 
 @keyframes spin { to { transform:rotate(360deg) } }
@@ -276,13 +276,13 @@
 @media(max-width:600px) {
     .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
     .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
+    .tl-step-num  { font-size:24px; }
     .tl-step-sub  { display:none; }
     .tl-card-top    { flex-direction:column; padding:0 14px; }
     .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
     .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
     .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-chip        { padding:4px 10px; font-size:13px; }
     .tl-search      { width:100%; margin-left:0; margin-top:6px; }
     .tl-search input{ width:100%; }
     .tl-route-dash-line { width:20px; }
@@ -290,7 +290,7 @@
     .tl-action      { flex:1; justify-content:center; }
     .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
     .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
+    .tl-page-header-left h1 { font-size:24px; }
     .tl-new-btn             { width:100%; justify-content:center; }
 }
 \n
@@ -341,13 +341,13 @@
     <div class="pt-card">
         <div class="pt-card-head" style="min-height:auto">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1">
-                <span style="font-size:24px;font-weight:800;color:var(--text);line-height:1.2">{{ $transfer->transfer_number }}</span>
-                <span style="font-size:13px;font-weight:700;padding:3px 12px;border-radius:999px;
+                <span style="font-size:29px;font-weight:800;color:var(--text);line-height:1.2">{{ $transfer->transfer_number }}</span>
+                <span style="font-size:16px;font-weight:700;padding:3px 12px;border-radius:999px;
                              background:var(--accent-dim);color:var(--accent);border:1px solid rgba(59,111,212,.2);white-space:nowrap">
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <span style="font-size:14px;color:var(--text-dim);white-space:nowrap">{{ $transfer->requested_at?->format('M d, Y') }}</span>
+            <span style="font-size:17px;color:var(--text-dim);white-space:nowrap">{{ $transfer->requested_at?->format('M d, Y') }}</span>
         </div>
         <div class="pt-card-body">
             <div class="pt-route">
@@ -402,13 +402,13 @@
              x-on:click.stop>
 
             {{-- Product name --}}
-            <div style="font-size:19px;font-weight:800;color:var(--text);
+            <div style="font-size:23px;font-weight:800;color:var(--text);
                         margin-bottom:4px;text-align:center">
                 📦 {{ $pendingProductName }}
             </div>
 
             {{-- Still needed subtitle --}}
-            <div style="font-size:14px;color:var(--text-sub);text-align:center;margin-bottom:20px">
+            <div style="font-size:17px;color:var(--text-sub);text-align:center;margin-bottom:20px">
                 {{ $pendingAlreadyAssigned }} assigned
                 &nbsp;·&nbsp;
                 <strong style="color:var(--text)">
@@ -426,20 +426,20 @@
                 max="{{ $pendingMaxQty }}"
                 x-init="$nextTick(() => $el.select())"
                 style="width:100%;padding:14px;border:2px solid var(--accent);
-                       border-radius:12px;font-size:32px;font-weight:800;text-align:center;
+                       border-radius:12px;font-size:38px;font-weight:800;text-align:center;
                        background:var(--surface);color:var(--text);font-family:var(--mono);
                        outline:none;box-sizing:border-box;display:block"
             >
 
             @error('pendingQty')
-                <div style="font-size:13px;color:var(--red);margin-top:6px;text-align:center">
+                <div style="font-size:16px;color:var(--red);margin-top:6px;text-align:center">
                     {{ $message }}
                 </div>
             @enderror
 
             {{-- Live "after adding" indicator --}}
             @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
-            <div style="font-size:13px;color:var(--text-dim);margin-top:10px;text-align:center">
+            <div style="font-size:16px;color:var(--text-dim);margin-top:10px;text-align:center">
                 After adding:
                 <strong style="color:{{ $afterAdd === 0 ? 'var(--green)' : 'var(--text)' }}">
                     {{ $afterAdd }} box{{ $afterAdd === 1 ? '' : 'es' }} still needed
@@ -447,13 +447,13 @@
             </div>
 
             {{-- Hint --}}
-            <div style="font-size:12px;color:var(--text-dim);text-align:center;margin-top:14px;
+            <div style="font-size:14px;color:var(--text-dim);text-align:center;margin-top:14px;
                         padding-top:14px;border-top:1px solid var(--border)">
                 Press <kbd style="background:var(--surface2);border:1px solid var(--border);
-                                  border-radius:4px;padding:1px 5px;font-size:12px">Enter</kbd>
+                                  border-radius:4px;padding:1px 5px;font-size:14px">Enter</kbd>
                 to confirm &nbsp;·&nbsp;
                 <kbd style="background:var(--surface2);border:1px solid var(--border);
-                            border-radius:4px;padding:1px 5px;font-size:12px">Esc</kbd>
+                            border-radius:4px;padding:1px 5px;font-size:14px">Esc</kbd>
                 to cancel
             </div>
         </div>
@@ -470,7 +470,7 @@
                 $totalNeeded = collect($packingSummary)->sum('boxes_needed');
                 $totalRemaining = $totalNeeded - $totalPacked;
             @endphp
-            <span style="font-size:16px;font-weight:700;font-family:var(--mono);
+            <span style="font-size:19px;font-weight:700;font-family:var(--mono);
                          background:{{ $totalRemaining > 0 ? 'var(--amber-dim)' : 'var(--green-dim)' }};
                          color:{{ $totalRemaining > 0 ? 'var(--amber)' : 'var(--green)' }};
                          padding:4px 12px;border-radius:6px;border:1px solid {{ $totalRemaining > 0 ? 'rgba(217,119,6,.2)' : 'rgba(22,163,74,.2)' }}">
@@ -491,14 +491,14 @@
                         <div style="display:flex;align-items:center;gap:10px">
                             <span class="pt-product-name">{{ $summary['product_name'] }}</span>
                             @if(!$summary['complete'])
-                                <span style="font-size:14px;font-weight:700;font-family:var(--mono);
+                                <span style="font-size:17px;font-weight:700;font-family:var(--mono);
                                              color:var(--amber);background:var(--amber-dim);
                                              padding:2px 8px;border-radius:5px">
                                     {{ $remaining }} left
                                 </span>
                             @endif
                         </div>
-                        <span style="font-size:13px;font-family:var(--mono);color:var(--text-dim);
+                        <span style="font-size:16px;font-family:var(--mono);color:var(--text-dim);
                                      background:var(--surface3);padding:2px 8px;border-radius:5px">
                             {{ $summary['barcode'] }}
                         </span>
@@ -527,7 +527,7 @@
     <div class="pt-card">
         <div class="pt-card-head">
             <span class="pt-card-title">Packed Boxes</span>
-            <span style="font-size:14px;font-weight:700;font-family:var(--mono);
+            <span style="font-size:17px;font-weight:700;font-family:var(--mono);
                          background:var(--accent-dim);color:var(--accent);padding:3px 10px;border-radius:6px">
                 {{ count($packedBoxes) }} boxes
             </span>
@@ -558,7 +558,7 @@
             <div>
                 <label class="pt-field-label">
                     Transporter <span style="color:var(--red)">*</span>
-                    <span style="font-size:13px;color:var(--text-dim);font-weight:normal;margin-left:8px">({{ count($transporters) }} available)</span>
+                    <span style="font-size:16px;color:var(--text-dim);font-weight:normal;margin-left:8px">({{ count($transporters) }} available)</span>
                 </label>
                 <select wire:model="transporter_id" class="pt-select" style="color:var(--text);">
                     <option value="">Select transporter…</option>
@@ -574,7 +574,7 @@
 
                 {{-- Debug: Show transporter data --}}
                 @if(count($transporters) === 0)
-                    <div style="margin-top:8px;padding:10px;background:var(--red-glow);color:var(--red);border-radius:6px;font-size:16px">
+                    <div style="margin-top:8px;padding:10px;background:var(--red-glow);color:var(--red);border-radius:6px;font-size:19px">
                         ⚠️ No active transporters found. Please create transporters in the system.
                     </div>
                 @endif
@@ -599,7 +599,7 @@
                 <span wire:loading.remove wire:target="shipTransfer">Ship Transfer</span>
                 <span wire:loading wire:target="shipTransfer">Shipping…</span>
             </button>
-            <p style="font-size:14px;color:var(--text-dim);text-align:center;margin-top:-8px">
+            <p style="font-size:17px;color:var(--text-dim);text-align:center;margin-top:-8px">
                 Partial shipments are allowed. Pack at least one box before shipping.
             </p>
         </div>

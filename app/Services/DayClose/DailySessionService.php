@@ -184,7 +184,7 @@ class DailySessionService
             throw new \Exception('Session is not open.');
         }
 
-        if (! $user->isShopManager() || $user->location_id !== $session->shop_id) {
+        if (! $user->isOwner() && (! $user->isShopManager() || $user->location_id !== $session->shop_id)) {
             abort(403, 'You can only close sessions for your own shop.');
         }
 

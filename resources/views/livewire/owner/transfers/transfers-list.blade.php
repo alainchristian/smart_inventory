@@ -6,7 +6,7 @@
 
 /* ── Page header */
 .otl-page-header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.otl-page-header-left h1 { font-size:35px; font-weight:800; letter-spacing:-.5px; color:var(--text); margin:0; }
+.otl-page-header-left h1 { font-size:42px; font-weight:800; letter-spacing:-.5px; color:var(--text); margin:0; }
 
 /* ── Status dropdown */
 .otl-status-dropdown { position:relative; }
@@ -14,7 +14,7 @@
     display:flex; align-items:center; gap:8px;
     padding:10px 16px; background:var(--surface); color:var(--text);
     border:1.5px solid var(--border-hi); border-radius:8px;
-    font-size:17px; font-weight:600; cursor:pointer;
+    font-size:20px; font-weight:600; cursor:pointer;
     transition:border-color .15s, box-shadow .15s;
 }
 .otl-dropdown-btn:hover { border-color:var(--accent); }
@@ -30,13 +30,13 @@
 .otl-dropdown-item {
     display:flex; align-items:center; justify-content:space-between;
     padding:10px 12px; border-radius:6px; cursor:pointer;
-    font-size:17px; font-weight:600; color:var(--text);
+    font-size:20px; font-weight:600; color:var(--text);
     transition:background .15s;
 }
 .otl-dropdown-item:hover { background:var(--surface2); }
 .otl-dropdown-item.active { background:var(--accent-dim); color:var(--accent); }
 .otl-dropdown-count {
-    font-size:14px; font-weight:700; padding:2px 8px;
+    font-size:17px; font-weight:700; padding:2px 8px;
     background:var(--surface3); border-radius:12px;
     color:var(--text-sub);
 }
@@ -75,10 +75,10 @@
 
 /* Number + badge row */
 .otl-card-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.otl-num       { font-size:17px; font-weight:800; color:var(--text); letter-spacing:-.2px; }
+.otl-num       { font-size:20px; font-weight:800; color:var(--text); letter-spacing:-.2px; }
 .otl-badge {
     display:inline-flex; align-items:center; gap:4px;
-    padding:2px 9px; border-radius:20px; font-size:14px; font-weight:700;
+    padding:2px 9px; border-radius:20px; font-size:17px; font-weight:700;
     letter-spacing:.5px; text-transform:uppercase;
     background:var(--badge-bg); color:var(--badge-color);
 }
@@ -87,12 +87,12 @@
 /* Urgency flag */
 .otl-urgent {
     display:inline-flex; align-items:center; gap:4px;
-    padding:2px 9px; border-radius:20px; font-size:14px; font-weight:700;
+    padding:2px 9px; border-radius:20px; font-size:17px; font-weight:700;
     background:rgba(217,119,6,.12); color:#d97706;
 }
 
 /* Route */
-.otl-route { display:flex; align-items:center; gap:8px; font-size:17px; }
+.otl-route { display:flex; align-items:center; gap:8px; font-size:20px; }
 .otl-route-node {
     display:inline-flex; align-items:center; gap:5px; font-weight:700; color:var(--text);
 }
@@ -104,7 +104,7 @@
 
 /* Dates */
 .otl-dates { display:flex; gap:14px; flex-wrap:wrap; }
-.otl-date  { font-size:16px; color:var(--text-sub); }
+.otl-date  { font-size:19px; color:var(--text-sub); }
 .otl-date strong { color:var(--text); font-weight:600; }
 
 /* Stats */
@@ -117,8 +117,8 @@
     padding:0 18px; gap:2px; border-right:1px solid var(--border);
 }
 .otl-stat:last-child { border-right:none; }
-.otl-stat-v { font-size:29px; font-weight:800; color:var(--text); line-height:1; }
-.otl-stat-l { font-size:13px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--text-sub); }
+.otl-stat-v { font-size:35px; font-weight:800; color:var(--text); line-height:1; }
+.otl-stat-l { font-size:16px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--text-sub); }
 
 /* Footer */
 .otl-card-foot {
@@ -128,7 +128,7 @@
 }
 .otl-action {
     display:inline-flex; align-items:center; gap:5px;
-    padding:5px 12px; border-radius:var(--rsm,6px); font-size:16px; font-weight:600;
+    padding:5px 12px; border-radius:var(--rsm,6px); font-size:19px; font-weight:600;
     border:1px solid var(--border); cursor:pointer; text-decoration:none;
     background:var(--surface); color:var(--text); transition:all .15s;
 }
@@ -137,16 +137,16 @@
 .otl-action.primary:hover { opacity:.88; }
 .otl-action.warn          { background:#d97706; color:#fff; border-color:#d97706; }
 .otl-action.warn:hover    { opacity:.88; }
-.otl-foot-time { margin-left:auto; font-size:14px; color:var(--text-sub); }
+.otl-foot-time { margin-left:auto; font-size:17px; color:var(--text-sub); }
 
 /* Empty state */
 .otl-empty {
     text-align:center; padding:64px 32px;
     background:var(--surface); border:1px dashed var(--border); border-radius:var(--r);
 }
-.otl-empty-ico { font-size:53px; margin-bottom:16px; }
-.otl-empty h3  { font-size:24px; font-weight:700; color:var(--text); margin:0 0 8px; }
-.otl-empty p   { font-size:19px; color:var(--text-sub); margin:0; }
+.otl-empty-ico { font-size:64px; margin-bottom:16px; }
+.otl-empty h3  { font-size:29px; font-weight:700; color:var(--text); margin:0 0 8px; }
+.otl-empty p   { font-size:23px; color:var(--text-sub); margin:0; }
 
 /* Pagination */
 .otl-pagination { margin-top:4px; }
@@ -158,7 +158,7 @@
 
 @media(max-width:768px) {
     .otl-page-header { flex-direction:column; align-items:stretch; gap:12px; }
-    .otl-page-header h1 { font-size:29px; }
+    .otl-page-header h1 { font-size:35px; }
     .otl-dropdown-btn { width:100%; justify-content:space-between; }
     .otl-dropdown-menu { left:0; right:0; }
     .otl-card-top { flex-direction:column; padding:0 16px; min-height:auto; }
@@ -168,30 +168,30 @@
     .otl-route-dash-line { width:30px; }
     .otl-dates { gap:8px; }
     .otl-card-foot { padding:12px 16px; flex-wrap:wrap; gap:8px; }
-    .otl-action { flex:1; justify-content:center; font-size:14px; }
+    .otl-action { flex:1; justify-content:center; font-size:17px; }
 }
 
 @media(max-width:640px) {
-    .otl-page-header h1 { font-size:26px; }
-    .otl-dropdown-btn { font-size:16px; padding:9px 14px; }
+    .otl-page-header h1 { font-size:31px; }
+    .otl-dropdown-btn { font-size:19px; padding:9px 14px; }
     .otl-card { border-radius:8px; }
     .otl-card-top { padding:0 14px; }
     .otl-card-info { padding:12px 0; }
-    .otl-num { font-size:18px; }
-    .otl-badge { font-size:12px; padding:2px 8px; }
-    .otl-route { font-size:16px; gap:6px; }
+    .otl-num { font-size:22px; }
+    .otl-badge { font-size:14px; padding:2px 8px; }
+    .otl-route { font-size:19px; gap:6px; }
     .otl-route-dash-line { width:20px; }
     .otl-route-node { max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .otl-stat { padding:10px 12px; min-width:80px; border-right:none; border-bottom:1px solid var(--border); }
     .otl-stat:last-child { border-bottom:none; }
-    .otl-stat-v { font-size:24px; }
-    .otl-stat-l { font-size:12px; }
+    .otl-stat-v { font-size:29px; }
+    .otl-stat-l { font-size:14px; }
     .otl-card-foot { padding:10px 14px; gap:6px; }
     .otl-foot-time { width:100%; text-align:center; margin-left:0; margin-top:4px; }
     .otl-empty { padding:48px 24px; }
-    .otl-empty-ico { font-size:42px; margin-bottom:12px; }
-    .otl-empty h3 { font-size:22px; }
-    .otl-empty p { font-size:17px; }
+    .otl-empty-ico { font-size:50px; margin-bottom:12px; }
+    .otl-empty h3 { font-size:26px; }
+    .otl-empty p { font-size:20px; }
     .otl-wrap { gap:16px; }
 }
 
@@ -230,13 +230,13 @@
 @media(max-width:600px) {
     .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
     .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
+    .tl-step-num  { font-size:24px; }
     .tl-step-sub  { display:none; }
     .tl-card-top    { flex-direction:column; padding:0 14px; }
     .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
     .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
     .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-chip        { padding:4px 10px; font-size:13px; }
     .tl-search      { width:100%; margin-left:0; margin-top:6px; }
     .tl-search input{ width:100%; }
     .tl-route-dash-line { width:20px; }
@@ -244,7 +244,7 @@
     .tl-action      { flex:1; justify-content:center; }
     .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
     .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
+    .tl-page-header-left h1 { font-size:24px; }
     .tl-new-btn             { width:100%; justify-content:center; }
 }
 \n

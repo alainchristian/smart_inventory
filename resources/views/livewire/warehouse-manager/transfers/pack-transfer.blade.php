@@ -35,13 +35,13 @@
 @media(max-width:600px) {
     .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
     .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
+    .tl-step-num  { font-size:24px; }
     .tl-step-sub  { display:none; }
     .tl-card-top    { flex-direction:column; padding:0 14px; }
     .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
     .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
     .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-chip        { padding:4px 10px; font-size:13px; }
     .tl-search      { width:100%; margin-left:0; margin-top:6px; }
     .tl-search input{ width:100%; }
     .tl-route-dash-line { width:20px; }
@@ -49,7 +49,7 @@
     .tl-action      { flex:1; justify-content:center; }
     .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
     .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
+    .tl-page-header-left h1 { font-size:24px; }
     .tl-new-btn             { width:100%; justify-content:center; }
 }
 \n
@@ -67,7 +67,34 @@
     .rf-item-top    { flex-wrap:wrap; }
     .rf-qty-ctrl    { width:100%; justify-content:space-between; }
 }
-\n</style>
+\n
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+</style>
 @php
 use App\Enums\TransferStatus;
 @endphp
@@ -79,12 +106,12 @@ use App\Enums\TransferStatus;
             <div class="flex-1">
                 <div class="flex items-center gap-3 mb-4">
                     <h2 class="text-2xl font-bold text-gray-900">{{ $transfer->transfer_number }}</h2>
-                    <span class="px-3 py-1 rounded-full text-base font-medium {{ $transfer->status->color() }}">
+                    <span class="px-3 py-1 rounded-full text-2xl font-medium {{ $transfer->status->color() }}">
                         {{ $transfer->status->label() }}
                     </span>
                 </div>
 
-                <div class="grid grid-cols-3 gap-6 text-base">
+                <div class="grid grid-cols-3 gap-6 text-2xl">
                     <div>
                         <span class="font-medium text-gray-500">Destination</span>
                         <p class="text-gray-900 mt-1">{{ $transfer->toShop->name }}</p>
@@ -109,12 +136,12 @@ use App\Enums\TransferStatus;
             <!-- Scanner Disabled State -->
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div>
-                    <h3 class="text-lg md:text-xl font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
-                    <p class="text-sm md:text-base text-gray-600">Use your phone as a dedicated scanner while working on desktop</p>
+                    <h3 class="text-2xl md:text-2xl font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
+                    <p class="text-2xl md:text-2xl text-gray-600">Use your phone as a dedicated scanner while working on desktop</p>
                 </div>
                 <button type="button"
                         wire:click="generateScannerSession"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold text-base md:text-lg transition-colors">
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold text-2xl md:text-2xl transition-colors">
                     Enable Phone Scanner
                 </button>
             </div>
@@ -131,27 +158,27 @@ use App\Enums\TransferStatus;
                         </span>
                     </div>
                     <div>
-                        <h3 class="text-lg md:text-xl font-semibold text-green-600">📱 Phone Connected</h3>
-                        <p class="text-sm md:text-base text-gray-600">Scanner ready - Point camera at barcodes</p>
+                        <h3 class="text-2xl md:text-2xl font-semibold text-green-600">📱 Phone Connected</h3>
+                        <p class="text-2xl md:text-2xl text-gray-600">Scanner ready - Point camera at barcodes</p>
                     </div>
                 </div>
 
                 <div class="flex gap-2">
                     <button type="button"
                             wire:click="$toggle('showScannerQR')"
-                            class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm md:text-base font-medium transition-colors">
+                            class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-2xl md:text-2xl font-medium transition-colors">
                         Show QR Code
                     </button>
                     <button type="button"
                             wire:click="closeScannerSession"
-                            class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm md:text-base font-medium transition-colors">
+                            class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-2xl md:text-2xl font-medium transition-colors">
                         Disconnect
                     </button>
                 </div>
             </div>
 
             <!-- Session info (collapsible) -->
-            <div class="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-500 flex items-center justify-between">
+            <div class="mt-3 pt-3 border-t border-gray-200 text-2xl text-gray-500 flex items-center justify-between">
                 <span>Session: <code class="bg-gray-100 px-2 py-0.5 rounded font-mono">{{ $scannerSession->session_code }}</code></span>
                 <span>Expires: {{ $scannerSession->expires_at->diffForHumans() }}</span>
             </div>
@@ -169,13 +196,13 @@ use App\Enums\TransferStatus;
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-lg md:text-xl font-semibold text-orange-600">⏱️ Session Expired</h3>
-                        <p class="text-sm md:text-base text-gray-600">Your phone scanner session has expired. Reconnect to continue.</p>
+                        <h3 class="text-2xl md:text-2xl font-semibold text-orange-600">⏱️ Session Expired</h3>
+                        <p class="text-2xl md:text-2xl text-gray-600">Your phone scanner session has expired. Reconnect to continue.</p>
                     </div>
                 </div>
                 <button type="button"
                         wire:click="generateScannerSession"
-                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold text-base md:text-lg transition-colors">
+                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold text-2xl md:text-2xl transition-colors">
                     Reconnect Phone
                 </button>
             </div>
@@ -189,12 +216,12 @@ use App\Enums\TransferStatus;
 
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
                 <div>
-                    <h3 class="text-lg md:text-xl font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
-                    <p class="text-sm md:text-base text-gray-600">Scan QR code with your phone to connect</p>
+                    <h3 class="text-2xl md:text-2xl font-semibold text-gray-900">📱 Phone Scanner Mode</h3>
+                    <p class="text-2xl md:text-2xl text-gray-600">Scan QR code with your phone to connect</p>
                 </div>
                 <button type="button"
                         wire:click="closeScannerSession"
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold text-base md:text-lg transition-colors">
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold text-2xl md:text-2xl transition-colors">
                     Cancel
                 </button>
             </div>
@@ -209,16 +236,16 @@ use App\Enums\TransferStatus;
                             {!! QrCode::size(250)->generate($scannerUrl) !!}
                         </div>
                         <div class="mt-4 bg-indigo-100 rounded-lg p-3">
-                            <p class="text-base font-bold text-indigo-900">📱 PRIMARY METHOD</p>
-                            <p class="text-sm text-indigo-700 mt-1">Open phone camera and point at QR code above</p>
+                            <p class="text-2xl font-bold text-indigo-900">📱 PRIMARY METHOD</p>
+                            <p class="text-2xl text-indigo-700 mt-1">Open phone camera and point at QR code above</p>
                         </div>
                     </div>
 
                     <!-- INSTRUCTIONS & MANUAL CODE (BACKUP - RIGHT SIDE) -->
                     <div class="flex flex-col justify-center">
                         <div class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg p-4 mb-4">
-                            <p class="font-bold mb-3 text-xl">📷 Quick Setup:</p>
-                            <ol class="text-base space-y-2">
+                            <p class="font-bold mb-3 text-2xl">📷 Quick Setup:</p>
+                            <ol class="text-2xl space-y-2">
                                 <li class="flex items-start">
                                     <span class="font-bold mr-2">1.</span>
                                     <span>Open <strong>phone camera app</strong></span>
@@ -240,9 +267,9 @@ use App\Enums\TransferStatus;
 
                         <!-- Alternative Manual Code -->
                         <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
-                            <p class="text-sm text-gray-500 mb-2">Alternative (if camera doesn't work):</p>
-                            <p class="text-sm text-gray-600 mb-2">Go to: <strong class="text-indigo-600">{{ url('/scanner') }}</strong></p>
-                            <p class="text-sm text-gray-600 mb-2">Enter code:</p>
+                            <p class="text-2xl text-gray-500 mb-2">Alternative (if camera doesn't work):</p>
+                            <p class="text-2xl text-gray-600 mb-2">Go to: <strong class="text-indigo-600">{{ url('/scanner') }}</strong></p>
+                            <p class="text-2xl text-gray-600 mb-2">Enter code:</p>
                             <div class="bg-gray-50 px-4 py-2 rounded border border-gray-300">
                                 <p class="text-2xl font-bold text-gray-700 tracking-widest text-center">
                                     {{ $scannerSession->session_code }}
@@ -250,7 +277,7 @@ use App\Enums\TransferStatus;
                             </div>
                         </div>
 
-                        <div class="mt-3 text-sm text-gray-500 text-center">
+                        <div class="mt-3 text-2xl text-gray-500 text-center">
                             ⏱️ Session expires: {{ $scannerSession->expires_at->diffForHumans() }}
                         </div>
                     </div>
@@ -269,8 +296,8 @@ use App\Enums\TransferStatus;
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
             </svg>
             <div class="flex-1">
-                <h3 class="text-xl font-semibold">Scan Box Barcode</h3>
-                <p class="text-indigo-100 text-base">Scan or enter box code to add to transfer</p>
+                <h3 class="text-2xl font-semibold">Scan Box Barcode</h3>
+                <p class="text-indigo-100 text-2xl">Scan or enter box code to add to transfer</p>
             </div>
         </div>
 
@@ -280,10 +307,10 @@ use App\Enums\TransferStatus;
                        wire:model="scanInput"
                        wire:keydown.enter="scanBox"
                        placeholder="Enter box code (e.g., BOX-001)"
-                       class="block w-full px-4 py-3 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-white border-0 text-xl font-mono"
+                       class="block w-full px-4 py-3 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-white border-0 text-2xl font-mono"
                        autofocus>
                 @error('scanInput')
-                    <p class="mt-2 text-base text-red-200">{{ $message }}</p>
+                    <p class="mt-2 text-2xl text-red-200">{{ $message }}</p>
                 @enderror
             </div>
             <button type="button"
@@ -301,10 +328,10 @@ use App\Enums\TransferStatus;
         {{-- Header --}}
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
             <div>
-                <div style="font-size:17px;font-weight:800;color:var(--accent)">
+                <div style="font-size:20px;font-weight:800;color:var(--accent)">
                     📦 {{ $pendingProductName }}
                 </div>
-                <div style="font-size:13px;color:var(--text-sub);margin-top:3px">
+                <div style="font-size:16px;color:var(--text-sub);margin-top:3px">
                     {{ $pendingAlreadyAssigned }} already assigned
                     &nbsp;·&nbsp;
                     <span style="font-weight:700;color:var(--text)">
@@ -313,13 +340,13 @@ use App\Enums\TransferStatus;
                 </div>
             </div>
             <button wire:click="closeQuantityPanel"
-                    style="background:none;border:none;font-size:26px;color:var(--text-dim);
+                    style="background:none;border:none;font-size:31px;color:var(--text-dim);
                            cursor:pointer;line-height:1;padding:0 2px">×</button>
         </div>
 
         {{-- Quantity input --}}
         <div>
-            <label style="display:block;font-size:13px;font-weight:700;color:var(--text-sub);
+            <label style="display:block;font-size:16px;font-weight:700;color:var(--text-sub);
                           text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">
                 How many boxes to add now?
             </label>
@@ -327,14 +354,14 @@ use App\Enums\TransferStatus;
                    wire:keydown.enter="confirmScannedQuantity"
                    type="number" min="1" max="{{ $pendingMaxQty }}"
                    style="width:100%;padding:12px 14px;border:2px solid var(--accent);
-                          border-radius:10px;font-size:29px;font-weight:800;text-align:center;
+                          border-radius:10px;font-size:35px;font-weight:800;text-align:center;
                           background:var(--surface);color:var(--text);font-family:var(--mono);
                           outline:none;box-sizing:border-box">
             @error('pendingQty')
-                <div style="font-size:13px;color:var(--red);margin-top:5px">{{ $message }}</div>
+                <div style="font-size:16px;color:var(--red);margin-top:5px">{{ $message }}</div>
             @enderror
             @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
-            <div style="font-size:13px;color:var(--text-dim);margin-top:6px;text-align:center">
+            <div style="font-size:16px;color:var(--text-dim);margin-top:6px;text-align:center">
                 After adding: <strong>{{ $afterAdd }}</strong> box{{ $afterAdd === 1 ? '' : 'es' }} still needed
             </div>
         </div>
@@ -344,7 +371,7 @@ use App\Enums\TransferStatus;
             <button wire:click="closeQuantityPanel"
                     style="flex:1;padding:11px;border-radius:10px;
                            border:1.5px solid var(--border);background:var(--surface);
-                           font-size:16px;font-weight:700;cursor:pointer;color:var(--text)">
+                           font-size:19px;font-weight:700;cursor:pointer;color:var(--text)">
                 Continue Scanning
             </button>
             <button wire:click="confirmScannedQuantity"
@@ -352,7 +379,7 @@ use App\Enums\TransferStatus;
                     wire:target="confirmScannedQuantity"
                     style="flex:2;padding:11px;border-radius:10px;border:none;
                            background:var(--accent);color:#fff;
-                           font-size:16px;font-weight:800;cursor:pointer;
+                           font-size:19px;font-weight:800;cursor:pointer;
                            box-shadow:0 4px 12px rgba(59,111,212,.3)">
                 <span wire:loading.remove wire:target="confirmScannedQuantity">
                     ✓ Add {{ $pendingQty }} Box{{ (int) $pendingQty === 1 ? '' : 'es' }}
@@ -370,7 +397,7 @@ use App\Enums\TransferStatus;
                 <svg class="h-5 w-5 text-green-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                 </svg>
-                <p class="text-base text-green-800">{{ session('success') }}</p>
+                <p class="text-2xl text-green-800">{{ session('success') }}</p>
             </div>
         </div>
     @endif
@@ -381,14 +408,14 @@ use App\Enums\TransferStatus;
                 <svg class="h-5 w-5 text-red-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                 </svg>
-                <p class="text-base text-red-800">{{ session('error') }}</p>
+                <p class="text-2xl text-red-800">{{ session('error') }}</p>
             </div>
         </div>
     @endif
 
     <!-- Products to Pack -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <h3 class="text-xl font-semibold text-gray-900 mb-6">Products to Pack</h3>
+        <h3 class="text-2xl font-semibold text-gray-900 mb-6">Products to Pack</h3>
 
         <div class="space-y-6">
             @foreach($items as $item)
@@ -404,13 +431,13 @@ use App\Enums\TransferStatus;
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex-1">
                             <div class="flex items-center gap-3 mb-2">
-                                <h4 class="font-semibold text-gray-900 text-xl">{{ $item['product_name'] }}</h4>
+                                <h4 class="font-semibold text-gray-900 text-2xl">{{ $item['product_name'] }}</h4>
                                 @if($isComplete)
-                                    <span class="px-2 py-1 bg-green-600 text-white text-sm font-medium rounded-full">Complete</span>
+                                    <span class="px-2 py-1 bg-green-600 text-white text-2xl font-medium rounded-full">Complete</span>
                                 @endif
                             </div>
 
-                            <div class="text-base text-gray-600 mb-3">
+                            <div class="text-2xl text-gray-600 mb-3">
                                 <span class="font-medium">Progress:</span>
                                 <span class="{{ $isComplete ? 'text-green-600 font-semibold' : 'text-gray-900' }}">
                                     {{ number_format($boxesAssigned) }} / {{ number_format($boxesRequested) }} boxes assigned
@@ -440,17 +467,17 @@ use App\Enums\TransferStatus;
                     <!-- Available Boxes -->
                     @if($availableBoxesForProduct->isNotEmpty())
                         <div class="mt-4 pt-4 border-t border-gray-200">
-                            <p class="text-base font-medium text-gray-700 mb-3">Available Boxes (showing first 5):</p>
+                            <p class="text-2xl font-medium text-gray-700 mb-3">Available Boxes (showing first 5):</p>
                             <div class="grid grid-cols-5 gap-3">
                                 @foreach($availableBoxesForProduct as $box)
                                     <button type="button"
                                             wire:click="scanInput = '{{ $box->box_code }}'; scanBox();"
                                             class="p-3 border-2 border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-colors text-left">
-                                        <div class="font-mono text-sm font-semibold text-gray-900">{{ $box->box_code }}</div>
-                                        <div class="text-sm text-gray-600 mt-1">
+                                        <div class="font-mono text-2xl font-semibold text-gray-900">{{ $box->box_code }}</div>
+                                        <div class="text-2xl text-gray-600 mt-1">
                                             {{ $box->status->label() }}
                                         </div>
-                                        <div class="text-sm text-gray-500">
+                                        <div class="text-2xl text-gray-500">
                                             {{ $box->items_remaining }} items
                                         </div>
                                     </button>
@@ -459,7 +486,7 @@ use App\Enums\TransferStatus;
                         </div>
                     @else
                         <div class="mt-4 pt-4 border-t border-gray-200 text-center py-4">
-                            <p class="text-base text-gray-500">No more available boxes for this product</p>
+                            <p class="text-2xl text-gray-500">No more available boxes for this product</p>
                         </div>
                     @endif
                 </div>
@@ -471,38 +498,38 @@ use App\Enums\TransferStatus;
     @if(!empty($assignedBoxes))
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-semibold text-gray-900">Assigned Boxes ({{ count($assignedBoxes) }})</h3>
+                <h3 class="text-2xl font-semibold text-gray-900">Assigned Boxes ({{ count($assignedBoxes) }})</h3>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Box Code</th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                            <th class="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            <th class="px-6 py-3 text-left text-2xl font-medium text-gray-500 uppercase tracking-wider">Box Code</th>
+                            <th class="px-6 py-3 text-left text-2xl font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th class="px-6 py-3 text-left text-2xl font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-2xl font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                            <th class="px-6 py-3 text-right text-2xl font-medium text-gray-500 uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($assignedBoxes as $box)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="font-mono text-base font-medium text-gray-900">{{ $box['box_code'] }}</span>
+                                    <span class="font-mono text-2xl font-medium text-gray-900">{{ $box['box_code'] }}</span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-2xl text-gray-900">
                                     {{ $box['product_name'] }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800">
+                                    <span class="px-2 py-1 text-2xl font-medium rounded-full bg-green-100 text-green-800">
                                         {{ $box['status'] }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900">
+                                <td class="px-6 py-4 whitespace-nowrap text-2xl text-gray-900">
                                     {{ number_format($box['items_remaining']) }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-base font-medium">
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-2xl font-medium">
                                     <button type="button"
                                             wire:click="removeBox({{ $box['id'] }})"
                                             class="text-red-600 hover:text-red-900">
@@ -522,14 +549,14 @@ use App\Enums\TransferStatus;
         <div class="grid grid-cols-3 gap-6 mb-6">
             <div class="text-center p-4 bg-gray-50 rounded-lg">
                 <div class="text-3xl font-bold text-gray-900">{{ count($assignedBoxes) }}</div>
-                <div class="text-base text-gray-600 mt-1">Boxes Assigned</div>
+                <div class="text-2xl text-gray-600 mt-1">Boxes Assigned</div>
             </div>
             <div class="text-center p-4 bg-gray-50 rounded-lg">
                 @php
                     $totalItemsAssigned = array_sum(array_column($items, 'quantity_assigned'));
                 @endphp
                 <div class="text-3xl font-bold text-gray-900">{{ number_format($totalItemsAssigned) }}</div>
-                <div class="text-base text-gray-600 mt-1">Total Items</div>
+                <div class="text-2xl text-gray-600 mt-1">Total Items</div>
             </div>
             <div class="text-center p-4 bg-gray-50 rounded-lg">
                 @php
@@ -541,14 +568,14 @@ use App\Enums\TransferStatus;
                     }
                 @endphp
                 <div class="text-3xl font-bold text-gray-900">{{ $productsComplete }}/{{ count($items) }}</div>
-                <div class="text-base text-gray-600 mt-1">Products Complete</div>
+                <div class="text-2xl text-gray-600 mt-1">Products Complete</div>
             </div>
         </div>
 
         <button type="button"
                 wire:click="openShipModal"
                 @if(empty($assignedBoxes)) disabled @endif
-                class="w-full px-6 py-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold text-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                class="w-full px-6 py-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold text-2xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
             </svg>
@@ -567,7 +594,7 @@ use App\Enums\TransferStatus;
                 <!-- Modal -->
                 <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
                     <div class="flex items-start justify-between mb-4">
-                        <h3 class="text-xl font-semibold text-gray-900">Ship Transfer</h3>
+                        <h3 class="text-2xl font-semibold text-gray-900">Ship Transfer</h3>
                         <button type="button"
                                 wire:click="closeShipModal"
                                 class="text-gray-400 hover:text-gray-600">
@@ -578,11 +605,11 @@ use App\Enums\TransferStatus;
                     </div>
 
                     <div class="mb-6">
-                        <p class="text-base text-gray-600 mb-4">
+                        <p class="text-2xl text-gray-600 mb-4">
                             You are about to ship <strong>{{ count($assignedBoxes) }} boxes</strong> to <strong>{{ $transfer->toShop->name }}</strong>.
                         </p>
 
-                        <label class="block text-base font-medium text-gray-700 mb-2">
+                        <label class="block text-2xl font-medium text-gray-700 mb-2">
                             Select Transporter (Optional)
                         </label>
                         <select wire:model="transporterId"

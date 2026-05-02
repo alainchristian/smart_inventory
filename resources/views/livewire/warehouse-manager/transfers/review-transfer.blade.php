@@ -9,7 +9,7 @@
 .rt-alert {
     display:flex; align-items:flex-start; gap:12px;
     padding:14px 18px; border-radius:10px;
-    border:1px solid; font-size:17px; line-height:1.5;
+    border:1px solid; font-size:20px; line-height:1.5;
 }
 .rt-alert.success { background:var(--success-dim); border-color:rgba(22,163,74,.25); color:#14532d; }
 .rt-alert.error   { background:var(--red-dim);     border-color:rgba(225,29,72,.25);  color:#7f1d1d; }
@@ -29,7 +29,7 @@
     background:var(--surface);
 }
 .rt-card-title {
-    font-size:16px; font-weight:700; letter-spacing:.5px;
+    font-size:19px; font-weight:700; letter-spacing:.5px;
     text-transform:uppercase; color:var(--text-sub);
 }
 .rt-card-body { padding:22px; }
@@ -45,7 +45,7 @@
     font-size:10.5px; font-weight:700; letter-spacing:.6px;
     text-transform:uppercase; color:var(--text-dim);
 }
-.rt-meta-value { font-size:17px; font-weight:600; color:var(--text); }
+.rt-meta-value { font-size:20px; font-weight:600; color:var(--text); }
 
 /* ── Status pill ── */
 .rt-pill {
@@ -64,8 +64,8 @@
     padding:14px 18px; border:1px solid var(--border);
 }
 .rt-route-node { flex:1; }
-.rt-route-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.rt-route-name  { font-size:17px; font-weight:700; color:var(--text); margin-top:3px; }
+.rt-route-label { font-size:14px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.rt-route-name  { font-size:20px; font-weight:700; color:var(--text); margin-top:3px; }
 .rt-route-arrow {
     display:flex; align-items:center; justify-content:center;
     width:36px; height:36px; border-radius:50%;
@@ -85,7 +85,7 @@
     padding:14px 18px; background:var(--surface2);
     border-bottom:1px solid var(--border);
 }
-.rt-product-name { font-size:18px; font-weight:700; color:var(--text); }
+.rt-product-name { font-size:22px; font-weight:700; color:var(--text); }
 .rt-product-body {
     padding:16px 18px;
     display:grid;
@@ -100,8 +100,8 @@
 /* ── Stat box inside product row ── */
 .rt-stat { display:flex; flex-direction:column; gap:4px; }
 .rt-stat-label { font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
-.rt-stat-value { font-size:26px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1; }
-.rt-stat-sub   { font-size:13px; color:var(--text-dim); margin-top:2px; }
+.rt-stat-value { font-size:31px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1; }
+.rt-stat-sub   { font-size:16px; color:var(--text-dim); margin-top:2px; }
 .rt-stat-value.ok  { color:var(--green); }
 .rt-stat-value.bad { color:var(--red); }
 
@@ -110,7 +110,7 @@
     width:100%; padding:10px 14px;
     background:var(--surface); color:var(--text);
     border:1.5px solid var(--border-hi);
-    border-radius:8px; font-size:18px; font-weight:700;
+    border-radius:8px; font-size:22px; font-weight:700;
     font-family:var(--mono);
     transition:border-color var(--tr), box-shadow var(--tr);
     outline:none;
@@ -138,7 +138,7 @@
     display:inline-flex; align-items:center; gap:6px;
     padding:6px 12px; border-radius:8px; margin-top:12px;
     background:var(--red-dim); border:1px solid rgba(225,29,72,.25);
-    color:var(--red); font-size:14px; font-weight:600;
+    color:var(--red); font-size:17px; font-weight:600;
 }
 
 /* ── Action footer ── */
@@ -153,7 +153,7 @@
 .rt-btn {
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
     padding:10px 22px; border-radius:9px;
-    font-size:17px; font-weight:700; font-family:var(--font);
+    font-size:20px; font-weight:700; font-family:var(--font);
     border:none; cursor:pointer;
     transition:background var(--tr), transform var(--tr), box-shadow var(--tr), opacity var(--tr);
     white-space:nowrap;
@@ -199,8 +199,8 @@
 .rt-status-banner.approved { background:var(--green-dim); border-color:rgba(14,158,134,.3); color:var(--green); }
 .rt-status-banner.rejected { background:var(--red-dim);   border-color:rgba(225,29,72,.3);  color:var(--red); }
 .rt-status-banner-icon { width:52px; height:52px; }
-.rt-status-banner-title { font-size:22px; font-weight:800; }
-.rt-status-banner-sub   { font-size:17px; opacity:.8; }
+.rt-status-banner-title { font-size:26px; font-weight:800; }
+.rt-status-banner-sub   { font-size:20px; opacity:.8; }
 
 /* ── Modal overlay ── */
 .rt-modal-overlay {
@@ -225,7 +225,7 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:18px 22px; border-bottom:1px solid var(--border);
 }
-.rt-modal-title { font-size:19px; font-weight:800; color:var(--text); }
+.rt-modal-title { font-size:23px; font-weight:800; color:var(--text); }
 .rt-modal-close {
     width:32px; height:32px; border-radius:8px;
     background:var(--surface2); border:1px solid var(--border);
@@ -244,7 +244,7 @@
     width:100%; padding:12px 14px;
     background:var(--surface2); color:var(--text);
     border:1.5px solid var(--border-hi);
-    border-radius:8px; font-size:17px; font-family:var(--font);
+    border-radius:8px; font-size:20px; font-family:var(--font);
     resize:vertical; min-height:110px; outline:none;
     transition:border-color var(--tr), box-shadow var(--tr);
 }
@@ -256,17 +256,17 @@
 
 /* ── Field label ── */
 .rt-field-label {
-    font-size:13px; font-weight:700; letter-spacing:.5px;
+    font-size:16px; font-weight:700; letter-spacing:.5px;
     text-transform:uppercase; color:var(--text-sub); margin-bottom:6px;
     display:block;
 }
-.rt-field-error { font-size:14px; color:var(--red); margin-top:5px; font-weight:600; }
+.rt-field-error { font-size:17px; color:var(--red); margin-top:5px; font-weight:600; }
 
 /* ── Notes box ── */
 .rt-notes {
     padding:14px 16px; background:var(--surface2);
     border-radius:8px; border:1px solid var(--border);
-    font-size:17px; color:var(--text-sub); line-height:1.6;
+    font-size:20px; color:var(--text-sub); line-height:1.6;
 }
 
 /* ── Pack CTA ── */
@@ -274,7 +274,7 @@
     display:inline-flex; align-items:center; gap:8px;
     padding:10px 22px; border-radius:9px;
     background:var(--accent); color:#fff;
-    font-size:17px; font-weight:700; text-decoration:none;
+    font-size:20px; font-weight:700; text-decoration:none;
     box-shadow:0 2px 8px var(--accent-glow);
     transition:background var(--tr), box-shadow var(--tr);
 }
@@ -288,7 +288,7 @@
     .rt-card-body { padding:16px; }
     .rt-product-head { padding:12px 14px; flex-wrap:wrap; gap:8px; }
     .rt-product-body { padding:14px 16px; }
-    .rt-product-name { font-size:17px; }
+    .rt-product-name { font-size:20px; }
     .rt-route { flex-direction:column; gap:12px; text-align:center; }
     .rt-route-node:last-child { text-align:center; }
     .rt-route-arrow { transform:rotate(90deg); }
@@ -302,11 +302,11 @@
     .rt-btn { flex:1; width:100%; }
     .rt-meta-grid { grid-template-columns:1fr; }
     .rt-card-head { gap:8px; }
-    .rt-card-title { font-size:13px; }
-    .rt-stat-value { font-size:22px; }
-    .rt-alert { padding:12px 14px; font-size:16px; }
+    .rt-card-title { font-size:16px; }
+    .rt-stat-value { font-size:26px; }
+    .rt-alert { padding:12px 14px; font-size:19px; }
     .rt-status-banner { padding:24px 16px; }
-    .rt-status-banner-title { font-size:19px; }
+    .rt-status-banner-title { font-size:23px; }
     .rt-wrap { gap:16px; }
 }
 
@@ -344,13 +344,13 @@
 @media(max-width:600px) {
     .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
     .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
+    .tl-step-num  { font-size:24px; }
     .tl-step-sub  { display:none; }
     .tl-card-top    { flex-direction:column; padding:0 14px; }
     .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
     .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
     .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-chip        { padding:4px 10px; font-size:13px; }
     .tl-search      { width:100%; margin-left:0; margin-top:6px; }
     .tl-search input{ width:100%; }
     .tl-route-dash-line { width:20px; }
@@ -358,7 +358,7 @@
     .tl-action      { flex:1; justify-content:center; }
     .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
     .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
+    .tl-page-header-left h1 { font-size:24px; }
     .tl-new-btn             { width:100%; justify-content:center; }
 }
 \n
@@ -403,7 +403,7 @@
     <div class="rt-card">
         <div class="rt-card-head">
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-                <span style="font-size:24px;font-weight:800;color:var(--text);letter-spacing:-.3px">
+                <span style="font-size:29px;font-weight:800;color:var(--text);letter-spacing:-.3px">
                     {{ $transfer->transfer_number }}
                 </span>
                 @php
@@ -419,7 +419,7 @@
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <div style="font-size:14px;color:var(--text-dim)">
+            <div style="font-size:17px;color:var(--text-dim)">
                 {{ $transfer->requested_at?->format('M d, Y · H:i') }}
             </div>
         </div>
@@ -458,7 +458,7 @@
                         <span class="rt-meta-label">Transporter</span>
                         <span class="rt-meta-value">{{ $transfer->transporter->name }}</span>
                         @if($transfer->transporter->vehicle_number)
-                            <span style="font-size:14px;color:var(--text-dim)">{{ $transfer->transporter->vehicle_number }}</span>
+                            <span style="font-size:17px;color:var(--text-dim)">{{ $transfer->transporter->vehicle_number }}</span>
                         @endif
                     </div>
                 @endif
@@ -486,7 +486,7 @@
         <div class="rt-card-head">
             <span class="rt-card-title">Requested Products</span>
             @if($transfer->status === TransferStatus::PENDING)
-                <span style="font-size:14px;color:var(--text-dim)">
+                <span style="font-size:17px;color:var(--text-dim)">
                     You may adjust quantities before approving
                 </span>
             @endif
@@ -518,7 +518,7 @@
                             </div>
                             <span class="rt-product-name">{{ $item['product_name'] }}</span>
                         </div>
-                        <span style="font-size:13px;color:var(--text-dim);background:var(--surface3);
+                        <span style="font-size:16px;color:var(--text-dim);background:var(--surface3);
                                      padding:3px 10px;border-radius:6px;font-weight:600">
                             {{ $item['items_per_box'] }} items / box
                         </span>
@@ -672,7 +672,7 @@
                         <svg width="18" height="18" fill="none" stroke="var(--red)" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
-                        <span style="font-size:16px;color:var(--red);line-height:1.5">
+                        <span style="font-size:19px;color:var(--red);line-height:1.5">
                             This action will reject the transfer request. The shop will be notified and will need to submit a new request.
                         </span>
                     </div>
@@ -753,13 +753,13 @@
 @media(max-width:600px) {
     .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
     .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
+    .tl-step-num  { font-size:24px; }
     .tl-step-sub  { display:none; }
     .tl-card-top    { flex-direction:column; padding:0 14px; }
     .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
     .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
     .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-chip        { padding:4px 10px; font-size:13px; }
     .tl-search      { width:100%; margin-left:0; margin-top:6px; }
     .tl-search input{ width:100%; }
     .tl-route-dash-line { width:20px; }
@@ -767,7 +767,7 @@
     .tl-action      { flex:1; justify-content:center; }
     .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
     .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
+    .tl-page-header-left h1 { font-size:24px; }
     .tl-new-btn             { width:100%; justify-content:center; }
 }
 \n

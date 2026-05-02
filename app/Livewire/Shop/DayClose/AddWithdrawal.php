@@ -21,7 +21,10 @@ class AddWithdrawal extends Component
         $user    = auth()->user();
         $session = DailySession::findOrFail($dailySessionId);
 
-        if ($session->shop_id !== $user->location_id || ! $session->isEditable()) {
+        if (! $user->isOwner() && ($session->shop_id !== $user->location_id || ! $session->isEditable())) {
+            abort(403);
+        }
+        if (! $session->isEditable()) {
             abort(403);
         }
 

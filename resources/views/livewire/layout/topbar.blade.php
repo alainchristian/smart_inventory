@@ -45,6 +45,7 @@
 
             <!-- Right: Action Buttons -->
             <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+
                 <!-- Notifications Bell -->
                 <div x-data="{ open: false }" class="relative" wire:poll.15s>
                     <button @click="open = !open" class="relative w-9 h-9 flex items-center justify-center rounded-lg transition-all"
