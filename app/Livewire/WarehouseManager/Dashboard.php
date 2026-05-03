@@ -131,32 +131,29 @@ class Dashboard extends Component
             ? round(($outboundTransfers - $prevOutboundTransfers) / $prevOutboundTransfers * 100, 1)
             : ($outboundTransfers > 0 ? 100 : 0);
 
-        // ── Outbound items + boxes (via transfer_items) ──────────────────
-        // quantity_requested stores item units; divide by items_per_box to get box count
-        $outboundItems = (int) DB::table('transfer_items')
+        // ── Outbound boxes (quantity_requested stores boxes directly) ──────
+        $outboundBoxes = (int) DB::table('transfer_items')
             ->join('transfers', 'transfer_items.transfer_id', '=', 'transfers.id')
             ->where('transfers.from_warehouse_id', $wId)
             ->whereBetween('transfers.shipped_at', [$from, $to])
             ->whereNull('transfers.deleted_at')
             ->sum('transfer_items.quantity_requested');
 
-        $outboundBoxes = (int) DB::table('transfer_items')
+        $outboundItems = (int) DB::table('transfer_items')
             ->join('transfers', 'transfer_items.transfer_id', '=', 'transfers.id')
             ->join('products',  'transfer_items.product_id',  '=', 'products.id')
             ->where('transfers.from_warehouse_id', $wId)
             ->whereBetween('transfers.shipped_at', [$from, $to])
             ->whereNull('transfers.deleted_at')
-            ->selectRaw('COALESCE(SUM(transfer_items.quantity_requested::numeric / NULLIF(products.items_per_box::numeric, 1)), 0) as total')
+            ->selectRaw('COALESCE(SUM(transfer_items.quantity_requested::numeric * products.items_per_box::numeric), 0) as total')
             ->value('total') ?? 0;
 
         $prevOutboundBoxes = (int) DB::table('transfer_items')
             ->join('transfers', 'transfer_items.transfer_id', '=', 'transfers.id')
-            ->join('products',  'transfer_items.product_id',  '=', 'products.id')
             ->where('transfers.from_warehouse_id', $wId)
             ->whereBetween('transfers.shipped_at', [$prevFrom, $prevTo])
             ->whereNull('transfers.deleted_at')
-            ->selectRaw('COALESCE(SUM(transfer_items.quantity_requested::numeric / NULLIF(products.items_per_box::numeric, 1)), 0) as total')
-            ->value('total') ?? 0;
+            ->sum('transfer_items.quantity_requested');
         $outboundBoxesChange = $prevOutboundBoxes > 0
             ? round(($outboundBoxes - $prevOutboundBoxes) / $prevOutboundBoxes * 100, 1)
             : ($outboundBoxes > 0 ? 100 : 0);

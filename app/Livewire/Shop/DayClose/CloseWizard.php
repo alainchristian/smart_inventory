@@ -169,8 +169,10 @@ class CloseWizard extends Component
 
     #[On('expense-added')]
     #[On('expense-voided')]
+    #[On('expense-updated')]
     #[On('withdrawal-added')]
     #[On('withdrawal-voided')]
+    #[On('withdrawal-updated')]
     #[On('deposit-added')]
     #[On('deposit-voided')]
     public function reloadSummary(): void

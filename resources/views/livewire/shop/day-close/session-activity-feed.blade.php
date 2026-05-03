@@ -6,7 +6,7 @@
 
     @if ($activities->isEmpty())
         <div style="text-align:center;padding:24px 0;font-size:12px;color:var(--text-dim);">
-            No activity yet today
+            No activity yet for this session
         </div>
     @else
         <div style="display:flex;flex-direction:column;gap:2px;">
@@ -14,13 +14,13 @@
                 @php
                     $isIn  = in_array($item['type'], ['sale', 'repayment']);
                     $typeStyles = match($item['type']) {
-                        'sale'         => ['bg' => 'var(--green-dim)',  'color' => 'var(--green)',  'label' => 'Sale'],
-                        'repayment'    => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)', 'label' => 'Repayment'],
-                        'return'       => ['bg' => 'var(--red-dim)',    'color' => 'var(--red)',    'label' => 'Return'],
-                        'expense'      => ['bg' => 'var(--amber-dim)',  'color' => 'var(--amber)',  'label' => 'Expense'],
-                        'bank_deposit' => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)', 'label' => 'Deposit'],
-                        'withdrawal'   => ['bg' => 'var(--surface2)', 'color' => 'var(--text-dim)', 'label' => 'Withdrawal'],
-                        default        => ['bg' => 'var(--surface2)', 'color' => 'var(--text-dim)', 'label' => ucfirst($item['type'])],
+                        'sale'         => ['bg' => 'var(--green-dim)',   'color' => 'var(--green)',    'label' => 'Sale'],
+                        'repayment'    => ['bg' => 'var(--accent-dim)',  'color' => 'var(--accent)',   'label' => 'Repayment'],
+                        'return'       => ['bg' => 'var(--red-dim)',     'color' => 'var(--red)',      'label' => 'Return'],
+                        'expense'      => ['bg' => 'var(--amber-dim)',   'color' => 'var(--amber)',    'label' => 'Expense'],
+                        'bank_deposit' => ['bg' => 'var(--accent-dim)',  'color' => 'var(--accent)',   'label' => 'Deposit'],
+                        'withdrawal'   => ['bg' => 'var(--surface2)',    'color' => 'var(--text-dim)', 'label' => 'Withdrawal'],
+                        default        => ['bg' => 'var(--surface2)',    'color' => 'var(--text-dim)', 'label' => ucfirst($item['type'])],
                     };
                 @endphp
                 <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;
@@ -72,6 +72,33 @@
                     @endif
                 </div>
             @endforeach
+        </div>
+
+        {{-- Totals footer --}}
+        <div style="margin-top:10px;padding:10px 10px 8px;border-radius:10px;
+                    border:1px solid var(--border);background:var(--surface);">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+                <div style="text-align:center;">
+                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">Total In</div>
+                    <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--green);">
+                        +{{ number_format($totalIn) }}
+                    </div>
+                </div>
+                <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);">
+                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">Total Out</div>
+                    <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--red);">
+                        −{{ number_format($totalOut) }}
+                    </div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">Net</div>
+                    @php $net = $totalIn - $totalOut; @endphp
+                    <div style="font-size:13px;font-weight:700;font-family:var(--mono);
+                                color:{{ $net >= 0 ? 'var(--green)' : 'var(--red)' }};">
+                        {{ $net >= 0 ? '+' : '−' }}{{ number_format(abs($net)) }}
+                    </div>
+                </div>
+            </div>
         </div>
     @endif
 </div>

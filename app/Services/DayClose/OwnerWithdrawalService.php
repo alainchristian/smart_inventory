@@ -19,7 +19,7 @@ class OwnerWithdrawalService
             throw new \Exception('Cannot record a withdrawal on a closed session.');
         }
 
-        if (! $user->isShopManager() || $user->location_id !== $session->shop_id) {
+        if (! $user->isOwner() && (! $user->isShopManager() || $user->location_id !== $session->shop_id)) {
             abort(403, 'You can only record withdrawals for your own shop.');
         }
 
@@ -60,10 +60,46 @@ class OwnerWithdrawalService
             throw new \Exception('Cannot void a withdrawal from a closed session.');
         }
 
-        if (! $user->isShopManager() || $user->location_id !== $withdrawal->shop_id) {
+        if (! $user->isOwner() && (! $user->isShopManager() || $user->location_id !== $withdrawal->shop_id)) {
             abort(403, 'You can only void withdrawals for your own shop.');
         }
 
         $withdrawal->delete();
+    }
+
+    public function updateWithdrawal(OwnerWithdrawal $withdrawal, array $data, User $user): OwnerWithdrawal
+    {
+        if (! $withdrawal->dailySession->isEditable()) {
+            throw new \Exception('Cannot edit a withdrawal from a closed session.');
+        }
+
+        if (! $user->isOwner() && (! $user->isShopManager() || $user->location_id !== $withdrawal->shop_id)) {
+            abort(403, 'You can only edit withdrawals for your own shop.');
+        }
+
+        $amount = (int) ($data['amount'] ?? 0);
+        $reason = trim($data['reason'] ?? '');
+        $method = $data['method'] ?? $withdrawal->method;
+
+        if ($amount <= 0) {
+            throw new \Exception('Withdrawal amount must be greater than zero.');
+        }
+
+        if (strlen($reason) === 0) {
+            throw new \Exception('A reason is required for owner withdrawals.');
+        }
+
+        if (! in_array($method, ['cash', 'mobile_money'])) {
+            throw new \Exception('Invalid withdrawal method.');
+        }
+
+        $withdrawal->update([
+            'amount'         => $amount,
+            'reason'         => $reason,
+            'method'         => $method,
+            'momo_reference' => $method === 'mobile_money' ? ($data['momo_reference'] ?? null) : null,
+        ]);
+
+        return $withdrawal->fresh();
     }
 }

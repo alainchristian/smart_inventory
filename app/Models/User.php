@@ -27,6 +27,7 @@ class User extends Authenticatable
         'is_active',
         'last_login_at',
         'must_change_password',
+        'notifications_read_at',
     ];
 
     protected $hidden = [
@@ -37,6 +38,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
+        'notifications_read_at' => 'datetime',
         'password' => 'hashed',
         'role' => UserRole::class,
         'location_type' => LocationType::class,

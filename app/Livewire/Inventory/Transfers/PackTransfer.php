@@ -20,6 +20,7 @@ class PackTransfer extends Component
     public array $packedBoxes = [];
     public bool $enableScanner = true;
     public ?int $transporter_id = null;
+    public string $transporterInput = '';
     public ?ScannerSession $scannerSession = null;
     public bool $showScannerQR = false;
     public bool $phoneConnected = false;
@@ -35,13 +36,20 @@ class PackTransfer extends Component
         'barcode-scanned' => 'handleBarcodeScan',
     ];
 
-    protected $rules = [
-        'transporter_id' => 'required|exists:transporters,id',
-    ];
-
     public function mount(Transfer $transfer)
     {
-        $this->authorize('pack', $transfer);
+        $user = auth()->user();
+
+        if (!$user->isWarehouseManager() && !$user->isOwner()) {
+            abort(403, 'Only warehouse staff can pack transfers.');
+        }
+
+        if ($transfer->status !== \App\Enums\TransferStatus::APPROVED) {
+            session()->flash('error', "Transfer {$transfer->transfer_number} is {$transfer->status->label()} and cannot be packed.");
+            redirect()->route('warehouse.transfers.index')->dispatch();
+            return;
+        }
+
         $this->transfer = $transfer;
         $this->refreshPackedBoxes();
 
@@ -95,7 +103,7 @@ class PackTransfer extends Component
             ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
             ->count();
 
-        $totalBoxesRequested = (int) ($transferItem->quantity_requested / $product->items_per_box);
+        $totalBoxesRequested = (int) $transferItem->quantity_requested;
         $remaining = max(0, $totalBoxesRequested - $alreadyPacked);
 
         if ($remaining <= 0) {
@@ -193,8 +201,17 @@ class PackTransfer extends Component
             return;
         }
 
-        // Validate transporter is selected
-        $this->validate();
+        // Resolve transporter: find existing by name or create new with defaults
+        $name = trim($this->transporterInput);
+        if (empty($name)) {
+            $this->addError('transporterInput', 'Please select or enter a transporter name.');
+            return;
+        }
+        $transporter = \App\Models\Transporter::firstOrCreate(
+            ['name' => $name],
+            ['is_active' => true, 'phone' => '']
+        );
+        $this->transporter_id = $transporter->id;
 
         try {
             $transferService = app(TransferService::class);
@@ -207,7 +224,7 @@ class PackTransfer extends Component
                     ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
                     ->count();
 
-                $boxesNeeded = (int) ($item->quantity_requested / $product->items_per_box);
+                $boxesNeeded = (int) $item->quantity_requested;
 
                 if ($boxesAssigned < $boxesNeeded) {
                     $remaining = $boxesNeeded - $boxesAssigned;
@@ -215,11 +232,8 @@ class PackTransfer extends Component
                 }
             }
 
-            // Update transporter before shipping
-            $this->transfer->update(['transporter_id' => $this->transporter_id]);
-
-            // Mark as shipped (partial shipments allowed)
-            $transferService->markAsShipped($this->transfer);
+            // Mark as shipped — pass transporter ID directly so markAsShipped doesn't null it out
+            $transferService->markAsShipped($this->transfer, $this->transporter_id);
             $this->transfer->refresh();
 
             $message = "Transfer {$this->transfer->transfer_number} shipped successfully";
@@ -340,7 +354,7 @@ class PackTransfer extends Component
         $packingSummary = [];
         foreach ($this->transfer->items as $item) {
             $product = $item->product;
-            $boxesNeeded = (int) ($item->quantity_requested / $product->items_per_box);
+            $boxesNeeded = (int) $item->quantity_requested;
             $boxesPacked = TransferBox::where('transfer_id', $this->transfer->id)
                 ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
                 ->count();

@@ -5,6 +5,7 @@ namespace App\Livewire\Layout;
 use App\Models\ActivityLog;
 use App\Models\Alert;
 use App\Models\HeldSale;
+use App\Models\Transfer;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -21,12 +22,94 @@ class Topbar extends Component
         $this->pageTitle = $pageTitle;
     }
 
+    // ── Notification feed ────────────────────────────────────────────────────
+
+    private function notifiableActions(): array
+    {
+        return [
+            'sale_created', 'sale_voided', 'price_modified',
+            'transfer_requested', 'transfer_approved', 'transfer_rejected',
+            'transfer_packed', 'transfer_received', 'transfer_discrepancy',
+            'daily_session_opened', 'daily_session_closed',
+            'return', 'return_approved',
+            'box_damaged', 'box_adjustment',
+            'credit_writeoff',
+        ];
+    }
+
+    public function getActivityNotificationsProperty(): array
+    {
+        if (!Auth::check()) return [];
+
+        $user = Auth::user();
+
+        $query = ActivityLog::query()
+            ->whereIn('action', $this->notifiableActions())
+            ->where('user_id', '!=', $user->id)
+            ->where('created_at', '>=', now()->subDays(7))
+            ->orderByDesc('created_at')
+            ->limit(25);
+
+        if ($user->isOwner()) {
+            $query->whereHas('user', fn($q) => $q->whereIn('role', ['shop_manager', 'warehouse_manager']));
+        } elseif ($user->isWarehouseManager()) {
+            $shopIds = Transfer::where('from_warehouse_id', $user->location_id)->pluck('to_shop_id')->unique();
+            $query->where('action', 'transfer_requested')
+                  ->where('entity_type', 'Transfer')
+                  ->whereIn('entity_id', Transfer::where('from_warehouse_id', $user->location_id)->pluck('id'));
+        } elseif ($user->isShopManager()) {
+            $query->whereIn('action', ['transfer_approved', 'transfer_rejected', 'transfer_packed'])
+                  ->where('entity_type', 'Transfer')
+                  ->whereIn('entity_id', Transfer::where('to_shop_id', $user->location_id)->pluck('id'));
+        } else {
+            return [];
+        }
+
+        $readAt = $user->notifications_read_at;
+
+        return $query->get()
+            ->map(fn($log) => [
+                'id'       => $log->id,
+                'label'    => $log->humanLabel(),
+                'subtitle' => $log->subtitle(),
+                'icon'     => $log->iconKey(),
+                'color'    => $log->colorKey(),
+                'url'      => $log->actionUrl($user),
+                'age'      => $log->created_at->diffForHumans(),
+                'unread'   => $readAt === null || $log->created_at > $readAt,
+            ])
+            ->toArray();
+    }
+
+    public function getUnreadActivityCountProperty(): int
+    {
+        if (!Auth::check()) return 0;
+
+        $user = Auth::user();
+        $readAt = $user->notifications_read_at;
+
+        if ($readAt === null) {
+            return min(collect($this->activityNotifications)->count(), 9);
+        }
+
+        return collect($this->activityNotifications)
+            ->filter(fn($n) => $n['unread'])
+            ->count();
+    }
+
+    public function markActivityRead(): void
+    {
+        if (!Auth::check()) return;
+
+        Auth::user()->update(['notifications_read_at' => now()]);
+    }
+
     /**
      * Get unread notifications count
      */
     public function getUnreadNotificationsCountProperty(): int
     {
-        return $this->totalPendingActions;
+        return $this->totalPendingActions + $this->unreadActivityCount;
     }
 
     /**

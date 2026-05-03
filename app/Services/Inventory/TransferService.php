@@ -5,9 +5,6 @@ namespace App\Services\Inventory;
 use App\Enums\BoxStatus;
 use App\Enums\LocationType;
 use App\Enums\TransferStatus;
-use App\Events\Inventory\TransferApproved;
-use App\Events\Inventory\TransferReceived;
-use App\Events\Inventory\TransferRequested;
 use App\Models\ActivityLog;
 use App\Models\Alert;
 use App\Models\Box;
@@ -66,11 +63,6 @@ class TransferService
                 'user_agent' => request()->header('User-Agent'),
             ]);
 
-            // Dispatch event if it exists
-            if (class_exists(TransferRequested::class)) {
-                event(new TransferRequested($transfer));
-            }
-
             return $transfer;
         });
     }
@@ -118,11 +110,6 @@ class TransferService
                 ->each(function ($alert) {
                     $alert->markAsResolved();
                 });
-
-            // Dispatch event if it exists
-            if (class_exists(TransferApproved::class)) {
-                event(new TransferApproved($transfer));
-            }
 
             return $transfer;
         });
@@ -426,11 +413,6 @@ class TransferService
                 ->each(function ($alert) {
                     $alert->markAsResolved();
                 });
-
-            // Dispatch event if it exists
-            if (class_exists(TransferReceived::class)) {
-                event(new TransferReceived($transfer));
-            }
 
             return $transfer;
         });

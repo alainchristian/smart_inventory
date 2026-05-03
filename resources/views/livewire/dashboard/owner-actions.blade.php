@@ -117,7 +117,33 @@
         {{-- Items --}}
         @foreach($section['items'] as $item)
 
-        @if($section['type'] === 'held_approvals')
+        @if($section['type'] === 'unclosed_sessions')
+        {{-- Inline force-close card for stale sessions --}}
+        <div style="padding:12px 18px;border-bottom:1px solid var(--border);
+                    display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+            <div style="min-width:0;flex:1">
+                <div style="font-size:13px;font-weight:700;color:var(--text)">
+                    {{ $item['title'] }}
+                </div>
+                <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
+                    {{ $item['subtitle'] }}
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+                <span style="font-size:11px;font-weight:700;font-family:var(--mono);
+                             color:{{ $item['value_color'] }}">{{ $item['value'] }}</span>
+                <button wire:click="forceCloseSession({{ $item['id'] }})"
+                        wire:confirm="Force-close this session? The session will be marked as closed with no cash count."
+                        wire:loading.attr="disabled"
+                        style="padding:4px 10px;border-radius:6px;border:1px solid var(--red);
+                               background:var(--red-dim);color:var(--red);
+                               font-size:11px;font-weight:700;cursor:pointer">
+                    Force Close
+                </button>
+            </div>
+        </div>
+
+        @elseif($section['type'] === 'held_approvals')
         {{-- Inline approve/reject card for held sales --}}
         <div style="padding:12px 18px;border-bottom:1px solid var(--border)">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">

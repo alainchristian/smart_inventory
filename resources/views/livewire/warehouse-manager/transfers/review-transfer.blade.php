@@ -1,411 +1,240 @@
 @php use App\Enums\TransferStatus; @endphp
-
-@push('styles')
+<div>
 <style>
-/* ── Review Transfer — Design System Aligned ── */
-.rt-wrap { display:flex; flex-direction:column; gap:20px; font-family:var(--font); }
+/* ── Review Transfer ─────────────────────────────────── */
+.rt-wrap { display:flex; flex-direction:column; gap:16px; }
 
-/* ── Alert banners ── */
+/* Alerts */
 .rt-alert {
-    display:flex; align-items:flex-start; gap:12px;
-    padding:14px 18px; border-radius:10px;
-    border:1px solid; font-size:20px; line-height:1.5;
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 14px; border-radius:10px; border:1px solid; font-size:12px; line-height:1.5;
 }
-.rt-alert.success { background:var(--success-dim); border-color:rgba(22,163,74,.25); color:#14532d; }
-.rt-alert.error   { background:var(--red-dim);     border-color:rgba(225,29,72,.25);  color:#7f1d1d; }
-.rt-alert.info    { background:var(--accent-dim);  border-color:rgba(59,111,212,.25); color:#1e3a8a; }
+.rt-alert.success { background:var(--green-dim);  border-color:rgba(16,185,129,.25); color:var(--green); }
+.rt-alert.error   { background:var(--red-dim);    border-color:rgba(225,29,72,.25);  color:var(--red); }
+.rt-alert.info    { background:var(--accent-dim); border-color:rgba(99,102,241,.25); color:var(--accent); }
 
-/* ── Card ── */
-.rt-card {
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:12px;
-    overflow:hidden;
-}
+/* Cards */
+.rt-card { background:#fff; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
 .rt-card-head {
-    padding:18px 22px;
-    border-bottom:1px solid var(--border);
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    background:var(--surface);
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--surface2);
 }
-.rt-card-title {
-    font-size:19px; font-weight:700; letter-spacing:.5px;
-    text-transform:uppercase; color:var(--text-sub);
-}
-.rt-card-body { padding:22px; }
+.rt-card-title { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
+.rt-card-body  { padding:16px; }
 
-/* ── Transfer header meta grid ── */
-.rt-meta-grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
-    gap:16px;
-}
-.rt-meta-item { display:flex; flex-direction:column; gap:4px; }
-.rt-meta-label {
-    font-size:10.5px; font-weight:700; letter-spacing:.6px;
-    text-transform:uppercase; color:var(--text-dim);
-}
-.rt-meta-value { font-size:20px; font-weight:600; color:var(--text); }
-
-/* ── Status pill ── */
-.rt-pill {
-    display:inline-flex; align-items:center; gap:6px;
-    padding:4px 12px; border-radius:999px;
-    font-size:11.5px; font-weight:700; letter-spacing:.3px;
+/* Transfer header */
+.rt-num   { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.rt-pill  {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.3px;
 }
 .rt-pill.pending  { background:var(--amber-dim); color:var(--amber); border:1px solid rgba(217,119,6,.25); }
-.rt-pill.approved { background:var(--green-dim);  color:var(--green); border:1px solid rgba(14,158,134,.25); }
-.rt-pill.rejected { background:var(--red-dim);    color:var(--red);   border:1px solid rgba(225,29,72,.25); }
+.rt-pill.approved { background:var(--green-dim);  color:var(--green);  border:1px solid rgba(16,185,129,.25); }
+.rt-pill.rejected { background:var(--red-dim);    color:var(--red);    border:1px solid rgba(225,29,72,.25); }
 
-/* ── Route strip ── */
+/* Route strip */
 .rt-route {
     display:flex; align-items:center; gap:0;
     background:var(--surface2); border-radius:10px;
-    padding:14px 18px; border:1px solid var(--border);
+    padding:12px 14px; border:1px solid var(--border);
 }
-.rt-route-node { flex:1; }
-.rt-route-label { font-size:14px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.rt-route-name  { font-size:20px; font-weight:700; color:var(--text); margin-top:3px; }
+.rt-route-node  { flex:1; }
+.rt-route-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.rt-route-name  { font-size:13px; font-weight:700; color:var(--text); margin-top:2px; }
 .rt-route-arrow {
     display:flex; align-items:center; justify-content:center;
-    width:36px; height:36px; border-radius:50%;
-    background:var(--accent-dim); color:var(--accent);
-    flex-shrink:0;
+    width:28px; height:28px; border-radius:50%;
+    background:var(--accent-dim); color:var(--accent); flex-shrink:0;
 }
 
-/* ── Product rows ── */
-.rt-product-row {
-    border:1.5px solid var(--border);
-    border-radius:10px; overflow:hidden;
-    transition:border-color var(--tr);
+/* Meta grid */
+.rt-meta-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:12px; }
+.rt-meta-item  { display:flex; flex-direction:column; gap:3px; }
+.rt-meta-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.rt-meta-value { font-size:13px; font-weight:600; color:var(--text); }
+.rt-meta-sub   { font-size:11px; color:var(--text-dim); }
+
+/* Notes box */
+.rt-notes {
+    padding:10px 12px; background:var(--surface2);
+    border-radius:8px; border:1px solid var(--border);
+    font-size:12px; color:var(--text-dim); line-height:1.6;
 }
-.rt-product-row.has-warning { border-color:rgba(225,29,72,.4); background:rgba(225,29,72,.02); }
+
+/* Product rows */
+.rt-product-row {
+    border:1px solid var(--border); border-radius:10px; overflow:hidden;
+    transition:border-color .15s;
+}
+.rt-product-row.has-warning { border-color:var(--red); background:var(--red-dim); }
 .rt-product-head {
     display:flex; align-items:center; justify-content:space-between;
-    padding:14px 18px; background:var(--surface2);
-    border-bottom:1px solid var(--border);
+    padding:10px 14px; background:var(--surface2); border-bottom:1px solid var(--border);
 }
-.rt-product-name { font-size:22px; font-weight:700; color:var(--text); }
+.rt-product-name { font-size:13px; font-weight:700; color:var(--text); }
 .rt-product-body {
-    padding:16px 18px;
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:16px;
-    align-items:start;
+    padding:14px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; align-items:start;
 }
-@media(max-width:640px) {
-    .rt-product-body { grid-template-columns:1fr; }
-}
+@media(max-width:640px) { .rt-product-body { grid-template-columns:1fr; } }
 
-/* ── Stat box inside product row ── */
-.rt-stat { display:flex; flex-direction:column; gap:4px; }
-.rt-stat-label { font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
-.rt-stat-value { font-size:31px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1; }
-.rt-stat-sub   { font-size:16px; color:var(--text-dim); margin-top:2px; }
+/* Stats inside product row */
+.rt-stat       { display:flex; flex-direction:column; gap:3px; }
+.rt-stat-label { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
+.rt-stat-value { font-size:22px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
+.rt-stat-sub   { font-size:11px; color:var(--text-dim); }
 .rt-stat-value.ok  { color:var(--green); }
 .rt-stat-value.bad { color:var(--red); }
 
-/* ── Input field ── */
+/* Input */
 .rt-input {
-    width:100%; padding:10px 14px;
-    background:var(--surface); color:var(--text);
-    border:1.5px solid var(--border-hi);
-    border-radius:8px; font-size:22px; font-weight:700;
-    font-family:var(--mono);
-    transition:border-color var(--tr), box-shadow var(--tr);
-    outline:none;
+    width:100%; padding:8px 12px;
+    background:#fff; color:var(--text);
+    border:1.5px solid var(--border); border-radius:8px;
+    font-size:14px; font-weight:700; font-family:var(--mono);
+    transition:border-color .15s, box-shadow .15s; outline:none;
 }
-.rt-input:focus {
-    border-color:var(--accent);
-    box-shadow:0 0 0 3px var(--accent-glow);
-}
-.rt-input.rt-input-error {
-    border-color:var(--red);
-    box-shadow:0 0 0 3px var(--red-glow);
-}
+.rt-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+.rt-input.rt-input-error { border-color:var(--red); box-shadow:0 0 0 3px rgba(225,29,72,.1); }
 
-/* ── Stock availability bar ── */
-.rt-stock-bar-wrap {
-    height:6px; border-radius:999px;
-    background:var(--surface3); overflow:hidden; margin-top:8px;
-}
-.rt-stock-bar { height:100%; border-radius:999px; transition:width .4s var(--ease); }
-.rt-stock-bar.ok  { background:var(--green); }
-.rt-stock-bar.bad { background:var(--red); }
+/* Stock bar */
+.rt-stock-bar-wrap { height:5px; border-radius:999px; background:var(--surface2); overflow:hidden; margin-top:6px; }
+.rt-stock-bar      { height:100%; border-radius:999px; transition:width .4s; }
+.rt-stock-bar.ok   { background:var(--green); }
+.rt-stock-bar.bad  { background:var(--red); }
 
-/* ── Warning chip ── */
+/* Warning chip */
 .rt-warn {
-    display:inline-flex; align-items:center; gap:6px;
-    padding:6px 12px; border-radius:8px; margin-top:12px;
+    display:inline-flex; align-items:center; gap:5px;
+    padding:5px 10px; border-radius:7px; margin-top:10px;
     background:var(--red-dim); border:1px solid rgba(225,29,72,.25);
-    color:var(--red); font-size:17px; font-weight:600;
+    color:var(--red); font-size:11px; font-weight:600;
 }
 
-/* ── Action footer ── */
+/* Action footer */
 .rt-action-bar {
     display:flex; align-items:center; justify-content:flex-end;
-    gap:12px; padding:18px 22px;
+    gap:10px; padding:12px 14px;
     background:var(--surface2); border-top:1px solid var(--border);
     flex-wrap:wrap;
 }
 
-/* ── Buttons ── */
+/* Buttons */
 .rt-btn {
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:10px 22px; border-radius:9px;
-    font-size:20px; font-weight:700; font-family:var(--font);
-    border:none; cursor:pointer;
-    transition:background var(--tr), transform var(--tr), box-shadow var(--tr), opacity var(--tr);
-    white-space:nowrap;
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    padding:8px 18px; border-radius:9px;
+    font-size:12px; font-weight:700;
+    border:none; cursor:pointer; transition:all .15s; white-space:nowrap;
 }
-.rt-btn:active { transform:scale(.97); }
+.rt-btn:active  { transform:scale(.97); }
 .rt-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
-
-.rt-btn-approve {
-    background:var(--accent); color:#fff;
-    box-shadow:0 2px 8px var(--accent-glow);
-}
-.rt-btn-approve:hover:not(:disabled) {
-    background:#2d5dbf;
-    box-shadow:0 4px 14px var(--accent-glow);
-}
-.rt-btn-reject {
-    background:var(--red-dim); color:var(--red);
-    border:1.5px solid rgba(225,29,72,.3);
-}
-.rt-btn-reject:hover:not(:disabled) {
-    background:rgba(225,29,72,.15);
-}
-.rt-btn-secondary {
-    background:var(--surface3); color:var(--text-sub);
-    border:1.5px solid var(--border);
-}
+.rt-btn-approve  { background:var(--accent); color:#fff; }
+.rt-btn-approve:hover:not(:disabled) { opacity:.88; }
+.rt-btn-reject   { background:var(--red-dim); color:var(--red); border:1px solid rgba(225,29,72,.3); }
+.rt-btn-reject:hover:not(:disabled)  { background:var(--red); color:#fff; }
+.rt-btn-secondary { background:var(--surface2); color:var(--text-dim); border:1px solid var(--border); }
 .rt-btn-secondary:hover { background:var(--border); }
-.rt-btn-danger {
-    background:var(--red); color:#fff;
-    box-shadow:0 2px 8px var(--red-glow);
-}
-.rt-btn-danger:hover:not(:disabled) {
-    background:#be1039;
-    box-shadow:0 4px 14px var(--red-glow);
-}
+.rt-btn-danger   { background:var(--red); color:#fff; }
+.rt-btn-danger:hover:not(:disabled) { opacity:.88; }
 
-/* ── Status banner (approved/rejected state) ── */
+/* Status banner */
 .rt-status-banner {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:12px; padding:32px; text-align:center; border-radius:12px;
-    border:1px solid;
+    gap:10px; padding:24px; text-align:center; border-radius:10px; border:1px solid;
 }
-.rt-status-banner.approved { background:var(--green-dim); border-color:rgba(14,158,134,.3); color:var(--green); }
+.rt-status-banner.approved { background:var(--green-dim); border-color:rgba(16,185,129,.3); color:var(--green); }
 .rt-status-banner.rejected { background:var(--red-dim);   border-color:rgba(225,29,72,.3);  color:var(--red); }
-.rt-status-banner-icon { width:52px; height:52px; }
-.rt-status-banner-title { font-size:26px; font-weight:800; }
-.rt-status-banner-sub   { font-size:20px; opacity:.8; }
+.rt-status-banner-icon  { width:44px; height:44px; }
+.rt-status-banner-title { font-size:15px; font-weight:800; }
+.rt-status-banner-sub   { font-size:12px; opacity:.8; }
 
-/* ── Modal overlay ── */
+/* Pack CTA */
+.rt-pack-cta {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:8px 18px; border-radius:9px;
+    background:var(--accent); color:#fff;
+    font-size:12px; font-weight:700; text-decoration:none; transition:opacity .15s;
+}
+.rt-pack-cta:hover { opacity:.88; }
+
+/* Modal */
 .rt-modal-overlay {
-    position:fixed; inset:0; z-index:50;
-    background:rgba(10,14,26,.6);
-    backdrop-filter:blur(4px);
-    display:flex; align-items:center; justify-content:center;
-    padding:20px;
-    animation:rtFadeIn .15s ease;
+    position:fixed; inset:0; z-index:50; background:rgba(10,14,26,.6);
+    backdrop-filter:blur(4px); display:flex; align-items:center;
+    justify-content:center; padding:20px; animation:rtFadeIn .15s ease;
 }
 @keyframes rtFadeIn { from { opacity:0 } to { opacity:1 } }
-
 .rt-modal {
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:14px; width:100%; max-width:500px;
-    box-shadow:0 24px 60px rgba(0,0,0,.18);
-    animation:rtSlideUp .2s var(--ease);
+    background:#fff; border:1px solid var(--border);
+    border-radius:14px; width:100%; max-width:480px;
+    box-shadow:0 24px 60px rgba(0,0,0,.15);
+    animation:rtSlideUp .2s ease;
 }
-@keyframes rtSlideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
-
+@keyframes rtSlideUp { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:translateY(0) } }
 .rt-modal-head {
     display:flex; align-items:center; justify-content:space-between;
-    padding:18px 22px; border-bottom:1px solid var(--border);
+    padding:14px 18px; border-bottom:1px solid var(--border);
 }
-.rt-modal-title { font-size:23px; font-weight:800; color:var(--text); }
+.rt-modal-title { font-size:14px; font-weight:700; color:var(--text); }
 .rt-modal-close {
-    width:32px; height:32px; border-radius:8px;
-    background:var(--surface2); border:1px solid var(--border);
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; color:var(--text-sub); transition:background var(--tr);
+    width:28px; height:28px; border-radius:7px; background:var(--surface2);
+    border:1px solid var(--border); display:flex; align-items:center;
+    justify-content:center; cursor:pointer; color:var(--text-dim); transition:background .15s;
 }
-.rt-modal-close:hover { background:var(--surface3); }
-.rt-modal-body { padding:22px; display:flex; flex-direction:column; gap:16px; }
-.rt-modal-foot {
-    display:flex; align-items:center; justify-content:flex-end; gap:10px;
-    padding:16px 22px; border-top:1px solid var(--border);
-}
+.rt-modal-close:hover { background:var(--border); }
+.rt-modal-body { padding:18px; display:flex; flex-direction:column; gap:14px; }
+.rt-modal-foot { display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:14px 18px; border-top:1px solid var(--border); }
 
-/* ── Textarea ── */
+/* Field */
+.rt-field-label { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
+.rt-field-error { font-size:11px; color:var(--red); margin-top:4px; font-weight:600; }
 .rt-textarea {
-    width:100%; padding:12px 14px;
-    background:var(--surface2); color:var(--text);
-    border:1.5px solid var(--border-hi);
-    border-radius:8px; font-size:20px; font-family:var(--font);
-    resize:vertical; min-height:110px; outline:none;
-    transition:border-color var(--tr), box-shadow var(--tr);
+    width:100%; padding:10px 12px; background:#fff; color:var(--text);
+    border:1.5px solid var(--border); border-radius:8px;
+    font-size:13px; resize:vertical; min-height:100px; outline:none; transition:border-color .15s;
 }
-.rt-textarea:focus {
-    border-color:var(--red);
-    box-shadow:0 0 0 3px var(--red-glow);
-    background:var(--surface);
-}
+.rt-textarea:focus { border-color:var(--accent); }
 
-/* ── Field label ── */
-.rt-field-label {
-    font-size:16px; font-weight:700; letter-spacing:.5px;
-    text-transform:uppercase; color:var(--text-sub); margin-bottom:6px;
-    display:block;
-}
-.rt-field-error { font-size:17px; color:var(--red); margin-top:5px; font-weight:600; }
-
-/* ── Notes box ── */
-.rt-notes {
-    padding:14px 16px; background:var(--surface2);
-    border-radius:8px; border:1px solid var(--border);
-    font-size:20px; color:var(--text-sub); line-height:1.6;
-}
-
-/* ── Pack CTA ── */
-.rt-pack-cta {
-    display:inline-flex; align-items:center; gap:8px;
-    padding:10px 22px; border-radius:9px;
-    background:var(--accent); color:#fff;
-    font-size:20px; font-weight:700; text-decoration:none;
-    box-shadow:0 2px 8px var(--accent-glow);
-    transition:background var(--tr), box-shadow var(--tr);
-}
-.rt-pack-cta:hover { background:#2d5dbf; box-shadow:0 4px 14px var(--accent-glow); }
-
-/* ── Divider ── */
 .rt-divider { border:none; border-top:1px solid var(--border); margin:0; }
 
+/* Responsive */
 @media(max-width:768px) {
-    .rt-card-head { padding:14px 16px; flex-wrap:wrap; }
-    .rt-card-body { padding:16px; }
-    .rt-product-head { padding:12px 14px; flex-wrap:wrap; gap:8px; }
-    .rt-product-body { padding:14px 16px; }
-    .rt-product-name { font-size:20px; }
-    .rt-route { flex-direction:column; gap:12px; text-align:center; }
-    .rt-route-node:last-child { text-align:center; }
+    .rt-card-head { flex-wrap:wrap; }
+    .rt-product-head { flex-wrap:wrap; gap:6px; }
+    .rt-route { flex-direction:column; gap:10px; }
+    .rt-route-node:last-child { text-align:left; }
     .rt-route-arrow { transform:rotate(90deg); }
-    .rt-meta-grid { grid-template-columns:1fr 1fr; gap:12px; }
-    .rt-modal { max-width:calc(100vw - 32px); }
-    .rt-modal-head, .rt-modal-body, .rt-modal-foot { padding:16px; }
+    .rt-meta-grid { grid-template-columns:1fr 1fr; }
 }
-
 @media(max-width:640px) {
-    .rt-action-bar { justify-content:stretch; flex-direction:column; padding:14px 16px; }
-    .rt-btn { flex:1; width:100%; }
+    .rt-action-bar { flex-direction:column; }
+    .rt-btn { width:100%; }
     .rt-meta-grid { grid-template-columns:1fr; }
-    .rt-card-head { gap:8px; }
-    .rt-card-title { font-size:16px; }
-    .rt-stat-value { font-size:26px; }
-    .rt-alert { padding:12px 14px; font-size:19px; }
-    .rt-status-banner { padding:24px 16px; }
-    .rt-status-banner-title { font-size:23px; }
-    .rt-wrap { gap:16px; }
+    .rt-stat-value { font-size:18px; }
 }
-
-/* Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
-}
-\n
-/* 2A - Transfer List Fixes */
-@media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
-}
-@media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:24px; }
-    .tl-step-sub  { display:none; }
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:13px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    .tl-route-dash-line { width:20px; }
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:24px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
-}
-\n
-/* 2B - Request Form Fixes */
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
-@media(max-width:600px) {
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-\n</style>
-@endpush
+</style>
 
 <div class="rt-wrap">
 
-    {{-- ── Flash Messages ── --}}
+    {{-- Flash messages --}}
     @if(session()->has('success'))
-        <div class="rt-alert success">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span>{{ session('success') }}</span>
-        </div>
+    <div class="rt-alert success">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('success') }}</span>
+    </div>
     @endif
     @if(session()->has('error'))
-        <div class="rt-alert error">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span>{{ session('error') }}</span>
-        </div>
+    <div class="rt-alert error">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('error') }}</span>
+    </div>
     @endif
 
-    {{-- ── Transfer Header Card ── --}}
+    {{-- Transfer header card --}}
     <div class="rt-card">
         <div class="rt-card-head">
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-                <span style="font-size:29px;font-weight:800;color:var(--text);letter-spacing:-.3px">
-                    {{ $transfer->transfer_number }}
-                </span>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span class="rt-num">{{ $transfer->transfer_number }}</span>
                 @php
                     $statusClass = match($transfer->status) {
                         TransferStatus::PENDING  => 'pending',
@@ -415,16 +244,14 @@
                     };
                 @endphp
                 <span class="rt-pill {{ $statusClass }}">
-                    <span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>
+                    <span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <div style="font-size:17px;color:var(--text-dim)">
-                {{ $transfer->requested_at?->format('M d, Y · H:i') }}
-            </div>
+            <span style="font-size:11px;color:var(--text-dim);">{{ $transfer->requested_at?->format('d M Y · H:i') }}</span>
         </div>
 
-        <div class="rt-card-body" style="display:flex;flex-direction:column;gap:18px">
+        <div class="rt-card-body" style="display:flex;flex-direction:column;gap:14px">
 
             {{-- Route strip --}}
             <div class="rt-route">
@@ -433,9 +260,7 @@
                     <div class="rt-route-name">{{ $transfer->fromWarehouse->name }}</div>
                 </div>
                 <div class="rt-route-arrow">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                    </svg>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                 </div>
                 <div class="rt-route-node" style="text-align:right">
                     <div class="rt-route-label">To Shop</div>
@@ -454,90 +279,78 @@
                     <span class="rt-meta-value">{{ count($items) }} {{ count($items) === 1 ? 'product' : 'products' }}</span>
                 </div>
                 @if($transfer->transporter)
-                    <div class="rt-meta-item">
-                        <span class="rt-meta-label">Transporter</span>
-                        <span class="rt-meta-value">{{ $transfer->transporter->name }}</span>
-                        @if($transfer->transporter->vehicle_number)
-                            <span style="font-size:17px;color:var(--text-dim)">{{ $transfer->transporter->vehicle_number }}</span>
-                        @endif
-                    </div>
+                <div class="rt-meta-item">
+                    <span class="rt-meta-label">Transporter</span>
+                    <span class="rt-meta-value">{{ $transfer->transporter->name }}</span>
+                    @if($transfer->transporter->vehicle_number)
+                        <span class="rt-meta-sub">{{ $transfer->transporter->vehicle_number }}</span>
+                    @endif
+                </div>
                 @endif
                 @if($transfer->reviewed_by)
-                    <div class="rt-meta-item">
-                        <span class="rt-meta-label">Reviewed By</span>
-                        <span class="rt-meta-value">{{ $transfer->reviewedBy?->name ?? '—' }}</span>
-                    </div>
+                <div class="rt-meta-item">
+                    <span class="rt-meta-label">Reviewed By</span>
+                    <span class="rt-meta-value">{{ $transfer->reviewedBy?->name ?? '—' }}</span>
+                </div>
                 @endif
             </div>
 
             {{-- Notes --}}
             @if($transfer->notes && $transfer->status === TransferStatus::PENDING)
-                <div>
-                    <div class="rt-meta-label" style="margin-bottom:6px">Shop Notes</div>
-                    <div class="rt-notes">{{ $transfer->notes }}</div>
-                </div>
+            <div>
+                <div class="rt-meta-label" style="margin-bottom:5px">Shop Notes</div>
+                <div class="rt-notes">{{ $transfer->notes }}</div>
+            </div>
             @endif
-
         </div>
     </div>
 
-    {{-- ── Requested Products Card ── --}}
+    {{-- Requested products card --}}
     <div class="rt-card">
         <div class="rt-card-head">
             <span class="rt-card-title">Requested Products</span>
             @if($transfer->status === TransferStatus::PENDING)
-                <span style="font-size:17px;color:var(--text-dim)">
-                    You may adjust quantities before approving
-                </span>
+            <span style="font-size:11px;color:var(--text-dim);">You may adjust quantities before approving</span>
             @endif
         </div>
 
-        <div class="rt-card-body" style="display:flex;flex-direction:column;gap:14px">
+        <div class="rt-card-body" style="display:flex;flex-direction:column;gap:12px">
             @foreach($items as $index => $item)
                 @php
                     $stock          = $stockLevels[$item['product_id']] ?? null;
                     $availableBoxes = $stock ? (int) $stock['total_boxes'] : 0;
-                    $requestedBoxes = (int) ($item['boxes_requested'] ?? 0);   // explicit int — single source of truth
+                    $requestedBoxes = (int) ($item['boxes_requested'] ?? 0);
                     $exceedsStock   = $requestedBoxes > $availableBoxes && $requestedBoxes > 0;
-                    $totalItems     = $requestedBoxes * (int) $item['items_per_box'];  // always derived from boxes, never from quantity_requested
+                    $totalItems     = $requestedBoxes * (int) $item['items_per_box'];
                     $stockPct       = ($availableBoxes > 0 && $requestedBoxes > 0)
                                         ? min(100, (int) round($requestedBoxes / $availableBoxes * 100))
                                         : 0;
                 @endphp
-
                 <div class="rt-product-row {{ $exceedsStock ? 'has-warning' : '' }}">
-
-                    {{-- Product header --}}
                     <div class="rt-product-head">
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <div style="width:32px;height:32px;border-radius:8px;background:var(--accent-dim);
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <div style="width:28px;height:28px;border-radius:7px;background:var(--accent-dim);
                                         display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                                <svg width="16" height="16" fill="none" stroke="var(--accent)" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                </svg>
+                                <svg width="13" height="13" fill="none" stroke="var(--accent)" viewBox="0 0 24 24" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                             </div>
                             <span class="rt-product-name">{{ $item['product_name'] }}</span>
                         </div>
-                        <span style="font-size:16px;color:var(--text-dim);background:var(--surface3);
-                                     padding:3px 10px;border-radius:6px;font-weight:600">
-                            {{ $item['items_per_box'] }} items / box
+                        <span style="font-size:11px;color:var(--text-dim);background:var(--surface2);
+                                     padding:2px 8px;border-radius:5px;font-weight:600">
+                            {{ $item['items_per_box'] }} items/box
                         </span>
                     </div>
 
-                    {{-- Product body --}}
                     <div class="rt-product-body">
-
                         {{-- Boxes Requested --}}
                         <div class="rt-stat">
                             <label class="rt-stat-label">Boxes Requested</label>
-                            {{-- DEBUG: item={{ json_encode($item) }} --}}
                             @if($transfer->status === TransferStatus::PENDING)
                                 <input type="number"
-                                       wire:model="items.{{ $index }}.boxes_requested"
-                                       min="0"
-                                       value="{{ $item['boxes_requested'] ?? 0 }}"
-                                       class="rt-input {{ $exceedsStock ? 'rt-input-error' : '' }}"
-                                       placeholder="0">
+                                       value="{{ $item['boxes_requested'] }}"
+                                       min="1"
+                                       @change="$wire.set('items.{{ $index }}.boxes_requested', parseInt($event.target.value) || 1)"
+                                       class="rt-input {{ $exceedsStock ? 'rt-input-error' : '' }}">
                                 @error("items.{$index}.boxes_requested")
                                     <span class="rt-field-error">{{ $message }}</span>
                                 @enderror
@@ -561,10 +374,9 @@
                                 @endif
                             </span>
                             @if($availableBoxes > 0)
-                                <div class="rt-stock-bar-wrap">
-                                    <div class="rt-stock-bar {{ $exceedsStock ? 'bad' : 'ok' }}"
-                                         style="width:{{ min(100, $stockPct) }}%"></div>
-                                </div>
+                            <div class="rt-stock-bar-wrap">
+                                <div class="rt-stock-bar {{ $exceedsStock ? 'bad' : 'ok' }}" style="width:{{ min(100, $stockPct) }}%"></div>
+                            </div>
                             @endif
                         </div>
 
@@ -574,74 +386,55 @@
                             <span class="rt-stat-value">{{ number_format($totalItems) }}</span>
                             <span class="rt-stat-sub">items total</span>
                         </div>
-
                     </div>
 
-                    {{-- Stock warning --}}
                     @if($exceedsStock && $requestedBoxes > 0)
-                        <div style="padding:0 18px 14px">
-                            <div class="rt-warn">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                </svg>
-                                Requested {{ $requestedBoxes }} boxes but only {{ $availableBoxes }} available. Reduce quantity to approve.
-                            </div>
+                    <div style="padding:0 14px 12px">
+                        <div class="rt-warn">
+                            <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            Requested {{ $requestedBoxes }} boxes but only {{ $availableBoxes }} available. Reduce quantity to approve.
                         </div>
+                    </div>
                     @endif
-
                 </div>
             @endforeach
         </div>
 
-        {{-- ── Action Bar (Pending state only) ── --}}
+        {{-- Action bar (pending) --}}
         @if($transfer->status === TransferStatus::PENDING)
             <hr class="rt-divider">
             <div class="rt-action-bar">
-                <button type="button"
-                        wire:click="openRejectModal"
-                        class="rt-btn rt-btn-reject">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                <button type="button" @click="$wire.openRejectModal()" class="rt-btn rt-btn-reject">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     Reject Request
                 </button>
-
                 <button type="button"
-                        wire:click="approve"
-                        onclick="console.log('Button clicked!', this)"
+                        @click="$wire.approve()"
                         class="rt-btn rt-btn-approve">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Approve Transfer
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Approve Transfer</span>
                 </button>
             </div>
 
-        {{-- ── Approved state ── --}}
+        {{-- Approved state --}}
         @elseif($transfer->status === TransferStatus::APPROVED)
-            <div style="padding:22px">
+            <div style="padding:16px">
                 <div class="rt-status-banner approved">
-                    <svg class="rt-status-banner-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                    <svg class="rt-status-banner-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <div class="rt-status-banner-title">Transfer Approved</div>
-                    <div class="rt-status-banner-sub">This transfer has been approved and is ready for packing.</div>
+                    <div class="rt-status-banner-sub">This transfer is approved and ready for packing.</div>
                     <a href="{{ route('warehouse.transfers.pack', $transfer) }}" class="rt-pack-cta">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-                        </svg>
+                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
                         Pack Transfer
                     </a>
                 </div>
             </div>
 
-        {{-- ── Rejected state ── --}}
+        {{-- Rejected state --}}
         @elseif($transfer->status === TransferStatus::REJECTED)
-            <div style="padding:22px">
+            <div style="padding:16px">
                 <div class="rt-status-banner rejected">
-                    <svg class="rt-status-banner-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                    <svg class="rt-status-banner-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <div class="rt-status-banner-title">Transfer Rejected</div>
                     @if($transfer->notes)
                         <div class="rt-status-banner-sub">Reason: {{ $transfer->notes }}</div>
@@ -649,141 +442,50 @@
                 </div>
             </div>
         @endif
-
     </div>
 
-    {{-- ── Reject Modal ── --}}
+    {{-- Reject modal --}}
     @if($showRejectModal)
-        <div class="rt-modal-overlay" x-data="{ show: @entangle('showRejectModal') }">
-            <div class="rt-modal" @click.stop>
-
-                <div class="rt-modal-head">
-                    <span class="rt-modal-title">Reject Transfer Request</span>
-                    <button type="button" class="rt-modal-close" @click="$wire.closeRejectModal()">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+    <div class="rt-modal-overlay" x-data="{ show: @entangle('showRejectModal') }">
+        <div class="rt-modal" @click.stop>
+            <div class="rt-modal-head">
+                <span class="rt-modal-title">Reject Transfer Request</span>
+                <button type="button" class="rt-modal-close" @click="$wire.closeRejectModal()">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="rt-modal-body">
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:12px;
+                            background:var(--red-dim);border-radius:8px;border:1px solid rgba(225,29,72,.2)">
+                    <svg width="14" height="14" fill="none" stroke="var(--red)" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span style="font-size:12px;color:var(--red);line-height:1.5">
+                        This will reject the transfer request. The shop will need to submit a new request.
+                    </span>
                 </div>
-
-                <div class="rt-modal-body">
-                    <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;
-                                background:var(--red-dim);border-radius:10px;border:1px solid rgba(225,29,72,.2)">
-                        <svg width="18" height="18" fill="none" stroke="var(--red)" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                        <span style="font-size:19px;color:var(--red);line-height:1.5">
-                            This action will reject the transfer request. The shop will be notified and will need to submit a new request.
-                        </span>
-                    </div>
-
-                    <div>
-                        <label class="rt-field-label">
-                            Reason for Rejection <span style="color:var(--red)">*</span>
-                        </label>
-                        <textarea wire:model="rejectReason"
-                                  class="rt-textarea"
-                                  placeholder="Explain why this transfer cannot be fulfilled…"></textarea>
-                        @error('rejectReason')
-                            <span class="rt-field-error">{{ $message }}</span>
-                        @enderror
-                    </div>
+                <div>
+                    <label class="rt-field-label">
+                        Reason for Rejection <span style="color:var(--red)">*</span>
+                    </label>
+                    <textarea wire:model="rejectReason"
+                              class="rt-textarea"
+                              placeholder="Explain why this transfer cannot be fulfilled…"></textarea>
+                    @error('rejectReason')
+                        <span class="rt-field-error">{{ $message }}</span>
+                    @enderror
                 </div>
-
-                <div class="rt-modal-foot">
-                    <button type="button"
-                            class="rt-btn rt-btn-secondary"
-                            @click="$wire.closeRejectModal()">
-                        Cancel
-                    </button>
-                    <button type="button"
-                            wire:click="reject"
-                            class="rt-btn rt-btn-danger"
-                            wire:loading.attr="disabled"
-                            wire:target="reject">
-                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" wire:loading.remove wire:target="reject">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                        <span wire:loading.remove wire:target="reject">Reject Transfer</span>
-                        <span wire:loading wire:target="reject">Rejecting…</span>
-                    </button>
-                </div>
-
+            </div>
+            <div class="rt-modal-foot">
+                <button type="button" class="rt-btn rt-btn-secondary" @click="$wire.closeRejectModal()">Cancel</button>
+                <button type="button" wire:click="reject" class="rt-btn rt-btn-danger"
+                        wire:loading.attr="disabled" wire:target="reject">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" wire:loading.remove wire:target="reject"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span wire:loading.remove wire:target="reject">Reject Transfer</span>
+                    <span wire:loading wire:target="reject">Rejecting…</span>
+                </button>
             </div>
         </div>
+    </div>
     @endif
 
 </div>
-
-@push('scripts')
-<style>
-@keyframes spin { to { transform:rotate(360deg) } }
-
-/* Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
-}
-\n
-/* 2A - Transfer List Fixes */
-@media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
-}
-@media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:24px; }
-    .tl-step-sub  { display:none; }
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:13px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    .tl-route-dash-line { width:20px; }
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:24px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
-}
-\n
-/* 2B - Request Form Fixes */
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
-@media(max-width:600px) {
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-\n</style>
-@endpush
+</div>

@@ -363,6 +363,39 @@ class OwnerActions extends Component
         $this->totalActions = collect($sections)->sum('count');
     }
 
+    public function forceCloseSession(int $sessionId): void
+    {
+        $user = auth()->user();
+        if (! $user->isOwner()) return;
+
+        $session = DailySession::with('shop')->find($sessionId);
+        if (! $session || $session->status !== 'open') return;
+
+        $session->update([
+            'status'    => 'closed',
+            'closed_at' => now(),
+            'closed_by' => $user->id,
+        ]);
+
+        ActivityLog::create([
+            'user_id'           => $user->id,
+            'user_name'         => $user->name,
+            'action'            => 'session_force_closed',
+            'entity_type'       => 'DailySession',
+            'entity_id'         => $session->id,
+            'entity_identifier' => ($session->shop->name ?? "Session #{$session->id}"),
+            'details'           => [
+                'session_date' => $session->session_date->toDateString(),
+                'reason'       => 'Force-closed by owner — stale open session',
+            ],
+            'ip_address'        => request()->ip(),
+        ]);
+
+        $this->loadActions();
+        $this->dispatch('notification', ['type' => 'success',
+            'message' => 'Session for ' . ($session->shop->name ?? 'shop') . ' has been closed.']);
+    }
+
     public function approveHeldSale(int $id): void
     {
         $user = auth()->user();

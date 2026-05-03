@@ -26,23 +26,30 @@ class ReviewTransfer extends Component
 
         // Verify this transfer is from this warehouse
         if ($transfer->from_warehouse_id !== $user->location_id) {
-            abort(403, 'You can only manage transfers from your warehouse.');
+            session()->flash('error', 'This transfer is not from your warehouse.');
+            redirect()->route('warehouse.transfers.index')->dispatch();
+            return;
+        }
+
+        // Only pending transfers can be reviewed
+        if ($transfer->status !== TransferStatus::PENDING) {
+            session()->flash('error', "Transfer {$transfer->transfer_number} is already {$transfer->status->label()} and cannot be reviewed.");
+            redirect()->route('warehouse.transfers.index')->dispatch();
+            return;
         }
 
         $this->transfer = $transfer;
 
-        // Load items with boxes calculation
+        // quantity_requested stores boxes directly
         foreach ($transfer->items as $item) {
             $product = $item->product;
-            $itemsPerBox   = max(1, (int) $product->items_per_box);
-            $boxesRequested = (int) round($item->quantity_requested / $itemsPerBox);
 
             $this->items[] = [
                 'id'                => $item->id,
                 'product_id'        => $item->product_id,
                 'product_name'      => $product->name,
-                'items_per_box'     => $itemsPerBox,
-                'boxes_requested'   => $boxesRequested,          // always int, never float
+                'items_per_box'     => (int) $product->items_per_box,
+                'boxes_requested'   => (int) $item->quantity_requested,
                 'quantity_requested'=> (int) $item->quantity_requested,
             ];
         }
@@ -50,8 +57,6 @@ class ReviewTransfer extends Component
 
     public function approve()
     {
-        \Log::info('APPROVE CALLED - items:', $this->items);
-
         // Validate that we can approve
         if ($this->transfer->status !== TransferStatus::PENDING) {
             session()->flash('error', 'Only pending transfers can be approved.');
@@ -97,10 +102,8 @@ class ReviewTransfer extends Component
             foreach ($this->items as $item) {
                 $transferItem = $this->transfer->items()->find($item['id']);
                 if ($transferItem) {
-                    $product = Product::find($item['product_id']);
-                    $newQuantity = (int) ($item['boxes_requested'] ?? 0) * (int) $product->items_per_box;
                     $transferItem->update([
-                        'quantity_requested' => $newQuantity,
+                        'quantity_requested' => (int) ($item['boxes_requested'] ?? 0),
                     ]);
                 }
             }
@@ -111,7 +114,8 @@ class ReviewTransfer extends Component
 
             session()->flash('success', "Transfer {$this->transfer->transfer_number} approved successfully.");
             return redirect()->route('warehouse.transfers.index');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \Log::error('APPROVE FAILED: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             session()->flash('error', 'Error approving transfer: ' . $e->getMessage());
         }
     }

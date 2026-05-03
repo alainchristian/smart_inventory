@@ -1,353 +1,192 @@
 @php use App\Enums\TransferStatus; @endphp
-
-@push('styles')
+<div>
 <style>
-/* ── Pack Transfer — Design System ── */
-:root {
-    --amber: #d97706;
-    --amber-dim: #fef3c7;
-    --green-dim: #dcfce7;
-}
-.pt-wrap { display:flex;flex-direction:column;gap:20px;font-family:var(--font); }
+/* ── Pack Transfer ───────────────────────────────────── */
+.pt-wrap { display:flex; flex-direction:column; gap:16px; }
 
-.pt-card {
-    background:var(--surface);border:1.5px solid var(--border);
-    border-radius:12px;overflow:hidden;
-    box-shadow:0 1px 3px rgba(0,0,0,.04);
-}
+/* Cards */
+.pt-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
 .pt-card-head {
-    padding:16px 22px;border-bottom:1px solid var(--border);
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-    background:var(--surface);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    background:var(--surface2); flex-wrap:wrap;
 }
-.pt-card-title {
-    font-size:16px;font-weight:700;letter-spacing:.6px;
-    text-transform:uppercase;color:var(--text-sub);
-    display:flex;align-items:center;gap:6px;
-}
-.pt-card-body  { padding:22px; }
-
-/* Route strip */
-.pt-route {
-    display:flex;align-items:center;
-    background:var(--surface2);border-radius:10px;
-    padding:14px 18px;border:1px solid var(--border);gap:0;
-}
-.pt-route-node  { flex:1; }
-.pt-route-label { font-size:14px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim); }
-.pt-route-name  { font-size:20px;font-weight:700;color:var(--text);margin-top:3px; }
-.pt-route-arrow {
-    width:34px;height:34px;border-radius:50%;
-    background:var(--accent-dim);color:var(--accent);
-    display:flex;align-items:center;justify-content:center;flex-shrink:0;
-}
-
-/* Scan bar */
-.pt-scan-bar {
-    display:flex;gap:10px;align-items:center;
-    padding:18px;background:var(--surface2);border-radius:10px;
-    border:2px dashed rgba(59,111,212,.25);
-}
-.pt-scan-input {
-    flex:1;padding:11px 14px;
-    background:var(--surface);color:var(--text);
-    border:1.5px solid var(--border-hi);border-radius:8px;
-    font-size:22px;font-family:var(--mono);font-weight:600;outline:none;
-    transition:border-color var(--tr),box-shadow var(--tr);
-}
-.pt-scan-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow); }
-.pt-scan-input::placeholder { color:var(--text-dim);font-weight:500; }
-.pt-scan-btn {
-    padding:11px 20px;background:var(--accent);color:#fff;
-    border:none;border-radius:8px;font-size:20px;font-weight:700;
-    font-family:var(--font);cursor:pointer;white-space:nowrap;
-    transition:background var(--tr),transform var(--tr);
-    box-shadow:0 2px 6px var(--accent-glow);
-}
-.pt-scan-btn:hover { background:#2d5dbf; }
-.pt-scan-btn:active { transform:scale(.98); }
-
-/* Product summary rows */
-.pt-product-row {
-    border:1.5px solid var(--border);border-radius:10px;overflow:hidden;
-    background:var(--surface);
-    box-shadow:0 1px 3px rgba(0,0,0,.04);
-}
-.pt-product-head {
-    display:flex;align-items:center;justify-content:space-between;
-    padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
-}
-.pt-product-name { font-size:20px;font-weight:700;color:var(--text);line-height:1.4; }
-.pt-progress-wrap {
-    display:flex;align-items:center;gap:10px;
-    padding:14px 16px;
-}
-.pt-progress-bar-bg {
-    flex:1;height:8px;border-radius:999px;
-    background:var(--surface3);overflow:hidden;
-    box-shadow:inset 0 1px 2px rgba(0,0,0,.05);
-}
-.pt-progress-bar { height:100%;border-radius:999px;transition:width .4s var(--ease); }
-.pt-progress-bar.complete { background:linear-gradient(90deg, var(--green) 0%, #0ea97e 100%); }
-.pt-progress-bar.partial  { background:linear-gradient(90deg, var(--amber) 0%, #f59e0b 100%); }
-.pt-progress-bar.empty    { background:var(--surface3); }
-.pt-progress-label {
-    font-size:17px;font-weight:700;font-family:var(--mono);
-    color:var(--text-sub);white-space:nowrap;
-    padding:2px 8px;background:var(--surface2);border-radius:6px;
-}
-
-/* Packed boxes list */
-.pt-box-item {
-    display:flex;align-items:center;gap:12px;
-    padding:10px 16px;border-bottom:1px solid var(--border);
-    transition:background var(--tr);
-}
-.pt-box-item:last-child { border-bottom:none; }
-.pt-box-item:hover { background:var(--surface2); }
-.pt-box-code {
-    font-size:17px;font-family:var(--mono);font-weight:700;
-    color:var(--accent);background:var(--accent-dim);
-    padding:4px 10px;border-radius:6px;white-space:nowrap;
-    border:1px solid rgba(59,111,212,.15);
-}
-.pt-box-product { font-size:19px;color:var(--text);font-weight:600;flex:1;line-height:1.4; }
-.pt-box-items   { font-size:17px;color:var(--text-dim);font-family:var(--mono);font-weight:600; }
+.pt-card-title { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
+.pt-card-body  { padding:16px; }
 
 /* Flash */
 .pt-flash {
-    display:flex;align-items:flex-start;gap:10px;
-    padding:12px 16px;border-radius:10px;border:1px solid;font-size:20px;
-    line-height:1.5;
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 14px; border-radius:10px; font-size:12px; border:1px solid; line-height:1.5;
 }
-.pt-flash svg { flex-shrink:0; }
-.pt-flash.success { background:var(--success-dim);border-color:rgba(22,163,74,.25);color:#14532d; }
-.pt-flash.error   { background:var(--red-dim);    border-color:rgba(225,29,72,.25); color:#7f1d1d; }
+.pt-flash.ok  { background:var(--green-dim);  border-color:rgba(16,185,129,.25); color:var(--green); }
+.pt-flash.err { background:var(--red-dim);    border-color:rgba(225,29,72,.25);  color:var(--red); }
+
+/* Transfer header */
+.pt-num  { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.pt-pill {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.3px;
+    background:var(--accent-dim); color:var(--accent); border:1px solid rgba(99,102,241,.2);
+}
+
+/* Route strip */
+.pt-route {
+    display:flex; align-items:center; gap:0;
+    background:var(--surface2); border-radius:10px;
+    padding:12px 14px; border:1px solid var(--border);
+}
+.pt-route-node  { flex:1; }
+.pt-route-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.pt-route-name  { font-size:13px; font-weight:700; color:var(--text); margin-top:2px; }
+.pt-route-arrow {
+    width:28px; height:28px; border-radius:50%;
+    background:var(--accent-dim); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+/* Scan strip */
+.pt-scan-strip {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; padding:14px; border-left:3px solid var(--accent);
+}
+.pt-scan-label { font-size:10px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+.pt-scan-row   { display:flex; gap:8px; }
+.pt-scan-input {
+    flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
+    font-size:14px; font-weight:700; font-family:var(--mono);
+    background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
+}
+.pt-scan-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+.pt-scan-btn {
+    padding:10px 20px; background:var(--accent); color:#fff;
+    border:none; border-radius:8px; font-size:12px; font-weight:700;
+    cursor:pointer; white-space:nowrap; transition:opacity .15s;
+}
+.pt-scan-btn:hover { opacity:.88; }
+
+/* Quantity panel (modal) */
+.pt-qty-overlay {
+    position:fixed; inset:0; z-index:9999; background:rgba(10,14,26,.6);
+    backdrop-filter:blur(4px); display:flex; align-items:center;
+    justify-content:center; padding:20px; animation:ptFadeIn .15s ease;
+}
+@keyframes ptFadeIn { from{opacity:0} to{opacity:1} }
+.pt-qty-modal {
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    width:100%; max-width:340px; padding:24px;
+    box-shadow:0 24px 60px rgba(0,0,0,.15); animation:ptSlideUp .2s ease;
+}
+@keyframes ptSlideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.pt-qty-title { font-size:15px; font-weight:800; color:var(--text); text-align:center; margin-bottom:3px; }
+.pt-qty-sub   { font-size:12px; color:var(--text-dim); text-align:center; margin-bottom:16px; }
+.pt-qty-input {
+    width:100%; padding:12px; border:2px solid var(--accent); border-radius:10px;
+    font-size:34px; font-weight:800; text-align:center;
+    background:var(--surface); color:var(--text); font-family:var(--mono);
+    outline:none; box-sizing:border-box; display:block;
+}
+.pt-qty-hint { font-size:11px; color:var(--text-dim); text-align:center; margin-top:8px; }
+
+/* Product rows */
+.pt-prod-row { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.pt-prod-row.complete { border-color:var(--green); }
+.pt-prod-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--border); gap:8px; flex-wrap:wrap;
+}
+.pt-prod-name   { font-size:13px; font-weight:700; color:var(--text); }
+.pt-prod-body   { padding:12px 14px; }
+.pt-prog-info   { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+.pt-prog-text   { font-size:12px; color:var(--text-dim); }
+.pt-prog-nums   { font-size:12px; font-weight:700; color:var(--text); font-family:var(--mono); }
+.pt-prog-bar-wrap { height:5px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+.pt-prog-bar    { height:100%; border-radius:4px; transition:width .3s; }
+.pt-prog-bar.partial  { background:var(--amber); }
+.pt-prog-bar.done     { background:var(--green); }
+.pt-prog-bar.empty    { background:var(--surface2); }
+
+/* Packed boxes table */
+.pt-table { width:100%; border-collapse:collapse; min-width:400px; }
+.pt-table thead th {
+    padding:7px 12px; font-size:10px; font-weight:700; letter-spacing:.6px;
+    text-transform:uppercase; color:var(--text-dim); border-bottom:1px solid var(--border); text-align:left;
+}
+.pt-table tbody tr { border-bottom:1px solid var(--border); }
+.pt-table tbody tr:last-child { border-bottom:none; }
+.pt-table tbody tr:hover { background:var(--surface2); }
+.pt-table tbody td { padding:8px 12px; font-size:12px; color:var(--text); vertical-align:middle; }
+.pt-code-cell { font-family:var(--mono); font-weight:700; font-size:12px; color:var(--accent); }
+
+/* Summary strip */
+.pt-summary { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+.pt-sum-box  { text-align:center; padding:12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border); }
+.pt-sum-v    { font-size:20px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
+.pt-sum-l    { font-size:10px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); margin-top:2px; }
 
 /* Transporter select */
 .pt-select {
-    width:100%;padding:11px 14px;
-    background:var(--surface);color:var(--text);
-    border:1.5px solid var(--border-hi);border-radius:8px;
-    font-size:20px;font-family:var(--font);outline:none;
-    transition:border-color var(--tr),box-shadow var(--tr);
+    width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:8px;
+    font-size:13px; background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
 }
-.pt-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow); }
-.pt-select option {
-    background:var(--surface);
-    color:var(--text);
-    padding:8px;
+.pt-select:focus { border-color:var(--accent); }
+.pt-field-label { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
+.pt-field-error { font-size:11px; color:var(--red); margin-top:4px; font-weight:600; }
+
+/* Ship button */
+.pt-ship-btn {
+    width:100%; padding:11px; background:var(--accent); color:#fff;
+    border:none; border-radius:9px; font-size:13px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    gap:8px; transition:opacity .15s;
 }
+.pt-ship-btn:hover:not(:disabled) { opacity:.88; }
+.pt-ship-btn:disabled { opacity:.4; cursor:not-allowed; }
 
-/* Buttons */
-.pt-btn {
-    display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    padding:11px 24px;border-radius:9px;border:none;cursor:pointer;
-    font-size:20px;font-weight:700;font-family:var(--font);
-    transition:background var(--tr),box-shadow var(--tr),transform var(--tr),opacity var(--tr);
-}
-.pt-btn:active { transform:scale(.97); }
-.pt-btn:disabled { opacity:.4;cursor:not-allowed;transform:none; }
-.pt-btn-primary {
-    background:var(--accent);color:#fff;
-    box-shadow:0 2px 8px var(--accent-glow);width:100%;
-    min-height:44px;
-}
-.pt-btn-primary:hover:not(:disabled) { background:#2d5dbf;box-shadow:0 4px 14px var(--accent-glow); }
-.pt-btn-primary:active:not(:disabled) { transform:scale(.98); }
-
-.pt-field-label {
-    font-size:16px;font-weight:700;letter-spacing:.5px;
-    text-transform:uppercase;color:var(--text-sub);margin-bottom:6px;display:block;
-}
-.pt-field-error { font-size:17px;color:var(--red);margin-top:4px;font-weight:600; }
-
-@media(max-width:768px) {
-    .pt-card { border-radius:10px; }
-    .pt-card-head { padding:16px; flex-wrap:wrap; gap:10px; }
-    .pt-card-body { padding:18px; }
-    .pt-card-title { font-size:17px; }
-
-    /* Route */
-    .pt-route { flex-direction:column; gap:14px; text-align:center; padding:16px; }
-    .pt-route-node { text-align:center !important; }
-    .pt-route-arrow { transform:rotate(90deg); margin:4px auto; }
-    .pt-route-label { font-size:16px; }
-    .pt-route-name { font-size:22px; }
-
-    /* Scan section */
-    .pt-scan-bar { gap:10px; padding:16px; }
-    .pt-scan-input { font-size:23px; padding:12px 14px; }
-    .pt-scan-btn { padding:12px 20px; font-size:22px; font-weight:700; }
-
-    /* Progress */
-    .pt-product-head { padding:14px 16px; flex-wrap:wrap; gap:10px; }
-    .pt-product-name { font-size:22px; }
-    .pt-progress-wrap { flex-direction:column; gap:10px; align-items:stretch; }
-    .pt-progress-label { text-align:right; font-size:19px; }
-
-    /* Packed boxes */
-    .pt-box-item { padding:12px 14px; flex-wrap:wrap; gap:10px; }
-    .pt-box-code { font-size:17px; padding:4px 10px; }
-    .pt-box-product { font-size:20px; }
-    .pt-box-items { font-size:19px; }
-
-    /* Buttons */
-    .pt-btn-primary { width:100%; font-size:23px; padding:13px 24px; }
-}
-
+/* Responsive */
 @media(max-width:640px) {
-    .pt-wrap { gap:14px; }
-    .pt-card { border-radius:8px; }
-    .pt-card-head { padding:14px; gap:8px; }
-    .pt-card-body { padding:16px; }
-
-    /* Header */
-    .pt-card-head > div > span:first-child { font-size:26px; }
-    .pt-card-head > div > span:nth-child(2) { font-size:14px; padding:3px 10px; }
-    .pt-card-head > span { font-size:16px; }
-
-    /* Route */
-    .pt-route { padding:14px; gap:10px; }
-    .pt-route-label { font-size:14px; }
-    .pt-route-name { font-size:20px; }
-
-    /* Scan */
-    .pt-scan-bar { padding:14px; gap:10px; }
-    .pt-scan-input { font-size:22px; padding:11px 13px; }
-    .pt-scan-btn { padding:11px 18px; font-size:20px; }
-
-    /* Flash messages */
-    .pt-flash { font-size:19px; padding:10px 14px; }
-
-    /* Progress */
-    .pt-product-name { font-size:20px; }
-    .pt-product-head span { font-size:16px !important; }
-    .pt-progress-label { font-size:17px; }
-
-    /* Boxes */
-    .pt-box-item { padding:10px 12px; gap:8px; }
-    .pt-box-code { font-size:16px; padding:3px 9px; }
-    .pt-box-product { font-size:19px; }
-    .pt-box-items { font-size:17px; }
-
-    /* Ship section */
-    .pt-select { font-size:22px; padding:11px 13px; }
-    .pt-field-label { font-size:14px; }
-    .pt-btn-primary { font-size:22px; padding:12px 22px; }
-
-    /* Helper text */
-    div[style*="font-size:17px"] p { font-size:19px !important; line-height:1.5; }
+    .pt-summary { grid-template-columns:1fr; }
+    .pt-route   { flex-direction:column; gap:10px; }
+    .pt-route-node:last-child { text-align:left; }
+    .pt-route-arrow { transform:rotate(90deg); }
 }
-
-@keyframes spin { to { transform:rotate(360deg) } }
-
-/* Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
-}
-\n
-/* 2A - Transfer List Fixes */
-@media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
-}
-@media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:24px; }
-    .tl-step-sub  { display:none; }
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:13px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    .tl-route-dash-line { width:20px; }
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:24px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
-}
-\n
-/* 2B - Request Form Fixes */
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
-@media(max-width:600px) {
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-\n</style>
-@endpush
+</style>
 
 <div class="pt-wrap">
 
-    {{-- Flash Messages --}}
+    {{-- Flash messages --}}
     @if(session()->has('success'))
-        <div class="pt-flash success">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:2px">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            {{ session('success') }}
-        </div>
+    <div class="pt-flash ok">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>{{ session('success') }}</span>
+    </div>
     @endif
-    @foreach(['scan_success','scan_error','error'] as $flashKey)
-        @if(session()->has($flashKey))
-            <div class="pt-flash {{ str_contains($flashKey,'error') ? 'error' : 'success' }}">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:2px">
-                    @if(str_contains($flashKey,'error'))
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    @else
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    @endif
-                </svg>
-                {{ session($flashKey) }}
-            </div>
+    @foreach(['scan_success','scan_error','error'] as $fk)
+        @if(session()->has($fk))
+        <div class="pt-flash {{ str_contains($fk,'error') ? 'err' : 'ok' }}">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
+                @if(str_contains($fk,'error'))
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                @else
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                @endif
+            </svg>
+            <span>{{ session($fk) }}</span>
+        </div>
         @endif
     @endforeach
 
-    {{-- Transfer Header --}}
+    {{-- Transfer header --}}
     <div class="pt-card">
-        <div class="pt-card-head" style="min-height:auto">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1">
-                <span style="font-size:29px;font-weight:800;color:var(--text);line-height:1.2">{{ $transfer->transfer_number }}</span>
-                <span style="font-size:16px;font-weight:700;padding:3px 12px;border-radius:999px;
-                             background:var(--accent-dim);color:var(--accent);border:1px solid rgba(59,111,212,.2);white-space:nowrap">
+        <div class="pt-card-head">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span class="pt-num">{{ $transfer->transfer_number }}</span>
+                <span class="pt-pill">
+                    <span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <span style="font-size:17px;color:var(--text-dim);white-space:nowrap">{{ $transfer->requested_at?->format('M d, Y') }}</span>
+            <span style="font-size:11px;color:var(--text-dim)">{{ $transfer->requested_at?->format('d M Y') }}</span>
         </div>
         <div class="pt-card-body">
             <div class="pt-route">
@@ -356,9 +195,7 @@
                     <div class="pt-route-name">{{ $transfer->fromWarehouse->name }}</div>
                 </div>
                 <div class="pt-route-arrow">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                    </svg>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                 </div>
                 <div class="pt-route-node" style="text-align:right">
                     <div class="pt-route-label">To Shop</div>
@@ -368,153 +205,126 @@
         </div>
     </div>
 
-    {{-- Scan Section --}}
-    <div class="pt-card">
-        <div class="pt-card-body">
-            <div class="pt-scan-bar">
-                <svg width="20" height="20" fill="none" stroke="var(--text-dim)" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-                </svg>
-                <input type="text"
-                       wire:model="scanInput"
-                       wire:keydown.enter="scanProduct"
-                       class="pt-scan-input"
-                       placeholder="Scan or type barcode, then press Enter…"
-                       autofocus>
-                <button type="button" wire:click="scanProduct" class="pt-scan-btn">
-                    Pack
-                </button>
-            </div>
+    {{-- Scan strip --}}
+    <div class="pt-scan-strip">
+        <div class="pt-scan-label">Scan or type product barcode</div>
+        <div class="pt-scan-row">
+            <input type="text"
+                   wire:model="scanInput"
+                   wire:keydown.enter="scanProduct"
+                   placeholder="Product barcode — press Enter to pack"
+                   class="pt-scan-input"
+                   autofocus>
+            <button type="button" @click="$wire.scanProduct()" class="pt-scan-btn">
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                Pack
+            </button>
         </div>
+        @error('scanInput')
+            <p style="font-size:11px;color:var(--red);margin-top:5px">{{ $message }}</p>
+        @enderror
     </div>
 
-    {{-- ── Quantity Popup ─────────────────────────────────────────── --}}
+    {{-- Quantity panel --}}
     @if($showQuantityPanel)
-    <div
-        x-data
-        x-on:keydown.escape.window="$wire.closeQuantityPanel()"
-        style="position:fixed;inset:0;z-index:900;display:flex;align-items:center;
-               justify-content:center;background:rgba(15,18,36,.55);backdrop-filter:blur(3px)"
-    >
-        <div style="background:var(--surface);border-radius:18px;width:340px;max-width:92vw;
-                    padding:28px 28px 24px;box-shadow:0 24px 64px rgba(0,0,0,.26);
-                    border:1px solid var(--border)"
-             x-on:click.stop>
-
-            {{-- Product name --}}
-            <div style="font-size:23px;font-weight:800;color:var(--text);
-                        margin-bottom:4px;text-align:center">
-                📦 {{ $pendingProductName }}
+    <div class="pt-qty-overlay"
+         x-data
+         x-on:keydown.escape.window="$wire.closeQuantityPanel()">
+        <div class="pt-qty-modal" @click.stop>
+            <div class="pt-qty-title">{{ $pendingProductName }}</div>
+            <div class="pt-qty-sub">
+                {{ $pendingAlreadyAssigned }} already assigned &nbsp;·&nbsp;
+                <strong style="color:var(--text)">{{ $pendingMaxQty }} box{{ $pendingMaxQty === 1 ? '' : 'es' }} needed</strong>
             </div>
-
-            {{-- Still needed subtitle --}}
-            <div style="font-size:17px;color:var(--text-sub);text-align:center;margin-bottom:20px">
-                {{ $pendingAlreadyAssigned }} assigned
-                &nbsp;·&nbsp;
-                <strong style="color:var(--text)">
-                    {{ $pendingMaxQty }} box{{ $pendingMaxQty === 1 ? '' : 'es' }} needed
-                </strong>
-            </div>
-
-            {{-- Number input — auto-focused, Enter confirms --}}
-            <input
-                wire:model.live="pendingQty"
-                wire:keydown.enter="confirmScannedQuantity"
-                x-on:keydown.escape.stop="$wire.closeQuantityPanel()"
-                type="number"
-                min="1"
-                max="{{ $pendingMaxQty }}"
-                x-init="$nextTick(() => $el.select())"
-                style="width:100%;padding:14px;border:2px solid var(--accent);
-                       border-radius:12px;font-size:38px;font-weight:800;text-align:center;
-                       background:var(--surface);color:var(--text);font-family:var(--mono);
-                       outline:none;box-sizing:border-box;display:block"
-            >
-
+            <input wire:model.live="pendingQty"
+                   wire:keydown.enter="confirmScannedQuantity"
+                   x-on:keydown.escape.stop="$wire.closeQuantityPanel()"
+                   type="number" min="1" max="{{ $pendingMaxQty }}"
+                   x-init="$nextTick(() => $el.select())"
+                   class="pt-qty-input">
             @error('pendingQty')
-                <div style="font-size:16px;color:var(--red);margin-top:6px;text-align:center">
-                    {{ $message }}
-                </div>
+                <div style="font-size:11px;color:var(--red);margin-top:6px;text-align:center">{{ $message }}</div>
             @enderror
-
-            {{-- Live "after adding" indicator --}}
             @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
-            <div style="font-size:16px;color:var(--text-dim);margin-top:10px;text-align:center">
-                After adding:
-                <strong style="color:{{ $afterAdd === 0 ? 'var(--green)' : 'var(--text)' }}">
-                    {{ $afterAdd }} box{{ $afterAdd === 1 ? '' : 'es' }} still needed
-                </strong>
+            <div class="pt-qty-hint">
+                After adding: <strong style="color:{{ $afterAdd === 0 ? 'var(--green)' : 'var(--text)' }}">{{ $afterAdd }} box{{ $afterAdd === 1 ? '' : 'es' }} still needed</strong>
             </div>
-
-            {{-- Hint --}}
-            <div style="font-size:14px;color:var(--text-dim);text-align:center;margin-top:14px;
-                        padding-top:14px;border-top:1px solid var(--border)">
-                Press <kbd style="background:var(--surface2);border:1px solid var(--border);
-                                  border-radius:4px;padding:1px 5px;font-size:14px">Enter</kbd>
+            <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+                Press <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px">Enter</kbd>
                 to confirm &nbsp;·&nbsp;
-                <kbd style="background:var(--surface2);border:1px solid var(--border);
-                            border-radius:4px;padding:1px 5px;font-size:14px">Esc</kbd>
+                <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px">Esc</kbd>
                 to cancel
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px">
+                <button @click="$wire.closeQuantityPanel()"
+                        style="flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);
+                               background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;color:var(--text)">
+                    Cancel
+                </button>
+                <button @click="$wire.confirmScannedQuantity()"
+                        wire:loading.attr="disabled" wire:target="confirmScannedQuantity"
+                        style="flex:2;padding:9px;border-radius:9px;border:none;
+                               background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                    <span wire:loading.remove wire:target="confirmScannedQuantity">Add {{ $pendingQty }} Box{{ (int) $pendingQty === 1 ? '' : 'es' }}</span>
+                    <span wire:loading wire:target="confirmScannedQuantity" style="display:none">Adding…</span>
+                </button>
             </div>
         </div>
     </div>
     @endif
 
-    {{-- Packing Progress per Product --}}
+    {{-- Packing progress --}}
     @if(isset($packingSummary) && count($packingSummary) > 0)
     <div class="pt-card">
         <div class="pt-card-head">
             <span class="pt-card-title">Packing Progress</span>
             @php
-                $totalPacked = collect($packingSummary)->sum('boxes_packed');
-                $totalNeeded = collect($packingSummary)->sum('boxes_needed');
+                $totalPacked    = collect($packingSummary)->sum('boxes_packed');
+                $totalNeeded    = collect($packingSummary)->sum('boxes_needed');
                 $totalRemaining = $totalNeeded - $totalPacked;
             @endphp
-            <span style="font-size:19px;font-weight:700;font-family:var(--mono);
-                         background:{{ $totalRemaining > 0 ? 'var(--amber-dim)' : 'var(--green-dim)' }};
-                         color:{{ $totalRemaining > 0 ? 'var(--amber)' : 'var(--green)' }};
-                         padding:4px 12px;border-radius:6px;border:1px solid {{ $totalRemaining > 0 ? 'rgba(217,119,6,.2)' : 'rgba(22,163,74,.2)' }}">
-                {{ $totalRemaining > 0 ? $totalRemaining . ' remaining' : 'Complete' }}
+            <span style="font-size:11px;font-weight:700;font-family:var(--mono);
+                         padding:3px 10px;border-radius:6px;border:1px solid;
+                         {{ $totalRemaining > 0
+                             ? 'background:var(--amber-dim);color:var(--amber);border-color:rgba(217,119,6,.2)'
+                             : 'background:var(--green-dim);color:var(--green);border-color:rgba(16,185,129,.2)' }}">
+                {{ $totalRemaining > 0 ? $totalRemaining . ' remaining' : '✓ Complete' }}
             </span>
         </div>
-        <div class="pt-card-body" style="display:flex;flex-direction:column;gap:12px">
+        <div class="pt-card-body" style="display:flex;flex-direction:column;gap:10px">
             @foreach($packingSummary as $summary)
                 @php
-                    $pct = $summary['boxes_needed'] > 0
-                        ? min(100, round($summary['boxes_packed'] / $summary['boxes_needed'] * 100))
-                        : 0;
+                    $pct      = $summary['boxes_needed'] > 0 ? min(100, round($summary['boxes_packed'] / $summary['boxes_needed'] * 100)) : 0;
                     $remaining = $summary['boxes_needed'] - $summary['boxes_packed'];
-                    $barClass = $summary['complete'] ? 'complete' : ($summary['boxes_packed'] > 0 ? 'partial' : 'empty');
+                    $barClass  = $summary['complete'] ? 'done' : ($summary['boxes_packed'] > 0 ? 'partial' : 'empty');
                 @endphp
-                <div class="pt-product-row">
-                    <div class="pt-product-head">
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <span class="pt-product-name">{{ $summary['product_name'] }}</span>
-                            @if(!$summary['complete'])
-                                <span style="font-size:17px;font-weight:700;font-family:var(--mono);
-                                             color:var(--amber);background:var(--amber-dim);
-                                             padding:2px 8px;border-radius:5px">
-                                    {{ $remaining }} left
-                                </span>
+                <div class="pt-prod-row {{ $summary['complete'] ? 'complete' : '' }}">
+                    <div class="pt-prod-head">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span class="pt-prod-name">{{ $summary['product_name'] }}</span>
+                            @if($summary['complete'])
+                                <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;
+                                             background:var(--green-dim);color:var(--green)">Complete</span>
+                            @else
+                                <span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;
+                                             background:var(--amber-dim);color:var(--amber)">{{ $remaining }} left</span>
                             @endif
                         </div>
-                        <span style="font-size:16px;font-family:var(--mono);color:var(--text-dim);
-                                     background:var(--surface3);padding:2px 8px;border-radius:5px">
+                        <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim);
+                                     background:var(--surface2);padding:2px 8px;border-radius:5px">
                             {{ $summary['barcode'] }}
                         </span>
                     </div>
-                    <div class="pt-progress-wrap">
-                        <div class="pt-progress-bar-bg">
-                            <div class="pt-progress-bar {{ $barClass }}" style="width:{{ $pct }}%"></div>
+                    <div class="pt-prod-body">
+                        <div class="pt-prog-info">
+                            <span class="pt-prog-text">Progress</span>
+                            <span class="pt-prog-nums" style="{{ $summary['complete'] ? 'color:var(--green)' : '' }}">
+                                {{ $summary['boxes_packed'] }} / {{ $summary['boxes_needed'] }} boxes
+                            </span>
                         </div>
-                        <span class="pt-progress-label" style="{{ $summary['complete'] ? 'color:var(--green)' : '' }}">
-                            {{ $summary['boxes_packed'] }} / {{ $summary['boxes_needed'] }} boxes
-                        </span>
-                        @if($summary['complete'])
-                            <svg width="16" height="16" fill="none" stroke="var(--green)" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        @endif
+                        <div class="pt-prog-bar-wrap">
+                            <div class="pt-prog-bar {{ $barClass }}" style="width:{{ $pct }}%"></div>
+                        </div>
                     </div>
                 </div>
             @endforeach
@@ -522,100 +332,130 @@
     </div>
     @endif
 
-    {{-- Packed Boxes List --}}
+    {{-- Packed boxes --}}
     @if(isset($packedBoxes) && count($packedBoxes) > 0)
     <div class="pt-card">
         <div class="pt-card-head">
             <span class="pt-card-title">Packed Boxes</span>
-            <span style="font-size:17px;font-weight:700;font-family:var(--mono);
+            <span style="font-size:12px;font-weight:700;font-family:var(--mono);
                          background:var(--accent-dim);color:var(--accent);padding:3px 10px;border-radius:6px">
-                {{ count($packedBoxes) }} boxes
+                {{ count($packedBoxes) }} box{{ count($packedBoxes) === 1 ? '' : 'es' }}
             </span>
         </div>
-        <div style="divide-y:var(--border)">
-            @foreach($packedBoxes as $box)
-                <div class="pt-box-item">
-                    <span class="pt-box-code">{{ $box['box_code'] }}</span>
-                    <span class="pt-box-product">{{ $box['product_name'] }}</span>
-                    <span class="pt-box-items">{{ $box['items'] }} items</span>
-                    @if($box['scanned_out'] ?? false)
-                        <svg width="14" height="14" fill="none" stroke="var(--green)" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                        </svg>
-                    @endif
-                </div>
-            @endforeach
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+            <table class="pt-table">
+                <thead>
+                    <tr>
+                        <th>Box Code</th>
+                        <th>Product</th>
+                        <th>Items</th>
+                        <th>Scanned Out</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($packedBoxes as $box)
+                    <tr>
+                        <td><span class="pt-code-cell">{{ $box['box_code'] }}</span></td>
+                        <td>{{ $box['product_name'] }}</td>
+                        <td style="font-family:var(--mono)">{{ number_format($box['items']) }}</td>
+                        <td>
+                            @if($box['scanned_out'] ?? false)
+                                <svg width="13" height="13" fill="none" stroke="var(--green)" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            @else
+                                <span style="font-size:10px;color:var(--text-dim)">Pending</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
     @endif
 
-    {{-- Transporter + Ship --}}
+    {{-- Summary + Ship --}}
     <div class="pt-card">
         <div class="pt-card-head">
             <span class="pt-card-title">Ship Transfer</span>
         </div>
-        <div class="pt-card-body" style="display:flex;flex-direction:column;gap:16px">
+        <div class="pt-card-body" style="display:flex;flex-direction:column;gap:14px">
+
+            {{-- Summary --}}
+            @php
+                $totalItemsAssigned = isset($packedBoxes) ? array_sum(array_column($packedBoxes, 'items')) : 0;
+                $productsComplete   = isset($packingSummary) ? count(array_filter($packingSummary, fn($s) => $s['complete'])) : 0;
+                $totalProducts      = isset($packingSummary) ? count($packingSummary) : 0;
+            @endphp
+            <div class="pt-summary">
+                <div class="pt-sum-box">
+                    <div class="pt-sum-v">{{ isset($packedBoxes) ? count($packedBoxes) : 0 }}</div>
+                    <div class="pt-sum-l">Boxes Packed</div>
+                </div>
+                <div class="pt-sum-box">
+                    <div class="pt-sum-v">{{ number_format($totalItemsAssigned) }}</div>
+                    <div class="pt-sum-l">Total Items</div>
+                </div>
+                <div class="pt-sum-box">
+                    <div class="pt-sum-v" style="{{ $productsComplete === $totalProducts && $totalProducts > 0 ? 'color:var(--green)' : '' }}">
+                        {{ $productsComplete }}/{{ $totalProducts }}
+                    </div>
+                    <div class="pt-sum-l">Products Done</div>
+                </div>
+            </div>
+
+            {{-- Transporter --}}
             <div>
                 <label class="pt-field-label">
                     Transporter <span style="color:var(--red)">*</span>
-                    <span style="font-size:16px;color:var(--text-dim);font-weight:normal;margin-left:8px">({{ count($transporters) }} available)</span>
+                    <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px">Select existing or type to add new</span>
                 </label>
-                <select wire:model="transporter_id" class="pt-select" style="color:var(--text);">
-                    <option value="">Select transporter…</option>
+                <input type="text"
+                       wire:model="transporterInput"
+                       list="transporters-datalist"
+                       placeholder="e.g. John Doe or select from list…"
+                       class="pt-select"
+                       autocomplete="off">
+                <datalist id="transporters-datalist">
                     @foreach($transporters as $t)
-                        <option value="{{ $t->id }}">
-                            {{ $t->name }}{{ $t->vehicle_number ? ' — ' . $t->vehicle_number : '' }}
-                        </option>
+                        <option value="{{ $t->name }}">{{ $t->vehicle_number ? $t->vehicle_number : '' }}</option>
                     @endforeach
-                </select>
-                @error('transporter_id')
+                </datalist>
+                @error('transporterInput')
                     <span class="pt-field-error">{{ $message }}</span>
                 @enderror
-
-                {{-- Debug: Show transporter data --}}
-                @if(count($transporters) === 0)
-                    <div style="margin-top:8px;padding:10px;background:var(--red-glow);color:var(--red);border-radius:6px;font-size:19px">
-                        ⚠️ No active transporters found. Please create transporters in the system.
-                    </div>
-                @endif
+                <p style="font-size:11px;color:var(--text-dim);margin-top:4px">
+                    New names are saved automatically when you ship.
+                </p>
             </div>
 
+            {{-- Ship button --}}
             <button type="button"
-                    wire:click="shipTransfer"
+                    @click="$wire.shipTransfer()"
                     @if(empty($packedBoxes ?? [])) disabled @endif
-                    class="pt-btn pt-btn-primary"
-                    wire:loading.attr="disabled"
-                    wire:target="shipTransfer">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"
+                    class="pt-ship-btn"
+                    wire:loading.attr="disabled" wire:target="shipTransfer">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"
                      wire:loading.remove wire:target="shipTransfer">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                 </svg>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                     wire:loading wire:target="shipTransfer"
-                     style="animation:spin 1s linear infinite">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"
-                            stroke-dasharray="31.4" stroke-dashoffset="10" stroke-linecap="round"/>
-                </svg>
                 <span wire:loading.remove wire:target="shipTransfer">Ship Transfer</span>
-                <span wire:loading wire:target="shipTransfer">Shipping…</span>
+                <span wire:loading wire:target="shipTransfer" style="display:none">Shipping…</span>
             </button>
-            <p style="font-size:17px;color:var(--text-dim);text-align:center;margin-top:-8px">
+            <p style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:-6px">
                 Partial shipments are allowed. Pack at least one box before shipping.
             </p>
         </div>
     </div>
 
-    <script>
-    window.addEventListener('quantity-confirmed', () => {
-        // Re-focus the scan input after popup closes
-        setTimeout(() => {
-            const scanInput = document.querySelector('[wire\\:model="scanInput"], [wire\\:model\\.live="scanInput"]');
-            if (scanInput) {
-                scanInput.focus();
-                scanInput.select();
-            }
-        }, 80);
-    });
-    </script>
+</div>
+
+<script>
+window.addEventListener('quantity-confirmed', () => {
+    setTimeout(() => {
+        const input = document.querySelector('.pt-scan-input');
+        if (input) { input.focus(); input.select(); }
+    }, 80);
+});
+</script>
 
 </div>

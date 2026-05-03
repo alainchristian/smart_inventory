@@ -89,8 +89,9 @@ class SessionActivityFeed extends Component
         // Build unified activity list
         $activities = collect();
 
-        // Sales
-        Sale::notVoided()
+        // Sales — match service: exclude both voided_at and deleted_at
+        Sale::whereNull('voided_at')
+            ->whereNull('deleted_at')
             ->where('shop_id', $shopId)
             ->whereDate('sale_date', $date)
             ->with('customer')
@@ -98,8 +99,8 @@ class SessionActivityFeed extends Component
             ->each(function ($sale) use (&$activities) {
                 $activities->push([
                     'type'      => 'sale',
-                    'time'      => $sale->created_at,
-                    'label'     => $sale->customer ? 'Sale — ' . $sale->customer->name : 'Sale',
+                    'time'      => $sale->sale_date,
+                    'label'     => $sale->sale_number . ($sale->customer ? ' — ' . $sale->customer->name : ''),
                     'amount'    => $sale->total,
                     'id'        => $sale->id,
                     'voidable'  => false,
@@ -157,14 +158,15 @@ class SessionActivityFeed extends Component
                 ]);
             });
 
-        // Credit repayments
-        CreditRepayment::where('daily_session_id', $this->dailySessionId)
+        // Credit repayments — match service: query by shop + date (not session_id, which may be null on older rows)
+        CreditRepayment::where('shop_id', $shopId)
+            ->whereDate('repayment_date', $date)
             ->with('customer')
             ->get()
             ->each(function ($repayment) use (&$activities) {
                 $activities->push([
                     'type'     => 'repayment',
-                    'time'     => $repayment->created_at,
+                    'time'     => $repayment->repayment_date ?? $repayment->created_at,
                     'label'    => 'Repayment' . ($repayment->customer ? ' — ' . $repayment->customer->name : ''),
                     'amount'   => $repayment->amount,
                     'id'       => $repayment->id,
@@ -195,6 +197,9 @@ class SessionActivityFeed extends Component
 
         $activities = $activities->sortByDesc('time')->values();
 
-        return view('livewire.shop.day-close.session-activity-feed', compact('activities', 'isOpen'));
+        $totalIn  = $activities->whereIn('type', ['sale', 'repayment'])->sum('amount');
+        $totalOut = $activities->whereIn('type', ['expense', 'withdrawal', 'bank_deposit', 'return'])->sum('amount');
+
+        return view('livewire.shop.day-close.session-activity-feed', compact('activities', 'isOpen', 'totalIn', 'totalOut'));
     }
 }

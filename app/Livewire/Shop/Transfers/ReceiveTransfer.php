@@ -55,12 +55,16 @@ class ReceiveTransfer extends Component
 
         // Verify this transfer is for this shop
         if ($transfer->to_shop_id !== $user->location_id) {
-            abort(403, 'You can only receive transfers for your shop.');
+            session()->flash('error', 'This transfer is not for your shop.');
+            redirect()->route('shop.transfers.index')->dispatch();
+            return;
         }
 
         // Only in-transit or delivered transfers can be received
         if (!in_array($transfer->status, [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED])) {
-            abort(403, 'Only in-transit or delivered transfers can be received.');
+            session()->flash('error', 'Only in-transit or delivered transfers can be received.');
+            redirect()->route('shop.transfers.index')->dispatch();
+            return;
         }
 
         $this->transfer = $transfer;
@@ -506,26 +510,45 @@ class ReceiveTransfer extends Component
             ];
         }
 
-        // Get all boxes for this transfer with their details
-        $expectedBoxesList = [];
-        foreach ($this->transfer->boxes as $tb) {
-            $expectedBoxesList[] = [
-                'box_id'       => $tb->box->id,
+        // Split boxes into three ordered sections using direct DB queries
+        // (same pattern as confirmScannedQuantity which already uses whereNotIn successfully)
+        $scannedBoxIds = array_map('intval', array_keys($this->scannedBoxes));
+
+        $pendingQuery = TransferBox::where('transfer_id', $this->transfer->id)
+            ->where('is_received', false)
+            ->with('box.product');
+        if (!empty($scannedBoxIds)) {
+            $pendingQuery->whereNotIn('box_id', $scannedBoxIds);
+        }
+        $pendingBoxes = $pendingQuery->get()->map(fn($tb) => [
+            'box_id'       => (int) $tb->box_id,
+            'box_code'     => $tb->box->box_code,
+            'product_name' => $tb->box->product->name,
+            'items'        => $tb->box->items_remaining,
+        ])->values()->toArray();
+
+        $receivedBoxes = TransferBox::where('transfer_id', $this->transfer->id)
+            ->where('is_received', true)
+            ->with('box.product')
+            ->get()->map(fn($tb) => [
+                'box_id'       => (int) $tb->box_id,
                 'box_code'     => $tb->box->box_code,
                 'product_name' => $tb->box->product->name,
                 'items'        => $tb->box->items_remaining,
-                'is_received'  => $tb->is_received,
-                'is_damaged'   => $tb->is_damaged,
-            ];
-        }
+                'is_damaged'   => (bool) $tb->is_damaged,
+            ])->values()->toArray();
+
+        $sessionBoxes = array_values($this->scannedBoxes);
 
         return view('livewire.shop.transfers.receive-transfer', [
             'receivingSummary' => $receivingSummary,
-            'expectedBoxesList' => $expectedBoxesList,
-            'expectedBoxes' => $this->getExpectedBoxesCount(),
-            'scannedCount' => $this->getScannedBoxesCount(),
-            'remainingCount' => $this->getRemainingBoxesCount(),
-            'damagedCount' => $this->getDamagedBoxesCount(),
+            'pendingBoxes'     => $pendingBoxes,
+            'sessionBoxes'     => $sessionBoxes,
+            'receivedBoxes'    => $receivedBoxes,
+            'expectedBoxes'    => $this->getExpectedBoxesCount(),
+            'scannedCount'     => $this->getScannedBoxesCount(),
+            'remainingCount'   => $this->getRemainingBoxesCount(),
+            'damagedCount'     => $this->getDamagedBoxesCount(),
             'progressPercentage' => $this->getProgressPercentage(),
         ]);
     }

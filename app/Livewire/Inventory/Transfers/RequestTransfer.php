@@ -233,13 +233,12 @@ class RequestTransfer extends Component
         try {
             $transferService = app(TransferService::class);
 
-            // Convert boxes to items (boxes × items_per_box)
+            // Store boxes directly
             $itemsWithQuantities = [];
             foreach ($this->items as $item) {
-                $product = Product::find($item['product_id']);
                 $itemsWithQuantities[] = [
                     'product_id' => $item['product_id'],
-                    'quantity' => $item['boxes_requested'] * $product->items_per_box,
+                    'quantity' => (int) $item['boxes_requested'],
                 ];
             }
 

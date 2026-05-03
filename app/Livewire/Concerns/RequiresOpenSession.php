@@ -17,13 +17,20 @@ trait RequiresOpenSession
      * Returns true  -> session is valid, component proceeds normally.
      * Returns false -> component renders the blocked state view.
      */
-    public function checkSession(int $shopId): bool
+    public function checkSession(?int $shopId): bool
     {
         $user = auth()->user();
 
-        // Owners bypass the gate — read-only visibility across all shops
+        // Owners bypass the gate — they can sell/receive at any shop regardless of session
         if ($user->isOwner()) {
             return true;
+        }
+
+        // Non-owner with no shop resolved → treat as no session
+        if ($shopId === null) {
+            $this->sessionBlocked     = true;
+            $this->sessionBlockReason = 'no_session';
+            return false;
         }
 
         // Only today's session matters for the gate

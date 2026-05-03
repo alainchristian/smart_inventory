@@ -4,13 +4,6 @@
 /* ── Transfers List ─────────────────────────────────────────────── */
 .wtl-wrap { display:flex; flex-direction:column; gap:16px; }
 
-/* Page header */
-.wtl-page-header {
-    display:flex; align-items:center; justify-content:space-between;
-    gap:12px; flex-wrap:wrap;
-}
-.wtl-page-title { font-size:22px; font-weight:700; color:var(--text); margin:0; }
-.wtl-page-sub   { font-size:13px; color:var(--text-dim); margin:2px 0 0; }
 
 /* Tab pills filter */
 .wtl-tabs {
@@ -28,7 +21,7 @@
     transition:all .15s; line-height:1.4; flex-shrink:0;
 }
 .wtl-tab:hover { color:var(--text); background:rgba(0,0,0,.04); }
-.wtl-tab.active { background:#3b6bd4; color:#fff; font-weight:600; }
+.wtl-tab.active { background:var(--accent); color:#fff; font-weight:600; }
 .wtl-tab-badge {
     font-size:11px; font-weight:700; padding:1px 6px;
     border-radius:10px; background:rgba(255,255,255,.25); color:inherit;
@@ -42,12 +35,12 @@
 .wtl-list { display:flex; flex-direction:column; gap:8px; }
 
 .wtl-card {
-    background:var(--surface); border:1px solid var(--border);
+    background:#fff; border:1px solid var(--border);
     border-radius:12px; overflow:hidden;
     transition:border-color .15s, box-shadow .15s;
 }
 .wtl-card:hover {
-    border-color:var(--card-accent, #3b6bd4);
+    border-color:var(--card-accent, var(--accent));
     box-shadow:0 2px 12px rgba(0,0,0,.06);
 }
 
@@ -119,20 +112,19 @@
 .wtl-card-foot {
     display:flex; align-items:center; gap:8px;
     padding:9px 16px; border-top:1px solid var(--border);
-    background:var(--surface2,rgba(0,0,0,.02));
 }
 .wtl-action {
     display:inline-flex; align-items:center; gap:5px;
     padding:5px 12px; border-radius:7px;
-    font-size:12px; font-weight:500;
+    font-size:12px; font-weight:600;
     border:1px solid var(--border); cursor:pointer;
-    text-decoration:none; background:var(--surface); color:var(--text);
+    text-decoration:none; background:#fff; color:var(--text);
     transition:all .15s; white-space:nowrap;
 }
-.wtl-action:hover        { border-color:#3b6bd4; color:#3b6bd4; }
-.wtl-action.primary      { background:#3b6bd4; color:#fff; border-color:#3b6bd4; }
+.wtl-action:hover        { border-color:var(--accent); color:var(--accent); }
+.wtl-action.primary      { background:var(--accent); color:#fff; border-color:var(--accent); }
 .wtl-action.primary:hover{ opacity:.88; }
-.wtl-action.warn         { background:#d97706; color:#fff; border-color:#d97706; }
+.wtl-action.warn         { background:var(--amber); color:#fff; border-color:var(--amber); }
 .wtl-action.warn:hover   { opacity:.88; }
 .wtl-foot-spacer { flex:1; }
 .wtl-foot-time   { font-size:11px; color:var(--text-faint); white-space:nowrap; }
@@ -147,11 +139,11 @@
 .wtl-empty p   { font-size:13px; color:var(--text-dim); margin:0; }
 
 /* Discrepancy highlight */
-.wtl-card--discrepancy { border-color:rgba(239,68,68,.35) !important; }
+.wtl-card--discrepancy { border-color:var(--red) !important; }
 .wtl-discrepancy-flag {
     display:inline-flex; align-items:center; gap:4px;
     padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600;
-    background:rgba(239,68,68,.1); color:#ef4444;
+    background:var(--red-dim); color:var(--red);
 }
 
 /* Pagination */
@@ -162,7 +154,6 @@
     .wtl-card-stats { flex-wrap:wrap; }
 }
 @media(max-width:768px) {
-    .wtl-page-header { flex-direction:column; align-items:flex-start; }
     .wtl-tabs { width:100%; }
     .wtl-card-top { flex-direction:column; }
     .wtl-card-stats { border-left:none; border-top:1px solid var(--border); margin:0; flex-wrap:wrap; }
@@ -178,14 +169,6 @@
 </style>
 
 <div class="wtl-wrap">
-
-    {{-- ── Page Header ────────────────────────────────── --}}
-    <div class="wtl-page-header">
-        <div>
-            <h1 class="wtl-page-title">Outbound Transfers</h1>
-            <p class="wtl-page-sub">Transfer requests from shops to this warehouse</p>
-        </div>
-    </div>
 
     {{-- ── Tab Filter ──────────────────────────────────── --}}
     <div class="wtl-tabs">
@@ -244,10 +227,7 @@
                     default      => 'rgba(100,116,139,.08)',
                 },
             ];
-            $itemsReq = $transfer->items->sum(function ($item) {
-                $ipb = max(1, (int) ($item->product->items_per_box ?? 1));
-                return (int) round($item->quantity_requested / $ipb);
-            });
+            $itemsReq = $transfer->items->sum(fn ($item) => (int) $item->quantity_requested);
         @endphp
         <div class="wtl-card {{ $transfer->has_discrepancy ? 'wtl-card--discrepancy' : '' }}"
              style="--card-accent:{{ $accent }}">

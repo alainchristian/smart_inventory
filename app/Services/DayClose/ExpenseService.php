@@ -20,7 +20,7 @@ class ExpenseService
             throw new \Exception('Session is closed — no new expenses can be added.');
         }
 
-        if (! $user->isShopManager() || $user->location_id !== $session->shop_id) {
+        if (! $user->isOwner() && (! $user->isShopManager() || $user->location_id !== $session->shop_id)) {
             abort(403, 'You can only add expenses to your own shop session.');
         }
 
@@ -90,10 +90,57 @@ class ExpenseService
             throw new \Exception('Cannot void expense from a closed session.');
         }
 
-        if (! $user->isShopManager() || $user->location_id !== $expense->dailySession->shop_id) {
+        if (! $user->isOwner() && (! $user->isShopManager() || $user->location_id !== $expense->dailySession->shop_id)) {
             abort(403, 'You can only void expenses from your own shop session.');
         }
 
         $expense->delete();
+    }
+
+    public function updateExpense(Expense $expense, array $data, User $user): Expense
+    {
+        if (! $expense->dailySession->isEditable()) {
+            throw new \Exception('Cannot edit an expense from a closed session.');
+        }
+
+        if (! $user->isOwner() && (! $user->isShopManager() || $user->location_id !== $expense->dailySession->shop_id)) {
+            abort(403, 'You can only edit expenses from your own shop session.');
+        }
+
+        if ($expense->is_system_generated) {
+            throw new \Exception('System-generated expenses cannot be edited.');
+        }
+
+        $categoryId    = (int) ($data['expense_category_id'] ?? 0);
+        $amount        = (int) ($data['amount'] ?? 0);
+        $description   = trim($data['description'] ?? '');
+        $paymentMethod = $data['payment_method'] ?? 'cash';
+
+        if (! ExpenseCategory::find($categoryId)) {
+            throw new \Exception('Invalid expense category.');
+        }
+
+        if ($amount <= 0) {
+            throw new \Exception('Expense amount must be greater than zero.');
+        }
+
+        if (empty($description)) {
+            throw new \Exception('Expense description is required.');
+        }
+
+        $validMethods = ['cash', 'mobile_money', 'bank_transfer', 'other'];
+        if (! in_array($paymentMethod, $validMethods)) {
+            throw new \Exception('Invalid payment method.');
+        }
+
+        $expense->update([
+            'expense_category_id' => $categoryId,
+            'amount'              => $amount,
+            'description'         => $description,
+            'payment_method'      => $paymentMethod,
+            'receipt_reference'   => $data['receipt_reference'] ?? $expense->receipt_reference,
+        ]);
+
+        return $expense->fresh();
     }
 }

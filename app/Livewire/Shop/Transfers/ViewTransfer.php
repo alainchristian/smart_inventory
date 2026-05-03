@@ -34,7 +34,7 @@ class ViewTransfer extends Component
         // Load items with boxes calculation
         foreach ($transfer->items as $item) {
             $product = $item->product;
-            $boxesRequested = $item->quantity_requested / $product->items_per_box;
+            $boxesRequested = (int) $item->quantity_requested;
 
             $this->items[] = [
                 'id' => $item->id,
@@ -57,7 +57,7 @@ class ViewTransfer extends Component
         $this->items = [];
         foreach ($this->transfer->items as $item) {
             $product = $item->product;
-            $boxesRequested = $item->quantity_requested / $product->items_per_box;
+            $boxesRequested = (int) $item->quantity_requested;
 
             $this->items[] = [
                 'id' => $item->id,
