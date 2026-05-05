@@ -54,6 +54,15 @@
     <div class="lg:ml-[var(--sidebar-width)]">
         <livewire:layout.topbar />
         <main class="min-h-screen" style="background-color: var(--bg); padding-top: var(--topbar-height); overflow-anchor: none;">
+            @if (session('error'))
+            <div style="background:var(--red-dim);border-bottom:1px solid var(--red);padding:10px 20px;
+                        display:flex;align-items:center;gap:10px;font-size:13px;color:var(--red)">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {{ session('error') }}
+            </div>
+            @endif
             <div class="p-2 sm:p-5 lg:p-8 xl:p-10">
                 {{ $slot }}
             </div>

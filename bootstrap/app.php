@@ -48,4 +48,25 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             return redirect()->route('login')->with('status', 'Your session has expired. Please sign in again.');
         });
+
+        // Redirect authenticated users to their own dashboard on 403 instead of error page
+        $exceptions->render(function (
+            \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e,
+            \Illuminate\Http\Request $request
+        ) {
+            if ($request->expectsJson() || $request->hasHeader('X-Livewire')) {
+                return null; // Let Livewire/API handle it normally
+            }
+
+            if (auth()->check()) {
+                $user = auth()->user();
+                $route = match (true) {
+                    $user->isOwner()            => 'owner.dashboard',
+                    $user->isWarehouseManager() => 'warehouse.dashboard',
+                    default                     => 'shop.dashboard',
+                };
+                return redirect()->route($route)
+                    ->with('error', 'You don\'t have permission to access that page.');
+            }
+        });
     })->create();
