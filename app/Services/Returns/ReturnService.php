@@ -106,6 +106,7 @@ class ReturnService
                     'quantity_returned' => $quantityReturned,
                     'quantity_damaged' => $quantityDamaged,
                     'quantity_good' => $quantityGood,
+                    'unit_price' => $itemData['unit_price'] ?? 0,
                     'original_sale_item_id' => $itemData['original_sale_item_id'] ?? null,
                     'is_replacement' => $itemData['is_replacement'] ?? false,
                     'condition_notes' => $itemData['condition_notes'] ?? null,

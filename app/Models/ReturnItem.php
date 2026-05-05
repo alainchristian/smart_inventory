@@ -16,6 +16,7 @@ class ReturnItem extends Model
         'quantity_returned',
         'quantity_damaged',
         'quantity_good',
+        'unit_price',
         'original_sale_item_id',
         'is_replacement',
         'replacement_box_id',
@@ -26,8 +27,14 @@ class ReturnItem extends Model
         'quantity_returned' => 'integer',
         'quantity_damaged' => 'integer',
         'quantity_good' => 'integer',
+        'unit_price' => 'integer',
         'is_replacement' => 'boolean',
     ];
+
+    public function getRefundAmountAttribute(): int
+    {
+        return $this->unit_price * $this->quantity_returned;
+    }
 
     // Relationships
     public function return(): BelongsTo

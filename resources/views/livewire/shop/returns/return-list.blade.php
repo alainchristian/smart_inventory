@@ -347,6 +347,14 @@
                                                 ({{ $item->quantity_damaged }} dmg)
                                             </span>
                                         @endif
+                                        @if (!$return->is_exchange && $item->unit_price > 0)
+                                            <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">
+                                                {{ number_format($item->unit_price) }} × {{ $item->quantity_returned }}
+                                                = <span style="color:var(--green);font-weight:600;">
+                                                    {{ number_format($item->refund_amount) }} RWF
+                                                </span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach

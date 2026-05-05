@@ -260,7 +260,7 @@
                                             </div>
                                             <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">
                                                 Sold: {{ $saleItem->quantity_sold }} ×
-                                                {{ number_format($saleItem->unit_price ?? 0) }} RWF
+                                                {{ number_format($saleItem->actual_unit_price ?? 0) }} RWF
                                             </div>
                                         </div>
                                     </div>
