@@ -209,11 +209,6 @@
 <div class="db-row-cf-side">
 
 {{-- LEFT: Cash Flow Donut --}}
-@php
-    $cfTotalFmt = $cfTotal >= 1000000
-        ? number_format($cfTotal / 1000000, 1) . 'M'
-        : ($cfTotal >= 1000 ? number_format($cfTotal / 1000, 0) . 'K' : number_format($cfTotal));
-@endphp
 <div class="db-card">
     <div class="db-card-head">
         <span class="db-card-title">Cash Flow</span>
@@ -226,7 +221,7 @@
             <canvas id="cfDonutChart" width="150" height="150"></canvas>
             <div class="db-donut-center">
                 <div class="db-donut-lbl">INFLOW</div>
-                <div class="db-donut-val">{{ $cfTotalFmt }}</div>
+                <div class="db-donut-val">{{ number_format($cfTotal) }}</div>
                 <div class="db-donut-unit">RWF</div>
             </div>
         </div>

@@ -143,12 +143,23 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 <div class="footer">Thank you for your business!</div>
 <div class="footer xsmall" style="margin-top:3px;">Printed: {{ now()->format('d M Y H:i') }}</div>
 
-{{-- Auto-print and close --}}
+{{-- Auto-print on desktop; show button on mobile --}}
+<div class="mobile-print-btn" style="display:none;text-align:center;margin:16px 0;">
+    <button onclick="window.print()" style="padding:10px 24px;background:#1d9e75;color:#fff;
+            border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">
+        Tap to Print / Save PDF
+    </button>
+</div>
+<style>
+@media (hover: none) and (pointer: coarse) {
+    .mobile-print-btn { display:block !important; }
+}
+</style>
 <script>
-window.onload = function () {
-    window.print();
-    window.onafterprint = function () { window.close(); };
-};
+const isMobile = navigator.maxTouchPoints > 1 || /Mobi|Android/i.test(navigator.userAgent);
+if (!isMobile) {
+    window.onload = function () { window.print(); };
+}
 </script>
 </body>
 </html>

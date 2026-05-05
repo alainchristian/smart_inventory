@@ -394,7 +394,7 @@
             <div>
                 <div class="text-[13px] font-semibold text-[var(--text-dim)] uppercase tracking-wider mb-2 px-3">Inventory</div>
                 <div class="space-y-1">
-                    <a href="{{ route('shop.inventory.stock') }}" wire:navigate
+                    <a href="{{ route('shop.inventory.stock') }}" wire:navigate.reload
                        class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                               {{ request()->routeIs('shop.inventory.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                         @if(request()->routeIs('shop.inventory.*'))
@@ -406,7 +406,7 @@
                         <span class="text-[14px] font-medium">Shop Stock</span>
                     </a>
 
-                    <a href="{{ route('shop.transfers.index') }}" wire:navigate
+                    <a href="{{ route('shop.transfers.index') }}" wire:navigate.reload
                        class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                               {{ request()->routeIs('shop.transfers.index') && !request()->routeIs('shop.transfers.request') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                         @if(request()->routeIs('shop.transfers.index') && !request()->routeIs('shop.transfers.request'))
@@ -436,7 +436,7 @@
             <div>
                 <div class="text-[13px] font-semibold text-[var(--text-dim)] uppercase tracking-wider mb-2 px-3">Operations</div>
                 <div class="space-y-1">
-                    <a href="{{ route('shop.returns.index') }}" wire:navigate
+                    <a href="{{ route('shop.returns.index') }}" wire:navigate.reload
                        class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                               {{ request()->routeIs('shop.returns.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                         @if(request()->routeIs('shop.returns.*'))

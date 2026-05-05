@@ -24,7 +24,7 @@ class RequestTransfer extends Component
         'fromWarehouseId' => 'required|exists:warehouses,id',
         'toShopId' => 'required|exists:shops,id',
         'items.*.product_id' => 'required|exists:products,id',
-        'items.*.boxes_requested' => 'required|integer|min:0',
+        'items.*.boxes_requested' => 'required|integer|min:1',
         'notes' => 'nullable|string|max:1000',
     ];
 
@@ -33,7 +33,7 @@ class RequestTransfer extends Component
         'toShopId.required' => 'Please select a destination shop.',
         'items.*.product_id.required' => 'Please select a product for each item.',
         'items.*.boxes_requested.required' => 'Please enter number of boxes.',
-        'items.*.boxes_requested.min' => 'Number of boxes cannot be negative.',
+        'items.*.boxes_requested.min' => 'At least 1 box must be requested.',
     ];
 
     public function mount()
@@ -135,6 +135,17 @@ class RequestTransfer extends Component
     {
         unset($this->items[$index]);
         $this->items = array_values($this->items);
+    }
+
+    public function incrementItem(int $index): void
+    {
+        $this->items[$index]['boxes_requested'] = (int) ($this->items[$index]['boxes_requested'] ?? 0) + 1;
+    }
+
+    public function decrementItem(int $index): void
+    {
+        $val = (int) ($this->items[$index]['boxes_requested'] ?? 0) - 1;
+        $this->items[$index]['boxes_requested'] = max(1, $val);
     }
 
     public function updatedFromWarehouseId()

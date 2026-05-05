@@ -1,7 +1,7 @@
 @php use App\Enums\TransferStatus; @endphp
 <style>
 /* ── Transfer Detail ────────────────────────────────────── */
-.td-wrap { display:flex; flex-direction:column; gap:16px; }
+.td-wrap { display:flex; flex-direction:column; gap:16px; max-width:100%; overflow:hidden; }
 
 /* ── Action alert ────────────────────────────────────── */
 .td-alert {

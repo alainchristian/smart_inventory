@@ -126,6 +126,20 @@
 .rf-qty-input.over  { border-color: var(--red); color: var(--red); }
 .rf-qty-label { font-size: 11px; color: var(--text-dim); }
 .rf-qty-avail { font-size: 10px; color: var(--text-dim); }
+.rf-qty-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-size: 16px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background .12s, border-color .12s;
+    line-height: 1; padding: 0;
+}
+.rf-qty-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.rf-static {
+    padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-size: 13px; font-weight: 600;
+}
 .rf-overstock-warn { font-size: 11px; font-weight: 600; color: var(--red); display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
 /* ── Totals ─────────────────────────────────────────────── */
@@ -213,12 +227,17 @@
           </div>
           <div class="rf-field">
             <label class="rf-label">To Shop</label>
-            <select wire:model.live="toShopId" class="rf-select">
-              <option value="">Select shop…</option>
-              @foreach($this->shops as $sh)
-                <option value="{{ $sh->id }}">{{ $sh->name }}</option>
-              @endforeach
-            </select>
+            @if(auth()->user()->isShopManager())
+              <div class="rf-static">{{ $this->shops->firstWhere('id', $toShopId)?->name ?? '—' }}</div>
+              <input type="hidden" wire:model="toShopId">
+            @else
+              <select wire:model.live="toShopId" class="rf-select">
+                <option value="">Select shop…</option>
+                @foreach($this->shops as $sh)
+                  <option value="{{ $sh->id }}">{{ $sh->name }}</option>
+                @endforeach
+              </select>
+            @endif
             @error('toShopId')<span class="rf-error">{{ $message }}</span>@enderror
           </div>
         </div>
@@ -370,8 +389,11 @@
                 </div>
                 <div class="rf-qty-row">
                   <div class="rf-qty-ctrl">
-                    <input class="rf-qty-input {{ $over ? 'over' : '' }}" type="number" min="0"
-                           wire:model.live="items.{{ $index }}.boxes_requested">
+                    <button type="button" class="rf-qty-btn" wire:click="decrementItem({{ $index }})">−</button>
+                    <input class="rf-qty-input {{ $over ? 'over' : '' }}" type="number" min="1"
+                           wire:model.live="items.{{ $index }}.boxes_requested"
+                           style="text-align:center;width:52px;">
+                    <button type="button" class="rf-qty-btn" wire:click="incrementItem({{ $index }})">+</button>
                     <span class="rf-qty-label">boxes</span>
                   </div>
                   <span class="rf-qty-avail">{{ $avail }} avail.</span>

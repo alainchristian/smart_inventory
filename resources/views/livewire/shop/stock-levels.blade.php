@@ -150,9 +150,10 @@
 
     /* Compact table */
     .ss-table td,
-    .ss-table th { padding:9px 10px }
+    .ss-table th { padding:8px 6px }
 
     .ss-bar-wrap { width:40px }
+    .ss-table-wrap { border-radius:8px }
 }
 </style>
 
@@ -269,7 +270,6 @@
                 {{-- Product name + SKU --}}
                 <td>
                     <div class="ss-name">{{ $row->name }}</div>
-                    <div class="ss-meta">{{ $row->sku }}</div>
                 </td>
 
                 {{-- Category --}}

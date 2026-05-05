@@ -41,8 +41,8 @@ class StockLevels extends Component
             ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
             ->where('boxes.location_type', LocationType::SHOP->value)
             ->where('boxes.location_id', $this->shopId)
-            ->whereIn('boxes.status', ['full', 'partial'])
-            ->where('boxes.items_remaining', '>', 0)
+            ->whereIn('boxes.status', $this->statusFilter === 'low' ? ['full', 'partial', 'empty'] : ['full', 'partial'])
+            ->when($this->statusFilter !== 'low', fn($q) => $q->where('boxes.items_remaining', '>', 0))
             ->whereNull('products.deleted_at')
             ->when($this->search, function ($q) {
                 $term = '%' . $this->search . '%';
