@@ -114,7 +114,12 @@
                     </div>
 
                     {{-- Secondary metrics row --}}
-                    <div class="grid gap-3" style="grid-template-columns: repeat({{ ($liveSummary['total_repayments'] ?? 0) > 0 ? 4 : 3 }}, 1fr);">
+                    @php
+                        $smCols = 3
+                            + (($liveSummary['total_refunds_cash'] ?? 0) > 0 ? 1 : 0)
+                            + (($liveSummary['total_repayments']   ?? 0) > 0 ? 1 : 0);
+                    @endphp
+                    <div class="grid gap-3" style="grid-template-columns: repeat({{ $smCols }}, 1fr);">
                         <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                             <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Cash in Drawer</div>
                             <div class="font-mono font-bold text-base" style="color:var(--accent);">{{ number_format($liveSummary['expected_cash']) }}</div>
@@ -130,6 +135,13 @@
                             <div class="font-mono font-bold text-base" style="color:var(--amber);">{{ number_format($liveSummary['total_withdrawals']) }}</div>
                             <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ $liveSummary['withdrawal_count'] }} items</div>
                         </div>
+                        @if (($liveSummary['total_refunds_cash'] ?? 0) > 0)
+                            <div class="rounded-xl p-3 text-center" style="background:var(--red-dim);border:1px solid var(--red);">
+                                <div class="text-xs font-medium mb-1" style="color:var(--red);">Cash Refunds</div>
+                                <div class="font-mono font-bold text-base" style="color:var(--red);">−{{ number_format($liveSummary['total_refunds_cash']) }}</div>
+                                <div class="text-xs mt-0.5" style="color:var(--red);opacity:0.75;">Paid out</div>
+                            </div>
+                        @endif
                         @if (($liveSummary['total_repayments'] ?? 0) > 0)
                             <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                                 <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Repayments</div>
