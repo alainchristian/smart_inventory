@@ -268,7 +268,7 @@ class ProcessReturn extends Component
                     'is_replacement' => false,
                     'replacement_product_id' => null,
                     'original_sale_item_id' => $saleItem->id,
-                    'unit_price' => $saleItem->unit_price ?? 0,
+                    'unit_price' => $saleItem->actual_unit_price ?? 0,
                 ];
             }
         }
