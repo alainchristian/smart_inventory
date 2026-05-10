@@ -5,31 +5,25 @@
     x-init="init()"
     x-destroy="teardown()"
     data-chart='@json($chartData)'
-    data-comparison='@json($comparisonData)'
-    data-show-comparison='{{ $showComparison ? "1" : "0" }}'
 >
     <div class="card-header">
         <div>
-            <div class="card-title">Sales Performance</div>
-            <div class="card-subtitle">Revenue over time (RWF)</div>
+            <div class="card-title">Revenue &amp; Profit Trend</div>
+            <div class="card-subtitle">RWF · revenue, gross &amp; net profit over time</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-            {{-- Compare toggle --}}
-            <button
-                wire:click="toggleComparison"
-                style="font-size:12px;font-weight:600;padding:5px 11px;border-radius:var(--rsm);
-                       border:1px solid var(--border);cursor:pointer;transition:all var(--tr);
-                       {{ $showComparison
-                          ? 'background:var(--accent);color:#fff;border-color:var(--accent)'
-                          : 'background:var(--surface2);color:var(--text-sub);' }}">
-                vs Previous
-            </button>
-            <div class="period-tabs">
-                @foreach(['today' => 'Today', 'week' => 'Week', 'month' => 'Month', 'quarter' => 'Quarter'] as $key => $lbl)
-                <button class="period-tab {{ $chartPeriod === $key ? 'active' : '' }}"
-                        wire:click="setChartPeriod('{{ $key }}')">{{ $lbl }}</button>
-                @endforeach
-            </div>
+        <div>
+            <select
+                wire:change="setChartPeriod($event.target.value)"
+                style="font-size:12px;font-weight:600;padding:5px 28px 5px 10px;
+                       border-radius:var(--rsm);border:1px solid var(--border);
+                       background:var(--surface2);color:var(--text);cursor:pointer;
+                       appearance:none;-webkit-appearance:none;
+                       background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236b7494' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E\");
+                       background-repeat:no-repeat;background-position:right 8px center">
+                <option value="daily"   {{ $chartPeriod === 'daily'   ? 'selected' : '' }}>Daily</option>
+                <option value="weekly"  {{ $chartPeriod === 'weekly'  ? 'selected' : '' }}>Weekly</option>
+                <option value="monthly" {{ $chartPeriod === 'monthly' ? 'selected' : '' }}>Monthly</option>
+            </select>
         </div>
     </div>
 
@@ -39,21 +33,8 @@
     </div>
     @endif
 
-    <div class="chart-container" style="padding:0 16px 16px 16px;{{ $loaded ? '' : 'display:none' }}">
-        <canvas id="salesChart" wire:ignore style="max-height:280px"></canvas>
-    </div>
-
-    @php $summaries = $this->getPeriodSummaries(); @endphp
-    <div class="sp-period-row">
-        @foreach([0 => ['today','Today'], 1 => ['week','This Week'], 2 => ['month','This Month'], 3 => ['quarter','This Quarter']] as $idx => [$key, $lbl])
-        <div class="sp-period-col {{ $activePeriodCol === $idx ? 'active-period' : '' }}"
-             wire:click="setActivePeriodCol({{ $idx }})">
-            <div class="sp-period-name">{{ $lbl }}</div>
-            <div class="sp-period-val {{ $summaries[$key] > 0 ? 'blue' : 'ok' }}">
-                {{ $summaries[$key] > 0 ? number_format($summaries[$key]) : '0' }}
-            </div>
-        </div>
-        @endforeach
+    <div class="chart-container" style="height:240px;padding:0 16px 16px 16px;{{ $loaded ? '' : 'display:none' }}">
+        <canvas id="salesChart" wire:ignore style="width:100%;height:100%"></canvas>
     </div>
 </div>
 
@@ -64,20 +45,10 @@ Alpine.data('salesPerfChart', () => ({
     init() {
         var self = this;
 
-        // Re-draw whenever the server updates chart data — covers:
-        //   • initial load after wire:init fires loadChart()
-        //   • every period-tab click (setChartPeriod changes chartData)
         this.$wire.$watch('chartData', function() {
             self._scheduleRedraw();
         });
 
-        // Also re-draw when comparison data or the toggle changes
-        this.$wire.$watch('comparisonData', function() {
-            self._scheduleRedraw();
-        });
-
-        // Hard fallback: if the $watch callbacks never fired (e.g. cached page
-        // where chartData is already set on first tick), draw after 400 ms.
         setTimeout(function() {
             var canvas = document.getElementById('salesChart');
             if (canvas && !canvas._chartInstance) {
@@ -86,9 +57,6 @@ Alpine.data('salesPerfChart', () => ({
         }, 400);
     },
 
-    // Double requestAnimationFrame guarantees two things:
-    //   1. The Livewire DOM morph (which removes display:none) has been committed.
-    //   2. The browser has calculated layout, so canvas.offsetWidth > 0.
     _scheduleRedraw() {
         var self = this;
         requestAnimationFrame(function() {
@@ -116,26 +84,11 @@ Alpine.data('salesPerfChart', () => ({
         var data = raw ? JSON.parse(raw) : null;
         if (!data) return;
 
-        var compRaw = this.$el.dataset.comparison;
-        var comp    = compRaw ? JSON.parse(compRaw) : null;
-        var showComp = this.$el.dataset.showComparison === '1';
-
         var inst = canvas._chartInstance;
-        inst.data.labels = data.labels;
-        inst.data.datasets[0].data = data.revenueData;
-        inst.data.datasets[1].data = data.countData;
-
-        if (showComp && comp && comp.revenueData) {
-            if (inst.data.datasets.length < 3) {
-                inst.data.datasets.push(this.buildCompDataset(comp.revenueData));
-            } else {
-                inst.data.datasets[2].data = comp.revenueData;
-            }
-        } else {
-            if (inst.data.datasets.length >= 3) {
-                inst.data.datasets.splice(2, 1);
-            }
-        }
+        inst.data.labels             = data.labels;
+        inst.data.datasets[0].data  = data.revenueData;
+        inst.data.datasets[1].data  = data.profitData;
+        inst.data.datasets[2].data  = data.netData;
 
         try {
             inst.resize();
@@ -147,41 +100,19 @@ Alpine.data('salesPerfChart', () => ({
         }
     },
 
-    buildCompDataset(revData) {
-        return {
-            label: 'Previous Period',
-            data: revData,
-            type: 'line',
-            borderColor: '#a8aec8',
-            borderWidth: 1.5,
-            borderDash: [5, 5],
-            borderDashOffset: 0,
-            fill: false,
-            pointRadius: 0,
-            tension: 0.4,
-            yAxisID: 'yRevenue'
-        };
-    },
-
     draw() {
         var canvas = document.getElementById('salesChart');
         if (!canvas) return;
-
-        // Canvas is inside a display:none container while $loaded=false.
-        // Drawing on a hidden element gives Chart.js a 0×0 size it never recovers
-        // from. Bail here — updateChart() will call draw() again on the next morph
-        // (which fires when $loaded becomes true and the container becomes visible).
-        if (canvas.offsetWidth === 0) return;
+        if (canvas.offsetWidth === 0) {
+            var self = this;
+            requestAnimationFrame(function() { self.draw(); });
+            return;
+        }
 
         var raw = this.$el.dataset.chart;
         var data = raw ? JSON.parse(raw) : null;
         if (!data) return;
 
-        var compRaw = this.$el.dataset.comparison;
-        var comp    = compRaw ? JSON.parse(compRaw) : null;
-        var showComp = this.$el.dataset.showComparison === '1';
-
-        // Kill orphaned Chart.js instances
         var orphan = Chart.getChart(canvas);
         if (orphan) orphan.destroy();
         if (canvas._chartInstance) {
@@ -189,71 +120,68 @@ Alpine.data('salesPerfChart', () => ({
             delete canvas._chartInstance;
         }
 
-        var isMobile    = window.innerWidth <= 640;
-        var aspectRatio = isMobile ? 1.5 : (window.innerWidth <= 1024 ? 2 : 2.5);
-
-        // Area fill gradient
-        var ctx      = canvas.getContext('2d');
-        var gradient = ctx.createLinearGradient(0, 0, 0, canvas.offsetHeight || 200);
-        gradient.addColorStop(0, 'rgba(59, 111, 212, 0.15)');
-        gradient.addColorStop(1, 'rgba(59, 111, 212, 0)');
-
-        var datasets = [
-            {
-                label: 'Revenue (RWF)',
-                data: data.revenueData,
-                type: 'line',
-                fill: true,
-                backgroundColor: gradient,
-                borderColor: '#3b6fd4',
-                borderWidth: 2,
-                tension: 0.4,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: '#3b6fd4',
-                yAxisID: 'yRevenue'
-            },
-            {
-                label: 'Transactions',
-                data: data.countData,
-                type: 'line',
-                fill: false,
-                backgroundColor: 'rgba(14,158,134,0.1)',
-                borderColor: '#0e9e86',
-                borderWidth: 2,
-                pointRadius: 0,
-                tension: 0.4,
-                yAxisID: 'yCount'
-            }
-        ];
-
-        if (showComp && comp && comp.revenueData) {
-            datasets.push(this.buildCompDataset(comp.revenueData));
-        }
-
         canvas._chartInstance = new Chart(canvas, {
             type: 'line',
-            data: { labels: data.labels, datasets: datasets },
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Revenue',
+                        data: data.revenueData,
+                        borderColor: '#3b6fd4',
+                        backgroundColor: '#3b6fd4',
+                        fill: false,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#3b6fd4',
+                        pointBorderWidth: 0
+                    },
+                    {
+                        label: 'Gross Profit',
+                        data: data.profitData,
+                        borderColor: '#0e9e86',
+                        backgroundColor: '#0e9e86',
+                        fill: false,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#0e9e86',
+                        pointBorderWidth: 0
+                    },
+                    {
+                        label: 'Net Profit',
+                        data: data.netData,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: '#8b5cf6',
+                        fill: false,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#8b5cf6',
+                        pointBorderWidth: 0
+                    }
+                ]
+            },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: aspectRatio,
-                animation: {
-                    x: { duration: 800, easing: 'easeOutCubic' },
-                    y: { duration: 0 }
-                },
+                maintainAspectRatio: false,
+                animation: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: {
                         display: true,
                         position: 'top',
-                        align: 'end',
+                        align: 'start',
                         labels: {
                             color: '#6b7494',
                             font: { size: 11, weight: '600', family: 'DM Sans' },
-                            padding: 12,
-                            boxWidth: 12,
-                            boxHeight: 12,
+                            padding: 16,
+                            boxWidth: 10,
+                            boxHeight: 10,
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
@@ -265,14 +193,14 @@ Alpine.data('salesPerfChart', () => ({
                         borderColor: '#e2e6f3',
                         borderWidth: 1,
                         padding: 12,
-                        displayColors: true,
                         boxPadding: 6,
                         callbacks: {
                             label: function(ctx) {
-                                if (ctx.dataset.yAxisID === 'yRevenue') {
-                                    return ' RWF ' + ctx.parsed.y.toLocaleString();
-                                }
-                                return ' ' + ctx.parsed.y + ' transactions';
+                                var val = ctx.parsed.y;
+                                var formatted = val < 0
+                                    ? '-' + Math.abs(val).toLocaleString()
+                                    : val.toLocaleString();
+                                return ' ' + ctx.dataset.label + ': ' + formatted + ' RWF';
                             }
                         }
                     }
@@ -283,8 +211,7 @@ Alpine.data('salesPerfChart', () => ({
                         ticks: { color: '#a8aec8', font: { size: 11, family: 'DM Sans' } },
                         border: { display: false }
                     },
-                    yRevenue: {
-                        position: 'left',
+                    y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0,0,0,0.04)' },
                         ticks: {
@@ -292,19 +219,10 @@ Alpine.data('salesPerfChart', () => ({
                             font: { size: 11, family: 'DM Sans' },
                             padding: 8,
                             callback: function(val) {
-                                return val >= 1000 ? Math.round(val / 1000) + 'K' : val;
+                                if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                                if (val >= 1000)    return Math.round(val / 1000) + 'K';
+                                return val;
                             }
-                        },
-                        border: { display: false }
-                    },
-                    yCount: {
-                        position: 'right',
-                        beginAtZero: true,
-                        grid: { drawOnChartArea: false },
-                        ticks: {
-                            color: '#0e9e86',
-                            font: { size: 10, family: 'DM Sans' },
-                            precision: 0
                         },
                         border: { display: false }
                     }

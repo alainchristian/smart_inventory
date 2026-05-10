@@ -71,18 +71,22 @@ class Dashboard extends Component
 
     protected function getDateRange(): array
     {
+        $now = now();
         return match ($this->period) {
-            'today'      => [today()->startOfDay(), today()->endOfDay()],
-            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
-            'this_week'  => [now()->startOfWeek(), now()->endOfDay()],
-            'this_month' => [now()->startOfMonth(), now()->endOfDay()],
-            'last_month' => [now()->subMonth()->startOfMonth(), now()->subMonth()->endOfMonth()],
-            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'today'      => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
+            'yesterday'  => [$now->copy()->subDay()->startOfDay(), $now->copy()->subDay()->endOfDay()],
+            'week'       => [$now->copy()->startOfWeek(), $now->copy()->endOfDay()],
+            'month'      => [$now->copy()->startOfMonth(), $now->copy()->endOfDay()],
+            'last_month' => [
+                $now->copy()->subMonthNoOverflow()->startOfMonth(),
+                $now->copy()->subMonthNoOverflow()->endOfMonth(),
+            ],
+            'last_30'    => [$now->copy()->subDays(29)->startOfDay(), $now->copy()->endOfDay()],
             'custom'     => [
                 Carbon::parse($this->customFrom)->startOfDay(),
                 Carbon::parse($this->customTo)->endOfDay(),
             ],
-            default => [now()->startOfWeek(), now()->endOfDay()],
+            default => [$now->copy()->startOfWeek(), $now->copy()->endOfDay()],
         };
     }
 
@@ -147,23 +151,34 @@ class Dashboard extends Component
         $stockItems = (int) Box::where('location_type', 'shop')->where('location_id', $shopId)->sum('items_remaining');
         $stockBoxes = (int) Box::where('location_type', 'shop')->where('location_id', $shopId)->where('items_remaining', '>', 0)->count();
 
-        // ── Low stock ─────────────────────────────────────────────────
-        $lowStockProducts = Product::active()
-            ->with(['boxes' => fn($q) => $q->where('location_type', 'shop')
-                ->where('location_id', $shopId)->whereIn('status', ['full', 'partial'])])
-            ->get()
-            ->filter(fn($p) => $p->isLowStock('shop', $shopId))
-            ->map(function ($p) use ($shopId) {
-                $p->current_stock = $p->getCurrentStock('shop', $shopId)['total_items'];
-                return $p;
+        // ── Low stock (box-count policy from settings) ────────────────
+        $shopLowStockThreshold = $settings->lowStockBoxesShop();
+        $lowStockProducts = DB::table('products as p')
+            ->join('boxes as b', function ($join) use ($shopId) {
+                $join->on('b.product_id', '=', 'p.id')
+                     ->where('b.location_type', 'shop')
+                     ->where('b.location_id', $shopId)
+                     ->whereRaw("b.status::text != 'empty'")
+                     ->where('b.items_remaining', '>', 0);
             })
-            ->sortBy('current_stock')
-            ->take(5);
+            ->where('p.is_active', true)
+            ->whereNull('p.deleted_at')
+            ->select(
+                'p.id',
+                'p.name',
+                DB::raw('COUNT(b.id) as current_stock')
+            )
+            ->groupBy('p.id', 'p.name')
+            ->havingRaw('COUNT(b.id) > 0')
+            ->havingRaw('COUNT(b.id) <= ?', [$shopLowStockThreshold])
+            ->orderBy('current_stock')
+            ->limit(5)
+            ->get();
 
         // ── Recent transactions ───────────────────────────────────────
         $recentSales = Sale::notVoided()->where('shop_id', $shopId)
             ->whereBetween('sale_date', [$from, $to])
-            ->with(['soldBy', 'items'])->orderBy('sale_date', 'desc')->limit(4)->get();
+            ->with(['soldBy', 'items.product'])->orderBy('sale_date', 'desc')->limit(15)->get();
         $recentReturns = ReturnModel::where('shop_id', $shopId)
             ->whereBetween('created_at', [$from, $to])
             ->orderBy('created_at', 'desc')->limit(2)->get();
@@ -215,33 +230,69 @@ class Dashboard extends Component
                 $trendCurrent = [0];
             }
             $trendPrev = []; // No previous-period overlay for per-sale bar chart
-        } elseif ($diffDays < 7) {
-            // Short period: one point per day, no duplicates
-            for ($i = 0; $i <= $diffDays; $i++) {
-                $day  = $from->copy()->addDays($i);
-                $pDay = $prevFrom->copy()->addDays($i);
-                $d    = $day->format('Y-m-d');
-                $sparklineSales[]   = (float) Sale::notVoided()->where('shop_id',$shopId)->whereDate('sale_date',$d)->sum('total');
-                $sparklineTxns[]    = (int)   Sale::notVoided()->where('shop_id',$shopId)->whereDate('sale_date',$d)->count();
-                $sparklineReturns[] = (float) ReturnModel::where('shop_id',$shopId)->whereDate('created_at',$d)->sum('refund_amount');
-                $trendLabels[]  = $day->format('M j');
-                $trendCurrent[] = (float) Sale::notVoided()->where('shop_id',$shopId)->whereDate('sale_date',$d)->sum('total');
-                $trendPrev[]    = (float) Sale::notVoided()->where('shop_id',$shopId)->whereDate('sale_date',$pDay->format('Y-m-d'))->sum('total');
-            }
         } else {
-            // Long period: 7 evenly-spaced points
+            // Multi-day: aggregate by calendar day in two bulk queries (no N+1 sampling)
+            $salesByDay = DB::table('sales')
+                ->whereNull('voided_at')->whereNull('deleted_at')
+                ->where('shop_id', $shopId)
+                ->whereBetween('sale_date', [$from, $to])
+                ->selectRaw("DATE(sale_date) as d, SUM(total) as revenue, COUNT(*) as txns")
+                ->groupByRaw("DATE(sale_date)")
+                ->get()->keyBy('d');
+
+            $prevSalesByDay = DB::table('sales')
+                ->whereNull('voided_at')->whereNull('deleted_at')
+                ->where('shop_id', $shopId)
+                ->whereBetween('sale_date', [$prevFrom, $prevTo])
+                ->selectRaw("DATE(sale_date) as d, SUM(total) as revenue")
+                ->groupByRaw("DATE(sale_date)")
+                ->get()->keyBy('d');
+
+            $returnsByDay = DB::table('returns')
+                ->where('shop_id', $shopId)
+                ->whereBetween('created_at', [$from, $to])
+                ->selectRaw("DATE(created_at) as d, SUM(refund_amount) as total")
+                ->groupByRaw("DATE(created_at)")
+                ->get()->keyBy('d');
+
+            // Sparklines: 7 evenly-spaced sample points from aggregated data
             $step = max(1, (int) round($diffDays / 6));
             for ($i = 0; $i <= 6; $i++) {
-                $day  = $from->copy()->addDays($i * $step);
-                $pDay = $prevFrom->copy()->addDays($i * $step);
+                $day = $from->copy()->addDays($i * $step);
                 if ($day->gt($to)) break;
                 $d = $day->format('Y-m-d');
-                $sparklineSales[]   = (float) Sale::notVoided()->where('shop_id',$shopId)->whereDate('sale_date',$d)->sum('total');
-                $sparklineTxns[]    = (int)   Sale::notVoided()->where('shop_id',$shopId)->whereDate('sale_date',$d)->count();
-                $sparklineReturns[] = (float) ReturnModel::where('shop_id',$shopId)->whereDate('created_at',$d)->sum('refund_amount');
-                $trendLabels[]  = $day->format('M j');
-                $trendCurrent[] = (float) Sale::notVoided()->where('shop_id',$shopId)->whereDate('sale_date',$d)->sum('total');
-                $trendPrev[]    = (float) Sale::notVoided()->where('shop_id',$shopId)->whereDate('sale_date',$pDay->format('Y-m-d'))->sum('total');
+                $sparklineSales[]   = (float) ($salesByDay[$d]->revenue ?? 0);
+                $sparklineTxns[]    = (int)   ($salesByDay[$d]->txns    ?? 0);
+                $sparklineReturns[] = (float) ($returnsByDay[$d]->total  ?? 0);
+            }
+
+            // Trend chart: every day when ≤ 60 days, weekly buckets for longer periods
+            if ($diffDays <= 60) {
+                for ($i = 0; $i <= $diffDays; $i++) {
+                    $day = $from->copy()->addDays($i);
+                    if ($day->gt($to)) break;
+                    $d  = $day->format('Y-m-d');
+                    $pd = $prevFrom->copy()->addDays($i)->format('Y-m-d');
+                    $trendLabels[]  = $day->format('M j');
+                    $trendCurrent[] = (float) ($salesByDay[$d]->revenue    ?? 0);
+                    $trendPrev[]    = (float) ($prevSalesByDay[$pd]->revenue ?? 0);
+                }
+            } else {
+                // Weekly buckets for > 60 day periods
+                for ($i = 0; $i <= $diffDays; $i += 7) {
+                    $weekStart = $from->copy()->addDays($i);
+                    if ($weekStart->gt($to)) break;
+                    $weekRev = $pWeekRev = 0.0;
+                    for ($j = 0; $j < 7 && ($i + $j) <= $diffDays; $j++) {
+                        $d  = $from->copy()->addDays($i + $j)->format('Y-m-d');
+                        $pd = $prevFrom->copy()->addDays($i + $j)->format('Y-m-d');
+                        $weekRev  += (float) ($salesByDay[$d]->revenue    ?? 0);
+                        $pWeekRev += (float) ($prevSalesByDay[$pd]->revenue ?? 0);
+                    }
+                    $trendLabels[]  = $weekStart->format('M j');
+                    $trendCurrent[] = $weekRev;
+                    $trendPrev[]    = $pWeekRev;
+                }
             }
         }
 
@@ -290,7 +341,7 @@ class Dashboard extends Component
             'salesChange', 'txnChange',
             'periodReturns', 'returnsChange',
             'stockItems', 'stockBoxes',
-            'lowStockProducts', 'recentSales', 'recentReturns',
+            'lowStockProducts', 'shopLowStockThreshold', 'recentSales', 'recentReturns',
             'topProducts',
             'sparklineSales', 'sparklineTxns', 'sparklineReturns',
             'isSingleDay', 'trendLabels', 'trendCurrent', 'trendPrev',

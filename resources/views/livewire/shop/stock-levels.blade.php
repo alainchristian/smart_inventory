@@ -194,8 +194,8 @@
     <div class="ss-kpi">
         <div class="ss-kpi-label">Low Stock</div>
         <div class="ss-kpi-value"
-             style="color:{{ ($kpis->low_stock_count ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">
-            {{ number_format($kpis->low_stock_count ?? 0) }}
+             style="color:{{ ($lowStockCount ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">
+            {{ number_format($lowStockCount ?? 0) }}
         </div>
         <div class="ss-kpi-sub">need replenishment</div>
     </div>
@@ -219,8 +219,8 @@
         </button>
         <button wire:click="$set('statusFilter','low')"
                 class="ss-tab {{ $statusFilter==='low' ? 'active' : '' }}">
-            @if(($kpis->low_stock_count ?? 0) > 0)
-                ⚠ Low ({{ $kpis->low_stock_count }})
+            @if(($lowStockCount ?? 0) > 0)
+                ⚠ Low ({{ $lowStockCount }})
             @else
                 Low Stock
             @endif
@@ -252,12 +252,14 @@
         <tbody>
             @forelse($stockData as $row)
             @php
-                $threshold = max(1, $row->low_stock_threshold);
-                $pct       = min(100, round(($row->total_items / $threshold) * 100));
-                $isCrit    = $row->total_items <= max(1, $threshold * 0.25);
-                $isLow     = $row->total_items <= $threshold;
-                $rowClass  = $isCrit ? 'crit' : ($isLow ? 'low' : 'ok');
-                $barColor  = $isCrit ? 'var(--red)' : ($isLow ? 'var(--amber)' : 'var(--green)');
+                // Active boxes = full + partial (excludes empty boxes)
+                $activeBoxes = $row->full_boxes + $row->partial_boxes;
+                // Bar fills to 100% at 2× the threshold; anything below threshold is flagged
+                $pct      = min(100, round(($activeBoxes / max(1, $shopThreshold * 2)) * 100));
+                $isCrit   = $activeBoxes <= max(1, (int) floor($shopThreshold / 2));
+                $isLow    = $activeBoxes <= $shopThreshold;
+                $rowClass = $isCrit ? 'crit' : ($isLow ? 'low' : 'ok');
+                $barColor = $isCrit ? 'var(--red)' : ($isLow ? 'var(--amber)' : 'var(--green)');
             @endphp
             <tr class="{{ $rowClass }}">
 

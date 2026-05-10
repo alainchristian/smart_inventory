@@ -6,6 +6,7 @@ use App\Enums\BoxStatus;
 use App\Enums\LocationType;
 use App\Models\Box;
 use App\Models\Product;
+use App\Services\SettingsService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -69,24 +70,26 @@ class StockLevels extends Component
             ->orderBy('name')
             ->paginate(20);
 
+        $warehouseThreshold = app(SettingsService::class)->lowStockBoxesWarehouse();
+
         // Get stock levels for each product
         $stockData = [];
         foreach ($products as $product) {
             $stock = $product->getCurrentStock(LocationType::WAREHOUSE->value, $this->warehouseId);
 
             // Apply status filter
-            if ($this->statusFilter === 'low' && !$product->isLowStock(LocationType::WAREHOUSE->value, $this->warehouseId)) {
+            if ($this->statusFilter === 'low' && !$product->isLowStock(LocationType::WAREHOUSE->value, $this->warehouseId, $warehouseThreshold)) {
                 continue;
             } elseif ($this->statusFilter === 'out' && $stock['total_items'] > 0) {
                 continue;
             }
 
             $stockData[] = [
-                'product' => $product,
-                'full_boxes' => $stock['full_boxes'],
+                'product'       => $product,
+                'full_boxes'    => $stock['full_boxes'],
                 'partial_boxes' => $stock['partial_boxes'],
-                'total_items' => $stock['total_items'],
-                'is_low_stock' => $product->isLowStock(LocationType::WAREHOUSE->value, $this->warehouseId),
+                'total_items'   => $stock['total_items'],
+                'is_low_stock'  => $product->isLowStock(LocationType::WAREHOUSE->value, $this->warehouseId, $warehouseThreshold),
             ];
         }
 

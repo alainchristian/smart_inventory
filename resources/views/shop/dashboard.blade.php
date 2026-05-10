@@ -4,76 +4,26 @@
 @push('styles')
 <style>
 /* ══════════════════════════════════════════════════════
-   PERIOD FILTER BAR
-══════════════════════════════════════════════════════ */
-.db-period-bar {
-    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-}
-/* Grouped pill container — single rounded box */
-.db-period-pills {
-    display:flex; align-items:center;
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:8px; padding:3px; gap:2px;
-}
-.db-period-pill {
-    font-size:13px; font-weight:500; color:var(--text-sub);
-    padding:6px 14px; border-radius:6px;
-    border:none; background:transparent;
-    cursor:pointer; transition:all .15s; white-space:nowrap;
-    line-height:1.4;
-}
-.db-period-pill:hover { color:var(--text); background:rgba(0,0,0,.04); }
-.db-period-pill.active { background:#3b6bd4; color:#fff; font-weight:600; }
-/* Separate Custom Range button */
-.db-period-custom {
-    display:flex; align-items:center; gap:6px;
-    font-size:13px; font-weight:500; color:var(--text-sub);
-    padding:7px 14px; border-radius:8px;
-    border:1px solid var(--border); background:var(--surface);
-    cursor:pointer; transition:all .15s; white-space:nowrap;
-    line-height:1.4;
-}
-.db-period-custom svg { flex-shrink:0; }
-.db-period-custom:hover { color:var(--text); border-color:#3b6bd4; }
-.db-period-custom.active { background:#3b6bd4; color:#fff; border-color:#3b6bd4; }
-.db-custom-picker {
-    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-    padding:8px 12px; border-radius:10px;
-    background:var(--surface); border:1px solid var(--border);
-}
-.db-date-input {
-    font-size:12px; color:var(--text); padding:5px 8px;
-    border:1px solid var(--border); border-radius:6px;
-    background:var(--surface); outline:none;
-}
-.db-date-input:focus { border-color:#3b6bd4; }
-.db-period-label {
-    margin-left:auto; display:flex; align-items:center; gap:6px;
-    font-size:12px; color:var(--text-dim); white-space:nowrap;
-}
-.db-period-label svg { flex-shrink:0; }
-.db-sync-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-.db-sync-dot.green { background:#10b981; }
-.db-sync-dot.amber { background:#f59e0b; }
-
-@keyframes db-spark-pop { 0%{opacity:.25;transform:scaleY(.85);} 100%{opacity:1;transform:scaleY(1);} }
-.db-spark-refresh { animation: db-spark-pop .35s ease-out; transform-origin: bottom; }
-@media(max-width:768px) {
-    .db-period-bar { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; gap:8px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-    .db-period-bar::-webkit-scrollbar { display:none; }
-    .db-period-pills { flex-shrink:0; }
-    .db-period-custom { flex-shrink:0; }
-    .db-period-label { display:none; }
-}
-@media(max-width:480px) {
-    .db-period-pill { font-size:12px; padding:5px 10px; }
-    .db-period-custom { font-size:12px; padding:6px 10px; }
-}
-
-/* ══════════════════════════════════════════════════════
    PAGE SHELL
 ══════════════════════════════════════════════════════ */
-.db-page { display:flex; flex-direction:column; gap:20px; padding-bottom:32px; }
+
+/* White background for this page only */
+main { background-color: #ffffff !important; }
+
+.db-page {
+    display:flex; flex-direction:column; gap:20px; padding-bottom:32px;
+    /* Pull back the layout's generous horizontal padding */
+    margin-left:-12px; margin-right:-12px;
+}
+@media(min-width:640px){
+    .db-page { margin-left:-12px; margin-right:-12px; }
+}
+@media(min-width:1024px){
+    .db-page { margin-left:-20px; margin-right:-20px; }
+}
+@media(min-width:1280px){
+    .db-page { margin-left:-28px; margin-right:-28px; }
+}
 
 /* ══════════════════════════════════════════════════════
    KPI CARDS ROW
@@ -206,15 +156,27 @@
 @media(max-width:900px){ .db-row-cf-side{ grid-template-columns:1fr; } }
 
 /* ── Low Stock ── */
-.db-stock-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:0.5px solid var(--border); }
+.db-stock-row { padding:8px 0; border-bottom:0.5px solid var(--border); }
 .db-stock-row:last-child { border-bottom:none; }
-.db-stock-thumb { width:36px; height:36px; border-radius:8px; background:var(--surface2); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-.db-stock-thumb svg { width:18px; height:18px; color:var(--text-dim); }
-.db-stock-name  { flex:1; font-size:13px; font-weight:500; color:var(--text); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.db-stock-count { font-size:13px; font-weight:700; color:#e24b4a; white-space:nowrap; }
-.db-stock-unit  { font-size:11px; font-weight:400; color:var(--text-dim); }
+.db-stock-info { display:flex; flex-direction:column; gap:5px; }
+.db-stock-name-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.db-stock-name  { font-size:12px; font-weight:500; color:var(--text); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+.db-stock-count { font-size:11px; font-weight:700; color:#e24b4a; white-space:nowrap; flex-shrink:0; }
+.db-stock-unit  { font-size:10px; font-weight:400; color:var(--text-dim); }
+.db-stock-bar-bg   { height:4px; border-radius:4px; background:var(--surface2); overflow:hidden; }
+.db-stock-bar-fill { height:100%; border-radius:4px; transition:width .3s; }
+
+/* ── Three-column row: fixed equal height + scroll ── */
+.db-row-cf-side > .db-card { height:380px; display:flex; flex-direction:column; }
+.db-card-scroll-body { flex:1; overflow-y:auto; min-height:0; }
 
 /* ── Recent Transactions ── */
+.db-txn-search {
+    width:100%; padding:6px 10px; border:1px solid var(--border);
+    border-radius:7px; font-size:12px; color:var(--text); background:var(--surface2);
+    margin-bottom:8px; outline:none; box-sizing:border-box;
+}
+.db-txn-search:focus { border-color:var(--accent); }
 .db-txn-row { display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:0.5px solid var(--border); }
 .db-txn-row:last-child { border-bottom:none; }
 .db-txn-icon { width:34px; height:34px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
@@ -222,6 +184,7 @@
 .db-txn-info  { flex:1; min-width:0; }
 .db-txn-title { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .db-txn-date  { font-size:11px; color:var(--text-dim); margin-top:1px; }
+.db-txn-products { color:var(--text-faint); font-style:italic; }
 .db-txn-amount { font-size:13px; font-weight:700; font-family:var(--mono); white-space:nowrap; }
 .db-txn-amount.credit { color:#0f6e56; }
 .db-txn-amount.debit  { color:#a32d2d; }
@@ -357,7 +320,7 @@
     // ─── Cash Flow donut ─────────────────────────────────────────────────
     let cfDonut = null;
 
-    function buildCfDonut(cash, momo, rawBank, rawCard) {
+    function buildCfDonut(cash, momo, rawBank, rawCard, credit) {
         const el = document.getElementById('cfDonutChart');
         if (!el || typeof Chart === 'undefined') return;
         el.width  = 150;
@@ -365,10 +328,11 @@
 
         // -1 means the method is disabled — omit from chart
         const segments = [
-            { label:'Cash',  value: cash,    color:'#1d9e75' },
-            { label:'MoMo',  value: momo,    color:'#3b6bd4' },
-            ...(rawBank >= 0 ? [{ label:'Bank', value: rawBank, color:'#8b5cf6' }] : []),
-            ...(rawCard >= 0 ? [{ label:'Card', value: rawCard, color:'#f59e0b' }] : []),
+            { label:'Cash',   value: cash,   color:'#1d9e75' },
+            { label:'MoMo',   value: momo,   color:'#3b6bd4' },
+            ...(rawBank >= 0 ? [{ label:'Bank',   value: rawBank,  color:'#8b5cf6' }] : []),
+            ...(rawCard >= 0 ? [{ label:'Card',   value: rawCard,  color:'#f59e0b' }] : []),
+            ...(credit  >  0 ? [{ label:'Credit', value: credit,   color:'#f97316' }] : []),
         ];
         const total  = segments.reduce((s, x) => s + x.value, 0);
         const data   = total > 0 ? segments.map(x => x.value) : segments.map(() => 1);
@@ -411,16 +375,17 @@
         const trendLabels  = JSON.parse(el.dataset.trendLabels  || '[]');
         const trendCurrent = JSON.parse(el.dataset.trendCurrent || '[]');
         const trendPrev    = JSON.parse(el.dataset.trendPrev    || '[]');
-        const cfCash = parseFloat(el.dataset.cfCash || '0');
-        const cfMomo = parseFloat(el.dataset.cfMomo || '0');
-        const cfBank = parseFloat(el.dataset.cfBank || '0');
-        const cfCard = parseFloat(el.dataset.cfCard || '-1');
+        const cfCash   = parseFloat(el.dataset.cfCash   || '0');
+        const cfMomo   = parseFloat(el.dataset.cfMomo   || '0');
+        const cfBank   = parseFloat(el.dataset.cfBank   || '-1');
+        const cfCard   = parseFloat(el.dataset.cfCard   || '-1');
+        const cfCredit = parseFloat(el.dataset.cfCredit || '0');
 
         drawSparkline('sp-sales',   sparkSales,   '#3b82f6');
         drawSparkline('sp-txns',    sparkTxns,    '#10b981');
         drawSparkline('sp-returns', sparkReturns, '#f97316');
         buildTrendChart(trendLabels, trendCurrent, trendPrev);
-        buildCfDonut(cfCash, cfMomo, cfBank, cfCard);
+        buildCfDonut(cfCash, cfMomo, cfBank, cfCard, cfCredit);
     }
 
     // Schedules initDashboard safely past Livewire's DOM morph cycle
@@ -428,24 +393,17 @@
         requestAnimationFrame(() => requestAnimationFrame(initDashboard));
     }
 
-    // Initial page load — fire after Livewire has hydrated the component
-    document.addEventListener('livewire:initialized', scheduleInit);
-
-    // SPA navigation (Livewire navigate) — re-init on every page arrival
+    // SPA navigation — re-init on every page arrival
     document.addEventListener('livewire:navigated', scheduleInit);
 
-    // Filter changes — re-draw after every Livewire commit
-    document.addEventListener('livewire:init', () => {
-        Livewire.hook('commit', ({ succeed }) => {
-            succeed(() => {
-                if (document.getElementById('db-chart-data')) {
-                    scheduleInit();
-                }
-            });
+    // Filter changes — register commit hook directly (Livewire is available at script-execution time)
+    Livewire.hook('commit', ({ succeed }) => {
+        succeed(() => {
+            if (document.getElementById('db-chart-data')) scheduleInit();
         });
     });
 
-    // Fallback: plain DOMContentLoaded in case livewire:initialized already fired
+    // Initial draw
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', scheduleInit);
     } else {

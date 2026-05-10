@@ -10,14 +10,11 @@ use Illuminate\Support\Facades\DB;
 
 class SalesPerformance extends Component
 {
-    public string $chartPeriod      = 'week';
-    public int    $activePeriodCol  = 0;
-    public array  $chartData        = [];
-    public array  $comparisonData   = [];
-    public bool   $showComparison   = false;
-    public bool   $loaded           = false;
+    public string  $chartPeriod = 'daily'; // daily | weekly | monthly
+    public array   $chartData   = [];
+    public bool    $loaded      = false;
 
-    public string  $period = 'today';
+    public string  $period = 'week';
     public ?string $from   = null;
     public ?string $to     = null;
 
@@ -48,246 +45,182 @@ class SalesPerformance extends Component
         $this->loadChartData();
     }
 
-    public function setActivePeriodCol(int $col): void
+    private function periodRange(): array
     {
-        $this->activePeriodCol = $col;
-    }
-
-    public function toggleComparison(): void
-    {
-        $this->showComparison = !$this->showComparison;
-        $this->loadComparisonData();
-    }
-
-    public function getPeriodSummaries(): array
-    {
-        return [
-            'today'   => Sale::notVoided()->whereDate('sale_date', today())->sum('total'),
-            'week'    => Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfDay()])->sum('total'),
-            'month'   => Sale::notVoided()->whereBetween('sale_date', [now()->startOfMonth(), now()->endOfDay()])->sum('total'),
-            'quarter' => Sale::notVoided()->whereBetween('sale_date', [now()->startOfQuarter(), now()->endOfDay()])->sum('total'),
-        ];
+        return match ($this->period) {
+            'today'      => [today()->startOfDay(), now()->endOfDay()],
+            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
+            'week'       => [now()->startOfWeek(), now()->endOfDay()],
+            'month'      => [now()->startOfMonth(), now()->endOfDay()],
+            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
+            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'custom'     => [
+                Carbon::parse($this->from ?? today())->startOfDay(),
+                Carbon::parse($this->to   ?? today())->endOfDay(),
+            ],
+            default      => [today()->startOfDay(), now()->endOfDay()],
+        };
     }
 
     private function loadChartData(): void
     {
+        [$start, $end] = $this->periodRange();
+
         $labels      = [];
         $revenueData = [];
-        $countData   = [];
+        $profitData  = [];
+        $netData     = [];
 
         match ($this->chartPeriod) {
-            'today'   => $this->loadHourlyData($labels, $revenueData, $countData),
-            'week'    => $this->loadWeeklyData($labels, $revenueData, $countData),
-            'month'   => $this->loadMonthlyData($labels, $revenueData, $countData),
-            'quarter' => $this->loadQuarterlyData($labels, $revenueData, $countData),
-            default   => $this->loadWeeklyData($labels, $revenueData, $countData),
+            'weekly'  => $this->loadByWeek($start, $end, $labels, $revenueData, $profitData, $netData),
+            'monthly' => $this->loadByMonth($start, $end, $labels, $revenueData, $profitData, $netData),
+            default   => $this->loadByDay($start, $end, $labels, $revenueData, $profitData, $netData),
         };
 
         $this->chartData = [
             'labels'      => $labels,
             'revenueData' => $revenueData,
-            'countData'   => $countData,
+            'profitData'  => $profitData,
+            'netData'     => $netData,
         ];
     }
 
-    // Single query - group by hour
-    private function loadHourlyData(array &$labels, array &$revenueData, array &$countData): void
+    private function loadByDay(Carbon $start, Carbon $end, array &$labels, array &$rev, array &$profit, array &$net): void
     {
-        $rows = Sale::notVoided()
-            ->whereDate('sale_date', today())
+        $days = (int) $start->diffInDays($end) + 1;
+        $days = min($days, 31);
+        $s    = $days < 31 ? $start : $end->copy()->subDays(30)->startOfDay();
+
+        $revRows = Sale::notVoided()
+            ->whereBetween('sale_date', [$s, $end])
+            ->select(DB::raw('DATE(sale_date) AS day'), DB::raw('SUM(total) AS revenue'))
+            ->groupBy('day')->orderBy('day')->get()->keyBy('day');
+
+        $profRows = DB::table('sale_items')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->whereNull('sales.voided_at')
+            ->whereBetween('sales.sale_date', [$s, $end])
             ->select(
-                DB::raw('EXTRACT(HOUR FROM sale_date)::int AS hour'),
-                DB::raw('SUM(total) AS revenue'),
-                DB::raw('COUNT(*) AS cnt')
-            )
-            ->groupBy('hour')
-            ->orderBy('hour')
-            ->get()
-            ->keyBy('hour');
-
-        for ($h = 0; $h < 24; $h++) {
-            $row           = $rows->get($h);
-            $labels[]      = str_pad($h, 2, '0', STR_PAD_LEFT) . ':00';
-            $revenueData[] = $row ? round($row->revenue, 0) : 0;
-            $countData[]   = $row ? (int) $row->cnt : 0;
-        }
-    }
-
-    // Single query - group by day of week
-    private function loadWeeklyData(array &$labels, array &$revenueData, array &$countData): void
-    {
-        $startOfWeek = now()->startOfWeek();
-
-        $rows = Sale::notVoided()
-            ->whereBetween('sale_date', [$startOfWeek, now()->endOfWeek()])
-            ->select(
-                DB::raw('DATE(sale_date) AS day'),
-                DB::raw('SUM(total) AS revenue'),
-                DB::raw('COUNT(*) AS cnt')
-            )
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get()
-            ->keyBy('day');
-
-        for ($d = 0; $d < 7; $d++) {
-            $date          = $startOfWeek->copy()->addDays($d);
-            $row           = $rows->get($date->format('Y-m-d'));
-            $labels[]      = $date->format('D');
-            $revenueData[] = $row ? round($row->revenue, 0) : 0;
-            $countData[]   = $row ? (int) $row->cnt : 0;
-        }
-    }
-
-    // Single query - group by day of month
-    private function loadMonthlyData(array &$labels, array &$revenueData, array &$countData): void
-    {
-        $startOfMonth = now()->startOfMonth();
-        $daysInMonth  = now()->daysInMonth;
-
-        $rows = Sale::notVoided()
-            ->whereBetween('sale_date', [$startOfMonth, now()->endOfMonth()])
-            ->select(
-                DB::raw('EXTRACT(DAY FROM sale_date)::int AS day_num'),
-                DB::raw('SUM(total) AS revenue'),
-                DB::raw('COUNT(*) AS cnt')
-            )
-            ->groupBy('day_num')
-            ->orderBy('day_num')
-            ->get()
-            ->keyBy('day_num');
-
-        for ($d = 1; $d <= $daysInMonth; $d++) {
-            $row           = $rows->get($d);
-            $labels[]      = (string) $d;
-            $revenueData[] = $row ? round($row->revenue, 0) : 0;
-            $countData[]   = $row ? (int) $row->cnt : 0;
-        }
-    }
-
-    // Single query - group by week number within the quarter
-    // Shows 13 weekly buckets (one per week of the quarter).
-    private function loadQuarterlyData(array &$labels, array &$revenueData, array &$countData): void
-    {
-        $startOfQuarter = now()->startOfQuarter();
-        $endOfQuarter   = now()->endOfQuarter();
-
-        $rows = Sale::notVoided()
-            ->whereBetween('sale_date', [$startOfQuarter, $endOfQuarter])
-            ->select(
-                DB::raw('DATE_TRUNC(\'week\', sale_date)::date AS week_start'),
-                DB::raw('SUM(total) AS revenue'),
-                DB::raw('COUNT(*) AS cnt')
-            )
-            ->groupBy('week_start')
-            ->orderBy('week_start')
-            ->get()
-            ->keyBy('week_start');
-
-        // Walk every week in the quarter, fill zeros for empty weeks
-        $current = $startOfQuarter->copy()->startOfWeek();
-        $weekNum = 1;
-
-        while ($current->lte($endOfQuarter)) {
-            $key           = $current->format('Y-m-d');
-            $row           = $rows->get($key);
-            $labels[]      = 'W' . $weekNum;
-            $revenueData[] = $row ? round($row->revenue, 0) : 0;
-            $countData[]   = $row ? (int) $row->cnt : 0;
-            $current->addWeek();
-            $weekNum++;
-        }
-    }
-
-    private function loadComparisonData(): void
-    {
-        if (!$this->showComparison) {
-            $this->comparisonData = [];
-            return;
-        }
-
-        $points   = count($this->chartData['labels'] ?? []);
-        $revenue  = [];
-
-        match ($this->chartPeriod) {
-            'today'   => $this->loadPrevHourlyData($revenue),
-            'week'    => $this->loadPrevWeeklyData($revenue),
-            'month'   => $this->loadPrevMonthlyData($revenue),
-            'quarter' => $this->loadPrevQuarterlyData($revenue),
-            default   => $this->loadPrevWeeklyData($revenue),
-        };
-
-        $this->comparisonData = ['revenueData' => $revenue];
-    }
-
-    private function loadPrevHourlyData(array &$revenue): void
-    {
-        $rows = Sale::notVoided()
-            ->whereDate('sale_date', today()->subDay())
-            ->select(
-                DB::raw('EXTRACT(HOUR FROM sale_date)::int AS hour'),
-                DB::raw('SUM(total) AS rev')
-            )
-            ->groupBy('hour')->orderBy('hour')->get()->keyBy('hour');
-
-        for ($h = 0; $h < 24; $h++) {
-            $revenue[] = $rows->get($h) ? round($rows->get($h)->rev, 0) : 0;
-        }
-    }
-
-    private function loadPrevWeeklyData(array &$revenue): void
-    {
-        $start = now()->startOfWeek()->subWeek();
-        $rows  = Sale::notVoided()
-            ->whereBetween('sale_date', [$start, $start->copy()->endOfWeek()])
-            ->select(
-                DB::raw('DATE(sale_date) AS day'),
-                DB::raw('SUM(total) AS rev')
+                DB::raw('DATE(sales.sale_date) AS day'),
+                DB::raw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) AS profit')
             )
             ->groupBy('day')->orderBy('day')->get()->keyBy('day');
 
-        for ($d = 0; $d < 7; $d++) {
-            $date    = $start->copy()->addDays($d);
-            $row     = $rows->get($date->format('Y-m-d'));
-            $revenue[] = $row ? round($row->rev, 0) : 0;
+        $expRows = DB::table('expenses')
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+            ->whereNull('expenses.deleted_at')
+            ->where('expenses.is_system_generated', false)
+            ->whereBetween('daily_sessions.session_date', [$s->toDateString(), $end->toDateString()])
+            ->select(DB::raw('daily_sessions.session_date AS day'), DB::raw('SUM(expenses.amount) AS expenses'))
+            ->groupBy('daily_sessions.session_date')->get()->keyBy('day');
+
+        for ($i = 0; $i < $days; $i++) {
+            $date     = $s->copy()->addDays($i);
+            $key      = $date->format('Y-m-d');
+            $r        = (float) ($revRows->get($key)?->revenue ?? 0);
+            $p        = (float) ($profRows->get($key)?->profit ?? 0);
+            $e        = (float) ($expRows->get($key)?->expenses ?? 0);
+            $labels[] = $date->format('M j');
+            $rev[]    = round($r);
+            $profit[] = round($p);
+            $net[]    = round($p - $e);
         }
     }
 
-    private function loadPrevMonthlyData(array &$revenue): void
+    private function loadByWeek(Carbon $start, Carbon $end, array &$labels, array &$rev, array &$profit, array &$net): void
     {
-        $prevMonth  = now()->subMonth()->startOfMonth();
-        $daysInPrev = $prevMonth->daysInMonth;
-        $rows       = Sale::notVoided()
-            ->whereBetween('sale_date', [$prevMonth, $prevMonth->copy()->endOfMonth()])
-            ->select(
-                DB::raw('EXTRACT(DAY FROM sale_date)::int AS day_num'),
-                DB::raw('SUM(total) AS rev')
-            )
-            ->groupBy('day_num')->orderBy('day_num')->get()->keyBy('day_num');
+        $s = $end->copy()->subWeeks(11)->startOfWeek();
+        if ($s->lt($start)) {
+            $s = $start->copy()->startOfWeek();
+        }
 
-        for ($d = 1; $d <= now()->daysInMonth; $d++) {
-            $row       = $d <= $daysInPrev ? $rows->get($d) : null;
-            $revenue[] = $row ? round($row->rev, 0) : 0;
+        $revRows = Sale::notVoided()
+            ->whereBetween('sale_date', [$s, $end])
+            ->select(DB::raw("DATE_TRUNC('week', sale_date)::date AS week"), DB::raw('SUM(total) AS revenue'))
+            ->groupBy('week')->orderBy('week')->get()->keyBy('week');
+
+        $profRows = DB::table('sale_items')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->whereNull('sales.voided_at')
+            ->whereBetween('sales.sale_date', [$s, $end])
+            ->select(
+                DB::raw("DATE_TRUNC('week', sales.sale_date)::date AS week"),
+                DB::raw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) AS profit')
+            )
+            ->groupBy('week')->orderBy('week')->get()->keyBy('week');
+
+        $expRows = DB::table('expenses')
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+            ->whereNull('expenses.deleted_at')
+            ->where('expenses.is_system_generated', false)
+            ->whereBetween('daily_sessions.session_date', [$s->toDateString(), $end->toDateString()])
+            ->select(
+                DB::raw("DATE_TRUNC('week', daily_sessions.session_date)::date AS week"),
+                DB::raw('SUM(expenses.amount) AS expenses')
+            )
+            ->groupBy('week')->get()->keyBy('week');
+
+        $cur = $s->copy()->startOfWeek();
+        while ($cur->lte($end)) {
+            $key      = $cur->format('Y-m-d');
+            $r        = (float) ($revRows->get($key)?->revenue ?? 0);
+            $p        = (float) ($profRows->get($key)?->profit ?? 0);
+            $e        = (float) ($expRows->get($key)?->expenses ?? 0);
+            $labels[] = $cur->format('M j');
+            $rev[]    = round($r);
+            $profit[] = round($p);
+            $net[]    = round($p - $e);
+            $cur->addWeek();
         }
     }
 
-    private function loadPrevQuarterlyData(array &$revenue): void
+    private function loadByMonth(Carbon $start, Carbon $end, array &$labels, array &$rev, array &$profit, array &$net): void
     {
-        $prevQStart = now()->subQuarter()->startOfQuarter();
-        $prevQEnd   = $prevQStart->copy()->endOfQuarter();
-        $rows       = Sale::notVoided()
-            ->whereBetween('sale_date', [$prevQStart, $prevQEnd])
-            ->select(
-                DB::raw("DATE_TRUNC('week', sale_date)::date AS week_start"),
-                DB::raw('SUM(total) AS rev')
-            )
-            ->groupBy('week_start')->orderBy('week_start')->get()->keyBy('week_start');
+        $s = $end->copy()->subMonths(11)->startOfMonth();
+        if ($s->lt($start)) {
+            $s = $start->copy()->startOfMonth();
+        }
 
-        $current = $prevQStart->copy()->startOfWeek();
-        while ($current->lte($prevQEnd)) {
-            $row       = $rows->get($current->format('Y-m-d'));
-            $revenue[] = $row ? round($row->rev, 0) : 0;
-            $current->addWeek();
+        $revRows = Sale::notVoided()
+            ->whereBetween('sale_date', [$s, $end])
+            ->select(DB::raw("TO_CHAR(sale_date, 'YYYY-MM') AS month"), DB::raw('SUM(total) AS revenue'))
+            ->groupBy('month')->orderBy('month')->get()->keyBy('month');
+
+        $profRows = DB::table('sale_items')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->whereNull('sales.voided_at')
+            ->whereBetween('sales.sale_date', [$s, $end])
+            ->select(
+                DB::raw("TO_CHAR(sales.sale_date, 'YYYY-MM') AS month"),
+                DB::raw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) AS profit')
+            )
+            ->groupBy('month')->orderBy('month')->get()->keyBy('month');
+
+        $expRows = DB::table('expenses')
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+            ->whereNull('expenses.deleted_at')
+            ->where('expenses.is_system_generated', false)
+            ->whereBetween('daily_sessions.session_date', [$s->toDateString(), $end->toDateString()])
+            ->select(
+                DB::raw("TO_CHAR(daily_sessions.session_date, 'YYYY-MM') AS month"),
+                DB::raw('SUM(expenses.amount) AS expenses')
+            )
+            ->groupBy('month')->get()->keyBy('month');
+
+        $cur = $s->copy()->startOfMonth();
+        while ($cur->lte($end)) {
+            $key      = $cur->format('Y-m');
+            $r        = (float) ($revRows->get($key)?->revenue ?? 0);
+            $p        = (float) ($profRows->get($key)?->profit ?? 0);
+            $e        = (float) ($expRows->get($key)?->expenses ?? 0);
+            $labels[] = $cur->format('M Y');
+            $rev[]    = round($r);
+            $profit[] = round($p);
+            $net[]    = round($p - $e);
+            $cur->addMonth();
         }
     }
 

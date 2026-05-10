@@ -55,32 +55,34 @@ new class extends Component
             ]);
         }
 
-        // Check for low stock products
+        // Check for low stock products (box-count policy)
+        $shopThreshold = app(\App\Services\SettingsService::class)->lowStockBoxesShop();
         $lowStockProducts = Product::active()
-            ->with('boxes')
             ->get()
-            ->filter(function ($product) {
-                $totalStock = $product->boxes()
-                    ->whereIn('status', ['full', 'partial'])
-                    ->sum('items_remaining');
-                return $totalStock <= $product->low_stock_threshold && $totalStock > 0;
+            ->filter(function ($product) use ($shopThreshold) {
+                $boxCount = $product->boxes()
+                    ->whereRaw("status::text != 'empty'")
+                    ->where('items_remaining', '>', 0)
+                    ->count();
+                return $boxCount > 0 && $boxCount <= $shopThreshold;
             })
             ->take(5);
 
         foreach ($lowStockProducts as $product) {
-            $totalStock = $product->boxes()
-                ->whereIn('status', ['full', 'partial'])
-                ->sum('items_remaining');
+            $boxCount = $product->boxes()
+                ->whereRaw("status::text != 'empty'")
+                ->where('items_remaining', '>', 0)
+                ->count();
 
             $notifications->push([
-                'id' => 'low-stock-' . $product->id,
-                'type' => 'low_stock',
-                'icon' => 'package',
-                'color' => 'orange',
-                'title' => 'Low Stock Alert',
-                'message' => $product->name . ' is running low (' . $totalStock . ' items remaining)',
-                'time' => 'Just now',
-                'url' => '#',
+                'id'      => 'low-stock-' . $product->id,
+                'type'    => 'low_stock',
+                'icon'    => 'package',
+                'color'   => 'orange',
+                'title'   => 'Low Stock Alert',
+                'message' => $product->name . ' is running low (' . $boxCount . ' ' . ($boxCount === 1 ? 'box' : 'boxes') . ' remaining)',
+                'time'    => 'Just now',
+                'url'     => '#',
                 'is_read' => false,
             ]);
         }

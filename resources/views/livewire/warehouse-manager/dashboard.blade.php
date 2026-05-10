@@ -19,7 +19,7 @@
 {{-- Period bar --}}
 <div class="db-period-bar">
     <div class="db-period-pills">
-        @foreach(['today'=>'Today','yesterday'=>'Yesterday','this_week'=>'This Week','this_month'=>'This Month','last_month'=>'Last Month','last_30'=>'Last 30 Days'] as $key => $label)
+        @foreach(['today'=>'Today','yesterday'=>'Yesterday','week'=>'This Week','month'=>'This Month','last_month'=>'Last Month','last_30'=>'Last 30 Days'] as $key => $label)
         <button wire:click="setPeriod('{{ $key }}')" class="db-period-pill {{ $period === $key ? 'active' : '' }}">{{ $label }}</button>
         @endforeach
     </div>
@@ -270,7 +270,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                 </div>
                 <span class="db-stock-name" title="{{ $product->name }}">{{ $product->name }}</span>
-                <span class="db-stock-count">{{ $product->current_stock }} <span class="db-stock-unit">units</span></span>
+                <span class="db-stock-count">{{ $product->current_stock }} <span class="db-stock-unit">{{ $product->current_stock == 1 ? 'box' : 'boxes' }}</span></span>
             </div>
             @empty
             <div style="padding:30px 0;text-align:center;color:var(--text-dim);font-size:13px;">All products well stocked ✓</div>

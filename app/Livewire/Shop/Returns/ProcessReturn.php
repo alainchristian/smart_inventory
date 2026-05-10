@@ -61,6 +61,7 @@ class ProcessReturn extends Component
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.quantity_returned' => 'required|integer|min:1',
         'items.*.quantity_damaged' => 'required|integer|min:0',
+        'items.*.condition' => 'required|in:good,partially_damaged,fully_damaged',
     ];
 
     protected $messages = [
@@ -257,45 +258,136 @@ class ProcessReturn extends Component
 
             $saleItem = $sale->items->firstWhere('id', $saleItemId);
             if ($saleItem) {
+                $product   = $saleItem->product;
+                $ipb       = max(1, (int) ($product->items_per_box ?? 1));
+                $itemsSold = max(1, (int) $saleItem->quantity_sold);
+
+                // quantity_sold is always in ITEMS.
+                // For full-box sales: actual_unit_price = box price, not per-item.
+                // For individual sales: actual_unit_price = per-item price.
+                if ($saleItem->is_full_box) {
+                    $boxesSold = max(1, (int) round($itemsSold / $ipb));
+                    $boxPrice  = $saleItem->actual_unit_price ?? 0;
+                    $itemPrice = $ipb > 0 ? (int) round($boxPrice / $ipb) : $boxPrice;
+                } else {
+                    $itemPrice = $saleItem->actual_unit_price ?? 0;
+                    $boxesSold = max(1, (int) round($itemsSold / $ipb));
+                    $boxPrice  = $itemPrice * $ipb;
+                }
+
+                // Default: return full boxes, good condition
                 $this->items[] = [
-                    'product_id' => $saleItem->product_id,
-                    'product_name' => $saleItem->product->name,
-                    'quantity_sold' => $saleItem->quantity_sold,
-                    'quantity_returned' => $saleItem->quantity_sold,
-                    'quantity_damaged' => 0,
-                    'quantity_good' => $saleItem->quantity_sold,
-                    'condition_notes' => '',
-                    'is_replacement' => false,
+                    'product_id'             => $saleItem->product_id,
+                    'product_name'           => $product->name,
+                    'is_full_box'            => (bool) $saleItem->is_full_box,
+                    'items_per_box'          => $ipb,
+                    'boxes_sold'             => $boxesSold,
+                    'items_sold'             => $itemsSold,
+                    'box_price'              => $boxPrice,
+                    'item_price'             => $itemPrice,
+                    'return_type'            => 'box',
+                    'condition'              => 'good',
+                    'qty_returned'           => $boxesSold,
+                    'qty_damaged'            => 0,
+                    // Always in items for DB
+                    'quantity_returned'      => $boxesSold * $ipb,
+                    'quantity_damaged'       => 0,
+                    'quantity_good'          => $boxesSold * $ipb,
+                    'unit_price'             => $itemPrice,
+                    'condition_notes'        => '',
+                    'is_replacement'         => false,
                     'replacement_product_id' => null,
-                    'original_sale_item_id' => $saleItem->id,
-                    'unit_price' => $saleItem->actual_unit_price ?? 0,
+                    'original_sale_item_id'  => $saleItem->id,
                 ];
             }
         }
+    }
+
+    public function setReturnType(int $index, string $type): void
+    {
+        if (!isset($this->items[$index])) return;
+
+        $this->items[$index]['return_type'] = $type;
+        $defaultQty = $type === 'box'
+            ? ($this->items[$index]['boxes_sold'] ?? 1)
+            : ($this->items[$index]['items_sold'] ?? 1);
+
+        $this->items[$index]['qty_returned'] = $defaultQty;
+        $this->items[$index]['qty_damaged']  = 0;
+        $this->syncQtyToItems($index);
+    }
+
+    public function setCondition(int $index, string $condition): void
+    {
+        if (!isset($this->items[$index])) return;
+
+        $this->items[$index]['condition'] = $condition;
+
+        // Auto-set damaged qty based on condition
+        $qr = (int) ($this->items[$index]['qty_returned'] ?? 1);
+        if ($condition === 'good') {
+            $this->items[$index]['qty_damaged']   = 0;
+            $this->items[$index]['condition_notes'] = '';
+        } elseif ($condition === 'fully_damaged') {
+            $this->items[$index]['qty_damaged'] = $qr;
+        } elseif ($condition === 'partially_damaged') {
+            // Keep existing qty_damaged if valid, otherwise default to 1
+            $existing = (int) ($this->items[$index]['qty_damaged'] ?? 0);
+            $this->items[$index]['qty_damaged'] = ($existing > 0 && $existing < $qr) ? $existing : 1;
+        }
+
+        $this->syncQtyToItems($index);
     }
 
     public function updateItemQuantity($index, $field, $value)
     {
         if (!isset($this->items[$index])) return;
 
-        $value = max(0, (int) $value);
+        $this->items[$index][$field] = max(0, (int) $value);
+        $this->syncQtyToItems($index);
+    }
 
-        if ($field === 'quantity_returned') {
-            $maxQty = $this->items[$index]['quantity_sold'];
-            $value = min($value, $maxQty);
-            $value = max(1, $value);
-            $this->items[$index]['quantity_returned'] = $value;
+    public function updated(string $name): void
+    {
+        if (preg_match('/^items\.(\d+)\.(qty_returned|qty_damaged)$/', $name, $m)) {
+            $this->syncQtyToItems((int) $m[1]);
+        }
+    }
 
-            if ($this->items[$index]['quantity_damaged'] > $value) {
-                $this->items[$index]['quantity_damaged'] = $value;
-            }
-        } elseif ($field === 'quantity_damaged') {
-            $maxDamaged = $this->items[$index]['quantity_returned'];
-            $value = min($value, $maxDamaged);
-            $this->items[$index]['quantity_damaged'] = $value;
+    protected function syncQtyToItems(int $index): void
+    {
+        if (!isset($this->items[$index])) return;
+
+        $type      = $this->items[$index]['return_type'] ?? 'box';
+        $condition = $this->items[$index]['condition']   ?? 'good';
+        $ipb       = max(1, (int) ($this->items[$index]['items_per_box'] ?? 1));
+        $boxesSold = max(1, (int) ($this->items[$index]['boxes_sold'] ?? 1));
+        $itemsSold = max(1, (int) ($this->items[$index]['items_sold'] ?? $ipb));
+
+        $maxQty = $type === 'box' ? $boxesSold : $itemsSold;
+        $qr = max(1, min((int) ($this->items[$index]['qty_returned'] ?? 1), $maxQty));
+
+        // Derive damaged qty from condition
+        if ($condition === 'good') {
+            $qd = 0;
+        } elseif ($condition === 'fully_damaged') {
+            $qd = $qr;
+        } else { // partially_damaged
+            $qd = max(1, min((int) ($this->items[$index]['qty_damaged'] ?? 1), $qr - 1));
         }
 
-        $this->items[$index]['quantity_good'] = $this->items[$index]['quantity_returned'] - $this->items[$index]['quantity_damaged'];
+        $this->items[$index]['qty_returned'] = $qr;
+        $this->items[$index]['qty_damaged']  = $qd;
+
+        if ($type === 'box') {
+            $this->items[$index]['quantity_returned'] = $qr * $ipb;
+            $this->items[$index]['quantity_damaged']  = $qd * $ipb;
+            $this->items[$index]['quantity_good']     = ($qr - $qd) * $ipb;
+        } else {
+            $this->items[$index]['quantity_returned'] = $qr;
+            $this->items[$index]['quantity_damaged']  = $qd;
+            $this->items[$index]['quantity_good']     = $qr - $qd;
+        }
     }
 
     public function updateConditionNotes($index, $value)
@@ -433,7 +525,11 @@ class ProcessReturn extends Component
 
         $total = 0;
         foreach ($this->items as $item) {
-            $total += ($item['unit_price'] ?? 0) * ($item['quantity_returned'] ?? 0);
+            if (($item['return_type'] ?? 'box') === 'box') {
+                $total += ($item['box_price'] ?? 0) * ($item['qty_returned'] ?? 0);
+            } else {
+                $total += ($item['item_price'] ?? 0) * ($item['qty_returned'] ?? 0);
+            }
         }
         return $total;
     }

@@ -97,15 +97,16 @@ class Product extends Model
         return $this->box_selling_price ?? ($this->selling_price * $this->items_per_box);
     }
 
-    public function isLowStock(string $locationType, int $locationId): bool
+    public function isLowStock(string $locationType, int $locationId, int $boxThreshold = 2): bool
     {
-        $totalItems = $this->boxes()
+        $boxCount = $this->boxes()
             ->where('location_type', $locationType)
             ->where('location_id', $locationId)
-            ->where('status', '!=', 'empty')
-            ->sum('items_remaining');
+            ->whereRaw("status::text != 'empty'")
+            ->where('items_remaining', '>', 0)
+            ->count();
 
-        return $totalItems <= $this->low_stock_threshold;
+        return $boxCount <= $boxThreshold;
     }
 
     public function getCurrentStock(string $locationType, int $locationId): array
@@ -134,13 +135,13 @@ class Product extends Model
         return $query->where('is_active', true);
     }
 
-    public function scopeLowStock($query, string $locationType, int $locationId)
+    public function scopeLowStock($query, string $locationType, int $locationId, int $boxThreshold = 2)
     {
         return $query->whereHas('boxes', function ($q) use ($locationType, $locationId) {
             $q->where('location_type', $locationType)
               ->where('location_id', $locationId);
-        })->get()->filter(function ($product) use ($locationType, $locationId) {
-            return $product->isLowStock($locationType, $locationId);
+        })->get()->filter(function ($product) use ($locationType, $locationId, $boxThreshold) {
+            return $product->isLowStock($locationType, $locationId, $boxThreshold);
         });
     }
 

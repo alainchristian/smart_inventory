@@ -3,24 +3,9 @@
 
 @push('styles')
 <style>
-/* ══ PERIOD BAR ═══════════════════════════════════════════════════════ */
-.db-period-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
-.db-period-pills { display:flex; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; overflow-x:auto; max-width:100%; scrollbar-width:none; }
-.db-period-pills::-webkit-scrollbar { display:none; }
-.db-period-pill { font-size:13px; font-weight:500; color:var(--text-sub,var(--text-dim)); padding:6px 14px; border-radius:6px; border:none; background:transparent; cursor:pointer; transition:all .15s; white-space:nowrap; line-height:1.4; flex-shrink:0; }
-.db-period-pill:hover { color:var(--text); background:rgba(0,0,0,.04); }
-.db-period-pill.active { background:#3b6bd4; color:#fff; font-weight:600; }
-.db-period-custom { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text-sub,var(--text-dim)); padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); cursor:pointer; transition:all .15s; white-space:nowrap; line-height:1.4; flex-shrink:0; }
-.db-period-custom.active { background:#3b6bd4; color:#fff; border-color:#3b6bd4; }
-.db-custom-picker { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 12px; border-radius:10px; background:var(--surface); border:1px solid var(--border); width:100%; }
-.db-date-input { font-size:12px; color:var(--text); padding:5px 8px; border:1px solid var(--border); border-radius:6px; background:var(--surface); outline:none; }
-.db-date-input:focus { border-color:#3b6bd4; }
-.db-period-label { margin-left:auto; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim); white-space:nowrap; }
-.db-sync-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-.db-sync-dot.green { background:#10b981; }
-.db-sync-dot.amber { background:#f59e0b; }
+/* ══ WAREHOUSE ICON BTN ════════════════════════════════════════════════ */
 .db-icon-btn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text-dim); cursor:pointer; transition:all .15s; text-decoration:none; flex-shrink:0; }
-.db-icon-btn:hover { color:var(--text); border-color:#3b6bd4; }
+.db-icon-btn:hover { color:var(--text); border-color:var(--accent); }
 
 /* ══ KPI CARDS (shared with shop dashboard) ══════════════════════════ */
 .db-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }

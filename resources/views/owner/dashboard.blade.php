@@ -2,58 +2,40 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const titleElement = document.querySelector('[data-page-title]');
-            if (titleElement) {
-                titleElement.textContent = 'Dashboard';
-            }
+            const el = document.querySelector('[data-page-title]');
+            if (el) el.textContent = 'Dashboard';
         });
     </script>
     @endpush
 
-    {{-- Page header + time filter --}}
+    {{-- Page header + global period filter --}}
     <div class="dashboard-page-header">
         <div>
             <h1>Owner Dashboard</h1>
-            <p>Real-time business metrics and insights</p>
+            <p>Welcome back, {{ auth()->user()->name }} 👋</p>
         </div>
         <livewire:dashboard.time-filter />
     </div>
 
-    {{-- Action Cards: replaces old amber banner + OwnerActions bottom panel --}}
-    <livewire:dashboard.action-cards />
-
-    {{-- Row 1: Business KPIs --}}
-    <div class="section-label">Revenue &amp; Profit</div>
+    {{-- ── Row 1: 5 KPI Cards ──────────────────────────────────────────── --}}
     <livewire:dashboard.business-kpi-row wire:poll.60s />
 
-    {{-- Row 2: Ops strip --}}
-    <div class="section-label">Live Operations</div>
-    <livewire:dashboard.ops-kpi-row />
-
-    {{-- Row 3: Sales chart + Top shops --}}
-    <div class="section-label">Sales &amp; Shop Performance</div>
-    <div class="row-sales-shops">
+    {{-- ── Row 2: Revenue Trend · Sales by Shop · Revenue by Category ──── --}}
+    <div class="row-trend-shops">
         <livewire:dashboard.sales-performance wire:init="loadChart" />
         <livewire:dashboard.top-shops />
+        <livewire:dashboard.revenue-by-category />
     </div>
 
-    {{-- Row 4: Transfers + Activity --}}
-    <div class="section-label">Inventory &amp; Activity</div>
-    <div class="row-ops-activity" style="grid-template-columns:1fr 1fr">
-        <livewire:dashboard.transfer-status />
-        <livewire:dashboard.activity-feed />
+    {{-- ── Row 3: Cash · Business · Warehouse · Credit · Top Shops ──────── --}}
+    <livewire:dashboard.business-snapshot />
+
+    {{-- ── Row 4: Top Shops · Expenses · Transactions · Insights ──────── --}}
+    <div class="row-bottom-four">
+        <livewire:dashboard.top-performing-shops />
+        <livewire:dashboard.expenses-breakdown />
+        <livewire:dashboard.recent-transactions />
+        <livewire:dashboard.business-insights />
     </div>
-
-    {{-- Row 5: Stock Coverage Map (full width) --}}
-    <div class="section-label">Stock Coverage Map</div>
-    <livewire:dashboard.stock-heat-map />
-
-    {{-- Row 6: Owner Actions (requires attention + inline approvals) --}}
-    <div class="section-label" style="margin-top:26px">Requires Your Attention</div>
-    <livewire:dashboard.owner-actions />
-
-    {{-- Row 7: Alerts & Notifications (merged) --}}
-    <div class="section-label" style="margin-top:26px">Alerts &amp; Notifications</div>
-    <livewire:dashboard.alerts-and-health />
 
 </x-app-layout>

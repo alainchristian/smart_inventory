@@ -489,7 +489,64 @@
     </div>
 </div>
 
-{{-- ── SECTION 5: Payment Methods ───────────────────────────────────── --}}
+{{-- ── SECTION 5: Inventory Policy ────────────────────────────────── --}}
+<div class="st-card">
+    <div class="st-card-head">
+        <div class="st-card-icon" style="background:rgba(16,185,129,.1)">
+            <svg width="18" height="18" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+        </div>
+        <div>
+            <div class="st-card-title">Inventory Policy</div>
+            <div class="st-card-desc">Define how many boxes a product must reach before it is flagged as low stock</div>
+        </div>
+    </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Low stock threshold — Shops</div>
+            <div class="st-hint">
+                A product at a shop with this many boxes or fewer will be flagged as low stock
+                on dashboards, stock alerts, and the notification bar.
+            </div>
+        </div>
+        <div>
+            <div class="st-input-wrap">
+                <input wire:model="lowStockBoxesShop"
+                       type="number" min="1" class="st-input"
+                       placeholder="2">
+                <span class="st-input-unit">boxes</span>
+            </div>
+            @error('lowStockBoxesShop')
+                <div class="st-input-error">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Low stock threshold — Warehouses</div>
+            <div class="st-hint">
+                A product at a warehouse with this many boxes or fewer will be flagged as low stock
+                on the warehouse manager dashboard and stock levels page.
+            </div>
+        </div>
+        <div>
+            <div class="st-input-wrap">
+                <input wire:model="lowStockBoxesWarehouse"
+                       type="number" min="1" class="st-input"
+                       placeholder="5">
+                <span class="st-input-unit">boxes</span>
+            </div>
+            @error('lowStockBoxesWarehouse')
+                <div class="st-input-error">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
+</div>
+
+{{-- ── SECTION 6: Payment Methods ───────────────────────────────────── --}}
 <div class="st-card">
     <div class="st-card-head">
         <div class="st-card-icon" style="background:rgba(99,102,241,.1)">

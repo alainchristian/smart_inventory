@@ -495,7 +495,7 @@ aside nav p.text-gray-400 {
 /* Page header */
 .dashboard-page-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
   gap: 16px;
@@ -514,6 +514,67 @@ aside nav p.text-gray-400 {
   font-size: 14px;
   color: var(--text-sub);
   margin-top: 4px;
+}
+
+/* ── Shared period filter bar (owner / shop / warehouse dashboards) ── */
+.db-period-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.db-period-pills {
+  display: flex; align-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 3px; gap: 2px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.db-period-pills::-webkit-scrollbar { display: none; }
+.db-period-pill {
+  font-size: 13px; font-weight: 500; color: var(--text-sub);
+  padding: 6px 14px; border-radius: 6px;
+  border: none; background: transparent;
+  cursor: pointer; transition: all .15s; white-space: nowrap; line-height: 1.4; flex-shrink: 0;
+}
+.db-period-pill:hover { color: var(--text); background: rgba(0,0,0,.04); }
+.db-period-pill.active { background: var(--accent); color: #fff; font-weight: 600; }
+.db-period-custom {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500; color: var(--text-sub);
+  padding: 7px 14px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; transition: all .15s; white-space: nowrap; line-height: 1.4; flex-shrink: 0;
+}
+.db-period-custom svg { flex-shrink: 0; }
+.db-period-custom:hover { color: var(--text); border-color: var(--accent); }
+.db-period-custom.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.db-custom-picker {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 12px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+}
+.db-date-input {
+  font-size: 12px; color: var(--text); padding: 5px 8px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); outline: none;
+}
+.db-date-input:focus { border-color: var(--accent); }
+.db-period-label {
+  margin-left: auto; display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-dim); white-space: nowrap;
+}
+.db-period-label svg { flex-shrink: 0; }
+.db-sync-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.db-sync-dot.green { background: #10b981; }
+.db-sync-dot.amber { background: #f59e0b; }
+
+@media (max-width: 768px) {
+  .db-period-bar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; gap: 8px;
+                   -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .db-period-bar::-webkit-scrollbar { display: none; }
+  .db-period-pills, .db-period-custom { flex-shrink: 0; }
+  .db-period-label { display: none; }
+}
+@media (max-width: 480px) {
+  .db-period-pill { font-size: 12px; padding: 5px 10px; }
+  .db-period-custom { font-size: 12px; padding: 6px 10px; }
 }
 
 /* Time filter */
@@ -603,7 +664,13 @@ aside nav p.text-gray-400 {
 }
 
 /* Grid layouts */
-.biz-kpi-grid,
+.biz-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
 .ops-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -635,6 +702,10 @@ aside nav p.text-gray-400 {
     gap: 18px;
 }
 
+@media (max-width: 1400px) {
+    .biz-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
 @media (max-width: 1200px) {
     .row-sales-shops  { grid-template-columns: 1fr; }
     .row-ops-activity { grid-template-columns: 1fr 1fr; }
@@ -644,7 +715,8 @@ aside nav p.text-gray-400 {
 
 @media (max-width: 900px) {
     .row-ops-activity { grid-template-columns: 1fr; }
-    .biz-kpi-grid, .ops-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .biz-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .ops-kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 640px) {
@@ -652,6 +724,7 @@ aside nav p.text-gray-400 {
     .row-ops-activity,
     .row-trace-alerts { grid-template-columns: 1fr; gap: 14px; }
     .biz-kpi-grid, .ops-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .biz-kpi-grid { gap: 10px; }
     .right-stack-panel { flex-direction: column; }
 }
 
@@ -703,6 +776,10 @@ aside nav p.text-gray-400 {
   background: linear-gradient(90deg, var(--violet), transparent);
 }
 
+.bkpi.amber::after {
+  background: linear-gradient(90deg, var(--amber), transparent);
+}
+
 .bkpi:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(26, 31, 54, .10);
@@ -740,6 +817,21 @@ aside nav p.text-gray-400 {
 .bkpi-icon.violet {
   background: var(--violet-dim);
   color: var(--violet);
+}
+
+.bkpi-icon.amber {
+  background: var(--amber-dim);
+  color: var(--amber);
+}
+
+.bkpi-pct.down {
+  background: var(--red-dim);
+  color: var(--red);
+}
+
+.bkpi-pct.amber {
+  background: var(--amber-dim);
+  color: var(--amber);
 }
 
 .bkpi-name {
@@ -968,6 +1060,22 @@ aside nav p.text-gray-400 {
     overflow: hidden;
 }
 
+/* Revenue Trend + Shops + Category row */
+.row-trend-shops > * {
+    height: 340px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Bottom four-column row */
+.row-bottom-four > * {
+    height: 360px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 /* Scrollable inner areas — these classes must be added
    to the scrollable div inside each card blade view */
 .card-scroll {
@@ -981,8 +1089,6 @@ aside nav p.text-gray-400 {
     .row-ops-activity > *,
     .row-trace-alerts > *,
     .row-sales-shops > * {
-        height: auto;
-        min-height: 300px;
         max-height: 520px;
     }
     .right-stack-panel > * {
@@ -1221,7 +1327,7 @@ aside nav p.text-gray-400 {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 22px 24px;
+  padding: 16px 18px;
   box-shadow: 0 1px 4px rgba(26, 31, 54, .06);
 }
 
@@ -1229,8 +1335,8 @@ aside nav p.text-gray-400 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -1278,7 +1384,10 @@ aside nav p.text-gray-400 {
 
 @media (max-width: 1200px) {
 
-  .biz-kpi-grid,
+  .biz-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .ops-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1452,7 +1561,7 @@ aside nav p.text-gray-400 {
 
 @media (max-width: 640px) {
   .biz-kpi-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
@@ -2196,6 +2305,175 @@ main,
   letter-spacing: -0.5px;
   font-family: var(--mono);
   line-height: 1;
+}
+
+/* ═══════════════════════════════════════
+   COMPACT KPI CARDS (ShoeShop-style)
+══════════════════════════════════════ */
+.kpi5-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.kpi5-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  box-shadow: 0 1px 4px rgba(26,31,54,.06);
+  transition: transform var(--tr), box-shadow var(--tr), border-color var(--tr);
+}
+
+.kpi5-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26,31,54,.10);
+  border-color: var(--border-hi);
+}
+
+.kpi5-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi5-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.kpi5-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--mono);
+  line-height: 1.2;
+}
+
+.kpi5-unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.kpi5-change {
+  font-size: 13px;
+  font-weight: 700;
+  display: block;
+}
+
+.kpi5-change.up   { color: var(--green); }
+.kpi5-change.down { color: var(--red); }
+
+.kpi5-period {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+@media (max-width: 1400px) {
+  .kpi5-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .kpi5-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .kpi5-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+
+/* ═══════════════════════════════════════
+   BUSINESS SNAPSHOT PANELS (Row 3)
+══════════════════════════════════════ */
+.snap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.snap-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(26,31,54,.06);
+}
+
+.snap-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.snap-panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.snap-panel-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--accent-dim);
+}
+
+.snap-panel-link:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+@media (max-width: 1200px) {
+  .snap-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .snap-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
+/* ═══════════════════════════════════════
+   DASHBOARD ROW 2: Trend + Shops + Category
+══════════════════════════════════════ */
+.row-trend-shops {
+  display: grid;
+  grid-template-columns: 1fr 340px 340px;
+  gap: 18px;
+  margin-bottom: 22px;
+  align-items: start;
+}
+
+/* ═══════════════════════════════════════
+   DASHBOARD ROW 4: Top Shops + Expenses + Transactions + Insights
+══════════════════════════════════════ */
+.row-bottom-four {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+  align-items: start;
+}
+
+@media (max-width: 1400px) {
+  .row-trend-shops { grid-template-columns: 1fr 300px; }
+  .row-trend-shops > *:last-child { grid-column: 1 / -1; }
+  .row-bottom-four { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .row-trend-shops,
+  .row-bottom-four { grid-template-columns: 1fr; }
 }
 
 .action-card__desc {

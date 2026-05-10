@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Transfer;
 use App\Models\Warehouse;
 use App\Enums\TransferStatus;
+use App\Services\SettingsService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -59,8 +60,8 @@ class Dashboard extends Component
         return match ($this->period) {
             'today'      => [today()->startOfDay(), today()->endOfDay()],
             'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
-            'this_week'  => [now()->startOfWeek(), now()->endOfDay()],
-            'this_month' => [now()->startOfMonth(), now()->endOfDay()],
+            'week'       => [now()->startOfWeek(), now()->endOfDay()],
+            'month'      => [now()->startOfMonth(), now()->endOfDay()],
             'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
             'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
             'custom'     => [Carbon::parse($this->customFrom)->startOfDay(), Carbon::parse($this->customTo)->endOfDay()],
@@ -164,17 +165,25 @@ class Dashboard extends Component
 
         $netStockChange = $inboundBoxes - $outboundBoxes;
 
-        // ── Low stock ────────────────────────────────────────────────────
-        $lowStockProducts = Product::active()
-            ->with(['boxes' => fn($q) => $q->where('location_type','warehouse')
-                ->where('location_id',$wId)->whereIn('status',['full','partial'])])
-            ->get()
-            ->filter(fn($p) => $p->isLowStock('warehouse',$wId))
-            ->map(function($p) use ($wId) {
-                $p->current_stock = $p->getCurrentStock('warehouse',$wId)['total_items'];
-                return $p;
+        // ── Low stock (box-count policy from settings) ────────────────
+        $warehouseThreshold = app(SettingsService::class)->lowStockBoxesWarehouse();
+        $lowStockProducts = DB::table('products as p')
+            ->join('boxes as b', function ($join) use ($wId) {
+                $join->on('b.product_id', '=', 'p.id')
+                     ->where('b.location_type', 'warehouse')
+                     ->where('b.location_id', $wId)
+                     ->whereRaw("b.status::text != 'empty'")
+                     ->where('b.items_remaining', '>', 0);
             })
-            ->sortBy('current_stock')->take(5);
+            ->where('p.is_active', true)
+            ->whereNull('p.deleted_at')
+            ->select('p.id', 'p.name', DB::raw('COUNT(b.id) as current_stock'))
+            ->groupBy('p.id', 'p.name')
+            ->havingRaw('COUNT(b.id) > 0')
+            ->havingRaw('COUNT(b.id) <= ?', [$warehouseThreshold])
+            ->orderBy('current_stock')
+            ->limit(5)
+            ->get();
         $lowStockCount = $lowStockProducts->count();
 
         // ── Transfer pipeline ────────────────────────────────────────────

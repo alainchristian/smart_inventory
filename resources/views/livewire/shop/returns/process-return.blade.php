@@ -234,6 +234,19 @@
                                 );
                                 $isSelected = $selectedIndex !== false;
                                 $item = $isSelected ? $items[$selectedIndex] : null;
+
+                                // Box-level display for unselected items
+                                $_ipb = max(1, (int) ($saleItem->product->items_per_box ?? 1));
+                                if ($saleItem->is_full_box) {
+                                    $_bsold  = max(1, (int) round($saleItem->quantity_sold / $_ipb));
+                                    $_bprice = $saleItem->actual_unit_price ?? 0;
+                                    $_iprice = $_ipb > 0 ? (int) round($_bprice / $_ipb) : $_bprice;
+                                } else {
+                                    $_iprice = $saleItem->actual_unit_price ?? 0;
+                                    $_bsold  = max(1, (int) round($saleItem->quantity_sold / $_ipb));
+                                    $_bprice = $_iprice * $_ipb;
+                                }
+                                $_isold = $saleItem->quantity_sold;
                             @endphp
 
                             <div style="border-radius:12px;border:1.5px solid {{ $isSelected ? 'var(--accent)' : 'var(--border)' }};
@@ -259,56 +272,214 @@
                                                 {{ $saleItem->product->name ?? 'Unknown' }}
                                             </div>
                                             <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">
-                                                Sold: {{ $saleItem->quantity_sold }} ×
-                                                {{ number_format($saleItem->actual_unit_price ?? 0) }} RWF
+                                                {{ $_bsold }} {{ $_bsold === 1 ? 'box' : 'boxes' }} sold
+                                                · <span style="font-family:var(--mono);font-weight:600;">{{ number_format($_bprice) }} RWF/box</span>
+                                                · <span style="opacity:0.7;">{{ number_format($_iprice) }} RWF/item ({{ $_ipb }} items/box)</span>
                                             </div>
                                         </div>
                                     </div>
+
+                                    {{-- Right: total sale value --}}
+                                    @if (!$isSelected)
+                                        <div style="text-align:right;flex-shrink:0;">
+                                            <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text-dim);">
+                                                {{ number_format($_bprice * $_bsold) }}
+                                                <span style="font-size:10px;font-weight:400;">RWF</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 @if ($isSelected)
-                                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);
-                                                display:grid;grid-template-columns:1fr 1fr;gap:10px;"
+                                    @php
+                                        $selType      = $item['return_type']  ?? 'box';
+                                        $selCond      = $item['condition']    ?? 'good';
+                                        $selBoxesSold = $item['boxes_sold']   ?? $_bsold;
+                                        $selItemsSold = $item['items_sold']   ?? $_isold;
+                                        $selQtyRet    = $item['qty_returned'] ?? ($selType === 'box' ? $selBoxesSold : $selItemsSold);
+                                        $selQtyDmg    = $item['qty_damaged']  ?? 0;
+                                        $selQtyGood   = $selQtyRet - $selQtyDmg;
+                                        $selBoxPrice  = $item['box_price']    ?? $_bprice;
+                                        $selItemPrice = $item['item_price']   ?? $_iprice;
+                                        $selIpb       = $item['items_per_box'] ?? $_ipb;
+                                        $selMaxQty    = $selType === 'box' ? $selBoxesSold : $selItemsSold;
+                                        $selUnitLabel = $selType === 'box' ? 'box' : 'item';
+                                        $selUnitPrice = $selType === 'box' ? $selBoxPrice : $selItemPrice;
+                                        $selLineRefund = $selUnitPrice * $selQtyRet;
+                                        $selItemsCount = $selType === 'box' ? $selQtyRet * $selIpb : $selQtyRet;
+                                        $selGoodItems  = $selType === 'box' ? $selQtyGood * $selIpb : $selQtyGood;
+                                        $selDmgItems   = $selType === 'box' ? $selQtyDmg * $selIpb : $selQtyDmg;
+                                    @endphp
+
+                                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"
                                          @click.stop>
-                                        <div>
-                                            <div style="font-size:11px;font-weight:600;color:var(--text-dim);
-                                                        margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;">
-                                                Qty Returned
-                                            </div>
+
+                                        {{-- Row 1: Return type toggle --}}
+                                        <div style="font-size:10px;font-weight:700;color:var(--text-dim);
+                                                    text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
+                                            What is being returned?
+                                        </div>
+                                        <div style="display:flex;gap:6px;margin-bottom:14px;">
+                                            <button wire:click="setReturnType({{ $selectedIndex }}, 'box')"
+                                                    style="flex:1;padding:7px 10px;border-radius:8px;font-size:12px;font-weight:600;
+                                                           border:1.5px solid {{ $selType === 'box' ? 'var(--accent)' : 'var(--border)' }};
+                                                           background:{{ $selType === 'box' ? 'var(--accent)' : 'var(--surface)' }};
+                                                           color:{{ $selType === 'box' ? 'white' : 'var(--text-dim)' }};cursor:pointer;">
+                                                Full Box(es)
+                                            </button>
+                                            <button wire:click="setReturnType({{ $selectedIndex }}, 'item')"
+                                                    style="flex:1;padding:7px 10px;border-radius:8px;font-size:12px;font-weight:600;
+                                                           border:1.5px solid {{ $selType === 'item' ? 'var(--accent)' : 'var(--border)' }};
+                                                           background:{{ $selType === 'item' ? 'var(--accent)' : 'var(--surface)' }};
+                                                           color:{{ $selType === 'item' ? 'white' : 'var(--text-dim)' }};cursor:pointer;">
+                                                Individual Items
+                                            </button>
+                                        </div>
+
+                                        {{-- Row 2: Quantity --}}
+                                        <div style="font-size:10px;font-weight:700;color:var(--text-dim);
+                                                    text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
+                                            How many {{ $selType === 'box' ? 'boxes' : 'items' }}?
+                                            <span style="font-weight:400;opacity:0.7;">(max {{ $selMaxQty }})</span>
+                                        </div>
+                                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                                             <input type="number"
-                                                   wire:model.live="items.{{ $selectedIndex }}.quantity_returned"
-                                                   min="1"
-                                                   max="{{ $saleItem->quantity_sold }}"
-                                                   style="width:100%;padding:8px 10px;border-radius:8px;font-size:14px;
-                                                          font-weight:700;font-family:var(--mono);text-align:right;
-                                                          background:var(--surface);border:1.5px solid var(--border);
-                                                          color:var(--text);box-sizing:border-box;"
+                                                   wire:model.live="items.{{ $selectedIndex }}.qty_returned"
+                                                   min="1" max="{{ $selMaxQty }}"
+                                                   style="width:120px;padding:8px 10px;border-radius:8px;font-size:22px;
+                                                          font-weight:800;font-family:var(--mono);text-align:center;
+                                                          background:var(--surface);border:1.5px solid var(--accent);
+                                                          color:var(--accent);box-sizing:border-box;"
                                                    @click.stop>
-                                        </div>
-                                        <div>
-                                            <div style="font-size:11px;font-weight:600;color:var(--red);
-                                                        margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;">
-                                                Qty Damaged
+                                            <div style="font-size:12px;color:var(--text-dim);">
+                                                <div style="font-family:var(--mono);font-weight:600;font-size:14px;color:var(--text);">
+                                                    {{ number_format($selUnitPrice) }} RWF/{{ $selUnitLabel }}
+                                                </div>
+                                                @if ($selType === 'box')
+                                                    <div>= {{ number_format($selItemsCount) }} items total</div>
+                                                @endif
                                             </div>
-                                            <input type="number"
-                                                   wire:model.live="items.{{ $selectedIndex }}.quantity_damaged"
-                                                   min="0"
-                                                   max="{{ $item['quantity_returned'] ?? $saleItem->quantity_sold }}"
-                                                   style="width:100%;padding:8px 10px;border-radius:8px;font-size:14px;
-                                                          font-weight:700;font-family:var(--mono);text-align:right;
-                                                          background:var(--surface);border:1.5px solid var(--red);
-                                                          color:var(--red);box-sizing:border-box;"
-                                                   @click.stop>
                                         </div>
-                                        <div style="grid-column:span 2;">
-                                            <input type="text"
-                                                   wire:model="items.{{ $selectedIndex }}.condition_notes"
-                                                   placeholder="Condition notes (optional)..."
-                                                   style="width:100%;padding:7px 10px;border-radius:8px;font-size:12px;
-                                                          background:var(--surface);border:1px solid var(--border);
-                                                          color:var(--text);box-sizing:border-box;"
-                                                   @click.stop>
+
+                                        {{-- Row 3: Condition --}}
+                                        <div style="font-size:10px;font-weight:700;color:var(--text-dim);
+                                                    text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
+                                            Condition of returned {{ $selType === 'box' ? 'boxes' : 'items' }}
                                         </div>
+                                        <div style="display:flex;gap:6px;margin-bottom:10px;">
+                                            <button wire:click="setCondition({{ $selectedIndex }}, 'good')"
+                                                    style="flex:1;padding:8px 6px;border-radius:8px;font-size:11px;font-weight:600;
+                                                           border:1.5px solid {{ $selCond === 'good' ? 'var(--green)' : 'var(--border)' }};
+                                                           background:{{ $selCond === 'good' ? 'var(--green-dim)' : 'var(--surface)' }};
+                                                           color:{{ $selCond === 'good' ? 'var(--green)' : 'var(--text-dim)' }};cursor:pointer;
+                                                           text-align:center;line-height:1.3;">
+                                                ✓ Good Condition<br>
+                                                <span style="font-size:9px;font-weight:400;opacity:0.8;">Back to stock</span>
+                                            </button>
+                                            <button wire:click="setCondition({{ $selectedIndex }}, 'partially_damaged')"
+                                                    style="flex:1;padding:8px 6px;border-radius:8px;font-size:11px;font-weight:600;
+                                                           border:1.5px solid {{ $selCond === 'partially_damaged' ? 'var(--amber)' : 'var(--border)' }};
+                                                           background:{{ $selCond === 'partially_damaged' ? 'var(--amber-dim)' : 'var(--surface)' }};
+                                                           color:{{ $selCond === 'partially_damaged' ? 'var(--amber)' : 'var(--text-dim)' }};cursor:pointer;
+                                                           text-align:center;line-height:1.3;">
+                                                ⚠ Partially Damaged<br>
+                                                <span style="font-size:9px;font-weight:400;opacity:0.8;">Some go to damaged goods</span>
+                                            </button>
+                                            <button wire:click="setCondition({{ $selectedIndex }}, 'fully_damaged')"
+                                                    style="flex:1;padding:8px 6px;border-radius:8px;font-size:11px;font-weight:600;
+                                                           border:1.5px solid {{ $selCond === 'fully_damaged' ? 'var(--red)' : 'var(--border)' }};
+                                                           background:{{ $selCond === 'fully_damaged' ? 'var(--red-dim)' : 'var(--surface)' }};
+                                                           color:{{ $selCond === 'fully_damaged' ? 'var(--red)' : 'var(--text-dim)' }};cursor:pointer;
+                                                           text-align:center;line-height:1.3;">
+                                                ✕ Fully Damaged<br>
+                                                <span style="font-size:9px;font-weight:400;opacity:0.8;">All go to damaged goods</span>
+                                            </button>
+                                        </div>
+
+                                        {{-- Partial split input (only when partially damaged) --}}
+                                        @if ($selCond === 'partially_damaged')
+                                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;
+                                                        padding:10px;border-radius:8px;background:var(--amber-dim);border:1px solid var(--amber);">
+                                                <div style="text-align:center;">
+                                                    <div style="font-size:10px;font-weight:700;color:var(--green);
+                                                                text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">
+                                                        Good — back to stock
+                                                    </div>
+                                                    <div style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--green);">
+                                                        {{ $selQtyGood }}
+                                                    </div>
+                                                    <div style="font-size:10px;color:var(--text-dim);">{{ $selUnitLabel }}(s)</div>
+                                                </div>
+                                                <div style="text-align:center;">
+                                                    <div style="font-size:10px;font-weight:700;color:var(--red);
+                                                                text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">
+                                                        Damaged — damaged goods
+                                                    </div>
+                                                    <input type="number"
+                                                           wire:model.live="items.{{ $selectedIndex }}.qty_damaged"
+                                                           min="1" max="{{ $selQtyRet - 1 }}"
+                                                           style="width:80px;padding:6px 8px;border-radius:8px;font-size:22px;
+                                                                  font-weight:800;font-family:var(--mono);text-align:center;
+                                                                  background:var(--surface);border:1.5px solid var(--red);
+                                                                  color:var(--red);box-sizing:border-box;"
+                                                           @click.stop>
+                                                    <div style="font-size:10px;color:var(--text-dim);margin-top:2px;">{{ $selUnitLabel }}(s)</div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- Outcome summary strip --}}
+                                        <div style="display:flex;gap:6px;margin-bottom:10px;">
+                                            @if ($selQtyGood > 0)
+                                                <div style="flex:1;padding:6px 8px;border-radius:6px;background:var(--green-dim);
+                                                            border:1px solid var(--green);text-align:center;">
+                                                    <div style="font-size:13px;font-weight:800;font-family:var(--mono);color:var(--green);">
+                                                        {{ $selQtyGood }}
+                                                    </div>
+                                                    <div style="font-size:9px;color:var(--green);font-weight:600;">
+                                                        {{ $selUnitLabel }}(s) → Stock
+                                                        @if ($selType === 'box')
+                                                            <span style="opacity:0.7;">({{ number_format($selGoodItems) }} items)</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endif
+                                            @if ($selQtyDmg > 0)
+                                                <div style="flex:1;padding:6px 8px;border-radius:6px;background:var(--red-dim);
+                                                            border:1px solid var(--red);text-align:center;">
+                                                    <div style="font-size:13px;font-weight:800;font-family:var(--mono);color:var(--red);">
+                                                        {{ $selQtyDmg }}
+                                                    </div>
+                                                    <div style="font-size:9px;color:var(--red);font-weight:600;">
+                                                        {{ $selUnitLabel }}(s) → Damaged Goods
+                                                        @if ($selType === 'box')
+                                                            <span style="opacity:0.7;">({{ number_format($selDmgItems) }} items)</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        {{-- Refund line --}}
+                                        <div style="display:flex;align-items:center;justify-content:space-between;
+                                                    padding:8px 12px;border-radius:8px;background:var(--green-dim);
+                                                    border:1px solid var(--green);margin-bottom:10px;">
+                                            <span style="font-size:11px;color:var(--green);font-weight:600;">
+                                                Line refund: {{ $selQtyRet }} × {{ number_format($selUnitPrice) }} RWF/{{ $selUnitLabel }}
+                                            </span>
+                                            <span style="font-size:13px;font-weight:800;font-family:var(--mono);color:var(--green);">
+                                                {{ number_format($selLineRefund) }} RWF
+                                            </span>
+                                        </div>
+
+                                        {{-- Damage notes (required if damaged) --}}
+                                        <textarea wire:model="items.{{ $selectedIndex }}.condition_notes"
+                                                  rows="2"
+                                                  placeholder="{{ $selCond === 'good' ? 'Notes (optional)...' : 'Describe the damage (required)...' }}"
+                                                  style="width:100%;padding:7px 10px;border-radius:8px;font-size:12px;resize:none;
+                                                         background:var(--surface);color:var(--text);box-sizing:border-box;
+                                                         border:1px solid {{ in_array($selCond, ['fully_damaged','partially_damaged']) ? 'var(--amber)' : 'var(--border)' }};"
+                                                  @click.stop></textarea>
                                     </div>
                                 @endif
                             </div>
@@ -517,13 +688,18 @@
 
                 @php
                     $sumItems   = count($items);
-                    $sumQty     = collect($items)->sum('quantity_returned');
-                    $sumDamaged = collect($items)->sum('quantity_damaged');
+                    $sumQty     = collect($items)->sum('qty_returned');
+                    $sumDamaged = collect($items)->sum('qty_damaged');
                     $sumGood    = $sumQty - $sumDamaged;
                     $sumRefund  = 0;
                     if (!$isExchange) {
                         foreach ($items as $itm) {
-                            $sumRefund += ($itm['unit_price'] ?? 0) * ($itm['quantity_returned'] ?? 0);
+                            $retType = $itm['return_type'] ?? 'box';
+                            if ($retType === 'box') {
+                                $sumRefund += ($itm['box_price'] ?? 0) * ($itm['qty_returned'] ?? 0);
+                            } else {
+                                $sumRefund += ($itm['item_price'] ?? 0) * ($itm['qty_returned'] ?? 0);
+                            }
                         }
                     }
                 @endphp
@@ -534,25 +710,25 @@
                                     border:1px solid var(--border);text-align:center;">
                             <div style="font-size:18px;font-weight:800;color:var(--text);
                                         font-family:var(--mono);">{{ $sumQty }}</div>
-                            <div style="font-size:10px;color:var(--text-dim);">Items</div>
+                            <div style="font-size:10px;color:var(--text-dim);">Qty Returned</div>
                         </div>
                         <div style="padding:8px;border-radius:8px;background:var(--surface);
                                     border:1px solid var(--border);text-align:center;">
                             <div style="font-size:18px;font-weight:800;color:var(--red);
                                         font-family:var(--mono);">{{ $sumDamaged }}</div>
-                            <div style="font-size:10px;color:var(--text-dim);">Damaged</div>
+                            <div style="font-size:10px;color:var(--text-dim);">Qty Damaged</div>
                         </div>
                     </div>
 
                     <div style="font-size:11px;margin-bottom:12px;">
                         @if ($sumGood > 0)
                             <div style="color:var(--green);margin-bottom:3px;">
-                                ✓ {{ $sumGood }} item(s) return to stock
+                                ✓ {{ $sumGood }} {{ $sumGood === 1 ? 'box' : 'boxes' }} return to stock
                             </div>
                         @endif
                         @if ($sumDamaged > 0)
                             <div style="color:var(--red);">
-                                ✗ {{ $sumDamaged }} item(s) flagged as damaged
+                                ✗ {{ $sumDamaged }} {{ $sumDamaged === 1 ? 'box' : 'boxes' }} flagged as damaged
                             </div>
                         @endif
                     </div>
@@ -605,7 +781,7 @@
                             </div>
                             <div style="font-size:11px;color:var(--text-dim);">
                                 {{ $isExchange ? 'Exchange' : 'Refund' }} ·
-                                {{ $sumQty }} item(s)
+                                {{ $sumQty }} {{ $sumQty === 1 ? 'box' : 'boxes' }}
                                 @if (!$isExchange && $sumRefund > 0)
                                     · {{ number_format($sumRefund) }} RWF
                                 @endif

@@ -9,9 +9,11 @@ use Livewire\Attributes\On;
 
 class TopShops extends Component
 {
-    public array  $shops      = [];
-    public int    $maxRevenue = 1;
-    public string $period     = 'month';
+    public array   $shops      = [];
+    public int     $maxRevenue = 1;
+    public string  $period     = 'month';
+    public ?string $from       = null;
+    public ?string $to         = null;
 
     public function mount(): void
     {
@@ -22,6 +24,8 @@ class TopShops extends Component
     public function refresh(string $period, ?string $from = null, ?string $to = null): void
     {
         $this->period = $period;
+        $this->from   = $from;
+        $this->to     = $to;
         $this->loadData();
     }
 
@@ -104,11 +108,17 @@ class TopShops extends Component
     private function periodRange(): array
     {
         return match ($this->period) {
-            'week'    => [now()->startOfWeek(),    now()->endOfDay()],
-            'month'   => [now()->startOfMonth(),   now()->endOfDay()],
-            'quarter' => [now()->startOfQuarter(), now()->endOfDay()],
-            'year'    => [now()->startOfYear(),    now()->endOfDay()],
-            default   => [today(),                 now()->endOfDay()],
+            'today'      => [today()->startOfDay(), now()->endOfDay()],
+            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
+            'week'       => [now()->startOfWeek(), now()->endOfDay()],
+            'month'      => [now()->startOfMonth(), now()->endOfDay()],
+            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
+            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'custom'     => [
+                \Carbon\Carbon::parse($this->from ?? today())->startOfDay(),
+                \Carbon\Carbon::parse($this->to   ?? today())->endOfDay(),
+            ],
+            default      => [today()->startOfDay(), now()->endOfDay()],
         };
     }
 

@@ -31,6 +31,10 @@ class Settings extends Component
     public bool $allowCardPayment         = false;
     public bool $allowBankTransferPayment = false;
 
+    // Inventory policy
+    public int $lowStockBoxesShop      = 2;
+    public int $lowStockBoxesWarehouse = 5;
+
     public function mount(): void
     {
         if (!auth()->user()->isOwner()) abort(403);
@@ -50,6 +54,8 @@ class Settings extends Component
         $this->priceOverrideThreshold    = $svc->priceOverrideThreshold();
         $this->allowCardPayment          = $svc->allowCardPayment();
         $this->allowBankTransferPayment  = $svc->allowBankTransferPayment();
+        $this->lowStockBoxesShop         = $svc->lowStockBoxesShop();
+        $this->lowStockBoxesWarehouse    = $svc->lowStockBoxesWarehouse();
     }
 
     public function save(): void
@@ -60,6 +66,8 @@ class Settings extends Component
             'maxCreditPerCustomer'    => 'required|integer|min:0',
             'overdueCreditDays'       => 'required|integer|min:0|max:365',
             'priceOverrideThreshold'  => 'required|integer|min:1|max:100',
+            'lowStockBoxesShop'       => 'required|integer|min:1',
+            'lowStockBoxesWarehouse'  => 'required|integer|min:1',
         ]);
 
         $svc = app(SettingsService::class);
@@ -77,6 +85,8 @@ class Settings extends Component
         $svc->set('price_override_threshold',     $this->priceOverrideThreshold);
         $svc->set('allow_card_payment',           $this->allowCardPayment);
         $svc->set('allow_bank_transfer_payment',  $this->allowBankTransferPayment);
+        $svc->set('low_stock_boxes_shop',         $this->lowStockBoxesShop);
+        $svc->set('low_stock_boxes_warehouse',    $this->lowStockBoxesWarehouse);
 
         $this->dispatch('notification', [
             'type'    => 'success',

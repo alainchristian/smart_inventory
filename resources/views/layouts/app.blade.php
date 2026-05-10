@@ -69,6 +69,8 @@
         </main>
     </div>
 
+    <livewire:transactions.live-feed />
+
     @livewireScripts
 
     @stack('scripts')

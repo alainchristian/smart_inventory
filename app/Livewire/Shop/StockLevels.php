@@ -5,6 +5,7 @@ namespace App\Livewire\Shop;
 use App\Enums\LocationType;
 use App\Models\Box;
 use App\Models\Product;
+use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -35,6 +36,8 @@ class StockLevels extends Component
 
     public function render()
     {
+        $shopThreshold = app(SettingsService::class)->lowStockBoxesShop();
+
         // ── 1. Products with boxes currently at this shop ─────────────────
         $currentStockQuery = DB::table('boxes')
             ->join('products', 'boxes.product_id', '=', 'products.id')
@@ -73,10 +76,11 @@ class StockLevels extends Component
                 'categories.name'
             );
 
-        // Apply low stock filter
+        // Apply low stock filter — box count vs global policy threshold
         if ($this->statusFilter === 'low') {
             $currentStockQuery->havingRaw(
-                'SUM(boxes.items_remaining) <= products.low_stock_threshold'
+                "SUM(CASE WHEN boxes.status::text != 'empty' AND boxes.items_remaining > 0 THEN 1 ELSE 0 END) <= ?",
+                [$shopThreshold]
             );
         }
 
@@ -91,11 +95,22 @@ class StockLevels extends Component
             ->selectRaw('
                 COUNT(DISTINCT boxes.product_id) as product_count,
                 COUNT(boxes.id) as total_boxes,
-                SUM(boxes.items_remaining) as total_items,
-                COUNT(CASE WHEN boxes.items_remaining <= products.low_stock_threshold
-                           THEN 1 END) as low_stock_count
+                SUM(boxes.items_remaining) as total_items
             ')
             ->first();
+
+        // Low stock count: products with ≤ threshold non-empty boxes (separate query)
+        $lowStockCount = DB::table('boxes')
+            ->join('products', 'boxes.product_id', '=', 'products.id')
+            ->where('boxes.location_type', LocationType::SHOP->value)
+            ->where('boxes.location_id', $this->shopId)
+            ->whereRaw("boxes.status::text != 'empty'")
+            ->where('boxes.items_remaining', '>', 0)
+            ->whereNull('products.deleted_at')
+            ->select('boxes.product_id')
+            ->groupBy('boxes.product_id')
+            ->havingRaw('COUNT(boxes.id) <= ?', [$shopThreshold])
+            ->get()->count();
 
         // ── 3. Previously stocked products (transferred but now out) ──────
         $previouslyStocked = collect();
@@ -144,14 +159,16 @@ class StockLevels extends Component
                 ->get();
         }
 
-        // Paginate current stock
+        // Paginate current stock — sort by items ascending (most critical first)
         $stockData = $currentStockQuery
-            ->orderByRaw('SUM(boxes.items_remaining) / products.low_stock_threshold ASC')
+            ->orderByRaw('SUM(boxes.items_remaining) ASC')
             ->paginate(24);
 
         return view('livewire.shop.stock-levels', [
             'stockData'         => $stockData,
             'kpis'              => $kpis,
+            'lowStockCount'     => $lowStockCount,
+            'shopThreshold'     => $shopThreshold,
             'previouslyStocked' => $previouslyStocked,
         ]);
     }

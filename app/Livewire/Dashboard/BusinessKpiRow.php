@@ -5,10 +5,13 @@ namespace App\Livewire\Dashboard;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Box;
+use App\Models\Customer;
+use App\Models\Expense;
 use App\Models\Warehouse;
 use App\Models\Shop;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\Attributes\On;
 
@@ -21,8 +24,12 @@ class BusinessKpiRow extends Component
     public array   $profit         = [];
     public array   $inventory      = [];
     public array   $locations      = [];
-    public array   $salesSparkline  = [];
-    public array   $profitSparkline = [];
+    public array   $salesSparkline    = [];
+    public array   $profitSparkline   = [];
+    public array   $expenseSparkline  = [];
+    public array   $creditSparkline   = [];
+    public array   $expenses          = [];
+    public array   $credit            = [];
 
     public function mount(): void
     {
@@ -164,59 +171,119 @@ class BusinessKpiRow extends Component
             'active_shops'      => Shop::where('is_active', true)->count(),
         ];
 
-        $this->salesSparkline  = $this->generateSalesSparkline();
-        $this->profitSparkline = $this->generateProfitSparkline();
+        // Expenses for selected period (daily_sessions.session_date is DATE)
+        $startDate = $start->toDateString();
+        $endDate   = $end->toDateString();
+        $prevStart_date = $prevStart->toDateString();
+        $prevEnd_date   = $prevEnd->toDateString();
+
+        $expCurrent = (int) Expense::whereNull('expenses.deleted_at')
+            ->where('expenses.is_system_generated', false)
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+            ->whereBetween('daily_sessions.session_date', [$startDate, $endDate])
+            ->sum('expenses.amount');
+
+        $expPrevious = (int) Expense::whereNull('expenses.deleted_at')
+            ->where('expenses.is_system_generated', false)
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+            ->whereBetween('daily_sessions.session_date', [$prevStart_date, $prevEnd_date])
+            ->sum('expenses.amount');
+
+        $this->expenses = [
+            'current'   => $expCurrent,
+            'growth'    => $expPrevious > 0 ? round((($expCurrent - $expPrevious) / $expPrevious) * 100, 1) : 0.0,
+            'net_op'    => (int)$margin - $expCurrent, // Gross Profit − Expenses = true net operating profit
+        ];
+
+        // Credit Outstanding — always current balance (not period-dependent)
+        $this->credit = [
+            'outstanding' => (int) Customer::sum('outstanding_balance'),
+            'count'       => (int) Customer::where('outstanding_balance', '>', 0)->count(),
+        ];
+
+        $this->salesSparkline   = $this->generateSalesSparkline($start, $end);
+        $this->profitSparkline  = $this->generateProfitSparkline($start, $end);
+        $this->expenseSparkline = $this->generateExpenseSparkline($start, $end);
+        $this->creditSparkline  = $this->generateCreditSparkline($start, $end);
     }
 
-    private function generateSalesSparkline(int $days = 7): array
+    private function sparkBuckets(Carbon $start, Carbon $end): array
     {
-        $rows = Sale::notVoided()
-            ->whereBetween('sale_date', [now()->subDays($days - 1)->startOfDay(), now()->endOfDay()])
-            ->selectRaw('DATE(sale_date) as day, SUM(total) as total')
-            ->groupBy('day')
-            ->orderBy('day')
-            ->pluck('total', 'day');
+        $days = max((int) $start->diffInDays($end), 1);
 
-        $result = [];
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $key      = now()->subDays($i)->format('Y-m-d');
-            $result[] = (float) ($rows[$key] ?? 0);
+        // Always show at least 7 points; expand the window for short periods
+        if ($days < 7)        { $start = $end->copy()->subDays(6)->startOfDay(); $days = 7; }
+
+        if ($days <= 31)      $step = 1;
+        elseif ($days <= 91)  $step = 7;
+        else                  $step = (int) ceil($days / 12);
+
+        $buckets = [];
+        $cur = $start->copy()->startOfDay();
+        while ($cur->lte($end)) {
+            $buckets[] = [$cur->copy(), $cur->copy()->addDays($step - 1)->endOfDay()];
+            $cur->addDays($step);
         }
-        return $result;
+        return array_slice($buckets, 0, 14);
     }
 
-    private function generateProfitSparkline(int $days = 7): array
+    private function generateSalesSparkline(Carbon $start, Carbon $end): array
     {
-        $rows = SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [now()->subDays($days - 1)->startOfDay(), now()->endOfDay()])
-            ->selectRaw('DATE(sales.sale_date) as day, SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
-            ->groupBy('day')
-            ->orderBy('day')
-            ->pluck('margin', 'day');
+        $buckets = $this->sparkBuckets($start, $end);
+        return array_map(fn($b) =>
+            (float) Sale::notVoided()->whereBetween('sale_date', $b)->sum('total'),
+        $buckets);
+    }
 
-        $result = [];
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $key      = now()->subDays($i)->format('Y-m-d');
-            $result[] = (float) ($rows[$key] ?? 0);
-        }
-        return $result;
+    private function generateProfitSparkline(Carbon $start, Carbon $end): array
+    {
+        $buckets = $this->sparkBuckets($start, $end);
+        return array_map(fn($b) =>
+            (float) (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
+                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->whereNull('sales.voided_at')
+                ->whereBetween('sales.sale_date', $b)
+                ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as m')
+                ->value('m') ?? 0),
+        $buckets);
+    }
+
+    private function generateExpenseSparkline(Carbon $start, Carbon $end): array
+    {
+        $buckets = $this->sparkBuckets($start, $end);
+        return array_map(fn($b) =>
+            (float) Expense::whereNull('expenses.deleted_at')
+                ->where('expenses.is_system_generated', false)
+                ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+                ->whereBetween('daily_sessions.session_date', [$b[0]->toDateString(), $b[1]->toDateString()])
+                ->sum('expenses.amount'),
+        $buckets);
+    }
+
+    private function generateCreditSparkline(Carbon $start, Carbon $end): array
+    {
+        $buckets = $this->sparkBuckets($start, $end);
+        return array_map(fn($b) =>
+            (float) DB::table('credit_repayments')
+                ->whereBetween('repayment_date', [$b[0]->toDateString(), $b[1]->toDateString()])
+                ->sum('amount'),
+        $buckets);
     }
 
     private function periodRange(): array
     {
         return match ($this->period) {
-            'today'   => [today()->startOfDay(),   now()->endOfDay()],
-            'week'    => [now()->startOfWeek(),     now()->endOfDay()],
-            'month'   => [now()->startOfMonth(),    now()->endOfDay()],
-            'quarter' => [now()->startOfQuarter(),  now()->endOfDay()],
-            'year'    => [now()->startOfYear(),     now()->endOfDay()],
-            'custom'  => [
+            'today'      => [today()->startOfDay(), now()->endOfDay()],
+            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
+            'week'       => [now()->startOfWeek(), now()->endOfDay()],
+            'month'      => [now()->startOfMonth(), now()->endOfDay()],
+            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
+            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'custom'     => [
                 Carbon::parse($this->from ?? today())->startOfDay(),
                 Carbon::parse($this->to   ?? today())->endOfDay(),
             ],
-            default   => [today()->startOfDay(), now()->endOfDay()],
+            default      => [today()->startOfDay(), now()->endOfDay()],
         };
     }
 

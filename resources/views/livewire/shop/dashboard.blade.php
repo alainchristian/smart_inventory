@@ -8,8 +8,8 @@
         @foreach([
             'today'      => 'Today',
             'yesterday'  => 'Yesterday',
-            'this_week'  => 'This Week',
-            'this_month' => 'This Month',
+            'week'       => 'This Week',
+            'month'      => 'This Month',
             'last_month' => 'Last Month',
             'last_30'    => 'Last 30 Days',
         ] as $key => $label)
@@ -56,7 +56,8 @@
      data-cf-cash="{{ $cfCash }}"
      data-cf-momo="{{ $cfMomo }}"
      data-cf-bank="{{ $allowBankTransfer ? $cfBank : -1 }}"
-     data-cf-card="{{ $allowCard ? 1 : -1 }}"
+     data-cf-card="{{ $allowCard ? $cfCard : -1 }}"
+     data-cf-credit="{{ $cfCredit }}"
 ></div>
 
 {{-- ════════════════════════════════════════════
@@ -82,7 +83,7 @@
                 </span>
                 <span class="db-kpi-vs">vs previous period</span>
             </div>
-            <div class="db-kpi-spark"><canvas id="sp-sales" wire:ignore width="90" height="36"></canvas></div>
+            <div class="db-kpi-spark"><canvas id="sp-sales" width="90" height="36"></canvas></div>
         </div>
     </div>
 
@@ -104,7 +105,7 @@
                 </span>
                 <span class="db-kpi-vs">vs previous period</span>
             </div>
-            <div class="db-kpi-spark"><canvas id="sp-txns" wire:ignore width="90" height="36"></canvas></div>
+            <div class="db-kpi-spark"><canvas id="sp-txns" width="90" height="36"></canvas></div>
         </div>
     </div>
 
@@ -126,7 +127,7 @@
                 </span>
                 <span class="db-kpi-vs">vs previous period</span>
             </div>
-            <div class="db-kpi-spark"><canvas id="sp-returns" wire:ignore width="90" height="36"></canvas></div>
+            <div class="db-kpi-spark"><canvas id="sp-returns" width="90" height="36"></canvas></div>
         </div>
     </div>
 
@@ -215,6 +216,7 @@
         <span style="font-size:11px;color:var(--text-dim);">{{ $periodLabel }}</span>
     </div>
 
+    <div class="db-card-scroll-body">
     <div class="db-donut-body">
         {{-- Donut --}}
         <div class="db-donut-wrap">
@@ -253,6 +255,13 @@
                     <span class="db-donut-leg-amt">{{ number_format($cfCard) }}</span>
                 </div>
                 @endif
+                @if($cfCredit > 0)
+                <div class="db-donut-leg-row">
+                    <span class="db-donut-dot" style="background:#f97316;"></span>
+                    <span class="db-donut-leg-name">Credit</span>
+                    <span class="db-donut-leg-amt">{{ number_format($cfCredit) }}</span>
+                </div>
+                @endif
             </div>
 
             <div class="db-deductions">
@@ -275,6 +284,7 @@
             </div>
         </div>
     </div>
+    </div>{{-- /db-card-scroll-body --}}
 
     {{-- Net in hand --}}
     <div class="db-inhand {{ $cfNet >= 0 ? 'db-inhand--pos' : 'db-inhand--neg' }}">
@@ -292,39 +302,68 @@
         <span class="db-card-title">Low Stock Alerts</span>
         <a href="{{ route('shop.inventory.stock') }}" class="db-view-all">View all</a>
     </div>
+    <div class="db-card-scroll-body">
     @forelse($lowStockProducts as $product)
+    @php
+        $pct = $shopLowStockThreshold > 0 ? min(100, round(($product->current_stock / $shopLowStockThreshold) * 100)) : 0;
+        $barColor = $pct <= 25 ? '#e24b4a' : ($pct <= 50 ? '#f59e0b' : '#3b6bd4');
+    @endphp
     <div class="db-stock-row">
-        <div class="db-stock-thumb">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 18c.5-3 2.5-5 5-6l3-1.5 2-1.5c1-.8 2-1 3-1 2 0 4 1.5 4.5 3.5L21 18H3z"/></svg>
+        <div class="db-stock-info">
+            <div class="db-stock-name-row">
+                <span class="db-stock-name" title="{{ $product->name }}">{{ $product->name }}</span>
+                <span class="db-stock-count">{{ $product->current_stock }}<span class="db-stock-unit">/{{ $shopLowStockThreshold }} box{{ $shopLowStockThreshold != 1 ? 'es' : '' }}</span></span>
+            </div>
+            <div class="db-stock-bar-bg">
+                <div class="db-stock-bar-fill" style="width:{{ $pct }}%;background:{{ $barColor }};"></div>
+            </div>
         </div>
-        <span class="db-stock-name" title="{{ $product->name }}">{{ $product->name }}</span>
-        <span class="db-stock-count">{{ $product->current_stock }} <span class="db-stock-unit">left</span></span>
     </div>
     @empty
     <div style="padding:30px 0;text-align:center;color:var(--text-dim);font-size:13px;">All products well stocked</div>
     @endforelse
+    </div>{{-- /db-card-scroll-body --}}
 </div>
 
 {{-- Recent Transactions --}}
-<div class="db-card">
+@php
+$txnList = collect();
+foreach ($recentSales as $sale) {
+    $productNames = $sale->items->pluck('product.name')->filter()->join(', ');
+    $txnList->push([
+        'type'     => 'sale',
+        'title'    => 'Sale #'.$sale->sale_number,
+        'date'     => $sale->sale_date,
+        'amount'   => $sale->total,
+        'credit'   => true,
+        'products' => $productNames,
+    ]);
+}
+foreach ($recentReturns as $ret) {
+    $txnList->push([
+        'type'     => 'return',
+        'title'    => 'Return #'.($ret->return_number ?? $ret->id),
+        'date'     => $ret->created_at,
+        'amount'   => $ret->refund_amount,
+        'credit'   => false,
+        'products' => '',
+    ]);
+}
+$txnList = $txnList->sortByDesc('date')->values();
+@endphp
+
+<div class="db-card" x-data="{ txnSearch: '' }">
     <div class="db-card-head">
         <span class="db-card-title">Recent Transactions</span>
         <a href="{{ route('shop.sales.index') }}" class="db-view-all">View all</a>
     </div>
-
-    @php
-    $txnList = collect();
-    foreach ($recentSales as $sale) {
-        $txnList->push(['type'=>'sale','title'=>'Sale #'.$sale->sale_number,'date'=>$sale->sale_date,'amount'=>$sale->total,'credit'=>true]);
-    }
-    foreach ($recentReturns as $ret) {
-        $txnList->push(['type'=>'return','title'=>'Return #'.($ret->return_number ?? $ret->id),'date'=>$ret->created_at,'amount'=>$ret->refund_amount,'credit'=>false]);
-    }
-    $txnList = $txnList->sortByDesc('date')->take(6)->values();
-    @endphp
-
+    <input type="text" x-model="txnSearch" placeholder="Search sale # or product…" class="db-txn-search">
+    <div class="db-card-scroll-body">
     @forelse($txnList as $txn)
-    <div class="db-txn-row">
+    <div class="db-txn-row"
+         x-show="txnSearch === '' ||
+                 '{{ addslashes(strtolower($txn['title'])) }}'.includes(txnSearch.toLowerCase()) ||
+                 '{{ addslashes(strtolower($txn['products'])) }}'.includes(txnSearch.toLowerCase())">
         <div class="db-txn-icon" style="background:{{ $txn['type']==='sale' ? 'rgba(59,107,212,.12)' : 'rgba(226,75,74,.12)' }};">
             @if($txn['type'] === 'sale')
             <svg fill="none" stroke="#3b6bd4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -334,7 +373,12 @@
         </div>
         <div class="db-txn-info">
             <div class="db-txn-title">{{ $txn['title'] }}</div>
-            <div class="db-txn-date">{{ \Carbon\Carbon::parse($txn['date'])->format('M j, Y g:i A') }}</div>
+            <div class="db-txn-date">
+                {{ \Carbon\Carbon::parse($txn['date'])->format('M j, Y g:i A') }}
+                @if($txn['products'])
+                <span class="db-txn-products">· {{ Str::limit($txn['products'], 40) }}</span>
+                @endif
+            </div>
         </div>
         <span class="db-txn-amount {{ $txn['credit'] ? 'credit' : 'debit' }}">
             {{ $txn['credit'] ? '+' : '-' }}{{ number_format($txn['amount']) }} RWF
@@ -343,6 +387,7 @@
     @empty
     <div style="padding:30px 0;text-align:center;color:var(--text-dim);font-size:13px;">No transactions in this period</div>
     @endforelse
+    </div>{{-- /db-card-scroll-body --}}
 </div>
 
 </div>{{-- /row-cf-side --}}

@@ -3,18 +3,14 @@
             display:flex;flex-direction:column" wire:poll.29s>
 
     {{-- Header --}}
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;
-                padding:18px 20px;border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:center;justify-content:space-between;
+                padding:16px 20px;border-bottom:1px solid var(--border)">
         <div>
-            <div style="font-size:20px;font-weight:700;color:var(--text)">
-                Transfer Status
-            </div>
-            <div style="font-size:19px;color:var(--text-dim);margin-top:2px">
-                Live pipeline
-            </div>
+            <div style="font-size:15px;font-weight:700;color:var(--text)">Transfer Status</div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:2px">Live pipeline</div>
         </div>
         <a href="{{ route('owner.transfers.index') }}"
-           style="font-size:17px;font-weight:600;color:var(--accent);
+           style="font-size:12px;font-weight:600;color:var(--accent);
                   text-decoration:none;padding:4px 10px;border-radius:7px;
                   background:var(--accent-dim)">
             Manage
@@ -66,40 +62,32 @@
     <div class="card-scroll">
         @foreach($statuses as $s)
         <a href="{{ $s['link'] }}"
-           style="display:flex;align-items:center;gap:14px;
-                  padding:14px 20px;text-decoration:none;
+           style="display:flex;align-items:center;gap:12px;
+                  padding:11px 20px;text-decoration:none;
                   border-bottom:1px solid var(--border);
                   transition:background var(--tr)"
            onmouseover="this.style.background='var(--surface2)'"
            onmouseout="this.style.background='transparent'">
 
-            {{-- Icon --}}
-            <div style="width:36px;height:36px;border-radius:10px;flex-shrink:0;
+            <div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;
                         background:{{ $s['bg'] }};
                         display:flex;align-items:center;justify-content:center">
-                <svg width="16" height="16" fill="none" stroke="{{ $s['color'] }}"
+                <svg width="15" height="15" fill="none" stroke="{{ $s['color'] }}"
                      stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="{{ $s['icon'] }}"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $s['icon'] }}"/>
                 </svg>
             </div>
 
-            {{-- Label --}}
             <div style="flex:1;min-width:0">
-                <div style="font-size:20px;font-weight:600;color:var(--text)">
-                    {{ $s['label'] }}
-                </div>
-                <div style="font-size:17px;color:var(--text-dim);margin-top:1px">
-                    {{ $s['sub'] }}
-                </div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">{{ $s['label'] }}</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-top:1px">{{ $s['sub'] }}</div>
             </div>
 
-            {{-- Count --}}
-            <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;
+            <div style="min-width:26px;height:26px;border-radius:50%;flex-shrink:0;
                         background:{{ $s['bg'] }};
                         display:flex;align-items:center;justify-content:center;
-                        font-size:20px;font-weight:800;font-family:var(--mono);
-                        color:{{ $s['color'] }}">
+                        font-size:13px;font-weight:800;font-family:var(--mono);
+                        color:{{ $s['color'] }};padding:0 6px">
                 {{ $s['count'] }}
             </div>
 
@@ -109,7 +97,7 @@
 
     {{-- Recent active transfers --}}
     <div style="border-top:1px solid var(--border)">
-        <div style="padding:10px 20px 4px;font-size:16px;font-weight:700;
+        <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;
                     letter-spacing:.5px;text-transform:uppercase;
                     color:var(--text-dim)">
             Recent Active
@@ -127,24 +115,24 @@
         @endphp
         <a href="{{ route('owner.transfers.show', $t['id']) }}"
            style="display:flex;align-items:center;justify-content:space-between;
-                  padding:10px 20px;text-decoration:none;gap:10px;
+                  padding:9px 20px;text-decoration:none;gap:10px;
                   border-top:1px solid var(--border);
                   transition:background var(--tr)"
            onmouseover="this.style.background='var(--surface2)'"
            onmouseout="this.style.background='transparent'">
             <div style="min-width:0;flex:1">
-                <div style="font-size:19px;font-weight:600;color:var(--text);
+                <div style="font-size:13px;font-weight:600;color:var(--text);
                             white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                     {{ $t['from'] }}
                     <span style="color:var(--text-dim)"> → </span>
                     {{ $t['to'] }}
                 </div>
-                <div style="font-size:17px;color:var(--text-dim);
+                <div style="font-size:11px;color:var(--text-dim);
                             font-family:var(--mono);margin-top:1px">
                     {{ $t['age'] }}
                 </div>
             </div>
-            <span style="font-size:14px;font-weight:700;padding:2px 8px;
+            <span style="font-size:11px;font-weight:700;padding:2px 8px;
                          border-radius:20px;white-space:nowrap;flex-shrink:0;
                          background:{{ $sc['bg'] }};color:{{ $sc['c'] }}">
                 {{ ucfirst(str_replace('_',' ',$t['status'])) }}
@@ -152,7 +140,7 @@
         </a>
         @empty
         <div style="padding:12px 20px;border-top:1px solid var(--border);
-                    font-size:17px;color:var(--text-dim);text-align:center">
+                    font-size:12px;color:var(--text-dim);text-align:center">
             No active transfers right now
         </div>
         @endforelse

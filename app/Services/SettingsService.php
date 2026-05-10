@@ -119,4 +119,14 @@ class SettingsService
     {
         return (int) $this->get('overdue_credit_days', 14);
     }
+
+    public function lowStockBoxesShop(): int
+    {
+        return (int) $this->get('low_stock_boxes_shop', 2);
+    }
+
+    public function lowStockBoxesWarehouse(): int
+    {
+        return (int) $this->get('low_stock_boxes_warehouse', 5);
+    }
 }
