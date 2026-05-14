@@ -410,17 +410,29 @@
 
         @error('wipe') <p class="sm-error" style="margin-bottom:10px">{{ $message }}</p> @enderror
 
-        <div class="sm-confirm-bar">
-            <div>
-                <label class="sm-label" style="margin-bottom:4px">Type <span style="font-family:monospace;background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--red)">DELETE</span> to confirm</label>
-                <input class="sm-confirm-input" type="text" wire:model="confirmText" autocomplete="off" spellcheck="false" placeholder="DELETE" />
+        <div x-data="{ ct: '' }" style="margin-top:16px">
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px">
+                Type <strong style="color:var(--text);font-family:monospace;letter-spacing:.5px">DELETE</strong> in the field below to confirm this action.
+            </p>
+            <div style="display:flex;align-items:center;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .15s"
+                 :style="ct === 'DELETE' ? 'border-color:var(--red)' : ''">
+                <input type="text"
+                       x-model="ct"
+                       wire:model="confirmText"
+                       autocomplete="off" spellcheck="false"
+                       placeholder="Type DELETE here…"
+                       @input="$wire.set('confirmText', $event.target.value)"
+                       style="flex:1;padding:12px 16px;border:none;background:transparent;font-size:14px;font-family:monospace;color:var(--text);outline:none;letter-spacing:.5px" />
+                <button
+                    wire:click="requestWipe"
+                    :disabled="ct !== 'DELETE' || {{ count($selected) }} === 0"
+                    :style="(ct === 'DELETE' && {{ count($selected) }} > 0)
+                        ? 'background:var(--red);color:#fff;cursor:pointer'
+                        : 'background:var(--surface);color:var(--text-dim);cursor:not-allowed'"
+                    style="padding:12px 24px;border:none;border-left:1.5px solid var(--border);font-size:13px;font-weight:700;font-family:var(--font);transition:background .2s,color .2s;white-space:nowrap;flex-shrink:0;border-radius:0 12px 12px 0">
+                    Yes, Delete Now
+                </button>
             </div>
-            <button
-                wire:click="requestWipe"
-                style="padding:9px 22px;border-radius:9px;background:var(--red);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);opacity:{{ (count($selected) > 0 && $confirmText === 'DELETE') ? '1' : '.4' }};margin-top:auto"
-                @if(count($selected) === 0 || $confirmText !== 'DELETE') disabled @endif>
-                Delete Selected Data
-            </button>
         </div>
     </div>
 @endif
