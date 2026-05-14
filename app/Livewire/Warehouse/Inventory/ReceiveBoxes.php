@@ -50,7 +50,8 @@ class ReceiveBoxes extends Component
     public array $editableProductBarcodes = [];
     public array $editableProductCategories = [];
     public array $editableProductItemsPerBox = [];
-    public array $editableProductPrices = [];
+    public array $editableProductBoxPurchasePrices = [];
+    public array $editableProductBoxSellingPrices = [];
     public array $productSuggestions = [];
     public array $excelHasDifferentValues = [];     // Track if Excel values differ from DB
     public array $shouldUpdateProduct = [];         // User choice to update product
@@ -95,21 +96,23 @@ class ReceiveBoxes extends Component
 
     protected $listeners = ['barcode-scanned' => 'handleBarcodeScan'];
 
-    public function mount()
+    public function mount(): void
     {
         $user = auth()->user();
 
-        // Auto-select warehouse for warehouse managers
         if ($user->isWarehouseManager()) {
             $this->warehouseId = $user->location_id;
+        }
 
-            // Log for debugging
-            \Log::info('Auto-selected warehouse', [
-                'user_id' => $user->id,
-                'warehouse_id' => $this->warehouseId,
-                'location_type' => $user->location_type,
-                'location_id' => $user->location_id,
-            ]);
+        if (request()->has('product_id')) {
+            $this->productId = (int) request()->get('product_id');
+            $product = Product::find($this->productId);
+            if ($product) {
+                $this->productName        = $product->name;
+                $this->selectedProductId  = $product->id;
+                $this->selectedProductName= $product->name;
+                $this->showProductDropdown = true;
+            }
         }
     }
 
@@ -477,11 +480,11 @@ class ReceiveBoxes extends Component
      */
     public function downloadTemplate()
     {
-        $headers = ['barcode', 'product_name', 'sku', 'category', 'items_per_box', 'selling_price', 'boxes', 'batch_number', 'expiry_date'];
+        $headers = ['barcode', 'product_name', 'sku', 'category', 'items_per_box', 'box_purchase_price', 'box_selling_price', 'boxes', 'batch_number', 'expiry_date'];
         $sample = [
-            ['1234567890123', 'Adidas Ultraboost Size 43', 'ADI-UB-43', 'Footwear', '12', '85000', '20', 'BATCH-2024-Q1', '2025-12-31'],
-            ['9876543210987', 'Nike Air Max Size 42', 'NIKE-AM-42', 'Footwear', '24', '75000', '15', 'BATCH-2024-Q2', '2026-06-30'],
-            ['5555555555555', 'Puma Speed Size 44', 'PUMA-SP-44', 'Footwear', '18', '65000', '10', 'BATCH-2024-Q3', '2026-03-15'],
+            ['1234567890123', 'Adidas Ultraboost Size 43', 'ADI-UB-43', 'Footwear', '12', '960000', '1020000', '20', 'BATCH-2024-Q1', '2025-12-31'],
+            ['9876543210987', 'Nike Air Max Size 42', 'NIKE-AM-42', 'Footwear', '24', '1800000', '1920000', '15', 'BATCH-2024-Q2', '2026-06-30'],
+            ['5555555555555', 'Puma Speed Size 44', 'PUMA-SP-44', 'Footwear', '18', '1170000', '1260000', '10', 'BATCH-2024-Q3', '2026-03-15'],
         ];
 
         $filename = 'box-receiving-template.csv';
@@ -536,10 +539,11 @@ class ReceiveBoxes extends Component
                     'sku' => trim($row[2] ?? ''),
                     'category' => trim($row[3] ?? ''),
                     'items_per_box' => $row[4] ?? '',
-                    'selling_price' => $row[5] ?? '',
-                    'boxes' => $row[6] ?? '',
-                    'batch_number' => trim($row[7] ?? ''),
-                    'expiry_date' => $row[8] ?? '',
+                    'box_purchase_price' => $row[5] ?? '',
+                    'box_selling_price' => $row[6] ?? '',
+                    'boxes' => $row[7] ?? '',
+                    'batch_number' => trim($row[8] ?? ''),
+                    'expiry_date' => $row[9] ?? '',
                 ];
             }
 
@@ -563,19 +567,24 @@ class ReceiveBoxes extends Component
                 if ($item['status'] === 'recognized') {
                     $product = Product::find($item['product_id']);
 
+                    $dbBoxPurchasePrice = $product->purchase_price * $product->items_per_box;
+                    $dbBoxSellingPrice  = $product->box_selling_price ?? ($product->selling_price * $product->items_per_box);
+
                     $this->editableProductNames[$rowNum] = $product->name;
                     $this->editableProductBarcodes[$rowNum] = $item['barcode'] ?? $product->barcode;
                     $this->editableProductSkus[$rowNum] = $product->sku;
                     $this->editableProductCategories[$rowNum] = $product->category_id;
                     $this->editableProductItemsPerBox[$rowNum] = $product->items_per_box;
-                    $this->editableProductPrices[$rowNum] = $product->selling_price;
+                    $this->editableProductBoxPurchasePrices[$rowNum] = $dbBoxPurchasePrice;
+                    $this->editableProductBoxSellingPrices[$rowNum]  = $dbBoxSellingPrice;
 
                     // Track if Excel has different values
                     $this->excelHasDifferentValues[$rowNum] = [
                         'name' => $item['product_name'] !== $product->name,
                         'sku' => ($item['sku'] ?? '') !== $product->sku,
                         'items_per_box' => ($item['items_per_box'] ?? 0) != $product->items_per_box,
-                        'price' => ($item['selling_price'] ?? 0) != $product->selling_price,
+                        'box_purchase_price' => ($item['box_purchase_price'] ?? 0) != $dbBoxPurchasePrice,
+                        'box_selling_price'  => ($item['box_selling_price'] ?? 0) != $dbBoxSellingPrice,
                     ];
 
                 } else {
@@ -585,7 +594,8 @@ class ReceiveBoxes extends Component
                     $this->editableProductSkus[$rowNum] = $item['sku'] ?: $this->generateSkuFromName($item['product_name']);
                     $this->editableProductCategories[$rowNum] = $item['category_id'];
                     $this->editableProductItemsPerBox[$rowNum] = $item['items_per_box'];
-                    $this->editableProductPrices[$rowNum] = $item['selling_price'];
+                    $this->editableProductBoxPurchasePrices[$rowNum] = $item['box_purchase_price'];
+                    $this->editableProductBoxSellingPrices[$rowNum]  = $item['box_selling_price'];
                 }
 
                 $this->editableProductSearchQuery[$rowNum] = '';
@@ -788,12 +798,15 @@ class ReceiveBoxes extends Component
                     // Check if user wants to update product info
                     if ($this->shouldUpdateProduct[$rowNum] ?? false) {
                         $product = Product::find($item['product_id']);
+                        $ipb = (int) max(1, $this->editableProductItemsPerBox[$rowNum]);
 
                         $product->update([
                             'name' => $this->editableProductNames[$rowNum],
                             'sku' => $this->editableProductSkus[$rowNum],
-                            'items_per_box' => $this->editableProductItemsPerBox[$rowNum],
-                            'selling_price' => (int) $this->editableProductPrices[$rowNum],
+                            'items_per_box' => $ipb,
+                            'purchase_price' => (int) round((float) $this->editableProductBoxPurchasePrices[$rowNum] / $ipb),
+                            'selling_price' => (int) round((float) $this->editableProductBoxSellingPrices[$rowNum] / $ipb),
+                            'box_selling_price' => (int) $this->editableProductBoxSellingPrices[$rowNum],
                             'category_id' => $this->editableProductCategories[$rowNum],
                         ]);
 
@@ -824,12 +837,15 @@ class ReceiveBoxes extends Component
                         // Check if update requested
                         if ($this->shouldUpdateProduct[$rowNum] ?? false) {
                             $product = Product::find($item['product_id']);
+                            $ipb = (int) max(1, $this->editableProductItemsPerBox[$rowNum]);
 
                             $product->update([
                                 'name' => $this->editableProductNames[$rowNum],
                                 'sku' => $this->editableProductSkus[$rowNum],
-                                'items_per_box' => $this->editableProductItemsPerBox[$rowNum],
-                                'selling_price' => (int) $this->editableProductPrices[$rowNum],
+                                'items_per_box' => $ipb,
+                                'purchase_price' => (int) round((float) $this->editableProductBoxPurchasePrices[$rowNum] / $ipb),
+                                'selling_price' => (int) round((float) $this->editableProductBoxSellingPrices[$rowNum] / $ipb),
+                                'box_selling_price' => (int) $this->editableProductBoxSellingPrices[$rowNum],
                                 'category_id' => $this->editableProductCategories[$rowNum],
                             ]);
 
@@ -856,8 +872,9 @@ class ReceiveBoxes extends Component
                     $sku = $this->editableProductSkus[$rowNum];
                     $barcode = $this->editableProductBarcodes[$rowNum];
                     $categoryId = $this->editableProductCategories[$rowNum];
-                    $itemsPerBox = $this->editableProductItemsPerBox[$rowNum];
-                    $price = $this->editableProductPrices[$rowNum];
+                    $itemsPerBox = (int) max(1, $this->editableProductItemsPerBox[$rowNum]);
+                    $boxPurchasePrice = (float) $this->editableProductBoxPurchasePrices[$rowNum];
+                    $boxSellingPrice  = (float) $this->editableProductBoxSellingPrices[$rowNum];
 
                     $product = Product::create([
                         'category_id' => $categoryId,
@@ -865,9 +882,9 @@ class ReceiveBoxes extends Component
                         'sku' => $sku,
                         'barcode' => $barcode,
                         'items_per_box' => $itemsPerBox,
-                        'purchase_price' => 0,
-                        'selling_price' => (int) $price,
-                        'box_selling_price' => null,
+                        'purchase_price' => (int) round($boxPurchasePrice / $itemsPerBox),
+                        'selling_price' => (int) round($boxSellingPrice / $itemsPerBox),
+                        'box_selling_price' => (int) $boxSellingPrice,
                         'low_stock_threshold' => 10,
                         'reorder_point' => 20,
                         'unit_of_measure' => 'piece',
@@ -943,7 +960,8 @@ class ReceiveBoxes extends Component
                 'editableProductBarcodes',
                 'editableProductCategories',
                 'editableProductItemsPerBox',
-                'editableProductPrices',
+                'editableProductBoxPurchasePrices',
+                'editableProductBoxSellingPrices',
                 'productSuggestions',
                 'excelHasDifferentValues',
                 'shouldUpdateProduct'
@@ -977,7 +995,8 @@ class ReceiveBoxes extends Component
             'editableProductBarcodes',
             'editableProductCategories',
             'editableProductItemsPerBox',
-            'editableProductPrices',
+            'editableProductBoxPurchasePrices',
+            'editableProductBoxSellingPrices',
             'productSuggestions',
             'excelHasDifferentValues',
             'shouldUpdateProduct'

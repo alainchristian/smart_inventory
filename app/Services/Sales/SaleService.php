@@ -258,6 +258,208 @@ class SaleService
         });
     }
 
+    /**
+     * Create a warehouse-direct sale.
+     * Boxes come from the warehouse, not the shop. Payment is collected at the shop.
+     * Items are specified in full boxes only (no partial-box warehouse sales).
+     */
+    public function createWarehouseSale(array $data): Sale
+    {
+        return DB::transaction(function () use ($data) {
+
+            // ── Resolve payment channels (same as createSale) ─────────────────────
+            $payments = collect($data['payments'] ?? [])
+                ->filter(fn ($p) => (int) $p['amount'] > 0)
+                ->values();
+
+            $singleMethodFallback = false;
+            if ($payments->isEmpty()) {
+                $payments = collect([[
+                    'method'    => $data['payment_method'] instanceof PaymentMethod
+                                    ? $data['payment_method']->value
+                                    : ($data['payment_method'] ?? 'cash'),
+                    'amount'    => 0,
+                    'reference' => null,
+                ]]);
+                $singleMethodFallback = true;
+            }
+
+            $creditAmount  = (int) $payments->where('method', 'credit')->sum('amount');
+            $nonCreditPaid = (int) $payments->where('method', '!=', 'credit')->sum('amount');
+            $isSplit       = $payments->count() > 1;
+            $hasCredit     = $creditAmount > 0;
+
+            $primaryMethod = $isSplit
+                ? PaymentMethod::CASH
+                : PaymentMethod::from(
+                    $payments->first()['method'] instanceof PaymentMethod
+                        ? $payments->first()['method']->value
+                        : $payments->first()['method']
+                  );
+
+            $warehouseId = (int) $data['source_warehouse_id'];
+
+            // ── Create the sale header ────────────────────────────────────────────
+            $sale = Sale::create([
+                'sale_number'                => $this->generateSaleNumber(),
+                'shop_id'                    => $data['shop_id'],
+                'type'                       => SaleType::FULL_BOX,
+                'payment_method'             => $primaryMethod,
+                'sold_by'                    => auth()->id(),
+                'sale_date'                  => now(),
+                'subtotal'                   => 0,
+                'tax'                        => 0,
+                'discount'                   => 0,
+                'total'                      => 0,
+                'has_price_override'         => false,
+                'customer_id'                => $data['customer_id'] ?? null,
+                'customer_name'              => $data['customer_name'] ?? null,
+                'customer_phone'             => $data['customer_phone'] ?? null,
+                'notes'                      => $data['notes'] ?? null,
+                'is_split_payment'           => $isSplit,
+                'amount_paid'                => $nonCreditPaid,
+                'credit_amount'              => $creditAmount,
+                'has_credit'                 => $hasCredit,
+                // Fulfillment fields
+                'fulfillment_type'           => 'warehouse_direct',
+                'source_warehouse_id'        => $warehouseId,
+                'fulfillment_status'         => 'pending',
+                'fulfillment_method'         => $data['fulfillment_method'],
+                'fulfillment_transporter_id' => $data['fulfillment_transporter_id'] ?? null,
+                'fulfillment_notes'          => $data['fulfillment_notes'] ?? null,
+            ]);
+
+            $subtotal = 0;
+
+            foreach ($data['items'] as $itemData) {
+                $product    = Product::findOrFail($itemData['product_id']);
+                $boxesNeeded = (int) $itemData['boxes'];
+                $boxPrice   = (int) $itemData['price']; // price per box
+
+                // Select boxes FIFO from warehouse
+                $boxes = Box::where('product_id', $product->id)
+                    ->where('location_type', 'warehouse')
+                    ->where('location_id', $warehouseId)
+                    ->whereIn('status', ['full', 'partial'])
+                    ->where('items_remaining', '>', 0)
+                    ->orderBy('received_at', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->limit($boxesNeeded)
+                    ->get();
+
+                if ($boxes->count() < $boxesNeeded) {
+                    throw new \Exception(
+                        "Insufficient warehouse stock for {$product->name}. " .
+                        "Needed {$boxesNeeded} boxes, only {$boxes->count()} available."
+                    );
+                }
+
+                foreach ($boxes as $box) {
+                    $itemsConsumed = $box->items_remaining;
+                    $lineTotal     = $boxPrice;
+
+                    $sale->items()->create([
+                        'product_id'          => $product->id,
+                        'box_id'              => $box->id,
+                        'quantity_sold'       => $itemsConsumed,
+                        'is_full_box'         => true,
+                        'original_unit_price' => $product->selling_price,
+                        'actual_unit_price'   => $product->selling_price,
+                        'line_total'          => $lineTotal,
+                        'price_was_modified'  => false,
+                    ]);
+
+                    $subtotal += $lineTotal;
+
+                    // Consume box and record movement as 'direct_sale'
+                    \App\Models\BoxMovement::create([
+                        'box_id'             => $box->id,
+                        'from_location_type' => 'warehouse',
+                        'from_location_id'   => $warehouseId,
+                        'to_location_type'   => null,
+                        'to_location_id'     => null,
+                        'movement_type'      => 'direct_sale',
+                        'moved_by'           => auth()->id(),
+                        'moved_at'           => now(),
+                        'reference_type'     => 'sale',
+                        'reference_id'       => $sale->id,
+                        'reason'             => "Warehouse direct sale: {$sale->sale_number}",
+                        'items_moved'        => $itemsConsumed,
+                    ]);
+
+                    $box->update([
+                        'items_remaining' => 0,
+                        'status'          => BoxStatus::EMPTY,
+                    ]);
+                }
+            }
+
+            $sale->update([
+                'subtotal' => $subtotal,
+                'total'    => $subtotal,
+            ]);
+
+            // ── Record payment rows ───────────────────────────────────────────────
+            if ($singleMethodFallback) {
+                \App\Models\SalePayment::create([
+                    'sale_id'        => $sale->id,
+                    'payment_method' => $primaryMethod,
+                    'amount'         => $subtotal,
+                    'reference'      => null,
+                ]);
+                $sale->update(['amount_paid' => $hasCredit ? 0 : $subtotal]);
+            } else {
+                foreach ($payments as $pmt) {
+                    $method = PaymentMethod::from(
+                        $pmt['method'] instanceof PaymentMethod ? $pmt['method']->value : $pmt['method']
+                    );
+                    \App\Models\SalePayment::create([
+                        'sale_id'        => $sale->id,
+                        'payment_method' => $method,
+                        'amount'         => (int) $pmt['amount'],
+                        'reference'      => $pmt['reference'] ?? null,
+                    ]);
+                }
+            }
+
+            // ── Credit handling ───────────────────────────────────────────────────
+            if ($hasCredit && !empty($data['customer_id'])) {
+                $customer = \App\Models\Customer::find($data['customer_id']);
+                if ($customer) {
+                    (new CustomerService())->recordSalePurchase($customer, $creditAmount);
+                }
+            } elseif (!empty($data['customer_id'])) {
+                $customer = \App\Models\Customer::find($data['customer_id']);
+                $customer?->update(['last_purchase_at' => now()]);
+            }
+
+            // ── Activity log ──────────────────────────────────────────────────────
+            $shop = Shop::find($sale->shop_id);
+
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'warehouse_direct_sale',
+                'entity_type'       => 'Sale',
+                'entity_id'         => $sale->id,
+                'entity_identifier' => $sale->sale_number,
+                'details' => [
+                    'total'          => $sale->total,
+                    'shop_name'      => $shop?->name,
+                    'warehouse_id'   => $warehouseId,
+                    'item_count'     => count($data['items']),
+                    'fulfillment'    => $data['fulfillment_method'],
+                ],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
+            Cache::flush();
+
+            return $sale;
+        });
+    }
+
     public function voidSale(Sale $sale, string $reason): Sale
     {
         if ($sale->voided_at) {

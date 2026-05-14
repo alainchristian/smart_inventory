@@ -66,9 +66,6 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     Route::prefix('products')->name('products.')->group(function () {
         Route::get('/', function () { return view('owner.products.index'); })->name('index');
         Route::get('/create', function () { return view('owner.products.create'); })->name('create');
-        Route::get('/purchase-prices', function () {
-            return view('owner.products.purchase-prices');
-        })->name('purchase-prices');
         Route::get('/{product}/edit', function (\App\Models\Product $product) {
             return view('owner.products.edit', compact('product'));
         })->name('edit');
@@ -85,6 +82,9 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/', function () { return view('owner.boxes.index'); })->name('index');
         Route::get('/{box}', function ($box) { return view('owner.boxes.show', ['boxId' => $box]); })->name('show');
     });
+
+    // Stock intake
+    Route::get('/inventory/receive', fn () => view('owner.inventory.receive'))->name('inventory.receive');
 
     // Transfers
     Route::prefix('transfers')->name('transfers.')->group(function () {
@@ -179,7 +179,6 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckL
         // Inventory management
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/boxes', function () { return view('warehouse.inventory.boxes'); })->name('boxes');
-            Route::get('/boxes/receive', function () { return view('warehouse.inventory.receive-boxes'); })->name('receive-boxes');
             Route::get('/stock-levels', function () { return view('warehouse.inventory.stock-levels'); })->name('stock-levels');
         });
 
@@ -202,6 +201,13 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckL
         // Expense Requests
         Route::prefix('expense-requests')->name('expense-requests.')->group(function () {
             Route::get('/', function () { return view('warehouse.expense-requests.index'); })->name('index');
+        });
+
+        // Sales fulfillment queue
+        Route::prefix('sales')->name('sales.')->group(function () {
+            Route::get('/fulfillment', function () {
+                return view('warehouse.sales.fulfillment-queue');
+            })->name('fulfillment');
         });
     });
 
@@ -256,6 +262,11 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/sales', function () { return view('shop.reports.sales'); })->name('sales');
         });
+
+        // Warehouse Sale (sell directly from warehouse stock)
+        Route::get('/warehouse-sale', function () {
+            return view('shop.sales.warehouse-sale');
+        })->name('warehouse-sale');
 
         // Credit Repayments
         Route::get('/credit-repayments', function () { return view('shop.credit-repayments'); })->name('credit-repayments');

@@ -17,11 +17,10 @@ class EditProduct extends Component
     public ?int    $categoryId  = null;
     public string  $description = '';
 
-    // Packaging & pricing
-    public int     $itemsPerBox      = 1;
-    public string  $purchasePrice    = '';
-    public string  $sellingPrice     = '';
-    public string  $boxSellingPrice  = '';
+    // Packaging & pricing — user enters RWF box prices; per-item stored in DB
+    public int     $itemsPerBox       = 1;
+    public string  $boxPurchasePrice  = '';
+    public string  $boxSellingPrice   = '';
 
     // Operational
     public int     $lowStockThreshold = 10;
@@ -38,10 +37,9 @@ class EditProduct extends Component
             'barcode'          => 'nullable|string|max:100|unique:products,barcode,' . $this->product->id,
             'categoryId'       => 'required|exists:categories,id',
             'description'      => 'nullable|string|max:1000',
-            'itemsPerBox'      => 'required|integer|min:1|max:10000',
-            'purchasePrice'    => 'required|numeric|min:0',
-            'sellingPrice'     => 'required|numeric|min:0',
-            'boxSellingPrice'  => 'nullable|numeric|min:0',
+            'itemsPerBox'       => 'required|integer|min:1|max:10000',
+            'boxPurchasePrice'  => 'required|numeric|min:0',
+            'boxSellingPrice'   => 'required|numeric|min:0',
             'lowStockThreshold'=> 'required|integer|min:0',
             'reorderPoint'     => 'required|integer|min:0',
             'unitOfMeasure'    => 'required|string|max:50',
@@ -56,8 +54,8 @@ class EditProduct extends Component
         'sku.unique'          => 'This SKU is already taken by another product.',
         'barcode.unique'      => 'This barcode is already registered to another product.',
         'categoryId.required' => 'Please select a category.',
-        'purchasePrice.required' => 'Purchase price is required.',
-        'sellingPrice.required'  => 'Selling price is required.',
+        'boxPurchasePrice.required' => 'Box purchase price is required.',
+        'boxSellingPrice.required'  => 'Box selling price is required.',
     ];
 
     public function mount(Product $product): void
@@ -70,16 +68,15 @@ class EditProduct extends Component
         $this->barcode          = $product->barcode ?? '';
         $this->categoryId       = $product->category_id;
         $this->description      = $product->description ?? '';
-        $this->itemsPerBox      = $product->items_per_box;
-        $this->purchasePrice    = $product->purchase_price > 0
-                                    ? (string) $product->purchase_price
+        $this->itemsPerBox       = $product->items_per_box;
+        $this->boxPurchasePrice  = $product->purchase_price > 0
+                                    ? (string) ($product->purchase_price * $product->items_per_box)
                                     : '';
-        $this->sellingPrice     = $product->selling_price > 0
-                                    ? (string) $product->selling_price
-                                    : '';
-        $this->boxSellingPrice  = $product->box_selling_price
+        $this->boxSellingPrice   = $product->box_selling_price
                                     ? (string) $product->box_selling_price
-                                    : '';
+                                    : ($product->selling_price > 0
+                                        ? (string) ($product->selling_price * $product->items_per_box)
+                                        : '');
         $this->lowStockThreshold = $product->low_stock_threshold;
         $this->reorderPoint      = $product->reorder_point;
         $this->unitOfMeasure     = $product->unit_of_measure ?? 'piece';
@@ -89,18 +86,10 @@ class EditProduct extends Component
 
     public function getMarginProperty(): ?float
     {
-        $buy  = (float) $this->purchasePrice;
-        $sell = (float) $this->sellingPrice;
+        $buy  = (float) $this->boxPurchasePrice;
+        $sell = (float) $this->boxSellingPrice;
         if ($sell <= 0 || $buy <= 0) return null;
         return round(($sell - $buy) / $sell * 100, 1);
-    }
-
-    public function getBoxPriceSuggestionProperty(): string
-    {
-        $sell = (float) $this->sellingPrice;
-        $ipb  = (int)   $this->itemsPerBox;
-        if ($sell <= 0 || $ipb <= 0) return '';
-        return number_format($sell * $ipb, 0, '.', ',');
     }
 
     public function update(): void
@@ -119,11 +108,9 @@ class EditProduct extends Component
             'barcode'            => $this->barcode ?: null,
             'description'        => $this->description ?: null,
             'items_per_box'      => $this->itemsPerBox,
-            'purchase_price'     => (int) $this->purchasePrice,
-            'selling_price'      => (int) $this->sellingPrice,
-            'box_selling_price'  => $this->boxSellingPrice !== ''
-                                    ? (int) $this->boxSellingPrice
-                                    : null,
+            'purchase_price'     => (int) round((float) $this->boxPurchasePrice / $this->itemsPerBox),
+            'selling_price'      => (int) round((float) $this->boxSellingPrice / $this->itemsPerBox),
+            'box_selling_price'  => (int) $this->boxSellingPrice,
             'low_stock_threshold'=> $this->lowStockThreshold,
             'reorder_point'      => $this->reorderPoint,
             'unit_of_measure'    => $this->unitOfMeasure,

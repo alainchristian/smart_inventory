@@ -4,7 +4,9 @@ namespace App\Livewire\Inventory\Boxes;
 
 use App\Enums\BoxStatus;
 use App\Enums\LocationType;
+use App\Models\ActivityLog;
 use App\Models\Box;
+use App\Models\BoxMovement;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Services\Inventory\BarcodeService;
@@ -36,12 +38,16 @@ class ReceiveBoxes extends Component
         'expiryDate.after' => 'Expiry date must be in the future.',
     ];
 
-    public function mount()
+    public function mount(): void
     {
         $user = auth()->user();
 
         if ($user->isWarehouseManager()) {
             $this->warehouseId = $user->location_id;
+        }
+
+        if (request()->has('product_id')) {
+            $this->productId = (int) request()->get('product_id');
         }
     }
 
@@ -71,12 +77,39 @@ class ReceiveBoxes extends Component
                 'expiry_date' => $this->expiryDate,
             ]);
 
+            BoxMovement::create([
+                'box_id'             => $box->id,
+                'from_location_type' => null,
+                'from_location_id'   => null,
+                'to_location_type'   => 'warehouse',
+                'to_location_id'     => $this->warehouseId,
+                'movement_type'      => 'received',
+                'moved_by'           => auth()->id(),
+                'moved_at'           => now(),
+                'items_moved'        => $product->items_per_box,
+            ]);
+
             $boxes[] = $box;
         }
 
+        ActivityLog::create([
+            'user_id'           => auth()->id(),
+            'user_name'         => auth()->user()->name,
+            'action'            => 'stock_intake',
+            'entity_type'       => 'Box',
+            'entity_id'         => $boxes[0]->id ?? null,
+            'entity_identifier' => $product->name,
+            'details'           => [
+                'product_id'    => $product->id,
+                'warehouse_id'  => $this->warehouseId,
+                'boxes_created' => $this->numberOfBoxes,
+                'batch_number'  => $this->batchNumber,
+            ],
+        ]);
+
         $this->createdBoxes = $boxes;
 
-        session()->flash('success', "{$this->numberOfBoxes} boxes created successfully.");
+        session()->flash('success', "{$this->numberOfBoxes} box(es) of {$product->name} added to warehouse.");
 
         $this->dispatch('boxes-created', count: $this->numberOfBoxes);
     }

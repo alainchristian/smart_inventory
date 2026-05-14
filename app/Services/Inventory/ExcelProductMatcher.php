@@ -25,7 +25,8 @@ class ExcelProductMatcher
             $sku = trim($row['sku'] ?? '');
             $categoryName = trim($row['category'] ?? '');
             $itemsPerBox = (int)($row['items_per_box'] ?? 0);
-            $sellingPrice = (float)($row['selling_price'] ?? 0);
+            $boxPurchasePrice = (float)($row['box_purchase_price'] ?? 0);
+            $boxSellingPrice  = (float)($row['box_selling_price'] ?? 0);
             $boxes = (int)($row['boxes'] ?? 0);
             $batchNumber = trim($row['batch_number'] ?? '') ?: null;
             $expiryDate = $this->parseDate($row['expiry_date'] ?? null);
@@ -73,7 +74,8 @@ class ExcelProductMatcher
                 'category_name' => $categoryName,
                 'category_id' => $category?->id,
                 'items_per_box' => $itemsPerBox,
-                'selling_price' => $sellingPrice,
+                'box_purchase_price' => $boxPurchasePrice,
+                'box_selling_price'  => $boxSellingPrice,
                 'boxes' => $boxes,
                 'batch_number' => $batchNumber,
                 'expiry_date' => $expiryDate,
@@ -131,7 +133,7 @@ class ExcelProductMatcher
             $rowData['status'] = 'unrecognized';
             $rowData['needs_confirmation'] = true;
             $rowData['match_method'] = 'none';
-            $rowData['has_complete_info'] = !empty($categoryName) && $itemsPerBox > 0 && $sellingPrice > 0;
+            $rowData['has_complete_info'] = !empty($categoryName) && $itemsPerBox > 0 && $boxSellingPrice > 0;
             $unrecognized[] = $rowData;
         }
 

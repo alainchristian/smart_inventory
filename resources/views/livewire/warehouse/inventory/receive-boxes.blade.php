@@ -145,7 +145,7 @@
                         <h3 class="font-semibold text-blue-900 mb-2">📋 Smart Import Instructions</h3>
                         <ol class="list-decimal list-inside text-sm text-blue-800 space-y-1">
                             <li>Download the CSV/Excel template below</li>
-                            <li>Fill in complete product info: <strong>barcode, product_name, sku, category, items_per_box, selling_price, boxes</strong>, batch_number (optional), expiry_date (optional)</li>
+                            <li>Fill in complete product info: <strong>barcode, product_name, sku, category, items_per_box, box_purchase_price, box_selling_price, boxes</strong>, batch_number (optional), expiry_date (optional)</li>
                             <li>Upload the file - system will auto-match existing products</li>
                             <li><strong>Smart matching:</strong>
                                 <ul class="list-disc list-inside ml-4 mt-1 space-y-0.5">
@@ -252,8 +252,11 @@
                                                             @if($excelHasDifferentValues[$rowNum]['items_per_box'] ?? false)
                                                                 <li>• Items per box differs</li>
                                                             @endif
-                                                            @if($excelHasDifferentValues[$rowNum]['price'] ?? false)
-                                                                <li>• Price differs</li>
+                                                            @if($excelHasDifferentValues[$rowNum]['box_purchase_price'] ?? false)
+                                                                <li>• Box purchase price differs</li>
+                                                            @endif
+                                                            @if($excelHasDifferentValues[$rowNum]['box_selling_price'] ?? false)
+                                                                <li>• Box selling price differs</li>
                                                             @endif
                                                         </ul>
                                                     </div>
@@ -308,8 +311,8 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- Grid: Category + Items/Box + Price -->
-                                                <div class="grid grid-cols-3 gap-3">
+                                                <!-- Grid: Category + Items/Box + Box Prices -->
+                                                <div class="grid grid-cols-2 gap-3">
                                                     <div>
                                                         <label class="block text-xs font-medium text-gray-700 mb-1">
                                                             Category
@@ -334,12 +337,21 @@
 
                                                     <div>
                                                         <label class="block text-xs font-medium text-gray-700 mb-1">
-                                                            Price (RWF)
+                                                            Box Purchase Price (RWF)
                                                         </label>
                                                         <input type="number"
-                                                               wire:model="editableProductPrices.{{ $rowNum }}"
+                                                               wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}"
                                                                min="0"
-                                                               step="0.01"
+                                                               class="block w-full rounded-lg border-gray-300 text-sm">
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                                                            Box Selling Price (RWF)
+                                                        </label>
+                                                        <input type="number"
+                                                               wire:model="editableProductBoxSellingPrices.{{ $rowNum }}"
+                                                               min="0"
                                                                class="block w-full rounded-lg border-gray-300 text-sm">
                                                     </div>
                                                 </div>
@@ -500,11 +512,21 @@
                                                                    class="block w-full rounded border-gray-300 text-xs">
                                                         </div>
 
-                                                        <!-- Price -->
-                                                        <div class="col-span-2">
-                                                            <label class="block text-xs text-gray-600 mb-1">Selling Price (RWF)</label>
+                                                        <!-- Box Purchase Price -->
+                                                        <div>
+                                                            <label class="block text-xs text-gray-600 mb-1">Box Purchase Price (RWF)</label>
                                                             <input type="number"
-                                                                   wire:model="editableProductPrices.{{ $rowNum }}"
+                                                                   wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}"
+                                                                   min="0"
+                                                                   class="block w-full rounded border-gray-300 text-xs">
+                                                        </div>
+
+                                                        <!-- Box Selling Price -->
+                                                        <div>
+                                                            <label class="block text-xs text-gray-600 mb-1">Box Selling Price (RWF)</label>
+                                                            <input type="number"
+                                                                   wire:model="editableProductBoxSellingPrices.{{ $rowNum }}"
+                                                                   min="0"
                                                                    class="block w-full rounded border-gray-300 text-xs">
                                                         </div>
                                                     </div>

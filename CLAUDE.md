@@ -569,6 +569,96 @@ Exception: Chart.js dataset color arrays inside `<script>` blocks may use hex or
 
 ---
 
+## System Manager Page — completed 2026-05-14
+
+### Route & files
+- `owner.system` → GET `/owner/system` → `resources/views/owner/system.blade.php`
+- Sidebar link: "System" (server icon, no warning icon) in `resources/views/livewire/layout/sidebar.blade.php`
+- Livewire component: `app/Livewire/Owner/SystemManager.php`
+- Blade: `resources/views/livewire/owner/system-manager.blade.php`
+
+### Two tabs
+- **Setup** — inline CRUD for Product Categories, Expense Categories, Transporters
+  (no page navigation, no tinker needed for initial data entry)
+- **Wipe** — selective data deletion with 14 checkbox groups
+
+### Setup tab — inline CRUD rules
+- Product Categories: name (required), code (optional), description (optional); toggle active/inactive; forceDelete blocked if products assigned
+- Expense Categories: name (required), applies_to (shop|warehouse|both), description; toggle blocked for 'Cash Shortage'; delete blocked if expenses recorded
+- Transporters: name (required), phone, company, vehicle number; delete blocked if transfer records exist
+- Each list uses inline confirm-row pattern (no modal) — `$catConfirmDelete`, `$expCatConfirmDelete`, `$trConfirmDelete`
+
+### Wipe tab — deletion rules
+- 14 groups with FK-safe deletion order hardcoded in `executeWipe()` map
+- Confirm bar: label "TYPE DELETE TO CONFIRM" + standalone monospace input + "Delete Selected Data" button
+- Alpine `x-model` + `@input="$wire.set(...)"` used for instant reactivity (wire:model alone only syncs on blur)
+- Button is pink/dim (var(--red-dim)) when inactive; solid red + white text when DELETE typed and groups selected
+- Two-step: `requestWipe()` validates → sets `$showConfirm` → modal → `executeWipe()`
+- `executeWipe()` runs inside `DB::transaction()`; users table: deletes all except current owner id
+- FK-safe order: reports → logs → sessions → sales → returns → transfers → credit → boxes → customers → users → transporters → products → categories → locations
+
+### Bug fixes in this session
+- `/shop/credit-repayments` — fixed `Undefined variable $reason` by switching `@include` to `<x-session-gate-blocked :reason="..." />` (proper Blade component prop passing)
+- Operations Centre widget — credit repayments were counted in "Gross Sales"; split `$in` into `$salesIn` + `$repaymentIn`; widget now shows "SALES" with "+X repaid" subtitle
+- Session close wizard — bank/card repayments were not reflected in BANK balance; `DailySessionService::computeLiveSummary()` now adds `$bankRepayments` (bank_transfer + card credit repayments) to `bank_available` and returns `total_repayments_bank`
+
+---
+
+## Box-Centric Product Management & Owner Stock Intake — completed 2026-05-14
+
+### What changed
+
+**Owner is now solely responsible for the product catalogue and all stock intake.
+Warehouse managers manage and ship existing boxes; they do not create products.**
+
+### Pricing redesign (box-centric)
+
+Products are priced at the **box level** in all forms. Per-item prices are derived automatically.
+
+| Form field | DB column written | Formula |
+|---|---|---|
+| Box Purchase Price | `products.purchase_price` | `round(boxPurchasePrice / items_per_box)` |
+| Box Selling Price | `products.selling_price` | `round(boxSellingPrice / items_per_box)` |
+| Box Selling Price | `products.box_selling_price` | stored as-is (always populated now) |
+
+On edit/load: form shows `purchase_price × items_per_box` and `box_selling_price ?? selling_price × items_per_box`.
+
+**DB schema unchanged** — `purchase_price` and `selling_price` remain per-item integers. POS, analytics, and transfer logic are unaffected.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `resources/views/livewire/products/_form.blade.php` | Pricing card: Items/Box first, then Box Purchase Price + Box Selling Price (2-col). Per-item hint shown below each field. |
+| `app/Livewire/Products/CreateProduct.php` | Props: `boxPurchasePrice`, `boxSellingPrice`. `save()` computes per-item. Flash has "Add stock →" link. |
+| `app/Livewire/Products/EditProduct.php` | `mount()` converts DB per-item → box prices. `update()` same as create. |
+| `app/Policies/BoxPolicy.php` | `create()` now returns `true` for owner and warehouse_manager (was always `false`). |
+| `app/Livewire/Warehouse/Inventory/ReceiveBoxes.php` | `mount()` handles `?product_id=X` query string — pre-fills product + opens dropdown. Removed debug `\Log::info`. |
+
+### Owner Stock Intake
+
+New route for the owner to receive supplier stock directly into a warehouse.
+
+| Item | Value |
+|---|---|
+| Route | `owner.inventory.receive` → `GET /owner/inventory/receive` |
+| View (wrapper) | `resources/views/owner/inventory/receive.blade.php` |
+| Livewire component | `<livewire:warehouse.inventory.receive-boxes />` (same as WM page) |
+| Sidebar | "Receive Stock" link after "All Boxes" in owner nav |
+
+The owner page embeds `App\Livewire\Warehouse\Inventory\ReceiveBoxes` — identical UI to `/warehouse/inventory/boxes/receive` (barcode scan, Excel import, product creation, recent boxes table). The warehouse route already allowed owners via `CheckRole::class . ':warehouse_manager,owner'`; `CheckLocation` passes owners through unconditionally.
+
+After creating a product, the flash message includes a direct "Add stock →" link that pre-fills `?product_id=X` on the intake page.
+
+### Key rules
+
+- **Never enter per-item prices directly** in the product form — always enter box prices; the form computes per-item on save.
+- `box_selling_price` is now **always set** when creating or editing a product (previously optional override). Existing products with `box_selling_price = null` still work via `effective_box_selling_price` accessor.
+- The simple `App\Livewire\Inventory\Boxes\ReceiveBoxes` component still exists but is not used by any current page — do not route to it.
+- `App\Livewire\Owner\Products\CreateProduct` is an older orphaned component — never route to it.
+
+---
+
 ## Sales History Page — completed 2026-05-02
 
 ### Files

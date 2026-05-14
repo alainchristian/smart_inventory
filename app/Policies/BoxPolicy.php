@@ -24,12 +24,9 @@ class BoxPolicy
         return false;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return false;
+        return $user->isOwner() || $user->isWarehouseManager();
     }
 
     /**

@@ -410,27 +410,27 @@
 
         @error('wipe') <p class="sm-error" style="margin-bottom:10px">{{ $message }}</p> @enderror
 
-        <div x-data="{ ct: '' }" style="margin-top:16px">
-            <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px">
-                Type <strong style="color:var(--text);font-family:monospace;letter-spacing:.5px">DELETE</strong> in the field below to confirm this action.
+        <div x-data="{ ct: '' }" style="margin-top:20px">
+            <p style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">
+                Type <span style="color:var(--red);font-family:monospace;letter-spacing:.05em">DELETE</span> to confirm
             </p>
-            <div style="display:flex;align-items:center;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .15s"
-                 :style="ct === 'DELETE' ? 'border-color:var(--red)' : ''">
+            <div style="display:flex;align-items:center;gap:12px">
                 <input type="text"
                        x-model="ct"
                        wire:model="confirmText"
                        autocomplete="off" spellcheck="false"
-                       placeholder="Type DELETE here…"
+                       placeholder="DELETE"
                        @input="$wire.set('confirmText', $event.target.value)"
-                       style="flex:1;padding:12px 16px;border:none;background:transparent;font-size:14px;font-family:monospace;color:var(--text);outline:none;letter-spacing:.5px" />
+                       style="width:140px;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);font-size:14px;font-family:monospace;color:var(--text);outline:none;letter-spacing:.5px;transition:border-color .15s"
+                       :style="ct === 'DELETE' ? 'border-color:var(--red)' : ''" />
                 <button
                     wire:click="requestWipe"
                     :disabled="ct !== 'DELETE' || {{ count($selected) }} === 0"
                     :style="(ct === 'DELETE' && {{ count($selected) }} > 0)
-                        ? 'background:var(--red);color:#fff;cursor:pointer'
-                        : 'background:var(--surface);color:var(--text-dim);cursor:not-allowed'"
-                    style="padding:12px 24px;border:none;border-left:1.5px solid var(--border);font-size:13px;font-weight:700;font-family:var(--font);transition:background .2s,color .2s;white-space:nowrap;flex-shrink:0;border-radius:0 12px 12px 0">
-                    Yes, Delete Now
+                        ? 'background:var(--red);color:#fff;cursor:pointer;opacity:1'
+                        : 'background:var(--red-dim);color:var(--red);cursor:not-allowed;opacity:.7'"
+                    style="padding:11px 22px;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:var(--font);transition:background .2s,color .2s,opacity .2s;white-space:nowrap">
+                    Delete Selected Data
                 </button>
             </div>
         </div>

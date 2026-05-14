@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use App\Enums\SaleType;
+use App\Models\Transporter;
+use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,6 +42,14 @@ class Sale extends Model
         'price_override_approved_at',
         'price_override_reason',
         'notes',
+        'fulfillment_type',
+        'source_warehouse_id',
+        'fulfillment_status',
+        'fulfillment_method',
+        'fulfillment_transporter_id',
+        'fulfillment_notes',
+        'fulfillment_confirmed_at',
+        'fulfillment_confirmed_by',
     ];
 
     protected $casts = [
@@ -57,6 +67,7 @@ class Sale extends Model
         'voided_at' => 'datetime',
         'has_price_override' => 'boolean',
         'price_override_approved_at' => 'datetime',
+        'fulfillment_confirmed_at' => 'datetime',
     ];
 
     // Relationships
@@ -100,6 +111,21 @@ class Sale extends Model
         return $this->hasMany(SalePayment::class);
     }
 
+    public function sourceWarehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'source_warehouse_id');
+    }
+
+    public function fulfillmentTransporter(): BelongsTo
+    {
+        return $this->belongsTo(Transporter::class, 'fulfillment_transporter_id');
+    }
+
+    public function fulfillmentConfirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'fulfillment_confirmed_by');
+    }
+
     // Helper methods
     public function isVoided(): bool
     {
@@ -109,6 +135,16 @@ class Sale extends Model
     public function needsPriceOverrideApproval(): bool
     {
         return $this->has_price_override && $this->price_override_approved_at === null;
+    }
+
+    public function isPendingFulfillment(): bool
+    {
+        return $this->fulfillment_status === 'pending';
+    }
+
+    public function isWarehouseDirect(): bool
+    {
+        return $this->fulfillment_type === 'warehouse_direct';
     }
 
     // Scopes
@@ -140,5 +176,15 @@ class Sale extends Model
     public function scopeWithPriceOverride($query)
     {
         return $query->where('has_price_override', true);
+    }
+
+    public function scopeWarehouseDirect($query)
+    {
+        return $query->where('fulfillment_type', 'warehouse_direct');
+    }
+
+    public function scopePendingFulfillment($query)
+    {
+        return $query->where('fulfillment_status', 'pending');
     }
 }

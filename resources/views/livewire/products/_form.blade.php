@@ -108,7 +108,7 @@
                   color:var(--text-sub);margin-bottom:16px;padding-bottom:12px;
                   border-bottom:1px solid var(--border);display:flex;align-items:center;
                   justify-content:space-between">
-        <span>Pricing <span style="color:var(--text-dim);font-size:10px">(in RWF)</span></span>
+        <span>Pricing <span style="color:var(--text-dim);font-size:10px">(RWF per box)</span></span>
         {{-- Live margin badge --}}
         @if($this->margin !== null)
           <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;
@@ -119,16 +119,33 @@
         @endif
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      {{-- Items per Box (first — needed to compute per-item hints) --}}
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
+          Items per Box <span style="color:var(--red)">*</span>
+        </label>
+        <input wire:model.live="itemsPerBox" type="number" min="1"
+               style="width:180px;padding:9px 12px;border:1px solid var(--border);
+                      border-radius:var(--rx);font-size:13px;background:var(--surface);
+                      color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
+               onfocus="this.style.borderColor='var(--accent)'"
+               onblur="this.style.borderColor='var(--border)'">
+        @error('itemsPerBox')
+          <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
+        @enderror
+      </div>
 
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+        {{-- Box Purchase Price --}}
         <div>
           <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Purchase Price <span style="color:var(--red)">*</span>
+            Box Purchase Price <span style="color:var(--red)">*</span>
           </label>
           <div style="position:relative">
             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
                          font-size:11px;color:var(--text-dim);font-weight:600">RWF</span>
-            <input wire:model.live="purchasePrice" type="number" min="0" step="100"
+            <input wire:model.live="boxPurchasePrice" type="number" min="0" step="100"
                    placeholder="0"
                    style="width:100%;padding:9px 12px 9px 40px;border:1px solid var(--border);
                           border-radius:var(--rx);font-size:13px;background:var(--surface);
@@ -136,20 +153,27 @@
                    onfocus="this.style.borderColor='var(--violet)'"
                    onblur="this.style.borderColor='var(--border)'">
           </div>
-          @error('purchasePrice')
+          @error('boxPurchasePrice')
             <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
           @enderror
-          <div style="font-size:10px;color:var(--text-dim);margin-top:3px">Owner-only visible</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">
+            @if($boxPurchasePrice && $itemsPerBox > 0)
+              → RWF {{ number_format((int) round((float)$boxPurchasePrice / $itemsPerBox)) }} per item
+            @else
+              → per-item price calculated automatically
+            @endif
+          </div>
         </div>
 
+        {{-- Box Selling Price --}}
         <div>
           <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Selling Price / Item <span style="color:var(--red)">*</span>
+            Box Selling Price <span style="color:var(--red)">*</span>
           </label>
           <div style="position:relative">
             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
                          font-size:11px;color:var(--text-dim);font-weight:600">RWF</span>
-            <input wire:model.live="sellingPrice" type="number" min="0" step="100"
+            <input wire:model.live="boxSellingPrice" type="number" min="0" step="100"
                    placeholder="0"
                    style="width:100%;padding:9px 12px 9px 40px;border:1px solid var(--border);
                           border-radius:var(--rx);font-size:13px;background:var(--surface);
@@ -157,41 +181,16 @@
                    onfocus="this.style.borderColor='var(--accent)'"
                    onblur="this.style.borderColor='var(--border)'">
           </div>
-          @error('sellingPrice')
+          @error('boxSellingPrice')
             <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
           @enderror
-          @if($sellingPrice && $itemsPerBox)
-            <p style="font-size:12px;color:var(--text-sub);margin-top:4px">
-              Box price: RWF {{ number_format((int)$sellingPrice * (int)$itemsPerBox) }}
-              @if($boxSellingPrice)
-                · Override set: RWF {{ number_format((int)$boxSellingPrice) }}
-              @endif
-            </p>
-          @endif
-        </div>
-
-        <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Box Selling Price
-            <span style="font-size:10px;font-weight:400;color:var(--text-dim)">(optional)</span>
-          </label>
-          <div style="position:relative">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
-                         font-size:11px;color:var(--text-dim);font-weight:600">RWF</span>
-            <input wire:model.live="boxSellingPrice" type="number" min="0" step="100"
-                   placeholder="{{ $this->boxPriceSuggestion ?: '0' }}"
-                   style="width:100%;padding:9px 12px 9px 40px;border:1px solid var(--border);
-                          border-radius:var(--rx);font-size:13px;background:var(--surface);
-                          color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
-                   onfocus="this.style.borderColor='var(--accent)'"
-                   onblur="this.style.borderColor='var(--border)'">
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">
+            @if($boxSellingPrice && $itemsPerBox > 0)
+              → RWF {{ number_format((int) round((float)$boxSellingPrice / $itemsPerBox)) }} per item
+            @else
+              → per-item price calculated automatically
+            @endif
           </div>
-          @if($this->boxPriceSuggestion)
-            <div style="font-size:10px;color:var(--text-dim);margin-top:3px">
-              Suggested: RWF {{ $this->boxPriceSuggestion }}
-              ({{ $itemsPerBox }} x {{ $sellingPrice }})
-            </div>
-          @endif
         </div>
 
       </div>
@@ -207,19 +206,17 @@
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
 
+        {{-- Items per Box moved to Pricing card above; keep stock thresholds here --}}
         <div>
           <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Items per Box <span style="color:var(--red)">*</span>
+            Items per Box <span style="color:var(--text-dim);font-size:10px">(confirmation)</span>
           </label>
           <input wire:model.live="itemsPerBox" type="number" min="1"
                  style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                        border-radius:var(--rx);font-size:13px;background:var(--surface);
-                        color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
+                        border-radius:var(--rx);font-size:13px;background:var(--surface2);
+                        color:var(--text-sub);outline:none;box-sizing:border-box;font-family:var(--mono)"
                  onfocus="this.style.borderColor='var(--accent)'"
                  onblur="this.style.borderColor='var(--border)'">
-          @error('itemsPerBox')
-            <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
-          @enderror
         </div>
 
         <div>
@@ -330,24 +327,17 @@
         {{ $sku ?: 'SKU-000' }}
       </div>
 
-      @if($sellingPrice)
-        <div style="font-size:18px;font-weight:700;color:var(--accent);font-family:var(--mono);margin-bottom:4px">
-          {{ number_format((float)$sellingPrice) }} RWF
+      @if($boxSellingPrice)
+        <div style="font-size:11px;color:var(--text-sub);margin-bottom:2px">Box of {{ $itemsPerBox }}</div>
+        <div style="font-size:18px;font-weight:700;color:var(--accent);font-family:var(--mono);margin-bottom:2px">
+          {{ number_format((float)$boxSellingPrice) }} RWF
         </div>
-        <div style="font-size:11px;color:var(--text-dim)">per item</div>
-      @endif
-
-      @if($itemsPerBox > 0 && $sellingPrice)
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          <div style="font-size:11px;color:var(--text-sub)">Box of {{ $itemsPerBox }}</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text);font-family:var(--mono)">
-            @if($boxSellingPrice)
-              {{ number_format((float)$boxSellingPrice) }} RWF
-            @else
-              ~{{ number_format((float)$sellingPrice * $itemsPerBox) }} RWF
-            @endif
+        <div style="font-size:11px;color:var(--text-dim)">per box</div>
+        @if($itemsPerBox > 0)
+          <div style="font-size:12px;color:var(--text-sub);margin-top:4px">
+            = {{ number_format((int) round((float)$boxSellingPrice / $itemsPerBox)) }} RWF per item
           </div>
-        </div>
+        @endif
       @endif
 
       @if($this->margin !== null)

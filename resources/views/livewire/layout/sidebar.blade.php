@@ -51,7 +51,7 @@
         openShopOps: {{ request()->routeIs('shop.*') && !request()->routeIs('shop.dashboard') ? 'true' : 'false' }},
         openWarehouseOps: {{ request()->routeIs('warehouse.*') && !request()->routeIs('warehouse.dashboard') ? 'true' : 'false' }},
         openReports: {{ request()->routeIs('*.reports.*') ? 'true' : 'false' }},
-        openInventory: {{ request()->routeIs('*.inventory.*') ? 'true' : 'false' }},
+        openInventory: {{ (request()->routeIs('*.inventory.*') || request()->routeIs('owner.inventory.receive')) ? 'true' : 'false' }},
         openShopTransfers: {{ request()->routeIs('shop.transfers.*') ? 'true' : 'false' }},
         openWarehouseTransfers: {{ request()->routeIs('warehouse.transfers.*') ? 'true' : 'false' }},
         openFinance: {{ (request()->routeIs('owner.finance.*') || request()->routeIs('owner.credit.*')) ? 'true' : 'false' }},
@@ -87,19 +87,6 @@
                     <span class="text-[14px] font-medium">Products</span>
                 </a>
 
-                <a href="{{ route('owner.products.purchase-prices') }}" wire:navigate
-                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
-                          {{ request()->routeIs('owner.products.purchase-prices') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
-                    @if(request()->routeIs('owner.products.purchase-prices'))
-                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
-                    @endif
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4h.01M9 5v2m0 4h.01"/>
-                    </svg>
-                    <span class="text-[14px] font-medium">Prices</span>
-                </a>
-
                 <a href="{{ route('shop.pos') }}" wire:navigate
                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                           {{ request()->routeIs('shop.pos') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
@@ -110,6 +97,18 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                     <span class="text-[14px] font-medium">Point of Sale</span>
+                </a>
+
+                <a href="{{ route('shop.warehouse-sale') }}" wire:navigate
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                          {{ request()->routeIs('shop.warehouse-sale') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                    @if(request()->routeIs('shop.warehouse-sale'))
+                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                    @endif
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                    </svg>
+                    <span class="text-[14px] font-medium">Warehouse Sale</span>
                 </a>
 
                 <!-- Locations (Collapsible) -->
@@ -152,6 +151,18 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                     <span class="text-[14px] font-medium">All Boxes</span>
+                </a>
+
+                <a href="{{ route('owner.inventory.receive') }}" wire:navigate
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                          {{ request()->routeIs('owner.inventory.receive') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                    @if(request()->routeIs('owner.inventory.receive'))
+                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                    @endif
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    <span class="text-[14px] font-medium">Receive Stock</span>
                 </a>
 
                 <!-- Reports (Collapsible) -->
@@ -314,18 +325,6 @@
                         <span class="text-[14px] font-medium">Boxes</span>
                     </a>
 
-                    <a href="{{ route('warehouse.inventory.receive-boxes') }}" wire:navigate
-                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
-                              {{ request()->routeIs('warehouse.inventory.receive-boxes') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
-                        @if(request()->routeIs('warehouse.inventory.receive-boxes'))
-                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
-                        @endif
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        <span class="text-[14px] font-medium">Receive Boxes</span>
-                    </a>
-
                     <a href="{{ route('warehouse.inventory.stock-levels') }}" wire:navigate
                        class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                               {{ request()->routeIs('warehouse.inventory.stock-levels') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
@@ -354,6 +353,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                         </svg>
                         <span class="text-[14px] font-medium">Transfers</span>
+                    </a>
+
+                    <a href="{{ route('warehouse.sales.fulfillment') }}" wire:navigate
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('warehouse.sales.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('warehouse.sales.*'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">Fulfillment Queue</span>
                     </a>
 
                     <a href="{{ route('warehouse.expense-requests.index') }}" wire:navigate
@@ -398,6 +409,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                         <span class="text-[14px] font-medium">Point of Sale</span>
+                    </a>
+
+                    <a href="{{ route('shop.warehouse-sale') }}" wire:navigate
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('shop.warehouse-sale') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('shop.warehouse-sale'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">Warehouse Sale</span>
                     </a>
                 </div>
             </div>
