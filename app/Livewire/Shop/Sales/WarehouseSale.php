@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Shop\Sales;
 
+use App\Livewire\Concerns\RequiresOpenSession;
 use App\Models\ActivityLog;
 use App\Models\Box;
 use App\Models\Product;
@@ -14,6 +15,7 @@ use Livewire\Component;
 
 class WarehouseSale extends Component
 {
+    use RequiresOpenSession;
     public int $shopId;
     public string $shopName = '';
     public int $warehouseId;
@@ -51,9 +53,12 @@ class WarehouseSale extends Component
     public function mount(): void
     {
         $user = auth()->user();
-        $shop = $user->isOwner()
-            ? Shop::first()
-            : Shop::find($user->location_id);
+
+        if ($user->isOwner()) {
+            abort(403, 'Warehouse sales are managed by shop managers.');
+        }
+
+        $shop = Shop::find($user->location_id);
 
         if (!$shop) {
             abort(403, 'No shop assigned.');
@@ -63,10 +68,12 @@ class WarehouseSale extends Component
             abort(422, 'This shop has no default warehouse configured.');
         }
 
-        $this->shopId       = $shop->id;
-        $this->shopName     = $shop->name;
-        $this->warehouseId  = $shop->default_warehouse_id;
+        $this->shopId        = $shop->id;
+        $this->shopName      = $shop->name;
+        $this->warehouseId   = $shop->default_warehouse_id;
         $this->warehouseName = $shop->defaultWarehouse->name ?? '';
+
+        $this->checkSession($shop->id);
     }
 
     public function getWarehouseStockProperty(): \Illuminate\Support\Collection

@@ -1,5 +1,13 @@
 <div>
 
+@if($sessionBlocked)
+    <x-session-gate-blocked
+        :reason="$sessionBlockReason"
+        :session-date="$blockedSessionDate"
+        :session-id="$blockedSessionId"
+    />
+@else
+
 {{-- ═══════════ SHARED CSS ═══════════ --}}
 <style>
 /* Section label — matches POS co-section-label */
@@ -1103,4 +1111,5 @@
   @endif
 @endif
 
+@endif {{-- /sessionBlocked --}}
 </div>
