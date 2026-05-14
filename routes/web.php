@@ -165,6 +165,8 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
 
     // System settings
     Route::get('/settings', function () { return view('owner.settings'); })->name('settings');
+
+    Route::get('/system', function () { return view('owner.system'); })->name('system');
 });
 
 // Warehouse Manager routes - Allow warehouse managers and owners

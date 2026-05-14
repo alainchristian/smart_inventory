@@ -264,6 +264,18 @@
                     </svg>
                     <span class="text-[14px] font-medium">Business Settings</span>
                 </a>
+
+                <a href="{{ route('owner.system') }}" wire:navigate
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                          {{ request()->routeIs('owner.system') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                    @if(request()->routeIs('owner.system'))
+                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                    @endif
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                    </svg>
+                    <span class="text-[14px] font-medium">System</span>
+                </a>
             </div>
 
         @elseif(auth()->user()->isWarehouseManager())

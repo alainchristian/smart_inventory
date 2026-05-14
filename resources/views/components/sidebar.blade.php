@@ -155,8 +155,8 @@
                         <!-- Management -->
                         <div class="pt-1.5">
                             <button @click="openManagement = !openManagement"
-                                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all {{ request()->routeIs('owner.users.*') || request()->routeIs('*.reports.*') || request()->routeIs('owner.settings') ? 'border' : '' }}"
-                                    style="{{ request()->routeIs('owner.users.*') || request()->routeIs('*.reports.*') || request()->routeIs('owner.settings') ? 'background: var(--accent-glow); color: var(--accent); border-color: var(--accent);' : 'color: var(--text-sub);' }}"
+                                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all {{ request()->routeIs('owner.users.*') || request()->routeIs('*.reports.*') || request()->routeIs('owner.settings') || request()->routeIs('owner.danger-zone') ? 'border' : '' }}"
+                                    style="{{ request()->routeIs('owner.users.*') || request()->routeIs('*.reports.*') || request()->routeIs('owner.settings') || request()->routeIs('owner.danger-zone') ? 'background: var(--accent-glow); color: var(--accent); border-color: var(--accent);' : 'color: var(--text-sub);' }}"
                                     onmouseover="if (!this.classList.contains('border')) { this.style.background='var(--surface2)'; this.style.color='var(--text)'; }"
                                     onmouseout="if (!this.classList.contains('border')) { this.style.background='transparent'; this.style.color='var(--text-sub)'; }">
                                 <div class="flex items-center space-x-2.5">
