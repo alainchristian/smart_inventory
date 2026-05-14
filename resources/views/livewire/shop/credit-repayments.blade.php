@@ -1,6 +1,10 @@
 <div>
     @if ($sessionBlocked)
-        @include('components.session-gate-blocked')
+        <x-session-gate-blocked
+            :reason="$sessionBlockReason"
+            :session-date="$blockedSessionDate"
+            :session-id="$blockedSessionId"
+        />
     @else
 
     {{-- Success Message --}}

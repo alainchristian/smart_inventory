@@ -222,7 +222,7 @@
                     @endif
                     @if ($hasRepayments)
                         @php
-                            $otherRep = ($summary['total_repayments'] ?? 0) - ($summary['total_repayments_cash'] ?? 0) - ($summary['total_repayments_momo'] ?? 0);
+                            $bankRep = $summary['total_repayments_bank'] ?? 0;
                         @endphp
                         <div class="px-4 py-3">
                             <div class="flex items-center justify-between mb-2">
@@ -249,10 +249,10 @@
                                         <span class="font-mono" style="color:#6366f1;">+{{ number_format($summary['total_repayments_momo']) }} RWF</span>
                                     </div>
                                 @endif
-                                @if ($otherRep > 0)
+                                @if ($bankRep > 0)
                                     <div class="flex justify-between text-xs">
-                                        <span style="color:var(--text-dim);">Card / Bank</span>
-                                        <span class="font-mono" style="color:var(--text-dim);">{{ number_format($otherRep) }} RWF</span>
+                                        <span style="color:var(--text-dim);">Card / Bank Transfer</span>
+                                        <span class="font-mono" style="color:var(--accent);">+{{ number_format($bankRep) }} RWF</span>
                                     </div>
                                 @endif
                             </div>

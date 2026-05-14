@@ -294,30 +294,30 @@ class LiveFeed extends Component
 
         $rows = DB::select($sql, $params);
 
-        $in = $out = $withdrawal = $deposit = 0;
-        $this->transactions = array_map(function ($row) use (&$in, &$out, &$withdrawal, &$deposit) {
+        $in = $out = $withdrawal = $deposit = $salesIn = $repaymentIn = 0;
+        $this->transactions = array_map(function ($row) use (&$in, &$out, &$withdrawal, &$deposit, &$salesIn, &$repaymentIn) {
             $r = (array) $row;
             $r['amount'] = (int) $r['amount'];
-            match ($r['type']) {
-                'sale', 'repayment' => $in         += $r['amount'],
-                'return', 'expense' => $out        += $r['amount'],
-                'withdrawal'        => $withdrawal += $r['amount'],
-                'deposit'           => $deposit    += $r['amount'],
-                default             => null,
-            };
+            if ($r['type'] === 'sale')             { $in += $r['amount']; $salesIn += $r['amount']; }
+            elseif ($r['type'] === 'repayment')    { $in += $r['amount']; $repaymentIn += $r['amount']; }
+            elseif (in_array($r['type'], ['return', 'expense'])) { $out += $r['amount']; }
+            elseif ($r['type'] === 'withdrawal')   { $withdrawal += $r['amount']; }
+            elseif ($r['type'] === 'deposit')      { $deposit += $r['amount']; }
             return $r;
         }, $rows);
 
         $transfer = $withdrawal + $deposit;
         $this->periodTotals = [
-            'in'         => $in,
-            'out'        => $out,
-            'transfer'   => $transfer,
-            'withdrawal' => $withdrawal,
-            'deposit'    => $deposit,
-            'net_pl'     => $in - $out,
-            'net_cash'   => $in - $out - $transfer,
-            'count'      => count($this->transactions),
+            'in'           => $in,
+            'sales_in'     => $salesIn,
+            'repayment_in' => $repaymentIn,
+            'out'          => $out,
+            'transfer'     => $transfer,
+            'withdrawal'   => $withdrawal,
+            'deposit'      => $deposit,
+            'net_pl'       => $in - $out,
+            'net_cash'     => $in - $out - $transfer,
+            'count'        => count($this->transactions),
         ];
     }
 

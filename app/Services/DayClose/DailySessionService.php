@@ -119,6 +119,7 @@ class DailySessionService
             ->whereDate('repayment_date', $date);
         $cashRepayments  = (int) (clone $repaymentQuery)->where('payment_method', 'cash')->sum('amount');
         $momoRepayments  = (int) (clone $repaymentQuery)->where('payment_method', 'mobile_money')->sum('amount');
+        $bankRepayments  = (int) (clone $repaymentQuery)->whereIn('payment_method', ['bank_transfer', 'card'])->sum('amount');
         $totalRepayments = (int) $repaymentQuery->sum('amount');
 
         // expected_cash: cash sales + cash repayments in; refunds/expenses/withdrawals/deposits out
@@ -137,8 +138,9 @@ class DailySessionService
             - $momoWithdrawals
             - $momoDeposits;
 
-        // Bank available balance = bank transfer sales + deposits moved to bank - bank transfer expenses
+        // Bank available balance = bank transfer sales + card sales + bank/card repayments + deposits - bank expenses
         $bankAvailable = (int) ($saleTotals->bank_transfer ?? 0)
+            + $bankRepayments
             + $totalDeposits
             - $bankExpenses;
 
@@ -168,6 +170,7 @@ class DailySessionService
             'total_repayments'      => $totalRepayments,
             'total_repayments_cash' => $cashRepayments,
             'total_repayments_momo' => $momoRepayments,
+            'total_repayments_bank' => $bankRepayments,
             'expected_cash'         => (int) $expectedCash,
             'momo_available'        => (int) $momoAvailable,
             'bank_available'        => (int) $bankAvailable,

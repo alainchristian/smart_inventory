@@ -248,13 +248,15 @@
 
         {{-- KPI cards --}}
         @php
-            $pIn       = $periodTotals['in']         ?? 0;
-            $pOut      = $periodTotals['out']        ?? 0;
-            $pTransfer = $periodTotals['transfer']   ?? 0;
-            $pWdr      = $periodTotals['withdrawal'] ?? 0;
-            $pDep      = $periodTotals['deposit']    ?? 0;
-            $pNetCash  = $periodTotals['net_cash']   ?? ($pIn - $pOut - $pTransfer);
-            $cashPos   = $pNetCash >= 0;
+            $pIn          = $periodTotals['in']           ?? 0;
+            $pSalesIn     = $periodTotals['sales_in']     ?? 0;
+            $pRepaymentIn = $periodTotals['repayment_in'] ?? 0;
+            $pOut         = $periodTotals['out']          ?? 0;
+            $pTransfer    = $periodTotals['transfer']     ?? 0;
+            $pWdr         = $periodTotals['withdrawal']   ?? 0;
+            $pDep         = $periodTotals['deposit']      ?? 0;
+            $pNetCash     = $periodTotals['net_cash']     ?? ($pIn - $pOut - $pTransfer);
+            $cashPos      = $pNetCash >= 0;
         @endphp
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
                     padding:8px 0 4px;">
@@ -271,13 +273,19 @@
                         </svg>
                     </div>
                     <span style="font-size:8px;font-weight:700;color:var(--text-dim);
-                                 text-transform:uppercase;letter-spacing:0.5px;">Gross Sales</span>
+                                 text-transform:uppercase;letter-spacing:0.5px;">Sales</span>
                 </div>
                 <div style="font-size:13px;font-weight:800;color:#10b981;
                             font-family:var(--mono);line-height:1.1;margin-bottom:4px;">
-                    RWF {{ number_format($pIn) }}
+                    RWF {{ number_format($pSalesIn) }}
                 </div>
-                <div style="font-size:9px;color:var(--text-faint);">Sales · Repayments</div>
+                <div style="font-size:9px;color:var(--text-faint);">
+                    @if ($pRepaymentIn > 0)
+                        +{{ number_format($pRepaymentIn) }} repaid
+                    @else
+                        From transactions
+                    @endif
+                </div>
             </div>
 
             <div style="background:var(--surface);border:1px solid var(--border);
