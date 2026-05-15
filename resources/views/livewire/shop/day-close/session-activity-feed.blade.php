@@ -32,6 +32,14 @@
                         {{ $typeStyles['label'] }}
                     </span>
 
+                    {{-- Warehouse direct badge --}}
+                    @if (($item['fulfillment_type'] ?? null) === 'warehouse_direct')
+                        <span style="padding:2px 6px;border-radius:5px;font-size:9px;font-weight:700;flex-shrink:0;
+                                     background:var(--accent-dim);color:var(--accent);letter-spacing:0.03em;">
+                            WH
+                        </span>
+                    @endif
+
                     {{-- Time --}}
                     <span style="font-size:10px;font-family:var(--mono);color:var(--text-dim);flex-shrink:0;">
                         {{ $item['time']?->format('H:i') }}

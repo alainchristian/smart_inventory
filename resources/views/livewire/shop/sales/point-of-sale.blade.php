@@ -1172,7 +1172,12 @@
     {{-- Header --}}
     <div class="sm-head">
       <div style="min-width:0">
-        <div class="sm-title">{{ $stagingCartIndex !== null ? 'Edit Cart Item' : 'Add to Cart' }}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+          <div class="sm-title">{{ $stagingCartIndex !== null ? 'Edit Cart Item' : 'Add to Cart' }}</div>
+          <span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+                       background:color-mix(in srgb,var(--green) 12%,transparent);color:var(--green);
+                       padding:2px 7px;border-radius:5px;flex-shrink:0">POS</span>
+        </div>
         <div class="sm-subtitle">{{ $stagingProduct['name'] }}</div>
       </div>
       <button wire:click="closeAddModal" class="sm-close">

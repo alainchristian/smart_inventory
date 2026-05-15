@@ -4,6 +4,7 @@ namespace App\Livewire\Shop\DayClose;
 
 use App\Models\DailySession;
 use App\Services\DayClose\DailySessionService;
+use App\Services\SettingsService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -36,6 +37,10 @@ class SessionSnapshot extends Component
             ? app(DailySessionService::class)->computeLiveSummary($session)
             : [];
 
-        return view('livewire.shop.day-close.session-snapshot', compact('snap', 'session'));
+        $settings        = app(SettingsService::class);
+        $settingAllowCard = $settings->allowCardPayment();
+        $settingAllowBank = $settings->allowBankTransferPayment();
+
+        return view('livewire.shop.day-close.session-snapshot', compact('snap', 'session', 'settingAllowCard', 'settingAllowBank'));
     }
 }

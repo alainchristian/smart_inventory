@@ -61,6 +61,13 @@
                             </div>
                             <div class="text-right flex-shrink-0">
                                 <div class="text-xs" style="color:var(--text-dim);">{{ $liveSummary['transaction_count'] }} transactions</div>
+                                @if ($warehouseDirectCount > 0)
+                                    <div class="text-xs mt-0.5 flex items-center justify-end gap-1">
+                                        <span style="display:inline-block;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:700;
+                                                     background:var(--accent-dim);color:var(--accent);">WH</span>
+                                        <span style="color:var(--text-dim);">{{ $warehouseDirectCount }} warehouse direct</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         {{-- Channel pills --}}
@@ -77,20 +84,20 @@
                                     <span class="text-xs font-mono font-bold" style="color:var(--accent);">{{ number_format($liveSummary['total_sales_momo']) }}</span>
                                 </div>
                             @endif
-                            @if ($liveSummary['total_sales_card'] > 0)
-                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);">
+                            @if ($settingAllowCard && $liveSummary['total_sales_card'] > 0)
+                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);border:1px solid var(--border);">
                                     <span class="text-xs font-medium" style="color:var(--text-dim);">Card</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--text);">{{ number_format($liveSummary['total_sales_card']) }}</span>
                                 </div>
                             @endif
-                            @if (($liveSummary['total_sales_bank_transfer'] ?? 0) > 0)
-                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);">
+                            @if ($settingAllowBank && ($liveSummary['total_sales_bank_transfer'] ?? 0) > 0)
+                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);border:1px solid var(--border);">
                                     <span class="text-xs font-medium" style="color:var(--text-dim);">Bank Txfr</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--text);">{{ number_format($liveSummary['total_sales_bank_transfer']) }}</span>
                                 </div>
                             @endif
                             @if (($liveSummary['total_sales_credit'] ?? 0) > 0)
-                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--amber-dim);">
+                                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--amber-dim);border:1px solid var(--amber);">
                                     <span class="text-xs font-medium" style="color:var(--amber);">Credit</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--amber);">{{ number_format($liveSummary['total_sales_credit']) }}</span>
                                 </div>
@@ -113,18 +120,76 @@
                         </div>
                     </div>
 
-                    {{-- Secondary metrics row --}}
+                    {{-- Cash in Drawer — formula breakdown --}}
+                    <div class="rounded-xl p-4" style="background:var(--surface2);border:1px solid var(--border);">
+                        <div class="text-xs font-medium mb-3" style="color:var(--text-dim);">Cash in Drawer</div>
+
+                        {{-- Formula rows --}}
+                        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;color:var(--text-dim);">Opening Balance</span>
+                                <span style="font-size:12px;font-family:var(--mono);font-weight:600;color:var(--text-dim);">{{ number_format($liveSummary['opening_balance']) }}</span>
+                            </div>
+                            @if ($liveSummary['total_sales_cash'] > 0)
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:11px;color:var(--text-dim);">+ Cash Sales</span>
+                                    <span style="font-size:12px;font-family:var(--mono);font-weight:600;color:var(--green);">+{{ number_format($liveSummary['total_sales_cash']) }}</span>
+                                </div>
+                            @endif
+                            @if (($liveSummary['total_repayments_cash'] ?? 0) > 0)
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:11px;color:var(--text-dim);">+ Cash Repayments</span>
+                                    <span style="font-size:12px;font-family:var(--mono);font-weight:600;color:var(--green);">+{{ number_format($liveSummary['total_repayments_cash']) }}</span>
+                                </div>
+                            @endif
+                            @if (($liveSummary['total_expenses_cash'] ?? 0) > 0)
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:11px;color:var(--text-dim);">− Cash Expenses</span>
+                                    <span style="font-size:12px;font-family:var(--mono);font-weight:600;color:var(--red);">−{{ number_format($liveSummary['total_expenses_cash']) }}</span>
+                                </div>
+                            @endif
+                            @if (($liveSummary['total_withdrawals_cash'] ?? 0) > 0)
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:11px;color:var(--text-dim);">− Cash Withdrawals</span>
+                                    <span style="font-size:12px;font-family:var(--mono);font-weight:600;color:var(--red);">−{{ number_format($liveSummary['total_withdrawals_cash']) }}</span>
+                                </div>
+                            @endif
+                            @if (($liveSummary['cash_deposits'] ?? 0) > 0)
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:11px;color:var(--text-dim);">− Cash Deposited</span>
+                                    <span style="font-size:12px;font-family:var(--mono);font-weight:600;color:var(--red);">−{{ number_format($liveSummary['cash_deposits']) }}</span>
+                                </div>
+                            @endif
+                            @if (($liveSummary['total_refunds_cash'] ?? 0) > 0)
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-size:11px;color:var(--text-dim);">− Cash Refunds</span>
+                                    <span style="font-size:12px;font-family:var(--mono);font-weight:600;color:var(--red);">−{{ number_format($liveSummary['total_refunds_cash']) }}</span>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Divider + expected total --}}
+                        <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:11px;font-weight:600;color:var(--text);">Expected in Drawer</span>
+                            <span style="font-size:16px;font-family:var(--mono);font-weight:800;color:var(--accent);">{{ number_format($liveSummary['expected_cash']) }} <span style="font-size:11px;font-weight:400;color:var(--text-dim);">RWF</span></span>
+                        </div>
+
+                        {{-- Credit note — explains why total_sales > cash collected --}}
+                        @if (($liveSummary['total_sales_credit'] ?? 0) > 0)
+                            <div style="margin-top:8px;padding:6px 10px;border-radius:8px;background:var(--amber-dim);
+                                        display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;color:var(--amber);">Credit Extended (not in drawer)</span>
+                                <span style="font-size:12px;font-family:var(--mono);font-weight:700;color:var(--amber);">{{ number_format($liveSummary['total_sales_credit']) }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Expenses & Withdrawals row --}}
                     @php
-                        $smCols = 3
-                            + (($liveSummary['total_refunds_cash'] ?? 0) > 0 ? 1 : 0)
-                            + (($liveSummary['total_repayments']   ?? 0) > 0 ? 1 : 0);
+                        $smCols = 2
+                            + (($liveSummary['total_repayments'] ?? 0) > 0 ? 1 : 0);
                     @endphp
                     <div class="grid gap-3" style="grid-template-columns: repeat({{ $smCols }}, 1fr);">
-                        <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
-                            <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Cash in Drawer</div>
-                            <div class="font-mono font-bold text-base" style="color:var(--accent);">{{ number_format($liveSummary['expected_cash']) }}</div>
-                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">Expected</div>
-                        </div>
                         <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                             <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Expenses</div>
                             <div class="font-mono font-bold text-base" style="color:var(--red);">{{ number_format($liveSummary['total_expenses']) }}</div>
@@ -135,13 +200,6 @@
                             <div class="font-mono font-bold text-base" style="color:var(--amber);">{{ number_format($liveSummary['total_withdrawals']) }}</div>
                             <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ $liveSummary['withdrawal_count'] }} items</div>
                         </div>
-                        @if (($liveSummary['total_refunds_cash'] ?? 0) > 0)
-                            <div class="rounded-xl p-3 text-center" style="background:var(--red-dim);border:1px solid var(--red);">
-                                <div class="text-xs font-medium mb-1" style="color:var(--red);">Cash Refunds</div>
-                                <div class="font-mono font-bold text-base" style="color:var(--red);">−{{ number_format($liveSummary['total_refunds_cash']) }}</div>
-                                <div class="text-xs mt-0.5" style="color:var(--red);opacity:0.75;">Paid out</div>
-                            </div>
-                        @endif
                         @if (($liveSummary['total_repayments'] ?? 0) > 0)
                             <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                                 <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Repayments</div>

@@ -52,62 +52,151 @@
     </div>
 
     {{-- ── Balances row ── --}}
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-bottom:1px solid var(--border);">
+    @php $topCols = $settingAllowBank ? 3 : 2; @endphp
+    <div style="display:grid;grid-template-columns:repeat({{ $topCols }},1fr);background:var(--surface);border-bottom:1px solid var(--border);">
 
-        {{-- Cash in drawer --}}
-        <div class="dc-snap-tile" style="border-right:1px solid var(--border);">
-            <div class="dc-snap-label">Cash</div>
-            <div class="dc-snap-num" style="color:var(--green);">{{ number_format($snap['expected_cash'] ?? 0) }}</div>
-            <div class="dc-snap-sub">in drawer</div>
+        {{-- Cash in drawer — with formula breakdown --}}
+        @php
+            $cashOpening  = $snap['opening_balance']     ?? 0;
+            $cashSales    = $snap['total_sales_cash']    ?? 0;
+            $cashRepaid   = $snap['total_repayments_cash'] ?? 0;
+            $cashExpenses = $snap['total_expenses_cash'] ?? 0;
+            $cashWithdraw = $snap['total_withdrawals_cash'] ?? 0;
+            $cashDeposits = $snap['cash_deposits']       ?? 0;
+            $cashRefunds  = $snap['total_refunds_cash']  ?? 0;
+            $expectedCash = $snap['expected_cash']       ?? 0;
+        @endphp
+        <div class="dc-snap-tile dc-snap-tile-brk" style="border-right:1px solid var(--border);">
+            <div>
+                <div class="dc-snap-label">Cash in Drawer</div>
+                <div class="dc-snap-num" style="color:var(--green);">{{ number_format($expectedCash) }}</div>
+                <div class="dc-snap-sub">expected</div>
+            </div>
+            <div class="dc-snap-brkwrap">
+                <div class="dc-snap-brk" style="color:var(--text-dim);">
+                    Opening <span style="font-family:var(--mono);font-weight:600;">{{ number_format($cashOpening) }}</span>
+                </div>
+                @if ($cashSales > 0)
+                    <div class="dc-snap-brk" style="color:var(--green);">
+                        +Sales <span style="font-family:var(--mono);font-weight:600;">{{ number_format($cashSales) }}</span>
+                    </div>
+                @endif
+                @if ($cashRepaid > 0)
+                    <div class="dc-snap-brk" style="color:var(--green);">
+                        +Repaid <span style="font-family:var(--mono);font-weight:600;">{{ number_format($cashRepaid) }}</span>
+                    </div>
+                @endif
+                @if ($cashExpenses > 0)
+                    <div class="dc-snap-brk" style="color:var(--red);">
+                        −Exp <span style="font-family:var(--mono);font-weight:600;">{{ number_format($cashExpenses) }}</span>
+                    </div>
+                @endif
+                @if ($cashWithdraw > 0)
+                    <div class="dc-snap-brk" style="color:var(--amber);">
+                        −Wthd <span style="font-family:var(--mono);font-weight:600;">{{ number_format($cashWithdraw) }}</span>
+                    </div>
+                @endif
+                @if ($cashDeposits > 0)
+                    <div class="dc-snap-brk" style="color:var(--red);">
+                        −Dep <span style="font-family:var(--mono);font-weight:600;">{{ number_format($cashDeposits) }}</span>
+                    </div>
+                @endif
+                @if ($cashRefunds > 0)
+                    <div class="dc-snap-brk" style="color:var(--red);">
+                        −Refunds <span style="font-family:var(--mono);font-weight:600;">{{ number_format($cashRefunds) }}</span>
+                    </div>
+                @endif
+            </div>
         </div>
 
         {{-- MoMo balance --}}
         @php $momo = $snap['momo_available'] ?? 0; @endphp
-        <div class="dc-snap-tile" style="border-right:1px solid var(--border);">
+        <div class="dc-snap-tile" @if($settingAllowBank) style="border-right:1px solid var(--border);" @endif>
             <div class="dc-snap-label">MoMo</div>
             <div class="dc-snap-num" style="color:{{ $momo >= 0 ? '#0ea5e9' : 'var(--red)' }};">{{ number_format($momo) }}</div>
             <div class="dc-snap-sub">available</div>
         </div>
 
-        {{-- Bank balance — deposit-source breakdown on right --}}
-        @php
-            $bank     = $snap['bank_available'] ?? 0;
-            $bankCash = $snap['cash_deposits']  ?? 0;
-            $bankMomo = $snap['momo_deposits']  ?? 0;
-        @endphp
-        <div class="dc-snap-tile dc-snap-tile-brk">
-            <div>
-                <div class="dc-snap-label">Bank</div>
-                <div class="dc-snap-num" style="color:{{ $bank >= 0 ? '#7c3aed' : 'var(--red)' }};">{{ number_format($bank) }}</div>
-                <div class="dc-snap-sub">available</div>
-            </div>
-            @if ($bankCash > 0 || $bankMomo > 0)
-                <div class="dc-snap-brkwrap">
-                    @if ($bankCash > 0)
-                        <div class="dc-snap-brk" style="color:var(--green);">
-                            Cash <span style="font-family:var(--mono);font-weight:600;">{{ number_format($bankCash) }}</span>
-                        </div>
-                    @endif
-                    @if ($bankMomo > 0)
-                        <div class="dc-snap-brk" style="color:#0ea5e9;">
-                            MoMo <span style="font-family:var(--mono);font-weight:600;">{{ number_format($bankMomo) }}</span>
-                        </div>
-                    @endif
+        {{-- Bank balance — only if owner allows bank transfer --}}
+        @if ($settingAllowBank)
+            @php
+                $bank     = $snap['bank_available'] ?? 0;
+                $bankCash = $snap['cash_deposits']  ?? 0;
+                $bankMomo = $snap['momo_deposits']  ?? 0;
+            @endphp
+            <div class="dc-snap-tile dc-snap-tile-brk">
+                <div>
+                    <div class="dc-snap-label">Bank</div>
+                    <div class="dc-snap-num" style="color:{{ $bank >= 0 ? '#7c3aed' : 'var(--red)' }};">{{ number_format($bank) }}</div>
+                    <div class="dc-snap-sub">available</div>
                 </div>
-            @endif
-        </div>
+                @if ($bankCash > 0 || $bankMomo > 0)
+                    <div class="dc-snap-brkwrap">
+                        @if ($bankCash > 0)
+                            <div class="dc-snap-brk" style="color:var(--green);">
+                                Cash <span style="font-family:var(--mono);font-weight:600;">{{ number_format($bankCash) }}</span>
+                            </div>
+                        @endif
+                        @if ($bankMomo > 0)
+                            <div class="dc-snap-brk" style="color:#0ea5e9;">
+                                MoMo <span style="font-family:var(--mono);font-weight:600;">{{ number_format($bankMomo) }}</span>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        @endif
 
     </div>
 
     {{-- ── Activity row ── --}}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);">
 
-        {{-- Revenue --}}
-        @php $tx = $snap['transaction_count'] ?? 0; @endphp
-        <div class="dc-snap-tile" style="border-right:1px solid var(--border);">
-            <div class="dc-snap-label">Revenue</div>
-            <div class="dc-snap-num" style="color:var(--accent);">{{ number_format($snap['total_sales'] ?? 0) }}</div>
-            <div class="dc-snap-sub">{{ $tx }} {{ $tx === 1 ? 'sale' : 'sales' }}</div>
+        {{-- Revenue — with payment channel breakdown --}}
+        @php
+            $tx        = $snap['transaction_count']       ?? 0;
+            $revCash   = $snap['total_sales_cash']        ?? 0;
+            $revMomo   = $snap['total_sales_momo']        ?? 0;
+            $revBank   = $snap['total_sales_bank_transfer'] ?? 0;
+            $revCard   = $snap['total_sales_card']        ?? 0;
+            $revCredit = $snap['total_sales_credit']      ?? 0;
+            $revTotal  = $snap['total_sales']             ?? 0;
+        @endphp
+        <div class="dc-snap-tile dc-snap-tile-brk" style="border-right:1px solid var(--border);">
+            <div>
+                <div class="dc-snap-label">Revenue</div>
+                <div class="dc-snap-num" style="color:var(--accent);">{{ number_format($revTotal) }}</div>
+                <div class="dc-snap-sub">{{ $tx }} {{ $tx === 1 ? 'sale' : 'sales' }}</div>
+            </div>
+            @if ($revTotal > 0)
+                <div class="dc-snap-brkwrap">
+                    @if ($revCash > 0)
+                        <div class="dc-snap-brk" style="color:var(--green);">
+                            Cash <span style="font-family:var(--mono);font-weight:600;">{{ number_format($revCash) }}</span>
+                        </div>
+                    @endif
+                    @if ($revMomo > 0)
+                        <div class="dc-snap-brk" style="color:#0ea5e9;">
+                            MoMo <span style="font-family:var(--mono);font-weight:600;">{{ number_format($revMomo) }}</span>
+                        </div>
+                    @endif
+                    @if ($settingAllowBank && $revBank > 0)
+                        <div class="dc-snap-brk" style="color:#7c3aed;">
+                            Bank <span style="font-family:var(--mono);font-weight:600;">{{ number_format($revBank) }}</span>
+                        </div>
+                    @endif
+                    @if ($settingAllowCard && $revCard > 0)
+                        <div class="dc-snap-brk" style="color:var(--text-dim);">
+                            Card <span style="font-family:var(--mono);font-weight:600;">{{ number_format($revCard) }}</span>
+                        </div>
+                    @endif
+                    @if ($revCredit > 0)
+                        <div class="dc-snap-brk" style="color:var(--amber);">
+                            Credit <span style="font-family:var(--mono);font-weight:600;">{{ number_format($revCredit) }}</span>
+                        </div>
+                    @endif
+                </div>
+            @endif
         </div>
 
         {{-- Expenses — channel breakdown on right --}}

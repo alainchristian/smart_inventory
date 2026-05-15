@@ -354,19 +354,26 @@ class SaleService
                     );
                 }
 
+                $priceModified  = (bool) ($itemData['price_modified'] ?? false);
+                $priceReason    = $itemData['price_modification_reason'] ?? null;
+                $actualUnitPrice = $product->items_per_box > 0
+                    ? (int) round($boxPrice / $product->items_per_box)
+                    : $product->selling_price;
+
                 foreach ($boxes as $box) {
                     $itemsConsumed = $box->items_remaining;
                     $lineTotal     = $boxPrice;
 
                     $sale->items()->create([
-                        'product_id'          => $product->id,
-                        'box_id'              => $box->id,
-                        'quantity_sold'       => $itemsConsumed,
-                        'is_full_box'         => true,
-                        'original_unit_price' => $product->selling_price,
-                        'actual_unit_price'   => $product->selling_price,
-                        'line_total'          => $lineTotal,
-                        'price_was_modified'  => false,
+                        'product_id'                 => $product->id,
+                        'box_id'                     => $box->id,
+                        'quantity_sold'              => $itemsConsumed,
+                        'is_full_box'                => true,
+                        'original_unit_price'        => $product->selling_price,
+                        'actual_unit_price'          => $actualUnitPrice,
+                        'line_total'                 => $lineTotal,
+                        'price_was_modified'         => $priceModified,
+                        'price_modification_reason'  => $priceReason,
                     ]);
 
                     $subtotal += $lineTotal;
@@ -394,9 +401,14 @@ class SaleService
                 }
             }
 
+            $hasPriceOverride = collect($data['items'])->contains(
+                fn ($i) => (bool) ($i['price_modified'] ?? false)
+            );
+
             $sale->update([
-                'subtotal' => $subtotal,
-                'total'    => $subtotal,
+                'subtotal'           => $subtotal,
+                'total'              => $subtotal,
+                'has_price_override' => $hasPriceOverride,
             ]);
 
             // ── Record payment rows ───────────────────────────────────────────────

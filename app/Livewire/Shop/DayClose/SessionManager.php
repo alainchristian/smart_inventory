@@ -4,19 +4,24 @@ namespace App\Livewire\Shop\DayClose;
 
 use App\Models\DailySession;
 use App\Models\ExpenseRequest;
+use App\Models\Sale;
 use App\Services\DayClose\DailySessionService;
+use App\Services\SettingsService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class SessionManager extends Component
 {
-    public ?DailySession $todaySession      = null;
-    public ?DailySession $unclosedPrevious  = null;
-    public array         $liveSummary       = [];
-    public int           $pendingRequestsCount = 0;
-    public int           $openingBalance    = 0;
-    public string        $openingBalanceHint = '';
-    public bool          $showOpenForm      = false;
+    public ?DailySession $todaySession           = null;
+    public ?DailySession $unclosedPrevious       = null;
+    public array         $liveSummary            = [];
+    public int           $pendingRequestsCount   = 0;
+    public int           $openingBalance         = 0;
+    public string        $openingBalanceHint     = '';
+    public bool          $showOpenForm           = false;
+    public int           $warehouseDirectCount   = 0;
+    public bool          $settingAllowCard        = false;
+    public bool          $settingAllowBank        = false;
 
     public function mount(): void
     {
@@ -45,6 +50,13 @@ class SessionManager extends Component
         if ($this->todaySession && $this->todaySession->isOpen()) {
             $this->liveSummary = app(DailySessionService::class)
                 ->computeLiveSummary($this->todaySession);
+
+            $this->warehouseDirectCount = Sale::where('shop_id', $shopId)
+                ->whereDate('sale_date', today())
+                ->whereNull('voided_at')
+                ->whereNull('deleted_at')
+                ->where('fulfillment_type', 'warehouse_direct')
+                ->count();
         }
 
         // Pre-fill opening balance from last closed session's retained cash
@@ -61,6 +73,10 @@ class SessionManager extends Component
         }
 
         $this->pendingRequestsCount = ExpenseRequest::pending()->forShop($shopId)->count();
+
+        $settings = app(SettingsService::class);
+        $this->settingAllowCard = $settings->allowCardPayment();
+        $this->settingAllowBank = $settings->allowBankTransferPayment();
     }
 
     public function openDay(): void

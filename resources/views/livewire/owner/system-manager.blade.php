@@ -9,8 +9,9 @@
 .sm-section-head    { display:flex;align-items:center;justify-content:space-between;margin-bottom:14px }
 .sm-section-title   { font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim) }
 .sm-card            { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden }
+.sm-table-wrap      { overflow-x:auto;-webkit-overflow-scrolling:touch }
 
-.sm-table           { width:100%;border-collapse:collapse;font-size:13px }
+.sm-table           { width:100%;border-collapse:collapse;font-size:13px;min-width:420px }
 .sm-table thead tr  { border-bottom:1px solid var(--border);background:var(--bg) }
 .sm-table thead th  { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
 .sm-table tbody tr  { border-bottom:1px solid var(--border);transition:background .12s }
@@ -65,6 +66,8 @@
     .sm-wipe-grid { grid-template-columns:1fr 1fr }
     .sm-confirm-bar { flex-direction:column;align-items:stretch }
     .sm-tabs { flex-direction:column }
+    .sm-section-head { flex-wrap:wrap;gap:8px }
+    .sm-section-title { font-size:12px }
 }
 @media(max-width:400px) {
     .sm-wipe-grid { grid-template-columns:1fr }
@@ -128,6 +131,7 @@
         @if($prodCategories->isEmpty())
             <div class="sm-empty">No product categories yet. Add one above.</div>
         @else
+            <div class="sm-table-wrap">
             <table class="sm-table">
                 <thead><tr>
                     <th>Name</th><th>Code</th><th>Status</th><th style="text-align:right">Actions</th>
@@ -168,6 +172,7 @@
                 @endforeach
                 </tbody>
             </table>
+            </div>
         @endif
     </div>
 </div>
@@ -216,6 +221,7 @@
         @if($expCategories->isEmpty())
             <div class="sm-empty">No expense categories yet.</div>
         @else
+            <div class="sm-table-wrap">
             <table class="sm-table">
                 <thead><tr>
                     <th>Name</th><th>Applies To</th><th>Status</th><th style="text-align:right">Actions</th>
@@ -269,6 +275,7 @@
                 @endforeach
                 </tbody>
             </table>
+            </div>
         @endif
     </div>
 </div>
@@ -317,6 +324,7 @@
         @if($transporters->isEmpty())
             <div class="sm-empty">No transporters yet. Add one above.</div>
         @else
+            <div class="sm-table-wrap">
             <table class="sm-table">
                 <thead><tr>
                     <th>Name</th><th>Company</th><th>Phone</th><th>Vehicle</th><th style="text-align:right">Actions</th>
@@ -347,6 +355,7 @@
                 @endforeach
                 </tbody>
             </table>
+            </div>
         @endif
     </div>
 </div>

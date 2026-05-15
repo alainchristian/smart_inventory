@@ -98,13 +98,14 @@ class SessionActivityFeed extends Component
             ->get()
             ->each(function ($sale) use (&$activities) {
                 $activities->push([
-                    'type'      => 'sale',
-                    'time'      => $sale->sale_date,
-                    'label'     => $sale->sale_number . ($sale->customer ? ' — ' . $sale->customer->name : ''),
-                    'amount'    => $sale->total,
-                    'id'        => $sale->id,
-                    'voidable'  => false,
-                    'system'    => false,
+                    'type'             => 'sale',
+                    'time'             => $sale->sale_date,
+                    'label'            => $sale->sale_number . ($sale->customer ? ' — ' . $sale->customer->name : ''),
+                    'amount'           => $sale->total,
+                    'id'               => $sale->id,
+                    'voidable'         => false,
+                    'system'           => false,
+                    'fulfillment_type' => $sale->fulfillment_type,
                 ]);
             });
 

@@ -52,7 +52,7 @@
     font-size:10px;font-weight:700;color:var(--text-dim);
     text-transform:uppercase;letter-spacing:.5px;line-height:1;
 }
-.whs-pay-amount-wrap { position:relative;width:130px;flex-shrink:0 }
+.whs-pay-amount-wrap { position:relative;width:130px;flex-shrink:0;min-width:80px }
 .whs-pay-amount {
     width:100%;box-sizing:border-box;padding:7px 36px 7px 10px;
     border:1.5px solid var(--border);border-radius:8px;
@@ -71,7 +71,7 @@
     border-radius:13px;margin-bottom:12px;
 }
 .whs-cash-display {
-    width:130px;flex-shrink:0;padding:7px 10px;
+    width:130px;flex-shrink:0;min-width:80px;padding:7px 10px;
     border:1.5px solid var(--green);border-radius:8px;
     background:rgba(16,185,129,.06);color:var(--green);
     font-size:14px;font-family:var(--mono);font-weight:700;
@@ -116,14 +116,84 @@
 
 /* Complete button — matches POS co-complete-btn */
 .whs-complete-btn {
-    width:100%;height:50px;
+    width:100%;min-height:50px;padding:10px 16px;
     background:var(--green);color:#fff;border:none;border-radius:13px;
-    font-size:16px;font-weight:800;cursor:pointer;font-family:var(--font);
+    font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
     display:flex;align-items:center;justify-content:center;gap:8px;
     box-shadow:0 5px 18px rgba(34,197,94,.28);transition:opacity .15s;
+    white-space:normal;text-align:center;
 }
 .whs-complete-btn:hover:not(:disabled) { opacity:.92 }
 .whs-complete-btn:disabled { opacity:.5;cursor:not-allowed;box-shadow:none }
+.whs-complete-btn-label { display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center }
+.whs-complete-btn-amt   { white-space:nowrap }
+
+/* Customer section — mirrors POS co-customer-* / co-search-* / co-new-cust-* */
+.whs-customer-selected {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 14px;background:var(--surface2);border:1.5px solid var(--accent);
+    border-radius:11px;gap:10px;
+}
+.whs-customer-name  { font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px }
+.whs-customer-phone { font-size:11px;color:var(--text-sub);font-family:var(--mono) }
+.whs-customer-credit {
+    display:inline-block;margin-left:8px;padding:1px 7px;
+    background:rgba(245,158,11,.12);color:var(--amber);border-radius:5px;font-weight:700;font-size:10px;
+}
+.whs-customer-clear {
+    width:26px;height:26px;border-radius:50%;border:none;
+    background:rgba(239,68,68,.1);color:var(--red);
+    cursor:pointer;display:grid;place-items:center;font-size:16px;
+    flex-shrink:0;line-height:1;padding:0;transition:background .15s;
+}
+.whs-customer-clear:hover { background:rgba(239,68,68,.2) }
+.whs-search-wrap { position:relative }
+.whs-search-input {
+    width:100%;box-sizing:border-box;padding:9px 11px;
+    border:1.5px solid var(--border);border-radius:10px;
+    font-size:13px;background:var(--surface);color:var(--text);
+    outline:none;transition:border-color .15s;font-family:var(--font);
+}
+.whs-search-input:focus { border-color:var(--accent) }
+.whs-search-dropdown {
+    position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:20;
+    background:var(--surface);border:1.5px solid var(--border);border-radius:11px;
+    box-shadow:0 10px 30px rgba(0,0,0,.18);max-height:200px;overflow-y:auto;
+}
+.whs-search-result {
+    width:100%;padding:10px 13px;text-align:left;border:none;background:transparent;
+    cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;
+    font-family:var(--font);display:block;
+}
+.whs-search-result:last-child { border-bottom:none }
+.whs-search-result:hover { background:var(--surface2) }
+.whs-search-result-name  { font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px }
+.whs-search-result-phone { font-size:11px;color:var(--text-dim);font-family:var(--mono) }
+.whs-search-result-credit { margin-left:6px;color:var(--amber);font-weight:700 }
+.whs-new-cust-btn {
+    width:100%;margin-top:8px;padding:8px;border-radius:10px;
+    border:1.5px dashed var(--border);background:transparent;
+    font-size:12px;font-weight:700;cursor:pointer;color:var(--text-dim);
+    transition:all .15s;font-family:var(--font);
+}
+.whs-new-cust-btn:hover { border-color:var(--accent);color:var(--accent) }
+.whs-new-cust-form {
+    background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:14px;
+}
+.whs-new-cust-title { font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px }
+.whs-new-cust-btns  { display:flex;gap:8px;margin-top:10px }
+.whs-btn-secondary {
+    flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--border);
+    background:transparent;font-size:12px;font-weight:600;cursor:pointer;
+    color:var(--text-sub);font-family:var(--font);transition:all .15s;
+}
+.whs-btn-secondary:hover { border-color:var(--accent);color:var(--accent) }
+.whs-btn-primary {
+    flex:1;padding:9px;border-radius:9px;border:none;
+    background:var(--accent);color:#fff;font-size:12px;font-weight:700;
+    cursor:pointer;font-family:var(--font);transition:opacity .15s;
+}
+.whs-btn-primary:hover { opacity:.88 }
 
 /* Cart item card */
 .whs-cart-item {
@@ -185,11 +255,61 @@
     font-family:var(--mono);color:var(--text);background:transparent;outline:none;
     min-width:0;height:48px;width:80px;
 }
+/* Line total — identical to POS sm-total */
 .whs-sm-total {
     display:flex;align-items:center;justify-content:space-between;
-    border:1.5px solid var(--border);border-radius:11px;
-    padding:13px 16px;margin:16px 0 4px;background:var(--surface2);
+    border-radius:11px;padding:13px 16px;margin-bottom:4px;
+    border:1.5px solid var(--border);background:var(--surface2);
 }
+.whs-sm-total.modified { border-color:var(--amber);background:rgba(245,158,11,.06) }
+.whs-sm-total-label { font-size:12px;color:var(--text-sub) }
+.whs-sm-total-amount {
+    font-size:24px;font-weight:800;font-family:var(--mono);color:var(--accent);line-height:1;
+}
+.whs-sm-total.modified .whs-sm-total-amount { color:var(--amber) }
+.whs-sm-total-unit { font-size:11px;font-weight:600;color:var(--text-dim);margin-left:4px }
+/* Price override section — identical to POS sm-price-* */
+.whs-sm-price-label-row {
+    display:flex;align-items:center;justify-content:space-between;min-height:18px;margin-bottom:8px;
+}
+.whs-sm-price-section-label {
+    font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;
+}
+.whs-sm-modified-badge {
+    font-size:10px;font-weight:700;color:var(--amber);
+    background:rgba(245,158,11,.12);padding:2px 7px;border-radius:5px;transition:opacity .15s;
+}
+.whs-sm-price-wrap { position:relative }
+.whs-sm-price-prefix {
+    position:absolute;left:11px;top:50%;transform:translateY(-50%);
+    font-size:10px;font-weight:700;color:var(--text-dim);pointer-events:none;
+    font-family:var(--mono);
+}
+.whs-sm-price-input {
+    width:100%;box-sizing:border-box;padding:10px 12px 10px 38px;
+    border:2px solid var(--border);border-radius:10px;
+    background:var(--surface);color:var(--text);font-size:14px;
+    font-family:var(--mono);outline:none;transition:border-color .15s;height:48px;
+}
+.whs-sm-price-input:focus { border-color:var(--accent) }
+.whs-sm-price-input.modified { border-color:var(--amber) }
+.whs-sm-price-locked {
+    height:48px;padding:0 14px;background:var(--surface2);border:2px solid var(--border);
+    border-radius:10px;font-family:var(--mono);font-size:14px;font-weight:700;
+    color:var(--text-sub);display:flex;align-items:center;justify-content:space-between;
+}
+.whs-sm-price-locked-hint { font-size:10px;color:var(--text-dim) }
+.whs-sm-reason-wrap {
+    margin-top:7px;overflow:hidden;transition:max-height .2s,opacity .2s;max-height:0;opacity:0;
+}
+.whs-sm-reason-wrap.visible { max-height:60px;opacity:1 }
+.whs-sm-reason-input {
+    width:100%;box-sizing:border-box;padding:8px 11px;
+    border:1.5px solid var(--amber);border-radius:8px;
+    font-size:13px;background:color-mix(in srgb,var(--amber) 5%,var(--surface));
+    color:var(--text);outline:none;font-family:var(--font);
+}
+.whs-sm-reason-input::placeholder { color:var(--amber);opacity:.6 }
 .whs-sm-footer {
     display:grid;grid-template-columns:auto 1fr;gap:9px;
     padding:14px 20px;border-top:1px solid var(--border);background:var(--surface);
@@ -239,6 +359,16 @@
 @media (max-width: 860px) {
     .whs-main-grid     { grid-template-columns:1fr !important; }
     .whs-checkout-grid { grid-template-columns:1fr !important; }
+}
+@media (max-width: 480px) {
+    .whs-complete-btn    { font-size:13px }
+    .whs-pay-amount-wrap { width:100px }
+    .whs-pay-amount      { font-size:13px }
+    .whs-cash-display    { width:100px;font-size:13px }
+    .whs-order-total-amt { font-size:20px }
+    .whs-bal-total       { font-size:22px }
+    .whs-pay-row         { gap:7px;padding:8px 10px }
+    .whs-pay-icon        { width:26px;height:26px;border-radius:6px }
 }
 </style>
 
@@ -301,8 +431,8 @@
         No stock available at {{ $warehouseName }}
       </div>
     @else
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table style="width:100%;border-collapse:collapse;min-width:480px">
           <thead>
             <tr style="background:var(--surface2)">
               <th style="padding:10px 16px;text-align:left;font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Product</th>
@@ -411,11 +541,17 @@
                             white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                   {{ $item['product_name'] }}
                 </div>
-                <div style="margin-top:4px">
+                <div style="margin-top:4px;display:flex;align-items:center;gap:4px">
                   <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;
                                background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)">
                     BOX
                   </span>
+                  @if(!empty($item['price_modified']))
+                  <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;
+                               background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)">
+                    MODIFIED
+                  </span>
+                  @endif
                 </div>
               </div>
               <button wire:click="removeFromCart({{ $i }})"
@@ -528,18 +664,68 @@
       <div class="whs-section-label">
         Customer <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div>
-          <label style="display:block;font-size:10px;font-weight:700;color:var(--text-dim);
-                        text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Name</label>
-          <input wire:model="customerName" type="text" placeholder="Customer name" class="whs-input">
+
+      @if($customerId)
+      {{-- Selected customer chip --}}
+      <div class="whs-customer-selected">
+        <div style="min-width:0">
+          <div class="whs-customer-name">{{ $customerName }}</div>
+          <div class="whs-customer-phone">
+            {{ $customerPhone }}
+            @if($customerOutstandingBalance > 0)
+            <span class="whs-customer-credit">
+              Credit: {{ number_format($customerOutstandingBalance) }} RWF
+            </span>
+            @endif
+          </div>
         </div>
-        <div>
-          <label style="display:block;font-size:10px;font-weight:700;color:var(--text-dim);
-                        text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Phone</label>
-          <input wire:model="customerPhone" type="text" placeholder="07X XXX XXXX" class="whs-input mono">
+        <button wire:click="clearCustomer" class="whs-customer-clear" title="Remove customer">×</button>
+      </div>
+
+      @elseif($showNewCustomerForm)
+      {{-- Create new customer inline form --}}
+      <div class="whs-new-cust-form">
+        <div class="whs-new-cust-title">Register New Customer</div>
+        <div style="display:grid;gap:9px">
+          <input wire:model="newCustomerName"  type="text"  placeholder="Full name *"               class="whs-input">
+          <input wire:model="newCustomerPhone" type="text"  placeholder="+250… (phone) *"           class="whs-input mono">
+          <input wire:model="newCustomerEmail" type="email" placeholder="email@example.com (optional)" class="whs-input">
+        </div>
+        <div class="whs-new-cust-btns">
+          <button wire:click="cancelNewCustomer" class="whs-btn-secondary">Cancel</button>
+          <button wire:click="saveNewCustomer"   class="whs-btn-primary">Save &amp; Select</button>
         </div>
       </div>
+
+      @else
+      {{-- Search input + dropdown --}}
+      <div class="whs-search-wrap">
+        <input wire:model.live="customerSearch" type="text"
+               wire:focus="openCustomerSearch"
+               placeholder="Search by name or phone…"
+               class="whs-search-input"
+               autocomplete="off">
+        @if($showCustomerSearch && count($customerResults) > 0)
+        <div class="whs-search-dropdown">
+          @foreach($customerResults as $c)
+          <button wire:click="selectCustomer({{ $c['id'] }})" class="whs-search-result" type="button">
+            <div class="whs-search-result-name">{{ $c['name'] }}</div>
+            <div class="whs-search-result-phone">
+              {{ $c['phone'] }}
+              @if($c['outstanding_balance'] > 0)
+              <span class="whs-search-result-credit">Credit: {{ number_format($c['outstanding_balance']) }}</span>
+              @endif
+            </div>
+          </button>
+          @endforeach
+        </div>
+        @endif
+      </div>
+      <button wire:click="showCreateCustomerForm" type="button" class="whs-new-cust-btn">
+        + Register New Customer
+      </button>
+      @endif
+
     </div>
 
     {{-- Fulfillment Method --}}
@@ -603,14 +789,16 @@
   {{-- RIGHT: Payment (Alpine-powered, POS-style) --}}
   <div style="position:sticky;top:84px"
        x-data="{
-           total:  {{ (int) $cartTotal }},
-           momo:   null,
-           card:   null,
-           bank:   null,
-           credit: null,
+           total:       {{ (int) $cartTotal }},
+           momo:        null,
+           card:        null,
+           bank:        null,
+           credit:      null,
+           allowCard:   {{ $settingAllowCardPayment  ? 'true' : 'false' }},
+           allowBank:   {{ $settingAllowBankTransfer ? 'true' : 'false' }},
            get m()       { return Number(this.momo)   || 0 },
-           get c()       { return Number(this.card)   || 0 },
-           get b()       { return Number(this.bank)   || 0 },
+           get c()       { return this.allowCard ? (Number(this.card)   || 0) : 0 },
+           get b()       { return this.allowBank ? (Number(this.bank)   || 0) : 0 },
            get cr()      { return Number(this.credit) || 0 },
            get nonCash() { return this.m + this.c + this.b + this.cr },
            get cash()    { return Math.max(0, this.total - this.nonCash) },
@@ -645,6 +833,18 @@
         </div>
       </div>
 
+      {{-- Credit warning --}}
+      <div style="{{ $creditWarningVisible ? '' : 'display:none' }}">
+        <div style="margin-bottom:12px;padding:10px 13px;
+                    background:color-mix(in srgb,var(--amber) 8%,var(--surface));
+                    border:1.5px solid var(--amber);border-radius:10px">
+          <div style="font-size:11px;font-weight:800;color:var(--amber);margin-bottom:2px;text-transform:uppercase;letter-spacing:.4px">
+            Outstanding Balance
+          </div>
+          <div style="font-size:12px;color:var(--text)">{{ $creditWarningMessage }}</div>
+        </div>
+      </div>
+
       {{-- Non-cash channels --}}
       <div class="whs-pay-list">
 
@@ -666,6 +866,7 @@
         </div>
 
         {{-- Bank Transfer --}}
+        @if($settingAllowBankTransfer)
         <div class="whs-pay-row" :class="b > 0 ? 'is-active' : ''">
           <div class="whs-pay-icon" style="background:rgba(99,102,241,.12)">
             <svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2" viewBox="0 0 24 24">
@@ -680,8 +881,10 @@
             <span class="whs-pay-amount-unit">RWF</span>
           </div>
         </div>
+        @endif
 
         {{-- Card --}}
+        @if($settingAllowCardPayment)
         <div class="whs-pay-row" :class="c > 0 ? 'is-active' : ''">
           <div class="whs-pay-icon" style="background:rgba(59,130,246,.12)">
             <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
@@ -696,8 +899,10 @@
             <span class="whs-pay-amount-unit">RWF</span>
           </div>
         </div>
+        @endif
 
         {{-- Credit --}}
+        @if($settingAllowCreditSales)
         <div class="whs-pay-row" :class="cr > 0 ? 'is-active' : ''">
           <div class="whs-pay-icon" style="background:rgba(245,158,11,.12)">
             <svg width="14" height="14" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24">
@@ -707,15 +912,25 @@
             </svg>
           </div>
           <div class="whs-pay-meta">
-            <div class="whs-pay-label">Credit</div>
+            <div class="whs-pay-label">
+              Credit
+              @if(!$customerId && $settingCreditRequiresCustomer)
+                <span style="font-size:10px;font-weight:400;color:var(--text-dim);
+                             text-transform:none;letter-spacing:0;margin-left:4px">
+                  — select customer first
+                </span>
+              @endif
+            </div>
           </div>
           <div class="whs-pay-amount-wrap">
             <input x-model.number="credit" type="number" min="0" placeholder="0"
                    class="whs-pay-amount"
+                   :disabled="{{ $settingCreditRequiresCustomer ? 'true' : 'false' }} && !$wire.customerId"
                    :style="cr > 0 ? 'border-color:var(--amber)' : ''">
             <span class="whs-pay-amount-unit">RWF</span>
           </div>
         </div>
+        @endif
 
       </div>{{-- /pay-list --}}
 
@@ -753,11 +968,12 @@
               :disabled="isOver"
               class="whs-complete-btn"
               :style="isOver ? 'opacity:.4;cursor:not-allowed;box-shadow:none' : ''">
-        <span wire:loading.remove style="display:flex;align-items:center;gap:7px">
-          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <span wire:loading.remove class="whs-complete-btn-label">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
-          Complete Sale — {{ number_format($cartTotal) }} RWF
+          <span>Complete Sale</span>
+          <span class="whs-complete-btn-amt">— {{ number_format($cartTotal) }} RWF</span>
         </span>
         <span wire:loading style="display:none;font-size:14px">Processing…</span>
       </button>
@@ -930,8 +1146,8 @@
         <div style="font-size:13px;color:var(--text-dim)">Completed warehouse direct sales from this shop will appear here.</div>
     </div>
 @else
-    <div class="whs-card" style="overflow-x:auto">
-        <table class="whs-hist-table">
+    <div class="whs-card" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="whs-hist-table" style="min-width:540px">
             <thead>
                 <tr>
                     <th class="whs-hist-th">Sale #</th>
@@ -1011,8 +1227,9 @@
   @php $stagingProduct = $warehouseStock->firstWhere('id', $stagingProductId); @endphp
   @if($stagingProduct)
     @php
-      $bp           = $stagingProduct->box_selling_price ?? ($stagingProduct->selling_price * $stagingProduct->items_per_box);
-      $stagingTotal = max(0, (int)$stagingBoxes) * $bp;
+      $defaultBoxPrice = (int)($stagingProduct->box_selling_price ?? ($stagingProduct->selling_price * $stagingProduct->items_per_box));
+      $effectivePrice  = (int)$stagingBoxPrice > 0 ? (int)$stagingBoxPrice : $defaultBoxPrice;
+      $stagingTotal    = max(0, (int)$stagingBoxes) * $effectivePrice;
     @endphp
     <div class="whs-sm-overlay">
       <div class="whs-sm-card">
@@ -1020,7 +1237,12 @@
         {{-- Header --}}
         <div class="whs-sm-head">
           <div style="min-width:0">
-            <div class="whs-sm-title">Add to Cart</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+              <div class="whs-sm-title">Add to Cart</div>
+              <span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+                           background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);
+                           padding:2px 7px;border-radius:5px;flex-shrink:0">Warehouse</span>
+            </div>
             <div class="whs-sm-subtitle">{{ $stagingProduct->name }}</div>
           </div>
           <button wire:click="closeAddModal" class="whs-sm-close">
@@ -1037,53 +1259,103 @@
           <div class="whs-sm-info">
             <div style="min-width:0">
               <div style="font-size:10px;font-family:var(--mono);color:var(--text-dim);
-                          text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">
+                          text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">
                 {{ $stagingProduct->sku }}
               </div>
               <div style="font-size:12px;color:var(--text-sub)">
-                {{ $stagingProduct->items_per_box }} items/box
-                @if($stagingProduct->category_name) · {{ $stagingProduct->category_name }}@endif
+                @if($stagingProduct->category_name){{ $stagingProduct->category_name }}@endif
               </div>
             </div>
             <div style="text-align:right;flex-shrink:0">
-              <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">Available</div>
-              <div style="font-size:20px;font-weight:800;font-family:var(--mono);line-height:1;color:var(--green)">
+              <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px;white-space:nowrap">
+                At {{ $warehouseName }}
+              </div>
+              <div style="font-size:20px;font-weight:800;font-family:var(--mono);line-height:1;
+                           color:{{ $stagingProduct->box_count > 0 ? 'var(--green)' : 'var(--red)' }}">
                 {{ $stagingProduct->box_count }}
                 <span style="font-size:11px;font-weight:600;color:var(--text-dim)">boxes</span>
               </div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
+                {{ $stagingProduct->items_per_box }} items / box
+              </div>
             </div>
           </div>
 
-          {{-- Quantity stepper --}}
-          <div>
+          {{-- Full Box indicator --}}
+          <div style="border:2px solid var(--accent);border-radius:11px;padding:12px 14px;
+                      background:color-mix(in srgb,var(--accent) 6%,var(--surface));margin-bottom:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-size:13px;font-weight:800;color:var(--accent)">Full Box</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
+                  {{ $stagingProduct->items_per_box }} items / box
+                </div>
+              </div>
+              <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-dim)">
+                Default: {{ number_format($defaultBoxPrice) }} RWF
+              </div>
+            </div>
+          </div>
+
+          {{-- Unit Price section --}}
+          <div class="whs-sm-price-section" style="margin-bottom:14px">
+            <div class="whs-sm-price-label-row">
+              <span class="whs-sm-price-section-label">Unit Price (per box)</span>
+              <span class="whs-sm-modified-badge"
+                    style="opacity:{{ $stagingPriceModified ? '1' : '0' }}">MODIFIED</span>
+            </div>
+
+            @if($settingAllowPriceOverride)
+            <div class="whs-sm-price-wrap">
+              <span class="whs-sm-price-prefix">RWF</span>
+              {{-- wire:model.lazy: syncs on blur only, prevents per-keystroke re-renders --}}
+              <input wire:model.lazy="stagingBoxPrice" type="number" min="1"
+                     class="whs-sm-price-input {{ $stagingPriceModified ? 'modified' : '' }}">
+            </div>
+            {{-- Reason field: always in DOM, CSS transitions in/out --}}
+            <div class="whs-sm-reason-wrap {{ $stagingPriceModified ? 'visible' : '' }}">
+              <input wire:model.live="stagingPriceReason" type="text"
+                     class="whs-sm-reason-input"
+                     placeholder="Reason for price change (required)…">
+            </div>
+            @else
+            <div class="whs-sm-price-locked">
+              <span>{{ number_format($defaultBoxPrice) }} RWF</span>
+              <span class="whs-sm-price-locked-hint">locked by owner</span>
+            </div>
+            @endif
+          </div>
+
+          {{-- Qty row --}}
+          <div style="margin-bottom:16px">
             <div style="font-size:10px;font-weight:700;color:var(--text-dim);
                         text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">
-              Number of Boxes
+              Qty (boxes)
             </div>
             <div class="whs-sm-stepper">
+              {{-- wire:click calls dedicated methods — $set with expressions does NOT work in Livewire 3 --}}
               <button type="button" class="whs-sm-step-btn"
-                      wire:click="$set('stagingBoxes', max(1, $stagingBoxes - 1))">&minus;</button>
-              <input wire:model.live="stagingBoxes" type="number"
+                      wire:click="decrementStagingBoxes">&minus;</button>
+              {{-- wire:model.lazy syncs only on blur — prevents per-keystroke re-renders --}}
+              <input wire:model.lazy="stagingBoxes" type="number"
                      min="1" max="{{ $stagingProduct->box_count }}"
                      class="whs-sm-qty-input">
               <button type="button" class="whs-sm-step-btn"
-                      wire:click="$set('stagingBoxes', min($stagingProduct->box_count, $stagingBoxes + 1))">+</button>
+                      wire:click="incrementStagingBoxes">+</button>
             </div>
           </div>
 
-          {{-- Line total --}}
-          <div class="whs-sm-total">
+          {{-- Line total — identical structure to POS sm-total --}}
+          <div class="whs-sm-total {{ $stagingPriceModified ? 'modified' : '' }}">
             <div>
-              <div style="font-size:12px;color:var(--text-sub)">Line total</div>
+              <div class="whs-sm-total-label">Line total</div>
               <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
-                {{ (int)$stagingBoxes }} × {{ number_format($bp) }} RWF
+                {{ (int)$stagingBoxes }} × {{ number_format($effectivePrice) }} RWF
               </div>
             </div>
             <div>
-              <span style="font-size:26px;font-weight:800;font-family:var(--mono);color:var(--accent);line-height:1">
-                {{ number_format($stagingTotal) }}
-              </span>
-              <span style="font-size:12px;font-weight:600;color:var(--text-dim);margin-left:3px">RWF</span>
+              <span class="whs-sm-total-amount">{{ number_format($stagingTotal) }}</span>
+              <span class="whs-sm-total-unit">RWF</span>
             </div>
           </div>
 
