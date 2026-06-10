@@ -18,7 +18,7 @@
     </div>
 
     {{-- Search --}}
-    <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+    <div style="background:var(--surface);border:none;border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:var(--shadow-card);">
         <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Search Customer</label>
         <input type="text" wire:model.live.debounce.300ms="search"
                placeholder="Search by name or phone..."
@@ -26,7 +26,7 @@
     </div>
 
     {{-- Customer table --}}
-    <div style="background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+    <div style="background:var(--surface);border:none;border-radius:12px;overflow:hidden;margin-bottom:20px;box-shadow:var(--shadow-card);">
         <div style="padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface2);">
             <h2 style="font-size:13px;font-weight:700;color:var(--text);margin:0;">Customers with Outstanding Credit</h2>
         </div>
@@ -45,7 +45,7 @@
                     </thead>
                     <tbody>
                         @foreach($this->customers as $customer)
-                            @php $rowBg = $writeoffCustomerId === $customer->id ? 'var(--surface2)' : 'white'; @endphp
+                            @php $rowBg = $writeoffCustomerId === $customer->id ? 'var(--surface2)' : 'var(--surface)'; @endphp
                             <tr style="border-bottom:1px solid var(--border);background:{{ $rowBg }};"
                                 onmouseover="this.style.background='var(--surface2)'"
                                 onmouseout="this.style.background='{{ $rowBg }}'">
@@ -60,7 +60,7 @@
                                 <td style="text-align:center;padding:13px 20px;">
                                     @if($writeoffCustomerId === $customer->id)
                                         <button wire:click="cancelWriteoff"
-                                                style="padding:7px 14px;border-radius:8px;background:white;border:1px solid var(--border);color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;">
+                                                style="padding:7px 14px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;">
                                             Cancel
                                         </button>
                                     @else
@@ -95,9 +95,9 @@
                                                         <div style="display:flex;gap:8px;align-items:center;">
                                                             <input type="number" wire:model="writeoffAmount"
                                                                    min="1" max="{{ $this->selectedCustomer->outstanding_balance }}"
-                                                                   style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:white;color:var(--text);font-size:15px;font-weight:600;font-family:var(--mono);">
+                                                                   style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;font-weight:600;font-family:var(--mono);">
                                                             <button wire:click="fillFullBalance" type="button"
-                                                                    style="padding:10px 12px;border-radius:10px;background:white;border:1px solid var(--border);color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                                                    style="padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
                                                                 Full balance
                                                             </button>
                                                         </div>
@@ -111,14 +111,14 @@
                                                         </label>
                                                         <textarea wire:model="writeoffReason" rows="3"
                                                                   placeholder="Explain why this debt is being written off (min 10 characters)..."
-                                                                  style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:white;color:var(--text);font-size:13px;resize:vertical;"></textarea>
+                                                                  style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;resize:vertical;"></textarea>
                                                         @error('writeoffReason') <div style="color:var(--red);font-size:12px;margin-top:4px;">{{ $message }}</div> @enderror
                                                     </div>
                                                 </div>
 
                                                 <div style="display:flex;gap:10px;margin-top:16px;">
                                                     <button wire:click="cancelWriteoff"
-                                                            style="padding:10px 20px;border-radius:10px;background:white;border:1px solid var(--border);color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;">
+                                                            style="padding:10px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;">
                                                         Cancel
                                                     </button>
                                                     <button wire:click="proceedToConfirm"
@@ -138,7 +138,7 @@
                                                     </div>
                                                 </div>
 
-                                                <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+                                                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
                                                     <div style="display:grid;gap:10px;">
                                                         <div style="display:flex;justify-content:space-between;font-size:13px;">
                                                             <span style="color:var(--text-dim);">Current balance</span>
@@ -155,13 +155,13 @@
                                                     </div>
                                                 </div>
 
-                                                <div style="font-size:12px;color:var(--text-dim);padding:10px 14px;background:white;border:1px solid var(--border);border-radius:10px;margin-bottom:16px;">
+                                                <div style="font-size:12px;color:var(--text-dim);padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;">
                                                     <span style="font-weight:600;color:var(--text-sub);">Reason:</span> {{ $writeoffReason }}
                                                 </div>
 
                                                 <div style="display:flex;gap:10px;">
                                                     <button wire:click="$set('confirmStep', false)"
-                                                            style="padding:10px 20px;border-radius:10px;background:white;border:1px solid var(--border);color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;">
+                                                            style="padding:10px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;">
                                                         ← Go Back
                                                     </button>
                                                     <button wire:click="submitWriteoff"
@@ -176,7 +176,7 @@
                                                 <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
                                                     <div style="font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;">Previous Write-offs</div>
                                                     @foreach($this->selectedCustomer->writeoffs as $wo)
-                                                        <div style="display:flex;align-items:start;justify-content:space-between;padding:10px 14px;background:white;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+                                                        <div style="display:flex;align-items:start;justify-content:space-between;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
                                                             <div>
                                                                 <div style="font-size:14px;font-weight:700;color:var(--red);font-family:var(--mono);">{{ number_format($wo->amount) }} RWF</div>
                                                                 <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">{{ $wo->written_off_at->format('d M Y') }} · by {{ $wo->writtenOffBy?->name ?? '—' }}</div>

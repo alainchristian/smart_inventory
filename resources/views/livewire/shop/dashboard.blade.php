@@ -4,6 +4,8 @@
      PERIOD FILTER BAR
 ════════════════════════════════════════════ --}}
 <div class="db-period-bar">
+
+    {{-- Row 1: preset pills (no Custom button — edit dates directly below) --}}
     <div class="db-period-pills">
         @foreach([
             'today'      => 'Today',
@@ -13,35 +15,27 @@
             'last_month' => 'Last Month',
             'last_30'    => 'Last 30 Days',
         ] as $key => $label)
-        <button wire:click="setPeriod('{{ $key }}')"
-                class="db-period-pill {{ $period === $key ? 'active' : '' }}">
+        <button wire:click="setPreset('{{ $key }}')"
+                class="db-period-pill {{ $preset === $key ? 'active' : '' }}">
             {{ $label }}
         </button>
         @endforeach
     </div>
 
-    <button wire:click="setPeriod('custom')"
-            class="db-period-custom {{ $period === 'custom' ? 'active' : '' }}">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-linecap="round"/></svg>
-        Custom Range
-    </button>
-
-    @if($showCustomPicker)
-    <div class="db-custom-picker" x-data x-on:click.outside="$wire.cancelCustomPicker()">
-        <span style="font-size:12px;color:var(--text-dim);white-space:nowrap;">From</span>
-        <input type="date" wire:model="customFrom" class="db-date-input">
-        <span style="font-size:12px;color:var(--text-dim);">to</span>
-        <input type="date" wire:model="customTo"   class="db-date-input">
-        <button wire:click="applyCustomRange" class="db-period-custom active">Apply</button>
-        <button wire:click="cancelCustomPicker" class="db-period-custom">✕</button>
+    {{-- Row 2: always-visible live date inputs + sync dot --}}
+    <div class="db-period-controls">
+        <div class="db-period-ctrl-seg db-period-ctrl-grow">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--text-dim)"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <input type="date" wire:model.live="dateFrom" class="db-date-input">
+            <span style="font-size:13px;color:var(--text-dim);flex-shrink:0;">→</span>
+            <input type="date" wire:model.live="dateTo" class="db-date-input">
+        </div>
+        <div class="db-period-ctrl-seg">
+            <span class="db-sync-dot {{ $lastSync->diffInMinutes(now()) < 5 ? 'green' : 'amber' }}"></span>
+            <span style="font-size:12px;color:var(--text-dim);">Live</span>
+        </div>
     </div>
-    @endif
 
-    <div class="db-period-label">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        {{ $periodLabel }}
-        <span class="db-sync-dot {{ $lastSync->diffInMinutes(now()) < 5 ? 'green' : 'amber' }}"></span>
-    </div>
 </div>
 
 {{-- Hidden chart data — updated by Livewire on each render --}}

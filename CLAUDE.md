@@ -683,3 +683,18 @@ After creating a product, the flash message includes a direct "Add stock →" li
 - `$summaryCash` query uses `sales.has_credit = true` condition when filter is `credit` (not `sales.payment_method`)
 - `applyPaymentFilter()` is called on BOTH the main query and the summary base query so KPI cards always match table results
 - Filter resets `$perPage = 20` in `updatingSearch`, `updatingDateFilter`, `updatingPaymentFilter`, `sort()`
+
+---
+
+## UI & Design System
+
+Before creating or editing ANY blade view, Livewire template, or CSS,
+read the full skill file at:
+
+```
+.claude/skills/ui-design.md
+```
+
+This is mandatory. It contains the existing design patterns, CSS class
+conventions, color variables, component structures, and mobile breakpoints
+that all pages must follow.

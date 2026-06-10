@@ -3,7 +3,7 @@
 /* ── Layout ── */
 .dc-index-grid  { display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start; }
 .dc-page-outer  { padding:20px 0 80px; }
-.dc-page-inner  { max-width:1100px; margin:0 auto; padding:0 16px; }
+.dc-page-inner  { padding:0; }
 .dc-header      { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:28px; }
 .dc-header-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
 

@@ -1,13 +1,3 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl" style="color: var(--text);">
-            {{ __('Credit Repayments') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <livewire:shop.credit-repayments />
-        </div>
-    </div>
+    <livewire:shop.credit-repayments />
 </x-app-layout>

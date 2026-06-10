@@ -14,10 +14,11 @@
 
 /* ── Hero banner ─────────────────────────────────────── */
 .td-hero {
-    background:#fff; border:1px solid var(--border);
+    background:var(--surface); border:none;
     border-radius:12px; overflow:hidden; position:relative;
     padding:16px 18px;
     border-left:4px solid var(--hero-color, var(--accent));
+    box-shadow:var(--shadow-card);
 }
 .td-hero-inner { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 .td-hero-num   { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
@@ -74,8 +75,9 @@
 
 /* ── Cards ───────────────────────────────────────────── */
 .td-card {
-    background:#fff; border:1px solid var(--border);
+    background:var(--surface); border:none;
     border-radius:12px; overflow:hidden; margin-bottom:12px;
+    box-shadow:var(--shadow-card);
 }
 .td-card:last-child { margin-bottom:0; }
 .td-card-head {
@@ -165,7 +167,7 @@
 }
 .td-btn:hover   { opacity:.88; }
 .td-btn.primary { background:var(--accent); color:#fff; border:1px solid var(--accent); }
-.td-btn.outline { background:#fff; color:var(--text); border:1px solid var(--border); }
+.td-btn.outline { background:var(--surface); color:var(--text); border:1px solid var(--border); }
 .td-btn.outline:hover { border-color:var(--accent); color:var(--accent); }
 .td-btn.success { background:var(--green-dim); color:var(--green); border:1px solid var(--green-dim); }
 .td-btn.success:hover { background:var(--green); color:#fff; }

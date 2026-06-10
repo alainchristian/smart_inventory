@@ -16,7 +16,15 @@
       "Bash(findstr:*)",
       "Bash(grep -n \"#[0-9a-fA-F]\\\\{3,6\\\\}\" /c/Users/Christian/Desktop/projects/smart-inventory/resources/views/livewire/owner/finance/daily-close-report.blade.php)",
       "Bash(grep -n \"#[0-9a-fA-F]\\\\{3,6\\\\}\" /c/Users/Christian/Desktop/projects/smart-inventory/resources/views/livewire/owner/finance/finance-overview.blade.php)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(grep -n 'main\\\\b\\\\|ml-64\\\\|pl-\\\\|bg-\\\\|content\\\\|slot\\\\|$slot\\\\|padding\\\\|pt-\\\\|mt-' /c/Users/Christian/Desktop/projects/smart-inventory/resources/views/livewire/layout/navigation.blade.php)",
+      "Bash(find resources/views/shop/day-close -name \"*.blade.php\")",
+      "Bash(find resources/views/shop -name \"close.blade.php\")",
+      "Bash(grep -rn \"max-w-[0-9]\\\\|max-width:[0-9]\\\\{3,4\\\\}\" resources/views/shop/ resources/views/warehouse/ resources/views/owner/ --include=\"*.blade.php\")",
+      "Bash(grep -v \"^[0-9]*:.*{$\\\\|svg\\\\|icon\\\\|name\\\\|value\\\\|meta\\\\|pct\\\\|::after\\\\|hover\")",
+      "Bash(awk -F: '$2 <= 1510 && $2 >= 1400')",
+      "Bash(awk '/^@media/{bp=$0} /\\\\.bkpi[^-]/{print NR\": \"bp\" => \"$0}' /c/Users/Christian/Desktop/projects/smart-inventory/resources/css/app.css)",
+      "Bash(awk 'NR>=333 && NR<=1052' resources/views/livewire/owner/reports/sales-analytics.blade.php)"
     ]
   }
 }

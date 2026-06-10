@@ -4,7 +4,7 @@
 .pt-wrap { display:flex; flex-direction:column; gap:16px; }
 
 /* Card shell */
-.pt-card { background:#fff; border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:0; }
+.pt-card { background:var(--surface); border:none; border-radius:12px; overflow:hidden; margin-bottom:0; box-shadow:var(--shadow-card); }
 .pt-card-head {
     display:flex; align-items:center; justify-content:space-between;
     padding:10px 14px; border-bottom:1px solid var(--border); background:var(--surface2);
@@ -47,7 +47,7 @@
     display:inline-flex; align-items:center; gap:6px;
     padding:6px 14px; border-radius:8px; font-size:12px; font-weight:700;
     cursor:pointer; border:1px solid var(--border); text-decoration:none;
-    background:#fff; color:var(--text); transition:all .15s; white-space:nowrap;
+    background:var(--surface); color:var(--text); transition:all .15s; white-space:nowrap;
 }
 .pt-scanner-btn:hover   { border-color:var(--accent); color:var(--accent); }
 .pt-scanner-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
@@ -79,7 +79,7 @@
 .pt-scan-input {
     flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
     font-size:14px; font-weight:700; font-family:var(--mono);
-    background:#fff; color:var(--text); outline:none; transition:border-color .15s;
+    background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
 }
 .pt-scan-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
 .pt-scan-btn {
@@ -99,13 +99,13 @@
 .pt-qty-input {
     width:100%; padding:10px 14px; border:2px solid var(--accent); border-radius:9px;
     font-size:28px; font-weight:800; text-align:center;
-    background:#fff; color:var(--text); font-family:var(--mono);
+    background:var(--surface); color:var(--text); font-family:var(--mono);
     outline:none; box-sizing:border-box; margin-top:10px;
 }
 .pt-qty-hint  { font-size:11px; color:var(--text-dim); text-align:center; margin-top:5px; }
 
 /* Product rows */
-.pt-prod-row { background:#fff; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.pt-prod-row { background:var(--surface); border:none; border-radius:10px; overflow:hidden; box-shadow:var(--shadow-card); }
 .pt-prod-row.complete { border-color:var(--green); }
 .pt-prod-head {
     display:flex; align-items:center; justify-content:space-between;
@@ -128,7 +128,7 @@
 .pt-boxes-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:6px; }
 .pt-box-chip {
     padding:7px 9px; border:1px solid var(--border); border-radius:8px;
-    cursor:pointer; transition:all .15s; background:#fff; text-align:left;
+    cursor:pointer; transition:all .15s; background:var(--surface); text-align:left;
 }
 .pt-box-chip:hover { border-color:var(--accent); background:var(--accent-dim); }
 .pt-box-code  { font-size:11px; font-weight:700; font-family:var(--mono); color:var(--text); }
@@ -187,7 +187,7 @@
     justify-content:center; padding:20px;
 }
 .pt-modal {
-    background:#fff; border:1px solid var(--border); border-radius:14px;
+    background:var(--surface); border:none; border-radius:14px;
     width:100%; max-width:480px; box-shadow:0 24px 60px rgba(0,0,0,.15);
 }
 .pt-modal-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); }
@@ -203,7 +203,7 @@
 .pt-field-label { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
 .pt-select {
     width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:8px;
-    font-size:13px; background:#fff; color:var(--text); outline:none;
+    font-size:13px; background:var(--surface); color:var(--text); outline:none;
 }
 .pt-select:focus { border-color:var(--accent); }
 .pt-btn {
@@ -213,7 +213,7 @@
 }
 .pt-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
 .pt-btn.primary:hover { opacity:.88; }
-.pt-btn.outline { background:#fff; color:var(--text); }
+.pt-btn.outline { background:var(--surface); color:var(--text); }
 .pt-btn.outline:hover { border-color:var(--accent); color:var(--accent); }
 
 /* Responsive */
@@ -414,7 +414,7 @@
         <div class="pt-qty-hint">After adding: <strong>{{ $afterAdd }}</strong> box{{ $afterAdd === 1 ? '' : 'es' }} still needed</div>
         <div style="display:flex;gap:8px;margin-top:12px">
             <button wire:click="closeQuantityPanel"
-                    style="flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:var(--text)">
+                    style="flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;color:var(--text)">
                 Continue Scanning
             </button>
             <button wire:click="confirmScannedQuantity"

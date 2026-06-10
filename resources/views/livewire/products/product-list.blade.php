@@ -1,4 +1,21 @@
 <div>
+<style>
+/* Product list — responsive column hiding */
+@media(max-width:768px) {
+  /* Hide owner-only analytics columns on tablet — Product/Stock/Status/Actions remain */
+  .pl-hide-tab { display:none !important; }
+  /* Tighten cell padding */
+  .pl-table td, .pl-table th { padding:8px 10px !important; }
+  /* Filter bar: stack search full-width */
+  .pl-filters { flex-direction:column; align-items:stretch !important; }
+  .pl-filters > div { min-width:0 !important; }
+}
+@media(max-width:480px) {
+  /* Also hide Category on very small screens */
+  .pl-hide-mob { display:none !important; }
+  .pl-table { min-width:360px !important; }
+}
+</style>
 
   {{-- Flash messages --}}
   @if(session('success'))
@@ -23,9 +40,9 @@
   @endif
 
   {{-- Filters bar --}}
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);
               padding:12px 14px;margin-bottom:12px">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+    <div class="pl-filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
 
       {{-- Search --}}
       <div style="flex:1;min-width:180px">
@@ -106,7 +123,7 @@
   </div>
 
   {{-- Table card --}}
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+  <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);overflow:hidden">
 
     {{-- Count / period strip --}}
     <div style="padding:9px 14px;border-bottom:1px solid var(--border);
@@ -124,9 +141,9 @@
 
     {{-- Responsive wrapper --}}
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <table style="width:100%;border-collapse:collapse;min-width:{{ $isOwner ? '860px' : '600px' }}">
+      <table class="pl-table" style="width:100%;border-collapse:collapse;min-width:{{ $isOwner ? '860px' : '600px' }}">
         <thead>
-          <tr style="background:var(--surface2)">
+          <tr style="background:var(--bg)">
 
             <th style="padding:9px 12px;text-align:left">
               <button wire:click="sortBy('name')"
@@ -140,7 +157,7 @@
               </button>
             </th>
 
-            <th style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
+            <th class="pl-hide-mob" style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
                         text-transform:uppercase;color:var(--text-sub);text-align:left;white-space:nowrap">
               Category
             </th>
@@ -151,7 +168,7 @@
             </th>
 
             @if($isOwner)
-            <th style="padding:9px 12px;text-align:right;white-space:nowrap">
+            <th class="pl-hide-tab" style="padding:9px 12px;text-align:right;white-space:nowrap">
               <button wire:click="sortBy('selling_price')"
                       style="background:none;border:none;cursor:pointer;display:inline-flex;
                              align-items:center;gap:4px;font-size:10px;font-weight:700;
@@ -162,17 +179,17 @@
                 @endif
               </button>
             </th>
-            <th style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
+            <th class="pl-hide-tab" style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
                         text-transform:uppercase;color:var(--text-sub);text-align:right;white-space:nowrap">
               Units
             </th>
             @canany(['viewPurchasePrice'])
-            <th style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
+            <th class="pl-hide-tab" style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
                         text-transform:uppercase;color:var(--text-sub);text-align:right;white-space:nowrap">
               Margin
             </th>
             @endcanany
-            <th style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
+            <th class="pl-hide-tab" style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
                         text-transform:uppercase;color:var(--text-sub);text-align:center;white-space:nowrap">
               Override
             </th>
@@ -220,7 +237,7 @@
             </td>
 
             {{-- Category --}}
-            <td style="padding:10px 12px">
+            <td class="pl-hide-mob" style="padding:10px 12px">
               <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;
                            background:var(--accent-dim);color:var(--accent);white-space:nowrap">
                 {{ $product->category->name ?? '--' }}
@@ -247,7 +264,7 @@
 
             @if($isOwner)
             {{-- Revenue --}}
-            <td style="padding:10px 12px;text-align:right">
+            <td class="pl-hide-tab" style="padding:10px 12px;text-align:right">
               <div style="font-size:12px;font-weight:700;font-family:var(--mono);
                            color:{{ $revenue > 0 ? 'var(--text)' : 'var(--text-dim)' }}">
                 @if($revenue > 0)
@@ -259,7 +276,7 @@
             </td>
 
             {{-- Units --}}
-            <td style="padding:10px 12px;text-align:right">
+            <td class="pl-hide-tab" style="padding:10px 12px;text-align:right">
               <div style="font-size:12px;font-family:var(--mono);
                            color:{{ $units > 0 ? 'var(--text-sub)' : 'var(--text-dim)' }}">
                 {{ $units > 0 ? number_format($units) : '--' }}
@@ -268,7 +285,7 @@
 
             {{-- Margin --}}
             @canany(['viewPurchasePrice'])
-            <td style="padding:10px 12px;text-align:right">
+            <td class="pl-hide-tab" style="padding:10px 12px;text-align:right">
               @if($marginPct !== null)
                 <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:8px;white-space:nowrap;
                              background:{{ $marginPct >= 20 ? 'var(--green-dim)' : ($marginPct >= 10 ? 'var(--accent-dim)' : 'var(--pink-dim)') }};
@@ -282,7 +299,7 @@
             @endcanany
 
             {{-- Override --}}
-            <td style="padding:10px 12px;text-align:center">
+            <td class="pl-hide-tab" style="padding:10px 12px;text-align:center">
               @if($hasOverride)
                 <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;
                              background:var(--pink-dim);color:var(--pink);white-space:nowrap">&#9888; Yes</span>

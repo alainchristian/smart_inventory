@@ -1,7 +1,7 @@
 <x-app-layout>
 <style>
 .sh-page  { padding:12px 0 60px; }
-.sh-inner { max-width:1200px;margin:0 auto;padding:0 16px; }
+.sh-inner { padding:0; }
 
 .sh-header { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap; }
 .sh-header-left  { display:flex;align-items:center;gap:12px; }

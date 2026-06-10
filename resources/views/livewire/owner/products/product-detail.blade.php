@@ -46,9 +46,9 @@
     .pd-close-btn:hover { background: var(--surface2); color: var(--text); }
 
     /* Pricing Strip - Data Dense */
-    .pd-pricing-strip { 
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 16px; 
-      padding: 16px 32px; background: var(--surface2); border-bottom: 1px solid var(--border);
+    .pd-pricing-strip {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 16px;
+      padding: 16px 32px; background: var(--bg); border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
     .pd-price-item { display: flex; flex-direction: column; gap: 4px; }
@@ -71,11 +71,11 @@
     .pd-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
 
     /* Tables */
-    .pd-table-wrap { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); }
+    .pd-table-wrap { border: none; border-radius: var(--r); overflow-x: auto; overflow-y: hidden; background: var(--surface); box-shadow: var(--shadow-card); }
     .pd-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .pd-table th { 
-      background: var(--surface2); padding: 12px 16px; font-size: 11px; font-weight: 600; 
-      color: var(--text-sub); text-transform: uppercase; border-bottom: 1px solid var(--border); 
+    .pd-table th {
+      background: var(--bg); padding: 12px 16px; font-size: 11px; font-weight: 600;
+      color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid var(--border);
       letter-spacing: 0.5px;
     }
     .pd-table td { 
@@ -112,10 +112,21 @@
       padding: 32px; text-align: center; color: var(--text-sub); font-size: 13px; 
       background: var(--surface2); border: 1px dashed var(--border); border-radius: 6px; 
     }
-    .pd-success-banner { 
-      padding: 14px 20px; background: var(--green-dim); color: var(--green); 
-      font-size: 13px; font-weight: 500; border-left: 3px solid var(--green); 
+    .pd-success-banner {
+      padding: 14px 20px; background: var(--green-dim); color: var(--green);
+      font-size: 13px; font-weight: 500; border-left: 3px solid var(--green);
       display: flex; align-items: center; gap: 10px; border-radius: 0 4px 4px 0;
+    }
+
+    @media (max-width: 600px) {
+      .pd-drawer { max-width: 100vw; }
+      .pd-header { padding: 16px 16px 14px; }
+      .pd-pricing-strip { padding: 12px 16px; gap: 10px; }
+      .pd-body { padding: 16px; gap: 24px; }
+      .pd-title { font-size: 17px; }
+      /* Movement rows: let them wrap on very narrow screens */
+      .pd-move-item { gap: 8px; flex-wrap: wrap; }
+      .pd-move-type { width: auto; min-width: 64px; }
     }
   </style>
 
@@ -303,7 +314,7 @@
             <div class="pd-section-title">Recent Box Movements</div>
           </div>
           @if(count($recentMoves) > 0)
-            <div style="border:1px solid var(--border); border-radius:6px; padding: 0 16px; background:var(--surface);">
+            <div style="border:none; border-radius:var(--r); padding: 0 16px; background:var(--surface); box-shadow:var(--shadow-card);">
               @foreach($recentMoves as $move)
               <div class="pd-move-item">
                 <span class="pd-move-type {{ $move['type'] }}">{{ $move['type'] }}</span>

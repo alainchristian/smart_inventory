@@ -127,9 +127,9 @@
    FILTER PANEL
 ═══════════════════════════════════════════════════ */
 .sli-filter-panel {
-    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    background:var(--surface); border:none; border-radius:14px;
     padding:16px 20px; display:flex; flex-direction:column; gap:0;
-    box-shadow:0 1px 3px rgba(0,0,0,.03);
+    box-shadow:var(--shadow-card);
 }
 
 /* ── Search row (always visible) ── */
@@ -225,31 +225,23 @@
     margin-top:1px;
 }
 
-/* ── Shared segmented-control container ── */
+/* ── Pill strip containers ── */
 .sli-pills--scroll,
 .sli-pills--wrap {
-    display:flex; align-items:center; gap:2px;
-    background:var(--surface2,#f5f4f1); border:1px solid var(--border);
-    border-radius:9px; padding:3px;
+    display:flex; align-items:center; gap:4px;
 }
 
-/* Scroll variant: overflows horizontally, fade-out edge hint */
 .sli-pills--scroll {
     flex:1; min-width:0; overflow-x:auto;
     -webkit-overflow-scrolling:touch; scrollbar-width:none;
-    -webkit-mask-image:linear-gradient(to right,black 92%,transparent 100%);
-    mask-image:linear-gradient(to right,black 92%,transparent 100%);
 }
 .sli-pills--scroll::-webkit-scrollbar { display:none; }
 
-/* Wrap variant: wraps on desktop, scrolls on small screens */
 .sli-pills--wrap { flex-wrap:wrap; }
 @media(max-width:660px){
     .sli-pills--wrap {
         flex-wrap:nowrap; overflow-x:auto;
         -webkit-overflow-scrolling:touch; scrollbar-width:none;
-        -webkit-mask-image:linear-gradient(to right,black 92%,transparent 100%);
-        mask-image:linear-gradient(to right,black 92%,transparent 100%);
     }
     .sli-pills--wrap::-webkit-scrollbar { display:none; }
 }
@@ -257,24 +249,25 @@
 /* ── Individual pill — shared base ── */
 .sli-pill--date,
 .sli-pill--pay {
-    flex-shrink:0; border:none; border-radius:6px;
-    background:transparent; cursor:pointer; transition:all .13s;
-    white-space:nowrap; line-height:1.4;
+    flex-shrink:0; border:1px solid transparent; border-radius:6px;
+    background:transparent; cursor:pointer; transition:all .12s;
+    white-space:nowrap; line-height:1.4; font-family:var(--font);
 }
-.sli-pill--date { padding:5px 14px; font-size:13px; font-weight:500; color:var(--text-dim); }
-.sli-pill--pay  { padding:4px 12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-dim); }
+.sli-pill--date { padding:5px 11px; font-size:12px; font-weight:600; color:var(--text-dim); }
+.sli-pill--pay  { padding:4px 10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-dim); }
 
-.sli-pill--date:hover,
-.sli-pill--pay:hover  { color:var(--text); background:rgba(0,0,0,.04); }
+.sli-pill--date:hover { color:var(--text); background:var(--surface2); border-color:var(--border); }
+.sli-pill--pay:hover  { color:var(--text); background:var(--surface2); border-color:var(--border); }
 
-/* Active: solid filled block */
+/* Active */
 .sli-pill--date.active {
-    background:#3b6bd4; color:#fff; font-weight:700;
-    box-shadow:0 1px 5px rgba(59,107,212,.35);
+    background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
 }
 .sli-pill--pay.active {
-    background:var(--pill-active,#1f1f1f); color:#fff;
-    box-shadow:0 1px 4px rgba(0,0,0,.2);
+    background:var(--pill-active,var(--accent)); color:#fff;
+    border-color:var(--pill-active,var(--accent));
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
 }
 
 /* ═══════════════════════════════════════════════════

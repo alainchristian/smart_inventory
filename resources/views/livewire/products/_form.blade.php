@@ -11,7 +11,7 @@
   <div style="display:flex;flex-direction:column;gap:16px">
 
     {{-- Card: Identity --}}
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px">
+    <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:22px 24px">
       <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
                   color:var(--text-sub);margin-bottom:16px;padding-bottom:12px;
                   border-bottom:1px solid var(--border)">
@@ -20,90 +20,59 @@
 
       {{-- Name --}}
       <div style="margin-bottom:14px">
-        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-          Product Name <span style="color:var(--red)">*</span>
-        </label>
+        <label class="pf-label">Product Name <span style="color:var(--red)">*</span></label>
         <input wire:model.live="name" type="text" placeholder="e.g. Coca Cola 500ml"
-               style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                      border-radius:var(--rx);font-size:14px;background:var(--surface);
-                      color:var(--text);outline:none;box-sizing:border-box;font-family:var(--font)"
-               onfocus="this.style.borderColor='var(--accent)'"
-               onblur="this.style.borderColor='var(--border)'">
+               class="pf-input">
         @error('name')
-          <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
+          <div class="pf-error">{{ $message }}</div>
         @enderror
       </div>
 
       {{-- SKU + Barcode row --}}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="pf-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            SKU <span style="color:var(--red)">*</span>
-          </label>
+          <label class="pf-label">SKU <span style="color:var(--red)">*</span></label>
           <input wire:model="sku" type="text" placeholder="PROD-001"
-                 style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                        border-radius:var(--rx);font-size:13px;background:var(--surface);
-                        color:var(--text);outline:none;box-sizing:border-box;
-                        font-family:var(--mono);text-transform:uppercase"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+                 class="pf-input pf-mono pf-upper">
           @error('sku')
-            <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
+            <div class="pf-error">{{ $message }}</div>
           @enderror
         </div>
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Barcode
-          </label>
+          <label class="pf-label">Barcode</label>
           <input wire:model="barcode" type="text" placeholder="8801234567890"
-                 style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                        border-radius:var(--rx);font-size:13px;background:var(--surface);
-                        color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+                 class="pf-input pf-mono">
           @error('barcode')
-            <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
+            <div class="pf-error">{{ $message }}</div>
           @enderror
         </div>
       </div>
 
       {{-- Category --}}
       <div style="margin-bottom:14px">
-        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-          Category <span style="color:var(--red)">*</span>
-        </label>
-        <select wire:model="categoryId"
-                style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                       border-radius:var(--rx);font-size:13px;background:var(--surface);
-                       color:var(--text);outline:none;cursor:pointer;box-sizing:border-box">
+        <label class="pf-label">Category <span style="color:var(--red)">*</span></label>
+        <select wire:model="categoryId" class="pf-input pf-select">
           <option value="">Select a category...</option>
           @foreach($categories as $cat)
             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
           @endforeach
         </select>
         @error('categoryId')
-          <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
+          <div class="pf-error">{{ $message }}</div>
         @enderror
       </div>
 
       {{-- Description --}}
       <div>
-        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-          Description
-        </label>
+        <label class="pf-label">Description</label>
         <textarea wire:model="description" rows="3"
                   placeholder="Optional product description..."
-                  style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                         border-radius:var(--rx);font-size:13px;background:var(--surface);
-                         color:var(--text);outline:none;resize:vertical;
-                         box-sizing:border-box;font-family:var(--font)"
-                  onfocus="this.style.borderColor='var(--accent)'"
-                  onblur="this.style.borderColor='var(--border)'"></textarea>
+                  class="pf-input pf-textarea"></textarea>
       </div>
     </div>
 
     {{-- Card: Pricing --}}
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px">
+    <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:22px 24px">
       <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
                   color:var(--text-sub);margin-bottom:16px;padding-bottom:12px;
                   border-bottom:1px solid var(--border);display:flex;align-items:center;
@@ -121,42 +90,28 @@
 
       {{-- Items per Box (first — needed to compute per-item hints) --}}
       <div style="margin-bottom:16px">
-        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-          Items per Box <span style="color:var(--red)">*</span>
-        </label>
+        <label class="pf-label">Items per Box <span style="color:var(--red)">*</span></label>
         <input wire:model.live="itemsPerBox" type="number" min="1"
-               style="width:180px;padding:9px 12px;border:1px solid var(--border);
-                      border-radius:var(--rx);font-size:13px;background:var(--surface);
-                      color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
-               onfocus="this.style.borderColor='var(--accent)'"
-               onblur="this.style.borderColor='var(--border)'">
+               class="pf-input pf-mono" style="width:180px">
         @error('itemsPerBox')
-          <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
+          <div class="pf-error">{{ $message }}</div>
         @enderror
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="pf-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
 
         {{-- Box Purchase Price --}}
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Box Purchase Price <span style="color:var(--red)">*</span>
-          </label>
-          <div style="position:relative">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
-                         font-size:11px;color:var(--text-dim);font-weight:600">RWF</span>
+          <label class="pf-label">Box Purchase Price <span style="color:var(--red)">*</span></label>
+          <div class="pf-price-wrap">
+            <span class="pf-price-prefix">RWF</span>
             <input wire:model.live="boxPurchasePrice" type="number" min="0" step="100"
-                   placeholder="0"
-                   style="width:100%;padding:9px 12px 9px 40px;border:1px solid var(--border);
-                          border-radius:var(--rx);font-size:13px;background:var(--surface);
-                          color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
-                   onfocus="this.style.borderColor='var(--violet)'"
-                   onblur="this.style.borderColor='var(--border)'">
+                   placeholder="0" class="pf-input pf-mono pf-price">
           </div>
           @error('boxPurchasePrice')
-            <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
+            <div class="pf-error">{{ $message }}</div>
           @enderror
-          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">
+          <div class="pf-hint">
             @if($boxPurchasePrice && $itemsPerBox > 0)
               → RWF {{ number_format((int) round((float)$boxPurchasePrice / $itemsPerBox)) }} per item
             @else
@@ -167,24 +122,16 @@
 
         {{-- Box Selling Price --}}
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Box Selling Price <span style="color:var(--red)">*</span>
-          </label>
-          <div style="position:relative">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
-                         font-size:11px;color:var(--text-dim);font-weight:600">RWF</span>
+          <label class="pf-label">Box Selling Price <span style="color:var(--red)">*</span></label>
+          <div class="pf-price-wrap">
+            <span class="pf-price-prefix">RWF</span>
             <input wire:model.live="boxSellingPrice" type="number" min="0" step="100"
-                   placeholder="0"
-                   style="width:100%;padding:9px 12px 9px 40px;border:1px solid var(--border);
-                          border-radius:var(--rx);font-size:13px;background:var(--surface);
-                          color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
-                   onfocus="this.style.borderColor='var(--accent)'"
-                   onblur="this.style.borderColor='var(--border)'">
+                   placeholder="0" class="pf-input pf-mono pf-price">
           </div>
           @error('boxSellingPrice')
-            <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
+            <div class="pf-error">{{ $message }}</div>
           @enderror
-          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">
+          <div class="pf-hint">
             @if($boxSellingPrice && $itemsPerBox > 0)
               → RWF {{ number_format((int) round((float)$boxSellingPrice / $itemsPerBox)) }} per item
             @else
@@ -197,65 +144,42 @@
     </div>
 
     {{-- Card: Packaging & Operational --}}
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px">
+    <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:22px 24px">
       <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
                   color:var(--text-sub);margin-bottom:16px;padding-bottom:12px;
                   border-bottom:1px solid var(--border)">
         Packaging &amp; Operations
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="pf-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
 
-        {{-- Items per Box moved to Pricing card above; keep stock thresholds here --}}
+        {{-- Items per Box confirmation --}}
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Items per Box <span style="color:var(--text-dim);font-size:10px">(confirmation)</span>
-          </label>
+          <label class="pf-label">Items per Box <span style="color:var(--text-dim);font-size:10px">(confirmation)</span></label>
           <input wire:model.live="itemsPerBox" type="number" min="1"
-                 style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                        border-radius:var(--rx);font-size:13px;background:var(--surface2);
-                        color:var(--text-sub);outline:none;box-sizing:border-box;font-family:var(--mono)"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+                 class="pf-input pf-mono pf-readonly">
         </div>
 
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Low Stock Alert At
-          </label>
+          <label class="pf-label">Low Stock Alert At</label>
           <input wire:model="lowStockThreshold" type="number" min="0"
-                 style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                        border-radius:var(--rx);font-size:13px;background:var(--surface);
-                        color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
-                 onfocus="this.style.borderColor='var(--amber)'"
-                 onblur="this.style.borderColor='var(--border)'">
-          <div style="font-size:10px;color:var(--text-dim);margin-top:3px">items remaining</div>
+                 class="pf-input pf-mono">
+          <div class="pf-hint">items remaining</div>
         </div>
 
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Reorder Point
-          </label>
+          <label class="pf-label">Reorder Point</label>
           <input wire:model="reorderPoint" type="number" min="0"
-                 style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                        border-radius:var(--rx);font-size:13px;background:var(--surface);
-                        color:var(--text);outline:none;box-sizing:border-box;font-family:var(--mono)"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+                 class="pf-input pf-mono">
         </div>
 
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="pf-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Unit of Measure
-          </label>
-          <select wire:model="unitOfMeasure"
-                  style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                         border-radius:var(--rx);font-size:13px;background:var(--surface);
-                         color:var(--text);outline:none;cursor:pointer;box-sizing:border-box">
+          <label class="pf-label">Unit of Measure</label>
+          <select wire:model="unitOfMeasure" class="pf-input pf-select">
             <option value="piece">Piece</option>
             <option value="pair">Pair</option>
             <option value="kg">Kilogram (kg)</option>
@@ -270,15 +194,9 @@
         </div>
 
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
-            Supplier
-          </label>
+          <label class="pf-label">Supplier</label>
           <input wire:model="supplier" type="text" placeholder="e.g. Rwanda Imports Ltd"
-                 style="width:100%;padding:9px 12px;border:1px solid var(--border);
-                        border-radius:var(--rx);font-size:13px;background:var(--surface);
-                        color:var(--text);outline:none;box-sizing:border-box;font-family:var(--font)"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+                 class="pf-input">
         </div>
 
       </div>
@@ -287,10 +205,10 @@
   </div>{{-- /left --}}
 
   {{-- ═══ RIGHT: Summary sidebar ═══ --}}
-  <div style="display:flex;flex-direction:column;gap:16px;position:sticky;top:84px">
+  <div class="pf-sidebar" style="display:flex;flex-direction:column;gap:16px;position:sticky;top:84px">
 
     {{-- Status card --}}
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px">
+    <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:20px 22px">
       <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
                   color:var(--text-sub);margin-bottom:14px">Status</div>
 
@@ -316,7 +234,7 @@
     </div>
 
     {{-- Live preview card --}}
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px">
+    <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:20px 22px">
       <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
                   color:var(--text-sub);margin-bottom:14px">Preview</div>
 
@@ -357,10 +275,7 @@
       <button
         @if($mode === 'create') wire:click="save" @else wire:click="update" @endif
         wire:loading.attr="disabled"
-        style="padding:11px 20px;background:var(--accent);color:#fff;border:none;
-               border-radius:var(--rx);font-size:14px;font-weight:700;cursor:pointer;
-               width:100%;font-family:var(--font);display:flex;align-items:center;
-               justify-content:center;gap:8px">
+        class="pf-btn-save">
         <span wire:loading.remove>
           @if($mode === 'create')
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="display:inline">
@@ -375,26 +290,64 @@
             Save Changes
           @endif
         </span>
-        <span wire:loading style="font-size:13px">Saving...</span>
+        <span wire:loading style="display:none;font-size:13px">Saving...</span>
       </button>
 
-      <a href="{{ route('owner.products.index') }}"
-         style="padding:10px 20px;background:var(--surface2);color:var(--text-sub);
-                border:1px solid var(--border);border-radius:var(--rx);font-size:13px;
-                font-weight:600;text-decoration:none;text-align:center;display:block">
-        Cancel
-      </a>
+      <a href="{{ route('owner.products.index') }}" class="pf-btn-cancel">Cancel</a>
     </div>
 
   </div>{{-- /right --}}
 
 </div>
 
-{{-- Responsive: stack on smaller screens --}}
 <style>
+/* ── Input system ─────────────────────────────────── */
+.pf-label  { display:block;font-size:12px;font-weight:600;color:var(--text-sub);
+             margin-bottom:5px;letter-spacing:.2px }
+.pf-error  { color:var(--red);font-size:11px;margin-top:4px }
+.pf-hint   { font-size:11px;color:var(--text-dim);margin-top:4px }
+
+.pf-input  { width:100%;padding:9px 12px;border:1.5px solid var(--border);
+             border-radius:var(--rsm);font-size:14px;background:var(--surface);
+             color:var(--text);outline:none;box-sizing:border-box;font-family:var(--font);
+             transition:border-color var(--tr),box-shadow var(--tr) }
+.pf-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
+
+.pf-mono   { font-family:var(--mono) }
+.pf-upper  { text-transform:uppercase }
+.pf-select { cursor:pointer }
+.pf-textarea { resize:vertical }
+.pf-readonly { background:var(--surface2);color:var(--text-sub) }
+
+.pf-price-wrap   { position:relative }
+.pf-price-prefix { position:absolute;left:10px;top:50%;transform:translateY(-50%);
+                   font-size:11px;color:var(--text-dim);font-weight:600;pointer-events:none }
+.pf-price        { padding-left:40px !important }
+
+/* ── Buttons ─────────────────────────────────────── */
+.pf-btn-save { padding:11px 20px;background:var(--accent);color:#fff;border:none;
+               border-radius:var(--rsm);font-size:14px;font-weight:700;cursor:pointer;
+               width:100%;font-family:var(--font);display:flex;align-items:center;
+               justify-content:center;gap:8px;transition:opacity var(--tr);
+               box-shadow:0 3px 10px rgba(59,111,212,.25) }
+.pf-btn-save:hover    { opacity:.88 }
+.pf-btn-save:disabled { opacity:.5;cursor:not-allowed }
+.pf-btn-cancel { padding:10px 20px;background:var(--surface2);color:var(--text-sub);
+                 border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;
+                 font-weight:600;text-decoration:none;text-align:center;display:block;
+                 transition:all var(--tr) }
+.pf-btn-cancel:hover { border-color:var(--border-hi);color:var(--text) }
+
+/* ── Layout breakpoints ──────────────────────────── */
 @media (max-width: 900px) {
-  .product-form-grid {
-    grid-template-columns: 1fr !important;
-  }
+  .product-form-grid { grid-template-columns: 1fr !important; }
+  .pf-sidebar { position:static !important; top:auto !important; }
+}
+@media (max-width: 768px) {
+  .pf-grid-3 { grid-template-columns: 1fr 1fr !important; }
+}
+@media (max-width: 540px) {
+  .pf-grid-2, .pf-grid-3 { grid-template-columns: 1fr !important; }
+  .pf-input { font-size:16px !important; } /* prevent iOS zoom */
 }
 </style>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" style="background-color: var(--bg);">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" style="background-color: var(--surface);">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,7 +32,7 @@
         })();
     </script>
 </head>
-<body style="background-color: var(--bg); font-family: var(--font);"
+<body style="background-color: var(--surface); font-family: var(--font);"
       x-data="{ mobileMenuOpen: false }"
       @toggle-mobile-menu.window="mobileMenuOpen = !mobileMenuOpen"
       @close-mobile-menu.window="mobileMenuOpen = false">
@@ -53,7 +53,7 @@
 
     <div class="lg:ml-[var(--sidebar-width)]">
         <livewire:layout.topbar />
-        <main class="min-h-screen" style="background-color: var(--bg); padding-top: var(--topbar-height); overflow-anchor: none;">
+        <main class="min-h-screen" style="background-color: var(--surface); padding-top: var(--topbar-height); overflow-anchor: none;">
             @if (session('error'))
             <div style="background:var(--red-dim);border-bottom:1px solid var(--red);padding:10px 20px;
                         display:flex;align-items:center;gap:10px;font-size:13px;color:var(--red)">
@@ -63,7 +63,7 @@
                 {{ session('error') }}
             </div>
             @endif
-            <div class="p-2 sm:p-5 lg:p-8 xl:p-10">
+            <div class="p-4 sm:p-5 lg:p-8 xl:p-10">
                 {{ $slot }}
             </div>
         </main>

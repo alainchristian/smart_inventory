@@ -18,41 +18,41 @@
 
 {{-- Period bar --}}
 <div class="db-period-bar">
+
+    {{-- Row 1: preset pills (no Custom button — edit dates directly below) --}}
     <div class="db-period-pills">
         @foreach(['today'=>'Today','yesterday'=>'Yesterday','week'=>'This Week','month'=>'This Month','last_month'=>'Last Month','last_30'=>'Last 30 Days'] as $key => $label)
-        <button wire:click="setPeriod('{{ $key }}')" class="db-period-pill {{ $period === $key ? 'active' : '' }}">{{ $label }}</button>
+        <button wire:click="setPreset('{{ $key }}')" class="db-period-pill {{ $preset === $key ? 'active' : '' }}">{{ $label }}</button>
         @endforeach
     </div>
-    <button wire:click="setPeriod('custom')" class="db-period-custom {{ $period === 'custom' ? 'active' : '' }}">
-        <svg style="width:13px;height:13px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        Custom Range
-    </button>
-    @if($showCustomPicker)
-    <div class="db-custom-picker" x-data x-on:click.outside="$wire.cancelCustomPicker()">
-        From <input type="date" wire:model="customFrom" class="db-date-input">
-        to <input type="date" wire:model="customTo" class="db-date-input">
-        <button wire:click="applyCustomRange" class="db-period-custom active">Apply</button>
-        <button wire:click="cancelCustomPicker" class="db-period-custom">✕</button>
+
+    {{-- Row 2: always-visible live date inputs + sync dot + warehouse selector --}}
+    <div class="db-period-controls">
+        <div class="db-period-ctrl-seg db-period-ctrl-grow">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--text-dim)"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <input type="date" wire:model.live="dateFrom" class="db-date-input">
+            <span style="font-size:13px;color:var(--text-dim);flex-shrink:0;">→</span>
+            <input type="date" wire:model.live="dateTo" class="db-date-input">
+        </div>
+        <div class="db-period-ctrl-seg">
+            <span class="db-sync-dot green"></span>
+            <span style="font-size:12px;color:var(--text-dim);">Live</span>
+        </div>
+        @if(auth()->user()->isOwner())
+        <div class="db-period-ctrl-seg">
+            <svg style="width:12px;height:12px;flex-shrink:0;color:var(--text-dim)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <form method="GET" action="{{ route('warehouse.dashboard') }}" style="display:inline;">
+                <select name="warehouse_id" onchange="this.form.submit()"
+                        style="font-size:12px;font-weight:600;color:var(--text);background:transparent;border:none;cursor:pointer;padding:0;outline:none;font-family:var(--font);">
+                    @foreach(\App\Models\Warehouse::orderBy('name')->get() as $wh)
+                        <option value="{{ $wh->id }}" {{ $wh->id == $warehouseId ? 'selected' : '' }}>{{ $wh->name }}</option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+        @endif
     </div>
-    @endif
-    <div class="db-period-label">
-        <svg style="width:13px;height:13px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        {{ $periodLabel }}
-        <span class="db-sync-dot green"></span>
-    </div>
-    @if(auth()->user()->isOwner())
-    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-dim);margin-left:4px;padding-left:10px;border-left:1px solid var(--border);">
-        <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-        <form method="GET" action="{{ route('warehouse.dashboard') }}" style="display:inline;">
-            <select name="warehouse_id" onchange="this.form.submit()"
-                    style="font-size:12px;font-weight:500;color:var(--text);background:transparent;border:none;cursor:pointer;padding:0 2px;outline:none;">
-                @foreach(\App\Models\Warehouse::orderBy('name')->get() as $wh)
-                    <option value="{{ $wh->id }}" {{ $wh->id == $warehouseId ? 'selected' : '' }}>{{ $wh->name }}</option>
-                @endforeach
-            </select>
-        </form>
-    </div>
-    @endif
+
 </div>
 
 {{-- ══ ROW 1: KPI CARDS ═══════════════════════════════════════════════ --}}

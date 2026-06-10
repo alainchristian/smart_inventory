@@ -2,11 +2,11 @@
 @push('styles')
 <style>
 .is-page        { padding:28px 0 80px; }
-.is-inner       { max-width:1200px; margin:0 auto; padding:0 20px; }
+.is-inner       { padding:0; }
 .is-header      { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
-.is-filters     { background:white; border:1px solid var(--border); border-radius:14px;
+.is-filters     { background:var(--surface); border:none; border-radius:14px;
                   overflow:hidden; margin-bottom:20px;
-                  box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+                  box-shadow:var(--shadow-card); }
 .is-presets     { display:flex; gap:4px; overflow-x:auto; -webkit-overflow-scrolling:touch;
                   padding:10px 14px; border-bottom:1px solid var(--border); }
 .is-presets::-webkit-scrollbar { display:none; }
@@ -32,8 +32,8 @@
 .is-shop-select:focus { color:var(--accent); }
 .is-seg-label   { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
                   color:var(--text-dim); white-space:nowrap; }
-.is-card        { border-radius:14px; overflow:hidden; border:1px solid var(--border); background:white;
-                  box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+.is-card        { border-radius:14px; overflow:hidden; border:none; background:var(--surface);
+                  box-shadow:var(--shadow-card); }
 .is-card-head   { padding:14px 20px; background:var(--surface2); border-bottom:1px solid var(--border);
                   display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .is-table       { width:100%; border-collapse:collapse; }
@@ -371,7 +371,7 @@
                 <tr><td colspan="4" class="is-section-hd">Operating Expenses</td></tr>
 
                 @forelse ($s['expenses_by_category'] as $exp)
-                <tr style="border-bottom:1px solid var(--border);background:white;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='white'">
+                <tr style="border-bottom:1px solid var(--border);background:var(--surface);" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
                     <td class="is-row-label is-row-indent">
                         {{ $exp['category'] }}
                         <span style="font-size:11px;color:var(--text-dim);margin-left:4px;">({{ $exp['count'] }})</span>

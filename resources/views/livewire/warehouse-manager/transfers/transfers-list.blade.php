@@ -35,13 +35,13 @@
 .wtl-list { display:flex; flex-direction:column; gap:8px; }
 
 .wtl-card {
-    background:#fff; border:1px solid var(--border);
+    background:var(--surface); border:none;
     border-radius:12px; overflow:hidden;
-    transition:border-color .15s, box-shadow .15s;
+    box-shadow:var(--shadow-card);
+    transition:box-shadow .15s;
 }
 .wtl-card:hover {
-    border-color:var(--card-accent, var(--accent));
-    box-shadow:0 2px 12px rgba(0,0,0,.06);
+    box-shadow:var(--shadow-card-hover);
 }
 
 /* Left accent bar */
@@ -118,7 +118,7 @@
     padding:5px 12px; border-radius:7px;
     font-size:12px; font-weight:600;
     border:1px solid var(--border); cursor:pointer;
-    text-decoration:none; background:#fff; color:var(--text);
+    text-decoration:none; background:var(--surface); color:var(--text);
     transition:all .15s; white-space:nowrap;
 }
 .wtl-action:hover        { border-color:var(--accent); color:var(--accent); }

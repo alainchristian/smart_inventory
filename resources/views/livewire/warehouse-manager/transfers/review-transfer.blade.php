@@ -14,7 +14,7 @@
 .rt-alert.info    { background:var(--accent-dim); border-color:rgba(99,102,241,.25); color:var(--accent); }
 
 /* Cards */
-.rt-card { background:#fff; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.rt-card { background:var(--surface); border:none; border-radius:12px; overflow:hidden; box-shadow:var(--shadow-card); }
 .rt-card-head {
     padding:10px 14px; border-bottom:1px solid var(--border);
     display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -89,7 +89,7 @@
 /* Input */
 .rt-input {
     width:100%; padding:8px 12px;
-    background:#fff; color:var(--text);
+    background:var(--surface); color:var(--text);
     border:1.5px solid var(--border); border-radius:8px;
     font-size:14px; font-weight:700; font-family:var(--mono);
     transition:border-color .15s, box-shadow .15s; outline:none;
@@ -165,7 +165,7 @@
 }
 @keyframes rtFadeIn { from { opacity:0 } to { opacity:1 } }
 .rt-modal {
-    background:#fff; border:1px solid var(--border);
+    background:var(--surface); border:none;
     border-radius:14px; width:100%; max-width:480px;
     box-shadow:0 24px 60px rgba(0,0,0,.15);
     animation:rtSlideUp .2s ease;
@@ -189,7 +189,7 @@
 .rt-field-label { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
 .rt-field-error { font-size:11px; color:var(--red); margin-top:4px; font-weight:600; }
 .rt-textarea {
-    width:100%; padding:10px 12px; background:#fff; color:var(--text);
+    width:100%; padding:10px 12px; background:var(--surface); color:var(--text);
     border:1.5px solid var(--border); border-radius:8px;
     font-size:13px; resize:vertical; min-height:100px; outline:none; transition:border-color .15s;
 }

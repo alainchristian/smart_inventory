@@ -122,21 +122,10 @@
     .db-insights-right { display:none; }
 }
 
-/* 680px — period bar: pills scroll, label hidden, warehouse selector wraps */
-@media(max-width:680px) {
-    .db-period-bar  { gap:7px; }
-    .db-period-pills { max-width:calc(100vw - 150px); }
-    .db-period-label { display:none; }
-    .db-period-custom span { display:none; }   /* hide "Custom Range" text, keep icon */
-}
-
 /* 520px — KPIs go single-column, cards height reduced */
 @media(max-width:520px) {
     .db-kpi-row { grid-template-columns:1fr; }
     .db-row-cf-side > .db-card { height:360px; }
-    .db-period-bar { flex-wrap:wrap; }
-    .db-period-pills { max-width:100%; }
-    .db-period-custom { padding:7px 10px; }
 }
 
 [x-cloak] { display:none !important; }

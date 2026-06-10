@@ -1,11 +1,18 @@
 <div style="font-family:var(--font)" x-data="{ drawerOpen: @entangle('showDrawer') }">
 <style>
 /* ── KPI bar ─────────────────────────────────────── */
-.um-kpis { display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px }
-.um-kpi  { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px }
-.um-kpi-label { font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px }
-.um-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;color:var(--text);line-height:1 }
-.um-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:3px }
+.um-kpis      { display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px }
+.um-kpi       { background:var(--surface);border:none;border-radius:var(--r);
+                box-shadow:var(--shadow-card);padding:22px 20px;
+                display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
+.um-kpi:hover { box-shadow:var(--shadow-card-hover) }
+.um-kpi-row   { display:flex;align-items:center;gap:12px }
+.um-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+                justify-content:center;flex-shrink:0 }
+.um-kpi-body  { flex:1;min-width:0 }
+.um-kpi-label { font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim);line-height:1.2 }
+.um-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;color:var(--text);line-height:1;flex-shrink:0 }
+.um-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px }
 
 /* ── Controls ────────────────────────────────────── */
 .um-bar { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px }
@@ -18,7 +25,7 @@
 .um-btn-new:hover { opacity:.88 }
 
 /* ── Table ───────────────────────────────────────── */
-.um-table-wrap { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden }
+.um-table-wrap { background:var(--surface);border:none;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-card) }
 .um-table { width:100%;border-collapse:collapse;font-size:13px }
 .um-table thead tr { background:var(--bg);border-bottom:1px solid var(--border) }
 .um-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
@@ -150,7 +157,7 @@
 /* Mobile */
 @media(max-width:640px) {
     .um-kpis { grid-template-columns:repeat(2,1fr);gap:8px }
-    .um-kpi  { padding:10px 12px }
+    .um-kpi  { padding:14px 14px;gap:10px }
     .um-kpi-val { font-size:20px }
     .um-hide-mob { display:none !important }
     .um-bar  { flex-direction:column;align-items:stretch }
@@ -194,29 +201,64 @@
 {{-- ── KPI bar ──────────────────────────────────────────────────────── --}}
 <div class="um-kpis">
     <div class="um-kpi">
-        <div class="um-kpi-label">Total Users</div>
-        <div class="um-kpi-val" style="color:var(--accent)">{{ $stats['total'] }}</div>
-        <div class="um-kpi-sub">all roles</div>
+        <div class="um-kpi-row">
+            <div class="um-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="um-kpi-body">
+                <div class="um-kpi-label">Total Users</div>
+                <div class="um-kpi-sub">all roles</div>
+            </div>
+            <div class="um-kpi-val" style="color:var(--accent)">{{ $stats['total'] }}</div>
+        </div>
     </div>
     <div class="um-kpi">
-        <div class="um-kpi-label">Active</div>
-        <div class="um-kpi-val" style="color:var(--green)">{{ $stats['active'] }}</div>
-        <div class="um-kpi-sub">can log in</div>
+        <div class="um-kpi-row">
+            <div class="um-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="um-kpi-body">
+                <div class="um-kpi-label">Active</div>
+                <div class="um-kpi-sub">can log in</div>
+            </div>
+            <div class="um-kpi-val" style="color:var(--green)">{{ $stats['active'] }}</div>
+        </div>
     </div>
     <div class="um-kpi">
-        <div class="um-kpi-label">Owners</div>
-        <div class="um-kpi-val">{{ $stats['owners'] }}</div>
-        <div class="um-kpi-sub">full access</div>
+        <div class="um-kpi-row">
+            <div class="um-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M3 21a9 9 0 0 1 18 0"/></svg>
+            </div>
+            <div class="um-kpi-body">
+                <div class="um-kpi-label">Owners</div>
+                <div class="um-kpi-sub">full access</div>
+            </div>
+            <div class="um-kpi-val">{{ $stats['owners'] }}</div>
+        </div>
     </div>
     <div class="um-kpi">
-        <div class="um-kpi-label">Warehouse</div>
-        <div class="um-kpi-val">{{ $stats['warehouse'] }}</div>
-        <div class="um-kpi-sub">managers</div>
+        <div class="um-kpi-row">
+            <div class="um-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            </div>
+            <div class="um-kpi-body">
+                <div class="um-kpi-label">Warehouse</div>
+                <div class="um-kpi-sub">managers</div>
+            </div>
+            <div class="um-kpi-val">{{ $stats['warehouse'] }}</div>
+        </div>
     </div>
     <div class="um-kpi">
-        <div class="um-kpi-label">Shop</div>
-        <div class="um-kpi-val">{{ $stats['shop'] }}</div>
-        <div class="um-kpi-sub">managers</div>
+        <div class="um-kpi-row">
+            <div class="um-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <div class="um-kpi-body">
+                <div class="um-kpi-label">Shop</div>
+                <div class="um-kpi-sub">managers</div>
+            </div>
+            <div class="um-kpi-val">{{ $stats['shop'] }}</div>
+        </div>
     </div>
 </div>
 

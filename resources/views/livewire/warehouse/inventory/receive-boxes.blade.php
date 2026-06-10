@@ -1,1074 +1,1115 @@
-<div class="max-w-7xl mx-auto">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Receive Boxes</h1>
-        <p class="mt-1 text-sm text-gray-600">Scan product barcode and enter number of boxes</p>
+<div style="font-family:var(--font)">
+<style>
+/* ── page prefix: rb- (receive-boxes) ─────── */
+
+/* Mode tabs */
+.rb-tabs { display:flex;gap:4px;margin-bottom:20px;align-items:center }
+.rb-tab  { padding:9px 20px;border-radius:9px;border:1.5px solid var(--border);
+           font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);
+           background:var(--surface);color:var(--text-dim);transition:all var(--tr);
+           display:flex;align-items:center;gap:7px;white-space:nowrap }
+.rb-tab:hover  { border-color:var(--accent);color:var(--accent) }
+.rb-tab.active { background:var(--accent);border-color:var(--accent);color:#fff }
+.rb-dl-btn { padding:8px 16px;background:var(--surface2);color:var(--text-sub);
+             border:1.5px solid var(--border);border-radius:var(--rsm);font-size:12px;
+             font-weight:600;cursor:pointer;font-family:var(--font);
+             transition:all var(--tr);display:inline-flex;align-items:center;gap:6px }
+.rb-dl-btn:hover { border-color:var(--accent);color:var(--accent) }
+
+/* Flash */
+.rb-flash { padding:12px 16px;border-radius:var(--rsm);font-size:13px;font-weight:500;
+            margin-bottom:16px;display:flex;align-items:center;gap:10px }
+.rb-flash.green { background:var(--green-dim);color:var(--green);border:1px solid var(--green) }
+.rb-flash.red   { background:var(--red-dim);color:var(--red);border:1px solid var(--red) }
+.rb-flash.amber { background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber) }
+
+/* Cards */
+.rb-card { background:var(--surface);border:none;box-shadow:var(--shadow-card);
+           border-radius:var(--r);padding:22px 24px }
+
+/* Scan strip */
+.rb-scan { background:var(--surface);border:none;box-shadow:var(--shadow-card);
+           border-radius:var(--r);padding:22px 24px;margin-bottom:16px }
+.rb-scan-lbl { font-size:10px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
+               color:var(--text-dim);margin-bottom:10px }
+.rb-scan-row { display:flex;gap:10px;align-items:center }
+.rb-scan-input { flex:1;padding:13px 16px;background:var(--surface);
+                 border:1.5px solid var(--border);border-radius:var(--rsm);
+                 font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);
+                 outline:none;box-sizing:border-box;transition:border-color var(--tr) }
+.rb-scan-input:focus  { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
+.rb-scan-input::placeholder { color:var(--text-dim);font-weight:400;font-size:13px;font-family:var(--font) }
+.rb-scan-input:disabled { background:var(--surface2);color:var(--text-dim);cursor:not-allowed }
+.rb-scan-btn  { padding:13px 22px;background:var(--accent);color:#fff;border:none;
+                border-radius:var(--rsm);font-size:13px;font-weight:700;cursor:pointer;
+                font-family:var(--font);white-space:nowrap;
+                box-shadow:0 3px 10px var(--accent-glow);transition:opacity var(--tr) }
+.rb-scan-btn:hover { opacity:.88 }
+.rb-scan-btn:disabled { opacity:.38;cursor:not-allowed }
+.rb-scan-clear { padding:13px 16px;background:var(--surface2);color:var(--text-sub);
+                 border:1.5px solid var(--border);border-radius:var(--rsm);
+                 font-size:13px;cursor:pointer;font-family:var(--font);transition:all var(--tr) }
+.rb-scan-clear:hover { border-color:var(--border-hi);color:var(--text) }
+.rb-scan-hint { font-size:11px;color:var(--text-dim);margin-top:8px }
+.rb-scan-hint.warn { color:var(--amber) }
+
+/* OR divider */
+.rb-or { display:flex;align-items:center;gap:12px;margin:16px 0;
+         color:var(--text-dim);font-size:12px;font-weight:600;letter-spacing:.3px }
+.rb-or::before,.rb-or::after { content:'';flex:1;height:1px;background:var(--border) }
+
+/* Browse button */
+.rb-browse-btn { width:100%;padding:12px 20px;background:var(--accent-dim);color:var(--accent);
+                 border:1.5px solid var(--accent);border-radius:var(--rsm);font-size:13px;
+                 font-weight:700;cursor:pointer;font-family:var(--font);
+                 display:flex;align-items:center;justify-content:center;gap:8px;
+                 transition:all var(--tr) }
+.rb-browse-btn:hover    { background:var(--accent);color:#fff }
+.rb-browse-btn:disabled { opacity:.42;cursor:not-allowed;border-color:var(--border);
+                          background:var(--surface2);color:var(--text-dim) }
+
+/* Form fields */
+.rb-field  { margin-bottom:16px }
+.rb-grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px }
+.rb-label  { display:block;font-size:12px;font-weight:700;color:var(--text-sub);
+             margin-bottom:6px;letter-spacing:.3px }
+.rb-label span { color:var(--red) }
+.rb-input  { width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);
+             font-size:14px;background:var(--surface);color:var(--text);outline:none;
+             box-sizing:border-box;font-family:var(--font);transition:border-color var(--tr) }
+.rb-input:focus    { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
+.rb-input:disabled { background:var(--surface2);color:var(--text-dim);cursor:not-allowed }
+.rb-input.mono     { font-family:var(--mono) }
+.rb-select { width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);
+             font-size:14px;background:var(--surface);color:var(--text);outline:none;
+             box-sizing:border-box;font-family:var(--font);cursor:pointer;
+             transition:border-color var(--tr) }
+.rb-select:focus    { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
+.rb-select:disabled { background:var(--surface2);color:var(--text-dim);cursor:not-allowed }
+.rb-error  { font-size:11px;color:var(--red);margin-top:4px }
+.rb-hint   { font-size:11px;color:var(--text-dim);margin-top:4px;line-height:1.5 }
+.rb-divider { height:1px;background:var(--border);margin:18px 0 }
+.rb-section-head { font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px }
+
+/* Alert boxes */
+.rb-alert       { padding:14px 16px;border-radius:var(--rsm);margin-bottom:14px }
+.rb-alert.green { background:var(--green-dim);border:1px solid var(--green) }
+.rb-alert.amber { background:var(--amber-dim);border:1px solid var(--amber) }
+.rb-alert.red   { background:var(--red-dim);border:1px solid var(--red) }
+.rb-alert.blue  { background:var(--accent-dim);border:1px solid var(--accent) }
+.rb-alert-head  { display:flex;align-items:center;gap:8px;margin-bottom:6px }
+.rb-alert-title { font-size:13px;font-weight:700 }
+.rb-alert.green .rb-alert-title { color:var(--green) }
+.rb-alert.amber .rb-alert-title { color:var(--amber) }
+.rb-alert.red   .rb-alert-title { color:var(--red) }
+.rb-alert.blue  .rb-alert-title { color:var(--accent) }
+.rb-alert-body  { font-size:12px;line-height:1.7 }
+.rb-alert.green .rb-alert-body  { color:var(--green) }
+.rb-alert.amber .rb-alert-body  { color:var(--amber) }
+.rb-alert.red   .rb-alert-body  { color:var(--red) }
+.rb-alert.blue  .rb-alert-body  { color:var(--accent) }
+
+/* Product info grid inside modal */
+.rb-pinfo     { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px }
+.rb-pinfo-row { display:flex;flex-direction:column;gap:2px }
+.rb-pinfo-key { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-dim) }
+.rb-pinfo-val { font-size:13px;font-weight:600;color:var(--text) }
+
+/* Search results */
+.rb-results { border:1px solid var(--border);border-radius:var(--rsm);
+              background:var(--surface);box-shadow:var(--shadow-card);
+              max-height:260px;overflow-y:auto;margin-top:6px }
+.rb-result  { padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);
+              transition:background var(--tr);display:flex;align-items:center;
+              justify-content:space-between;gap:12px }
+.rb-result:last-child  { border-bottom:none }
+.rb-result:hover,.rb-result.sel { background:var(--accent-dim) }
+.rb-result-name { font-size:13px;font-weight:600;color:var(--text) }
+.rb-result-meta { font-size:11px;color:var(--text-dim);margin-top:1px }
+
+/* Checkbox row */
+.rb-chk-row  { display:flex;align-items:flex-start;gap:10px;padding:12px 14px;
+               background:var(--accent-dim);border-radius:var(--rsm);
+               border:1px solid var(--accent);cursor:pointer }
+.rb-chk-row input { margin-top:3px;accent-color:var(--accent);flex-shrink:0 }
+.rb-chk-text { font-size:13px;font-weight:600;color:var(--text) }
+.rb-chk-sub  { font-size:11px;color:var(--text-dim);margin-top:2px;line-height:1.5 }
+
+/* Excel row cards */
+.rb-xs { border-radius:var(--r);margin-bottom:16px;box-shadow:var(--shadow-card);overflow:hidden }
+.rb-xs-head { padding:14px 18px;display:flex;align-items:center;gap:10px }
+.rb-xs-head.green { background:var(--green-dim);border-bottom:1px solid var(--green) }
+.rb-xs-head.amber { background:var(--amber-dim);border-bottom:1px solid var(--amber) }
+.rb-xs-head.red   { background:var(--red-dim);border-bottom:1px solid var(--red) }
+.rb-xs-title { font-size:13px;font-weight:700 }
+.rb-xs-head.green .rb-xs-title { color:var(--green) }
+.rb-xs-head.amber .rb-xs-title { color:var(--amber) }
+.rb-xs-head.red   .rb-xs-title { color:var(--red) }
+.rb-xs-body { background:var(--surface);padding:16px }
+.rb-row-card { border:1px solid var(--border);border-radius:var(--rsm);padding:16px;margin-bottom:12px }
+.rb-row-card:last-child { margin-bottom:0 }
+.rb-row-badge { display:inline-flex;align-items:center;font-size:10px;font-weight:700;
+                padding:2px 8px;border-radius:20px;white-space:nowrap }
+.rb-row-fields { background:var(--bg);border-radius:var(--rsm);padding:14px;margin-top:12px }
+.rb-chg-alert  { background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--rsm);
+                 padding:12px 14px;margin-bottom:12px }
+.rb-chg-title  { font-size:12px;font-weight:700;color:var(--amber);margin-bottom:6px;
+                 display:flex;align-items:center;gap:6px }
+.rb-chg-list   { margin:0 0 0 14px;font-size:11px;color:var(--amber);line-height:1.9;padding:0 }
+
+/* Import summary */
+.rb-summary    { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px }
+.rb-stat       { background:var(--bg);border-radius:var(--rsm);padding:14px 16px;text-align:center }
+.rb-stat-lbl   { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+                 color:var(--text-dim);margin-bottom:6px }
+.rb-stat-val   { font-size:22px;font-weight:800;font-family:var(--mono);line-height:1 }
+
+/* Session bar */
+.rb-session { background:var(--accent-dim);border:1px solid var(--accent);
+              border-radius:var(--rsm);padding:10px 18px;margin-bottom:16px;
+              display:flex;align-items:center;gap:10px }
+
+/* Recent table */
+.rb-tbl-wrap { background:var(--surface);border:none;box-shadow:var(--shadow-card);
+               border-radius:var(--r);overflow:hidden;margin-top:20px }
+.rb-tbl-head { display:flex;align-items:center;justify-content:space-between;
+               padding:14px 18px;border-bottom:1px solid var(--border) }
+.rb-tbl      { width:100%;border-collapse:collapse;font-size:13px }
+.rb-tbl thead tr { background:var(--bg);border-bottom:1px solid var(--border) }
+.rb-tbl thead th { padding:9px 14px;text-align:left;font-size:11px;font-weight:700;
+                   letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
+.rb-tbl tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
+.rb-tbl tbody tr:last-child { border-bottom:none }
+.rb-tbl tbody tr:hover { background:var(--surface2) }
+.rb-tbl td { padding:11px 14px;vertical-align:middle }
+.rb-new-btn { padding:6px 14px;background:transparent;border:1.5px solid var(--border);
+              border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;
+              font-family:var(--font);color:var(--text-sub);transition:all var(--tr) }
+.rb-new-btn:hover { border-color:var(--accent);color:var(--accent) }
+
+/* Modal */
+.rb-overlay { position:fixed;inset:0;z-index:400;background:rgba(26,31,54,.45);
+              backdrop-filter:blur(2px);display:flex;align-items:center;
+              justify-content:center;padding:20px }
+.rb-modal   { background:var(--surface);border-radius:var(--r);
+              box-shadow:0 20px 60px rgba(26,31,54,.25);
+              width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column }
+.rb-modal-head  { display:flex;align-items:center;justify-content:space-between;
+                  padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0 }
+.rb-modal-title { font-size:16px;font-weight:800;color:var(--text) }
+.rb-modal-sub   { font-size:12px;color:var(--text-dim);margin-top:2px }
+.rb-modal-close { width:32px;height:32px;border-radius:8px;border:none;
+                  background:var(--surface2);color:var(--text-sub);cursor:pointer;
+                  display:flex;align-items:center;justify-content:center;transition:background var(--tr) }
+.rb-modal-close:hover { background:var(--surface3) }
+.rb-modal-body  { flex:1;overflow-y:auto;padding:22px }
+.rb-modal-foot  { padding:14px 22px;border-top:1px solid var(--border);
+                  display:flex;gap:10px;justify-content:flex-end;flex-shrink:0 }
+.rb-btn-confirm { padding:11px 24px;background:var(--green);color:#fff;border:none;
+                  border-radius:var(--rsm);font-size:14px;font-weight:700;cursor:pointer;
+                  font-family:var(--font);box-shadow:0 3px 10px rgba(14,158,134,.25);
+                  transition:opacity var(--tr) }
+.rb-btn-confirm:hover    { opacity:.88 }
+.rb-btn-confirm:disabled { opacity:.42;cursor:not-allowed }
+.rb-btn-cancel  { padding:11px 20px;background:transparent;border:1.5px solid var(--border);
+                  color:var(--text-sub);border-radius:var(--rsm);font-size:14px;font-weight:600;
+                  cursor:pointer;font-family:var(--font);transition:all var(--tr) }
+.rb-btn-cancel:hover { border-color:var(--border-hi);color:var(--text) }
+
+/* File upload zone */
+.rb-upload-zone { border:2px dashed var(--border);border-radius:var(--r);
+                  padding:32px 20px;text-align:center;transition:border-color var(--tr);cursor:pointer }
+.rb-upload-zone:hover { border-color:var(--accent) }
+.rb-upload-choose { display:inline-flex;align-items:center;gap:8px;padding:9px 20px;
+                    background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);
+                    font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font) }
+
+/* Instructions */
+.rb-instr      { background:var(--bg);border-radius:var(--rsm);padding:14px 16px;margin-bottom:16px }
+.rb-instr-title { font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px }
+.rb-instr ol   { margin:0 0 0 18px;padding:0;font-size:12px;color:var(--text-sub);line-height:2 }
+
+/* Responsive */
+@media(max-width:768px) {
+    .rb-scan-row { flex-direction:column }
+    .rb-scan-input,.rb-scan-btn,.rb-scan-clear { width:100%;box-sizing:border-box }
+    .rb-grid-2 { grid-template-columns:1fr }
+    .rb-summary { grid-template-columns:1fr 1fr }
+    .rb-modal { align-self:flex-end;max-width:100vw;border-radius:var(--r) var(--r) 0 0;max-height:92vh }
+    .rb-modal-foot { flex-direction:column }
+    .rb-btn-confirm,.rb-btn-cancel { width:100%;text-align:center }
+}
+@media(max-width:480px) {
+    .rb-tabs { overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch }
+    .rb-tab  { flex-shrink:0 }
+    .rb-summary { grid-template-columns:1fr 1fr }
+}
+</style>
+
+{{-- ── Mode tabs ────────────────────────────────────────────────── --}}
+<div class="rb-tabs">
+    <button wire:click="switchMode('manual')" type="button"
+            class="rb-tab {{ $manualMode ? 'active' : '' }}">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        Manual Entry
+    </button>
+    <button wire:click="switchMode('excel')" type="button"
+            class="rb-tab {{ !$manualMode ? 'active' : '' }}">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        Excel / CSV Import
+    </button>
+    @if(!$manualMode)
+    <button wire:click="downloadTemplate" type="button" class="rb-dl-btn" style="margin-left:auto">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Template
+    </button>
+    @endif
+</div>
+
+{{-- ── Flash messages ───────────────────────────────────────────── --}}
+@if(session()->has('success'))
+<div class="rb-flash green">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0">
+        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    {{ session('success') }}
+</div>
+@endif
+@if(session()->has('error'))
+<div class="rb-flash red">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0">
+        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    {{ session('error') }}
+</div>
+@endif
+@if(session()->has('warning'))
+<div class="rb-flash amber">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    {{ session('warning') }}
+</div>
+@endif
+
+@if($manualMode)
+{{-- ══════════════════════════ MANUAL MODE ══════════════════════════ --}}
+
+    {{-- Warehouse selector --}}
+    <div class="rb-card" style="margin-bottom:16px">
+        <label class="rb-label">Warehouse <span>*</span></label>
+        <select wire:model.live="warehouseId" class="rb-select"
+                {{ auth()->user()->isWarehouseManager() ? 'disabled' : '' }}>
+            <option value="">Select warehouse…</option>
+            @foreach($warehouses as $warehouse)
+                <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+            @endforeach
+        </select>
+        @error('warehouseId') <p class="rb-error">{{ $message }}</p> @enderror
     </div>
 
-    <!-- Mode Toggle -->
-    <div class="mb-6 bg-white rounded-lg shadow-sm p-4">
-        <div class="flex items-center space-x-4">
-            <button wire:click="switchMode('manual')"
-                    class="px-6 py-2 rounded-lg font-semibold {{ $manualMode ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700' }}">
-                📦 Manual Entry
-            </button>
-            <button wire:click="switchMode('excel')"
-                    class="px-6 py-2 rounded-lg font-semibold {{ !$manualMode ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700' }}">
-                📊 Excel Upload
-            </button>
-            @if(!$manualMode)
-                <button wire:click="downloadTemplate"
-                        class="ml-auto px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
-                    ⬇️ Download Template
-                </button>
+    {{-- Scan strip --}}
+    <div class="rb-scan">
+        <div class="rb-scan-lbl">Scan product barcode</div>
+        <div class="rb-scan-row">
+            <input wire:model.live="productBarcode"
+                   type="text"
+                   class="rb-scan-input"
+                   placeholder="Scan or type barcode from box…"
+                   {{ !$warehouseId ? 'disabled' : '' }}
+                   autofocus>
+            @if($productBarcode)
+            <button wire:click="clearProduct" type="button" class="rb-scan-clear">Clear</button>
             @endif
         </div>
+        @if(!$warehouseId)
+        <p class="rb-scan-hint warn">Select a warehouse above before scanning</p>
+        @else
+        <p class="rb-scan-hint">Receive form opens automatically when a barcode is detected</p>
+        @endif
+        @error('productBarcode') <p style="font-size:11px;color:rgba(255,100,100,.85);margin-top:8px">{{ $message }}</p> @enderror
     </div>
 
-    <!-- Flash Messages -->
-    @if (session()->has('success'))
-        <div class="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
-            <p class="text-sm text-green-800">{{ session('success') }}</p>
+    {{-- OR + Browse --}}
+    <div class="rb-card">
+        <div class="rb-or">OR</div>
+        <button wire:click="openProductDropdown" type="button"
+                {{ !$warehouseId ? 'disabled' : '' }}
+                class="rb-browse-btn">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            Browse &amp; Select Product
+        </button>
+        <p class="rb-hint" style="text-align:center;margin-top:10px">
+            @if(!$warehouseId)
+                Select a warehouse to enable product browsing
+            @else
+                Choose from existing products or create a new one
+            @endif
+        </p>
+    </div>
+
+@else
+{{-- ══════════════════════════ EXCEL MODE ═══════════════════════════ --}}
+
+    @if(!$showExcelPreview)
+    {{-- Upload card --}}
+    <div class="rb-card">
+
+        <div class="rb-field">
+            <label class="rb-label">Warehouse <span>*</span></label>
+            <select wire:model.live="warehouseId" class="rb-select"
+                    {{ auth()->user()->isWarehouseManager() ? 'disabled' : '' }}>
+                <option value="">Select warehouse…</option>
+                @foreach($warehouses as $warehouse)
+                    <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                @endforeach
+            </select>
         </div>
-    @endif
-    @if (session()->has('error'))
-        <div class="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p class="text-sm text-red-800">{{ session('error') }}</p>
+
+        <div class="rb-instr">
+            <div class="rb-instr-title">Import Instructions</div>
+            <ol>
+                <li>Download the CSV/Excel template</li>
+                <li>Fill in: <strong>barcode, product_name, sku, category, items_per_box, box_purchase_price, box_selling_price, boxes</strong> — plus optional batch_number and expiry_date</li>
+                <li>Upload the file — the system auto-matches existing products by barcode, then by name</li>
+                <li>Review matches, correct any unknown products, then confirm the import</li>
+            </ol>
         </div>
-    @endif
-    @if (session()->has('warning'))
-        <div class="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p class="text-sm text-yellow-800">{{ session('warning') }}</p>
-        </div>
-    @endif
 
-    @if($manualMode)
-        {{-- MANUAL MODE - Simple barcode input --}}
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="space-y-6">
-                <!-- Warehouse -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Warehouse</label>
-                    <select wire:model.live="warehouseId"
-                            class="block w-full rounded-lg border-gray-300 shadow-sm"
-                            {{ auth()->user()->isWarehouseManager() ? 'disabled' : '' }}>
-                        <option value="">Select warehouse...</option>
-                        @foreach($warehouses as $warehouse)
-                            <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('warehouseId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-
-                <!-- Product Barcode - Opens Modal -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Product Barcode <span class="text-xs text-gray-500">(scan from physical box)</span>
-                    </label>
-                    <div class="flex gap-2">
-                        <input type="text"
-                               wire:model.live="productBarcode"
-                               placeholder="Scan or type barcode from box"
-                               class="flex-1 rounded-lg border-gray-300 font-mono text-lg {{ !$warehouseId ? 'opacity-50 cursor-not-allowed' : '' }}"
-                               {{ !$warehouseId ? 'disabled' : '' }}
-                               autofocus>
-                        @if($productBarcode)
-                            <button wire:click="clearProduct"
-                                    class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-                                Clear
-                            </button>
-                        @endif
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500">
-                        @if(!$warehouseId)
-                            <span class="text-red-600 font-semibold">⚠️ Please select a warehouse first</span>
-                        @else
-                            System will open receive form when you scan/enter barcode
-                        @endif
-                    </p>
-                    @error('productBarcode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                    @error('warehouseId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-
-                <!-- Divider with OR -->
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-gray-300"></div>
-                    </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="px-2 bg-white text-gray-500">OR</span>
-                    </div>
-                </div>
-
-                <!-- Browse Products Button -->
-                <div>
-                    <button wire:click="openProductDropdown"
-                            type="button"
-                            {{ !$warehouseId ? 'disabled' : '' }}
-                            class="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold flex items-center justify-center gap-2
-                                   {{ !$warehouseId ? 'opacity-50 cursor-not-allowed' : '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Browse & Select Product
-                    </button>
-                    <p class="mt-2 text-xs text-gray-500 text-center">
-                        @if(!$warehouseId)
-                            <span class="text-red-600 font-semibold">⚠️ Please select a warehouse first</span>
-                        @else
-                            Select from existing products or create a new one
-                        @endif
-                    </p>
-                </div>
+        <label class="rb-upload-zone">
+            <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                 style="color:var(--text-dim);margin-bottom:12px">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <div style="font-size:14px;font-weight:600;color:var(--text-sub);margin-bottom:14px">
+                Drop file here or click to browse
             </div>
+            <span class="rb-upload-choose">Choose CSV / Excel File</span>
+            <input type="file" wire:model="excelFile" accept=".xlsx,.xls,.csv" style="display:none">
+            @if($excelFile)
+            <div style="margin-top:12px;font-size:12px;color:var(--accent);font-weight:600;
+                        display:flex;align-items:center;gap:6px;justify-content:center">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                {{ $excelFile->getClientOriginalName() }}
+            </div>
+            @endif
+            @error('excelFile') <p class="rb-error" style="margin-top:8px">{{ $message }}</p> @enderror
+        </label>
+
+        @if($excelFile && !$showExcelPreview)
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:16px">
+            @if(!$warehouseId)
+            <span style="font-size:12px;color:var(--red)">Select a warehouse first</span>
+            @endif
+            <button wire:click="processExcelFile" type="button"
+                    {{ !$warehouseId ? 'disabled' : '' }}
+                    style="padding:11px 22px;background:{{ $warehouseId ? 'var(--accent)' : 'var(--surface2)' }};
+                           color:{{ $warehouseId ? '#fff' : 'var(--text-dim)' }};border:none;
+                           border-radius:var(--rsm);font-size:14px;font-weight:700;
+                           cursor:{{ $warehouseId ? 'pointer' : 'not-allowed' }};font-family:var(--font);
+                           display:inline-flex;align-items:center;gap:8px;
+                           {{ $warehouseId ? 'box-shadow:0 3px 10px rgba(59,111,212,.25)' : '' }}">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                Preview Import
+            </button>
         </div>
+        @endif
+    </div>
 
     @else
-        {{-- EXCEL MODE --}}
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            @if(!$showExcelPreview)
-                <div class="space-y-4">
-                    <!-- Warehouse -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Warehouse</label>
-                        <select wire:model.live="warehouseId"
-                                class="block w-full rounded-lg border-gray-300"
-                                {{ auth()->user()->isWarehouseManager() ? 'disabled' : '' }}>
-                            <option value="">Select warehouse...</option>
-                            @foreach($warehouses as $warehouse)
-                                <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
-                            @endforeach
-                        </select>
+    {{-- ───────── EXCEL PREVIEW ───────── --}}
+
+        {{-- RECOGNIZED --}}
+        @if(!empty($excelRecognized))
+        <div class="rb-xs">
+            <div class="rb-xs-head green">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--green);flex-shrink:0">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span class="rb-xs-title">
+                    Products Found — {{ count($excelRecognized) }} rows · {{ array_sum(array_column($excelRecognized, 'boxes')) }} boxes
+                </span>
+            </div>
+            <div class="rb-xs-body">
+                @foreach($excelRecognized as $item)
+                @php $rowNum = $item['row_number']; @endphp
+                <div class="rb-row-card">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap">
+                        <span class="rb-row-badge" style="background:var(--green-dim);color:var(--green)">Row {{ $rowNum }}</span>
+                        <span class="rb-row-badge" style="background:var(--green-dim);color:var(--green)">Matched by {{ $item['match_method'] }}</span>
+                        @if($item['new_barcode'] ?? false)
+                        <span class="rb-row-badge" style="background:var(--accent-dim);color:var(--accent)">New Barcode</span>
+                        @endif
+                        <span style="font-size:12px;color:var(--text-dim);margin-left:auto">
+                            {{ $item['boxes'] }} boxes{{ !empty($item['batch_number']) ? ' · Batch: ' . $item['batch_number'] : '' }}
+                        </span>
                     </div>
 
-                    <!-- Instructions -->
-                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <h3 class="font-semibold text-blue-900 mb-2">📋 Smart Import Instructions</h3>
-                        <ol class="list-decimal list-inside text-sm text-blue-800 space-y-1">
-                            <li>Download the CSV/Excel template below</li>
-                            <li>Fill in complete product info: <strong>barcode, product_name, sku, category, items_per_box, box_purchase_price, box_selling_price, boxes</strong>, batch_number (optional), expiry_date (optional)</li>
-                            <li>Upload the file - system will auto-match existing products</li>
-                            <li><strong>Smart matching:</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1 space-y-0.5">
-                                    <li>Known barcodes → Instant match ✓</li>
-                                    <li>Known product names → Auto-associate new barcode</li>
-                                    <li>New products → Pre-filled from Excel, just verify or search existing</li>
-                                </ul>
-                            </li>
-                        </ol>
-                    </div>
-
-                    <!-- File Upload -->
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                        <label class="cursor-pointer">
-                            <span class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-block">
-                                Choose CSV/Excel File
-                            </span>
-                            <input type="file"
-                                   wire:model="excelFile"
-                                   accept=".xlsx,.xls,.csv"
-                                   class="hidden">
+                    {{-- Change detection --}}
+                    @if(!empty($excelHasDifferentValues[$rowNum]) && in_array(true, $excelHasDifferentValues[$rowNum]))
+                    <div class="rb-chg-alert">
+                        <div class="rb-chg-title">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            Excel values differ from database:
+                        </div>
+                        <ul class="rb-chg-list">
+                            @if($excelHasDifferentValues[$rowNum]['name'] ?? false)          <li>Product name differs</li>@endif
+                            @if($excelHasDifferentValues[$rowNum]['sku'] ?? false)           <li>SKU differs</li>@endif
+                            @if($excelHasDifferentValues[$rowNum]['items_per_box'] ?? false) <li>Items per box differs</li>@endif
+                            @if($excelHasDifferentValues[$rowNum]['box_purchase_price'] ?? false) <li>Box purchase price differs</li>@endif
+                            @if($excelHasDifferentValues[$rowNum]['box_selling_price'] ?? false)  <li>Box selling price differs</li>@endif
+                        </ul>
+                        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:12px;font-weight:600;color:var(--amber)">
+                            <input type="checkbox" wire:model="shouldUpdateProduct.{{ $rowNum }}" style="accent-color:var(--amber)">
+                            Update product with Excel values
                         </label>
-                        @if($excelFile)
-                            <p class="mt-2 text-sm text-gray-600">Selected: {{ $excelFile->getClientOriginalName() }}</p>
-                        @endif
-                        @error('excelFile') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
-
-                    @if($excelFile && !$showExcelPreview)
-                        <div class="flex justify-end">
-                            <button wire:click="processExcelFile"
-                                    {{ !$warehouseId ? 'disabled' : '' }}
-                                    class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold
-                                           {{ !$warehouseId ? 'opacity-50 cursor-not-allowed' : '' }}">
-                                📊 Preview Import
-                            </button>
-                        </div>
-                        @if(!$warehouseId)
-                            <p class="text-sm text-red-600 text-center mt-2">⚠️ Please select a warehouse first</p>
-                        @endif
-                    @endif
-                </div>
-            @else
-                <!-- Preview with Barcode Recognition -->
-                <div class="space-y-6">
-
-                    <!-- RECOGNIZED SECTION -->
-                    @if(!empty($excelRecognized))
-                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                            <div class="flex items-center gap-2 mb-3">
-                                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                                <h3 class="font-semibold text-green-900">
-                                    ✓ Products Found ({{ count($excelRecognized) }} rows - {{ array_sum(array_column($excelRecognized, 'boxes')) }} boxes)
-                                </h3>
-                            </div>
-
-                            <div class="space-y-4">
-                                @foreach($excelRecognized as $item)
-                                    @php $rowNum = $item['row_number']; @endphp
-
-                                    <div class="bg-white rounded-lg p-4 border-2 border-green-300">
-
-                                        <!-- Row Header -->
-                                        <div class="flex items-start justify-between mb-3">
-                                            <div class="flex-1">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="px-2 py-1 bg-green-200 text-green-800 text-xs font-semibold rounded">
-                                                        Row {{ $rowNum }}
-                                                    </span>
-                                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
-                                                        ✓ Matched by {{ $item['match_method'] }}
-                                                    </span>
-                                                    @if($item['new_barcode'] ?? false)
-                                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                                                            🔵 New Barcode
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                                <p class="text-sm text-gray-600 mt-1">
-                                                    {{ $item['boxes'] }} boxes
-                                                    @if($item['batch_number']) | Batch: {{ $item['batch_number'] }} @endif
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Change Detection Warning -->
-                                        @if(!empty($excelHasDifferentValues[$rowNum]) && in_array(true, $excelHasDifferentValues[$rowNum]))
-                                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
-                                                <div class="flex items-start gap-2 mb-2">
-                                                    <svg class="w-4 h-4 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                                    </svg>
-                                                    <div class="flex-1">
-                                                        <p class="text-sm font-medium text-yellow-800">Excel has different values:</p>
-                                                        <ul class="text-xs text-yellow-700 mt-1 space-y-0.5">
-                                                            @if($excelHasDifferentValues[$rowNum]['name'] ?? false)
-                                                                <li>• Product name differs</li>
-                                                            @endif
-                                                            @if($excelHasDifferentValues[$rowNum]['sku'] ?? false)
-                                                                <li>• SKU differs</li>
-                                                            @endif
-                                                            @if($excelHasDifferentValues[$rowNum]['items_per_box'] ?? false)
-                                                                <li>• Items per box differs</li>
-                                                            @endif
-                                                            @if($excelHasDifferentValues[$rowNum]['box_purchase_price'] ?? false)
-                                                                <li>• Box purchase price differs</li>
-                                                            @endif
-                                                            @if($excelHasDifferentValues[$rowNum]['box_selling_price'] ?? false)
-                                                                <li>• Box selling price differs</li>
-                                                            @endif
-                                                        </ul>
-                                                    </div>
-                                                </div>
-
-                                                <label class="flex items-center gap-2 mt-2 cursor-pointer">
-                                                    <input type="checkbox"
-                                                           wire:model="shouldUpdateProduct.{{ $rowNum }}"
-                                                           class="rounded border-yellow-400 text-yellow-600 focus:ring-yellow-500">
-                                                    <span class="text-sm font-medium text-yellow-900">
-                                                        Update product with values from Excel
-                                                    </span>
-                                                </label>
-                                            </div>
-                                        @endif
-
-                                        <!-- Editable Fields -->
-                                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                            <p class="text-xs font-medium text-gray-700 mb-3">
-                                                Product Information (editable):
-                                            </p>
-
-                                            <div class="space-y-3">
-                                                <!-- Product Name -->
-                                                <div>
-                                                    <label class="block text-xs font-medium text-gray-700 mb-1">
-                                                        Product Name
-                                                    </label>
-                                                    <input type="text"
-                                                           wire:model="editableProductNames.{{ $rowNum }}"
-                                                           class="block w-full rounded-lg border-gray-300 text-sm">
-                                                </div>
-
-                                                <!-- Grid: Barcode + SKU -->
-                                                <div class="grid grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-gray-700 mb-1">
-                                                            Barcode
-                                                        </label>
-                                                        <input type="text"
-                                                               wire:model="editableProductBarcodes.{{ $rowNum }}"
-                                                               class="block w-full rounded-lg border-gray-300 text-sm font-mono">
-                                                    </div>
-
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-gray-700 mb-1">
-                                                            SKU
-                                                        </label>
-                                                        <input type="text"
-                                                               wire:model="editableProductSkus.{{ $rowNum }}"
-                                                               class="block w-full rounded-lg border-gray-300 text-sm font-mono">
-                                                    </div>
-                                                </div>
-
-                                                <!-- Grid: Category + Items/Box + Box Prices -->
-                                                <div class="grid grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-gray-700 mb-1">
-                                                            Category
-                                                        </label>
-                                                        <select wire:model="editableProductCategories.{{ $rowNum }}"
-                                                                class="block w-full rounded-lg border-gray-300 text-sm">
-                                                            @foreach($categories as $category)
-                                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-gray-700 mb-1">
-                                                            Items/Box
-                                                        </label>
-                                                        <input type="number"
-                                                               wire:model="editableProductItemsPerBox.{{ $rowNum }}"
-                                                               min="1"
-                                                               class="block w-full rounded-lg border-gray-300 text-sm">
-                                                    </div>
-
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-gray-700 mb-1">
-                                                            Box Purchase Price (RWF)
-                                                        </label>
-                                                        <input type="number"
-                                                               wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}"
-                                                               min="0"
-                                                               class="block w-full rounded-lg border-gray-300 text-sm">
-                                                    </div>
-
-                                                    <div>
-                                                        <label class="block text-xs font-medium text-gray-700 mb-1">
-                                                            Box Selling Price (RWF)
-                                                        </label>
-                                                        <input type="number"
-                                                               wire:model="editableProductBoxSellingPrices.{{ $rowNum }}"
-                                                               min="0"
-                                                               class="block w-full rounded-lg border-gray-300 text-sm">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
                     @endif
 
-                    <!-- NEW PRODUCTS SECTION -->
-                    @if(!empty($excelUnknown))
-                        <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
-                            <div class="flex items-center gap-2 mb-3">
-                                <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                                <h3 class="font-semibold text-yellow-900">
-                                    ⚠️ Verify Product Names ({{ count($excelUnknown) }} rows)
-                                </h3>
+                    {{-- Editable fields --}}
+                    <div class="rb-row-fields">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:10px">
+                            Product Information (editable)
+                        </div>
+                        <div class="rb-field">
+                            <label class="rb-label">Product Name</label>
+                            <input type="text" wire:model="editableProductNames.{{ $rowNum }}" class="rb-input">
+                        </div>
+                        <div class="rb-grid-2">
+                            <div>
+                                <label class="rb-label">Barcode</label>
+                                <input type="text" wire:model="editableProductBarcodes.{{ $rowNum }}" class="rb-input mono">
                             </div>
-
-                            <div class="space-y-4">
-                                @foreach($excelUnknown as $item)
-                                    @php $rowNum = $item['row_number']; @endphp
-
-                                    <div class="bg-white rounded-lg p-4 border-2 {{ $item['status'] === 'matched' ? 'border-green-300' : 'border-yellow-300' }}">
-
-                                        <!-- Row Header -->
-                                        <div class="flex items-start justify-between mb-3">
-                                            <div>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs font-semibold rounded">
-                                                        Row {{ $rowNum }}
-                                                    </span>
-                                                    @if($item['status'] === 'matched')
-                                                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
-                                                            ✓ Matched
-                                                        </span>
-                                                    @else
-                                                        <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded">
-                                                            ⚠️ New Product
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                                <p class="text-sm text-gray-600 mt-1">
-                                                    {{ $item['boxes'] }} boxes
-                                                    @if($item['batch_number']) | Batch: {{ $item['batch_number'] }} @endif
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        @if($item['status'] === 'matched')
-                                            <!-- MATCHED VIA SEARCH -->
-                                            <div class="bg-green-50 rounded-lg p-3 border border-green-200">
-                                                <p class="text-sm font-semibold text-green-900">{{ $item['matched_product_name'] }}</p>
-                                                <p class="text-xs text-green-700 mt-1">
-                                                    SKU: {{ $item['product_sku'] }} | {{ $item['matched_items_per_box'] }} items/box
-                                                </p>
-                                            </div>
-                                        @else
-                                            <!-- NEW PRODUCT - PRE-FILLED FROM EXCEL -->
-                                            <div class="space-y-3">
-
-                                                <!-- Live Search Product Name -->
-                                                <div class="relative">
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                                        Product Name
-                                                        <span class="text-xs text-gray-500 font-normal">(Search existing or keep as is)</span>
-                                                    </label>
-
-                                                    <!-- Display current name -->
-                                                    <div class="mb-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                                                        <p class="text-sm font-medium text-blue-900">
-                                                            From Excel: "{{ $editableProductNames[$rowNum] }}"
-                                                        </p>
-                                                    </div>
-
-                                                    <!-- Live search input -->
-                                                    <input type="text"
-                                                           wire:model.live.debounce.300ms="editableProductSearchQuery.{{ $rowNum }}"
-                                                           placeholder="Type to search existing products..."
-                                                           class="block w-full rounded-lg border-gray-300 text-sm"
-                                                           autocomplete="off">
-
-                                                    <!-- Live search results dropdown -->
-                                                    @if(!empty($liveSearchResults[$rowNum]))
-                                                        <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                                            @foreach($liveSearchResults[$rowNum] as $result)
-                                                                <button type="button"
-                                                                        wire:click="selectProductFromSearch({{ $rowNum }}, {{ $result['id'] }})"
-                                                                        class="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0">
-                                                                    <p class="font-medium text-gray-900">{{ $result['name'] }}</p>
-                                                                    <p class="text-xs text-gray-600 mt-1">
-                                                                        SKU: {{ $result['sku'] }} |
-                                                                        {{ $result['items_per_box'] }} items/box |
-                                                                        {{ number_format($result['selling_price']) }} RWF
-                                                                    </p>
-                                                                </button>
-                                                            @endforeach
-                                                        </div>
-                                                    @endif
-
-                                                    <p class="text-xs text-gray-500 mt-1">
-                                                        💡 Type to search, or leave as is to create new product
-                                                    </p>
-                                                </div>
-
-                                                <!-- Pre-filled fields from Excel -->
-                                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                                    <p class="text-xs font-medium text-gray-700 mb-2">Pre-filled from Excel:</p>
-
-                                                    <div class="grid grid-cols-2 gap-3">
-                                                        <!-- Barcode (read-only) -->
-                                                        <div>
-                                                            <label class="block text-xs text-gray-600 mb-1">Barcode</label>
-                                                            <input type="text"
-                                                                   value="{{ $editableProductBarcodes[$rowNum] }}"
-                                                                   disabled
-                                                                   class="block w-full rounded border-gray-200 bg-gray-100 text-xs font-mono">
-                                                        </div>
-
-                                                        <!-- SKU (editable) -->
-                                                        <div>
-                                                            <label class="block text-xs text-gray-600 mb-1">SKU</label>
-                                                            <input type="text"
-                                                                   wire:model="editableProductSkus.{{ $rowNum }}"
-                                                                   class="block w-full rounded border-gray-300 text-xs font-mono">
-                                                        </div>
-
-                                                        <!-- Category (from Excel, may need selection if not found) -->
-                                                        <div>
-                                                            <label class="block text-xs text-gray-600 mb-1">
-                                                                Category <span class="text-red-500">*</span>
-                                                            </label>
-                                                            @if($editableProductCategories[$rowNum])
-                                                                <input type="text"
-                                                                       value="{{ $item['category_name'] }}"
-                                                                       disabled
-                                                                       class="block w-full rounded border-gray-200 bg-green-100 text-xs">
-                                                            @else
-                                                                <select wire:model="editableProductCategories.{{ $rowNum }}"
-                                                                        class="block w-full rounded border-red-300 bg-red-50 text-xs">
-                                                                    <option value="">⚠️ "{{ $item['category_name'] }}" not found - Select:</option>
-                                                                    @foreach($categories as $category)
-                                                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                                                    @endforeach
-                                                                </select>
-                                                            @endif
-                                                        </div>
-
-                                                        <!-- Items per Box -->
-                                                        <div>
-                                                            <label class="block text-xs text-gray-600 mb-1">Items/Box</label>
-                                                            <input type="number"
-                                                                   wire:model="editableProductItemsPerBox.{{ $rowNum }}"
-                                                                   class="block w-full rounded border-gray-300 text-xs">
-                                                        </div>
-
-                                                        <!-- Box Purchase Price -->
-                                                        <div>
-                                                            <label class="block text-xs text-gray-600 mb-1">Box Purchase Price (RWF)</label>
-                                                            <input type="number"
-                                                                   wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}"
-                                                                   min="0"
-                                                                   class="block w-full rounded border-gray-300 text-xs">
-                                                        </div>
-
-                                                        <!-- Box Selling Price -->
-                                                        <div>
-                                                            <label class="block text-xs text-gray-600 mb-1">Box Selling Price (RWF)</label>
-                                                            <input type="number"
-                                                                   wire:model="editableProductBoxSellingPrices.{{ $rowNum }}"
-                                                                   min="0"
-                                                                   class="block w-full rounded border-gray-300 text-xs">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
+                            <div>
+                                <label class="rb-label">SKU</label>
+                                <input type="text" wire:model="editableProductSkus.{{ $rowNum }}" class="rb-input mono">
                             </div>
                         </div>
-                    @endif
-
-                    <!-- ERRORS SECTION -->
-                    @if(!empty($excelErrors))
-                        <div class="bg-red-50 border-2 border-red-200 rounded-lg p-4">
-                            <div class="flex items-center gap-2 mb-2">
-                                <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                                </svg>
-                                <h3 class="font-semibold text-red-900">
-                                    ❌ Errors ({{ count($excelErrors) }} rows)
-                                </h3>
+                        <div class="rb-grid-2">
+                            <div>
+                                <label class="rb-label">Category</label>
+                                <select wire:model="editableProductCategories.{{ $rowNum }}" class="rb-select">
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
-                            <div class="space-y-1">
-                                @foreach($excelErrors as $error)
-                                    <p class="text-sm text-red-700">Row {{ $error['row'] }}: {{ $error['error'] }}</p>
-                                @endforeach
+                            <div>
+                                <label class="rb-label">Items / Box</label>
+                                <input type="number" wire:model="editableProductItemsPerBox.{{ $rowNum }}" min="1" class="rb-input">
                             </div>
                         </div>
-                    @endif
-
-                    <!-- SUMMARY & ACTIONS -->
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <h3 class="font-semibold text-gray-900 mb-3">Import Summary</h3>
-
-                        <div class="grid grid-cols-4 gap-4 mb-4">
-                            <div class="text-center">
-                                <p class="text-xs text-gray-600 uppercase mb-1">Ready</p>
-                                <p class="text-2xl font-bold text-green-600">
-                                    {{ array_sum(array_column($excelRecognized, 'boxes')) }}
-                                </p>
-                                <p class="text-xs text-gray-500">boxes</p>
+                        <div class="rb-grid-2">
+                            <div>
+                                <label class="rb-label">Box Purchase Price (RWF)</label>
+                                <input type="number" wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}" min="0" class="rb-input">
                             </div>
-                            <div class="text-center">
-                                <p class="text-xs text-gray-600 uppercase mb-1">New Products</p>
-                                <p class="text-2xl font-bold text-yellow-600">
-                                    {{ count(array_filter($excelUnknown, fn($i) => $i['status'] !== 'matched')) }}
-                                </p>
-                                <p class="text-xs text-gray-500">to create</p>
+                            <div>
+                                <label class="rb-label">Box Selling Price (RWF)</label>
+                                <input type="number" wire:model="editableProductBoxSellingPrices.{{ $rowNum }}" min="0" class="rb-input">
                             </div>
-                            <div class="text-center">
-                                <p class="text-xs text-gray-600 uppercase mb-1">Errors</p>
-                                <p class="text-2xl font-bold text-red-600">
-                                    {{ count($excelErrors) }}
-                                </p>
-                                <p class="text-xs text-gray-500">rows</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-xs text-gray-600 uppercase mb-1">Total</p>
-                                <p class="text-2xl font-bold text-blue-600">
-                                    {{ array_sum(array_column($excelRecognized, 'boxes')) + array_sum(array_column($excelUnknown, 'boxes')) }}
-                                </p>
-                                <p class="text-xs text-gray-500">boxes</p>
-                            </div>
-                        </div>
-
-                        <!-- Show warnings if any -->
-                        @if(!$this->canImport && !empty($warehouseId))
-                            <div class="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
-                                <p class="text-sm text-yellow-800">
-                                    ⚠️ Please select categories for all new products before importing
-                                </p>
-                            </div>
-                        @endif
-
-                        <div class="flex justify-end gap-3">
-                            <button wire:click="cancelExcelImport"
-                                    type="button"
-                                    class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                                Cancel
-                            </button>
-                            <button wire:click="confirmExcelImport"
-                                    type="button"
-                                    @if(!$this->canImport) disabled @endif
-                                    class="px-6 py-2 text-white rounded-lg font-semibold shadow-lg
-                                           {{ $this->canImport ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed' }}">
-                                Import All ({{ array_sum(array_column($excelRecognized, 'boxes')) + array_sum(array_column($excelUnknown, 'boxes')) }} boxes)
-                            </button>
                         </div>
                     </div>
                 </div>
-            @endif
+                @endforeach
+            </div>
         </div>
-    @endif
+        @endif
 
-    <!-- Recent Boxes -->
-    @if(!empty($recentBoxes))
-        <div class="mt-8 bg-white rounded-lg shadow-sm p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">Recently Created ({{ count($recentBoxes) }})</h2>
-                <button wire:click="startNew"
-                        class="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm">
-                    🔄 Start New
+        {{-- UNKNOWN / NEW --}}
+        @if(!empty($excelUnknown))
+        <div class="rb-xs">
+            <div class="rb-xs-head amber">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--amber);flex-shrink:0">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span class="rb-xs-title">Verify Products — {{ count($excelUnknown) }} rows</span>
+            </div>
+            <div class="rb-xs-body">
+                @foreach($excelUnknown as $item)
+                @php $rowNum = $item['row_number']; @endphp
+                <div class="rb-row-card" style="{{ $item['status'] === 'matched' ? 'border-color:var(--green)' : '' }}">
+                    <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap">
+                        <span class="rb-row-badge" style="background:var(--amber-dim);color:var(--amber)">Row {{ $rowNum }}</span>
+                        @if($item['status'] === 'matched')
+                        <span class="rb-row-badge" style="background:var(--green-dim);color:var(--green)">Matched</span>
+                        @else
+                        <span class="rb-row-badge" style="background:var(--red-dim);color:var(--red)">New Product</span>
+                        @endif
+                        <span style="font-size:12px;color:var(--text-dim);margin-left:auto">
+                            {{ $item['boxes'] }} boxes{{ !empty($item['batch_number']) ? ' · Batch: ' . $item['batch_number'] : '' }}
+                        </span>
+                    </div>
+
+                    @if($item['status'] === 'matched')
+                    <div class="rb-alert green" style="margin-bottom:0">
+                        <div style="font-size:13px;font-weight:700;color:var(--green)">{{ $item['matched_product_name'] }}</div>
+                        <div style="font-size:11px;color:var(--green);margin-top:3px">
+                            SKU: {{ $item['product_sku'] }} · {{ $item['matched_items_per_box'] }} items/box
+                        </div>
+                    </div>
+                    @else
+                    <div class="rb-row-fields">
+                        {{-- Live search --}}
+                        <div style="position:relative;margin-bottom:12px">
+                            <label class="rb-label">
+                                Product Name
+                                <span style="color:var(--text-dim);font-weight:400">(search existing or keep as new)</span>
+                            </label>
+                            <div style="padding:8px 12px;background:var(--accent-dim);border-radius:var(--rsm);
+                                        margin-bottom:8px;font-size:12px;color:var(--accent);font-weight:600">
+                                From Excel: "{{ $editableProductNames[$rowNum] }}"
+                            </div>
+                            <input type="text"
+                                   wire:model.live.debounce.300ms="editableProductSearchQuery.{{ $rowNum }}"
+                                   placeholder="Type to search existing products…"
+                                   class="rb-input"
+                                   autocomplete="off">
+                            @if(!empty($liveSearchResults[$rowNum]))
+                            <div style="position:absolute;left:0;right:0;z-index:20;top:100%;margin-top:2px">
+                                <div class="rb-results">
+                                    @foreach($liveSearchResults[$rowNum] as $result)
+                                    <div class="rb-result"
+                                         wire:click="selectProductFromSearch({{ $rowNum }}, {{ $result['id'] }})">
+                                        <div>
+                                            <div class="rb-result-name">{{ $result['name'] }}</div>
+                                            <div class="rb-result-meta">
+                                                SKU: {{ $result['sku'] }} · {{ $result['items_per_box'] }} items/box · {{ number_format($result['selling_price']) }} RWF
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endif
+                            <p class="rb-hint">Type to search — or leave as is to create a new product</p>
+                        </div>
+
+                        <div class="rb-grid-2">
+                            <div>
+                                <label class="rb-label">Barcode</label>
+                                <input type="text" value="{{ $editableProductBarcodes[$rowNum] }}" disabled class="rb-input mono">
+                            </div>
+                            <div>
+                                <label class="rb-label">SKU</label>
+                                <input type="text" wire:model="editableProductSkus.{{ $rowNum }}" class="rb-input mono">
+                            </div>
+                        </div>
+                        <div class="rb-grid-2">
+                            <div>
+                                <label class="rb-label">Category <span>*</span></label>
+                                @if($editableProductCategories[$rowNum])
+                                    <input type="text" value="{{ $item['category_name'] }}" disabled
+                                           class="rb-input"
+                                           style="background:var(--green-dim);color:var(--green);border-color:var(--green)">
+                                @else
+                                    <select wire:model="editableProductCategories.{{ $rowNum }}"
+                                            class="rb-select"
+                                            style="border-color:var(--red);background:var(--red-dim);color:var(--red)">
+                                        <option value="">"{{ $item['category_name'] }}" not found — select:</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
+                                @endif
+                            </div>
+                            <div>
+                                <label class="rb-label">Items / Box</label>
+                                <input type="number" wire:model="editableProductItemsPerBox.{{ $rowNum }}" class="rb-input">
+                            </div>
+                        </div>
+                        <div class="rb-grid-2">
+                            <div>
+                                <label class="rb-label">Box Purchase Price (RWF)</label>
+                                <input type="number" wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}" min="0" class="rb-input">
+                            </div>
+                            <div>
+                                <label class="rb-label">Box Selling Price (RWF)</label>
+                                <input type="number" wire:model="editableProductBoxSellingPrices.{{ $rowNum }}" min="0" class="rb-input">
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- ERRORS --}}
+        @if(!empty($excelErrors))
+        <div class="rb-xs">
+            <div class="rb-xs-head red">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--red);flex-shrink:0">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                <span class="rb-xs-title">Import Errors — {{ count($excelErrors) }} rows</span>
+            </div>
+            <div class="rb-xs-body">
+                @foreach($excelErrors as $error)
+                <div style="padding:8px 2px;font-size:13px;color:var(--red);border-bottom:1px solid var(--border)">
+                    <strong>Row {{ $error['row'] }}:</strong> {{ $error['error'] }}
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- IMPORT SUMMARY --}}
+        <div class="rb-card">
+            <div class="rb-section-head">Import Summary</div>
+            <div class="rb-summary">
+                <div class="rb-stat">
+                    <div class="rb-stat-lbl">Ready</div>
+                    <div class="rb-stat-val" style="color:var(--green)">{{ array_sum(array_column($excelRecognized, 'boxes')) }}</div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:4px">boxes</div>
+                </div>
+                <div class="rb-stat">
+                    <div class="rb-stat-lbl">New Products</div>
+                    <div class="rb-stat-val" style="color:var(--amber)">{{ count(array_filter($excelUnknown, fn($i) => $i['status'] !== 'matched')) }}</div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:4px">to create</div>
+                </div>
+                <div class="rb-stat">
+                    <div class="rb-stat-lbl">Errors</div>
+                    <div class="rb-stat-val" style="color:var(--red)">{{ count($excelErrors) }}</div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:4px">rows</div>
+                </div>
+                <div class="rb-stat">
+                    <div class="rb-stat-lbl">Total</div>
+                    <div class="rb-stat-val" style="color:var(--accent)">{{ array_sum(array_column($excelRecognized, 'boxes')) + array_sum(array_column($excelUnknown, 'boxes')) }}</div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:4px">boxes</div>
+                </div>
+            </div>
+
+            @if(!$this->canImport && !empty($warehouseId))
+            <div class="rb-alert amber" style="margin-bottom:16px">
+                <div class="rb-alert-body">Select categories for all new products before importing</div>
+            </div>
+            @endif
+
+            <div style="display:flex;justify-content:flex-end;gap:10px">
+                <button wire:click="cancelExcelImport" type="button" class="rb-btn-cancel">Cancel</button>
+                <button wire:click="confirmExcelImport" type="button"
+                        @if(!$this->canImport) disabled @endif
+                        class="rb-btn-confirm">
+                    Import All ({{ array_sum(array_column($excelRecognized, 'boxes')) + array_sum(array_column($excelUnknown, 'boxes')) }} boxes)
                 </button>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Box Code</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier Barcode</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Batch</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expiry</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($recentBoxes as $box)
-                            <tr>
-                                <td class="px-4 py-3 text-sm font-mono text-blue-600">{{ $box->box_code }}</td>
-                                <td class="px-4 py-3 text-sm">{{ $box->product->name }}</td>
-                                <td class="px-4 py-3 text-sm">{{ $box->items_remaining }} items</td>
-                                <td class="px-4 py-3 text-sm font-mono text-gray-600">{{ $box->supplier_barcode ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm">{{ $box->batch_number ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm">{{ $box->expiry_date ? $box->expiry_date->format('Y-m-d') : '-' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        </div>
+
+    @endif
+@endif
+
+{{-- ── Session bar ──────────────────────────────────────────────── --}}
+@if($sessionTotal > 0)
+<div class="rb-session" style="margin-top:16px">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
+        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <span style="font-size:13px;color:var(--accent);font-weight:600">
+        Session total: <strong style="font-family:var(--mono)">{{ $sessionTotal }}</strong> boxes received
+    </span>
+</div>
+@endif
+
+{{-- ── Recent boxes ─────────────────────────────────────────────── --}}
+@if(!empty($recentBoxes))
+<div class="rb-tbl-wrap">
+    <div class="rb-tbl-head">
+        <div>
+            <span style="font-size:14px;font-weight:700;color:var(--text)">Recently Received</span>
+            <span style="font-size:12px;color:var(--text-dim);margin-left:8px;font-weight:400">{{ count($recentBoxes) }} boxes this session</span>
+        </div>
+        <button wire:click="startNew" type="button" class="rb-new-btn">Start New</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="rb-tbl">
+        <thead>
+            <tr>
+                <th>Box Code</th>
+                <th>Product</th>
+                <th>Items</th>
+                <th>Supplier Barcode</th>
+                <th>Batch</th>
+                <th>Expiry</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($recentBoxes as $box)
+            <tr>
+                <td>
+                    <span style="font-family:var(--mono);font-size:12px;font-weight:700;
+                                 padding:3px 9px;border-radius:7px;
+                                 background:var(--accent-dim);color:var(--accent)">
+                        {{ $box->box_code }}
+                    </span>
+                </td>
+                <td style="font-weight:600;color:var(--text)">{{ $box->product->name }}</td>
+                <td style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-sub)">
+                    {{ $box->items_remaining }}
+                </td>
+                <td style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">
+                    {{ $box->supplier_barcode ?? '—' }}
+                </td>
+                <td style="font-size:12px;color:var(--text-dim)">{{ $box->batch_number ?? '—' }}</td>
+                <td style="font-size:12px;color:var(--text-dim)">
+                    {{ $box->expiry_date ? $box->expiry_date->format('d M Y') : '—' }}
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    </div>
+</div>
+@endif
+
+{{-- ══════════════════════════ RECEIVE MODAL ════════════════════════ --}}
+@if($showReceiveModal)
+<div class="rb-overlay" wire:click="closeReceiveModal">
+    <div class="rb-modal" @click.stop>
+
+        {{-- Header --}}
+        <div class="rb-modal-head">
+            <div>
+                <div class="rb-modal-title">
+                    @if($isNewProduct)      Create New Product
+                    @elseif($barcodeIsKnown) Receive Boxes
+                    @elseif($showProductSearch) Link Barcode to Product
+                    @elseif($showProductDropdown) Select Product
+                    @else Receive Boxes
+                    @endif
+                </div>
+                @if($productBarcode && !$showProductDropdown && !$isNewProduct)
+                <div class="rb-modal-sub">
+                    Barcode: <span style="font-family:var(--mono);color:var(--accent);font-weight:700">{{ $productBarcode }}</span>
+                </div>
+                @endif
             </div>
+            <button wire:click="closeReceiveModal" type="button" class="rb-modal-close">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
-    @endif
 
-    @if($sessionTotal > 0)
-        <div class="mt-6 bg-blue-50 rounded-lg p-4">
-            <p class="text-sm font-semibold text-blue-900">📊 Session Total: {{ $sessionTotal }} boxes created</p>
-        </div>
-    @endif
+        {{-- Body --}}
+        <div class="rb-modal-body">
 
-    <!-- Unified Receive Modal -->
-    @if($showReceiveModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto">
-            <!-- Backdrop -->
-            <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-                 wire:click="closeReceiveModal"></div>
+            {{-- Warehouse warning --}}
+            @if(!$warehouseId)
+            <div class="rb-alert red">
+                <div class="rb-alert-head">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <span class="rb-alert-title">Warehouse Not Selected</span>
+                </div>
+                <div class="rb-alert-body">Close this dialog and select a warehouse on the main screen first.</div>
+            </div>
+            @endif
 
-            <!-- Modal Container -->
-            <div class="flex items-center justify-center min-h-screen px-4 py-6">
-                <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
-                     @click.stop>
-
-                    <!-- Fixed Header -->
-                    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-                        <div>
-                            <h2 class="text-lg font-bold text-gray-900">
-                                @if($isNewProduct)
-                                    ➕ Create New Product
-                                @elseif($barcodeIsKnown)
-                                    ✓ Receive Boxes
-                                @elseif($showProductSearch)
-                                    🔍 Link Barcode to Product
-                                @elseif($showProductDropdown)
-                                    📦 Select Product
-                                @else
-                                    Receive Boxes
-                                @endif
-                            </h2>
-                            @if($productBarcode && !$showProductDropdown && !$isNewProduct)
-                                <p class="text-sm text-gray-600 mt-1">Barcode: <span class="font-mono text-blue-600">{{ $productBarcode }}</span></p>
-                            @endif
-                        </div>
-                        <button wire:click="closeReceiveModal"
-                                type="button"
-                                class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
+            @if($barcodeIsKnown && !$showProductSearch)
+            {{-- ── SCENARIO 1: Known barcode ── --}}
+            @if($product)
+            <div class="rb-alert green">
+                <div class="rb-alert-head">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <span class="rb-alert-title">Product Recognized</span>
+                </div>
+                <div class="rb-pinfo">
+                    <div class="rb-pinfo-row">
+                        <span class="rb-pinfo-key">Name</span>
+                        <span class="rb-pinfo-val">{{ $product->name }}</span>
                     </div>
-
-                    <!-- Scrollable Content -->
-                    <div class="flex-1 overflow-y-auto px-6 py-4">
-                        <div class="space-y-4">
-                            <!-- Warehouse Warning -->
-                            @if(!$warehouseId)
-                                <div class="bg-red-50 border-2 border-red-200 rounded-lg p-4">
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <div class="flex-1">
-                                            <p class="text-sm font-semibold text-red-800">Warehouse Not Selected</p>
-                                            <p class="text-xs text-red-700 mt-1">Please close this dialog and select a warehouse on the main screen first.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if($barcodeIsKnown && !$showProductSearch)
-                                <!-- SCENARIO 1: Known Barcode (Fast Path) -->
-                                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <h3 class="font-semibold text-green-900">Product Recognized!</h3>
-                                    </div>
-                                    @if($product)
-                                        <div class="grid grid-cols-2 gap-2 text-sm">
-                                            <div><span class="text-gray-600">Name:</span> <span class="font-semibold ml-2">{{ $product->name }}</span></div>
-                                            <div><span class="text-gray-600">SKU:</span> <span class="font-mono ml-2">{{ $product->sku }}</span></div>
-                                            <div><span class="text-gray-600">Items/Box:</span> <span class="font-semibold ml-2">{{ $product->items_per_box }}</span></div>
-                                            <div><span class="text-gray-600">Price:</span> <span class="ml-2">{{ number_format($product->selling_price, 0) }} RWF</span></div>
-                                        </div>
-                                    @endif
-                                </div>
-
-                            @elseif($showProductSearch)
-                                <!-- SCENARIO 2: Unknown Barcode (Learning Path) -->
-                                <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <h3 class="font-semibold text-yellow-900">Barcode Not Recognized</h3>
-                                    </div>
-                                    <p class="text-sm text-yellow-800">
-                                        Barcode <strong class="font-mono">{{ $productBarcode }}</strong> is not in the system.
-                                        Search for the product below.
-                                    </p>
-                                </div>
-
-                                <!-- Product Search -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Product</label>
-                                    <input type="text"
-                                           wire:model.live.debounce.300ms="productSearch"
-                                           placeholder="Type product name or SKU..."
-                                           class="block w-full rounded-lg border-gray-300 text-sm">
-                                    <p class="mt-1 text-xs text-gray-500">Start typing to see matching products</p>
-                                </div>
-
-                                <!-- Search Results -->
-                                @if(!empty($searchResults))
-                                    <div class="space-y-2 max-h-60 overflow-y-auto">
-                                        <p class="text-xs font-medium text-gray-600 uppercase">Select a product:</p>
-                                        @foreach($searchResults as $result)
-                                            <div wire:click="selectProduct({{ $result['id'] }})"
-                                                 class="p-3 border rounded-lg cursor-pointer transition-all
-                                                        {{ $selectedProductId == $result['id'] ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200' : 'border-gray-300 hover:bg-gray-50' }}">
-                                                <div class="flex items-start justify-between">
-                                                    <div class="flex-1">
-                                                        <p class="font-medium text-gray-900">{{ $result['name'] }}</p>
-                                                        <p class="text-xs text-gray-600 mt-1">
-                                                            SKU: <span class="font-mono">{{ $result['sku'] }}</span> |
-                                                            {{ $result['items_per_box'] }} items/box
-                                                        </p>
-                                                    </div>
-                                                    @if($selectedProductId == $result['id'])
-                                                        <svg class="w-5 h-5 text-blue-600 flex-shrink-0 ml-2" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @elseif(strlen($productSearch) >= 2)
-                                    <div class="text-center py-8 text-gray-500 text-sm">
-                                        No products found. Try a different search term.
-                                    </div>
-                                @endif
-
-                                <!-- Remember Barcode Checkbox -->
-                                @if($selectedProductId)
-                                    <div class="bg-blue-50 border border-blue-300 rounded-lg p-4">
-                                        <label class="flex items-start gap-3 cursor-pointer">
-                                            <input type="checkbox"
-                                                   wire:model="rememberBarcode"
-                                                   checked
-                                                   class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                            <div class="flex-1">
-                                                <p class="text-sm font-semibold text-gray-900">Remember this association</p>
-                                                <p class="text-xs text-gray-700 mt-1">
-                                                    Save barcode <strong class="font-mono">{{ $productBarcode }}</strong> for
-                                                    "<strong>{{ $selectedProductName }}</strong>" so it's recognized instantly next time.
-                                                </p>
-                                            </div>
-                                        </label>
-
-                                        @if($rememberBarcode)
-                                            <div class="mt-3">
-                                                <label class="block text-xs font-medium text-gray-700 mb-1">Supplier Name (Optional)</label>
-                                                <input type="text"
-                                                       wire:model="supplierName"
-                                                       placeholder="e.g., Supplier A, Supplier B"
-                                                       class="block w-full rounded border-gray-300 text-sm">
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endif
-
-                            @elseif($showProductDropdown)
-                                <!-- SCENARIO 3: Product Dropdown (Browse & Select) -->
-                                <div class="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
-                                        </svg>
-                                        <h3 class="font-semibold text-indigo-900">Select a Product</h3>
-                                    </div>
-                                    <p class="text-sm text-indigo-800">
-                                        Browse available products or create a new one if it doesn't exist.
-                                    </p>
-                                </div>
-
-                                <!-- Product Search -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Product</label>
-                                    <input type="text"
-                                           wire:model.live.debounce.300ms="productSearch"
-                                           placeholder="Type product name or SKU..."
-                                           class="block w-full rounded-lg border-gray-300 text-sm"
-                                           autofocus>
-                                    <p class="mt-1 text-xs text-gray-500">Start typing to see matching products</p>
-                                </div>
-
-                                <!-- Search Results -->
-                                @if(!empty($searchResults))
-                                    <div class="space-y-2 max-h-60 overflow-y-auto">
-                                        <p class="text-xs font-medium text-gray-600 uppercase">Select a product:</p>
-                                        @foreach($searchResults as $result)
-                                            <div wire:click="selectProductFromDropdown({{ $result['id'] }})"
-                                                 class="p-3 border rounded-lg cursor-pointer transition-all
-                                                        {{ $selectedProductId == $result['id'] ? 'bg-indigo-50 border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-300 hover:bg-gray-50' }}">
-                                                <div class="flex items-start justify-between">
-                                                    <div class="flex-1">
-                                                        <p class="font-medium text-gray-900">{{ $result['name'] }}</p>
-                                                        <p class="text-xs text-gray-600 mt-1">
-                                                            SKU: <span class="font-mono">{{ $result['sku'] }}</span> |
-                                                            {{ $result['items_per_box'] }} items/box |
-                                                            {{ number_format($result['selling_price'], 0) }} RWF
-                                                        </p>
-                                                    </div>
-                                                    @if($selectedProductId == $result['id'])
-                                                        <svg class="w-5 h-5 text-indigo-600 flex-shrink-0 ml-2" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @elseif(strlen($productSearch) >= 2)
-                                    <div class="text-center py-6 text-gray-500 text-sm">
-                                        <p class="mb-4">No products found matching "{{ $productSearch }}"</p>
-                                        <button wire:click="createNewProduct"
-                                                type="button"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                            </svg>
-                                            Create New Product
-                                        </button>
-                                    </div>
-                                @else
-                                    <div class="text-center py-6">
-                                        <button wire:click="createNewProduct"
-                                                type="button"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                            </svg>
-                                            Create New Product
-                                        </button>
-                                    </div>
-                                @endif
-
-                            @elseif($isNewProduct)
-                                <!-- SCENARIO 4: Create New Product -->
-                                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <h3 class="font-semibold text-green-900">Create New Product</h3>
-                                    </div>
-                                    <p class="text-sm text-green-800">
-                                        Fill in the product details below. This product will be created and boxes will be received in one step.
-                                    </p>
-                                </div>
-
-                                <!-- New Product Form -->
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Product Name <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text"
-                                               wire:model="newProductName"
-                                               placeholder="e.g., Coca Cola 500ml"
-                                               class="block w-full rounded-lg border-gray-300">
-                                        @error('newProductName') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            SKU <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text"
-                                               wire:model="newProductSku"
-                                               placeholder="e.g., COC-500ML"
-                                               class="block w-full rounded-lg border-gray-300 font-mono">
-                                        @error('newProductSku') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Barcode <span class="text-xs text-gray-500">(optional)</span>
-                                        </label>
-                                        <input type="text"
-                                               wire:model="productBarcode"
-                                               placeholder="Leave empty or enter barcode"
-                                               class="block w-full rounded-lg border-gray-300 font-mono">
-                                        @error('productBarcode') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Category <span class="text-red-500">*</span>
-                                        </label>
-                                        <select wire:model="newProductCategoryId"
-                                                class="block w-full rounded-lg border-gray-300">
-                                            <option value="">Select category...</option>
-                                            @foreach($categories as $category)
-                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        @error('newProductCategoryId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                    </div>
-
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                                Items per Box <span class="text-red-500">*</span>
-                                            </label>
-                                            <input type="number"
-                                                   wire:model="newProductItemsPerBox"
-                                                   min="1"
-                                                   placeholder="e.g., 24"
-                                                   class="block w-full rounded-lg border-gray-300">
-                                            @error('newProductItemsPerBox') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                        </div>
-
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                                Selling Price (RWF) <span class="text-red-500">*</span>
-                                            </label>
-                                            <input type="number"
-                                                   wire:model="newProductSellingPrice"
-                                                   min="0"
-                                                   step="1"
-                                                   placeholder="e.g., 500"
-                                                   class="block w-full rounded-lg border-gray-300">
-                                            @error('newProductSellingPrice') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if((!$showProductSearch || $selectedProductId) && !$showProductDropdown || $isNewProduct)
-                                <!-- Divider -->
-                                <div class="border-t border-gray-300 my-4"></div>
-
-                                <!-- BOX ENTRY SECTION -->
-                                <h3 class="font-semibold text-gray-900">Box Details</h3>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Number of Boxes <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="number"
-                                           wire:model="numberOfBoxes"
-                                           min="1"
-                                           max="100"
-                                           class="block w-full rounded-lg border-gray-300">
-                                    @if($product)
-                                        <p class="mt-1 text-xs text-gray-500">≈ {{ $numberOfBoxes * $product->items_per_box }} items</p>
-                                    @endif
-                                    @error('numberOfBoxes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Batch Number <span class="text-xs text-gray-500">(optional)</span>
-                                        </label>
-                                        <input type="text"
-                                               wire:model="batchNumber"
-                                               placeholder="e.g., BATCH-2024-Q1"
-                                               class="block w-full rounded-lg border-gray-300 text-sm">
-                                        @error('batchNumber') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Expiry Date <span class="text-xs text-gray-500">(optional)</span>
-                                        </label>
-                                        <input type="date"
-                                               wire:model="expiryDate"
-                                               class="block w-full rounded-lg border-gray-300 text-sm">
-                                        @error('expiryDate') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
+                    <div class="rb-pinfo-row">
+                        <span class="rb-pinfo-key">SKU</span>
+                        <span class="rb-pinfo-val" style="font-family:var(--mono)">{{ $product->sku }}</span>
                     </div>
-
-                    <!-- Fixed Footer -->
-                    <div class="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
-                        <button wire:click="closeReceiveModal"
-                                type="button"
-                                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">
-                            Cancel
-                        </button>
-                        @if((!$showProductSearch || $selectedProductId) && !$showProductDropdown)
-                            <button wire:click="createBoxes"
-                                    type="button"
-                                    {{ !$warehouseId ? 'disabled' : '' }}
-                                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-sm
-                                           {{ !$warehouseId ? 'opacity-50 cursor-not-allowed' : '' }}">
-                                @if($isNewProduct)
-                                    Create Product & Receive {{ $numberOfBoxes }} Box{{ $numberOfBoxes > 1 ? 'es' : '' }}
-                                @else
-                                    Receive {{ $numberOfBoxes }} Box{{ $numberOfBoxes > 1 ? 'es' : '' }}
-                                @endif
-                            </button>
-                        @endif
+                    <div class="rb-pinfo-row">
+                        <span class="rb-pinfo-key">Items / Box</span>
+                        <span class="rb-pinfo-val">{{ $product->items_per_box }}</span>
+                    </div>
+                    <div class="rb-pinfo-row">
+                        <span class="rb-pinfo-key">Selling Price</span>
+                        <span class="rb-pinfo-val">{{ number_format($product->selling_price) }} RWF</span>
                     </div>
                 </div>
             </div>
+            @endif
+
+            @elseif($showProductSearch)
+            {{-- ── SCENARIO 2: Unknown barcode ── --}}
+            <div class="rb-alert amber">
+                <div class="rb-alert-head">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span class="rb-alert-title">Barcode Not Recognized</span>
+                </div>
+                <div class="rb-alert-body">
+                    Barcode <strong style="font-family:var(--mono)">{{ $productBarcode }}</strong> is not in the system.
+                    Search for the product below to link it.
+                </div>
+            </div>
+
+            <div class="rb-field">
+                <label class="rb-label">Search Product</label>
+                <input type="text"
+                       wire:model.live.debounce.300ms="productSearch"
+                       placeholder="Type product name or SKU…"
+                       class="rb-input">
+                <p class="rb-hint">Start typing to see matching products</p>
+            </div>
+
+            @if(!empty($searchResults))
+            <div class="rb-results" style="margin-bottom:14px">
+                @foreach($searchResults as $result)
+                <div wire:click="selectProduct({{ $result['id'] }})"
+                     class="rb-result {{ $selectedProductId == $result['id'] ? 'sel' : '' }}">
+                    <div>
+                        <div class="rb-result-name">{{ $result['name'] }}</div>
+                        <div class="rb-result-meta">SKU: {{ $result['sku'] }} · {{ $result['items_per_box'] }} items/box</div>
+                    </div>
+                    @if($selectedProductId == $result['id'])
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+            @elseif(strlen($productSearch) >= 2)
+            <div style="text-align:center;padding:20px 0 14px;color:var(--text-dim);font-size:13px">
+                No products found for "{{ $productSearch }}"
+            </div>
+            @endif
+
+            @if($selectedProductId)
+            <div class="rb-chk-row" style="margin-bottom:14px">
+                <input type="checkbox" wire:model="rememberBarcode" checked id="rb-remember">
+                <label for="rb-remember" style="cursor:pointer;flex:1">
+                    <div class="rb-chk-text">Remember this barcode association</div>
+                    <div class="rb-chk-sub">
+                        Saves <strong style="font-family:var(--mono)">{{ $productBarcode }}</strong> for
+                        "{{ $selectedProductName }}" so it's recognized instantly next time
+                    </div>
+                </label>
+            </div>
+            @if($rememberBarcode)
+            <div class="rb-field">
+                <label class="rb-label">
+                    Supplier Name
+                    <span style="color:var(--text-dim);font-weight:400">(optional)</span>
+                </label>
+                <input type="text" wire:model="supplierName" placeholder="e.g., Supplier A" class="rb-input">
+            </div>
+            @endif
+            @endif
+
+            @elseif($showProductDropdown)
+            {{-- ── SCENARIO 3: Product dropdown ── --}}
+            <div class="rb-alert blue">
+                <div class="rb-alert-head">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--accent)">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <span class="rb-alert-title">Select a Product</span>
+                </div>
+                <div class="rb-alert-body">Browse existing products or create a new one if it doesn't exist yet</div>
+            </div>
+
+            <div class="rb-field">
+                <label class="rb-label">Search Product</label>
+                <input type="text"
+                       wire:model.live.debounce.300ms="productSearch"
+                       placeholder="Type product name or SKU…"
+                       class="rb-input"
+                       autofocus>
+                <p class="rb-hint">Start typing to see matching products</p>
+            </div>
+
+            @if(!empty($searchResults))
+            <div class="rb-results" style="margin-bottom:14px">
+                @foreach($searchResults as $result)
+                <div wire:click="selectProductFromDropdown({{ $result['id'] }})"
+                     class="rb-result {{ $selectedProductId == $result['id'] ? 'sel' : '' }}">
+                    <div>
+                        <div class="rb-result-name">{{ $result['name'] }}</div>
+                        <div class="rb-result-meta">
+                            SKU: {{ $result['sku'] }} · {{ $result['items_per_box'] }} items/box · {{ number_format($result['selling_price']) }} RWF
+                        </div>
+                    </div>
+                    @if($selectedProductId == $result['id'])
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+            @elseif(strlen($productSearch) >= 2)
+            <div style="text-align:center;padding:16px 0 14px">
+                <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">
+                    No products found for "{{ $productSearch }}"
+                </p>
+                <button wire:click="createNewProduct" type="button"
+                        style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+                               background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);
+                               font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Create New Product
+                </button>
+            </div>
+            @else
+            <div style="text-align:center;padding:12px 0 14px">
+                <button wire:click="createNewProduct" type="button"
+                        style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+                               background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);
+                               font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Create New Product
+                </button>
+            </div>
+            @endif
+
+            @elseif($isNewProduct)
+            {{-- ── SCENARIO 4: New product form ── --}}
+            <div class="rb-alert green">
+                <div class="rb-alert-head">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--green)">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    <span class="rb-alert-title">Create New Product</span>
+                </div>
+                <div class="rb-alert-body">Fill in the product details — it will be created and boxes received in one step</div>
+            </div>
+
+            <div class="rb-field">
+                <label class="rb-label">Product Name <span>*</span></label>
+                <input type="text" wire:model="newProductName" placeholder="e.g., Coca Cola 500ml" class="rb-input">
+                @error('newProductName') <p class="rb-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="rb-field">
+                <label class="rb-label">SKU <span>*</span></label>
+                <input type="text" wire:model="newProductSku" placeholder="e.g., COC-500ML" class="rb-input mono">
+                @error('newProductSku') <p class="rb-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="rb-field">
+                <label class="rb-label">
+                    Barcode
+                    <span style="color:var(--text-dim);font-weight:400">(optional)</span>
+                </label>
+                <input type="text" wire:model="productBarcode" placeholder="Leave empty or enter barcode" class="rb-input mono">
+                @error('productBarcode') <p class="rb-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="rb-field">
+                <label class="rb-label">Category <span>*</span></label>
+                <select wire:model="newProductCategoryId" class="rb-select">
+                    <option value="">Select category…</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                @error('newProductCategoryId') <p class="rb-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="rb-grid-2">
+                <div>
+                    <label class="rb-label">Items per Box <span>*</span></label>
+                    <input type="number" wire:model="newProductItemsPerBox" min="1" placeholder="e.g., 24" class="rb-input">
+                    @error('newProductItemsPerBox') <p class="rb-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="rb-label">Selling Price (RWF) <span>*</span></label>
+                    <input type="number" wire:model="newProductSellingPrice" min="0" step="1" placeholder="e.g., 500" class="rb-input">
+                    @error('newProductSellingPrice') <p class="rb-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
+            @endif
+
+            {{-- ── BOX DETAILS (shown when a product is selected/confirmed) ── --}}
+            @if((!$showProductSearch || $selectedProductId) && !$showProductDropdown || $isNewProduct)
+            <div class="rb-divider"></div>
+            <div class="rb-section-head">Box Details</div>
+
+            <div class="rb-field">
+                <label class="rb-label">Number of Boxes <span>*</span></label>
+                <input type="number" wire:model="numberOfBoxes" min="1" max="100" class="rb-input">
+                @if($product)
+                <p class="rb-hint">≈ {{ $numberOfBoxes * $product->items_per_box }} items total</p>
+                @endif
+                @error('numberOfBoxes') <p class="rb-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="rb-grid-2">
+                <div>
+                    <label class="rb-label">
+                        Batch Number
+                        <span style="color:var(--text-dim);font-weight:400">(optional)</span>
+                    </label>
+                    <input type="text" wire:model="batchNumber" placeholder="e.g., BATCH-2024-Q1" class="rb-input">
+                    @error('batchNumber') <p class="rb-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="rb-label">
+                        Expiry Date
+                        <span style="color:var(--text-dim);font-weight:400">(optional)</span>
+                    </label>
+                    <input type="date" wire:model="expiryDate" class="rb-input">
+                    @error('expiryDate') <p class="rb-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
+            @endif
+
+        </div>{{-- /modal-body --}}
+
+        {{-- Footer --}}
+        <div class="rb-modal-foot">
+            <button wire:click="closeReceiveModal" type="button" class="rb-btn-cancel">Cancel</button>
+            @if((!$showProductSearch || $selectedProductId) && !$showProductDropdown)
+            <button wire:click="createBoxes" type="button"
+                    {{ !$warehouseId ? 'disabled' : '' }}
+                    class="rb-btn-confirm">
+                @if($isNewProduct)
+                    Create &amp; Receive {{ $numberOfBoxes }} Box{{ $numberOfBoxes > 1 ? 'es' : '' }}
+                @else
+                    Receive {{ $numberOfBoxes }} Box{{ $numberOfBoxes > 1 ? 'es' : '' }}
+                @endif
+            </button>
+            @endif
         </div>
-    @endif
+
+    </div>{{-- /modal --}}
+</div>{{-- /overlay --}}
+@endif
+
 </div>

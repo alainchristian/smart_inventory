@@ -71,6 +71,10 @@
   --rx: 6px;
   --ease: cubic-bezier(.4, 0, .2, 1);
   --tr: .18s var(--ease);
+
+  /* ── Shadows ───────────────────────────────── */
+  --shadow-card: 0 2px 8px rgba(26,31,54,.09), 0 0 0 1px var(--border);
+  --shadow-card-hover: 0 6px 20px rgba(26,31,54,.13), 0 0 0 1px var(--border-hi);
 }
 
 /* Base Styles */
@@ -80,7 +84,7 @@ html {
 }
 
 body {
-  background-color: var(--bg);
+  background-color: var(--surface);
   color: var(--text);
   font-family: var(--font);
   font-weight: 400;
@@ -115,7 +119,7 @@ html {
 }
 
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Fix for sticky positioning */
@@ -516,48 +520,50 @@ aside nav p.text-gray-400 {
   margin-top: 4px;
 }
 
-/* ── Shared period filter bar (owner / shop / warehouse dashboards) ── */
+/* ── Shared period filter card (owner / shop / warehouse dashboards) ── */
 .db-period-bar {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--surface); border-radius: 14px;
+  box-shadow: var(--shadow-card); margin-bottom: 20px;
+  /* min-width:0 is critical — without it, flex items expand to content size
+     and never let the pills scroll container constrain properly */
+  min-width: 0; max-width: 100%;
 }
+/* Top row: scrolling preset pills */
 .db-period-pills {
-  display: flex; align-items: center;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 8px; padding: 3px; gap: 2px;
-  overflow-x: auto; scrollbar-width: none;
+  display: flex; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  padding: 10px 14px; border-bottom: 1px solid var(--border); scrollbar-width: none;
+  flex-wrap: nowrap; min-width: 0;
 }
 .db-period-pills::-webkit-scrollbar { display: none; }
+/* Individual pill button — matches finance-overview preset style */
 .db-period-pill {
-  font-size: 13px; font-weight: 500; color: var(--text-sub);
-  padding: 6px 14px; border-radius: 6px;
-  border: none; background: transparent;
-  cursor: pointer; transition: all .15s; white-space: nowrap; line-height: 1.4; flex-shrink: 0;
+  font-size: 12px; font-weight: 600; color: var(--text-dim);
+  padding: 5px 11px; border-radius: 6px;
+  border: 1px solid transparent; background: transparent;
+  cursor: pointer; transition: all .12s; white-space: nowrap; flex-shrink: 0;
+  font-family: var(--font); line-height: 1.4;
 }
-.db-period-pill:hover { color: var(--text); background: rgba(0,0,0,.04); }
-.db-period-pill.active { background: var(--accent); color: #fff; font-weight: 600; }
-.db-period-custom {
+.db-period-pill:hover { color: var(--text); background: var(--surface2); border-color: var(--border); }
+.db-period-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+/* Bottom row: controls (date inputs, labels, extras) */
+.db-period-controls {
+  display: flex; align-items: center; gap: 0;
+}
+.db-period-ctrl-seg {
   display: flex; align-items: center; gap: 6px;
-  font-size: 13px; font-weight: 500; color: var(--text-sub);
-  padding: 7px 14px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--surface);
-  cursor: pointer; transition: all .15s; white-space: nowrap; line-height: 1.4; flex-shrink: 0;
+  padding: 8px 14px; border-right: 1px solid var(--border); flex-shrink: 0;
 }
-.db-period-custom svg { flex-shrink: 0; }
-.db-period-custom:hover { color: var(--text); border-color: var(--accent); }
-.db-period-custom.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.db-custom-picker {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 8px 12px; border-radius: 10px;
-  background: var(--surface); border: 1px solid var(--border);
-}
+.db-period-ctrl-seg:last-child { border-right: none; }
+.db-period-ctrl-grow { flex: 1; min-width: 0; }
 .db-date-input {
-  font-size: 12px; color: var(--text); padding: 5px 8px;
-  border: 1px solid var(--border); border-radius: 6px;
-  background: var(--surface); outline: none;
+  padding: 0; border: none; background: transparent; color: var(--text);
+  font-size: 13px; font-weight: 600; font-family: var(--font); cursor: pointer;
+  width: 110px; outline: none;
 }
-.db-date-input:focus { border-color: var(--accent); }
+.db-date-input::-webkit-calendar-picker-indicator { opacity: 0.4; cursor: pointer; margin-left: 2px; }
+.db-date-input:focus { color: var(--accent); }
 .db-period-label {
-  margin-left: auto; display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--text-dim); white-space: nowrap;
 }
 .db-period-label svg { flex-shrink: 0; }
@@ -566,15 +572,11 @@ aside nav p.text-gray-400 {
 .db-sync-dot.amber { background: #f59e0b; }
 
 @media (max-width: 768px) {
-  .db-period-bar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; gap: 8px;
-                   -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-  .db-period-bar::-webkit-scrollbar { display: none; }
-  .db-period-pills, .db-period-custom { flex-shrink: 0; }
-  .db-period-label { display: none; }
+  .db-period-ctrl-seg { padding: 6px 10px; }
+  .db-period-label span:not(.db-sync-dot) { display: none; }
 }
 @media (max-width: 480px) {
-  .db-period-pill { font-size: 12px; padding: 5px 10px; }
-  .db-period-custom { font-size: 12px; padding: 6px 10px; }
+  .db-period-pill { font-size: 11px; padding: 4px 9px; }
 }
 
 /* Time filter */
@@ -742,13 +744,13 @@ aside nav p.text-gray-400 {
 /* Business KPI cards */
 .bkpi {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r);
   padding: 22px 24px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(26, 31, 54, .06);
-  transition: transform var(--tr), box-shadow var(--tr), border-color var(--tr);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--tr), box-shadow var(--tr);
 }
 
 .bkpi::after {
@@ -782,8 +784,7 @@ aside nav p.text-gray-400 {
 
 .bkpi:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(26, 31, 54, .10);
-  border-color: var(--border-hi);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .bkpi-icon {
@@ -1431,7 +1432,7 @@ aside nav p.text-gray-400 {
 @media (max-width: 768px) {
   .dashboard-page-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 12px;
   }
 
@@ -2728,4 +2729,24 @@ main,
     font-size: 11px;
   }
 }
+
+/* ── Two-line stacked table cell ──────────────────────────────────────────
+   Use on <td> when a column should show a primary value + secondary label
+   on two compact lines rather than growing wide.
+
+   Usage:
+     <td class="td-2l">
+       <div class="td-2l-main">Primary text</div>
+       <div class="td-2l-sub">secondary label</div>         ← plain dim text
+       <span class="td-2l-badge" style="...">Badge</span>   ← coloured pill
+     </td>
+──────────────────────────────────────────────────────────────────────── */
+.td-2l      { max-width:200px }
+.td-2l-main { font-size:13px;font-weight:600;color:var(--text);
+              white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+.td-2l-sub  { font-size:11px;color:var(--text-dim);margin-top:2px;
+              white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+.td-2l-badge { display:inline-flex;align-items:center;font-size:10px;font-weight:700;
+               padding:1px 6px;border-radius:20px;margin-top:3px;white-space:nowrap }
+
 

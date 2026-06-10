@@ -5,18 +5,24 @@
     display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;
 }
 .ss-kpi {
-    background:var(--surface);border:1px solid var(--border);
-    border-radius:var(--r);padding:14px 18px;
+    background:var(--surface);border:none;box-shadow:var(--shadow-card);
+    border-radius:var(--r);padding:22px 20px;
+    display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr);
 }
+.ss-kpi:hover { box-shadow:var(--shadow-card-hover) }
+.ss-kpi-row   { display:flex;align-items:center;gap:12px }
+.ss-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+                justify-content:center;flex-shrink:0 }
+.ss-kpi-body  { flex:1;min-width:0 }
 .ss-kpi-label {
     font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
-    color:var(--text-dim);margin-bottom:6px;
+    color:var(--text-dim);line-height:1.2;
 }
 .ss-kpi-value {
     font-size:22px;font-weight:800;font-family:var(--mono);
-    letter-spacing:-1px;color:var(--text);line-height:1;
+    letter-spacing:-1px;color:var(--text);line-height:1;flex-shrink:0;
 }
-.ss-kpi-sub {font-size:11px;color:var(--text-dim);margin-top:3px;font-family:var(--mono)}
+.ss-kpi-sub {font-size:11px;color:var(--text-dim);margin-top:2px;font-family:var(--mono)}
 
 /* ── Controls ────────────────────────────────────────────────── */
 .ss-controls {
@@ -53,7 +59,7 @@
 
 /* ── Table ───────────────────────────────────────────────────── */
 .ss-table-wrap {
-    background:var(--surface);border:1px solid var(--border);
+    background:var(--surface);border:none;box-shadow:var(--shadow-card);
     border-radius:var(--r);overflow:hidden;
 }
 .ss-table {
@@ -140,7 +146,7 @@
 /* ── Mobile ──────────────────────────────────────────────────── */
 @media(max-width:640px) {
     .ss-kpis { grid-template-columns:1fr 1fr;gap:8px }
-    .ss-kpi  { padding:10px 12px }
+    .ss-kpi  { padding:14px 14px;gap:10px }
     .ss-kpi-value { font-size:18px }
     .ss-controls { flex-direction:column;align-items:stretch }
     .ss-tabs { overflow-x:auto }
@@ -173,31 +179,52 @@
 {{-- ── KPI bar ──────────────────────────────────────────────────────── --}}
 <div class="ss-kpis">
     <div class="ss-kpi">
-        <div class="ss-kpi-label">Products</div>
-        <div class="ss-kpi-value" style="color:var(--accent)">
-            {{ number_format($kpis->product_count ?? 0) }}
+        <div class="ss-kpi-row">
+            <div class="ss-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div class="ss-kpi-body">
+                <div class="ss-kpi-label">Products</div>
+                <div class="ss-kpi-sub">in stock now</div>
+            </div>
+            <div class="ss-kpi-value" style="color:var(--accent)">{{ number_format($kpis->product_count ?? 0) }}</div>
         </div>
-        <div class="ss-kpi-sub">in stock now</div>
     </div>
     <div class="ss-kpi">
-        <div class="ss-kpi-label">Total Boxes</div>
-        <div class="ss-kpi-value">{{ number_format($kpis->total_boxes ?? 0) }}</div>
-        <div class="ss-kpi-sub">at this shop</div>
+        <div class="ss-kpi-row">
+            <div class="ss-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </div>
+            <div class="ss-kpi-body">
+                <div class="ss-kpi-label">Total Boxes</div>
+                <div class="ss-kpi-sub">at this shop</div>
+            </div>
+            <div class="ss-kpi-value">{{ number_format($kpis->total_boxes ?? 0) }}</div>
+        </div>
     </div>
     <div class="ss-kpi">
-        <div class="ss-kpi-label">Sellable Items</div>
-        <div class="ss-kpi-value" style="color:var(--green)">
-            {{ number_format($kpis->total_items ?? 0) }}
+        <div class="ss-kpi-row">
+            <div class="ss-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <div class="ss-kpi-body">
+                <div class="ss-kpi-label">Sellable Items</div>
+                <div class="ss-kpi-sub">units ready to sell</div>
+            </div>
+            <div class="ss-kpi-value" style="color:var(--green)">{{ number_format($kpis->total_items ?? 0) }}</div>
         </div>
-        <div class="ss-kpi-sub">units ready to sell</div>
     </div>
     <div class="ss-kpi">
-        <div class="ss-kpi-label">Low Stock</div>
-        <div class="ss-kpi-value"
-             style="color:{{ ($lowStockCount ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">
-            {{ number_format($lowStockCount ?? 0) }}
+        <div class="ss-kpi-row">
+            <div class="ss-kpi-icon" style="background:{{ ($lowStockCount ?? 0) > 0 ? 'var(--amber-dim)' : 'var(--green-dim)' }};color:{{ ($lowStockCount ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="ss-kpi-body">
+                <div class="ss-kpi-label">Low Stock</div>
+                <div class="ss-kpi-sub">need replenishment</div>
+            </div>
+            <div class="ss-kpi-value" style="color:{{ ($lowStockCount ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">{{ number_format($lowStockCount ?? 0) }}</div>
         </div>
-        <div class="ss-kpi-sub">need replenishment</div>
     </div>
 </div>
 

@@ -138,10 +138,10 @@
         @endphp
 
         {{-- Total sales hero --}}
-        <div class="rounded-2xl mb-4" style="border:1px solid var(--border);background:white;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+        <div class="rounded-2xl mb-4" style="border:none;background:var(--surface);box-shadow:var(--shadow-card);">
             <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid var(--border);">
                 <div>
-                    <div class="text-xs font-semibold mb-1" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;">Total Sales Today</div>
+                    <div class="text-xs font-semibold mb-1" style="color:var(--text);text-transform:uppercase;letter-spacing:0.8px;">Total Sales Today</div>
                     <div class="font-mono font-bold" style="font-size:28px;letter-spacing:-1px;color:var(--text);">
                         {{ number_format($summary['total_sales'] ?? 0) }}
                         <span style="font-size:13px;color:var(--text-dim);font-weight:500;">RWF</span>
@@ -167,11 +167,11 @@
         </div>
 
         {{-- Channel breakdown --}}
-        <div class="rounded-2xl overflow-hidden mb-4" style="border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+        <div class="rounded-2xl overflow-hidden mb-4" style="border:none;box-shadow:var(--shadow-card);">
             <div class="px-4 py-3" style="background:var(--surface2);border-bottom:1px solid var(--border);">
-                <span class="text-xs font-semibold" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;">By Payment Channel</span>
+                <span class="text-xs font-semibold" style="color:var(--text);text-transform:uppercase;letter-spacing:0.6px;">By Payment Channel</span>
             </div>
-            <div style="background:white;">
+            <div style="background:var(--surface);">
                 @foreach ($channels as $__chRow)
                 @php [$method, $amount, $color, $bg, $_show] = $__chRow; @endphp
                     @php $pct = $total > 0 ? round($amount / $total * 100, 1) : 0; @endphp
@@ -202,11 +202,11 @@
             $hasRepayments   = ($summary['total_repayments']   ?? 0) > 0;
         @endphp
         @if ($hasCashRefunds || $hasRepayments)
-            <div class="rounded-2xl overflow-hidden" style="border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+            <div class="rounded-2xl overflow-hidden" style="border:none;box-shadow:var(--shadow-card);">
                 <div class="px-4 py-3" style="background:var(--surface2);border-bottom:1px solid var(--border);">
-                    <span class="text-xs font-semibold" style="color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;">Adjustments</span>
+                    <span class="text-xs font-semibold" style="color:var(--text);text-transform:uppercase;letter-spacing:0.6px;">Adjustments</span>
                 </div>
-                <div style="background:white;">
+                <div style="background:var(--surface);">
                     @if ($hasCashRefunds)
                         <div class="flex items-center justify-between px-4 py-3" style="border-bottom:{{ $hasRepayments ? '1px solid var(--border)' : 'none' }};">
                             <div class="flex items-center gap-2">
@@ -275,7 +275,7 @@
             {{-- Bank Deposits --}}
             <div @click="activeTab = 'deposits'"
                  class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:white;border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
+                 style="border-radius:12px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
                  x-bind:style="{ 'border-color': activeTab === 'deposits' ? 'var(--accent)' : 'var(--border)', 'box-shadow': activeTab === 'deposits' ? '0 0 0 3px var(--accent-dim)' : 'none' }">
                 <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -297,7 +297,7 @@
             {{-- Expenses --}}
             <div @click="activeTab = 'expenses'"
                  class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:white;border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
+                 style="border-radius:12px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
                  x-bind:style="{ 'border-color': activeTab === 'expenses' ? 'var(--red)' : 'var(--border)', 'box-shadow': activeTab === 'expenses' ? '0 0 0 3px var(--red-dim)' : 'none' }">
                 <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <div style="width:28px;height:28px;border-radius:8px;background:var(--red-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -319,7 +319,7 @@
             {{-- Withdrawals --}}
             <div @click="activeTab = 'withdrawals'"
                  class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:white;border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
+                 style="border-radius:12px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
                  x-bind:style="{ 'border-color': activeTab === 'withdrawals' ? 'var(--amber)' : 'var(--border)', 'box-shadow': activeTab === 'withdrawals' ? '0 0 0 3px var(--amber-dim)' : 'none' }">
                 <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <div style="width:28px;height:28px;border-radius:8px;background:var(--amber-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -341,7 +341,7 @@
         </div>{{-- end summary strip --}}
 
         {{-- Tab content panel --}}
-        <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-card);">
 
             {{-- Tab bar — explicit separators --}}
             <div style="display:flex;background:var(--surface2);border-bottom:1px solid var(--border);">
@@ -407,10 +407,10 @@
     <style>@media(max-width:640px){ .cash-count-grid{ grid-template-columns:1fr !important; } }</style>
 
         {{-- LEFT — Cash ledger --}}
-        <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-card);">
 
             <div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2);">
-                <span style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.7px;">Cash Drawer</span>
+                <span style="font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.7px;">Cash Drawer</span>
             </div>
 
             @php
@@ -454,7 +454,7 @@
         {{-- RIGHT — Counting input --}}
         <div style="display:flex;flex-direction:column;gap:16px;">
 
-            <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow-card);">
                 <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">
                     Count the physical cash
                 </label>
@@ -480,7 +480,7 @@
             </div>
 
             {{-- Variance display — always visible, updates live --}}
-            <div style="border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+            <div style="border-radius:14px;overflow:hidden;border:none;box-shadow:var(--shadow-card);">
                 @php
                     $counted  = (int) $actualCashCounted;
                     $expected = $summary['expected_cash'] ?? 0;
@@ -644,7 +644,7 @@
             </div>
 
             {{-- ── 2. SESSION SUMMARY ── --}}
-            <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+            <div style="border-radius:16px;overflow:hidden;border:none;box-shadow:var(--shadow-card);">
                 {{-- Header --}}
                 <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
                             display:flex;align-items:center;gap:8px;">
@@ -655,7 +655,7 @@
                 </div>
 
                 {{-- Inflow rows --}}
-                <div style="background:white;">
+                <div style="background:var(--surface);">
                     @foreach ($inflows as $__inRow)
                     @php [$lbl, $val, $clr, $sign] = $__inRow; @endphp
                         @if ($val > 0 || $sign === null)
@@ -720,7 +720,7 @@
             </div>
 
             {{-- ── 3. CASH DISPOSITION ── --}}
-            <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+            <div style="border-radius:16px;overflow:hidden;border:none;box-shadow:var(--shadow-card);">
                 <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
                             display:flex;align-items:center;gap:8px;">
                     <svg style="width:14px;height:14px;" fill="none" stroke="var(--amber)" viewBox="0 0 24 24" stroke-width="2">
@@ -729,7 +729,7 @@
                     <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">Cash Disposition</span>
                 </div>
 
-                <div style="background:white;padding:16px;display:flex;flex-direction:column;gap:14px;">
+                <div style="background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:14px;">
 
                     {{-- Transfer row: drawer → owner --}}
                     <div>
@@ -792,7 +792,7 @@
 
             {{-- ── 4. NON-CASH SETTLEMENT ── --}}
             @if ($hasNonCash)
-                <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                <div style="border-radius:16px;overflow:hidden;border:none;box-shadow:var(--shadow-card);">
                     <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);">
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="#6366f1" viewBox="0 0 24 24" stroke-width="2">
@@ -803,7 +803,7 @@
                         <div style="font-size:11px;color:var(--text-dim);padding-left:22px;">Confirm how each channel's collections were transferred to the owner</div>
                     </div>
 
-                    <div style="background:white;">
+                    <div style="background:var(--surface);">
                         @foreach ($ncChannels as $__ncRow)
                         @php [$label, $field, $refField, $total, $color, $_show] = $__ncRow; @endphp
                             @if ($total > 0)
@@ -876,7 +876,7 @@
             @if ($currentStep > 1)
                 <button wire:click="prevStep"
                         class="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
-                        style="background:white;color:var(--text-dim);border:1px solid var(--border);">
+                        style="background:var(--surface);color:var(--text-dim);border:1px solid var(--border);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>

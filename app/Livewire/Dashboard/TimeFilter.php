@@ -6,38 +6,59 @@ use Livewire\Component;
 
 class TimeFilter extends Component
 {
-    public string  $activePeriod = 'today';
-    public string  $currency     = 'RWF';
-    public ?string $customFrom   = null;
-    public ?string $customTo     = null;
-    public bool    $showCustom   = false;
+    public string $preset   = 'today';
+    public string $dateFrom = '';
+    public string $dateTo   = '';
+    public string $currency = 'RWF';
 
-    public function setPeriod(string $period): void
+    public function mount(): void
     {
-        $this->activePeriod = $period;
-        $this->showCustom   = false;
+        $this->resolveDates();
+    }
+
+    public function setPreset(string $preset): void
+    {
+        $this->preset = $preset;
+        $this->resolveDates();
         $this->dispatchFilter();
     }
 
-    public function applyCustomRange(): void
+    // Livewire lifecycle hook — fires when dateFrom is changed via wire:model.live
+    public function updatedDateFrom(): void
     {
-        if ($this->customFrom && $this->customTo) {
-            $this->activePeriod = 'custom';
-            $this->showCustom   = false;
-            $this->dispatchFilter();
-        }
+        $this->preset = 'custom';
+        $this->dispatchFilter();
+    }
+
+    // Livewire lifecycle hook — fires when dateTo is changed via wire:model.live
+    public function updatedDateTo(): void
+    {
+        $this->preset = 'custom';
+        $this->dispatchFilter();
+    }
+
+    private function resolveDates(): void
+    {
+        match ($this->preset) {
+            'today'      => [$this->dateFrom, $this->dateTo] = [today()->toDateString(), today()->toDateString()],
+            'yesterday'  => [$this->dateFrom, $this->dateTo] = [today()->subDay()->toDateString(), today()->subDay()->toDateString()],
+            'week'       => [$this->dateFrom, $this->dateTo] = [today()->startOfWeek()->toDateString(), today()->toDateString()],
+            'month'      => [$this->dateFrom, $this->dateTo] = [today()->startOfMonth()->toDateString(), today()->toDateString()],
+            'last_month' => [$this->dateFrom, $this->dateTo] = [
+                today()->subMonthNoOverflow()->startOfMonth()->toDateString(),
+                today()->subMonthNoOverflow()->endOfMonth()->toDateString(),
+            ],
+            default      => [$this->dateFrom, $this->dateTo] = [now()->subDays(29)->toDateString(), today()->toDateString()],
+        };
     }
 
     private function dispatchFilter(): void
     {
-        // Livewire 3: named parameters, NOT an array.
-        // All #[On('time-filter-changed')] listeners must use:
-        //   public function refresh(string $period, ?string $from, ?string $to)
-        // The old array syntax ($payload['period']) silently received nothing.
+        // Livewire 3 named parameters — listeners: refresh(string $period, ?string $from, ?string $to)
         $this->dispatch('time-filter-changed',
-            period: $this->activePeriod,
-            from:   $this->customFrom,
-            to:     $this->customTo,
+            period: $this->preset,
+            from:   $this->dateFrom,
+            to:     $this->dateTo,
         );
     }
 

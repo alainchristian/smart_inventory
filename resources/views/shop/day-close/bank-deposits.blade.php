@@ -1,6 +1,5 @@
 <x-app-layout>
-    <div class="py-2 sm:py-6">
-        <div class="max-w-2xl mx-auto px-0 sm:px-4 lg:px-8">
+    <div>
             <div class="mb-4 sm:mb-6 flex items-center gap-3">
                 <a href="{{ route('shop.session.open') }}"
                    class="p-2 rounded-lg transition-colors"
@@ -57,6 +56,5 @@
                     </a>
                 </div>
             @endif
-        </div>
     </div>
 </x-app-layout>

@@ -15,11 +15,10 @@ use Livewire\Component;
 class Dashboard extends Component
 {
     public int    $shopId;
-    public string $period         = 'today';
-    public string $customFrom     = '';
-    public string $customTo       = '';
-    public bool   $showCustomPicker = false;
-    public string $periodLabel    = '';
+    public string $preset       = 'today';
+    public string $dateFrom     = '';
+    public string $dateTo       = '';
+    public string $periodLabel  = '';
 
     public function mount(?int $shopId = null): void
     {
@@ -38,56 +37,50 @@ class Dashboard extends Component
             }
         }
 
+        $this->resolveDates();
         $this->updatePeriodLabel();
     }
 
-    public function setPeriod(string $period): void
+    public function setPreset(string $preset): void
     {
-        if ($period === 'custom') {
-            $this->showCustomPicker = true;
-            if (! $this->customFrom) $this->customFrom = now()->subDays(6)->format('Y-m-d');
-            if (! $this->customTo)   $this->customTo   = now()->format('Y-m-d');
-            return;
-        }
-
-        $this->period = $period;
-        $this->showCustomPicker = false;
+        $this->preset = $preset;
+        $this->resolveDates();
         $this->updatePeriodLabel();
     }
 
-    public function applyCustomRange(): void
+    public function updatedDateFrom(): void
     {
-        if ($this->customFrom && $this->customTo) {
-            $this->period = 'custom';
-            $this->showCustomPicker = false;
-            $this->updatePeriodLabel();
-        }
+        $this->preset = 'custom';
+        $this->updatePeriodLabel();
     }
 
-    public function cancelCustomPicker(): void
+    public function updatedDateTo(): void
     {
-        $this->showCustomPicker = false;
+        $this->preset = 'custom';
+        $this->updatePeriodLabel();
+    }
+
+    private function resolveDates(): void
+    {
+        match ($this->preset) {
+            'today'      => [$this->dateFrom, $this->dateTo] = [today()->toDateString(), today()->toDateString()],
+            'yesterday'  => [$this->dateFrom, $this->dateTo] = [today()->subDay()->toDateString(), today()->subDay()->toDateString()],
+            'week'       => [$this->dateFrom, $this->dateTo] = [today()->startOfWeek()->toDateString(), today()->toDateString()],
+            'month'      => [$this->dateFrom, $this->dateTo] = [today()->startOfMonth()->toDateString(), today()->toDateString()],
+            'last_month' => [$this->dateFrom, $this->dateTo] = [
+                today()->subMonthNoOverflow()->startOfMonth()->toDateString(),
+                today()->subMonthNoOverflow()->endOfMonth()->toDateString(),
+            ],
+            default      => [$this->dateFrom, $this->dateTo] = [now()->subDays(29)->toDateString(), today()->toDateString()],
+        };
     }
 
     protected function getDateRange(): array
     {
-        $now = now();
-        return match ($this->period) {
-            'today'      => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
-            'yesterday'  => [$now->copy()->subDay()->startOfDay(), $now->copy()->subDay()->endOfDay()],
-            'week'       => [$now->copy()->startOfWeek(), $now->copy()->endOfDay()],
-            'month'      => [$now->copy()->startOfMonth(), $now->copy()->endOfDay()],
-            'last_month' => [
-                $now->copy()->subMonthNoOverflow()->startOfMonth(),
-                $now->copy()->subMonthNoOverflow()->endOfMonth(),
-            ],
-            'last_30'    => [$now->copy()->subDays(29)->startOfDay(), $now->copy()->endOfDay()],
-            'custom'     => [
-                Carbon::parse($this->customFrom)->startOfDay(),
-                Carbon::parse($this->customTo)->endOfDay(),
-            ],
-            default => [$now->copy()->startOfWeek(), $now->copy()->endOfDay()],
-        };
+        return [
+            Carbon::parse($this->dateFrom)->startOfDay(),
+            Carbon::parse($this->dateTo)->endOfDay(),
+        ];
     }
 
     protected function getPrevDateRange(): array

@@ -18,16 +18,19 @@ class InventoryAnalyticsService
      */
     public function getInventoryKpis(?string $locationFilter = 'all'): array
     {
-        $cacheKey = "analytics_inventory_kpis_{$locationFilter}";
+        $cacheKey = "analytics_inventory_kpis_v2_{$locationFilter}";
 
         return Cache::remember($cacheKey, 900, function () use ($locationFilter) {
             $query = Box::available()
                 ->join('products', 'boxes.product_id', '=', 'products.id')
-                ->selectRaw('
+                ->selectRaw("
                     SUM(boxes.items_remaining * products.purchase_price) as purchase_value,
                     SUM(boxes.items_remaining * products.selling_price) as retail_value,
-                    COUNT(DISTINCT boxes.product_id) as product_count
-                ');
+                    COUNT(DISTINCT boxes.product_id) as product_count,
+                    COUNT(CASE WHEN boxes.status = 'full'    THEN 1 END) as box_full_count,
+                    COUNT(CASE WHEN boxes.status = 'partial' THEN 1 END) as box_partial_count,
+                    COUNT(CASE WHEN boxes.status = 'damaged' THEN 1 END) as box_damaged_count
+                ");
 
             $query = $this->applyLocationFilter($query, $locationFilter);
 
@@ -39,11 +42,14 @@ class InventoryAnalyticsService
             $turnoverRate = $this->calculateStockTurnover($locationFilter);
 
             return [
-                'purchase_value' => (int) $purchaseValue,
-                'retail_value' => (int) $retailValue,
-                'potential_profit' => (int) $potentialProfit,
-                'turnover_rate' => round($turnoverRate, 2),
-                'product_count' => $result->product_count ?? 0,
+                'purchase_value'    => (int) $purchaseValue,
+                'retail_value'      => (int) $retailValue,
+                'potential_profit'  => (int) $potentialProfit,
+                'turnover_rate'     => round($turnoverRate, 2),
+                'product_count'     => (int) ($result->product_count ?? 0),
+                'box_full_count'    => (int) ($result->box_full_count ?? 0),
+                'box_partial_count' => (int) ($result->box_partial_count ?? 0),
+                'box_damaged_count' => (int) ($result->box_damaged_count ?? 0),
             ];
         });
     }
@@ -66,7 +72,7 @@ class InventoryAnalyticsService
                     warehouses.id,
                     warehouses.name,
                     SUM(boxes.items_remaining * products.purchase_price) as value,
-                    SUM(boxes.items_remaining) as items_count
+                    COUNT(boxes.id) as box_count
                 ')
                 ->groupBy('warehouses.id', 'warehouses.name')
                 ->get();
@@ -81,7 +87,7 @@ class InventoryAnalyticsService
                     shops.id,
                     shops.name,
                     SUM(boxes.items_remaining * products.purchase_price) as value,
-                    SUM(boxes.items_remaining) as items_count
+                    COUNT(boxes.id) as box_count
                 ')
                 ->groupBy('shops.id', 'shops.name')
                 ->get();
@@ -89,20 +95,20 @@ class InventoryAnalyticsService
             return [
                 'warehouses' => $warehouses->map(function ($item) {
                     return [
-                        'location_id' => $item->id,
+                        'location_id'   => $item->id,
                         'location_name' => $item->name,
                         'location_type' => 'warehouse',
-                        'value' => (int) $item->value,
-                        'items_count' => $item->items_count,
+                        'value'         => (int) $item->value,
+                        'box_count'     => (int) $item->box_count,
                     ];
                 })->toArray(),
                 'shops' => $shops->map(function ($item) {
                     return [
-                        'location_id' => $item->id,
+                        'location_id'   => $item->id,
                         'location_name' => $item->name,
                         'location_type' => 'shop',
-                        'value' => (int) $item->value,
-                        'items_count' => $item->items_count,
+                        'value'         => (int) $item->value,
+                        'box_count'     => (int) $item->box_count,
                     ];
                 })->toArray(),
             ];
@@ -137,7 +143,6 @@ class InventoryAnalyticsService
                         ELSE '90+ days'
                     END as age_bracket,
                     COUNT(*) as box_count,
-                    SUM(boxes.items_remaining) as items_count,
                     SUM(boxes.items_remaining * products.purchase_price) as value
                 ")
                 ->groupBy('age_bracket');
@@ -147,8 +152,7 @@ class InventoryAnalyticsService
             return $query->get()->map(function ($item) {
                 return [
                     'age_bracket' => $item->age_bracket,
-                    'box_count'   => $item->box_count,
-                    'items_count' => $item->items_count,
+                    'box_count'   => (int) $item->box_count,
                     'value'       => (int) $item->value,
                 ];
             })->toArray();
@@ -172,7 +176,7 @@ class InventoryAnalyticsService
                     boxes.expiry_date,
                     boxes.location_type,
                     boxes.location_id,
-                    SUM(boxes.items_remaining) as items_count,
+                    COUNT(boxes.id) as box_count,
                     SUM(boxes.items_remaining * products.purchase_price) as value
                 ')
                 ->groupBy('products.id', 'products.name', 'boxes.expiry_date', 'boxes.location_type', 'boxes.location_id')
@@ -182,13 +186,13 @@ class InventoryAnalyticsService
 
             return $query->get()->map(function ($item) {
                 return [
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product_name,
-                    'expiry_date' => $item->expiry_date,
+                    'product_id'    => $item->product_id,
+                    'product_name'  => $item->product_name,
+                    'expiry_date'   => $item->expiry_date,
                     'location_type' => is_string($item->location_type) ? $item->location_type : $item->location_type->value,
-                    'location_id' => $item->location_id,
-                    'items_count' => $item->items_count,
-                    'value' => (int) $item->value,
+                    'location_id'   => $item->location_id,
+                    'box_count'     => (int) $item->box_count,
+                    'value'         => (int) $item->value,
                 ];
             })->toArray();
         });
@@ -264,7 +268,7 @@ class InventoryAnalyticsService
                 ->selectRaw("
                     products.id,
                     products.name,
-                    SUM(boxes.items_remaining) as items_count,
+                    COUNT(DISTINCT boxes.id) as box_count,
                     SUM(boxes.items_remaining * products.purchase_price) as purchase_value,
                     SUM(boxes.items_remaining * products.selling_price) as retail_value,
                     COUNT(DISTINCT CONCAT(boxes.location_type::text, ':', boxes.location_id::text)) as location_count
@@ -279,7 +283,7 @@ class InventoryAnalyticsService
                 return [
                     'product_id'     => $item->id,
                     'product_name'   => $item->name,
-                    'items_count'    => $item->items_count,
+                    'box_count'      => (int) $item->box_count,
                     'purchase_value' => (int) $item->purchase_value,
                     'retail_value'   => (int) $item->retail_value,
                     'location_count' => (int) $item->location_count,
@@ -358,7 +362,7 @@ class InventoryAnalyticsService
      * Classify every active product with stock into A / B / C / Dead
      * based on trailing 90-day sales revenue contribution.
      */
-    public function getVelocityClassification(?string $locationFilter = 'all'): array
+    public function getVelocityClassification(?string $locationFilter = 'all', int $days = 30): array
     {
         // Products with current stock
         $stockQuery = DB::table('boxes')
@@ -374,7 +378,7 @@ class InventoryAnalyticsService
             ->selectRaw('
                 products.id,
                 products.name,
-                SUM(boxes.items_remaining) as items_in_stock,
+                COUNT(DISTINCT boxes.id) as box_count,
                 SUM(boxes.items_remaining * products.purchase_price) as cost_value
             ')
             ->groupBy('products.id', 'products.name')
@@ -385,12 +389,12 @@ class InventoryAnalyticsService
             return ['A' => [], 'B' => [], 'C' => [], 'Dead' => [], 'summary' => []];
         }
 
-        // 90-day revenue per product
+        // trailing-period revenue per product
         $salesQuery = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereIn('sale_items.product_id', $stockedProducts->keys()->toArray())
             ->whereNull('sales.voided_at')
-            ->where('sales.sale_date', '>=', now()->subDays(90));
+            ->where('sales.sale_date', '>=', now()->subDays($days));
 
         if ($locationFilter !== 'all' && str_starts_with($locationFilter, 'shop:')) {
             $salesQuery->where('sales.shop_id', (int) explode(':', $locationFilter)[1]);
@@ -406,11 +410,11 @@ class InventoryAnalyticsService
         // Merge and sort by revenue desc
         $classified = $stockedProducts->map(function ($p) use ($revenue) {
             return [
-                'product_id'     => $p->id,
-                'product_name'   => $p->name,
-                'items_in_stock' => (int) $p->items_in_stock,
-                'cost_value'     => (int) $p->cost_value,
-                'revenue_90d'    => (float) ($revenue[$p->id] ?? 0),
+                'product_id'   => $p->id,
+                'product_name' => $p->name,
+                'box_count'    => (int) $p->box_count,
+                'cost_value'   => (int) $p->cost_value,
+                'revenue_90d'  => (float) ($revenue[$p->id] ?? 0),
             ];
         })->sortByDesc('revenue_90d')->values();
 
@@ -457,16 +461,16 @@ class InventoryAnalyticsService
     /**
      * Days on hand per product based on 30-day average sales velocity.
      */
-    public function getDaysOnHandPerProduct(?string $locationFilter = 'all', int $limit = 30): array
+    public function getDaysOnHandPerProduct(?string $locationFilter = 'all', int $limit = 30, int $days = 30): array
     {
-        // Avg daily sales per product (last 30 days)
+        // Avg daily sales per product (trailing $days window)
         $salesQuery = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->whereNull('sales.voided_at')
             ->whereNull('products.deleted_at')
             ->where('products.is_active', true)
-            ->where('sales.sale_date', '>=', now()->subDays(30));
+            ->where('sales.sale_date', '>=', now()->subDays($days));
 
         if ($locationFilter !== 'all' && str_starts_with($locationFilter, 'shop:')) {
             $salesQuery->where('sales.shop_id', (int) explode(':', $locationFilter)[1]);
@@ -475,10 +479,10 @@ class InventoryAnalyticsService
         $salesData = $salesQuery
             ->selectRaw('
                 sale_items.product_id,
-                SUM(sale_items.quantity_sold) as units_sold_30d
+                SUM(sale_items.quantity_sold) as units_sold_period
             ')
             ->groupBy('sale_items.product_id')
-            ->pluck('units_sold_30d', 'product_id');
+            ->pluck('units_sold_period', 'product_id');
 
         // Current stock per product
         $stockQuery = DB::table('boxes')
@@ -494,26 +498,29 @@ class InventoryAnalyticsService
             ->selectRaw('
                 products.id,
                 products.name,
+                products.items_per_box,
                 products.low_stock_threshold,
+                COUNT(DISTINCT boxes.id) as box_count,
                 SUM(boxes.items_remaining) as items_remaining,
                 SUM(boxes.items_remaining * products.purchase_price) as cost_value
             ')
-            ->groupBy('products.id', 'products.name', 'products.low_stock_threshold')
+            ->groupBy('products.id', 'products.name', 'products.items_per_box', 'products.low_stock_threshold')
             ->get();
 
-        return $stock->map(function ($p) use ($salesData) {
-            $units30d   = (float) ($salesData[$p->id] ?? 0);
-            $avgDaily   = $units30d / 30;
-            $daysOnHand = $avgDaily > 0
+        return $stock->map(function ($p) use ($salesData, $days) {
+            $unitsPeriod     = (float) ($salesData[$p->id] ?? 0);
+            $avgDaily        = $unitsPeriod / max($days, 1);
+            $boxesSoldPeriod = (int) ceil($unitsPeriod / max(1, $p->items_per_box));
+            $daysOnHand      = $avgDaily > 0
                 ? (int) round($p->items_remaining / $avgDaily)
-                : null; // null = no velocity, stock won't run out by sales
+                : null;
 
             return [
                 'product_id'          => $p->id,
                 'product_name'        => $p->name,
-                'items_remaining'     => (int) $p->items_remaining,
+                'box_count'           => (int) $p->box_count,
                 'cost_value'          => (int) $p->cost_value,
-                'units_sold_30d'      => (int) $units30d,
+                'boxes_sold_period'   => $boxesSoldPeriod,
                 'avg_daily_sales'     => round($avgDaily, 2),
                 'days_on_hand'        => $daysOnHand,
                 'low_stock_threshold' => (int) $p->low_stock_threshold,
@@ -546,7 +553,7 @@ class InventoryAnalyticsService
                 categories.id,
                 categories.name as category_name,
                 COUNT(DISTINCT products.id) as product_count,
-                SUM(boxes.items_remaining) as total_items,
+                COUNT(DISTINCT boxes.id) as box_count,
                 SUM(boxes.items_remaining * products.purchase_price) as cost_value,
                 SUM(boxes.items_remaining * products.selling_price) as retail_value
             ')
@@ -561,7 +568,7 @@ class InventoryAnalyticsService
                 'category_id'   => $row->id,
                 'category_name' => $row->category_name,
                 'product_count' => (int) $row->product_count,
-                'total_items'   => (int) $row->total_items,
+                'box_count'     => (int) $row->box_count,
                 'cost_value'    => (int) $row->cost_value,
                 'retail_value'  => (int) $row->retail_value,
                 'pct_of_total'  => $totalCost > 0
@@ -574,10 +581,11 @@ class InventoryAnalyticsService
     /**
      * Weekly boxes-received vs items-consumed for the last 12 weeks.
      */
-    public function getInventoryMovementTrend(?string $locationFilter = 'all'): array
+    public function getInventoryMovementTrend(?string $locationFilter = 'all', int $days = 84): array
     {
+        $numWeeks = max(4, min(26, (int) round($days / 7)));
         $weeks = [];
-        for ($i = 11; $i >= 0; $i--) {
+        for ($i = $numWeeks - 1; $i >= 0; $i--) {
             $start = now()->startOfWeek()->subWeeks($i);
             $end   = $start->copy()->endOfWeek();
 
@@ -608,7 +616,7 @@ class InventoryAnalyticsService
                 'week_label'     => $start->format('M d'),
                 'week_start'     => $start->toDateString(),
                 'boxes_received' => (int) $receivedQuery->count(),
-                'items_consumed' => (int) $consumedQuery->sum('items_moved'),
+                'boxes_consumed' => (int) $consumedQuery->count(),
             ];
         }
 
@@ -618,18 +626,18 @@ class InventoryAnalyticsService
     /**
      * Shrinkage statistics — damaged items in last 90 days vs received.
      */
-    public function getShrinkageStats(?string $locationFilter = 'all'): array
+    public function getShrinkageStats(?string $locationFilter = 'all', int $days = 90): array
     {
-        // Total items received in last 90 days (via box_movements)
+        // Total items received in trailing window (via box_movements)
         $receivedQuery = DB::table('box_movements')
             ->join('boxes', 'box_movements.box_id', '=', 'boxes.id')
             ->where('box_movements.movement_type', 'received')
-            ->where('box_movements.moved_at', '>=', now()->subDays(90));
+            ->where('box_movements.moved_at', '>=', now()->subDays($days));
 
-        // Total damaged goods recorded in last 90 days
+        // Total damaged goods recorded in trailing window
         $damagedQuery = DB::table('damaged_goods')
             ->whereNull('deleted_at')
-            ->where('recorded_at', '>=', now()->subDays(90));
+            ->where('recorded_at', '>=', now()->subDays($days));
 
         if ($locationFilter !== 'all') {
             if (str_starts_with($locationFilter, 'shop:')) {

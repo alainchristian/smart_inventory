@@ -3,21 +3,24 @@
 /* ── KPI strip ───────────────────────────────────── */
 .bx-kpis {
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-    gap:16px;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
     margin-bottom:24px;
 }
 /* Extend .bkpi with amber + red variants */
 .bkpi.amber::after { background:linear-gradient(90deg,var(--amber),transparent) }
 .bkpi.red::after   { background:linear-gradient(90deg,var(--red),transparent) }
-.bkpi-icon.amber   { background:rgba(217,119,6,.12);color:var(--amber) }
-.bkpi-icon.red     { background:rgba(220,38,38,.12);color:var(--red) }
-.bkpi-pct.amber    { background:rgba(217,119,6,.15);color:var(--amber) }
-.bkpi-pct.red      { background:rgba(220,38,38,.12);color:var(--red) }
-.bkpi-pct.down     { background:rgba(220,38,38,.12);color:var(--red) }
+.bkpi-icon.amber   { background:var(--amber-dim);color:var(--amber) }
+.bkpi-icon.red     { background:var(--red-dim);color:var(--red) }
+.bkpi-pct.amber    { background:var(--amber-dim);color:var(--amber) }
+.bkpi-pct.red      { background:var(--red-dim);color:var(--red) }
+.bkpi-pct.down     { background:var(--red-dim);color:var(--red) }
 
 /* ── Filter bar ──────────────────────────────────── */
-.bx-bar { display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px }
+.bx-bar { display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;
+          background:var(--surface);border:none;box-shadow:var(--shadow-card);
+          border-radius:var(--r);padding:14px 16px;
+          position:sticky;top:var(--topbar-height);z-index:15 }
 .bx-search-wrap { flex:1;min-width:200px;position:relative }
 .bx-search-icon { position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-dim);pointer-events:none }
 .bx-search {
@@ -47,7 +50,7 @@
 .bx-btn-clear:hover { border-color:var(--border-hi);color:var(--text) }
 
 /* ── Table ───────────────────────────────────────── */
-.bx-table-wrap { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden }
+.bx-table-wrap { background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);overflow:hidden }
 .bx-table { width:100%;border-collapse:collapse;font-size:13px }
 .bx-table thead tr { background:var(--bg);border-bottom:1px solid var(--border) }
 .bx-table thead th {
@@ -88,13 +91,19 @@
 .bx-empty-sub   { font-size:13px;color:var(--text-dim);margin-bottom:16px }
 .bx-empty-btn   { padding:8px 20px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer;background:transparent;font-family:var(--font) }
 
-/* Mobile */
+/* Responsive */
 @media(max-width:1100px) { .bx-hide-lg { display:none !important } }
 @media(max-width:800px)  { .bx-hide-md { display:none !important } }
-@media(max-width:640px) {
-    .bx-bar { flex-direction:column;align-items:stretch }
-    .bx-select,.bx-toggle-wrap,.bx-btn-clear { width:100% }
+@media(max-width:768px) {
+    .bx-kpis { grid-template-columns:1fr 1fr;gap:8px }
+    .bx-bar  { flex-direction:column;align-items:stretch;gap:8px }
+    .bx-select,.bx-toggle-wrap,.bx-btn-clear,.bx-search-wrap { width:100% }
     .bx-table td,.bx-table th { padding:9px 10px }
+}
+@media(max-width:480px) {
+    .bx-kpis { grid-template-columns:1fr }
+    .bx-hide-sm { display:none !important }
+    .bx-view-btn { padding:4px 8px;font-size:11px }
 }
 </style>
 
@@ -140,8 +149,8 @@
                 <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Partial</div>
             </div>
             <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-dim);font-family:var(--mono)">{{ number_format($stats->empty_count ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Consumed</div>
+                <div style="font-size:11px;font-weight:700;color:{{ $stagnantCount > 0 ? 'var(--amber)' : 'var(--text-dim)' }};font-family:var(--mono)">{{ number_format($stagnantCount) }}</div>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Stagnant</div>
             </div>
         </div>
     </div>
@@ -187,45 +196,7 @@
         </div>
     </div>
 
-    {{-- Card 3: Stagnant Boxes --}}
-    @php
-        $stagnantValColor  = $stagnantCount > 0 ? 'var(--amber)' : 'var(--green)';
-        $stagnantPctClass  = $stagnantCount > 0 ? 'amber' : 'green';
-        $stagnantRate      = $activeTotal > 0
-            ? round($stagnantCount / $activeTotal * 100) : 0;
-    @endphp
-    <div class="bkpi violet">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="display:flex;align-items:center;gap:8px">
-                <div class="bkpi-icon violet">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                </div>
-                <span class="bkpi-name">Stagnant</span>
-            </div>
-            <span class="bkpi-pct {{ $stagnantPctClass }}">{{ $stagnantRate }}%</span>
-        </div>
-        <div class="bkpi-value" style="color:{{ $stagnantValColor }}">{{ $stagnantCount }}</div>
-        <div class="bkpi-meta">No movement in 30+ days</div>
-        <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:{{ $stagnantCount > 0 ? 'var(--amber)' : 'var(--green)' }};font-family:var(--mono)">{{ $stagnantCount }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Stagnant</div>
-            </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ number_format(max(0, $activeTotal - $stagnantCount)) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Active</div>
-            </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-dim);font-family:var(--mono)">30d</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Threshold</div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Card 5: Damaged (clickable → filter) --}}
+    {{-- Card 3: Damaged (clickable → filter) --}}
     @php
         $damagedValColor  = ($stats->damaged_count ?? 0) > 0 ? 'var(--red)' : 'var(--green)';
         $damagedPctClass  = ($stats->damaged_count ?? 0) > 0 ? 'down' : 'green';
@@ -264,7 +235,7 @@
         </div>
     </div>
 
-    {{-- Card 6: Expiring Soon (clickable → filter) --}}
+    {{-- Card 4: Expiring Soon (clickable → filter) --}}
     @php
         $expValColor  = ($stats->expiring_soon ?? 0) > 0 ? 'var(--amber)' : 'var(--green)';
         $expPctClass  = ($stats->expiring_soon ?? 0) > 0 ? 'amber' : 'green';
@@ -489,27 +460,23 @@
                 </td>
 
                 {{-- Product --}}
-                <td>
-                    <div style="font-weight:600;color:var(--text);font-size:13px">
-                        {{ $box->product?->name ?? '—' }}
-                    </div>
+                <td class="td-2l">
+                    <div class="td-2l-main">{{ $box->product?->name ?? '—' }}</div>
                     @if($box->product?->category)
-                    <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;
-                                 background:var(--accent-dim,rgba(59,111,212,.1));color:var(--accent);
-                                 margin-top:2px;display:inline-block">
+                    <span class="td-2l-badge" style="background:var(--accent-dim);color:var(--accent)">
                         {{ $box->product->category->name }}
                     </span>
                     @endif
                 </td>
 
                 {{-- Location --}}
-                <td>
-                    <div style="display:flex;align-items:center;gap:5px;color:var(--text-sub);font-size:13px">
+                <td class="td-2l">
+                    <div class="td-2l-main" style="display:flex;align-items:center;gap:5px">
                         {!! $locIcon !!}
-                        <span style="font-weight:600">{{ $box->location?->name ?? '—' }}</span>
+                        {{ $box->location?->name ?? '—' }}
                     </div>
                     @if($box->location_type)
-                    <div style="font-size:10px;color:var(--text-dim);margin-top:1px;text-transform:capitalize">
+                    <div class="td-2l-sub" style="text-transform:capitalize">
                         {{ $box->location_type->value }}
                     </div>
                     @endif
@@ -569,12 +536,9 @@
 
                 {{-- Cost Value --}}
                 @if($isOwner)
-                <td class="bx-hide-lg" style="text-align:right">
+                <td class="bx-hide-lg" style="text-align:right;white-space:nowrap">
                     @if($costVal > 0)
-                    <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">
-                        {{ number_format($costVal) }}
-                        <span style="font-size:10px;color:var(--text-dim)">RWF</span>
-                    </span>
+                    <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);white-space:nowrap">{{ number_format($costVal) }} <span style="font-size:10px;color:var(--text-dim)">RWF</span></span>
                     @else
                     <span style="color:var(--text-dim);font-size:12px">—</span>
                     @endif
@@ -582,9 +546,7 @@
                 @endif
 
                 {{-- Batch --}}
-                <td class="bx-hide-lg" style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">
-                    {{ $box->batch_number ?? '—' }}
-                </td>
+                <td class="bx-hide-lg" style="font-family:var(--mono);font-size:12px;color:var(--text-dim);white-space:nowrap">{{ $box->batch_number ?? '—' }}</td>
 
                 {{-- Action --}}
                 <td style="text-align:right">
@@ -624,13 +586,50 @@
     </table>
     </div>
 
-    {{-- Pagination --}}
-    @if($boxes->hasPages())
-    <div style="padding:12px 16px;border-top:1px solid var(--border)">
-        {{ $boxes->links() }}
-    </div>
+</div>
+
+{{-- Sticky summary bar --}}
+<div style="position:sticky;bottom:0;z-index:20;
+            background:var(--surface);border-top:2px solid var(--border);
+            box-shadow:0 -4px 16px rgba(26,31,54,.08);
+            padding:10px 16px;
+            display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <span style="font-size:12px;color:var(--text-dim)">
+        Showing
+        <strong style="color:var(--text-sub);font-family:var(--mono)">{{ number_format($boxes->count()) }}</strong>
+        of
+        <strong style="color:var(--text-sub);font-family:var(--mono)">{{ number_format($filteredCount) }}</strong>
+        {{ $filteredCount === 1 ? 'box' : 'boxes' }}
+        @if($search || $locationType || $productId || $status || $expiringOnly)
+            <span style="font-weight:400"> matching filters</span>
+        @endif
+    </span>
+    @if($isOwner && $filteredCostValue > 0)
+    <span style="font-size:12px;color:var(--text-dim)">
+        Total cost:
+        <strong style="color:var(--text);font-family:var(--mono)">{{ number_format($filteredCostValue) }}</strong>
+        <span style="font-size:10px">RWF</span>
+    </span>
     @endif
 </div>
+
+{{-- Infinite scroll sentinel --}}
+@if($hasMore)
+<div wire:key="scroll-sentinel"
+     x-data
+     x-init="
+         const obs = new IntersectionObserver(entries => {
+             if (entries[0].isIntersecting) $wire.loadMore()
+         }, { rootMargin: '300px' });
+         obs.observe($el);
+     "
+     style="height:1px;margin-top:4px">
+</div>
+@else
+<div style="padding:12px 0;text-align:center;font-size:12px;color:var(--text-dim)">
+    @if($filteredCount > 25) All {{ number_format($filteredCount) }} boxes loaded @endif
+</div>
+@endif
 
 {{-- ── Box detail drawer ──────────────────────────────────────── --}}
 <livewire:inventory.boxes.box-detail />

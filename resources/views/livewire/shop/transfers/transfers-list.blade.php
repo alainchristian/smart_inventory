@@ -31,11 +31,12 @@
 
 /* ── Transfer card ──────────────────────────────────────── */
 .tl-card {
-    background: #fff; border: 1px solid var(--border);
+    background: var(--surface); border: none;
     border-radius: 12px; overflow: hidden;
-    transition: box-shadow .18s, border-color .18s; position: relative;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow .18s; position: relative;
 }
-.tl-card:hover { border-color: var(--card-accent, var(--accent)); box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+.tl-card:hover { box-shadow: var(--shadow-card-hover); }
 .tl-stripe {
     position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
     background: var(--card-accent, var(--accent));

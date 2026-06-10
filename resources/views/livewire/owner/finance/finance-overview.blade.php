@@ -13,9 +13,9 @@
 
 /* ── Filter bar ── */
 .fo-filters {
-    background:white;border:1px solid var(--border);
+    background:var(--surface);border:none;
     border-radius:14px;overflow:hidden;margin-bottom:20px;
-    box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    box-shadow:var(--shadow-card);
 }
 /* Top row: period presets */
 .fo-presets-row {
@@ -76,13 +76,13 @@
 /* ── KPI strip ── */
 .fo-kpis {
     display:grid;grid-template-columns:repeat(6,1fr);
-    gap:0;background:white;
-    border-radius:16px;overflow:hidden;border:1px solid var(--border);
-    box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    gap:0;background:var(--surface);
+    border-radius:16px;overflow:hidden;border:none;
+    box-shadow:var(--shadow-card);
     margin-bottom:20px;
 }
 .fo-kpi {
-    background:white;padding:16px 14px;
+    background:var(--surface);padding:22px 16px;
     border-right:1px solid var(--border);
 }
 .fo-kpi:last-child { border-right:none; }
@@ -98,8 +98,8 @@
 
 /* ── Shop ranking ── */
 .fo-ranking {
-    margin-bottom:20px;border:1px solid var(--border);border-radius:14px;
-    overflow:hidden;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    margin-bottom:20px;border:none;border-radius:14px;
+    overflow:hidden;background:var(--surface);box-shadow:var(--shadow-card);
 }
 .fo-ranking-header {
     padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
@@ -107,7 +107,7 @@
 }
 .fo-rank-row {
     display:flex;align-items:center;gap:12px;padding:11px 16px;
-    background:white;border-bottom:1px solid var(--border);
+    background:var(--surface);border-bottom:1px solid var(--border);
 }
 .fo-rank-row:last-child { border-bottom:none; }
 .fo-rank-num {
@@ -128,9 +128,9 @@
     gap:16px;margin-bottom:20px;
 }
 .fo-chart-card {
-    background:white;border:1px solid var(--border);
+    background:var(--surface);border:none;
     border-radius:14px;padding:18px 20px;
-    box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    box-shadow:var(--shadow-card);
 }
 .fo-chart-title { font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px; }
 .fo-chart-sub   { font-size:11px;color:var(--text-dim);margin-bottom:14px; }
@@ -145,11 +145,11 @@
 /* ── Sessions table ── */
 .fo-table-wrap {
     border:1px solid var(--border);border-radius:14px;overflow:hidden;
-    background:white;box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,0.05);
 }
 .fo-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
 .fo-table {
-    width:100%;border-collapse:collapse;min-width:820px;font-size:12px;background:white;
+    width:100%;border-collapse:collapse;min-width:820px;font-size:12px;background:var(--surface);
 }
 .fo-table thead tr {
     background:var(--surface2);border-bottom:1px solid var(--border);
@@ -161,7 +161,7 @@
 }
 .fo-table thead th.fo-num { text-align:right; }
 .fo-table tbody tr {
-    border-bottom:1px solid var(--border);transition:background 0.08s;cursor:pointer;background:white;
+    border-bottom:1px solid var(--border);transition:background 0.08s;cursor:pointer;background:var(--surface);
 }
 .fo-table tbody tr:last-child { border-bottom:none; }
 .fo-table tbody tr:hover { background:var(--surface2); }

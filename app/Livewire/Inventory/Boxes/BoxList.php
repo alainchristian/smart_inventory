@@ -9,12 +9,9 @@ use App\Models\Shop;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class BoxList extends Component
 {
-    use WithPagination;
-
     public string  $search        = '';
     public ?string $locationType  = null;
     public ?int    $locationId    = null;
@@ -24,6 +21,7 @@ class BoxList extends Component
     public int     $expiringDays  = 30;
     public string  $sortBy        = 'received_at';
     public string  $sortDirection = 'desc';
+    public int     $perPage       = 25;
 
     protected $queryString = [
         'search'        => ['except' => ''],
@@ -47,23 +45,15 @@ class BoxList extends Component
     public function updatingLocationType(): void
     {
         $this->locationId = null;
-        $this->resetPage();
+        $this->perPage    = 25;
     }
 
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
+    public function updatingSearch(): void       { $this->perPage = 25; }
+    public function updatingProductId(): void    { $this->perPage = 25; }
+    public function updatingStatus(): void       { $this->perPage = 25; }
+    public function updatingExpiringOnly(): void { $this->perPage = 25; }
 
-    public function updatingProductId(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingStatus(): void
-    {
-        $this->resetPage();
-    }
+    public function loadMore(): void { $this->perPage += 25; }
 
     public function sortColumn(string $field): void
     {
@@ -79,21 +69,22 @@ class BoxList extends Component
             $this->sortDirection = 'desc';
         }
 
-        $this->resetPage();
+        $this->perPage = 25;
     }
 
     public function clearFilters(): void
     {
         $this->reset(['search', 'productId', 'status', 'expiringOnly']);
-        $this->resetPage();
+        $this->perPage = 25;
     }
 
     public function render()
     {
-        // ── Main query ─────────────────────────────────────────────────────
-        $query = Box::query()
-            ->with(['product.category', 'location', 'receivedBy'])
-            ->where('status', '!=', 'empty')   // empty = consumed; exclude from inventory view
+        $isOwner = auth()->user()->isOwner() || auth()->user()->isAdmin();
+
+        // ── Filtered base (all filters, no sort — used for both paginated query and aggregates) ──
+        $baseQuery = Box::query()
+            ->where('status', '!=', 'empty')
             ->when($this->search, fn ($q) =>
                 $q->where('box_code', 'ILIKE', "%{$this->search}%")
             )
@@ -112,7 +103,21 @@ class BoxList extends Component
             )
             ->when($this->expiringOnly, fn ($q) =>
                 $q->expiringSoon($this->expiringDays)
-            )
+            );
+
+        // ── Filtered totals (respond to ALL active filters) ───────────────
+        $filteredCount = (clone $baseQuery)->count();
+        $filteredCostValue = $isOwner
+            ? (int) ((clone $baseQuery)
+                ->join('products as p_agg', 'boxes.product_id', '=', 'p_agg.id')
+                ->whereIn('boxes.status', ['full', 'partial'])
+                ->where('boxes.items_remaining', '>', 0)
+                ->sum(DB::raw('boxes.items_remaining * p_agg.purchase_price')))
+            : 0;
+
+        // ── Main paginated query ───────────────────────────────────────────
+        $query = (clone $baseQuery)
+            ->with(['product.category', 'location', 'receivedBy'])
             ->when($this->sortBy === 'cost_value', fn ($q) =>
                 $q->join('products as p_sort', 'boxes.product_id', '=', 'p_sort.id')
                   ->orderByRaw('(boxes.items_remaining * p_sort.purchase_price) ' . $this->sortDirection)
@@ -180,15 +185,18 @@ class BoxList extends Component
             ->count();
 
         return view('livewire.inventory.boxes.box-list', [
-            'boxes'         => $query->paginate(50),
-            'stats'         => $stats,
-            'fillRate'      => $fillRate,
-            'stagnantCount' => $stagnantCount,
-            'isOwner'       => auth()->user()->isOwner() || auth()->user()->isAdmin(),
-            'products'      => Product::active()->orderBy('name')->get(),
-            'warehouses'    => Warehouse::active()->orderBy('name')->get(),
-            'shops'         => Shop::active()->orderBy('name')->get(),
-            'statuses'      => array_filter(BoxStatus::cases(), fn ($s) => $s !== BoxStatus::EMPTY),
+            'boxes'              => $query->take($this->perPage)->get(),
+            'hasMore'            => $filteredCount > $this->perPage,
+            'stats'              => $stats,
+            'fillRate'           => $fillRate,
+            'stagnantCount'      => $stagnantCount,
+            'filteredCount'      => $filteredCount,
+            'filteredCostValue'  => $filteredCostValue,
+            'isOwner'            => $isOwner,
+            'products'           => Product::active()->orderBy('name')->get(),
+            'warehouses'         => Warehouse::active()->orderBy('name')->get(),
+            'shops'              => Shop::active()->orderBy('name')->get(),
+            'statuses'           => array_filter(BoxStatus::cases(), fn ($s) => $s !== BoxStatus::EMPTY),
         ]);
     }
 }

@@ -49,7 +49,7 @@
 @if($isOwner && $showShopSelectionModal)
 <div style="position:fixed;inset:0;z-index:800;display:flex;align-items:center;justify-content:center;
             background:rgba(15,20,40,.6);backdrop-filter:blur(6px)">
-  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:440px;
+  <div style="background:var(--surface);border-radius:20px;padding:32px 28px;width:440px;
               max-width:94vw;box-shadow:0 32px 80px rgba(0,0,0,.25)">
     <div style="text-align:center;margin-bottom:24px">
       <div style="width:60px;height:60px;border-radius:16px;background:#eef2ff;
