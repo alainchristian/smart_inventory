@@ -8,99 +8,75 @@ use Livewire\Component;
 
 class LossAnalysis extends Component
 {
-    public $dateFrom;
-    public $dateTo;
-    public $locationFilter = 'all';
+    public string $preset       = 'last_30';
+    public string $dateFrom     = '';
+    public string $dateTo       = '';
+    public string $locationFilter = 'all';
+    public string $activeTab    = 'overview';
 
-    protected $queryString = ['dateFrom', 'dateTo', 'locationFilter'];
+    protected $queryString = ['preset', 'dateFrom', 'dateTo', 'locationFilter', 'activeTab'];
 
-    public function mount()
+    public function mount(): void
     {
-        // Ensure only owners can access
         if (!auth()->user()->isOwner()) {
-            abort(403, 'Unauthorized access.');
+            abort(403);
         }
-
-        // Set default date range (last 30 days)
-        $this->dateFrom = $this->dateFrom ?? now()->subDays(30)->format('Y-m-d');
-        $this->dateTo = $this->dateTo ?? now()->format('Y-m-d');
-    }
-
-    public function updatedDateFrom()
-    {
-        $this->validateDates();
-    }
-
-    public function updatedDateTo()
-    {
-        $this->validateDates();
-    }
-
-    public function validateDates()
-    {
-        // Ensure dateFrom is not after dateTo
-        if ($this->dateFrom > $this->dateTo) {
-            $this->dateTo = $this->dateFrom;
+        if (!$this->dateFrom) {
+            $this->resolveDates();
         }
     }
 
-    public function setDateRange($range)
+    public function setPreset(string $preset): void
     {
-        $this->dateTo = now()->format('Y-m-d');
-
-        switch ($range) {
-            case 'today':
-                $this->dateFrom = now()->format('Y-m-d');
-                break;
-            case 'week':
-                $this->dateFrom = now()->subDays(7)->format('Y-m-d');
-                break;
-            case 'month':
-                $this->dateFrom = now()->subDays(30)->format('Y-m-d');
-                break;
-            case 'quarter':
-                $this->dateFrom = now()->subDays(90)->format('Y-m-d');
-                break;
-            case 'year':
-                $this->dateFrom = now()->subDays(365)->format('Y-m-d');
-                break;
-        }
+        $this->preset = $preset;
+        $this->resolveDates();
     }
 
-    public function getLossKpisProperty()
+    public function updatedDateFrom(): void { $this->preset = 'custom'; }
+    public function updatedDateTo(): void   { $this->preset = 'custom'; }
+
+    public function setTab(string $tab): void { $this->activeTab = $tab; }
+
+    private function resolveDates(): void
     {
-        $service = app(LossAnalyticsService::class);
-        return $service->getLossKpis($this->dateFrom, $this->dateTo, $this->locationFilter);
+        match ($this->preset) {
+            'today'      => [$this->dateFrom, $this->dateTo] = [today()->toDateString(), today()->toDateString()],
+            'yesterday'  => [$this->dateFrom, $this->dateTo] = [today()->subDay()->toDateString(), today()->subDay()->toDateString()],
+            'week'       => [$this->dateFrom, $this->dateTo] = [today()->startOfWeek()->toDateString(), today()->toDateString()],
+            'month'      => [$this->dateFrom, $this->dateTo] = [today()->startOfMonth()->toDateString(), today()->toDateString()],
+            'last_month' => [$this->dateFrom, $this->dateTo] = [today()->subMonthNoOverflow()->startOfMonth()->toDateString(), today()->subMonthNoOverflow()->endOfMonth()->toDateString()],
+            default      => [$this->dateFrom, $this->dateTo] = [now()->subDays(29)->toDateString(), today()->toDateString()],
+        };
     }
 
-    public function getLossTrendProperty()
+    public function getLossKpisProperty(): array
     {
-        $service = app(LossAnalyticsService::class);
-        return $service->getLossTrend($this->dateFrom, $this->dateTo, $this->locationFilter);
+        return app(LossAnalyticsService::class)->getLossKpis($this->dateFrom, $this->dateTo, $this->locationFilter);
     }
 
-    public function getReturnReasonsProperty()
+    public function getLossTrendProperty(): array
     {
-        $service = app(LossAnalyticsService::class);
-        return $service->getReturnReasonBreakdown($this->dateFrom, $this->dateTo, $this->locationFilter);
+        return app(LossAnalyticsService::class)->getLossTrend($this->dateFrom, $this->dateTo, $this->locationFilter);
     }
 
-    public function getDispositionBreakdownProperty()
+    public function getReturnReasonsProperty(): array
     {
-        $service = app(LossAnalyticsService::class);
-        return $service->getDispositionBreakdown($this->dateFrom, $this->dateTo, $this->locationFilter);
+        return app(LossAnalyticsService::class)->getReturnReasonBreakdown($this->dateFrom, $this->dateTo, $this->locationFilter);
     }
 
-    public function getProblemProductsProperty()
+    public function getDispositionBreakdownProperty(): array
     {
-        $service = app(LossAnalyticsService::class);
-        return $service->getProblemProducts($this->dateFrom, $this->dateTo, $this->locationFilter, 20);
+        return app(LossAnalyticsService::class)->getDispositionBreakdown($this->dateFrom, $this->dateTo, $this->locationFilter);
     }
 
-    public function getReturnsByLocationProperty()
+    public function getProblemProductsProperty(): array
     {
-        $service = app(LossAnalyticsService::class);
-        return $service->getReturnsByLocation($this->dateFrom, $this->dateTo);
+        return app(LossAnalyticsService::class)->getProblemProducts($this->dateFrom, $this->dateTo, $this->locationFilter, 20);
+    }
+
+    public function getReturnsByLocationProperty(): array
+    {
+        return app(LossAnalyticsService::class)->getReturnsByLocation($this->dateFrom, $this->dateTo);
     }
 
     public function getShopsProperty()

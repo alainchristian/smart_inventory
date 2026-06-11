@@ -44,6 +44,28 @@
 .rv-text-block { font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap }
 .rv-annotate-btn { background:transparent;border:none;cursor:pointer;color:var(--text-dim);font-size:11px;padding:2px 6px;border-radius:4px }
 .rv-annotate-btn:hover { background:var(--surface2);color:var(--accent) }
+/* Inline block insight */
+.rv-insight { display:flex;align-items:flex-start;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12.5px;line-height:1.5;font-weight:500 }
+.rv-insight svg { flex-shrink:0;margin-top:1px }
+.rv-insight.rv-good    { color:var(--green) }
+.rv-insight.rv-warn    { color:var(--amber) }
+.rv-insight.rv-bad     { color:var(--red) }
+.rv-insight.rv-neutral { color:var(--text-dim) }
+/* Key Findings strip */
+.rv-findings { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:18px }
+.rv-findings-hdr { font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:6px }
+.rv-findings-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px }
+.rv-finding { padding:10px 13px;border-radius:var(--rsm);border-left:3px solid;display:flex;flex-direction:column;gap:3px }
+.rv-finding.rv-good    { background:rgba(0,180,80,.07);border-left-color:var(--green) }
+.rv-finding.rv-warn    { background:rgba(240,160,0,.08);border-left-color:var(--amber) }
+.rv-finding.rv-bad     { background:rgba(220,50,50,.07);border-left-color:var(--red) }
+.rv-finding.rv-neutral { background:var(--surface2);border-left-color:var(--border) }
+.rv-finding-label { font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;opacity:.7 }
+.rv-finding-text  { font-size:12.5px;font-weight:500;line-height:1.4 }
+.rv-finding.rv-good .rv-finding-label, .rv-finding.rv-good .rv-finding-text { color:var(--green) }
+.rv-finding.rv-warn .rv-finding-label, .rv-finding.rv-warn .rv-finding-text { color:var(--amber) }
+.rv-finding.rv-bad .rv-finding-label,  .rv-finding.rv-bad .rv-finding-text  { color:var(--red) }
+.rv-finding.rv-neutral .rv-finding-label, .rv-finding.rv-neutral .rv-finding-text { color:var(--text-dim) }
 .rv-drawer { position:fixed;top:0;right:0;width:380px;max-width:100%;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:9999;box-shadow:-4px 0 20px rgba(0,0,0,.12);overflow-y:auto;display:flex;flex-direction:column }
 .rv-drawer-hdr { padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between }
 .rv-drawer-title { font-size:15px;font-weight:700;color:var(--text) }
@@ -110,6 +132,236 @@ function extractKpiSub(string $metricId, array $data): string {
         'finance_expense_trend'      => 'Daily average: ' . (count($data) > 0 ? number_format(array_sum(array_column($data, 'total_expenses')) / count($data)) : 0) . ' RWF',
         default                   => '',
     };
+}
+
+/**
+ * Returns ['text' => string, 'tone' => good|warn|bad|neutral] or null.
+ * Converts raw metric data into a plain-English sentence an owner can act on.
+ */
+function generateInsight(string $metricId, array $data): ?array
+{
+    if (isset($data['error'])) return null;
+    $g = fn(string $s) => ['text' => $s, 'tone' => 'good'];
+    $w = fn(string $s) => ['text' => $s, 'tone' => 'warn'];
+    $b = fn(string $s) => ['text' => $s, 'tone' => 'bad'];
+    $n = fn(string $s) => ['text' => $s, 'tone' => 'neutral'];
+    $fmt = fn($v) => number_format((float)$v);
+
+    switch ($metricId) {
+
+        case 'sales_revenue': {
+            $growth = round($data['growth_percentage'] ?? 0, 1);
+            $margin = round($data['margin_pct'] ?? 0, 1);
+            $rev    = $fmt($data['total_revenue'] ?? 0);
+            if ($growth > 20) return $g("Revenue surged {$growth}% — your strongest growth in recent periods. Keep the momentum.");
+            if ($growth > 5)  return $g("Revenue grew {$growth}% with a {$margin}% gross margin. Solid performance.");
+            if ($growth >= 0) return $n("Revenue steady at {$rev} RWF with a {$margin}% margin. Consistent but room to grow.");
+            if ($growth > -10) return $w("Revenue dipped {$growth}% vs the prior period. Worth investigating the cause.");
+            return $b("Revenue fell {$growth}% — a significant decline. Review sales activity and pricing.");
+        }
+
+        case 'sales_gross_profit': {
+            $margin = round($data['margin_pct'] ?? 0, 1);
+            $gp     = $fmt($data['gross_profit'] ?? 0);
+            if ($margin >= 35) return $g("Excellent {$margin}% gross margin — your pricing and cost of goods are well calibrated.");
+            if ($margin >= 20) return $g("Healthy {$margin}% gross margin on {$gp} RWF gross profit.");
+            if ($margin >= 10) return $w("Thin {$margin}% margin — consider reviewing supplier costs or adjusting pricing.");
+            return $b("Very low {$margin}% gross margin. Urgent review of COGS and pricing is needed.");
+        }
+
+        case 'sales_transaction_count': {
+            $n    = (int)($data['transactions_count'] ?? 0);
+            $prev = (int)($data['previous_transactions'] ?? 0);
+            if ($prev > 0) {
+                $chg = round((($n - $prev) / $prev) * 100, 1);
+                if ($chg > 0) return $g("Transaction volume up {$chg}% — more customers making purchases.");
+                return $w("Transaction count dropped {$chg}% vs prior period. Fewer customers or larger orders?");
+            }
+            return $n(number_format($n) . " transactions processed this period.");
+        }
+
+        case 'sales_avg_basket': {
+            $avg = $fmt($data['avg_basket'] ?? 0);
+            $cnt = number_format($data['transactions_count'] ?? 0);
+            return $n("Each of the {$cnt} customers spent an average of {$avg} RWF per visit.");
+        }
+
+        case 'inventory_fill_rate': {
+            $rate = round($data['fill_rate'] ?? 0, 1);
+            if ($rate >= 90) return $g("Excellent {$rate}% fill rate — shelves are well stocked across all locations.");
+            if ($rate >= 70) return $w("{$rate}% fill rate — noticeable gaps in coverage. Plan transfers or restock.");
+            return $b("Low {$rate}% fill rate — shelves are significantly under-stocked. Urgent replenishment needed.");
+        }
+
+        case 'inventory_dead_stock':
+        case 'ops_low_stock_count': {
+            $dead = (int)($data['dead_stock_count'] ?? 0);
+            $low  = (int)($data['low_stock_count'] ?? 0);
+            if ($metricId === 'inventory_dead_stock') {
+                if ($dead === 0) return $g("No dead stock detected — all products are actively selling.");
+                if ($dead <= 3)  return $w("{$dead} product(s) haven't moved in 90+ days. Consider markdowns or transfers.");
+                return $b("{$dead} products are stagnant for 90+ days. Capital is locked — clear them out.");
+            }
+            if ($low === 0)  return $g("No products are running critically low right now.");
+            if ($low <= 5)   return $w("{$low} product(s) are running low — schedule restocking soon.");
+            return $b("{$low} products are low on stock — immediate action required before stock-outs occur.");
+        }
+
+        case 'inventory_cost_value': {
+            $cost   = $fmt($data['purchase_value'] ?? 0);
+            $profit = $fmt($data['potential_profit'] ?? 0);
+            return $n("Inventory at {$cost} RWF cost, with {$profit} RWF in potential gross profit if sold at full retail.");
+        }
+
+        case 'inventory_retail_value': {
+            $retail = $fmt($data['retail_value'] ?? 0);
+            $cost   = $fmt($data['purchase_value'] ?? 0);
+            return $n("Stock worth {$retail} RWF at retail price, sitting at {$cost} RWF cost.");
+        }
+
+        case 'loss_total': {
+            $total = ($data['total_refunds'] ?? 0) + ($data['damaged_loss'] ?? 0);
+            if ($total == 0) return $g("No losses this period — clean run with no returns or damaged goods.");
+            $fmtTotal = $fmt($total);
+            $returns  = $fmt($data['total_refunds'] ?? 0);
+            $damaged  = $fmt($data['damaged_loss'] ?? 0);
+            return $w("Losses of {$fmtTotal} RWF: {$returns} RWF in returns and {$damaged} RWF from damaged goods.");
+        }
+
+        case 'loss_return_rate': {
+            $rate = round($data['return_rate'] ?? 0, 1);
+            $cnt  = (int)($data['returns_count'] ?? 0);
+            if ($rate < 2)  return $g("Healthy {$rate}% return rate — customers are largely satisfied with what they receive.");
+            if ($rate < 5)  return $w("{$rate}% return rate ({$cnt} returns) — within range, but keep an eye on it.");
+            return $b("High {$rate}% return rate with {$cnt} returns. Investigate product quality or customer expectations.");
+        }
+
+        case 'loss_damaged_value': {
+            $v = $fmt($data['damaged_loss'] ?? 0);
+            if (($data['damaged_loss'] ?? 0) == 0) return $g("No damaged-goods losses recorded this period.");
+            return $w("{$v} RWF lost to damaged goods. Review handling and storage conditions.");
+        }
+
+        case 'loss_shrinkage': {
+            $s = round($data['shrinkage_pct'] ?? 0, 2);
+            $n = (int)($data['items_damaged_90d'] ?? 0);
+            if ($s < 0.5) return $g("Negligible {$s}% shrinkage — your inventory control is strong.");
+            if ($s < 2)   return $w("{$s}% shrinkage with {$n} items damaged in the last 90 days — review handling.");
+            return $b("High {$s}% shrinkage rate. Security, storage, and handling practices need immediate review.");
+        }
+
+        case 'replenishment_critical': {
+            $cnt = count($data);
+            if ($cnt === 0) return $g("No products at critical levels — all stock is adequately covered.");
+            if ($cnt === 1) return $b("1 product is critically low — a stock-out could happen any day. Order now.");
+            return $b("{$cnt} products are critically low. Immediate supplier orders are needed to avoid stock-outs.");
+        }
+
+        case 'replenishment_days_on_hand': {
+            $rows = collect($data)->map(fn($r) => is_array($r) ? $r : (array)$r);
+            $urgent = $rows->filter(fn($r) => ($r['days_on_hand'] ?? 999) < 7)->count();
+            if ($urgent === 0) return $g("All products have more than a week of stock remaining.");
+            $min  = $rows->sortBy('days_on_hand')->first() ?? [];
+            $name = $min['product_name'] ?? 'a product';
+            $days = $min['days_on_hand'] ?? 0;
+            return $b("{$urgent} product(s) have less than 7 days of stock. Most urgent: {$name} ({$days} days left).");
+        }
+
+        case 'ops_damaged_pending': {
+            $cnt = (int)($data['count'] ?? 0);
+            if ($cnt === 0) return $g("No damaged goods awaiting a decision — backlog is clear.");
+            return $w("{$cnt} damaged item(s) need a disposition decision. Resolve to free up space and write off losses.");
+        }
+
+        case 'transfers_kpis': {
+            $total = (int)($data['total_transfers'] ?? 0);
+            $dr    = round($data['discrepancy_rate'] ?? 0, 1);
+            if ($total === 0) return $n("No transfers completed this period.");
+            if ($dr < 2)  return $g(number_format($total) . " transfers with only {$dr}% discrepancy — excellent packing accuracy.");
+            if ($dr < 10) return $w("{$dr}% discrepancy rate on " . number_format($total) . " transfers — review packing procedures.");
+            return $b("High {$dr}% discrepancy rate — packing and shipping accuracy needs urgent attention.");
+        }
+
+        case 'transfers_discrepancies': {
+            $cnt = is_array($data) && isset($data[0]) ? count($data) : (int)($data['total_discrepancies'] ?? 0);
+            if ($cnt === 0) return $g("No discrepancies — all transfers reconciled perfectly.");
+            return $w("{$cnt} discrepancy/discrepancies detected. Investigate and reconcile before stock records drift.");
+        }
+
+        case 'finance_net_operating': {
+            $net = (float)($data['net_result'] ?? 0);
+            $m   = round($data['net_margin_pct'] ?? 0, 1);
+            $fmtNet = $fmt(abs($net));
+            if ($net > 0 && $m >= 15) return $g("Profitable period — {$fmtNet} RWF net result with a {$m}% net margin.");
+            if ($net > 0) return $w("Marginally profitable at {$fmtNet} RWF ({$m}% margin). Watch expenses to protect the bottom line.");
+            return $b("Operations ran at a loss of {$fmtNet} RWF — expenses exceeded net revenue this period.");
+        }
+
+        case 'finance_expense_summary': {
+            $cur  = $data['total_expenses'] ?? 0;
+            $prev = $data['previous_total'] ?? 0;
+            $fmtCur = $fmt($cur);
+            if ($prev > 0) {
+                $chg = round((($cur - $prev) / $prev) * 100, 1);
+                if ($chg > 20) return $b("Expenses jumped {$chg}% vs prior period at {$fmtCur} RWF — review cost drivers.");
+                if ($chg > 0)  return $w("Expenses up {$chg}% at {$fmtCur} RWF — slightly higher than before.");
+                return $g("Expenses down {$chg}% at {$fmtCur} RWF — cost discipline is working.");
+            }
+            return $n("Total expenses of {$fmtCur} RWF recorded this period.");
+        }
+
+        case 'finance_cash_variance': {
+            $shortage  = (float)($data['total_shortage'] ?? 0);
+            $sessions  = (int)($data['sessions_with_shortage'] ?? 0);
+            $totalSess = $data['total_sessions'] ?? 0;
+            if ($shortage == 0) return $g("All cash sessions balanced — no shortages recorded. Excellent cash discipline.");
+            $fmtS = $fmt($shortage);
+            if ($sessions === 1) return $w("1 of {$totalSess} sessions had a cash shortage of {$fmtS} RWF — investigate the gap.");
+            return $b("{$sessions} of {$totalSess} sessions had shortages totaling {$fmtS} RWF — review cash handling procedures.");
+        }
+
+        case 'finance_withdrawal_summary': {
+            $total = $fmt($data['total_withdrawals'] ?? 0);
+            $cash  = $fmt($data['cash_withdrawals'] ?? 0);
+            return $n("Owner withdrawals totaled {$total} RWF this period, with {$cash} RWF taken in cash.");
+        }
+
+        case 'sales_voided': {
+            $cnt = (int)($data['voided_count'] ?? 0);
+            if ($cnt === 0) return $g("No voided transactions — clean sales record.");
+            if ($cnt <= 3)  return $w("{$cnt} transaction(s) were voided. Review whether these were handled correctly.");
+            return $b("{$cnt} voided transactions — a high void rate may indicate pricing errors or staff issues.");
+        }
+
+        case 'sales_top_products': {
+            if (empty($data[0])) return null;
+            $top  = is_array($data[0]) ? $data[0] : (array)$data[0];
+            $name = $top['product_name'] ?? 'Top product';
+            $rev  = $fmt($top['revenue'] ?? 0);
+            return $n("Top seller: {$name} at {$rev} RWF. Keep it well stocked — demand is proven.");
+        }
+
+        case 'sales_by_shop': {
+            if (empty($data)) return null;
+            $rows  = collect($data)->map(fn($r) => is_array($r) ? $r : (array)$r);
+            $total = $rows->sum('revenue');
+            if ($total == 0) return null;
+            $top  = $rows->sortByDesc('revenue')->first() ?? [];
+            $name = $top['shop_name'] ?? 'Top shop';
+            $pct  = round(($top['revenue'] / $total) * 100);
+            return $n("{$name} is driving {$pct}% of total revenue — your strongest location this period.");
+        }
+
+        case 'inventory_abc_summary': {
+            $rows   = collect($data)->map(fn($r) => is_array($r) ? $r : (array)$r);
+            $aClass = $rows->filter(fn($r) => ($r['classification'] ?? '') === 'A')->count();
+            $total  = $rows->count();
+            if ($total === 0) return null;
+            return $n("{$aClass} of {$total} products are Class A — they generate the bulk of revenue. Never let them stock out.");
+        }
+
+        default: return null;
+    }
 }
 @endphp
 
@@ -266,6 +518,42 @@ function extractKpiSub(string $metricId, array $data): string {
     <div style="font-size:13px;color:var(--text-dim)">This report has {{ $report->blockCount() }} metric {{ Str::plural('block', $report->blockCount()) }}</div>
 </div>
 @else
+@php
+    /* Pre-compute insights for the Key Findings strip */
+    $allInsights = [];
+    foreach ($results as $br) {
+        $ins = generateInsight($br['block']['metric_id'] ?? '', is_array($br['data'] ?? null) ? $br['data'] : []);
+        if ($ins) {
+            $allInsights[] = $ins + ['title' => $br['block']['title'] ?? ''];
+        }
+    }
+    $featured = array_slice(
+        array_merge(
+            array_values(array_filter($allInsights, fn($i) => $i['tone'] === 'bad')),
+            array_values(array_filter($allInsights, fn($i) => $i['tone'] === 'warn')),
+            array_values(array_filter($allInsights, fn($i) => $i['tone'] === 'good'))
+        ),
+        0, 4
+    );
+@endphp
+
+@if (count($featured) >= 2)
+<div class="rv-findings">
+    <div class="rv-findings-hdr">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Key Findings
+    </div>
+    <div class="rv-findings-grid">
+        @foreach ($featured as $finding)
+        <div class="rv-finding rv-{{ $finding['tone'] }}">
+            <span class="rv-finding-label">{{ $finding['title'] }}</span>
+            <span class="rv-finding-text">{{ $finding['text'] }}</span>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 <div class="rv-results">
     @foreach ($results as $blockResult)
     @php
@@ -432,6 +720,25 @@ function extractKpiSub(string $metricId, array $data): string {
                             data-labels="{{ json_encode($labels) }}"
                             data-datasets="{{ json_encode($datasets) }}"></canvas>
                 </div>
+                @endif
+
+                {{-- Insight sentence --}}
+                @if ($viz !== 'text')
+                @php $blockInsight = generateInsight($metricId, is_array($data) ? $data : []); @endphp
+                @if ($blockInsight)
+                <div class="rv-insight rv-{{ $blockInsight['tone'] }}">
+                    @if ($blockInsight['tone'] === 'good')
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    @elseif ($blockInsight['tone'] === 'bad')
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    @elseif ($blockInsight['tone'] === 'warn')
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    @else
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    @endif
+                    {{ $blockInsight['text'] }}
+                </div>
+                @endif
                 @endif
 
             </div>{{-- /rv-block-body --}}

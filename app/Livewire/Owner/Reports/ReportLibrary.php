@@ -2,6 +2,7 @@
 namespace App\Livewire\Owner\Reports;
 
 use App\Models\SavedReport;
+use App\Services\Reports\ReportTemplates;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -9,8 +10,9 @@ class ReportLibrary extends Component
 {
     use WithPagination;
 
-    public string $search = '';
-    public string $filter = 'all'; // all | mine | shared
+    public string $search  = '';
+    public string $filter  = 'all'; // all | mine | shared
+    public string $sortBy  = 'last_run'; // last_run | run_count | alpha | created
 
     public function mount(): void
     {
@@ -19,8 +21,9 @@ class ReportLibrary extends Component
         }
     }
 
-    public function updatingSearch(): void { $this->resetPage(); }
+    public function updatingSearch(): void  { $this->resetPage(); }
     public function updatingFilter(): void  { $this->resetPage(); }
+    public function updatingSortBy(): void  { $this->resetPage(); }
 
     public function deleteReport(int $id): void
     {
@@ -43,6 +46,14 @@ class ReportLibrary extends Component
         session()->flash('success', 'Report duplicated.');
     }
 
+    public function toggleShare(int $id): void
+    {
+        $report = SavedReport::find($id);
+        if ($report && $report->created_by === auth()->id()) {
+            $report->update(['is_shared' => ! $report->is_shared]);
+        }
+    }
+
     public function render()
     {
         $user  = auth()->user();
@@ -63,10 +74,19 @@ class ReportLibrary extends Component
             $query->where('name', 'ilike', '%' . $this->search . '%');
         }
 
-        $reports = $query->orderByDesc('last_run_at')->orderByDesc('created_at')->paginate(20);
+        match ($this->sortBy) {
+            'run_count' => $query->orderByDesc('run_count'),
+            'alpha'     => $query->orderBy('name'),
+            'created'   => $query->orderByDesc('created_at'),
+            default     => $query->orderByDesc('last_run_at')->orderByDesc('created_at'),
+        };
+
+        $reports  = $query->paginate(20);
+        $tmplList = app(ReportTemplates::class)->list();
 
         return view('livewire.owner.reports.report-library', [
-            'reports' => $reports,
+            'reports'  => $reports,
+            'tmplList' => $tmplList,
         ]);
     }
 }

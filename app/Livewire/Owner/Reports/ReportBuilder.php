@@ -5,37 +5,41 @@ use App\Models\SavedReport;
 use App\Models\Shop;
 use App\Models\Warehouse;
 use App\Services\Reports\MetricRegistry;
+use App\Services\Reports\ReportTemplates;
 use Livewire\Component;
 
 class ReportBuilder extends Component
 {
-    // ─── Report meta ───────────────────────────────────────────────────────
+    // Report meta
     public string  $reportName        = '';
     public string  $reportDescription = '';
     public bool    $isShared          = false;
 
-    // ─── Global filters ────────────────────────────────────────────────────
+    // Global filters
     public string  $dateRange      = 'month';
     public ?string $dateFrom       = null;
     public ?string $dateTo         = null;
     public string  $locationFilter = 'all';
 
-    // ─── Comparison ────────────────────────────────────────────────────────
+    // Comparison
     public string  $comparisonMode = 'none';  // none | prior_period | prior_year
 
-    // ─── Canvas (ordered array of block configs) ───────────────────────────
+    // Canvas (ordered array of block configs)
     public array   $canvas = [];   // each item: {id, metric_id, title, width, viz, ...}
 
-    // ─── Catalogue search ──────────────────────────────────────────────────
+    // Catalogue search
     public string  $catalogueSearch = '';
     public string  $catalogueDomain = 'all';
 
-    // ─── Edit context ──────────────────────────────────────────────────────
+    // Edit context
     public ?int    $editingReportId = null;
 
-    // ─── Schedule ──────────────────────────────────────────────────────────
+    // Schedule
     public string  $scheduleCron       = '';
     public string  $scheduleRecipients = '';  // comma-separated emails
+
+    // UI state
+    public bool    $showTemplateModal  = false;
 
     public function mount(?int $reportId = null): void
     {
@@ -57,7 +61,30 @@ class ReportBuilder extends Component
             $this->canvas               = $config['blocks'];
             $this->scheduleCron         = $report->schedule_cron ?? '';
             $this->scheduleRecipients   = implode(', ', $report->schedule_recipients ?? []);
+            $this->showTemplateModal    = false;
+        } elseif ($templateKey = request()->query('template')) {
+            $this->loadTemplate($templateKey);
+            $this->showTemplateModal = false;
+        } else {
+            $this->showTemplateModal = true;
         }
+    }
+
+    public function dismissTemplateModal(): void
+    {
+        $this->showTemplateModal = false;
+    }
+
+    public function reorderBlocks(array $orderedIds): void
+    {
+        $indexed   = collect($this->canvas)->keyBy('id');
+        $reordered = collect($orderedIds)
+            ->filter(fn ($id) => $indexed->has($id))
+            ->map(fn ($id, $pos) => array_merge($indexed[$id], ['position' => $pos]))
+            ->values();
+        $seen    = $reordered->pluck('id')->all();
+        $orphans = collect($this->canvas)->filter(fn ($b) => ! in_array($b['id'], $seen))->values();
+        $this->canvas = $reordered->merge($orphans)->toArray();
     }
 
     public function addBlock(string $metricId): void
@@ -66,16 +93,15 @@ class ReportBuilder extends Component
         if (! $meta) return;
 
         $block = [
-            'id'             => 'b' . now()->timestamp . '_' . count($this->canvas),
-            'metric_id'      => $metricId,
-            'title'          => $meta['label'],
-            'width'          => 'half',
-            'viz'            => $meta['default_viz'],
-            'position'       => count($this->canvas),
+            'id'              => 'b' . now()->timestamp . '_' . count($this->canvas),
+            'metric_id'       => $metricId,
+            'title'           => $meta['label'],
+            'width'           => 'half',
+            'viz'             => $meta['default_viz'],
+            'position'        => count($this->canvas),
             'show_if_nonzero' => false,
         ];
 
-        // Extra defaults for text blocks
         if ($metricId === 'text_block') {
             $block['content'] = '';
             $block['width']   = 'full';
@@ -131,17 +157,15 @@ class ReportBuilder extends Component
         )->toArray();
     }
 
-    /** Step 7: Per-block location/date overrides */
     public function updateBlockOverride(string $blockId, string $field, string $value): void
     {
         $allowed = ['location_filter_override', 'date_range_override', 'date_from_override', 'date_to_override'];
-        if (!in_array($field, $allowed)) return;
+        if (! in_array($field, $allowed)) return;
         $this->canvas = collect($this->canvas)->map(fn ($b) =>
             $b['id'] === $blockId ? array_merge($b, [$field => $value ?: null]) : $b
         )->toArray();
     }
 
-    /** Step 9: Update text block body */
     public function updateBlockContent(string $blockId, string $content): void
     {
         $this->canvas = collect($this->canvas)->map(fn ($b) =>
@@ -149,21 +173,19 @@ class ReportBuilder extends Component
         )->toArray();
     }
 
-    /** Step 11: Scorecard threshold */
     public function updateBlockThreshold(string $blockId, string $field, string $value): void
     {
         $allowed = ['threshold_warning', 'threshold_critical'];
-        if (!in_array($field, $allowed)) return;
+        if (! in_array($field, $allowed)) return;
         $this->canvas = collect($this->canvas)->map(fn ($b) =>
-            $b['id'] === $blockId ? array_merge($b, [$field => $value === '' ? null : (float)$value]) : $b
+            $b['id'] === $blockId ? array_merge($b, [$field => $value === '' ? null : (float) $value]) : $b
         )->toArray();
     }
 
-    /** Step 12: Block data controls (sort/limit) */
     public function updateBlockOption(string $blockId, string $field, string $value): void
     {
         $allowed = ['sort_by', 'sort_direction', 'limit'];
-        if (!in_array($field, $allowed)) return;
+        if (! in_array($field, $allowed)) return;
         $this->canvas = collect($this->canvas)->map(function ($b) use ($blockId, $field, $value) {
             if ($b['id'] !== $blockId) return $b;
             $opts = $b['block_options'] ?? [];
@@ -176,7 +198,6 @@ class ReportBuilder extends Component
         })->toArray();
     }
 
-    /** Step 17: Conditional block visibility */
     public function updateBlockShowIfNonzero(string $blockId, bool $value): void
     {
         $this->canvas = collect($this->canvas)->map(fn ($b) =>
@@ -184,11 +205,10 @@ class ReportBuilder extends Component
         )->toArray();
     }
 
-    /** Step 8: Load template from ReportTemplates service */
     public function loadTemplate(string $templateKey): void
     {
-        $templates = app(\App\Services\Reports\ReportTemplates::class)->get($templateKey);
-        if (!$templates) return;
+        $templates = app(ReportTemplates::class)->get($templateKey);
+        if (! $templates) return;
 
         $this->reportName        = $templates['name'];
         $this->reportDescription = $templates['description'] ?? '';
@@ -198,16 +218,18 @@ class ReportBuilder extends Component
 
         foreach ($templates['blocks'] as $blockDef) {
             $meta = app(MetricRegistry::class)->find($blockDef['metric_id']);
-            if (!$meta) continue;
+            if (! $meta) continue;
             $this->canvas[] = array_merge([
-                'id'             => 'b' . now()->timestamp . '_' . count($this->canvas),
-                'title'          => $meta['label'],
-                'width'          => 'half',
-                'viz'            => $meta['default_viz'],
-                'position'       => count($this->canvas),
+                'id'              => 'b' . now()->timestamp . '_' . count($this->canvas),
+                'title'           => $meta['label'],
+                'width'           => 'half',
+                'viz'             => $meta['default_viz'],
+                'position'        => count($this->canvas),
                 'show_if_nonzero' => false,
             ], $blockDef);
         }
+
+        $this->showTemplateModal = false;
     }
 
     public function save(): void
@@ -229,7 +251,6 @@ class ReportBuilder extends Component
             'blocks'          => array_values($this->canvas),
         ];
 
-        // Parse schedule recipients
         $recipients = array_filter(array_map('trim', explode(',', $this->scheduleRecipients)));
 
         if ($this->editingReportId) {
@@ -283,7 +304,6 @@ class ReportBuilder extends Component
         return array_column($this->canvas, 'metric_id');
     }
 
-    // Flat catalogue keyed by metric_id for easy viz_options lookup in blade
     public function getFlatCatalogueProperty(): array
     {
         return collect(app(MetricRegistry::class)->catalogue())
@@ -302,6 +322,7 @@ class ReportBuilder extends Component
             'addedMetricIds' => $this->addedMetricIds,
             'warehouses'     => $this->warehouses,
             'shops'          => $this->shops,
+            'tmplList'       => app(ReportTemplates::class)->list(),
         ]);
     }
 }
