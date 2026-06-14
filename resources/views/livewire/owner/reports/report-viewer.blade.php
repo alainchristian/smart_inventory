@@ -190,14 +190,14 @@ function generateInsight(string $metricId, array $data): ?array
         }
 
         case 'sales_transaction_count': {
-            $n    = (int)($data['transactions_count'] ?? 0);
+            $cnt  = (int)($data['transactions_count'] ?? 0);
             $prev = (int)($data['previous_transactions'] ?? 0);
             if ($prev > 0) {
-                $chg = round((($n - $prev) / $prev) * 100, 1);
+                $chg = round((($cnt - $prev) / $prev) * 100, 1);
                 if ($chg > 0) return $g("Transaction volume up {$chg}% — more customers making purchases.");
                 return $w("Transaction count dropped {$chg}% vs prior period. Fewer customers or larger orders?");
             }
-            return $n(number_format($n) . " transactions processed this period.");
+            return $n(number_format($cnt) . " transactions processed this period.");
         }
 
         case 'sales_avg_basket': {
