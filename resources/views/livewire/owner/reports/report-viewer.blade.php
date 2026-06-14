@@ -45,6 +45,26 @@
 .rv-annotate-btn { background:transparent;border:none;cursor:pointer;color:var(--text-dim);font-size:11px;padding:2px 6px;border-radius:4px }
 .rv-annotate-btn:hover { background:var(--surface2);color:var(--accent) }
 /* Inline block insight */
+/* Breakdown panel */
+.rv-breakdown-toggle { display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:5px 10px 5px 0;background:transparent;border:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--text-dim);letter-spacing:.2px }
+.rv-breakdown-toggle:hover { color:var(--accent) }
+.rv-breakdown-toggle svg { transition:transform .2s }
+.rv-breakdown-toggle.open svg { transform:rotate(180deg) }
+.rv-breakdown-panel { margin-top:10px;border-top:1px solid var(--border);padding-top:12px }
+.rv-bk-section { margin-bottom:12px }
+.rv-bk-section:last-child { margin-bottom:0 }
+.rv-bk-label { font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:6px }
+.rv-bk-row { display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12.5px }
+.rv-bk-row:last-child { border-bottom:none }
+.rv-bk-name { flex:1;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.rv-bk-val  { color:var(--text);font-weight:700;font-size:12px;white-space:nowrap }
+.rv-bk-pct  { min-width:38px;text-align:right;font-size:11px;font-weight:700;color:var(--text-dim) }
+.rv-bk-bar-wrap { width:60px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0 }
+.rv-bk-bar  { height:5px;background:var(--accent);border-radius:3px }
+.rv-bk-pill { display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700 }
+.rv-bk-pill.ok   { background:var(--green-dim,rgba(0,180,80,.1));color:var(--green) }
+.rv-bk-pill.warn { background:var(--amber-dim,rgba(240,160,0,.08));color:var(--amber) }
+.rv-bk-pill.crit { background:var(--danger-glow,rgba(220,50,50,.07));color:var(--red) }
 .rv-insight { display:flex;align-items:flex-start;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12.5px;line-height:1.5;font-weight:500 }
 .rv-insight svg { flex-shrink:0;margin-top:1px }
 .rv-insight.rv-good    { color:var(--green) }
@@ -720,6 +740,33 @@ function generateInsight(string $metricId, array $data): ?array
                             data-labels="{{ json_encode($labels) }}"
                             data-datasets="{{ json_encode($datasets) }}"></canvas>
                 </div>
+                @endif
+
+                {{-- Breakdown toggle (KPI cards only) --}}
+                @if ($viz === 'kpi_card' && !isset($data['error']))
+                @php
+                    $bdOpen = $openBreakdownId === $block['id'];
+                    $bdData = $breakdowns[$block['id']] ?? null;
+                    $noBreakdown = ($bdData['type'] ?? '') === 'none';
+                @endphp
+                @if (!$noBreakdown)
+                <button class="rv-breakdown-toggle {{ $bdOpen ? 'open' : '' }}"
+                        wire:click="loadBreakdown('{{ $block['id'] }}')"
+                        wire:loading.attr="disabled"
+                        wire:loading.class="opacity-50"
+                        wire:target="loadBreakdown('{{ $block['id'] }}')">
+                    <span wire:loading.remove wire:target="loadBreakdown('{{ $block['id'] }}')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        {{ $bdOpen ? 'Collapse' : 'What\'s behind this?' }}
+                    </span>
+                    <span wire:loading wire:target="loadBreakdown('{{ $block['id'] }}')" style="display:none">Loading…</span>
+                </button>
+                @if ($bdOpen && $bdData)
+                <div class="rv-breakdown-panel">
+                    @include('livewire.owner.reports.partials.breakdown-panel', ['bd' => $bdData, 'metricId' => $metricId, 'blockData' => $data])
+                </div>
+                @endif
+                @endif
                 @endif
 
                 {{-- Insight sentence --}}

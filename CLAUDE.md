@@ -698,3 +698,31 @@ read the full skill file at:
 This is mandatory. It contains the existing design patterns, CSS class
 conventions, color variables, component structures, and mobile breakpoints
 that all pages must follow.
+
+---
+
+## Report Library — 7 Additional Quick-Start Templates (added 2026-06-11)
+
+Added 7 new entries to `app/Services/Reports/ReportTemplates.php` to broaden
+the time-bound coverage of the Quick-Start strip. **No** changes to
+`MetricRegistry`, `ReportRunner`, or any blade/Livewire component — these
+templates compose existing metric blocks.
+
+| key | name | date_range | block count |
+| --- | --- | --- | --- |
+| `daily_snapshot` | Daily Snapshot | today | 9 |
+| `weekly_exec` | Weekly Executive Brief | week | 9 |
+| `year_review` | Year in Review | year | 11 |
+| `shop_compare` | Shop Head-to-Head | month | 8 |
+| `cash_banking` | Cash & Banking Audit | month | 6 |
+| `margin_pricing` | Margin & Pricing Health | month | 6 |
+| `audit_pack` | Pre-Audit Compliance Pack | month | 8 |
+
+Total template count is now 14 (7 existing + 7 new).
+
+Rules followed when adding templates:
+- All `metric_id`s must exist in `MetricRegistry::catalogue()`.
+- Every `viz` value must be in that metric's `viz_options`.
+- `color` uses CSS variable tokens only (`--accent`, `--green`, `--amber`, `--red`, `--violet`).
+- Icons are inner-SVG path data sized for the `viewBox="0 0 24 24"` wrapper in `report-library.blade.php`.
+- No `text_block` entries and no `comparison_mode` in the template config.
