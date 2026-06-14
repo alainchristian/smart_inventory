@@ -280,7 +280,9 @@
     .fo-kpis { grid-template-columns:1fr 1fr;gap:8px; }
     .fo-kpi  { padding:14px;gap:10px; }
     .fo-kpi-val { font-size:20px; }
-    .fo-kpi-footer { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:480px) {
+    .fo-kpis { grid-template-columns:1fr; }
     .fo-rank-bar-wrap { display:none; }
     /* Modal 3-col → single column stack on mobile */
     .fo-expanded-detail { grid-template-columns:1fr; }
@@ -585,158 +587,138 @@
 </div>
 
 {{-- ── Dual Chart Row ── --}}
-@if(!empty($chartData['labels']))
 <div class="fo-charts">
     {{-- Line trend chart --}}
     <div class="fo-chart-card">
         <div class="fo-chart-title">Revenue & Expense Trend</div>
         <div class="fo-chart-sub">Daily movement across all shops · RWF</div>
-        <div class="fo-chart-legend">
-            <span class="fo-legend-item">
-                <span class="fo-legend-dot" style="background:var(--accent);"></span>Revenue
-            </span>
-            <span class="fo-legend-item">
-                <span class="fo-legend-dot" style="background:var(--accent);border:1px dashed var(--accent);"></span>Repayments
-            </span>
-            <span class="fo-legend-item">
-                <span class="fo-legend-dot" style="background:var(--red);"></span>Expenses
-            </span>
-            <span class="fo-legend-item">
-                <span class="fo-legend-dot" style="background:var(--green);"></span>Net
-            </span>
-        </div>
-        <div style="position:relative;height:200px;">
-            <canvas id="finance-trend-chart"
-                    data-chart='@json($chartData)'></canvas>
-        </div>
+        <div id="fo-trend-chart"
+             style="min-height:220px"
+             data-labels='@json($chartData["labels"] ?? [])'
+             data-revenue='@json($chartData["revenue"] ?? [])'
+             data-expenses='@json($chartData["expenses"] ?? [])'
+             data-repayments='@json($chartData["repayments"] ?? [])'
+             data-net='@json($chartData["net"] ?? [])'></div>
     </div>
 
     {{-- Grouped bar chart --}}
     <div class="fo-chart-card">
         <div class="fo-chart-title">Revenue vs Expenses</div>
         <div class="fo-chart-sub">Grouped by period · RWF</div>
-        <div class="fo-chart-legend">
-            <span class="fo-legend-item">
-                <span class="fo-legend-dot" style="background:var(--accent);"></span>Revenue
-            </span>
-            <span class="fo-legend-item">
-                <span class="fo-legend-dot" style="background:var(--red-dim);border:1px solid var(--red);"></span>Expenses
-            </span>
-        </div>
-        <div style="position:relative;height:200px;">
-            <canvas id="finance-bar-chart"
-                    data-chart='@json($chartData)'></canvas>
-        </div>
+        <div id="fo-bar-chart"
+             style="min-height:220px"
+             data-labels='@json($chartData["labels"] ?? [])'
+             data-revenue='@json($chartData["revenue"] ?? [])'
+             data-expenses='@json($chartData["expenses"] ?? [])'></div>
     </div>
 </div>
 
 @script
 <script>
-(function() {
-    let trendChart = null;
-    let barChart   = null;
+    let _foTrendChart = null;
+    let _foBarChart   = null;
 
-    function getChartData() {
-        const el = document.getElementById('finance-trend-chart');
-        if (!el) return null;
-        try { return JSON.parse(el.getAttribute('data-chart') || 'null'); }
-        catch (e) { return null; }
-    }
+    function _initFoTrendChart() {
+        const el = document.getElementById('fo-trend-chart');
+        if (!el) return;
 
-    function drawCharts() {
-        const trendCanvas = document.getElementById('finance-trend-chart');
-        const barCanvas   = document.getElementById('finance-bar-chart');
+        const labels     = JSON.parse(el.dataset.labels     || '[]');
+        const revenue    = JSON.parse(el.dataset.revenue    || '[]');
+        const expenses   = JSON.parse(el.dataset.expenses   || '[]');
+        const repayments = JSON.parse(el.dataset.repayments || '[]');
+        const net        = JSON.parse(el.dataset.net        || '[]');
 
-        // Canvas gone (filter hid the chart block) — clean up instances
-        if (!trendCanvas) { trendChart = null; barChart = null; return; }
+        if (_foTrendChart) { _foTrendChart.destroy(); _foTrendChart = null; }
 
-        const data = getChartData();
-        if (!data || !data.labels || !data.labels.length) return;
+        if (!labels.length) {
+            el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:13px;">No data for this period</div>';
+            return;
+        }
 
         const cs     = getComputedStyle(document.documentElement);
-        const accent = cs.getPropertyValue('--accent').trim() || '#0f766e';
-        const red    = cs.getPropertyValue('--red').trim()    || '#e11d48';
-        const redDim = cs.getPropertyValue('--red-dim').trim()|| '#fee2e2';
-        const green  = cs.getPropertyValue('--green').trim()  || '#10b981';
-        const grid   = 'rgba(0,0,0,0.04)';
-        const txt    = 'var(--text-dim)';
+        const accent = cs.getPropertyValue('--accent').trim()    || '#0f766e';
+        const red    = cs.getPropertyValue('--red').trim()       || '#e11d48';
+        const green  = cs.getPropertyValue('--green').trim()     || '#10b981';
+        const amber  = cs.getPropertyValue('--amber').trim()     || '#d97706';
+        const txtDim = cs.getPropertyValue('--text-dim').trim()  || '#64748b';
 
-        // Destroy stale instances whose canvas was replaced by Livewire's DOM morph
-        if (trendChart && !trendChart.canvas.isConnected) { trendChart.destroy(); trendChart = null; }
-        if (barChart   && !barChart.canvas.isConnected)   { barChart.destroy();   barChart   = null; }
+        const fmt = v => 'RWF ' + Number(v).toLocaleString();
 
-        // ── Trend line chart ──────────────────────────────────────────
-        if (trendChart) {
-            trendChart.data.labels            = data.labels;
-            trendChart.data.datasets[0].data  = data.revenue;
-            trendChart.data.datasets[1].data  = data.repayments || [];
-            trendChart.data.datasets[2].data  = data.expenses;
-            trendChart.data.datasets[3].data  = data.net || [];
-            trendChart.update('none');
-        } else {
-            trendChart = new Chart(trendCanvas.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: data.labels,
-                    datasets: [
-                        { label:'Revenue',    data: data.revenue,          borderColor: accent, backgroundColor:'rgba(15,118,110,0.05)', borderWidth:2.5, pointBackgroundColor:accent, pointRadius:3, tension:0.4, fill:true },
-                        { label:'Repayments', data: data.repayments || [], borderColor: accent, borderWidth:2, pointBackgroundColor:accent, pointRadius:3, tension:0.4, borderDash:[6,3], fill:false },
-                        { label:'Expenses',   data: data.expenses,         borderColor: red,    borderWidth:2, pointBackgroundColor:red,    pointRadius:3, tension:0.4, borderDash:[4,3], fill:false },
-                        { label:'Net',        data: data.net || [],        borderColor: green,  borderWidth:2, pointBackgroundColor:green,  pointRadius:3, tension:0.4, borderDash:[2,3], fill:false },
-                    ]
-                },
-                options: {
-                    responsive:true, maintainAspectRatio:false,
-                    plugins: {
-                        legend: { display:false },
-                        tooltip: { mode:'index', intersect:false, backgroundColor:'rgba(15,23,42,0.9)', titleFont:{size:13}, bodyFont:{size:12}, padding:10, cornerRadius:8 }
-                    },
-                    scales: {
-                        x: { grid:{display:false}, ticks:{color:txt, font:{size:11}} },
-                        y: { grid:{color:grid}, border:{display:false}, ticks:{color:txt, font:{size:11}} }
-                    }
-                }
-            });
-        }
-
-        // ── Bar chart ─────────────────────────────────────────────────
-        if (!barCanvas) return;
-        if (barChart) {
-            barChart.data.labels           = data.labels;
-            barChart.data.datasets[0].data = data.revenue;
-            barChart.data.datasets[1].data = data.expenses;
-            barChart.update('none');
-        } else {
-            barChart = new Chart(barCanvas.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: [
-                        { label:'Revenue',  data:data.revenue,  backgroundColor:accent, borderRadius:4, categoryPercentage:0.75, barPercentage:0.6 },
-                        { label:'Expenses', data:data.expenses, backgroundColor:redDim, borderColor:red, borderWidth:1, borderRadius:4, categoryPercentage:0.75, barPercentage:0.6 },
-                    ]
-                },
-                options: {
-                    responsive:true, maintainAspectRatio:false,
-                    plugins: {
-                        legend: { display:false },
-                        tooltip: { backgroundColor:'rgba(15,23,42,0.9)', padding:10, cornerRadius:8, mode:'index' }
-                    },
-                    scales: {
-                        x: { grid:{display:false}, border:{display:false}, ticks:{color:txt, font:{size:11}} },
-                        y: { grid:{color:grid},    border:{display:false}, ticks:{color:txt, font:{size:11}} }
-                    }
-                }
-            });
-        }
+        _foTrendChart = new ApexCharts(el, {
+            chart: { type: 'line', height: 220, toolbar: { show: false }, animations: { enabled: false }, background: 'transparent', fontFamily: 'inherit' },
+            series: [
+                { name: 'Revenue',    data: revenue    },
+                { name: 'Repayments', data: repayments },
+                { name: 'Expenses',   data: expenses   },
+                { name: 'Net',        data: net        },
+            ],
+            xaxis: { categories: labels, labels: { style: { colors: txtDim, fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: txtDim, fontSize: '11px' }, formatter: v => v >= 1000 ? 'RWF ' + Math.round(v/1000) + 'k' : 'RWF ' + v } },
+            colors: [accent, amber, red, green],
+            stroke: { width: [2.5, 2, 2, 2], curve: 'smooth', dashArray: [0, 6, 4, 2] },
+            fill: { type: ['gradient', 'solid', 'solid', 'solid'], gradient: { shadeIntensity: 1, opacityFrom: 0.12, opacityTo: 0.01, stops: [0, 95] } },
+            markers: { size: 3, hover: { size: 5 } },
+            legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', labels: { colors: txtDim }, markers: { width: 8, height: 8, radius: 2 } },
+            grid: { borderColor: 'rgba(0,0,0,0.05)', strokeDashArray: 3 },
+            tooltip: { shared: true, intersect: false, y: { formatter: fmt } },
+            dataLabels: { enabled: false },
+        });
+        _foTrendChart.render();
     }
 
-    drawCharts();
-    Livewire.hook('commit', ({ succeed }) => { succeed(() => { setTimeout(drawCharts, 50); }); });
-})();
+    function _initFoBarChart() {
+        const el = document.getElementById('fo-bar-chart');
+        if (!el) return;
+
+        const labels   = JSON.parse(el.dataset.labels   || '[]');
+        const revenue  = JSON.parse(el.dataset.revenue  || '[]');
+        const expenses = JSON.parse(el.dataset.expenses || '[]');
+
+        if (_foBarChart) { _foBarChart.destroy(); _foBarChart = null; }
+
+        if (!labels.length) {
+            el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:13px;">No data for this period</div>';
+            return;
+        }
+
+        const cs     = getComputedStyle(document.documentElement);
+        const accent = cs.getPropertyValue('--accent').trim()    || '#0f766e';
+        const red    = cs.getPropertyValue('--red').trim()       || '#e11d48';
+        const txtDim = cs.getPropertyValue('--text-dim').trim()  || '#64748b';
+
+        const fmt = v => 'RWF ' + Number(v).toLocaleString();
+
+        _foBarChart = new ApexCharts(el, {
+            chart: { type: 'line', height: 220, toolbar: { show: false }, animations: { enabled: false }, background: 'transparent', fontFamily: 'inherit' },
+            series: [
+                { name: 'Revenue',  data: revenue  },
+                { name: 'Expenses', data: expenses },
+            ],
+            xaxis: { categories: labels, labels: { style: { colors: txtDim, fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: txtDim, fontSize: '11px' }, formatter: v => v >= 1000 ? 'RWF ' + Math.round(v/1000) + 'k' : 'RWF ' + v } },
+            colors: [accent, red],
+            stroke: { width: [2.5, 2], curve: 'smooth', dashArray: [0, 4] },
+            fill: { type: ['gradient', 'solid'], gradient: { shadeIntensity: 1, opacityFrom: 0.1, opacityTo: 0.01, stops: [0, 95] } },
+            markers: { size: 3, hover: { size: 5 } },
+            legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', labels: { colors: txtDim }, markers: { width: 8, height: 8, radius: 2 } },
+            grid: { borderColor: 'rgba(0,0,0,0.05)', strokeDashArray: 3 },
+            tooltip: { shared: true, intersect: false, y: { formatter: fmt } },
+            dataLabels: { enabled: false },
+        });
+        _foBarChart.render();
+    }
+
+    _initFoTrendChart();
+    _initFoBarChart();
+
+    Livewire.hook('commit', ({ succeed }) => {
+        succeed(() => {
+            requestAnimationFrame(_initFoTrendChart);
+            requestAnimationFrame(_initFoBarChart);
+        });
+    });
 </script>
 @endscript
-@endif
 
 {{-- ── No data ── --}}
 @if(empty($rows))
