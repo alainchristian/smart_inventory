@@ -31,6 +31,7 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 .items .amt  { width:25%; text-align:right; font-size:11px; font-weight:bold; }
 .items .sub  { font-size:9px; color:#555; padding-left:0; }
 .items .mod  { font-size:9px; color:#b45309; }
+.wh-tag { font-size:8px; color:#888; font-style:italic; }
 
 /* Total */
 .total-row  { display:flex; justify-content:space-between; align-items:baseline; margin:4px 0; }
@@ -72,9 +73,15 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 
 {{-- Items --}}
 <table class="items">
+@php $hasWarehouseItems = collect($groupedItems)->contains(fn($i) => ($i['source'] ?? 'shop') === 'warehouse'); @endphp
 @foreach($groupedItems as $item)
 <tr>
-    <td class="name bold">{{ $item['product_name'] }}</td>
+    <td class="name bold">
+        {{ $item['product_name'] }}
+        @if(($item['source'] ?? 'shop') === 'warehouse')
+            <span class="wh-tag"> †</span>
+        @endif
+    </td>
     <td class="qty">{{ $item['quantity'] }}{{ $item['is_full_box'] ? 'bx' : 'pc' }}</td>
     <td class="amt">{{ number_format($item['line_total']) }}</td>
 </tr>
@@ -91,6 +98,9 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
     </td>
 </tr>
 @endforeach
+@if($hasWarehouseItems)
+<tr><td colspan="3" class="sub" style="padding-top:4px;color:#777">† dispatched from warehouse</td></tr>
+@endif
 </table>
 
 <hr class="solid">

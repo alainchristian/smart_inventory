@@ -44,6 +44,60 @@
     .wiz-float       { right: 8px !important; bottom: 12px !important; }
     .wiz-float-panel { width: 185px !important; }
 }
+
+/* ── Premium UI Design Skill additions ── */
+.wiz-card { background:var(--surface); border:none; border-radius:var(--r, 12px); box-shadow:var(--shadow-card); }
+.wiz-card-head { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.wiz-card-title { font-size:13px; font-weight:700; color:var(--text); margin:0; text-transform:uppercase; letter-spacing:0.6px; }
+
+
+/* ── Premium KPI Cards ── */
+.wiz-kpis { display:grid; gap:16px; margin-bottom:24px; }
+.wiz-kpis-1 { grid-template-columns: 1fr; }
+.wiz-kpis-3 { grid-template-columns: repeat(3, 1fr); }
+.wiz-kpi { background:var(--surface); border:none; border-radius:var(--r, 12px); box-shadow:var(--shadow-card); padding:24px 24px; display:flex; flex-direction:column; gap:16px; transition:box-shadow var(--tr, 0.2s); }
+.wiz-kpi:hover { box-shadow:var(--shadow-card-hover); }
+.wiz-kpi-row { display:flex; align-items:center; gap:12px; }
+.wiz-kpi-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.wiz-kpi-body { flex:1; min-width:0; }
+.wiz-kpi-label { font-size:12px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-dim); line-height:1.2; }
+.wiz-kpi-sub { font-size:12px; color:var(--text-dim); margin-top:2px; }
+.wiz-kpi-val { font-size:32px; font-weight:800; font-family:var(--mono, monospace); letter-spacing:-1px; line-height:1; color:var(--text); }
+.wiz-kpi-bar { height:4px; border-radius:4px; background:var(--border); overflow:hidden; }
+.wiz-kpi-divider { height:1px; background:var(--border); }
+.wiz-kpi-footer { display:grid; grid-template-columns:repeat(3, 1fr); }
+.wiz-kpi-stat { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0; }
+.wiz-kpi-stat-v { font-size:14px; font-weight:800; font-family:var(--mono, monospace); color:var(--text-sub); }
+.wiz-kpi-stat-l { font-size:10px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px; }
+
+@media(max-width:768px) {
+    .wiz-kpis-3 { grid-template-columns: 1fr 1fr; }
+    .wiz-kpi { padding:18px; gap:12px; }
+    .wiz-kpi-val { font-size:26px; }
+}
+@media(max-width:500px) {
+    .wiz-kpis-3 { grid-template-columns: 1fr; }
+}
+
+/* Tabs */
+.wiz-tabs { display:grid; grid-template-columns:repeat(3, 1fr); background:var(--surface); box-shadow:var(--shadow-card); border-radius:var(--r, 12px); overflow:hidden; margin-bottom:24px; }
+.wiz-tab { display:flex; align-items:center; justify-content:center; gap:6px; padding:12px 10px; border:none; border-radius:0; border-bottom:2.5px solid transparent; border-right:1px solid var(--border); cursor:pointer; font-size:12px; font-weight:600; font-family:var(--font); background:transparent; color:var(--text-dim); transition:all var(--tr); white-space:nowrap; }
+.wiz-tab:last-child { border-right:none; }
+.wiz-tab:hover { background:var(--surface2); color:var(--text); border-bottom-color:var(--border-hi); }
+.wiz-tab.active { background:var(--accent-dim); color:var(--accent); border-bottom-color:var(--accent); }
+
+/* Buttons */
+.wiz-btn { padding:9px 18px; border-radius:var(--rsm, 8px); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font); transition:all var(--tr); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.wiz-btn-primary { background:var(--accent); color:#fff; border:none; box-shadow:0 3px 10px rgba(59,111,212,.25); }
+.wiz-btn-primary:hover { opacity:.88; }
+.wiz-btn-ghost { background:var(--surface); color:var(--text-dim); border:1px solid var(--border); }
+.wiz-btn-ghost:hover { background:var(--surface2); color:var(--text); }
+.wiz-btn-amber { background:linear-gradient(135deg,#f59e0b,#d97706); color:#1a1a1a; border:none; font-weight:800; box-shadow:0 4px 14px rgba(245,158,11,0.35); }
+.wiz-btn-amber:hover { opacity:.9; }
+
+/* Cash Input focus ring */
+.wiz-cash-input:focus { border-color:var(--accent) !important; box-shadow:0 0 0 3px var(--accent-dim); }
+
 </style>
 <div style="padding-bottom:100px;">
 
@@ -72,11 +126,11 @@
                         <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 flex-shrink-0 wiz-step-circle"
                              style="
                                 @if ($currentStep > $n)
-                                    background:var(--green);color:#fff;box-shadow:0 0 0 4px var(--green-dim);
+                                    background:var(--green);color:#fff;box-shadow:0 0 0 6px var(--green-dim), 0 4px 12px var(--green-glow);
                                 @elseif ($currentStep === $n)
-                                    background:var(--accent);color:#fff;box-shadow:0 0 0 4px var(--accent-dim);
+                                    background:var(--accent);color:#fff;box-shadow:0 0 0 6px var(--accent-dim), 0 4px 12px var(--accent-glow);
                                 @else
-                                    background:var(--surface2);color:var(--text-dim);border:2px solid var(--border);
+                                    background:var(--surface);color:var(--text-dim);border:2px solid var(--border);box-shadow:var(--shadow-card);
                                 @endif
                              ">
                             @if ($currentStep > $n)
@@ -137,39 +191,52 @@
             $activeChannels = array_filter($channels, fn($c) => $c[1] > 0);
         @endphp
 
-        {{-- Total sales hero --}}
-        <div class="rounded-2xl mb-4" style="border:none;background:var(--surface);box-shadow:var(--shadow-card);">
-            <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid var(--border);">
-                <div>
-                    <div class="text-xs font-semibold mb-1" style="color:var(--text);text-transform:uppercase;letter-spacing:0.8px;">Total Sales Today</div>
-                    <div class="font-mono font-bold" style="font-size:28px;letter-spacing:-1px;color:var(--text);">
-                        {{ number_format($summary['total_sales'] ?? 0) }}
-                        <span style="font-size:13px;color:var(--text-dim);font-weight:500;">RWF</span>
+        {{-- Total sales KPI --}}
+        <div class="wiz-kpis wiz-kpis-1">
+            <div class="wiz-kpi" style="padding:24px 32px;">
+                <div class="wiz-kpi-row">
+                    <div class="wiz-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="wiz-kpi-body">
+                        <div class="wiz-kpi-label" style="font-size:13px;letter-spacing:1px;">Total Sales Today</div>
+                        <div class="wiz-kpi-sub">Gross revenue from all channels</div>
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-2xl font-bold" style="color:var(--text-dim);">{{ $summary['transaction_count'] ?? 0 }}</div>
-                    <div class="text-xs mt-0.5" style="color:var(--text-dim);">transactions</div>
+                
+                <div class="wiz-kpi-val" style="color:var(--green);font-size:42px;">
+                    {{ number_format($summary['total_sales'] ?? 0) }}
+                    <span style="font-size:16px;font-weight:600;color:var(--text-dim);margin-left:4px;">RWF</span>
                 </div>
-            </div>
-            {{-- Mini channel dots --}}
-            <div class="flex px-5 py-3 gap-4">
-                @foreach ([['Cash',$summary['total_sales_cash']??0,'#10b981'],['MoMo',$summary['total_sales_momo']??0,'#6366f1'],['Card',$summary['total_sales_card']??0,'#64748b'],['Credit',$summary['total_sales_credit']??0,'#f59e0b']] as $__cRow)
-                @php [$lbl,$amt,$clr] = $__cRow; @endphp
-                    @if ($amt > 0)
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{{ $clr }};"></span>
-                            <span class="text-xs" style="color:var(--text-dim);">{{ $lbl }}</span>
-                        </div>
-                    @endif
-                @endforeach
+                
+                @php $cashPct = $total > 0 ? round(($summary['total_sales_cash'] ?? 0) / $total * 100) : 0; @endphp
+                <div class="wiz-kpi-bar" style="background:var(--surface2);">
+                    <div style="height:100%;border-radius:4px;background:var(--green);width:{{ $cashPct }}%"></div>
+                </div>
+                
+                <div class="wiz-kpi-divider"></div>
+                
+                <div class="wiz-kpi-footer">
+                    <div class="wiz-kpi-stat">
+                        <span class="wiz-kpi-stat-v">{{ $summary['transaction_count'] ?? 0 }}</span>
+                        <span class="wiz-kpi-stat-l">Transactions</span>
+                    </div>
+                    <div class="wiz-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border);">
+                        <span class="wiz-kpi-stat-v">{{ $cashPct }}%</span>
+                        <span class="wiz-kpi-stat-l">Cash Ratio</span>
+                    </div>
+                    <div class="wiz-kpi-stat">
+                        <span class="wiz-kpi-stat-v" style="color:var(--accent);">{{ number_format($summary['total_sales_momo'] ?? 0) }}</span>
+                        <span class="wiz-kpi-stat-l">Mobile Money</span>
+                    </div>
+                </div>
             </div>
         </div>
 
         {{-- Channel breakdown --}}
         <div class="rounded-2xl overflow-hidden mb-4" style="border:none;box-shadow:var(--shadow-card);">
-            <div class="px-4 py-3" style="background:var(--surface2);border-bottom:1px solid var(--border);">
-                <span class="text-xs font-semibold" style="color:var(--text);text-transform:uppercase;letter-spacing:0.6px;">By Payment Channel</span>
+            <div class="wiz-card-head">
+                <span class="wiz-card-title">By Payment Channel</span>
             </div>
             <div style="background:var(--surface);">
                 @foreach ($channels as $__chRow)
@@ -203,8 +270,8 @@
         @endphp
         @if ($hasCashRefunds || $hasRepayments)
             <div class="rounded-2xl overflow-hidden" style="border:none;box-shadow:var(--shadow-card);">
-                <div class="px-4 py-3" style="background:var(--surface2);border-bottom:1px solid var(--border);">
-                    <span class="text-xs font-semibold" style="color:var(--text);text-transform:uppercase;letter-spacing:0.6px;">Adjustments</span>
+                <div class="wiz-card-head">
+                    <span class="wiz-card-title">Adjustments</span>
                 </div>
                 <div style="background:var(--surface);">
                     @if ($hasCashRefunds)
@@ -270,105 +337,93 @@
     <div x-data="{ activeTab: 'deposits' }">
 
         {{-- Summary strip --}}
-        <div class="grid grid-cols-3 gap-3 mb-5">
-
+        {{-- Summary KPI Cards --}}
+        <div class="wiz-kpis wiz-kpis-3">
             {{-- Bank Deposits --}}
-            <div @click="activeTab = 'deposits'"
-                 class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
-                 x-bind:style="{ 'border-color': activeTab === 'deposits' ? 'var(--accent)' : 'var(--border)', 'box-shadow': activeTab === 'deposits' ? '0 0 0 3px var(--accent-dim)' : 'none' }">
-                <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <svg style="width:14px;height:14px;color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l9-3 9 3M3 6v12l9 3 9-3V6M12 3v18"/>
-                        </svg>
+            <div @click="activeTab = 'deposits'" class="wiz-kpi" style="cursor:pointer;" :style="activeTab === 'deposits' ? 'box-shadow:0 0 0 3px var(--accent-dim), var(--shadow-card-hover); border-color:var(--accent);' : ''">
+                <div class="wiz-kpi-row">
+                    <div class="wiz-kpi-icon" style="background:var(--accent-dim);color:var(--accent);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l9-3 9 3M3 6v12l9 3 9-3V6M12 3v18"/></svg>
                     </div>
-                    <span class="wiz-strip-label" style="font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Deposits</span>
+                    <div class="wiz-kpi-body">
+                        <div class="wiz-kpi-label">Deposits</div>
+                    </div>
                 </div>
-                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--accent);letter-spacing:-0.5px;">
+                <div class="wiz-kpi-val" style="color:var(--accent);">
                     {{ number_format($summary['total_bank_deposits'] ?? 0) }}
-                    <span style="font-size:11px;font-weight:400;color:var(--text-dim);">RWF</span>
                 </div>
-                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-dim);margin-top:2px;">
-                    {{ $summary['bank_deposit_count'] ?? 0 }} deposit{{ ($summary['bank_deposit_count'] ?? 0) !== 1 ? 's' : '' }}
+                <div class="wiz-kpi-divider"></div>
+                <div class="wiz-kpi-footer" style="grid-template-columns:1fr;">
+                    <div class="wiz-kpi-stat" style="align-items:flex-start;padding:0;">
+                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ $summary['bank_deposit_count'] ?? 0 }} items</span>
+                    </div>
                 </div>
             </div>
 
             {{-- Expenses --}}
-            <div @click="activeTab = 'expenses'"
-                 class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
-                 x-bind:style="{ 'border-color': activeTab === 'expenses' ? 'var(--red)' : 'var(--border)', 'box-shadow': activeTab === 'expenses' ? '0 0 0 3px var(--red-dim)' : 'none' }">
-                <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    <div style="width:28px;height:28px;border-radius:8px;background:var(--red-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <svg style="width:14px;height:14px;color:var(--red);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
-                        </svg>
+            <div @click="activeTab = 'expenses'" class="wiz-kpi" style="cursor:pointer;" :style="activeTab === 'expenses' ? 'box-shadow:0 0 0 3px var(--red-dim), var(--shadow-card-hover); border-color:var(--red);' : ''">
+                <div class="wiz-kpi-row">
+                    <div class="wiz-kpi-icon" style="background:var(--red-dim);color:var(--red);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
                     </div>
-                    <span class="wiz-strip-label" style="font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Expenses</span>
+                    <div class="wiz-kpi-body">
+                        <div class="wiz-kpi-label">Expenses</div>
+                    </div>
                 </div>
-                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--red);letter-spacing:-0.5px;">
+                <div class="wiz-kpi-val" style="color:var(--red);">
                     {{ number_format($summary['total_expenses'] ?? 0) }}
-                    <span style="font-size:11px;font-weight:400;color:var(--text-dim);">RWF</span>
                 </div>
-                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-dim);margin-top:2px;">
-                    {{ $summary['expense_count'] ?? 0 }} item{{ ($summary['expense_count'] ?? 0) !== 1 ? 's' : '' }}
+                <div class="wiz-kpi-divider"></div>
+                <div class="wiz-kpi-footer" style="grid-template-columns:1fr;">
+                    <div class="wiz-kpi-stat" style="align-items:flex-start;padding:0;">
+                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ $summary['expense_count'] ?? 0 }} items</span>
+                    </div>
                 </div>
             </div>
 
             {{-- Withdrawals --}}
-            <div @click="activeTab = 'withdrawals'"
-                 class="wiz-strip-card"
-                 style="border-radius:12px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);cursor:pointer;transition:all 0.15s;"
-                 x-bind:style="{ 'border-color': activeTab === 'withdrawals' ? 'var(--amber)' : 'var(--border)', 'box-shadow': activeTab === 'withdrawals' ? '0 0 0 3px var(--amber-dim)' : 'none' }">
-                <div class="wiz-strip-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    <div style="width:28px;height:28px;border-radius:8px;background:var(--amber-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <svg style="width:14px;height:14px;color:var(--amber);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
+            <div @click="activeTab = 'withdrawals'" class="wiz-kpi" style="cursor:pointer;" :style="activeTab === 'withdrawals' ? 'box-shadow:0 0 0 3px var(--amber-dim), var(--shadow-card-hover); border-color:var(--amber);' : ''">
+                <div class="wiz-kpi-row">
+                    <div class="wiz-kpi-icon" style="background:var(--amber-dim);color:var(--amber);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     </div>
-                    <span class="wiz-strip-label" style="font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Withdrawals</span>
+                    <div class="wiz-kpi-body">
+                        <div class="wiz-kpi-label">Withdrawals</div>
+                    </div>
                 </div>
-                <div class="wiz-strip-amt" style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--amber);letter-spacing:-0.5px;">
+                <div class="wiz-kpi-val" style="color:var(--amber);">
                     {{ number_format($summary['total_withdrawals'] ?? 0) }}
-                    <span style="font-size:11px;font-weight:400;color:var(--text-dim);">RWF</span>
                 </div>
-                <div class="wiz-strip-sub" style="font-size:11px;color:var(--text-dim);margin-top:2px;">
-                    {{ $summary['withdrawal_count'] ?? 0 }} item{{ ($summary['withdrawal_count'] ?? 0) !== 1 ? 's' : '' }}
+                <div class="wiz-kpi-divider"></div>
+                <div class="wiz-kpi-footer" style="grid-template-columns:1fr;">
+                    <div class="wiz-kpi-stat" style="align-items:flex-start;padding:0;">
+                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ $summary['withdrawal_count'] ?? 0 }} items</span>
+                    </div>
                 </div>
             </div>
-
-        </div>{{-- end summary strip --}}
+        </div>{{-- end summary KPI Cards --}}
 
         {{-- Tab content panel --}}
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-card);">
 
             {{-- Tab bar — explicit separators --}}
-            <div style="display:flex;background:var(--surface2);border-bottom:1px solid var(--border);">
+            <div class="wiz-tabs">
                 <button type="button"
                         @click="activeTab = 'deposits'"
-                        x-bind:style="{ 'color': activeTab === 'deposits' ? 'var(--accent)' : 'var(--text-dim)', 'border-bottom': activeTab === 'deposits' ? '2px solid var(--accent)' : '2px solid transparent', 'background': activeTab === 'deposits' ? 'var(--surface2)' : 'transparent' }"
-                        style="flex:1;padding:11px 0;font-size:12px;font-weight:600;
-                               border:none;cursor:pointer;font-family:var(--font);
-                               border-right:1px solid var(--border);
-                               transition:color 0.15s,background 0.15s;">
+                        :class="{ 'active': activeTab === 'deposits' }"
+                        class="wiz-tab">
                     Bank Deposits
                 </button>
                 <button type="button"
                         @click="activeTab = 'expenses'"
-                        x-bind:style="{ 'color': activeTab === 'expenses' ? 'var(--red)' : 'var(--text-dim)', 'border-bottom': activeTab === 'expenses' ? '2px solid var(--red)' : '2px solid transparent', 'background': activeTab === 'expenses' ? 'var(--surface2)' : 'transparent' }"
-                        style="flex:1;padding:11px 0;font-size:12px;font-weight:600;
-                               border:none;cursor:pointer;font-family:var(--font);
-                               border-right:1px solid var(--border);
-                               transition:color 0.15s,background 0.15s;">
+                        :class="{ 'active': activeTab === 'expenses' }"
+                        class="wiz-tab">
                     Expenses
                 </button>
                 <button type="button"
                         @click="activeTab = 'withdrawals'"
-                        x-bind:style="{ 'color': activeTab === 'withdrawals' ? 'var(--amber)' : 'var(--text-dim)', 'border-bottom': activeTab === 'withdrawals' ? '2px solid var(--amber)' : '2px solid transparent', 'background': activeTab === 'withdrawals' ? 'var(--surface2)' : 'transparent' }"
-                        style="flex:1;padding:11px 0;font-size:12px;font-weight:600;
-                               border:none;cursor:pointer;font-family:var(--font);
-                               transition:color 0.15s,background 0.15s;">
+                        :class="{ 'active': activeTab === 'withdrawals' }"
+                        class="wiz-tab">
                     Withdrawals
                 </button>
             </div>
@@ -404,12 +459,66 @@
     ════════════════════════════════════════════ --}}
     @if ($currentStep === 3)
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;" class="cash-count-grid">
-    <style>@media(max-width:640px){ .cash-count-grid{ grid-template-columns:1fr !important; } }</style>
+    <style>@media(max-width:640px){ .cash-count-grid{ grid-template-columns:1fr !important; } }
+/* ── Premium UI Design Skill additions ── */
+.wiz-card { background:var(--surface); border:none; border-radius:var(--r, 12px); box-shadow:var(--shadow-card); }
+.wiz-card-head { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.wiz-card-title { font-size:13px; font-weight:700; color:var(--text); margin:0; text-transform:uppercase; letter-spacing:0.6px; }
+
+
+/* ── Premium KPI Cards ── */
+.wiz-kpis { display:grid; gap:16px; margin-bottom:24px; }
+.wiz-kpis-1 { grid-template-columns: 1fr; }
+.wiz-kpis-3 { grid-template-columns: repeat(3, 1fr); }
+.wiz-kpi { background:var(--surface); border:none; border-radius:var(--r, 12px); box-shadow:var(--shadow-card); padding:24px 24px; display:flex; flex-direction:column; gap:16px; transition:box-shadow var(--tr, 0.2s); }
+.wiz-kpi:hover { box-shadow:var(--shadow-card-hover); }
+.wiz-kpi-row { display:flex; align-items:center; gap:12px; }
+.wiz-kpi-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.wiz-kpi-body { flex:1; min-width:0; }
+.wiz-kpi-label { font-size:12px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-dim); line-height:1.2; }
+.wiz-kpi-sub { font-size:12px; color:var(--text-dim); margin-top:2px; }
+.wiz-kpi-val { font-size:32px; font-weight:800; font-family:var(--mono, monospace); letter-spacing:-1px; line-height:1; color:var(--text); }
+.wiz-kpi-bar { height:4px; border-radius:4px; background:var(--border); overflow:hidden; }
+.wiz-kpi-divider { height:1px; background:var(--border); }
+.wiz-kpi-footer { display:grid; grid-template-columns:repeat(3, 1fr); }
+.wiz-kpi-stat { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0; }
+.wiz-kpi-stat-v { font-size:14px; font-weight:800; font-family:var(--mono, monospace); color:var(--text-sub); }
+.wiz-kpi-stat-l { font-size:10px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px; }
+
+@media(max-width:768px) {
+    .wiz-kpis-3 { grid-template-columns: 1fr 1fr; }
+    .wiz-kpi { padding:18px; gap:12px; }
+    .wiz-kpi-val { font-size:26px; }
+}
+@media(max-width:500px) {
+    .wiz-kpis-3 { grid-template-columns: 1fr; }
+}
+
+/* Tabs */
+.wiz-tabs { display:grid; grid-template-columns:repeat(3, 1fr); background:var(--surface); box-shadow:var(--shadow-card); border-radius:var(--r, 12px); overflow:hidden; margin-bottom:24px; }
+.wiz-tab { display:flex; align-items:center; justify-content:center; gap:6px; padding:12px 10px; border:none; border-radius:0; border-bottom:2.5px solid transparent; border-right:1px solid var(--border); cursor:pointer; font-size:12px; font-weight:600; font-family:var(--font); background:transparent; color:var(--text-dim); transition:all var(--tr); white-space:nowrap; }
+.wiz-tab:last-child { border-right:none; }
+.wiz-tab:hover { background:var(--surface2); color:var(--text); border-bottom-color:var(--border-hi); }
+.wiz-tab.active { background:var(--accent-dim); color:var(--accent); border-bottom-color:var(--accent); }
+
+/* Buttons */
+.wiz-btn { padding:9px 18px; border-radius:var(--rsm, 8px); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font); transition:all var(--tr); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.wiz-btn-primary { background:var(--accent); color:#fff; border:none; box-shadow:0 3px 10px rgba(59,111,212,.25); }
+.wiz-btn-primary:hover { opacity:.88; }
+.wiz-btn-ghost { background:var(--surface); color:var(--text-dim); border:1px solid var(--border); }
+.wiz-btn-ghost:hover { background:var(--surface2); color:var(--text); }
+.wiz-btn-amber { background:linear-gradient(135deg,#f59e0b,#d97706); color:#1a1a1a; border:none; font-weight:800; box-shadow:0 4px 14px rgba(245,158,11,0.35); }
+.wiz-btn-amber:hover { opacity:.9; }
+
+/* Cash Input focus ring */
+.wiz-cash-input:focus { border-color:var(--accent) !important; box-shadow:0 0 0 3px var(--accent-dim); }
+
+</style>
 
         {{-- LEFT — Cash ledger --}}
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-card);">
 
-            <div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2);">
+            <div class="wiz-card-head">
                 <span style="font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.7px;">Cash Drawer</span>
             </div>
 
@@ -439,7 +548,7 @@
                 @endforeach
             </div>
 
-            <div style="padding:14px 16px;background:var(--surface2);">
+            <div style="padding:14px 16px;border-top:1px solid var(--border);background:var(--surface);">
                 <div style="display:flex;align-items:center;justify-content:space-between;">
                     <span style="font-size:13px;font-weight:600;color:var(--text);">Expected cash</span>
                     <span style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--accent);letter-spacing:-0.5px;">
@@ -616,113 +725,34 @@
         <div style="display:flex;flex-direction:column;gap:16px;">
 
             {{-- ── 1. VARIANCE HERO ── --}}
-            <div style="border-radius:16px;padding:18px 20px;
-                        background:{{ $vBg }};border:1.5px solid {{ $vBorder }};
-                        display:flex;align-items:center;justify-content:space-between;gap:16px;">
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <div style="width:40px;height:40px;border-radius:12px;
-                                background:{{ $vColor }};opacity:0.15;
-                                display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
-                        <svg style="position:absolute;width:22px;height:22px;" fill="none" stroke="{{ $vColor }}" viewBox="0 0 24 24" stroke-width="2">
+            <div class="wiz-kpi" style="flex-direction:row; justify-content:space-between; align-items:center; padding:24px 32px; background:{{ $vBg }}; border:1.5px solid {{ $vBorder }};">
+                <div style="display:flex;align-items:center;gap:20px;">
+                    <div style="width:56px;height:56px;border-radius:16px;background:{{ $vColor }};opacity:0.15;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
+                        <svg style="position:absolute;width:32px;height:32px;" fill="none" stroke="{{ $vColor }}" viewBox="0 0 24 24" stroke-width="2">
                             {!! $vIcon !!}
                         </svg>
                     </div>
                     <div>
-                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:{{ $vColor }};margin-bottom:2px;">{{ $vLabel }}</div>
-                        <div style="font-size:26px;font-weight:800;font-family:var(--mono);color:{{ $vColor }};line-height:1;">
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:{{ $vColor }};margin-bottom:4px;">{{ $vLabel }}</div>
+                        <div style="font-size:42px;font-weight:800;font-family:var(--mono);color:{{ $vColor }};line-height:1;letter-spacing:-1px;">
                             {{ $v >= 0 ? '+' : '' }}{{ number_format($v) }}
-                            <span style="font-size:13px;font-weight:600;opacity:0.75;"> RWF</span>
+                            <span style="font-size:16px;font-weight:600;opacity:0.75;letter-spacing:0;"> RWF</span>
                         </div>
                     </div>
                 </div>
                 <div style="text-align:right;flex-shrink:0;">
-                    <div style="font-size:10px;color:{{ $vColor }};opacity:0.75;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Expected</div>
-                    <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:{{ $vColor }};">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
-                    <div style="font-size:10px;color:{{ $vColor }};opacity:0.75;margin:4px 0 2px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Counted</div>
-                    <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:{{ $vColor }};">{{ number_format((int) $actualCashCounted) }}</div>
+                    <div style="font-size:11px;color:{{ $vColor }};opacity:0.8;margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Expected</div>
+                    <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:{{ $vColor }};">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
+                    <div style="font-size:11px;color:{{ $vColor }};opacity:0.8;margin:8px 0 4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Counted</div>
+                    <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:{{ $vColor }};">{{ number_format((int) $actualCashCounted) }}</div>
                 </div>
             </div>
-
-            {{-- ── 2. SESSION SUMMARY ── --}}
-            <div style="border-radius:16px;overflow:hidden;border:none;box-shadow:var(--shadow-card);">
-                {{-- Header --}}
-                <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
-                            display:flex;align-items:center;gap:8px;">
-                    <svg style="width:14px;height:14px;color:var(--text-dim);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">Session Summary</span>
-                </div>
-
-                {{-- Inflow rows --}}
-                <div style="background:var(--surface);">
-                    @foreach ($inflows as $__inRow)
-                    @php [$lbl, $val, $clr, $sign] = $__inRow; @endphp
-                        @if ($val > 0 || $sign === null)
-                            <div style="display:flex;align-items:center;justify-content:space-between;
-                                        padding:10px 16px;border-bottom:1px solid var(--border);">
-                                <div style="display:flex;align-items:center;gap:8px;">
-                                    <div style="width:3px;height:14px;border-radius:2px;background:{{ $clr }};flex-shrink:0;"></div>
-                                    <span style="font-size:12px;color:var(--text-dim);">{{ $lbl }}</span>
-                                </div>
-                                <span style="font-size:12px;font-weight:600;font-family:var(--mono);color:{{ $clr }};">
-                                    {{ $sign }}{{ number_format($val) }} <span style="font-size:10px;opacity:0.7;">RWF</span>
-                                </span>
-                            </div>
-                        @endif
-                    @endforeach
-
-                    {{-- Outflows with divider --}}
-                    @foreach ($outflows as $__outRow)
-                    @php [$lbl, $val, $clr, $sign] = $__outRow; @endphp
-                        @if ($val > 0)
-                            <div style="display:flex;align-items:center;justify-content:space-between;
-                                        padding:10px 16px;border-bottom:1px solid var(--border);">
-                                <div style="display:flex;align-items:center;gap:8px;">
-                                    <div style="width:3px;height:14px;border-radius:2px;background:{{ $clr }};flex-shrink:0;"></div>
-                                    <span style="font-size:12px;color:var(--text-dim);">{{ $lbl }}</span>
-                                </div>
-                                <span style="font-size:12px;font-weight:600;font-family:var(--mono);color:{{ $clr }};">
-                                    {{ $sign }}{{ number_format($val) }} <span style="font-size:10px;opacity:0.7;">RWF</span>
-                                </span>
-                            </div>
-                            @if ($lbl === 'Non-cash Collected' && count($nonCashChannels) > 1)
-                                @foreach ($nonCashChannels as $chName => $chAmt)
-                                    <div style="display:flex;align-items:center;justify-content:space-between;
-                                                padding:6px 16px 6px 28px;border-bottom:1px solid var(--border);
-                                                background:var(--surface2);">
-                                        <span style="font-size:11px;color:var(--text-dim);">↳ {{ $chName }}</span>
-                                        <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim);">{{ number_format($chAmt) }} RWF</span>
-                                    </div>
-                                @endforeach
-                            @endif
-                        @endif
-                    @endforeach
-                </div>
-
-                {{-- Expected / Counted / Variance footer --}}
-                <div style="background:var(--surface2);">
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:2px solid var(--border);">
-                        <div style="padding:12px 14px;border-right:1px solid var(--border);">
-                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:3px;">Expected</div>
-                            <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--accent);">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
-                        </div>
-                        <div style="padding:12px 14px;border-right:1px solid var(--border);">
-                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:3px;">Counted</div>
-                            <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);">{{ number_format((int) $actualCashCounted) }}</div>
-                        </div>
-                        <div style="padding:12px 14px;">
-                            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:3px;">Variance</div>
-                            <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:{{ $vColor }};">{{ $v >= 0 ? '+' : '' }}{{ number_format($v) }}</div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {{-- ── 3. CASH DISPOSITION ── --}}
             <div style="border-radius:16px;overflow:hidden;border:none;box-shadow:var(--shadow-card);">
-                <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
-                            display:flex;align-items:center;gap:8px;">
+                <div style="padding:14px 16px;border-bottom:1px solid var(--border);
+                            display:flex;align-items:center;gap:8px;background:var(--surface);">
                     <svg style="width:14px;height:14px;" fill="none" stroke="var(--amber)" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
@@ -742,7 +772,7 @@
                                @input="$dispatch('momo-deduction-changed', { val: parseInt($event.target.value) || 0 })"
                                style="width:100%;padding:12px 16px;border-radius:10px;
                                       font-size:22px;font-weight:700;font-family:var(--mono);text-align:right;
-                                      background:var(--surface2);border:1.5px solid var(--border);
+                                      background:var(--surface);border:1.5px solid var(--border);
                                       color:var(--text);transition:border-color 0.2s;
                                       -moz-appearance:textfield;box-sizing:border-box;"
                                placeholder="0"
@@ -758,42 +788,27 @@
                             <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;">MoMo Reference</label>
                             <input type="text" wire:model="ownerMomoReference"
                                    style="width:100%;padding:9px 12px;border-radius:8px;font-size:13px;font-family:var(--mono);
-                                          background:var(--surface2);border:1px solid var(--border);color:var(--text);box-sizing:border-box;"
+                                          background:var(--surface);border:1.5px solid var(--border);color:var(--text);box-sizing:border-box;"
                                    placeholder="Transaction ID or confirmation code">
                         </div>
                     @endif
 
                     {{-- Retained display --}}
-                    <div style="border-radius:12px;padding:14px 16px;
-                                background:var(--surface2);border:1px solid var(--border);
-                                display:flex;align-items:center;justify-content:space-between;">
+                    <div class="wiz-kpi" style="padding:24px 32px; flex-direction:row; align-items:center; justify-content:space-between; margin-top:8px; margin-bottom:8px;">
                         <div>
-                            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);margin-bottom:3px;">Retained in Shop</div>
-                            <div style="font-size:11px;color:var(--text-dim);">Cash stays in the register</div>
+                            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:4px;">Retained in Shop</div>
+                            <div style="font-size:13px;color:var(--text-dim);">Cash stays in the register</div>
                         </div>
-                        <div style="font-size:22px;font-weight:800;font-family:var(--mono);
-                                    color:{{ $cashRetained >= 0 ? 'var(--text)' : 'var(--red)' }};">
+                        <div style="font-size:32px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;color:{{ $cashRetained >= 0 ? 'var(--text)' : 'var(--red)' }};">
                             {{ number_format($cashRetained) }}
-                            <span style="font-size:12px;font-weight:600;color:var(--text-dim);"> RWF</span>
+                            <span style="font-size:16px;font-weight:600;color:var(--text-dim);"> RWF</span>
                         </div>
                     </div>
-
-                    {{-- Notes --}}
-                    <div>
-                        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;">Notes <span style="font-weight:400;opacity:0.6;">(optional)</span></label>
-                        <textarea wire:model="notes" rows="2"
-                                  style="width:100%;padding:9px 12px;border-radius:8px;font-size:13px;resize:none;
-                                         background:var(--surface2);border:1px solid var(--border);color:var(--text);
-                                         box-sizing:border-box;font-family:var(--font);"
-                                  placeholder="Any notes for the owner…"></textarea>
-                    </div>
-                </div>
-            </div>
 
             {{-- ── 4. NON-CASH SETTLEMENT ── --}}
             @if ($hasNonCash)
                 <div style="border-radius:16px;overflow:hidden;border:none;box-shadow:var(--shadow-card);">
-                    <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);">
+                    <div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface);">
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
                             <svg style="width:14px;height:14px;" fill="none" stroke="#6366f1" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
@@ -829,7 +844,7 @@
                                             <input type="number" wire:model.blur="{{ $field }}" min="0"
                                                    style="width:100%;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:700;
                                                           font-family:var(--mono);text-align:right;
-                                                          background:var(--surface2);border:1px solid var(--border);
+                                                          background:var(--surface);border:1.5px solid var(--border);
                                                           color:var(--text);box-sizing:border-box;-moz-appearance:textfield;"
                                                    placeholder="0"
                                                    onfocus="if(this.value==='0')this.value='';this.style.borderColor='{{ $color }}';"
@@ -840,7 +855,7 @@
                                                         color:var(--text-dim);margin-bottom:4px;">Reference</div>
                                             <input type="text" wire:model="{{ $refField }}"
                                                    style="width:100%;padding:8px 10px;border-radius:8px;font-size:12px;
-                                                          background:var(--surface2);border:1px solid var(--border);
+                                                          background:var(--surface);border:1.5px solid var(--border);
                                                           color:var(--text);box-sizing:border-box;"
                                                    placeholder="Txn ID…">
                                         </div>
@@ -875,8 +890,7 @@
         <div>
             @if ($currentStep > 1)
                 <button wire:click="prevStep"
-                        class="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
-                        style="background:var(--surface);color:var(--text-dim);border:1px solid var(--border);">
+                        class="wiz-btn wiz-btn-ghost">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -889,8 +903,7 @@
             @if ($currentStep < 4)
                 <button wire:click="nextStep"
                         wire:key="btn-next-step"
-                        class="flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-                        style="background:var(--accent);color:white;min-width:140px;">
+                        class="wiz-btn wiz-btn-primary" style="min-width:140px;">
                     <span>Continue</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
@@ -901,8 +914,7 @@
                         wire:key="btn-submit-close"
                         wire:loading.attr="disabled"
                         wire:confirm="Close the day and submit? You can re-open it for corrections until the owner locks the session."
-                        class="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-opacity hover:opacity-90"
-                        style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#1a1a1a;box-shadow:0 4px 14px rgba(245,158,11,0.35);">
+                        class="wiz-btn wiz-btn-amber py-3.5 px-8 rounded-xl">
                     <span wire:loading.remove wire:target="submitClose">
                         <svg class="w-4 h-4 inline mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>

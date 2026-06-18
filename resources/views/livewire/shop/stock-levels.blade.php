@@ -1,5 +1,16 @@
 <div style="font-family:var(--font)">
 <style>
+/* ── Page Header ─────────────────────────────────────────────── */
+.ss-header       { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap; }
+.ss-header-title { font-size:22px;font-weight:800;color:var(--text);margin:0 0 4px;letter-spacing:-0.3px; }
+.ss-header-sub   { font-size:13px;color:var(--text-dim);margin:0;font-family:var(--mono); }
+
+/* ── Custom Scrollbar ────────────────────────────────────────── */
+.ss-table-wrap ::-webkit-scrollbar { height:6px; }
+.ss-table-wrap ::-webkit-scrollbar-track { background:transparent; }
+.ss-table-wrap ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.ss-table-wrap ::-webkit-scrollbar-thumb:hover { background:var(--text-dim); }
+
 /* ── KPI bar ─────────────────────────────────────────────────── */
 .ss-kpis {
     display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;
@@ -7,9 +18,9 @@
 .ss-kpi {
     background:var(--surface);border:none;box-shadow:var(--shadow-card);
     border-radius:var(--r);padding:22px 20px;
-    display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr);
+    display:flex;flex-direction:column;gap:16px;transition:all var(--tr);
 }
-.ss-kpi:hover { box-shadow:var(--shadow-card-hover) }
+.ss-kpi:hover { box-shadow:var(--shadow-card-hover); transform:translateY(-2px) }
 .ss-kpi-row   { display:flex;align-items:center;gap:12px }
 .ss-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
                 justify-content:center;flex-shrink:0 }
@@ -43,30 +54,32 @@
 
 /* Tab pills */
 .ss-tabs {
-    display:flex;gap:4px;background:var(--surface2);
-    border-radius:10px;padding:3px;border:1px solid var(--border);
+    display:flex;gap:4px;flex-wrap:wrap;
 }
 .ss-tab {
-    padding:6px 14px;border-radius:8px;border:none;cursor:pointer;
-    font-size:12px;font-weight:600;font-family:var(--font);
-    background:transparent;color:var(--text-sub);transition:all var(--tr);
-    white-space:nowrap;
+    display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:9px;
+    border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;
+    font-family:var(--font);background:var(--surface);color:var(--text-dim);
+    transition:all var(--tr);white-space:nowrap;
+}
+.ss-tab:hover {
+    border-color:var(--accent);color:var(--accent);
 }
 .ss-tab.active {
-    background:var(--surface);color:var(--text);
-    box-shadow:0 1px 4px rgba(26,31,54,.10);
+    background:var(--accent);border-color:var(--accent);color:#fff;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
 }
 
 /* ── Table ───────────────────────────────────────────────────── */
 .ss-table-wrap {
     background:var(--surface);border:none;box-shadow:var(--shadow-card);
-    border-radius:var(--r);overflow:hidden;
+    border-radius:var(--r);
 }
 .ss-table {
     width:100%;border-collapse:collapse;font-size:13px;
 }
 .ss-table thead tr {
-    background:var(--bg);border-bottom:1px solid var(--border);
+    border-bottom:2px solid var(--border);
 }
 .ss-table thead th {
     padding:10px 16px;text-align:left;font-size:10px;font-weight:700;
@@ -164,15 +177,14 @@
 </style>
 
 {{-- ── Page header ─────────────────────────────────────────────────── --}}
-<div style="display:flex;align-items:flex-start;justify-content:space-between;
-            gap:12px;margin-bottom:20px;flex-wrap:wrap">
+<div class="ss-header">
     <div>
-        <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px">
+        <h1 class="ss-header-title">
             Stock at {{ auth()->user()->location?->name ?? 'This Shop' }}
-        </div>
-        <div style="font-size:12px;color:var(--text-dim);margin-top:3px;font-family:var(--mono)">
+        </h1>
+        <p class="ss-header-sub">
             Live box inventory · updates as sales and transfers happen
-        </div>
+        </p>
     </div>
 </div>
 
@@ -187,8 +199,8 @@
                 <div class="ss-kpi-label">Products</div>
                 <div class="ss-kpi-sub">in stock now</div>
             </div>
-            <div class="ss-kpi-value" style="color:var(--accent)">{{ number_format($kpis->product_count ?? 0) }}</div>
         </div>
+        <div class="ss-kpi-value" style="color:var(--accent)">{{ number_format($kpis->product_count ?? 0) }}</div>
     </div>
     <div class="ss-kpi">
         <div class="ss-kpi-row">
@@ -199,8 +211,8 @@
                 <div class="ss-kpi-label">Total Boxes</div>
                 <div class="ss-kpi-sub">at this shop</div>
             </div>
-            <div class="ss-kpi-value">{{ number_format($kpis->total_boxes ?? 0) }}</div>
         </div>
+        <div class="ss-kpi-value">{{ number_format($kpis->total_boxes ?? 0) }}</div>
     </div>
     <div class="ss-kpi">
         <div class="ss-kpi-row">
@@ -211,8 +223,8 @@
                 <div class="ss-kpi-label">Sellable Items</div>
                 <div class="ss-kpi-sub">units ready to sell</div>
             </div>
-            <div class="ss-kpi-value" style="color:var(--green)">{{ number_format($kpis->total_items ?? 0) }}</div>
         </div>
+        <div class="ss-kpi-value" style="color:var(--green)">{{ number_format($kpis->total_items ?? 0) }}</div>
     </div>
     <div class="ss-kpi">
         <div class="ss-kpi-row">
@@ -223,8 +235,8 @@
                 <div class="ss-kpi-label">Low Stock</div>
                 <div class="ss-kpi-sub">need replenishment</div>
             </div>
-            <div class="ss-kpi-value" style="color:{{ ($lowStockCount ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">{{ number_format($lowStockCount ?? 0) }}</div>
         </div>
+        <div class="ss-kpi-value" style="color:{{ ($lowStockCount ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">{{ number_format($lowStockCount ?? 0) }}</div>
     </div>
 </div>
 

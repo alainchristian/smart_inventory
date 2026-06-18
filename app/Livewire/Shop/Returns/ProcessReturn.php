@@ -29,6 +29,7 @@ class ProcessReturn extends Component
     public $showSaleSearchDropdown = false;
     public $showQuickSales = false;
     public $saleAgeWarning = false;
+    public $salePeriod = 'today';
 
     // Return items — selected from the sale
     public $items = [];
@@ -148,31 +149,42 @@ class ProcessReturn extends Component
 
     public function loadTodaySales()
     {
-        $this->showQuickSales = true;
-        $this->saleSearch = '';
+        $this->loadSalesByPeriod('today');
+    }
 
-        $this->saleSearchResults = Sale::where('shop_id', $this->shopId)
-            ->whereNull('voided_at')
-            ->whereDate('sale_date', today())
+    public function loadSalesByPeriod(string $period): void
+    {
+        $this->salePeriod = $period;
+        $this->saleSearch = '';
+        $this->showSaleSearchDropdown = false;
+
+        $query = Sale::where('shop_id', $this->shopId)->whereNull('voided_at');
+
+        match ($period) {
+            'yesterday'  => $query->whereDate('sale_date', today()->subDay()),
+            'this_week'  => $query->whereBetween('sale_date', [now()->startOfWeek(), now()->endOfWeek()]),
+            'this_month' => $query->whereMonth('sale_date', now()->month)->whereYear('sale_date', now()->year),
+            default      => $query->whereDate('sale_date', today()),
+        };
+
+        $this->saleSearchResults = $query
             ->with(['items.product', 'soldBy'])
-            ->latest()
-            ->limit(20)
+            ->latest('sale_date')
+            ->limit(30)
             ->get()
-            ->map(function ($sale) {
-                return [
-                    'id' => $sale->id,
-                    'sale_number' => $sale->sale_number,
-                    'customer_name' => $sale->customer_name,
-                    'customer_phone' => $sale->customer_phone,
-                    'total' => $sale->total ?? 0,
-                    'created_at' => $sale->created_at->format('M d, Y g:i A'),
-                    'items_count' => $sale->items->count(),
-                    'sold_by' => $sale->soldBy?->name ?? null,
-                ];
-            })
+            ->map(fn($sale) => [
+                'id'             => $sale->id,
+                'sale_number'    => $sale->sale_number,
+                'customer_name'  => $sale->customer_name,
+                'customer_phone' => $sale->customer_phone,
+                'total'          => $sale->total ?? 0,
+                'created_at'     => $sale->sale_date->format('d M Y · g:i A'),
+                'items_count'    => $sale->items->count(),
+                'sold_by'        => $sale->soldBy?->name ?? null,
+            ])
             ->toArray();
 
-        $this->showSaleSearchDropdown = count($this->saleSearchResults) > 0;
+        $this->showQuickSales = true;
     }
 
     public function selectSale($saleId)

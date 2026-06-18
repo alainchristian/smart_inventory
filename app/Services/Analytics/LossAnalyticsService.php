@@ -7,11 +7,27 @@ use App\Models\ReturnItem;
 use App\Models\DamagedGood;
 use App\Models\Sale;
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 class LossAnalyticsService
 {
+    // processed_at / recorded_at are TIMESTAMP columns — always stamp startOfDay/endOfDay.
+    private function parseDateRange(string $dateFrom, string $dateTo): array
+    {
+        return [
+            Carbon::parse($dateFrom)->startOfDay(),
+            Carbon::parse($dateTo)->endOfDay(),
+        ];
+    }
+
+    // Use a short TTL when the range includes today so live data appears quickly.
+    private function cacheTtl(string $dateTo): int
+    {
+        return Carbon::parse($dateTo)->isToday() ? 60 : 900;
+    }
+
     /**
      * Get loss KPIs for a date range
      */
@@ -19,9 +35,11 @@ class LossAnalyticsService
     {
         $cacheKey = "analytics_loss_kpis_{$dateFrom}_{$dateTo}_{$locationFilter}";
 
-        return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $locationFilter) {
+        return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter) {
+            [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
+
             // Get returns data
-            $returnsQuery = ReturnModel::whereBetween('processed_at', [$dateFrom, $dateTo])
+            $returnsQuery = ReturnModel::whereBetween('processed_at', [$from, $to])
                 ->where('is_exchange', false); // Only refunds
 
             $returnsQuery = $this->applyLocationFilter($returnsQuery, $locationFilter);
@@ -29,15 +47,19 @@ class LossAnalyticsService
             $totalRefunds = $returnsQuery->sum('refund_amount');
             $returnsCount = $returnsQuery->count();
 
-            // Get damaged goods data
-            $damagedQuery = DamagedGood::whereBetween('recorded_at', [$dateFrom, $dateTo]);
+            // Damaged goods NOT from returns — return-sourced damage is already captured
+            // by refund_amount, counting it again would double the loss figure.
+            $damagedQuery = DamagedGood::whereBetween('recorded_at', [$from, $to])
+                ->where('source_type', '!=', 'return');
             $damagedQuery = $this->applyLocationFilterForDamaged($damagedQuery, $locationFilter);
 
-            $damagedLoss = $damagedQuery->sum('estimated_loss');
+            $damagedAgg   = $damagedQuery->selectRaw('COALESCE(SUM(estimated_loss), 0) as total_loss, COUNT(*) as total_count')->first();
+            $damagedLoss  = (int) ($damagedAgg->total_loss  ?? 0);
+            $damagedCount = (int) ($damagedAgg->total_count ?? 0);
 
             // Calculate return rate
             $salesQuery = Sale::notVoided()
-                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+                ->whereBetween('sale_date', [$from, $to]);
             $salesQuery = $this->applyLocationFilterForSales($salesQuery, $locationFilter);
 
             $totalSales = $salesQuery->count();
@@ -48,6 +70,7 @@ class LossAnalyticsService
                 'return_rate' => round($returnRate, 2),
                 'returns_count' => $returnsCount,
                 'damaged_loss' => (int) $damagedLoss,
+                'damaged_count' => $damagedCount,
                 'total_loss' => (int) ($totalRefunds + $damagedLoss),
             ];
         });
@@ -60,9 +83,11 @@ class LossAnalyticsService
     {
         $cacheKey = "analytics_loss_trend_{$dateFrom}_{$dateTo}_{$locationFilter}";
 
-        return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $locationFilter) {
+        return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter) {
+            [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
+
             // Get daily refunds
-            $refundsQuery = ReturnModel::whereBetween('processed_at', [$dateFrom, $dateTo])
+            $refundsQuery = ReturnModel::whereBetween('processed_at', [$from, $to])
                 ->where('is_exchange', false)
                 ->selectRaw('DATE(processed_at) as date, SUM(refund_amount) as amount, COUNT(*) as count')
                 ->groupBy('date')
@@ -71,8 +96,9 @@ class LossAnalyticsService
             $refundsQuery = $this->applyLocationFilter($refundsQuery, $locationFilter);
             $refunds = $refundsQuery->get()->keyBy('date');
 
-            // Get daily damaged goods
-            $damagedQuery = DamagedGood::whereBetween('recorded_at', [$dateFrom, $dateTo])
+            // Exclude return-sourced damaged goods — already captured by refund_amount above
+            $damagedQuery = DamagedGood::whereBetween('recorded_at', [$from, $to])
+                ->where('source_type', '!=', 'return')
                 ->selectRaw('DATE(recorded_at) as date, SUM(estimated_loss) as amount, COUNT(*) as count')
                 ->groupBy('date')
                 ->orderBy('date');
@@ -81,8 +107,8 @@ class LossAnalyticsService
             $damaged = $damagedQuery->get()->keyBy('date');
 
             // Merge and fill gaps
-            $startDate = \Carbon\Carbon::parse($dateFrom);
-            $endDate = \Carbon\Carbon::parse($dateTo);
+            $startDate = Carbon::parse($dateFrom);
+            $endDate   = Carbon::parse($dateTo);
             $result = [];
 
             for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
@@ -108,8 +134,11 @@ class LossAnalyticsService
     {
         $cacheKey = "analytics_return_reasons_{$dateFrom}_{$dateTo}_{$locationFilter}";
 
-        return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $locationFilter) {
-            $query = ReturnModel::whereBetween('processed_at', [$dateFrom, $dateTo])
+        return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter) {
+            [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
+
+            $query = ReturnModel::whereBetween('processed_at', [$from, $to])
+                ->where('is_exchange', false)
                 ->selectRaw('reason, COUNT(*) as count, SUM(refund_amount) as amount')
                 ->groupBy('reason')
                 ->orderByDesc('count');
@@ -133,8 +162,10 @@ class LossAnalyticsService
     {
         $cacheKey = "analytics_disposition_{$dateFrom}_{$dateTo}_{$locationFilter}";
 
-        return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $locationFilter) {
-            $query = DamagedGood::whereBetween('recorded_at', [$dateFrom, $dateTo])
+        return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter) {
+            [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
+
+            $query = DamagedGood::whereBetween('recorded_at', [$from, $to])
                 ->selectRaw('disposition, COUNT(*) as count, SUM(estimated_loss) as loss, SUM(quantity_damaged) as quantity')
                 ->groupBy('disposition')
                 ->orderByDesc('loss');
@@ -159,18 +190,20 @@ class LossAnalyticsService
     {
         $cacheKey = "analytics_problem_products_{$dateFrom}_{$dateTo}_{$locationFilter}_{$limit}";
 
-        return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $locationFilter, $limit) {
+        return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter, $limit) {
+            [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
+
             // Get return items - Note: refund_amount is in returns table, not return_items
             $returnItemsQuery = ReturnItem::join('returns', 'return_items.return_id', '=', 'returns.id')
                 ->join('products', 'return_items.product_id', '=', 'products.id')
-                ->whereBetween('returns.processed_at', [$dateFrom, $dateTo])
+                ->whereBetween('returns.processed_at', [$from, $to])
                 ->where('returns.is_exchange', false)
                 ->selectRaw('
                     products.id,
                     products.name,
                     COUNT(DISTINCT returns.id) as return_count,
                     SUM(return_items.quantity_returned) as returned_quantity,
-                    SUM(returns.refund_amount) as refund_amount
+                    SUM(return_items.unit_price * return_items.quantity_returned) as refund_amount
                 ')
                 ->groupBy('products.id', 'products.name');
 
@@ -181,9 +214,10 @@ class LossAnalyticsService
 
             $returns = $returnItemsQuery->get()->keyBy('id');
 
-            // Get damaged goods
+            // Exclude return-sourced damaged goods from loss totals
             $damagedQuery = DamagedGood::join('products', 'damaged_goods.product_id', '=', 'products.id')
-                ->whereBetween('damaged_goods.recorded_at', [$dateFrom, $dateTo])
+                ->whereBetween('damaged_goods.recorded_at', [$from, $to])
+                ->where('damaged_goods.source_type', '!=', 'return')
                 ->selectRaw('
                     products.id,
                     products.name,
@@ -231,13 +265,16 @@ class LossAnalyticsService
     {
         $cacheKey = "analytics_returns_by_location_{$dateFrom}_{$dateTo}";
 
-        return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo) {
+        return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo) {
+            [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
+
             return ReturnModel::join('shops', 'returns.shop_id', '=', 'shops.id')
-                ->whereBetween('returns.processed_at', [$dateFrom, $dateTo])
+                ->whereBetween('returns.processed_at', [$from, $to])
                 ->selectRaw('
                     shops.id,
                     shops.name,
                     COUNT(returns.id) as returns_count,
+                    COUNT(CASE WHEN returns.is_exchange = false THEN 1 END) as refunds_count,
                     SUM(CASE WHEN returns.is_exchange = false THEN returns.refund_amount ELSE 0 END) as refund_amount,
                     COUNT(CASE WHEN returns.is_exchange = true THEN 1 END) as exchanges_count
                 ')
@@ -249,6 +286,7 @@ class LossAnalyticsService
                         'shop_id' => $item->id,
                         'shop_name' => $item->name,
                         'returns_count' => $item->returns_count,
+                        'refunds_count' => (int) $item->refunds_count,
                         'refund_amount' => (int) $item->refund_amount,
                         'exchanges_count' => $item->exchanges_count,
                     ];

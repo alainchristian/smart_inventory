@@ -10,8 +10,9 @@ class LiveFeed extends Component
 {
     public bool   $isOpen     = false;
     public int    $unread     = 0;
-    public string $activeTab  = 'transactions'; // transactions | stock | movements
-    public string $period     = 'today'; // today | yesterday | this_week | this_month | last_30 | custom
+    public string $activeTab       = 'transactions'; // transactions | stock | movements
+    public string $period          = 'today'; // today | yesterday | this_week | this_month | last_30 | custom
+    public string $movementsPeriod = 'today'; // today | yesterday | this_week | last_7 | last_30
     public string $filter     = 'all';   // all | in | out | transfer
     public string $dateFrom   = '';
     public string $dateTo     = '';
@@ -55,6 +56,12 @@ class LiveFeed extends Component
         $this->activeTab = $tab;
         if ($tab === 'stock')     $this->loadStock();
         if ($tab === 'movements') $this->loadMovements();
+    }
+
+    public function setMovementsPeriod(string $p): void
+    {
+        $this->movementsPeriod = $p;
+        $this->loadMovements();
     }
 
     public function setPeriod(string $p): void
@@ -321,26 +328,33 @@ class LiveFeed extends Component
         ];
     }
 
+    protected function movementsDateRange(): array
+    {
+        return match ($this->movementsPeriod) {
+            'yesterday' => [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()],
+            'this_week' => [now()->startOfWeek(), now()->endOfDay()],
+            'last_7'    => [now()->subDays(6)->startOfDay(), now()->endOfDay()],
+            'last_30'   => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            default     => [now()->startOfDay(), now()->endOfDay()], // today
+        };
+    }
+
     protected function loadMovements(): void
     {
-        $since = now()->subHours(24)->toDateTimeString();
+        [$from, $to] = $this->movementsDateRange();
 
+        // Group by product + sale reference + location + user so one sale shows one row per product
         $sql = "
             SELECT
-                bm.id,
-                b.box_code,
-                b.status::text               AS box_status,
-                p.name                       AS product_name,
+                p.name                                               AS product_name,
                 bm.movement_type,
-                bm.from_location_type::text  AS from_type,
-                bm.to_location_type::text    AS to_type,
-                COALESCE(fw.name, fs.name)   AS from_location,
-                COALESCE(tw.name, ts.name)   AS to_location,
-                u.name                       AS moved_by,
-                bm.moved_at,
-                bm.items_moved,
-                bm.reason,
-                bm.notes
+                COALESCE(fw.name, fs.name)                           AS from_location,
+                COALESCE(tw.name, ts.name)                           AS to_location,
+                u.name                                               AS moved_by,
+                COUNT(bm.id)::int                                    AS box_count,
+                COALESCE(SUM(bm.items_moved), 0)::int                AS total_items,
+                MAX(bm.moved_at)                                     AS moved_at,
+                (ARRAY_AGG(bm.reason ORDER BY bm.moved_at DESC))[1]  AS reason
             FROM box_movements bm
             JOIN  boxes    b  ON b.id  = bm.box_id
             LEFT JOIN products p  ON p.id  = b.product_id
@@ -349,27 +363,28 @@ class LiveFeed extends Component
             LEFT JOIN shops      fs ON bm.from_location_type::text = 'shop'      AND fs.id = bm.from_location_id
             LEFT JOIN warehouses tw ON bm.to_location_type::text   = 'warehouse' AND tw.id = bm.to_location_id
             LEFT JOIN shops      ts ON bm.to_location_type::text   = 'shop'      AND ts.id = bm.to_location_id
-            WHERE bm.moved_at >= ?
-            ORDER BY bm.moved_at DESC
-            LIMIT 150
+            WHERE bm.moved_at BETWEEN ? AND ?
+            GROUP BY
+                p.id, p.name, bm.movement_type,
+                bm.reference_type, bm.reference_id,
+                COALESCE(fw.name, fs.name),
+                COALESCE(tw.name, ts.name),
+                u.name
+            ORDER BY MAX(bm.moved_at) DESC
+            LIMIT 50
         ";
 
         $this->movements = array_map(fn($r) => [
-            'id'            => $r->id,
-            'box_code'      => $r->box_code,
-            'box_status'    => $r->box_status,
             'product_name'  => $r->product_name,
             'movement_type' => $r->movement_type,
             'from_location' => $r->from_location,
             'to_location'   => $r->to_location,
-            'from_type'     => $r->from_type,
-            'to_type'       => $r->to_type,
             'moved_by'      => $r->moved_by,
+            'box_count'     => (int) $r->box_count,
+            'items_moved'   => (int) $r->total_items,
             'moved_at'      => $r->moved_at,
-            'items_moved'   => $r->items_moved !== null ? (int) $r->items_moved : null,
             'reason'        => $r->reason,
-            'notes'         => $r->notes,
-        ], DB::select($sql, [$since]));
+        ], DB::select($sql, [$from->toDateTimeString(), $to->toDateTimeString()]));
     }
 
     protected function loadStock(): void

@@ -15,20 +15,28 @@ class ReceiptController extends Controller
             abort(403);
         }
 
-        $sale->load(['items.product', 'payments', 'soldBy', 'shop', 'customer']);
+        $sale->load(['items.product', 'items.box', 'payments', 'soldBy', 'shop', 'customer']);
 
         // Group items by product + unit price + sale type so qty is aggregated
         $groupedItems = $sale->items
             ->groupBy(fn ($i) => $i->product_id . '_' . $i->actual_unit_price . '_' . ($i->is_full_box ? 'b' : 'i'))
-            ->map(fn ($grp) => [
-                'product_name'    => $grp->first()->product->name ?? '—',
-                'quantity'        => $grp->sum('quantity_sold'),
-                'unit_price'      => $grp->first()->actual_unit_price,
-                'line_total'      => $grp->sum('line_total'),
-                'is_full_box'     => $grp->first()->is_full_box,
-                'price_modified'  => $grp->contains('price_was_modified', true),
-                'original_price'  => $grp->first()->original_unit_price,
-            ])
+            ->map(function ($grp) {
+                $first       = $grp->first();
+                $isBox       = $first->is_full_box;
+                $ipb         = max(1, $first->product->items_per_box ?? 1);
+                $totalItems  = $grp->sum('quantity_sold');
+
+                return [
+                    'product_name'    => $first->product->name ?? '—',
+                    'quantity'        => $isBox ? (int) round($totalItems / $ipb) : $totalItems,
+                    'unit_price'      => $isBox ? $first->actual_unit_price * $ipb : $first->actual_unit_price,
+                    'line_total'      => $grp->sum('line_total'),
+                    'is_full_box'     => $isBox,
+                    'price_modified'  => $grp->contains('price_was_modified', true),
+                    'original_price'  => $isBox ? $first->original_unit_price * $ipb : $first->original_unit_price,
+                    'source'          => $first->box?->location_type?->value ?? 'shop',
+                ];
+            })
             ->values();
 
         return view('receipt.print', compact('sale', 'groupedItems'));

@@ -179,16 +179,15 @@
 
 {{-- KPI Cards --}}
 @php
-    $kpis        = $this->lossKpis;
-    $avgRefund   = $kpis['returns_count'] > 0
-                    ? (int) round($kpis['total_refunds'] / $kpis['returns_count'])
-                    : 0;
-    $dispRows    = $this->dispositionBreakdown;
-    $damagedCount = collect($dispRows)->sum('count');
-    $lossShare   = $kpis['total_loss'] > 0
-                    ? (int) round($kpis['total_refunds'] / $kpis['total_loss'] * 100)
-                    : 0;
-    $dmgShare    = 100 - $lossShare;
+    $kpis         = $this->lossKpis;
+    $avgRefund    = $kpis['returns_count'] > 0
+                     ? (int) round($kpis['total_refunds'] / $kpis['returns_count'])
+                     : 0;
+    $damagedCount = $kpis['damaged_count'];
+    $lossShare    = $kpis['total_loss'] > 0
+                     ? min(100, max(0, (int) round($kpis['total_refunds'] / $kpis['total_loss'] * 100)))
+                     : 0;
+    $dmgShare     = 100 - $lossShare;
     $rateColor   = $kpis['return_rate'] > 5
                     ? 'var(--red)'
                     : ($kpis['return_rate'] > 2 ? 'var(--amber)' : 'var(--green)');
@@ -484,7 +483,7 @@
                 <div wire:key="la-location-wrap-{{ $dateFrom }}-{{ $dateTo }}">
                     <div id="la-location-chart"
                          data-shops='@json(array_column($byLoc, "shop_name"))'
-                         data-returns='@json(array_column($byLoc, "returns_count"))'
+                         data-returns='@json(array_column($byLoc, "refunds_count"))'
                          data-exchanges='@json(array_column($byLoc, "exchanges_count"))'
                          data-refunds='@json(array_column($byLoc, "refund_amount"))'
                          style="min-height:220px"></div>
@@ -504,7 +503,7 @@
                                 @foreach($byLoc as $loc)
                                     <tr>
                                         <td style="font-weight:500">{{ $loc['shop_name'] }}</td>
-                                        <td class="la-num">{{ $loc['returns_count'] }}</td>
+                                        <td class="la-num">{{ $loc['refunds_count'] }}</td>
                                         <td class="la-num">{{ $loc['exchanges_count'] }}</td>
                                         <td class="la-num" style="color:var(--amber)">{{ number_format($loc['refund_amount']) }}</td>
                                     </tr>
@@ -514,7 +513,7 @@
                             <tfoot>
                                 <tr>
                                     <td style="font-weight:700;font-size:12px;padding:9px 14px">Total</td>
-                                    <td class="la-num" style="font-weight:700;padding:9px 14px">{{ collect($byLoc)->sum('returns_count') }}</td>
+                                    <td class="la-num" style="font-weight:700;padding:9px 14px">{{ collect($byLoc)->sum('refunds_count') }}</td>
                                     <td class="la-num" style="font-weight:700;padding:9px 14px">{{ collect($byLoc)->sum('exchanges_count') }}</td>
                                     <td class="la-num" style="font-weight:700;color:var(--amber);padding:9px 14px">{{ number_format(collect($byLoc)->sum('refund_amount')) }}</td>
                                 </tr>

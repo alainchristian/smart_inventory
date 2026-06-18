@@ -13,6 +13,7 @@ class FulfillmentQueue extends Component
     public string $warehouseName = '';
     public string $tab = 'pending'; // 'pending' | 'history'
     public ?int $expandedSaleId = null;
+    public ?int $expandedHistoryId = null;
 
     // Confirm state
     public ?int $confirmingFulfillmentId = null;
@@ -40,7 +41,7 @@ class FulfillmentQueue extends Component
         return Sale::warehouseDirect()
             ->pendingFulfillment()
             ->where('source_warehouse_id', $this->warehouseId)
-            ->with(['items.box', 'items.product', 'shop', 'fulfillmentTransporter'])
+            ->with(['items.box', 'items.product', 'shop', 'fulfillmentTransporter', 'payments', 'soldBy'])
             ->latest('sale_date')
             ->get();
     }
@@ -54,12 +55,26 @@ class FulfillmentQueue extends Component
             ->count();
     }
 
+    public function getBoxesDispatchedTodayProperty(): int
+    {
+        $sales = Sale::warehouseDirect()
+            ->where('source_warehouse_id', $this->warehouseId)
+            ->where('fulfillment_status', 'fulfilled')
+            ->whereDate('fulfillment_confirmed_at', today())
+            ->with(['items.box'])
+            ->get();
+
+        return $sales->sum(
+            fn ($s) => $s->items->filter(fn ($i) => $i->box?->location_type?->value === 'warehouse')->count()
+        );
+    }
+
     public function getFulfilledHistoryProperty(): \Illuminate\Database\Eloquent\Collection
     {
         return Sale::warehouseDirect()
             ->where('source_warehouse_id', $this->warehouseId)
             ->where('fulfillment_status', 'fulfilled')
-            ->with(['items.product', 'shop', 'fulfillmentTransporter', 'fulfillmentConfirmedBy'])
+            ->with(['items.box', 'items.product', 'shop', 'fulfillmentTransporter', 'fulfillmentConfirmedBy', 'payments', 'soldBy'])
             ->latest('fulfillment_confirmed_at')
             ->limit(100)
             ->get();
@@ -67,8 +82,14 @@ class FulfillmentQueue extends Component
 
     public function setTab(string $tab): void
     {
-        $this->tab = $tab;
+        $this->tab            = $tab;
         $this->expandedSaleId = null;
+        $this->expandedHistoryId = null;
+    }
+
+    public function toggleHistory(int $saleId): void
+    {
+        $this->expandedHistoryId = $this->expandedHistoryId === $saleId ? null : $saleId;
     }
 
     public function toggleExpand(int $saleId): void
@@ -118,9 +139,10 @@ class FulfillmentQueue extends Component
     public function render()
     {
         return view('livewire.warehouse.sales.fulfillment-queue', [
-            'pendingSales'     => $this->pendingSales,
-            'fulfilledToday'   => $this->fulfilledTodayCount,
-            'fulfilledHistory' => $this->tab === 'history' ? $this->fulfilledHistory : collect(),
+            'pendingSales'         => $this->pendingSales,
+            'fulfilledToday'       => $this->fulfilledTodayCount,
+            'boxesDispatchedToday' => $this->boxesDispatchedToday,
+            'fulfilledHistory'     => $this->tab === 'history' ? $this->fulfilledHistory : collect(),
         ]);
     }
 }

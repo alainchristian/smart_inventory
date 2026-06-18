@@ -133,7 +133,8 @@ class ReturnService
                         $return,
                         $processedBy,
                         $itemData['condition_notes'] ?? 'Returned damaged',
-                        $itemData['photo_path'] ?? null
+                        $itemData['photo_path'] ?? null,
+                        $itemData['unit_price'] ?? null
                     );
                 }
 
@@ -349,9 +350,11 @@ class ReturnService
         ReturnModel $return,
         User $processedBy,
         string $description,
-        ?string $photoPath = null
+        ?string $photoPath = null,
+        ?int $unitPrice = null
     ): void {
-        $estimatedLoss = $product->purchase_price * $quantity;
+        // Use the selling price that was refunded so estimated_loss matches what the owner sees
+        $estimatedLoss = ($unitPrice ?? $product->selling_price) * $quantity;
 
         $photos = $photoPath ? [$photoPath] : null;
 

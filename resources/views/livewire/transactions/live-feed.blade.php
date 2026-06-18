@@ -45,11 +45,11 @@
 
 {{-- Overlay --}}
 <div wire:click="close"
-     style="position:fixed;inset:0;z-index:181;background:rgba(0,0,0,0.4);
+     style="position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,0.45);
             pointer-events:auto;animation:lf-fade 0.18s ease;"
      aria-hidden="true"></div>
 
-{{-- Drawer shell --}}
+{{-- Drawer --}}
 <div class="lf-drawer"
      style="display:flex;flex-direction:column;overflow:hidden;
             background:var(--surface2);">
@@ -486,24 +486,43 @@
             $newCutoff = $prevOpenedAt ? \Carbon\Carbon::parse($prevOpenedAt) : null;
 
             $moveCfg = [
-                'transfer'   => ['label' => 'Transfer',   'color' => 'var(--accent)', 'bg' => 'var(--accent-dim)'],
-                'sale'       => ['label' => 'Sale Out',   'color' => '#10b981',       'bg' => '#ecfdf5'],
-                'return'     => ['label' => 'Return',     'color' => '#f97316',       'bg' => '#fff7ed'],
-                'damage'     => ['label' => 'Damaged',    'color' => 'var(--red)',    'bg' => 'var(--red-dim)'],
-                'adjustment' => ['label' => 'Adjustment', 'color' => '#8b5cf6',       'bg' => '#f5f3ff'],
+                'direct_sale' => ['label' => 'Warehouse Sale', 'color' => '#10b981',       'bg' => '#ecfdf5'],
+                'consumption' => ['label' => 'Shop Sale',      'color' => 'var(--green)',   'bg' => 'var(--green-dim)'],
+                'transfer'    => ['label' => 'Transfer',       'color' => 'var(--accent)',  'bg' => 'var(--accent-dim)'],
+                'return'      => ['label' => 'Return',         'color' => '#f97316',        'bg' => '#fff7ed'],
+                'damage'      => ['label' => 'Damaged',        'color' => 'var(--red)',     'bg' => 'var(--red-dim)'],
+                'adjustment'  => ['label' => 'Adjustment',     'color' => '#8b5cf6',        'bg' => '#f5f3ff'],
             ];
 
             $typeIcons = [
-                'transfer'   => 'M5 12h14M12 5l7 7-7 7',
-                'sale'       => 'M12 5v14M5 12l7 7 7-7',
-                'return'     => 'M9 14l-4-4 4-4M5 10h11a4 4 0 010 8h-1',
-                'damage'     => 'M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
-                'adjustment' => 'M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z',
+                'direct_sale' => 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
+                'consumption' => 'M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z M3 6h18 M16 10a4 4 0 01-8 0',
+                'transfer'    => 'M5 12h14M12 5l7 7-7 7',
+                'return'      => 'M9 14l-4-4 4-4M5 10h11a4 4 0 010 8h-1',
+                'damage'      => 'M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
+                'adjustment'  => 'M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z',
             ];
         @endphp
 
+        {{-- Period pills --}}
+        @php
+            $mvPeriods = ['today' => 'Today', 'yesterday' => 'Yesterday', 'this_week' => 'This Week', 'last_7' => 'Last 7 Days', 'last_30' => 'Last 30 Days'];
+        @endphp
+        <div style="display:flex;gap:4px;padding:10px 0 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;" class="lf-no-scroll">
+            @foreach ($mvPeriods as $key => $label)
+                <button wire:click="setMovementsPeriod('{{ $key }}')"
+                        style="padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;
+                               white-space:nowrap;cursor:pointer;flex-shrink:0;border:none;
+                               background:{{ $movementsPeriod === $key ? 'var(--accent)' : 'transparent' }};
+                               color:{{ $movementsPeriod === $key ? 'white' : 'var(--text-dim)' }};
+                               transition:all 0.12s;">
+                    {{ $label }}
+                </button>
+            @endforeach
+        </div>
+
         @if (count($movements) === 0)
-            <div style="text-align:center;padding:64px 20px;color:var(--text-dim);">
+            <div style="text-align:center;padding:48px 20px;color:var(--text-dim);">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
                      style="margin:0 auto 12px;opacity:0.25;display:block;"
                      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -513,29 +532,26 @@
                     <circle cx="18.5" cy="18.5" r="2.5"/>
                 </svg>
                 <div style="font-size:14px;font-weight:600;margin-bottom:4px;">No movements</div>
-                <div style="font-size:12px;opacity:0.7;">No box activity in the last 24 hours</div>
+                <div style="font-size:12px;opacity:0.7;">No box activity for this period</div>
             </div>
         @else
-            <div style="padding-top:14px;">
+            <div style="padding-top:6px;">
                 <div style="font-size:10px;font-weight:600;color:var(--text-faint);margin-bottom:10px;
-                            text-align:right;">Last 24 hours · {{ count($movements) }} movements</div>
+                            text-align:right;">{{ count($movements) }} product group{{ count($movements) === 1 ? '' : 's' }}</div>
 
                 @foreach ($movements as $mv)
                     @php
-                        $movedAt  = \Carbon\Carbon::parse($mv['moved_at']);
-                        $diff     = $now->diffInSeconds($movedAt);
-                        if ($diff < 60)        $rel = 'Just now';
-                        elseif ($diff < 3600)  $rel = floor($diff / 60) . 'm ago';
-                        elseif ($diff < 86400) $rel = floor($diff / 3600) . 'h ago';
-                        else                   $rel = $movedAt->format('d M, H:i');
+                        $movedAt = \Carbon\Carbon::parse($mv['moved_at']);
+                        if ($movedAt->isToday())     $rel = $movedAt->format('H:i');
+                        elseif ($movedAt->isYesterday()) $rel = 'Yesterday ' . $movedAt->format('H:i');
+                        else                         $rel = $movedAt->format('d M, H:i');
 
                         $isNew = $newCutoff && $movedAt->gt($newCutoff);
                         $type  = $mv['movement_type'];
-                        $cfg   = $moveCfg[$type] ?? ['label' => ucfirst($type), 'color' => 'var(--text-dim)', 'bg' => 'var(--surface)'];
+                        $cfg   = $moveCfg[$type] ?? ['label' => str_replace('_', ' ', ucwords($type, '_')), 'color' => 'var(--text-dim)', 'bg' => 'var(--surface)'];
                         $icon  = $typeIcons[$type] ?? 'M5 12h14';
-
-                        $fromLabel = $mv['from_location'] ?? ($mv['from_type'] === 'warehouse' ? 'Warehouse' : ($mv['from_type'] === 'shop' ? 'Shop' : 'Origin'));
-                        $toLabel   = $mv['to_location']   ?? ($mv['to_type']   === 'warehouse' ? 'Warehouse' : ($mv['to_type']   === 'shop' ? 'Shop'      : 'Destination'));
+                        $boxes = $mv['box_count'];
+                        $items = $mv['items_moved'];
                     @endphp
 
                     <div style="display:flex;align-items:flex-start;gap:10px;
@@ -562,10 +578,11 @@
 
                         {{-- Details --}}
                         <div style="flex:1;min-width:0;">
+                            {{-- Product name + type badge --}}
                             <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap;">
                                 <span style="font-size:12px;font-weight:700;color:var(--text);
-                                             font-family:var(--mono);white-space:nowrap;">
-                                    {{ $mv['box_code'] }}
+                                             white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">
+                                    {{ $mv['product_name'] ?? '—' }}
                                 </span>
                                 <span style="font-size:9px;padding:1px 6px;border-radius:4px;
                                              background:{{ $cfg['bg'] }};color:{{ $cfg['color'] }};
@@ -578,56 +595,46 @@
                                 @endif
                             </div>
 
-                            {{-- Product --}}
-                            <div style="font-size:11px;color:var(--text-dim);margin-bottom:2px;
-                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                                {{ $mv['product_name'] ?? '—' }}
-                                @if ($mv['items_moved'])
-                                    · <strong style="color:var(--text);">{{ number_format($mv['items_moved']) }}</strong> items
+                            {{-- Box count + items --}}
+                            <div style="font-size:11px;color:var(--text-dim);margin-bottom:2px;">
+                                <strong style="color:var(--text);">{{ $boxes }}</strong>
+                                {{ $boxes === 1 ? 'box' : 'boxes' }}
+                                @if ($items > 0)
+                                    · <strong style="color:var(--text);">{{ number_format($items) }}</strong> items
                                 @endif
                             </div>
 
-                            {{-- From → To --}}
+                            {{-- From → To location --}}
+                            @if ($mv['from_location'] || $mv['to_location'])
                             <div style="font-size:10px;color:var(--text-faint);
-                                        display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                                        display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:2px;">
                                 @if ($mv['from_location'])
                                     <span style="background:var(--surface2);border:1px solid var(--border);
                                                  border-radius:4px;padding:0 5px;line-height:16px;white-space:nowrap;">
                                         {{ $mv['from_location'] }}
                                     </span>
-                                    <span style="color:var(--text-faint);">→</span>
                                 @endif
                                 @if ($mv['to_location'])
+                                    <span style="color:var(--text-faint);">→</span>
                                     <span style="background:var(--surface2);border:1px solid var(--border);
                                                  border-radius:4px;padding:0 5px;line-height:16px;white-space:nowrap;">
                                         {{ $mv['to_location'] }}
                                     </span>
                                 @endif
                             </div>
+                            @endif
 
                             {{-- Actor + time --}}
-                            <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">
+                            <div style="font-size:10px;color:var(--text-faint);">
                                 {{ $mv['moved_by'] }} · {{ $rel }}
-                                @if ($mv['reason'])
-                                    · <em>{{ Str::limit($mv['reason'], 28) }}</em>
-                                @endif
                             </div>
                         </div>
 
-                        {{-- Box status chip --}}
-                        @php
-                            $statusColor = match($mv['box_status']) {
-                                'full'    => ['c' => '#10b981', 'b' => '#ecfdf5'],
-                                'partial' => ['c' => '#f59e0b', 'b' => '#fefce8'],
-                                'damaged' => ['c' => 'var(--red)', 'b' => 'var(--red-dim)'],
-                                'empty'   => ['c' => 'var(--text-faint)', 'b' => 'var(--surface2)'],
-                                default   => ['c' => 'var(--text-dim)', 'b' => 'var(--surface)'],
-                            };
-                        @endphp
+                        {{-- Box count pill --}}
                         <div style="flex-shrink:0;text-align:right;">
-                            <span style="font-size:9px;padding:2px 6px;border-radius:5px;font-weight:700;
-                                         background:{{ $statusColor['b'] }};color:{{ $statusColor['c'] }};">
-                                {{ ucfirst($mv['box_status']) }}
+                            <span style="font-size:11px;font-weight:800;font-family:var(--mono);
+                                         color:{{ $cfg['color'] }};">
+                                ×{{ $boxes }}
                             </span>
                         </div>
                     </div>
@@ -784,14 +791,14 @@
         pointer-events: auto;
     }
 
-    /* ── Drawer — desktop (right panel, below topbar) ───────────────── */
+    /* ── Drawer — desktop (right panel, full height) ───────────────── */
     .lf-drawer {
         position: fixed;
-        top: var(--topbar-height, 64px);
+        top: 0;
         right: 0;
         bottom: 0;
         width: 480px;
-        z-index: 182;
+        z-index: 999999;
         pointer-events: auto;
         box-shadow: -6px 0 48px rgba(0,0,0,0.16);
         animation: lf-slide-in 0.22s cubic-bezier(0.22,1,0.36,1);

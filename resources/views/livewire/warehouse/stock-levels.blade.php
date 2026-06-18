@@ -1,233 +1,426 @@
-<div>
-    <!-- Page Header -->
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Warehouse Stock Levels</h2>
-        <p class="mt-1 text-sm text-gray-600">
+<div style="font-family:var(--font)">
+<style>
+/* ══ Warehouse Stock Levels ══════════════════════ prefix: wsl- ══════════ */
+
+.wsl-page { padding:0 0 80px; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.wsl-header       { display:flex;align-items:flex-start;justify-content:space-between;
+                    gap:16px;margin-bottom:24px;flex-wrap:wrap; }
+.wsl-header-title { font-size:22px;font-weight:800;color:var(--text);margin:0 0 4px; }
+.wsl-header-sub   { font-size:13px;color:var(--text-dim);margin:0; }
+
+/* ── Warehouse selector (owner) ─────────────────────────────────────────── */
+.wsl-wh-bar    { background:var(--surface);border:none;border-radius:var(--r);
+                 box-shadow:var(--shadow-card);margin-bottom:20px;
+                 display:flex;align-items:center;gap:10px;padding:12px 16px; }
+.wsl-wh-label  { font-size:12px;font-weight:700;color:var(--text-dim);white-space:nowrap; }
+.wsl-wh-select { flex:1;padding:0;border:none;background:transparent;color:var(--text);
+                 font-size:14px;font-weight:600;font-family:var(--font);
+                 cursor:pointer;outline:none; }
+
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+.wsl-bar         { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px; }
+.wsl-search-wrap { flex:1;min-width:220px;position:relative; }
+.wsl-search-icon { position:absolute;left:11px;top:50%;transform:translateY(-50%);
+                   width:14px;height:14px;color:var(--text-dim);pointer-events:none; }
+.wsl-search      { width:100%;padding:9px 11px 9px 34px;border:1.5px solid var(--border);
+                   border-radius:10px;font-size:14px;background:var(--surface);color:var(--text);
+                   outline:none;box-sizing:border-box;font-family:var(--font);
+                   transition:border-color var(--tr); }
+.wsl-search::placeholder { color:var(--text-dim); }
+.wsl-search:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim); }
+.wsl-select      { padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;
+                   font-size:13px;font-weight:600;background:var(--surface);color:var(--text);
+                   outline:none;cursor:pointer;font-family:var(--font);
+                   transition:border-color var(--tr); }
+.wsl-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim); }
+
+/* ── KPI grid ───────────────────────────────────────────────────────────── */
+.wsl-kpis    { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
+.wsl-kpi     { background:var(--surface);border:none;border-radius:var(--r);
+               box-shadow:var(--shadow-card);padding:20px;
+               display:flex;flex-direction:column;gap:14px;transition:box-shadow var(--tr); }
+.wsl-kpi:hover { box-shadow:var(--shadow-card-hover); }
+.wsl-kpi-row  { display:flex;align-items:center;gap:12px; }
+.wsl-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+                justify-content:center;flex-shrink:0; }
+.wsl-kpi-body { flex:1;min-width:0; }
+.wsl-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;
+                 text-transform:uppercase;color:var(--text-dim); }
+.wsl-kpi-val  { font-size:24px;font-weight:800;font-family:var(--mono);
+                letter-spacing:-1px;line-height:1; }
+.wsl-kpi-divider { height:1px;background:var(--border); }
+.wsl-kpi-footer { display:grid;grid-template-columns:repeat(3,1fr); }
+.wsl-kpi-stat   { display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0; }
+.wsl-kpi-stat-v { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text-sub); }
+.wsl-kpi-stat-l { font-size:10px;color:var(--text-dim);letter-spacing:.3px; }
+
+/* ── Table ──────────────────────────────────────────────────────────────── */
+.wsl-table-wrap  { background:var(--surface);border:none;border-radius:var(--r);
+                   box-shadow:var(--shadow-card); }
+.wsl-table-head  { padding:14px 16px;border-bottom:1px solid var(--border);
+                   display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.wsl-table-title { font-size:13px;font-weight:700;color:var(--text);margin:0; }
+.wsl-scroll      { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+.wsl-table       { width:100%;border-collapse:collapse;table-layout:fixed;min-width:960px; }
+.wsl-table thead tr { border-bottom:2px solid var(--border); }
+.wsl-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
+                      letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);
+                      white-space:nowrap; }
+.wsl-table thead th.c { text-align:center; }
+.wsl-table thead th.r { text-align:right; }
+.wsl-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr); }
+.wsl-table tbody tr:last-child { border-bottom:none; }
+.wsl-table tbody tr:hover     { background:var(--surface2); }
+.wsl-table tbody tr.wsl-low   { background:rgba(217,119,6,.04); }
+.wsl-table tbody tr.wsl-low:hover { background:rgba(217,119,6,.09); }
+.wsl-table td   { padding:12px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub); }
+.wsl-table td.c { text-align:center; }
+.wsl-table td.r { text-align:right; }
+
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+.wsl-badge     { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+                 padding:3px 9px;border-radius:6px;white-space:nowrap; }
+.wsl-badge-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.wsl-empty       { padding:60px 20px;text-align:center; }
+.wsl-empty-icon  { width:44px;height:44px;border-radius:12px;background:var(--surface2);
+                   display:flex;align-items:center;justify-content:center;margin:0 auto 14px; }
+.wsl-empty-title { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px; }
+.wsl-empty-sub   { font-size:13px;color:var(--text-dim); }
+
+/* ── Pagination ─────────────────────────────────────────────────────────── */
+.wsl-pagination { padding:12px 16px;border-top:1px solid var(--border); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media(max-width:900px) { .wsl-kpis { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:480px) { .wsl-kpis { grid-template-columns:1fr; } }
+@media(max-width:640px) {
+    .wsl-bar { flex-direction:column;align-items:stretch; }
+    .wsl-search-wrap { min-width:0; }
+    .wsl-select { width:100%; }
+}
+</style>
+
+<div class="wsl-page">
+
+{{-- ── Page header ──────────────────────────────────────────────────────── --}}
+<div class="wsl-header">
+    <div>
+        <h1 class="wsl-header-title">Warehouse Stock Levels</h1>
+        <p class="wsl-header-sub">
             @if(auth()->user()->isOwner() && $warehouseId)
-                Viewing: {{ $warehouses->firstWhere('id', $warehouseId)?->name }}
+                Viewing {{ $warehouses->firstWhere('id', $warehouseId)?->name ?? 'Warehouse' }}
             @elseif(auth()->user()->isWarehouseManager())
-                View current inventory levels at {{ auth()->user()->location?->name }}
+                {{ auth()->user()->location?->name ?? 'Your Warehouse' }}
             @else
-                Select a warehouse to view inventory levels
+                Select a warehouse to view inventory
             @endif
         </p>
     </div>
+</div>
 
-    <!-- Warehouse Selector (for Owners) -->
-    @if(auth()->user()->isOwner())
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Select Warehouse</label>
-            <select wire:model.live="warehouseId"
-                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="">-- Select a warehouse --</option>
-                @foreach($warehouses as $warehouse)
-                    <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
-                @endforeach
-            </select>
-        </div>
-    @endif
+{{-- ── Warehouse selector (owners only) ────────────────────────────────── --}}
+@if(auth()->user()->isOwner())
+<div class="wsl-wh-bar">
+    <svg width="14" height="14" fill="none" stroke="var(--text-dim)" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+    </svg>
+    <span class="wsl-wh-label">Warehouse</span>
+    <select wire:model.live="warehouseId" class="wsl-wh-select">
+        <option value="">— Select a warehouse —</option>
+        @foreach($warehouses as $wh)
+            <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+        @endforeach
+    </select>
+</div>
+@endif
 
-    @if($needsWarehouseSelection ?? false)
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-            <svg class="w-12 h-12 text-blue-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+@if($needsWarehouseSelection ?? false)
+
+{{-- ── No warehouse selected ────────────────────────────────────────────── --}}
+<div class="wsl-table-wrap">
+    <div class="wsl-empty">
+        <div class="wsl-empty-icon">
+            <svg width="20" height="20" fill="none" stroke="var(--text-dim)" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
             </svg>
-            <p class="text-gray-700 text-lg font-medium">Please select a warehouse to view stock levels</p>
         </div>
-    @else
-        <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Search -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search Products</label>
-                <input type="text"
-                       wire:model.live.debounce.300ms="search"
-                       placeholder="Search by name, SKU, or barcode..."
-                       class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            </div>
+        <div class="wsl-empty-title">Select a warehouse</div>
+        <div class="wsl-empty-sub">Choose a warehouse above to view its current stock levels.</div>
+    </div>
+</div>
 
-            <!-- Status Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Stock Status</label>
-                <select wire:model.live="statusFilter"
-                        class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="all">All Products</option>
-                    <option value="low">Low Stock Only</option>
-                    <option value="out">Out of Stock Only</option>
-                </select>
+@else
+
+@php
+    $sdCol        = collect($stockData);
+    $totalBoxes   = $sdCol->sum('full_boxes') + $sdCol->sum('partial_boxes');
+    $fullBoxes    = (int) $sdCol->sum('full_boxes');
+    $partialBoxes = (int) $sdCol->sum('partial_boxes');
+    $totalItems   = (int) $sdCol->sum('total_items');
+    $lowCount     = $sdCol->where('is_low_stock', true)->count();
+    $outCount     = $sdCol->where('total_items', 0)->count();
+    $inStockCount = $sdCol->where('total_items', '>', 0)->where('is_low_stock', false)->count();
+    $productCount = count($stockData);
+    $avgBoxes     = $productCount > 0 ? round($totalBoxes / $productCount, 1) : 0;
+@endphp
+
+{{-- ── Filter bar ───────────────────────────────────────────────────────── --}}
+<div class="wsl-bar">
+    <div class="wsl-search-wrap">
+        <svg class="wsl-search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 111 11a6 6 0 0116 0z"/>
+        </svg>
+        <input type="text"
+               wire:model.live.debounce.300ms="search"
+               placeholder="Search by name, SKU, or barcode…"
+               class="wsl-search">
+    </div>
+    <select wire:model.live="statusFilter" class="wsl-select">
+        <option value="all">All Products</option>
+        <option value="low">Low Stock</option>
+        <option value="out">Out of Stock</option>
+    </select>
+</div>
+
+{{-- ── KPI cards ─────────────────────────────────────────────────────────── --}}
+<div class="wsl-kpis">
+
+    {{-- Products --}}
+    <div class="wsl-kpi">
+        <div class="wsl-kpi-row">
+            <div class="wsl-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+            </div>
+            <div class="wsl-kpi-body">
+                <div class="wsl-kpi-label">Products</div>
+            </div>
+        </div>
+        <div class="wsl-kpi-val" style="color:var(--accent)">{{ number_format($productCount) }}</div>
+        <div class="wsl-kpi-divider"></div>
+        <div class="wsl-kpi-footer">
+            <div class="wsl-kpi-stat">
+                <span class="wsl-kpi-stat-v" style="color:var(--green)">{{ $inStockCount }}</span>
+                <span class="wsl-kpi-stat-l">In Stock</span>
+            </div>
+            <div class="wsl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+                <span class="wsl-kpi-stat-v" style="color:var(--amber)">{{ $lowCount }}</span>
+                <span class="wsl-kpi-stat-l">Low</span>
+            </div>
+            <div class="wsl-kpi-stat">
+                <span class="wsl-kpi-stat-v" style="color:var(--red)">{{ $outCount }}</span>
+                <span class="wsl-kpi-stat-l">Out</span>
             </div>
         </div>
     </div>
 
-    <!-- Stock Summary Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs md:text-sm text-gray-600">Products</p>
-                    <p class="text-xl md:text-2xl font-bold text-gray-900">{{ count($stockData) }}</p>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                </div>
+    {{-- Total Boxes --}}
+    <div class="wsl-kpi">
+        <div class="wsl-kpi-row">
+            <div class="wsl-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                </svg>
+            </div>
+            <div class="wsl-kpi-body">
+                <div class="wsl-kpi-label">Total Boxes</div>
             </div>
         </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs md:text-sm text-gray-600">Total Boxes</p>
-                    <p class="text-xl md:text-2xl font-bold text-green-600">{{ collect($stockData)->sum('full_boxes') + collect($stockData)->sum('partial_boxes') }}</p>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 md:w-6 md:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-                    </svg>
-                </div>
+        <div class="wsl-kpi-val" style="color:var(--green)">{{ number_format($totalBoxes) }}</div>
+        <div class="wsl-kpi-divider"></div>
+        <div class="wsl-kpi-footer">
+            <div class="wsl-kpi-stat">
+                <span class="wsl-kpi-stat-v">{{ number_format($fullBoxes) }}</span>
+                <span class="wsl-kpi-stat-l">Full</span>
             </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs md:text-sm text-gray-600">Low Stock</p>
-                    <p class="text-xl md:text-2xl font-bold text-red-600">{{ collect($stockData)->where('is_low_stock', true)->count() }}</p>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 md:w-6 md:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                </div>
+            <div class="wsl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+                <span class="wsl-kpi-stat-v" style="color:var(--amber)">{{ number_format($partialBoxes) }}</span>
+                <span class="wsl-kpi-stat-l">Partial</span>
             </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs md:text-sm text-gray-600">Total Items</p>
-                    <p class="text-xl md:text-2xl font-bold text-gray-900">{{ number_format(collect($stockData)->sum('total_items'), 0) }}</p>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 md:w-6 md:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                    </svg>
-                </div>
+            <div class="wsl-kpi-stat">
+                <span class="wsl-kpi-stat-v">{{ $avgBoxes }}</span>
+                <span class="wsl-kpi-stat-l">Avg / Product</span>
             </div>
         </div>
     </div>
 
-    <!-- Stock Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <!-- Mobile Card View -->
-        <div class="md:hidden space-y-3 p-4">
-            @forelse($stockData as $data)
-                <div class="border rounded-lg p-3 {{ $data['is_low_stock'] ? 'bg-red-50 border-red-200' : 'border-gray-200' }}">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex-1">
-                            <div class="text-sm font-medium text-gray-900">{{ $data['product']->name }}</div>
-                            <div class="text-xs font-mono text-gray-600 mt-1">{{ $data['product']->barcode }}</div>
-                        </div>
+    {{-- Low Stock --}}
+    <div class="wsl-kpi">
+        <div class="wsl-kpi-row">
+            <div class="wsl-kpi-icon" style="background:{{ $lowCount > 0 ? 'var(--amber-dim)' : 'var(--green-dim)' }};color:{{ $lowCount > 0 ? 'var(--amber)' : 'var(--green)' }}">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div class="wsl-kpi-body">
+                <div class="wsl-kpi-label">Low Stock</div>
+            </div>
+        </div>
+        <div class="wsl-kpi-val" style="color:{{ $lowCount > 0 ? 'var(--amber)' : 'var(--green)' }}">{{ number_format($lowCount) }}</div>
+        <div class="wsl-kpi-divider"></div>
+        <div class="wsl-kpi-footer">
+            <div class="wsl-kpi-stat">
+                <span class="wsl-kpi-stat-v" style="color:var(--red)">{{ $outCount }}</span>
+                <span class="wsl-kpi-stat-l">Out of Stock</span>
+            </div>
+            <div class="wsl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+                <span class="wsl-kpi-stat-v" style="color:var(--amber)">{{ $lowCount }}</span>
+                <span class="wsl-kpi-stat-l">Low</span>
+            </div>
+            <div class="wsl-kpi-stat">
+                <span class="wsl-kpi-stat-v" style="color:var(--green)">{{ $inStockCount }}</span>
+                <span class="wsl-kpi-stat-l">OK</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Total Items --}}
+    <div class="wsl-kpi">
+        <div class="wsl-kpi-row">
+            <div class="wsl-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+            </div>
+            <div class="wsl-kpi-body">
+                <div class="wsl-kpi-label">Total Items</div>
+            </div>
+        </div>
+        <div class="wsl-kpi-val" style="color:var(--violet)">{{ number_format($totalItems) }}</div>
+        <div class="wsl-kpi-divider"></div>
+        <div class="wsl-kpi-footer">
+            <div class="wsl-kpi-stat">
+                <span class="wsl-kpi-stat-v">{{ number_format($fullBoxes) }}</span>
+                <span class="wsl-kpi-stat-l">Full Boxes</span>
+            </div>
+            <div class="wsl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+                <span class="wsl-kpi-stat-v">{{ number_format($partialBoxes) }}</span>
+                <span class="wsl-kpi-stat-l">Partial Boxes</span>
+            </div>
+            <div class="wsl-kpi-stat">
+                <span class="wsl-kpi-stat-v">{{ $productCount > 0 ? number_format(round($totalItems / $productCount)) : 0 }}</span>
+                <span class="wsl-kpi-stat-l">Avg / Product</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{{-- ── Stock Table ────────────────────────────────────────────────────────── --}}
+<div class="wsl-table-wrap">
+    <div class="wsl-table-head">
+        <span class="wsl-table-title">Inventory</span>
+        <span style="font-size:12px;color:var(--text-dim)">
+            {{ number_format($productCount) }} {{ $productCount === 1 ? 'product' : 'products' }}
+        </span>
+    </div>
+
+    <div class="wsl-scroll">
+        <table class="wsl-table">
+            <colgroup>
+                <col style="width:240px">
+                <col style="width:150px">
+                <col style="width:120px">
+                <col style="width:100px">
+                <col style="width:100px">
+                <col style="width:130px">
+                <col style="width:120px">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Barcode / SKU</th>
+                    <th class="c">Total Boxes</th>
+                    <th class="c">Full</th>
+                    <th class="c">Partial</th>
+                    <th class="r">Total Items</th>
+                    <th class="c">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($stockData as $data)
+                <tr class="{{ $data['is_low_stock'] ? 'wsl-low' : '' }}">
+                    <td>
+                        <span style="font-size:13px;font-weight:600;color:var(--text);
+                                     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+                                     display:block;max-width:220px"
+                              title="{{ $data['product']->name }}">
+                            {{ $data['product']->name }}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">
+                            {{ $data['product']->barcode ?? ($data['product']->sku ?? '—') }}
+                        </span>
+                    </td>
+                    <td class="c">
+                        <span style="font-family:var(--mono);font-weight:700;font-size:14px;color:var(--text)">
+                            {{ $data['full_boxes'] + $data['partial_boxes'] }}
+                        </span>
+                    </td>
+                    <td class="c">
+                        <span style="font-family:var(--mono);font-weight:600;color:var(--green)">
+                            {{ $data['full_boxes'] }}
+                        </span>
+                    </td>
+                    <td class="c">
+                        <span style="font-family:var(--mono);font-weight:600;color:var(--amber)">
+                            {{ $data['partial_boxes'] }}
+                        </span>
+                    </td>
+                    <td class="r">
+                        <span style="font-family:var(--mono);font-size:13px;color:var(--text-sub);white-space:nowrap">
+                            {{ number_format($data['total_items']) }}
+                        </span>
+                    </td>
+                    <td class="c">
                         @if($data['total_items'] == 0)
-                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Out</span>
+                            <span class="wsl-badge" style="background:var(--red-dim);color:var(--red)">
+                                <span class="wsl-badge-dot" style="background:var(--red)"></span>Out of Stock
+                            </span>
                         @elseif($data['is_low_stock'])
-                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Low</span>
+                            <span class="wsl-badge" style="background:var(--amber-dim);color:var(--amber)">
+                                <span class="wsl-badge-dot" style="background:var(--amber)"></span>Low Stock
+                            </span>
                         @else
-                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">OK</span>
+                            <span class="wsl-badge" style="background:var(--green-dim);color:var(--green)">
+                                <span class="wsl-badge-dot" style="background:var(--green)"></span>In Stock
+                            </span>
                         @endif
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mt-2">
-                        <div class="text-center p-2 bg-gray-50 rounded">
-                            <div class="text-lg font-bold text-gray-900">{{ $data['full_boxes'] + $data['partial_boxes'] }}</div>
-                            <div class="text-xs text-gray-600">Boxes</div>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="7">
+                        <div class="wsl-empty">
+                            <div class="wsl-empty-icon">
+                                <svg width="20" height="20" fill="none" stroke="var(--text-dim)" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                </svg>
+                            </div>
+                            <div class="wsl-empty-title">No products found</div>
+                            <div class="wsl-empty-sub">Try adjusting your search or filter.</div>
                         </div>
-                        <div class="text-center p-2 bg-green-50 rounded">
-                            <div class="text-lg font-bold text-green-600">{{ $data['full_boxes'] }}</div>
-                            <div class="text-xs text-gray-600">Full</div>
-                        </div>
-                        <div class="text-center p-2 bg-blue-50 rounded">
-                            <div class="text-lg font-bold text-blue-600">{{ number_format($data['total_items'], 0) }}</div>
-                            <div class="text-xs text-gray-600">Items</div>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="py-12 text-center">
-                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                    </svg>
-                    <p class="text-gray-500 text-sm font-medium">No products found</p>
-                </div>
-            @endforelse
-        </div>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
-        <!-- Desktop Table View -->
-        <div class="hidden md:block overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Boxes</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Full</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Partial</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Items</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($stockData as $data)
-                        <tr class="{{ $data['is_low_stock'] ? 'bg-red-50' : '' }}">
-                            <td class="px-6 py-4">
-                                <div class="text-sm font-medium text-gray-900">{{ $data['product']->name }}</div>
-                                <div class="text-xs font-mono text-gray-500">{{ $data['product']->barcode }}</div>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="text-lg font-bold text-gray-900">{{ $data['full_boxes'] + $data['partial_boxes'] }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="text-sm font-semibold text-green-600">{{ $data['full_boxes'] }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="text-sm font-semibold text-yellow-600">{{ $data['partial_boxes'] }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="text-sm text-blue-600">{{ number_format($data['total_items'], 0) }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                @if($data['total_items'] == 0)
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Out of Stock</span>
-                                @elseif($data['is_low_stock'])
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Low Stock</span>
-                                @else
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">In Stock</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                                    </svg>
-                                    <p class="text-gray-500 text-lg font-medium">No products found</p>
-                                    <p class="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination -->
-        @if($products->hasPages())
-            <div class="px-4 md:px-6 py-4 border-t border-gray-200">
-                {{ $products->links() }}
-            </div>
-        @endif
+    @if($products->hasPages())
+    <div class="wsl-pagination">
+        {{ $products->links() }}
     </div>
     @endif
+</div>
+
+@endif
+
+</div>
 </div>

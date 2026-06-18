@@ -472,6 +472,297 @@ class SaleService
         });
     }
 
+    /**
+     * Create a sale from a mixed cart (shop stock + warehouse stock combined).
+     * Shop items use FIFO consumeItems(); warehouse items use direct_sale BoxMovement.
+     * If any warehouse items exist, fulfillment fields are set on the Sale.
+     */
+    public function createMixedSale(array $data): Sale
+    {
+        return DB::transaction(function () use ($data) {
+
+            // ── Resolve payment channels ──────────────────────────────────────────
+            $payments = collect($data['payments'] ?? [])
+                ->filter(fn ($p) => (int) $p['amount'] > 0)
+                ->values();
+
+            $singleMethodFallback = false;
+            if ($payments->isEmpty()) {
+                $payments = collect([[
+                    'method'    => $data['payment_method'] ?? 'cash',
+                    'amount'    => 0,
+                    'reference' => null,
+                ]]);
+                $singleMethodFallback = true;
+            }
+
+            $creditAmount  = (int) $payments->where('method', 'credit')->sum('amount');
+            $nonCreditPaid = (int) $payments->where('method', '!=', 'credit')->sum('amount');
+            $isSplit       = $payments->count() > 1;
+            $hasCredit     = $creditAmount > 0;
+
+            $primaryMethod = $isSplit
+                ? PaymentMethod::CASH
+                : PaymentMethod::from(
+                    $payments->first()['method'] instanceof PaymentMethod
+                        ? $payments->first()['method']->value
+                        : $payments->first()['method']
+                  );
+
+            // ── Separate items by source ──────────────────────────────────────────
+            $shopItems      = array_values(array_filter($data['items'], fn ($i) => ($i['source'] ?? 'shop') === 'shop'));
+            $warehouseItems = array_values(array_filter($data['items'], fn ($i) => ($i['source'] ?? '') === 'warehouse'));
+            $hasWarehouse   = count($warehouseItems) > 0;
+            $warehouseId    = $hasWarehouse ? (int) ($data['source_warehouse_id'] ?? 0) : null;
+
+            // ── Determine SaleType ────────────────────────────────────────────────
+            $hasFullBox  = collect($data['items'])->contains(fn ($i) => ($i['mode'] ?? 'box') === 'box');
+            $hasItemMode = collect($data['items'])->contains(fn ($i) => ($i['mode'] ?? 'box') === 'item');
+            $saleType = ($hasFullBox && $hasItemMode)
+                ? SaleType::MIXED
+                : ($hasItemMode ? SaleType::INDIVIDUAL_ITEMS : SaleType::FULL_BOX);
+
+            // ── Create the sale header ────────────────────────────────────────────
+            $sale = Sale::create([
+                'sale_number'      => $this->generateSaleNumber(),
+                'shop_id'          => $data['shop_id'],
+                'type'             => $saleType,
+                'payment_method'   => $primaryMethod,
+                'sold_by'          => auth()->id(),
+                'sale_date'        => now(),
+                'subtotal'         => 0,
+                'tax'              => $data['tax'] ?? 0,
+                'discount'         => $data['discount'] ?? 0,
+                'total'            => 0,
+                'has_price_override' => false,
+                'customer_id'      => $data['customer_id'] ?? null,
+                'customer_name'    => $data['customer_name'] ?? null,
+                'customer_phone'   => $data['customer_phone'] ?? null,
+                'notes'            => $data['notes'] ?? null,
+                'is_split_payment' => $isSplit,
+                'amount_paid'      => $nonCreditPaid,
+                'credit_amount'    => $creditAmount,
+                'has_credit'       => $hasCredit,
+                // Fulfillment — only set when warehouse items are present
+                'fulfillment_type'           => $hasWarehouse ? 'warehouse_direct' : null,
+                'source_warehouse_id'        => $hasWarehouse ? $warehouseId : null,
+                'fulfillment_status'         => $hasWarehouse ? 'pending' : null,
+                'fulfillment_method'         => $hasWarehouse ? ($data['fulfillment_method'] ?? null) : null,
+                'fulfillment_transporter_id' => $hasWarehouse ? ($data['fulfillment_transporter_id'] ?? null) : null,
+                'fulfillment_notes'          => $hasWarehouse ? ($data['fulfillment_notes'] ?? null) : null,
+            ]);
+
+            $subtotal         = 0;
+            $hasPriceOverride = false;
+
+            // ── Shop items (FIFO consumeItems path) ───────────────────────────────
+            foreach ($shopItems as $itemData) {
+                $product    = Product::findOrFail($itemData['product_id']);
+                $isFullBox  = ($itemData['mode'] ?? 'box') === 'box';
+                $itemsToSell = $isFullBox
+                    ? (int) $itemData['qty'] * (int) $product->items_per_box
+                    : (int) $itemData['qty'];
+                $finalPrice    = (int) $itemData['price'];
+                $originalPrice = $isFullBox
+                    ? $product->calculateBoxPrice()
+                    : $product->selling_price;
+
+                if ($finalPrice !== $originalPrice) {
+                    $hasPriceOverride = true;
+                }
+
+                $boxes = Box::where('product_id', $product->id)
+                    ->where('location_type', 'shop')
+                    ->where('location_id', $data['shop_id'])
+                    ->whereIn('status', ['full', 'partial'])
+                    ->where('items_remaining', '>', 0)
+                    ->orderBy('received_at', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
+
+                $remaining = $itemsToSell;
+
+                foreach ($boxes as $box) {
+                    if ($remaining <= 0) break;
+                    $consume   = min($remaining, $box->items_remaining);
+                    $lineTotal = $isFullBox ? $finalPrice : ($consume * $finalPrice);
+
+                    $sale->items()->create([
+                        'product_id'                => $product->id,
+                        'box_id'                    => $box->id,
+                        'quantity_sold'             => $consume,
+                        'is_full_box'               => $isFullBox && $consume === $box->items_remaining,
+                        'original_unit_price'       => $originalPrice,
+                        'actual_unit_price'         => $finalPrice,
+                        'line_total'                => $lineTotal,
+                        'price_was_modified'        => $finalPrice !== $originalPrice,
+                        'price_modification_reason' => $itemData['price_modification_reason'] ?? null,
+                    ]);
+
+                    $subtotal += $lineTotal;
+                    $box->consumeItems($consume, "Sale: {$sale->sale_number}", $sale->id, 'sale');
+                    $remaining -= $consume;
+                }
+
+                if ($remaining > 0) {
+                    throw new \Exception(
+                        "Insufficient shop stock for {$product->name}. " .
+                        "Needed {$itemsToSell} items, only " . ($itemsToSell - $remaining) . " available."
+                    );
+                }
+            }
+
+            // ── Warehouse items (direct_sale BoxMovement path) ────────────────────
+            foreach ($warehouseItems as $itemData) {
+                $product     = Product::findOrFail($itemData['product_id']);
+                $boxesNeeded = (int) $itemData['qty'];
+                $boxPrice    = (int) $itemData['price'];
+
+                $boxes = Box::where('product_id', $product->id)
+                    ->where('location_type', 'warehouse')
+                    ->where('location_id', $warehouseId)
+                    ->whereIn('status', ['full', 'partial'])
+                    ->where('items_remaining', '>', 0)
+                    ->orderBy('received_at', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->limit($boxesNeeded)
+                    ->get();
+
+                if ($boxes->count() < $boxesNeeded) {
+                    throw new \Exception(
+                        "Insufficient warehouse stock for {$product->name}. " .
+                        "Needed {$boxesNeeded} boxes, only {$boxes->count()} available."
+                    );
+                }
+
+                $priceModified   = (bool) ($itemData['price_modified'] ?? false);
+                if ($priceModified) $hasPriceOverride = true;
+                $actualUnitPrice = $product->items_per_box > 0
+                    ? (int) round($boxPrice / $product->items_per_box)
+                    : $product->selling_price;
+
+                foreach ($boxes as $box) {
+                    $itemsConsumed = $box->items_remaining;
+
+                    $sale->items()->create([
+                        'product_id'                => $product->id,
+                        'box_id'                    => $box->id,
+                        'quantity_sold'             => $itemsConsumed,
+                        'is_full_box'               => true,
+                        'original_unit_price'       => $product->selling_price,
+                        'actual_unit_price'         => $actualUnitPrice,
+                        'line_total'                => $boxPrice,
+                        'price_was_modified'        => $priceModified,
+                        'price_modification_reason' => $itemData['price_modification_reason'] ?? null,
+                    ]);
+
+                    $subtotal += $boxPrice;
+
+                    \App\Models\BoxMovement::create([
+                        'box_id'             => $box->id,
+                        'from_location_type' => 'warehouse',
+                        'from_location_id'   => $warehouseId,
+                        'to_location_type'   => null,
+                        'to_location_id'     => null,
+                        'movement_type'      => 'direct_sale',
+                        'moved_by'           => auth()->id(),
+                        'moved_at'           => now(),
+                        'reference_type'     => 'sale',
+                        'reference_id'       => $sale->id,
+                        'reason'             => "Mixed sale: {$sale->sale_number}",
+                        'items_moved'        => $itemsConsumed,
+                    ]);
+
+                    $box->update([
+                        'items_remaining' => 0,
+                        'status'          => BoxStatus::EMPTY,
+                    ]);
+                }
+            }
+
+            $tax      = $data['tax'] ?? 0;
+            $discount = $data['discount'] ?? 0;
+            $total    = $subtotal + $tax - $discount;
+
+            $sale->update([
+                'subtotal'           => $subtotal,
+                'total'              => $total,
+                'has_price_override' => $hasPriceOverride,
+            ]);
+
+            // ── Record payment rows ───────────────────────────────────────────────
+            if ($singleMethodFallback) {
+                \App\Models\SalePayment::create([
+                    'sale_id'        => $sale->id,
+                    'payment_method' => $primaryMethod,
+                    'amount'         => $total,
+                    'reference'      => null,
+                ]);
+                $sale->update(['amount_paid' => $hasCredit ? 0 : $total]);
+            } else {
+                foreach ($payments as $pmt) {
+                    $method = PaymentMethod::from(
+                        $pmt['method'] instanceof PaymentMethod ? $pmt['method']->value : $pmt['method']
+                    );
+                    \App\Models\SalePayment::create([
+                        'sale_id'        => $sale->id,
+                        'payment_method' => $method,
+                        'amount'         => (int) $pmt['amount'],
+                        'reference'      => $pmt['reference'] ?? null,
+                    ]);
+                }
+            }
+
+            // ── Customer credit ───────────────────────────────────────────────────
+            if ($hasCredit && !empty($data['customer_id'])) {
+                $customer = \App\Models\Customer::find($data['customer_id']);
+                if ($customer) {
+                    (new CustomerService())->recordSalePurchase($customer, $creditAmount);
+                }
+            } elseif (!empty($data['customer_id'])) {
+                $customer = \App\Models\Customer::find($data['customer_id']);
+                $customer?->update(['last_purchase_at' => now()]);
+            }
+
+            // ── Activity log ──────────────────────────────────────────────────────
+            $shop = Shop::find($sale->shop_id);
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => $hasWarehouse ? 'mixed_sale_created' : 'sale_created',
+                'entity_type'       => 'Sale',
+                'entity_id'         => $sale->id,
+                'entity_identifier' => $sale->sale_number,
+                'details' => [
+                    'total'           => $sale->total,
+                    'shop_name'       => $shop?->name,
+                    'shop_items'      => count($shopItems),
+                    'warehouse_items' => count($warehouseItems),
+                    'fulfillment'     => $hasWarehouse ? ($data['fulfillment_method'] ?? null) : null,
+                ],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
+            if ($hasPriceOverride) {
+                ActivityLog::create([
+                    'user_id'           => auth()->id(),
+                    'user_name'         => auth()->user()?->name,
+                    'action'            => 'price_modified',
+                    'entity_type'       => 'Sale',
+                    'entity_id'         => $sale->id,
+                    'entity_identifier' => $sale->sale_number,
+                    'details'           => ['total' => $sale->total, 'shop_name' => $shop?->name],
+                    'ip_address'        => request()->ip(),
+                    'user_agent'        => request()->header('User-Agent'),
+                ]);
+            }
+
+            Cache::flush();
+            return $sale;
+        });
+    }
+
     public function voidSale(Sale $sale, string $reason): Sale
     {
         if ($sale->voided_at) {

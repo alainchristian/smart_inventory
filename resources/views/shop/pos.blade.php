@@ -1,3 +1,3 @@
 <x-app-layout>
-    <livewire:shop.sales.point-of-sale />
+    <livewire:shop.sales.unified-pos />
 </x-app-layout>

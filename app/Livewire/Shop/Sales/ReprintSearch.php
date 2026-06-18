@@ -4,40 +4,84 @@ namespace App\Livewire\Shop\Sales;
 
 use App\Models\Sale;
 use Livewire\Component;
-use Livewire\WithPagination;
+use Carbon\Carbon;
 
 class ReprintSearch extends Component
 {
-    use WithPagination;
+    public string $search    = '';
+    public string $dateFrom  = '';
+    public string $dateTo    = '';
+    public string $preset    = 'today';
+    public int    $perPage   = 25;
 
-    public string  $search           = '';
-    public string  $dateFrom         = '';
-    public string  $dateTo           = '';
-    public bool    $showReceiptModal  = false;
-    public ?int    $selectedSaleId    = null;
-    public ?Sale   $selectedSale      = null;
+    public bool  $showReceiptModal = false;
+    public ?int  $selectedSaleId   = null;
+    public ?Sale $selectedSale     = null;
 
     protected $queryString = [
         'search'   => ['except' => ''],
         'dateFrom' => ['except' => ''],
         'dateTo'   => ['except' => ''],
+        'preset'   => ['except' => 'today'],
     ];
 
     public function mount(): void
     {
-        $this->dateFrom = today()->toDateString();
-        $this->dateTo   = today()->toDateString();
+        $this->resolveDates();
     }
 
-    public function updatingSearch(): void   { $this->resetPage(); }
-    public function updatingDateFrom(): void { $this->resetPage(); }
-    public function updatingDateTo(): void   { $this->resetPage(); }
+    public function setPreset(string $preset): void
+    {
+        $this->preset  = $preset;
+        $this->perPage = 25;
+        $this->resolveDates();
+    }
+
+    public function resolveDates(): void
+    {
+        $today = today();
+
+        match ($this->preset) {
+            'today'      => [$this->dateFrom, $this->dateTo] = [$today->toDateString(), $today->toDateString()],
+            'yesterday'  => [$this->dateFrom, $this->dateTo] = [$today->copy()->subDay()->toDateString(), $today->copy()->subDay()->toDateString()],
+            'this_week'  => [$this->dateFrom, $this->dateTo] = [$today->copy()->startOfWeek()->toDateString(), $today->toDateString()],
+            'this_month' => [$this->dateFrom, $this->dateTo] = [$today->copy()->startOfMonth()->toDateString(), $today->toDateString()],
+            'last_month' => [$this->dateFrom, $this->dateTo] = [
+                $today->copy()->subMonth()->startOfMonth()->toDateString(),
+                $today->copy()->subMonth()->endOfMonth()->toDateString(),
+            ],
+            'last_30'    => [$this->dateFrom, $this->dateTo] = [$today->copy()->subDays(29)->toDateString(), $today->toDateString()],
+            default      => null, // 'custom' — keep whatever dateFrom/dateTo are
+        };
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->perPage = 25;
+    }
+
+    public function updatingDateFrom(): void
+    {
+        $this->preset  = 'custom';
+        $this->perPage = 25;
+    }
+
+    public function updatingDateTo(): void
+    {
+        $this->preset  = 'custom';
+        $this->perPage = 25;
+    }
+
+    public function loadMore(): void
+    {
+        $this->perPage += 25;
+    }
 
     public function viewSale(int $id): void
     {
-        $this->selectedSale      = Sale::with(['shop', 'soldBy', 'payments', 'items.product'])->find($id);
-        $this->selectedSaleId    = $id;
-        $this->showReceiptModal  = true;
+        $this->selectedSale     = Sale::with(['shop', 'soldBy', 'payments', 'items.product'])->find($id);
+        $this->selectedSaleId   = $id;
+        $this->showReceiptModal = true;
     }
 
     public function closeReceiptModal(): void
@@ -68,8 +112,10 @@ class ReprintSearch extends Component
             })
             ->orderByDesc('sale_date');
 
-        $sales = $query->paginate(15);
+        $total   = $query->count();
+        $sales   = $query->take($this->perPage)->get();
+        $hasMore = $total > $this->perPage;
 
-        return view('livewire.shop.sales.reprint-search', compact('sales'));
+        return view('livewire.shop.sales.reprint-search', compact('sales', 'total', 'hasMore'));
     }
 }

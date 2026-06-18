@@ -19,6 +19,7 @@ class Dashboard extends Component
     public string $dateFrom     = '';
     public string $dateTo       = '';
     public string $periodLabel  = '';
+    public int    $chartVersion = 0;
 
     public function mount(?int $shopId = null): void
     {
@@ -46,18 +47,21 @@ class Dashboard extends Component
         $this->preset = $preset;
         $this->resolveDates();
         $this->updatePeriodLabel();
+        $this->chartVersion++;
     }
 
     public function updatedDateFrom(): void
     {
         $this->preset = 'custom';
         $this->updatePeriodLabel();
+        $this->chartVersion++;
     }
 
     public function updatedDateTo(): void
     {
         $this->preset = 'custom';
         $this->updatePeriodLabel();
+        $this->chartVersion++;
     }
 
     private function resolveDates(): void
@@ -248,15 +252,25 @@ class Dashboard extends Component
                 ->groupByRaw("DATE(created_at)")
                 ->get()->keyBy('d');
 
-            // Sparklines: 7 evenly-spaced sample points from aggregated data
-            $step = max(1, (int) round($diffDays / 6));
-            for ($i = 0; $i <= 6; $i++) {
-                $day = $from->copy()->addDays($i * $step);
-                if ($day->gt($to)) break;
-                $d = $day->format('Y-m-d');
-                $sparklineSales[]   = (float) ($salesByDay[$d]->revenue ?? 0);
-                $sparklineTxns[]    = (int)   ($salesByDay[$d]->txns    ?? 0);
-                $sparklineReturns[] = (float) ($returnsByDay[$d]->total  ?? 0);
+            // Sparklines: 7 equal-width buckets — sum all days in each bucket so
+            // sparse data (few transactions spread across a month) still shows variation
+            $totalDays  = $diffDays + 1;
+            $bucketSize = max(1, (int) ceil($totalDays / 7));
+            for ($i = 0; $i < 7; $i++) {
+                $bStart = $from->copy()->addDays($i * $bucketSize);
+                if ($bStart->gt($to)) break;
+                $bEnd = $from->copy()->addDays(($i + 1) * $bucketSize - 1);
+                if ($bEnd->gt($to)) $bEnd = $to->copy();
+                $rev = 0.0; $txns = 0; $rets = 0.0;
+                for ($cursor = $bStart->copy(); $cursor->lte($bEnd); $cursor->addDay()) {
+                    $dk    = $cursor->format('Y-m-d');
+                    $rev  += (float) ($salesByDay[$dk]->revenue   ?? 0);
+                    $txns += (int)   ($salesByDay[$dk]->txns      ?? 0);
+                    $rets += (float) ($returnsByDay[$dk]->total    ?? 0);
+                }
+                $sparklineSales[]   = $rev;
+                $sparklineTxns[]    = $txns;
+                $sparklineReturns[] = $rets;
             }
 
             // Trend chart: every day when ≤ 60 days, weekly buckets for longer periods

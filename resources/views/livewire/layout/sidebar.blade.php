@@ -387,17 +387,6 @@
                         <span class="text-[14px] font-medium">Point of Sale</span>
                     </a>
 
-                    <a href="{{ route('shop.warehouse-sale') }}" wire:navigate
-                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
-                              {{ request()->routeIs('shop.warehouse-sale') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
-                        @if(request()->routeIs('shop.warehouse-sale'))
-                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
-                        @endif
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
-                        </svg>
-                        <span class="text-[14px] font-medium">Warehouse Sale</span>
-                    </a>
                 </div>
             </div>
 

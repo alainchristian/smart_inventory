@@ -16,10 +16,10 @@
     text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;
 }
 
-/* Card wrapper */
+/* Card wrapper — matches POS shadow-card pattern (no overflow:hidden, no border) */
 .whs-card {
-    background:var(--surface);border:1px solid var(--border);
-    border-radius:16px;overflow:hidden;
+    background:var(--surface);border:none;
+    border-radius:var(--r);box-shadow:var(--shadow-card);
 }
 
 /* Input — matches POS co-input */
@@ -82,10 +82,10 @@
     background:var(--green);color:#fff;padding:2px 5px;border-radius:4px;flex-shrink:0;
 }
 
-/* Balance strip */
+/* Balance strip — matches POS co-bal-strip */
 .whs-bal-strip {
     border:1px solid var(--border);border-radius:11px;
-    overflow:hidden;margin-bottom:12px;padding:11px 13px;background:var(--surface2);
+    overflow:hidden;margin-bottom:12px;padding:11px 13px;background:var(--bg);
 }
 .whs-bal-strip-nums { display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px }
 .whs-bal-total { font-size:24px;font-weight:800;font-family:var(--mono);color:var(--text);line-height:1 }
@@ -94,9 +94,9 @@
 .whs-bal-bar-wrap { height:5px;border-radius:99px;background:var(--border);overflow:hidden }
 .whs-bal-bar { height:100%;border-radius:99px;transition:width .2s,background .2s }
 
-/* Order summary */
+/* Order summary — matches POS co-order-card (bg, border) */
 .whs-order-card {
-    background:var(--surface2);border:1px solid var(--border);
+    background:var(--bg);border:1px solid var(--border);
     border-radius:12px;padding:14px 16px;margin-bottom:16px;
 }
 .whs-order-row {
@@ -120,7 +120,7 @@
     background:var(--green);color:#fff;border:none;border-radius:13px;
     font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
     display:flex;align-items:center;justify-content:center;gap:8px;
-    box-shadow:0 5px 18px rgba(34,197,94,.28);transition:opacity .15s;
+    box-shadow:0 5px 18px var(--green-glow);transition:opacity .15s;
     white-space:normal;text-align:center;
 }
 .whs-complete-btn:hover:not(:disabled) { opacity:.92 }
@@ -178,7 +178,7 @@
 }
 .whs-new-cust-btn:hover { border-color:var(--accent);color:var(--accent) }
 .whs-new-cust-form {
-    background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:14px;
+    background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:14px;
 }
 .whs-new-cust-title { font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px }
 .whs-new-cust-btns  { display:flex;gap:8px;margin-top:10px }
@@ -195,10 +195,10 @@
 }
 .whs-btn-primary:hover { opacity:.88 }
 
-/* Cart item card */
+/* Cart item card — matches POS cart item style */
 .whs-cart-item {
-    background:var(--surface2);border:1.5px solid var(--border);
-    border-radius:12px;padding:11px 12px;margin-bottom:8px;
+    background:var(--surface);border:1.5px solid var(--border);
+    border-radius:var(--r);padding:11px 12px;margin-bottom:8px;
 }
 
 /* Fulfillment toggle */
@@ -238,7 +238,7 @@
 .whs-sm-body    { padding:18px 20px }
 .whs-sm-info {
     display:flex;align-items:center;justify-content:space-between;
-    background:var(--surface2);border:1px solid var(--border);border-radius:11px;
+    background:var(--bg);border:1px solid var(--border);border-radius:11px;
     padding:11px 14px;margin-bottom:16px;gap:12px;
 }
 .whs-sm-stepper {
@@ -255,11 +255,11 @@
     font-family:var(--mono);color:var(--text);background:transparent;outline:none;
     min-width:0;height:48px;width:80px;
 }
-/* Line total — identical to POS sm-total */
+/* Line total — matches POS sm-total exactly */
 .whs-sm-total {
     display:flex;align-items:center;justify-content:space-between;
     border-radius:11px;padding:13px 16px;margin-bottom:4px;
-    border:1.5px solid var(--border);background:var(--surface2);
+    border:1.5px solid var(--border);background:var(--bg);
 }
 .whs-sm-total.modified { border-color:var(--amber);background:rgba(245,158,11,.06) }
 .whs-sm-total-label { font-size:12px;color:var(--text-sub) }
@@ -328,37 +328,63 @@
 }
 .whs-sm-confirm:hover { opacity:.9 }
 
-/* Tabs */
+/* Tabs — full-width grid tabs matching ui-design.md pattern */
 .whs-tabs {
-    display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);
-    border-radius:12px;padding:4px;margin-bottom:22px;
+    display:grid;grid-template-columns:1fr 1fr;
+    background:var(--surface);box-shadow:var(--shadow-card);
+    border-radius:var(--r);margin-bottom:22px;overflow:hidden;
 }
 .whs-tab-btn {
-    flex:1;padding:8px 16px;border:none;border-radius:9px;font-size:13px;font-weight:700;
-    cursor:pointer;font-family:var(--font);background:transparent;color:var(--text-dim);transition:all .15s;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:12px 10px;border:none;border-radius:0;
+    border-bottom:2.5px solid transparent;border-right:1px solid var(--border);
+    cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);
+    background:transparent;color:var(--text-dim);transition:all var(--tr);white-space:nowrap;
 }
-.whs-tab-btn.active {
-    background:var(--surface-raised);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1);
-}
+.whs-tab-btn:last-child { border-right:none }
+.whs-tab-btn:hover { background:var(--surface2);color:var(--text);border-bottom-color:var(--border-hi) }
+.whs-tab-btn.active { background:var(--accent-dim);color:var(--accent);border-bottom-color:var(--accent) }
 
-/* History */
+/* History — matches ui-design.md table rules */
 .whs-hist-table { width:100%;border-collapse:collapse }
+.whs-hist-thead-row { border-bottom:2px solid var(--border) }
 .whs-hist-th {
-    padding:10px 14px;text-align:left;font-size:10px;font-weight:800;
-    color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;
-    background:var(--surface);border-bottom:1px solid var(--border);white-space:nowrap;
+    padding:10px 14px;text-align:left;font-size:11px;font-weight:700;
+    color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;
 }
 .whs-hist-td {
     padding:11px 14px;font-size:13px;color:var(--text-sub);
-    border-bottom:1px solid var(--border);vertical-align:middle;
+    border-bottom:1px solid var(--border);vertical-align:middle;transition:background var(--tr);
 }
 .whs-hist-row:last-child .whs-hist-td { border-bottom:none }
 .whs-hist-row:hover .whs-hist-td { background:var(--surface2) }
+/* Stock table */
+.whs-stock-table { width:100%;border-collapse:collapse;min-width:480px }
+.whs-stock-thead-row { border-bottom:2px solid var(--border) }
+.whs-stock-th {
+    padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
+    letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;
+}
+.whs-stock-th.center { text-align:center }
+.whs-stock-th.right  { text-align:right }
+.whs-stock-row { border-top:1px solid var(--border);transition:background var(--tr) }
+.whs-stock-row:hover { background:var(--surface2) }
+.whs-stock-td { padding:12px 16px;vertical-align:middle }
+.whs-stock-td.center { text-align:center }
+.whs-stock-td.right  { text-align:right }
+
+/* Back button */
+.whs-back-btn:hover { border-color:var(--accent);color:var(--accent) }
 
 /* Responsive */
 @media (max-width: 860px) {
     .whs-main-grid     { grid-template-columns:1fr !important; }
     .whs-checkout-grid { grid-template-columns:1fr !important; }
+}
+@media (max-width: 640px) {
+    .whs-tabs { overflow-x:auto;scrollbar-width:none;display:flex }
+    .whs-tabs::-webkit-scrollbar { display:none }
+    .whs-tab-btn { flex-shrink:0;min-width:110px }
 }
 @media (max-width: 480px) {
     .whs-complete-btn    { font-size:13px }
@@ -372,20 +398,52 @@
 }
 </style>
 
+{{-- Page header — matches POS header bar style --}}
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:11px;background:var(--accent-dim);
+                    display:grid;place-items:center;flex-shrink:0">
+            <svg width="20" height="20" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+        </div>
+        <div>
+            <h1 style="font-size:20px;font-weight:800;color:var(--text);margin:0 0 3px;letter-spacing:-.3px">
+                Warehouse Sale
+            </h1>
+            <p style="font-size:13px;color:var(--text-dim);margin:0">
+                {{ $warehouseName }}
+                @if($step === 'checkout') · <span style="color:var(--accent);font-weight:600">Checkout</span>@endif
+                @if($step === 'done') · <span style="color:var(--green);font-weight:600">Complete</span>@endif
+            </p>
+        </div>
+    </div>
+    @if($step === 'cart' && !empty($cart))
+    <div style="display:flex;align-items:center;gap:8px;background:var(--accent);color:#fff;
+                padding:6px 14px;border-radius:22px">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+        <span style="font-size:12px;font-weight:700;font-family:var(--mono)">
+            {{ count($cart) }} · {{ number_format($cartTotal) }} RWF
+        </span>
+    </div>
+    @endif
+</div>
+
 {{-- Tab switcher — only show when not mid-checkout/done --}}
 @if($step === 'cart' || $tab === 'history')
 <div class="whs-tabs">
     <button class="whs-tab-btn {{ $tab === 'sale' ? 'active' : '' }}" wire:click="setTab('sale')">
-        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"
-             style="display:inline;vertical-align:-.1em;margin-right:5px">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
         </svg>
         New Sale
     </button>
     <button class="whs-tab-btn {{ $tab === 'history' ? 'active' : '' }}" wire:click="setTab('history')">
-        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"
-             style="display:inline;vertical-align:-.1em;margin-right:5px">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         Sale History
@@ -427,18 +485,23 @@
     </div>
 
     @if($warehouseStock->isEmpty())
-      <div style="padding:48px 24px;text-align:center;color:var(--text-dim);font-size:13px">
-        No stock available at {{ $warehouseName }}
+      <div style="padding:60px 24px;text-align:center">
+        <svg width="48" height="48" fill="none" stroke="var(--border)" stroke-width="1.5" viewBox="0 0 24 24"
+             style="margin:0 auto 14px;display:block">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+        <div style="font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px">No stock available</div>
+        <div style="font-size:13px;color:var(--text-dim)">{{ $warehouseName }} has no boxes in stock</div>
       </div>
     @else
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-        <table style="width:100%;border-collapse:collapse;min-width:480px">
+        <table class="whs-stock-table">
           <thead>
-            <tr style="background:var(--surface2)">
-              <th style="padding:10px 16px;text-align:left;font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Product</th>
-              <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Boxes</th>
-              <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Box Price</th>
-              <th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase">Add</th>
+            <tr class="whs-stock-thead-row">
+              <th class="whs-stock-th">Product</th>
+              <th class="whs-stock-th center">Boxes</th>
+              <th class="whs-stock-th right">Box Price</th>
+              <th class="whs-stock-th center">Add</th>
             </tr>
           </thead>
           <tbody>
@@ -449,10 +512,8 @@
                 $cartBoxes = $inCart ? $inCart['boxes'] : 0;
                 $available = $product->box_count - $cartBoxes;
               @endphp
-              <tr style="border-top:1px solid var(--border);transition:background .1s"
-                  onmouseover="this.style.background='var(--surface2)'"
-                  onmouseout="this.style.background=''">
-                <td style="padding:12px 16px">
+              <tr class="whs-stock-row" wire:key="stock-{{ $product->id }}">
+                <td class="whs-stock-td">
                   <div style="font-size:13px;font-weight:700;color:var(--text)">{{ $product->name }}</div>
                   <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">
                     {{ $product->sku }}
@@ -460,34 +521,31 @@
                     · {{ $product->items_per_box }} items/box
                   </div>
                 </td>
-                <td style="padding:12px;text-align:center">
-                  <span style="font-family:var(--mono);font-size:15px;font-weight:800;
+                <td class="whs-stock-td center">
+                  <span style="font-family:var(--mono);font-size:16px;font-weight:800;
                                color:{{ $available > 0 ? 'var(--green)' : 'var(--text-dim)' }}">
                     {{ $available }}
                   </span>
                   @if($cartBoxes > 0)
-                    <div style="font-size:10px;color:var(--text-dim)">{{ $cartBoxes }} in cart</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:2px">{{ $cartBoxes }} in cart</div>
                   @endif
                 </td>
-                <td style="padding:12px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">
-                  {{ number_format($boxPrice) }}
+                <td class="whs-stock-td right" style="white-space:nowrap">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">{{ number_format($boxPrice) }}</span>
                   <span style="font-size:10px;font-weight:600;color:var(--text-dim)"> RWF</span>
                 </td>
-                <td style="padding:12px;text-align:center">
+                <td class="whs-stock-td center">
                   @if($available > 0)
                     <button wire:click="openAddModal({{ $product->id }})"
                             style="padding:6px 16px;background:var(--accent);color:#fff;border:none;
                                    border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;
-                                   font-family:var(--font);box-shadow:0 2px 8px rgba(59,111,212,.22);
-                                   transition:opacity .15s"
+                                   font-family:var(--font);box-shadow:0 2px 8px var(--accent-glow);
+                                   transition:opacity var(--tr)"
                             onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
                       Add
                     </button>
                   @else
-                    <span style="font-size:11px;font-weight:600;color:var(--text-dim);
-                                 background:var(--surface2);padding:4px 10px;border-radius:6px">
-                      In cart
-                    </span>
+                    <span class="xx-stat" style="background:var(--surface2);color:var(--text-dim)">In cart</span>
                   @endif
                 </td>
               </tr>
@@ -499,7 +557,7 @@
   </div>
 
   {{-- RIGHT: Cart panel (POS-style) --}}
-  <div style="position:sticky;top:84px">
+  <div style="position:sticky;top:16px">
     <div class="whs-card" style="display:flex;flex-direction:column">
 
       {{-- Cart header --}}
@@ -602,12 +660,12 @@
         <button wire:click="goToCheckout"
                 @if(empty($cart)) disabled @endif
                 style="width:100%;padding:14px 16px;
-                       background:{{ empty($cart) ? 'var(--surface2)' : 'linear-gradient(135deg,#3b6fd4,#6b8dff)' }};
+                       background:{{ empty($cart) ? 'var(--surface2)' : 'var(--accent)' }};
                        color:{{ empty($cart) ? 'var(--text-dim)' : '#fff' }};
                        border:none;border-radius:12px;font-size:15px;font-weight:800;
                        cursor:{{ empty($cart) ? 'not-allowed' : 'pointer' }};font-family:var(--font);
-                       box-shadow:{{ empty($cart) ? 'none' : '0 4px 20px rgba(59,111,212,.38)' }};
-                       display:flex;align-items:center;justify-content:center;gap:9px;transition:.15s">
+                       box-shadow:{{ empty($cart) ? 'none' : '0 4px 18px var(--accent-glow)' }};
+                       display:flex;align-items:center;justify-content:center;gap:9px;transition:opacity var(--tr)">
           @if(empty($cart))
             Add items to cart first
           @else
@@ -787,7 +845,7 @@
   </div>{{-- /left --}}
 
   {{-- RIGHT: Payment (Alpine-powered, POS-style) --}}
-  <div style="position:sticky;top:84px"
+  <div style="position:sticky;top:16px"
        x-data="{
            total:       {{ (int) $cartTotal }},
            momo:        null,
@@ -981,9 +1039,8 @@
       <button wire:click="backToCart"
               style="width:100%;margin-top:10px;padding:10px;background:transparent;color:var(--text-sub);
                      border:1.5px solid var(--border);border-radius:11px;font-size:13px;font-weight:700;
-                     cursor:pointer;font-family:var(--font);transition:all .15s"
-              onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-sub)'">
+                     cursor:pointer;font-family:var(--font);transition:all var(--tr)"
+              class="whs-back-btn">
         ← Back to Cart
       </button>
 
@@ -1115,10 +1172,11 @@
   </div>
 
   <button wire:click="newSale"
-          style="width:100%;height:50px;background:linear-gradient(135deg,#3b6fd4,#6b8dff);
+          style="width:100%;height:50px;background:var(--accent);
                  color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:800;
-                 cursor:pointer;font-family:var(--font);box-shadow:0 4px 18px rgba(59,111,212,.35);
-                 display:flex;align-items:center;justify-content:center;gap:8px">
+                 cursor:pointer;font-family:var(--font);box-shadow:0 4px 18px var(--accent-glow);
+                 display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity var(--tr)"
+          onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
     </svg>
@@ -1137,7 +1195,7 @@
 @if($tab === 'history')
 
 @if($saleHistory->isEmpty())
-    <div class="whs-card" style="padding:48px 24px;text-align:center">
+    <div class="whs-card" style="padding:60px 24px;text-align:center">
         <svg width="48" height="48" fill="none" stroke="var(--border)" stroke-width="1.5" viewBox="0 0 24 24"
              style="margin:0 auto 12px;display:block">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -1146,10 +1204,11 @@
         <div style="font-size:13px;color:var(--text-dim)">Completed warehouse direct sales from this shop will appear here.</div>
     </div>
 @else
-    <div class="whs-card" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <div class="whs-card">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table class="whs-hist-table" style="min-width:540px">
             <thead>
-                <tr>
+                <tr class="whs-hist-thead-row">
                     <th class="whs-hist-th">Sale #</th>
                     <th class="whs-hist-th">Date</th>
                     <th class="whs-hist-th">Items</th>
@@ -1215,6 +1274,7 @@
                 @endforeach
             </tbody>
         </table>
+      </div>
     </div>
 @endif
 
