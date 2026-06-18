@@ -12,10 +12,10 @@
 .iv-table { width:100%;border-collapse:collapse }
 .iv-table thead th { font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap }
 .iv-table thead th.r { text-align:right }
-.iv-table tbody td { font-size:13px;color:var(--text);padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle }
+.iv-table tbody td { font-size:13px;color:var(--text);padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap }
 .iv-table tbody td.r { text-align:right }
 .iv-table tbody tr:last-child td { border-bottom:none }
-.iv-table tfoot td { font-size:13px;font-weight:700;color:var(--text);padding:10px 12px;border-top:1px solid var(--border) }
+.iv-table tfoot td { font-size:13px;font-weight:700;color:var(--text);padding:10px 12px;border-top:1px solid var(--border);white-space:nowrap }
 .iv-table tfoot td.r { text-align:right }
 .iv-card { background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:20px }
 .iv-two-col { display:grid;grid-template-columns:1fr 1fr;gap:20px }
@@ -55,10 +55,10 @@
 .iv-kpi-bar   { height:3px;border-radius:3px }
 .iv-kpi-divider { height:1px;background:var(--border) }
 .iv-kpi-footer  { display:flex;flex-direction:column;gap:0 }
-.iv-kpi-stat    { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border) }
+.iv-kpi-stat    { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
 .iv-kpi-stat:last-child { border-bottom:none }
-.iv-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-0.3px }
-.iv-kpi-stat-l  { font-size:11px;color:var(--text-dim) }
+.iv-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-0.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.iv-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
 /* Full-width tab strip — mirrors sa-tabs */
 .iv-tabs { display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);box-shadow:var(--shadow-card);border-radius:var(--r);margin-bottom:24px;overflow:hidden }
 .iv-tab  { display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 10px;border:none;border-radius:0;border-bottom:2.5px solid transparent;border-right:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);background:transparent;color:var(--text-dim);transition:all var(--tr);white-space:nowrap }
