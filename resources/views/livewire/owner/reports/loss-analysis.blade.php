@@ -32,8 +32,9 @@
 .la-kpi-bar     { height:3px;border-radius:3px }
 .la-kpi-divider { height:1px;background:var(--border) }
 .la-kpi-footer  { display:grid;grid-template-columns:repeat(3,1fr) }
-.la-kpi-stat    { display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 0 }
-.la-kpi-stat-v  { font-size:11px;font-weight:700;font-family:var(--mono);color:var(--text-sub) }
+.la-kpi-stat    { display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 0;min-width:0 }
+.la-kpi-stat-v  { font-size:11px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
+                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
 .la-kpi-stat-l  { font-size:10px;color:var(--text-dim);letter-spacing:.3px;text-align:center }
 
 /* Tabs */
@@ -115,7 +116,7 @@
     .la-kpis    { grid-template-columns:1fr 1fr;gap:8px }
     .la-kpi     { padding:14px 12px;gap:10px }
     .la-kpi-val { font-size:18px }
-    .la-kpi-footer { grid-template-columns:1fr 1fr }
+    .la-kpi-footer { grid-template-columns:repeat(3,1fr) }
     .la-tabs    { display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
                   scrollbar-width:none;flex-wrap:nowrap }
     .la-tabs::-webkit-scrollbar { display:none }
@@ -125,7 +126,6 @@
 @media(max-width:480px) {
     .la-hide-mob   { display:none !important }
     .la-kpis       { grid-template-columns:1fr }
-    .la-kpi-footer { grid-template-columns:repeat(3,1fr) }
 }
 </style>
 
