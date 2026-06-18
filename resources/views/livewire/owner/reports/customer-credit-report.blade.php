@@ -10,8 +10,8 @@
 .cc-page-subtitle { font-size:14px !important; }
 .cc-section-title { font-size:16px !important; }
 .cc-section-subtitle { font-size:13px !important; }
-.cc-table thead th { font-size:12px !important; }
-.cc-table tbody td { font-size:14px !important; }
+.cc-table thead th { font-size:12px !important; white-space:nowrap }
+.cc-table tbody td { font-size:14px !important; white-space:nowrap }
 
 /* ── Mobile responsive ───────────────────────────── */
 @media(max-width:640px) {
@@ -27,14 +27,6 @@
     .bkpi-label { font-size:12px !important; }
 }
 
-@media(max-width:640px) {
-    .cc-table { display:block; overflow-x:auto; }
-    .cc-table thead, .cc-table tbody, .cc-table tr { display:block; }
-    .cc-table thead { display:none; }
-    .cc-table tr { margin-bottom:16px; border:1px solid var(--border); border-radius:8px; padding:12px; background:var(--surface); }
-    .cc-table td { display:block; padding:6px 0 !important; border:none !important; text-align:left !important; }
-    .cc-table td::before { content:attr(data-label); display:inline-block; font-weight:600; width:140px; color:var(--text-sub); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; }
-}
 
 /* Modal styles */
 .cc-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding:20px; }
@@ -171,8 +163,8 @@
         Customer Credit List
     </h2>
 
-    <div style="overflow-x:auto">
-        <table class="cc-table" style="width:100%;border-collapse:collapse;font-size:13px">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="cc-table" style="min-width:860px;width:100%;border-collapse:collapse;font-size:13px">
             <thead>
                 <tr style="border-bottom:2px solid var(--border)">
                     <th style="text-align:left;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Customer</th>

@@ -199,35 +199,6 @@
                 letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim) }
 .sa-colgrp th.grp-revenue,.sa-colgrp th.grp-profit,.sa-colgrp th.grp-credit { color:var(--text-dim) }
 
-/* ── Hiding columns on mobile ────────────────────────────────────── */
-.sa-hide-mob { }
-
-/* ── Mobile card transform for dense tables ──────────────────────── */
-@media(max-width:640px) {
-    .sa-hide-mob { display:none !important }
-    .sa-cards-mob thead { display:none }
-    .sa-cards-mob tfoot { display:none }
-    .sa-cards-mob tbody { display:block }
-    .sa-cards-mob tr    { display:block;padding:11px 14px;border-bottom:1px solid var(--border) }
-    .sa-cards-mob tr:last-child { border-bottom:none }
-    .sa-cards-mob td   { display:flex;justify-content:space-between;align-items:center;
-                         padding:3px 0;font-size:13px }
-    .sa-cards-mob td[data-label]::before {
-        content:attr(data-label);font-size:11px;font-weight:700;color:var(--text-dim);
-        text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;margin-right:8px }
-    .sa-cards-mob td.sa-row-title { display:block;padding-bottom:7px;
-                                    border-bottom:1px solid var(--border);margin-bottom:4px }
-    .sa-cards-mob td.sa-row-title::before { display:none }
-
-    /* Ledger/audit keep as horizontal scroll */
-    .sa-ledger-tbl { min-width:900px !important }
-    .sa-ledger-tbl thead,.sa-ledger-tbl tbody,.sa-ledger-tbl tfoot,
-    .sa-ledger-tbl tr,.sa-ledger-tbl th,.sa-ledger-tbl td { display:revert !important }
-
-    .sa-audit-tbl { min-width:1360px !important }
-    .sa-audit-tbl thead,.sa-audit-tbl tbody,.sa-audit-tbl tfoot,
-    .sa-audit-tbl tr,.sa-audit-tbl th,.sa-audit-tbl td { display:revert !important }
-}
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media(max-width:768px) {
@@ -653,42 +624,42 @@
         </div>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl sa-cards-mob" style="width:100%">
+        <table class="sa-tbl" style="min-width:920px;table-layout:fixed">
             <thead>
                 <tr>
                     <th>Date</th>
                     <th style="text-align:right">Revenue</th>
-                    <th class="sa-hide-mob" style="text-align:right">Txns</th>
-                    <th class="sa-hide-mob" style="text-align:right">Items</th>
+                    <th style="text-align:right">Txns</th>
+                    <th style="text-align:right">Items</th>
                     <th style="text-align:right;color:var(--green)">Gross Profit</th>
                     <th style="text-align:right;color:var(--green)">Margin</th>
-                    <th class="sa-hide-mob" style="text-align:right">Discounts</th>
-                    <th class="sa-hide-mob" style="text-align:right;color:var(--red)">Returns</th>
+                    <th style="text-align:right">Discounts</th>
+                    <th style="text-align:right;color:var(--red)">Returns</th>
                     <th style="text-align:right">Net Rev.</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse(array_reverse($scorecard) as $day)
                 <tr style="{{ $day['is_today'] ? 'background:var(--accent-dim)' : '' }}">
-                    <td class="sa-row-title">
+                    <td>
                         <div style="display:flex;align-items:center;gap:8px">
                             <span style="font-weight:600;color:{{ $day['is_today'] ? 'var(--accent)' : 'var(--text)' }}">{{ $day['day_label'] }}</span>
                             @if($day['is_today'])<span style="font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-dim);padding:1px 6px;border-radius:10px">TODAY</span>@endif
                         </div>
                     </td>
-                    <td data-label="Revenue" style="text-align:right;font-family:var(--mono);font-weight:600;color:{{ $day['revenue'] > 0 ? 'var(--text)' : 'var(--text-dim)' }}">
+                    <td style="text-align:right;font-family:var(--mono);font-weight:600;color:{{ $day['revenue'] > 0 ? 'var(--text)' : 'var(--text-dim)' }}">
                         {{ $day['revenue'] > 0 ? number_format($day['revenue']) : '—' }}
                     </td>
-                    <td class="sa-hide-mob" data-label="Txns" style="text-align:right;font-family:var(--mono);color:var(--text-sub)">
+                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">
                         {{ $day['transactions'] > 0 ? $day['transactions'] : '—' }}
                     </td>
-                    <td class="sa-hide-mob" data-label="Items" style="text-align:right;font-family:var(--mono);color:var(--text-sub)">
+                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">
                         {{ $day['items_sold'] > 0 ? number_format($day['items_sold']) : '—' }}
                     </td>
-                    <td data-label="Profit" style="text-align:right;font-family:var(--mono);font-weight:600;color:var(--green)">
+                    <td style="text-align:right;font-family:var(--mono);font-weight:600;color:var(--green)">
                         {{ $day['gross_profit'] > 0 ? number_format($day['gross_profit']) : '—' }}
                     </td>
-                    <td data-label="Margin" style="text-align:right">
+                    <td style="text-align:right">
                         @if($day['margin_pct'] > 0)
                         @php $mp = $day['margin_pct'] @endphp
                         <span class="sa-margin-pill"
@@ -700,10 +671,10 @@
                         <span style="color:var(--text-dim)">—</span>
                         @endif
                     </td>
-                    <td class="sa-hide-mob" data-label="Discounts" style="text-align:right;font-family:var(--mono);color:{{ $day['discounts'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">
+                    <td style="text-align:right;font-family:var(--mono);color:{{ $day['discounts'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">
                         {{ $day['discounts'] > 0 ? number_format($day['discounts']) : '—' }}
                     </td>
-                    <td class="sa-hide-mob" data-label="Returns" style="text-align:right;font-family:var(--mono);color:{{ $day['returns_count'] > 0 ? 'var(--red)' : 'var(--text-dim)' }}">
+                    <td style="text-align:right;font-family:var(--mono);color:{{ $day['returns_count'] > 0 ? 'var(--red)' : 'var(--text-dim)' }}">
                         {{ $day['returns_count'] > 0 ? $day['returns_count'].' · '.number_format($day['returned_amount']) : '—' }}
                     </td>
                     <td data-label="Net Rev." style="text-align:right;font-family:var(--mono);font-weight:600;color:var(--text)">
@@ -1026,9 +997,9 @@
                     </td>
                     <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ number_format($p['quantity_sold']) }}</td>
                     <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ $p['transaction_count'] }}</td>
-                    <td class="sa-hide-mob" style="text-align:right;font-family:var(--mono);color:var(--text-sub);font-size:12px">{{ number_format($p['avg_selling_price']) }}</td>
+                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub);font-size:12px">{{ number_format($p['avg_selling_price']) }}</td>
                     <td style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format($p['revenue']) }}</td>
-                    <td class="sa-hide-mob" style="text-align:right">
+                    <td style="text-align:right">
                         <div style="height:4px;background:var(--surface2);border-radius:2px;width:60px;display:inline-block;vertical-align:middle;margin-right:5px">
                             <div style="height:100%;width:{{ $p['revenue_share'] }}%;background:var(--accent);border-radius:2px"></div>
                         </div>
@@ -1367,20 +1338,20 @@
         <span class="sa-card-badge">{{ count($sellers) }} sellers</span>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl sa-cards-mob" style="width:100%">
+        <table class="sa-tbl" style="min-width:1060px;table-layout:fixed">
             <thead>
                 <tr>
-                    <th class="sa-hide-mob">#</th>
+                    <th style="width:36px">#</th>
                     <th>Seller</th>
-                    <th class="sa-hide-mob">Shop</th>
+                    <th>Shop</th>
                     <th style="text-align:right">Txns</th>
                     <th style="text-align:right">Revenue</th>
-                    <th class="sa-hide-mob" style="text-align:right">Share</th>
-                    <th class="sa-hide-mob" style="text-align:right">Avg Order</th>
-                    <th class="sa-hide-mob" style="text-align:right">Items</th>
+                    <th style="text-align:right">Share</th>
+                    <th style="text-align:right">Avg Order</th>
+                    <th style="text-align:right">Items</th>
                     <th style="text-align:right;color:var(--green)">GP</th>
                     <th style="text-align:right;color:var(--green)">Margin</th>
-                    <th class="sa-hide-mob" style="text-align:right;color:var(--amber)">Discounts</th>
+                    <th style="text-align:right;color:var(--amber)">Discounts</th>
                     <th style="text-align:right;color:var(--amber)">Overrides</th>
                     <th style="text-align:right;color:var(--red)">Voided</th>
                 </tr>
@@ -1389,8 +1360,8 @@
                 @forelse($sellers as $i => $s)
                 @php $isTop = $i === 0; @endphp
                 <tr style="{{ $isTop ? 'background:var(--green-dim)' : '' }}">
-                    <td class="sa-hide-mob" style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $i + 1 }}</td>
-                    <td class="sa-row-title">
+                    <td style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $i + 1 }}</td>
+                    <td>
                         <div style="display:flex;align-items:center;gap:8px">
                             <div class="sa-avatar"
                                  style="background:{{ $isTop ? 'var(--green-dim)' : 'var(--surface2)' }};
@@ -1400,21 +1371,20 @@
                             <div>
                                 <div style="font-weight:600;color:var(--text);font-size:12px">{{ $s['seller_name'] }}</div>
                                 @if($isTop)<div style="font-size:10px;color:var(--green);font-weight:600">Top seller</div>@endif
-                                <div style="font-size:10px;color:var(--text-dim)">{{ $s['shop_name'] }} · {{ $s['revenue_share'] }}% share</div>
                             </div>
                         </div>
                     </td>
-                    <td class="sa-hide-mob" style="font-size:12px;color:var(--text-sub)">{{ $s['shop_name'] }}</td>
-                    <td data-label="Txns" style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ $s['transactions'] }}</td>
-                    <td data-label="Revenue" style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format($s['revenue']) }}</td>
-                    <td class="sa-hide-mob" style="text-align:right">
+                    <td style="font-size:12px;color:var(--text-sub)">{{ $s['shop_name'] }}</td>
+                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ $s['transactions'] }}</td>
+                    <td style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format($s['revenue']) }}</td>
+                    <td style="text-align:right">
                         <div style="height:4px;background:var(--surface2);border-radius:2px;width:50px;display:inline-block;vertical-align:middle;margin-right:5px">
                             <div style="height:100%;width:{{ min($s['revenue_share'], 100) }}%;background:var(--accent);border-radius:2px"></div>
                         </div>
                         <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $s['revenue_share'] }}%</span>
                     </td>
-                    <td class="sa-hide-mob" data-label="Avg Order" style="text-align:right;font-family:var(--mono);color:var(--text-sub);font-size:11px">{{ number_format($s['avg_order']) }}</td>
-                    <td class="sa-hide-mob" data-label="Items" style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ number_format($s['items_sold']) }}</td>
+                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub);font-size:11px">{{ number_format($s['avg_order']) }}</td>
+                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ number_format($s['items_sold']) }}</td>
                     <td data-label="GP" style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--green)">{{ number_format($s['gross_profit']) }}</td>
                     <td data-label="Margin" style="text-align:right">
                         @php $mp = $s['margin_pct'] @endphp
@@ -1424,7 +1394,7 @@
                             {{ $mp }}%
                         </span>
                     </td>
-                    <td class="sa-hide-mob" data-label="Discounts" style="text-align:right;font-family:var(--mono);color:{{ $s['total_discount'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};font-size:11px">
+                    <td style="text-align:right;font-family:var(--mono);color:{{ $s['total_discount'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};font-size:11px">
                         {{ $s['total_discount'] > 0 ? number_format($s['total_discount']) : '—' }}
                     </td>
                     <td data-label="Overrides" style="text-align:right">

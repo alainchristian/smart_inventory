@@ -12,8 +12,8 @@
 .pm-date-input, .pm-shop-select { font-size:14px !important; }
 .pm-section-title { font-size:16px !important; }
 .pm-section-subtitle { font-size:13px !important; }
-.pm-table thead th { font-size:12px !important; }
-.pm-table tbody td { font-size:14px !important; }
+.pm-table thead th { font-size:12px !important; white-space:nowrap }
+.pm-table tbody td { font-size:14px !important; white-space:nowrap }
 
 /* ── Mobile responsive ───────────────────────────── */
 @media(max-width:640px) {
@@ -35,14 +35,6 @@
     .bkpi-label { font-size:12px !important; }
 }
 
-@media(max-width:640px) {
-    .pm-table { display:block; overflow-x:auto; }
-    .pm-table thead, .pm-table tbody, .pm-table tr { display:block; }
-    .pm-table thead { display:none; }
-    .pm-table tr { margin-bottom:16px; border:1px solid var(--border); border-radius:8px; padding:12px; background:var(--surface); }
-    .pm-table td { display:block; padding:6px 0 !important; border:none !important; text-align:left !important; }
-    .pm-table td::before { content:attr(data-label); display:inline-block; font-weight:600; width:140px; color:var(--text-sub); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; }
-}
 </style>
 
 {{-- ══════════════════════════════════════════════════════════════════════════
@@ -202,8 +194,8 @@
         Recent Transactions
     </h2>
 
-    <div style="overflow-x:auto">
-        <table class="pm-table" style="width:100%;border-collapse:collapse;font-size:13px">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="pm-table" style="min-width:680px;width:100%;border-collapse:collapse;font-size:13px">
             <thead>
                 <tr style="border-bottom:2px solid var(--border)">
                     <th style="text-align:left;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Sale #</th>
