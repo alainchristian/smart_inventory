@@ -150,8 +150,16 @@ main { background-color: var(--surface) !important; }
     display:grid;
     grid-template-columns:1.8fr 1fr 1fr;
     gap:16px;
-    min-width:700px; /* horizontal scroll only kicks in below this */
     align-items:start;
+}
+
+@media(max-width:1000px) {
+    .db-row-cf-side { grid-template-columns:1fr 1fr; }
+    .db-row-cf-side > .db-card:first-child { grid-column:1 / -1; }
+}
+@media(max-width:768px) {
+    .db-row-cf-side { grid-template-columns:1fr; }
+    .db-row-cf-side > .db-card:first-child { grid-column:auto; }
 }
 
 /* ── Low Stock ── */
