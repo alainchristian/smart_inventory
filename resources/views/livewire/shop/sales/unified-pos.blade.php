@@ -41,8 +41,8 @@
 .upos-page ::-webkit-scrollbar-thumb:hover, .upos-overlay ::-webkit-scrollbar-thumb:hover, .upos-cart-drawer ::-webkit-scrollbar-thumb:hover { background:var(--text-dim) }
 
 /* ── Layout ────────────────────────────────────────────────────────────── */
-.upos-page { padding:0 0 80px }
-.upos-layout { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start }
+.upos-page { padding:0 0 80px; overflow-x:hidden }
+.upos-layout { display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:16px; align-items:start }
 
 /* ── Page header ────────────────────────────────────────────────────────── */
 .upos-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap }
@@ -60,15 +60,15 @@
 .upos-badge.warehouse { background:var(--accent-dim); color:var(--accent) }
 
 /* ── Left panel ─────────────────────────────────────────────────────────── */
-.upos-left { display:flex; flex-direction:column; gap:12px }
+.upos-left { display:flex; flex-direction:column; gap:12px; min-width:0 }
 
 /* ── Right panel (cart column) ──────────────────────────────────────────── */
 .upos-right { align-self: stretch }
 
 /* ── Search bar ─────────────────────────────────────────────────────────── */
-.upos-search-card { background:var(--surface); border:none; box-shadow:var(--shadow-card); border-radius:var(--r); padding:12px 14px; display:flex; flex-direction:column; gap:10px }
-.upos-search-row { display:flex; gap:8px; align-items:center }
-.upos-search-wrap { position:relative; flex:1 }
+.upos-search-card { background:var(--surface); border:none; box-shadow:var(--shadow-card); border-radius:var(--r); padding:12px 14px; display:flex; flex-direction:column; gap:10px; min-width:0 }
+.upos-search-row { display:flex; gap:8px; align-items:center; min-width:0 }
+.upos-search-wrap { position:relative; flex:1; min-width:0 }
 .upos-search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-dim); pointer-events:none }
 .upos-search-input { width:100%; padding:9px 12px 9px 34px; border-radius:var(--rsm); border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-family:var(--font); transition:border-color var(--tr); box-sizing:border-box }
 .upos-search-input:focus { outline:none; border-color:var(--accent); background:var(--surface) }
@@ -79,7 +79,7 @@
 .upos-barcode-input:focus { outline:none; border-color:var(--accent); background:var(--surface) }
 
 /* ── Filter pills ───────────────────────────────────────────────────────── */
-.upos-filter-strip { display:flex; gap:6px; flex-wrap:wrap }
+.upos-filter-strip { display:flex; gap:6px; flex-wrap:wrap; min-width:0 }
 .upos-filter-pill { padding:5px 14px; border-radius:20px; border:1.5px solid var(--border); background:var(--surface); color:var(--text-dim); font-size:12px; font-weight:600; cursor:pointer; transition:all var(--tr); white-space:nowrap }
 .upos-filter-pill:hover { border-color:var(--accent); color:var(--accent) }
 .upos-filter-pill.active { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12) }
@@ -315,9 +315,15 @@
 .upos-shop-btn:hover { border-color:var(--accent); background:var(--accent-dim); color:var(--accent) }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
-@media(max-width:1000px) { .upos-co-body { grid-template-columns:1fr } .upos-co-left { border-right:none; border-bottom:1px solid var(--border) } }
+@media(max-width:1000px) {
+    .upos-co-body { display:flex; flex-direction:column; overflow-y:auto; padding-bottom:14px; }
+    .upos-co-left { border-right:none; border-bottom:1px solid var(--border); overflow-y:visible; flex:none; }
+    .upos-co-right { overflow-y:visible; flex:none; }
+    .upos-bal-strip { position:sticky; top:0; z-index:10; box-shadow:0 4px 12px rgba(26,31,54,.08); }
+    .upos-co-complete { position:sticky; bottom:0; z-index:10; }
+}
 @media(max-width:860px) {
-    .upos-layout { grid-template-columns:1fr }
+    .upos-layout { grid-template-columns:minmax(0,1fr) }
     .upos-right { display:none !important }
     .upos-cart-fab { display:flex }
     .upos-cart-drawer-overlay { display:block }
@@ -330,6 +336,12 @@
     .upos-sm-card { max-width:100%; margin:0 }
     .upos-rc-card { max-width:100%; margin:0 }
     .upos-shop-grid { grid-template-columns:1fr }
+}
+@media(max-width:400px) {
+    .upos-stock-grid { grid-template-columns:1fr 1fr; gap:8px }
+    .upos-tile { padding:10px; gap:6px }
+    .upos-tile-name { font-size:12px }
+    .upos-tile-price { font-size:14px }
 }
 </style>
 
