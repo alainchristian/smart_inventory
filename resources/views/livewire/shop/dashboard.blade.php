@@ -8,10 +8,7 @@ main { background-color: var(--surface) !important; }
 
 .db-page {
     display:flex; flex-direction:column; gap:20px; padding-bottom:32px;
-    margin-left:-12px; margin-right:-12px;
 }
-@media(min-width:1024px){ .db-page { margin-left:-20px; margin-right:-20px; } }
-@media(min-width:1280px){ .db-page { margin-left:-28px; margin-right:-28px; } }
 
 /* ══════════════════════════════════════════════════════
    KPI CARDS ROW
@@ -145,7 +142,6 @@ main { background-color: var(--surface) !important; }
 /* ══════════════════════════════════════════════════════
    THREE-COLUMN ROW (CF + Low Stock + Transactions)
 ══════════════════════════════════════════════════════ */
-.db-row-cf-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .db-row-cf-side {
     display:grid;
     grid-template-columns:1.8fr 1fr 1fr;
@@ -421,7 +417,6 @@ main { background-color: var(--surface) !important; }
 {{-- ════════════════════════════════════════════
      CASH FLOW + LOW STOCK + RECENT TRANSACTIONS
 ════════════════════════════════════════════ --}}
-<div class="db-row-cf-wrap">
 <div class="db-row-cf-side">
 
 {{-- LEFT: Cash Flow Donut --}}
@@ -605,8 +600,7 @@ $txnList = $txnList->sortByDesc('date')->values();
     </div>{{-- /db-card-scroll-body --}}
 </div>
 
-</div>{{-- /row-cf-side --}}
-</div>{{-- /row-cf-wrap --}}
+</div>{{-- /db-row-cf-side --}}
 
 {{-- ════════════════════════════════════════════
      BUSINESS INSIGHTS
