@@ -33,7 +33,7 @@
 .otl-list { display:flex; flex-direction:column; gap:8px; }
 .otl-card {
     background:var(--surface); border:1px solid var(--border);
-    border-radius:12px; overflow:hidden;
+    border-radius:12px;
     transition:border-color .15s, box-shadow .15s;
     position:relative;
 }
@@ -44,6 +44,7 @@
 .otl-card-stripe {
     position:absolute; top:0; left:0; bottom:0; width:3px;
     background:var(--card-color, transparent);
+    border-radius:inherit; border-top-right-radius:0; border-bottom-right-radius:0;
 }
 
 /* Card top */
@@ -141,6 +142,36 @@
     .otl-action     { flex:1; justify-content:center; }
     .otl-foot-time  { width:100%; text-align:center; margin-left:0; }
 }
+
+/* Responsive 2A — Transfer List Pages */
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .otl-card-top   { flex-direction:column; padding:12px 14px; }
+    .otl-card-stats { border-left:none; border-top:1px solid var(--border); flex-wrap:wrap; margin:0; padding-top:8px; }
+    .otl-stat       { padding:8px 14px; flex:1; min-width:80px; border-right:none; }
+    .otl-route-dash-line { width:20px; }
+    .otl-card-foot  { flex-wrap:wrap; gap:6px; }
+    .otl-action     { flex:1; justify-content:center; }
+    .otl-foot-time  { width:100%; text-align:center; }
+    .otl-page-header         { flex-direction:column; align-items:flex-start; }
+    .otl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+}
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 <div class="otl-wrap">

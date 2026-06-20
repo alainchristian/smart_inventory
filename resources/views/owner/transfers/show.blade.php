@@ -27,7 +27,7 @@
 .ots-card-body  { padding:16px; }
 
 /* Transfer header */
-.ots-num  { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.ots-num  { font-size:14px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
 .ots-pill {
     display:inline-flex; align-items:center; gap:5px;
     padding:2px 9px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
@@ -107,6 +107,15 @@
 @media(max-width:480px) {
     .ots-meta-grid { grid-template-columns:1fr; }
 }
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 <div class="ots-wrap">

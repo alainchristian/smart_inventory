@@ -32,7 +32,7 @@
 /* ── Transfer card ──────────────────────────────────────── */
 .tl-card {
     background: var(--surface); border: none;
-    border-radius: 12px; overflow: hidden;
+    border-radius: 12px;
     box-shadow: var(--shadow-card);
     transition: box-shadow .18s; position: relative;
 }
@@ -40,6 +40,7 @@
 .tl-stripe {
     position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
     background: var(--card-accent, var(--accent));
+    border-radius: inherit; border-top-right-radius: 0; border-bottom-right-radius: 0;
 }
 
 /* ── Card body ──────────────────────────────────────────── */
@@ -104,7 +105,6 @@
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 640px) {
     .tl-body   { padding: 11px 12px 11px 16px; }
-    .tl-stats  { display: none; }   /* hide stats panel on mobile — info is in the body */
 }
 @media (max-width: 480px) {
     .tl-route  { flex-wrap: wrap; }
@@ -113,6 +113,41 @@
     .tl-action { flex: 1; justify-content: center; }
     .tl-foot-time { width: 100%; text-align: center; margin-left: 0; }
 }
+
+/* Responsive 2A — Transfer List Pages */
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-body        { flex-direction:column; padding:12px 14px; }
+    .tl-stats       { border-left:none; border-top:1px solid var(--border);
+                      margin:0; flex-wrap:wrap; padding-top:8px; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; border-right:none; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-foot        { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+}
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 {{-- Status filter tabs --}}

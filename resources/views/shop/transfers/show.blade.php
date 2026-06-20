@@ -8,8 +8,8 @@
             </svg>
         </a>
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold" style="color:var(--text);">Transfer Details</h1>
-            <p class="text-sm mt-0.5" style="color:var(--text-dim);">Track your transfer request progress</p>
+            <h1 class="text-xl sm:text-3xl font-bold" style="color:var(--text);">Transfer Details</h1>
+            <p class="text-xl mt-0.5" style="color:var(--text-dim);">Track your transfer request progress</p>
         </div>
     </div>
 

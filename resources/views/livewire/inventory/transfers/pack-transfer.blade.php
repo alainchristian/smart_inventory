@@ -23,7 +23,7 @@
 .pt-flash.err { background:var(--red-dim);    border-color:rgba(225,29,72,.25);  color:var(--red); }
 
 /* Transfer header */
-.pt-num  { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.pt-num  { font-size:14px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
 .pt-pill {
     display:inline-flex; align-items:center; gap:5px;
     padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.3px;
@@ -82,7 +82,7 @@
 .pt-qty-sub   { font-size:12px; color:var(--text-dim); text-align:center; margin-bottom:16px; }
 .pt-qty-input {
     width:100%; padding:12px; border:2px solid var(--accent); border-radius:10px;
-    font-size:34px; font-weight:800; text-align:center;
+    font-size:28px; font-weight:800; text-align:center;
     background:var(--surface); color:var(--text); font-family:var(--mono);
     outline:none; box-sizing:border-box; display:block;
 }
@@ -150,6 +150,15 @@
     .pt-route-node:last-child { text-align:left; }
     .pt-route-arrow { transform:rotate(90deg); }
 }
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 <div class="pt-wrap">

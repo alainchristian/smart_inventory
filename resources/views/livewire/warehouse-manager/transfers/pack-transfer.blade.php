@@ -226,6 +226,15 @@
     .pt-scan-row  { flex-direction:column; }
     .pt-qty-input { font-size:22px; }
 }
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 <div class="pt-wrap">

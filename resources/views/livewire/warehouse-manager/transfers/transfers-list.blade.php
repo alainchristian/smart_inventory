@@ -36,7 +36,7 @@
 
 .wtl-card {
     background:var(--surface); border:none;
-    border-radius:12px; overflow:hidden;
+    border-radius:12px;
     box-shadow:var(--shadow-card);
     transition:box-shadow .15s;
 }
@@ -51,7 +51,7 @@
 .wtl-accent-bar {
     width:3px; flex-shrink:0;
     background:var(--card-accent, var(--border));
-    border-radius:12px 0 0 0;
+    border-radius:inherit; border-top-right-radius:0; border-bottom-right-radius:0;
 }
 
 .wtl-card-body { flex:1; min-width:0; }
@@ -166,6 +166,36 @@
     .wtl-stat-v { font-size:18px; }
     .wtl-route-node { max-width:110px; }
 }
+
+/* Responsive 2A — Transfer List Pages */
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .wtl-card-top   { flex-direction:column; padding:12px 14px; }
+    .wtl-card-stats { border-left:none; border-top:1px solid var(--border); flex-wrap:wrap; margin:0; padding-top:8px; }
+    .wtl-stat       { padding:8px 14px; flex:1; min-width:80px; border-right:none; }
+    .wtl-route-dash-line { width:20px; }
+    .wtl-card-foot  { flex-wrap:wrap; gap:6px; }
+    .wtl-action     { flex:1; justify-content:center; }
+    .wtl-foot-time  { width:100%; text-align:center; }
+    .wtl-page-header         { flex-direction:column; align-items:flex-start; }
+    .wtl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+}
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 <div class="wtl-wrap">

@@ -1,8 +1,8 @@
 <x-app-layout>
     <div class="mb-4 sm:mb-6 flex items-center justify-between gap-3 flex-wrap">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold" style="color:var(--text);">Transfer Requests</h1>
-            <p class="text-sm mt-0.5" style="color:var(--text-dim);">Track your inventory requests from warehouse</p>
+            <h1 class="text-xl sm:text-3xl font-bold" style="color:var(--text);">Transfer Requests</h1>
+            <p class="text-xl mt-0.5" style="color:var(--text-dim);">Track your inventory requests from warehouse</p>
         </div>
         <a href="{{ route('shop.transfers.request') }}"
            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;

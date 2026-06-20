@@ -31,7 +31,7 @@
 .rf-flash.info { background:var(--accent-dim); border-color:rgba(99,102,241,.25); color:var(--accent); }
 
 /* Transfer header */
-.rf-num  { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.rf-num  { font-size:14px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
 .rf-pill {
     display:inline-flex; align-items:center; gap:5px;
     padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.3px;
@@ -170,6 +170,30 @@
     .rf-route-node:last-child { text-align:left; }
     .rf-route-arrow { transform:rotate(90deg); }
 }
+
+/* Responsive 2B — Request Transfer Form */
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
+}
+@media(max-width:600px) {
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 <div class="rf-wrap">
@@ -263,7 +287,7 @@
                    type="number" min="1" max="{{ $pendingMaxQty }}"
                    x-init="$nextTick(() => $el.select())"
                    style="width:100%;padding:12px;border:2px solid var(--accent);
-                          border-radius:10px;font-size:34px;font-weight:800;text-align:center;
+                          border-radius:10px;font-size:28px;font-weight:800;text-align:center;
                           background:var(--surface);color:var(--text);font-family:var(--mono);
                           outline:none;box-sizing:border-box;display:block">
             @error('pendingQty')

@@ -1,7 +1,7 @@
 @php use App\Enums\TransferStatus; @endphp
 <style>
 /* ── Transfer Detail ────────────────────────────────────── */
-.td-wrap { display:flex; flex-direction:column; gap:16px; max-width:100%; overflow:hidden; }
+.td-wrap { display:flex; flex-direction:column; gap:16px; max-width:100%; min-width:0; }
 
 /* ── Action alert ────────────────────────────────────── */
 .td-alert {
@@ -21,7 +21,7 @@
     box-shadow:var(--shadow-card);
 }
 .td-hero-inner { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-.td-hero-num   { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.td-hero-num   { font-size:14px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
 .td-hero-badge {
     display:inline-flex; align-items:center; gap:4px;
     padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700;
@@ -70,20 +70,21 @@
 .td-tl-step.active .td-tl-label { color:var(--accent); }
 
 /* ── Body grid ───────────────────────────────────────── */
-.td-body { display:grid; grid-template-columns:1fr 300px; gap:16px; align-items:start; }
-@media(max-width:860px) { .td-body { grid-template-columns:1fr; } }
+.td-body { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px; align-items:start; }
+@media(max-width:860px) { .td-body { grid-template-columns:minmax(0,1fr); } }
 
 /* ── Cards ───────────────────────────────────────────── */
 .td-card {
     background:var(--surface); border:none;
     border-radius:12px; overflow:hidden; margin-bottom:12px;
     box-shadow:var(--shadow-card);
+    transition:box-shadow var(--tr);
 }
+.td-card:hover { box-shadow:var(--shadow-card-hover); }
 .td-card:last-child { margin-bottom:0; }
 .td-card-head {
     display:flex; align-items:center; justify-content:space-between;
-    padding:10px 14px; border-bottom:1px solid var(--border);
-    background:var(--surface2);
+    padding:16px 16px 0;
 }
 .td-card-head-left { display:flex; align-items:center; gap:8px; }
 .td-card-icon {
@@ -199,6 +200,15 @@
     .td-tl-label    { font-size:8px; padding:0 2px; }
     .td-tl-dot      { width:16px; height:16px; }
 }
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 <div class="td-wrap"
@@ -374,8 +384,8 @@
         </div>
       </div>
 
-      {{-- Assigned boxes --}}
-      @if($transfer->boxes()->count() > 0)
+      {{-- Assigned boxes (Hidden per user request) --}}
+      @if(false && $transfer->boxes()->count() > 0)
       <div class="td-card">
         <div class="td-card-head">
           <div class="td-card-head-left">

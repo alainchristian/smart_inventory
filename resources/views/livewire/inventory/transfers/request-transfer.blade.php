@@ -3,26 +3,27 @@
 /* ── Layout ─────────────────────────────────────────────── */
 .rf-layout {
     display: grid;
-    grid-template-columns: 1fr 290px;
+    grid-template-columns: minmax(0,1fr) 290px;
     gap: 16px;
     align-items: start;
 }
 
 /* ── Card ───────────────────────────────────────────────── */
 .rf-card {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    background: var(--surface);
+    border: none;
+    border-radius: var(--r);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
     margin-bottom: 14px;
+    transition: box-shadow var(--tr);
 }
+.rf-card:hover { box-shadow: var(--shadow-card-hover); }
 .rf-card-head {
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
+    padding: 16px 16px 0;
 }
 .rf-card-icon {
     width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
@@ -30,8 +31,8 @@
     background: var(--icon-bg, rgba(99,102,241,.12));
     color: var(--icon-c, var(--accent));
 }
-.rf-card-head h3 { font-size: 12px; font-weight: 700; color: var(--text); margin: 0; }
-.rf-card-body    { padding: 14px; }
+.rf-card-head h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0; }
+.rf-card-body    { padding: 16px; }
 
 /* ── Form fields ────────────────────────────────────────── */
 .rf-row2  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -112,7 +113,7 @@
 .rf-item-top  { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .rf-item-name { font-size: 12px; font-weight: 600; color: var(--text); }
 .rf-item-sub  { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
-.rf-item-rm   { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 17px; line-height: 1; padding: 2px 4px; transition: color .12s; flex-shrink: 0; }
+.rf-item-rm   { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px 4px; transition: color .12s; flex-shrink: 0; }
 .rf-item-rm:hover { color: var(--red); }
 .rf-qty-row   { display: flex; align-items: center; justify-content: space-between; }
 .rf-qty-ctrl  { display: flex; align-items: center; gap: 6px; }
@@ -193,6 +194,30 @@
     .rf-add-btn   { margin-left: auto; }
     .rf-add-text  { display: none; }   /* icon only */
 }
+
+/* Responsive 2B — Request Transfer Form */
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
+}
+@media(max-width:600px) {
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+
+/* Responsive 2C — General Rules */
+@media(max-width:600px) {
+    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
+    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
 </style>
 
 <form wire:submit.prevent="submit">

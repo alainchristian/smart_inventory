@@ -8,8 +8,8 @@
             </svg>
         </a>
         <div class="flex-1">
-            <h1 class="text-2xl sm:text-3xl font-bold" style="color:var(--text);">Review Transfer</h1>
-            <p class="text-sm mt-0.5" style="color:var(--text-dim);">Approve or reject this transfer request</p>
+            <h1 class="text-xl sm:text-3xl font-bold" style="color:var(--text);">Review Transfer</h1>
+            <p class="text-xl mt-0.5" style="color:var(--text-dim);">Approve or reject this transfer request</p>
         </div>
         @if(in_array($transfer->status, [\App\Enums\TransferStatus::IN_TRANSIT, \App\Enums\TransferStatus::DELIVERED, \App\Enums\TransferStatus::RECEIVED]))
         <a href="{{ route('warehouse.transfers.delivery-note', $transfer) }}" target="_blank"
