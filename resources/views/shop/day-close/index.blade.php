@@ -2,7 +2,7 @@
 <style>
 /* ── Layout ── */
 .dc-index-grid  { display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start; }
-.dc-page-outer  { padding:20px 0 80px; }
+.dc-page-outer  { padding:20px 0 80px; overflow-x:hidden; }
 .dc-page-inner  { padding:0; }
 .dc-header      { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:28px; }
 .dc-header-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
@@ -44,10 +44,16 @@
     .dc-right-col         { gap:12px; }
     .dc-quick-link        { padding:9px 10px; font-size:12px; }
     .dc-snap-wrap         { border-radius:10px; }
-    .dc-snap-label        { font-size:8px !important; }
-    .dc-snap-num          { font-size:14px !important; }
-    .dc-snap-sub          { font-size:8px !important; }
-    .dc-snap-breakdown    { font-size:8px !important; }
+}
+
+/* ── Responsive: extra-narrow (313px phones) ── */
+@media (max-width:400px) {
+    .dc-page-inner        { padding:0 4px; }
+    .dc-page-outer        { padding:4px 0 60px; }
+    .dc-header            { margin-bottom:12px; }
+    .dc-header h1         { font-size:16px; }
+    .dc-index-grid        { gap:10px; }
+    .dc-section-lbl span  { font-size:10px; }
 }
 </style>
 

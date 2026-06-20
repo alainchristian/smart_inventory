@@ -98,6 +98,68 @@
 /* Cash Input focus ring */
 .wiz-cash-input:focus { border-color:var(--accent) !important; box-shadow:0 0 0 3px var(--accent-dim); }
 
+/* ──────────────────────────────────────────────────────────
+   Extra-narrow fixes (313px phones) — CSS only, no logic
+   ────────────────────────────────────────────────────────── */
+@media (max-width:400px) {
+
+    /* Step circles: slightly smaller to prevent squeezing connector lines */
+    .wiz-step-circle { width:28px !important; height:28px !important; }
+
+    /* All KPI cards: reduce padding + value font-size */
+    .wiz-kpi { padding:12px !important; gap:10px !important; }
+    .wiz-kpi-val { font-size:20px !important; }
+
+    /* Tabs: tighter font so "Bank Deposits" fits in its ~100px cell */
+    .wiz-tab { font-size:10px !important; padding:10px 6px !important; }
+
+    /* Step 4 — Variance Hero:
+       The inline row (icon+number on left, Expected/Counted on right) overflows.
+       Stack to column so both sides get full width. */
+    .wiz-variance-hero {
+        flex-direction:column !important;
+        padding:14px !important;
+        gap:12px !important;
+        align-items:flex-start !important;
+    }
+    .wiz-variance-hero .wiz-variance-right {
+        text-align:left !important;
+        width:100%;
+        display:grid;
+        grid-template-columns:1fr 1fr 1fr 1fr;
+        gap:4px;
+        align-items:center;
+    }
+    /* The big variance number: smaller on very narrow */
+    .wiz-variance-num { font-size:28px !important; }
+
+    /* Step 4 — Retained in Shop KPI:
+       Row layout with 32px font overflows. Flip to column. */
+    .wiz-retained-kpi {
+        flex-direction:column !important;
+        align-items:flex-start !important;
+        padding:14px !important;
+        gap:8px !important;
+    }
+    .wiz-retained-val { font-size:22px !important; letter-spacing:-0.5px !important; }
+
+    /* Step 4 — Non-cash settlement channel grid:
+       The 2-col Settled/Reference grid is too narrow (~130px each).
+       Stack to single column. */
+    .wiz-nc-row-grid { grid-template-columns:1fr !important; }
+
+    /* Step 3 — Variance display row:
+       Flex row with value on right overflows at 313px. */
+    .wiz-variance-card-row {
+        flex-direction:column !important;
+        gap:8px !important;
+        align-items:flex-start !important;
+    }
+    .wiz-variance-card-right { text-align:left !important; }
+
+    /* Floating widget collapsed pill: tighter padding */
+    .wiz-float-pill { padding:6px 10px !important; }
+}
 </style>
 <div style="padding-bottom:100px;">
 
@@ -619,7 +681,7 @@
                     </div>
                 @elseif ($variance > 0)
                     <div style="padding:16px 20px;background:var(--amber-dim);border-color:var(--amber);">
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                        <div class="wiz-variance-card-row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <div style="width:32px;height:32px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                     <svg style="width:16px;height:16px;color:#1a1a1a;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -631,7 +693,7 @@
                                     <div style="font-size:12px;color:var(--text-dim);">Extra cash will be retained in the drawer</div>
                                 </div>
                             </div>
-                            <div style="text-align:right;flex-shrink:0;">
+                            <div class="wiz-variance-card-right" style="text-align:right;flex-shrink:0;">
                                 <div style="font-size:20px;font-weight:800;color:var(--amber);font-family:var(--mono);">+{{ number_format($variance) }}</div>
                                 <div style="font-size:10px;color:var(--text-dim);">RWF over</div>
                             </div>
@@ -639,7 +701,7 @@
                     </div>
                 @else
                     <div style="padding:16px 20px;background:var(--red-dim);border-color:var(--red);">
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                        <div class="wiz-variance-card-row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <div style="width:32px;height:32px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                     <svg style="width:16px;height:16px;color:white;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -725,7 +787,7 @@
         <div style="display:flex;flex-direction:column;gap:16px;">
 
             {{-- ── 1. VARIANCE HERO ── --}}
-            <div class="wiz-kpi" style="flex-direction:row; justify-content:space-between; align-items:center; padding:24px 32px; background:{{ $vBg }}; border:1.5px solid {{ $vBorder }};">
+            <div class="wiz-kpi wiz-variance-hero" style="flex-direction:row; justify-content:space-between; align-items:center; padding:24px 32px; background:{{ $vBg }}; border:1.5px solid {{ $vBorder }};">
                 <div style="display:flex;align-items:center;gap:20px;">
                     <div style="width:56px;height:56px;border-radius:16px;background:{{ $vColor }};opacity:0.15;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
                         <svg style="position:absolute;width:32px;height:32px;" fill="none" stroke="{{ $vColor }}" viewBox="0 0 24 24" stroke-width="2">
@@ -740,7 +802,7 @@
                         </div>
                     </div>
                 </div>
-                <div style="text-align:right;flex-shrink:0;">
+                <div class="wiz-variance-right" style="text-align:right;flex-shrink:0;">
                     <div style="font-size:11px;color:{{ $vColor }};opacity:0.8;margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Expected</div>
                     <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:{{ $vColor }};">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
                     <div style="font-size:11px;color:{{ $vColor }};opacity:0.8;margin:8px 0 4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Counted</div>
@@ -794,12 +856,12 @@
                     @endif
 
                     {{-- Retained display --}}
-                    <div class="wiz-kpi" style="padding:24px 32px; flex-direction:row; align-items:center; justify-content:space-between; margin-top:8px; margin-bottom:8px;">
+                    <div class="wiz-kpi wiz-retained-kpi" style="padding:24px 32px; flex-direction:row; align-items:center; justify-content:space-between; margin-top:8px; margin-bottom:8px;">
                         <div>
                             <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:4px;">Retained in Shop</div>
                             <div style="font-size:13px;color:var(--text-dim);">Cash stays in the register</div>
                         </div>
-                        <div style="font-size:32px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;color:{{ $cashRetained >= 0 ? 'var(--text)' : 'var(--red)' }};">
+                        <div class="wiz-retained-val" style="font-size:32px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;color:{{ $cashRetained >= 0 ? 'var(--text)' : 'var(--red)' }};">
                             {{ number_format($cashRetained) }}
                             <span style="font-size:16px;font-weight:600;color:var(--text-dim);"> RWF</span>
                         </div>
@@ -837,7 +899,7 @@
                                         </span>
                                     </div>
                                     {{-- Amount + Reference in compact 2-col --}}
-                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                    <div class="wiz-nc-row-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                                         <div>
                                             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;
                                                         color:var(--text-dim);margin-bottom:4px;">Settled (RWF)</div>
@@ -961,6 +1023,7 @@
     {{-- Collapsed pill --}}
     <div x-show="!open" x-cloak
          @click="open = true"
+         class="wiz-float-pill"
          style="cursor:pointer;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
                 background:rgba(var(--surface-rgb,255,255,255),0.9);
                 border:1px solid var(--border);border-radius:999px;

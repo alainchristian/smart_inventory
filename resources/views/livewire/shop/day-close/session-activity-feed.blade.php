@@ -1,4 +1,11 @@
 <div wire:poll.30s="refresh">
+<style>
+/* Hide activity timestamps on very narrow screens to prevent row overflow */
+@media (max-width:400px) {
+    .af-time { display:none; }
+    .af-total-val { font-size:11px; }
+}
+</style>
     @if (session()->has('error'))
         <div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;font-size:11px;
                     background:var(--red-dim);color:var(--red);">{{ session('error') }}</div>
@@ -41,7 +48,7 @@
                     @endif
 
                     {{-- Time --}}
-                    <span style="font-size:10px;font-family:var(--mono);color:var(--text-dim);flex-shrink:0;">
+                    <span class="af-time" style="font-size:10px;font-family:var(--mono);color:var(--text-dim);flex-shrink:0;">
                         {{ $item['time']?->format('H:i') }}
                     </span>
 
@@ -88,7 +95,7 @@
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
                 <div style="text-align:center;">
                     <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">Total In</div>
-                    <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--green);">
+                    <div class="af-total-val" style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--green);">
                         +{{ number_format($totalIn) }}
                     </div>
                 </div>

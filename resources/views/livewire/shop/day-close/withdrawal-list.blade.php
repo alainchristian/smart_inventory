@@ -6,7 +6,8 @@
     @if ($withdrawals->isEmpty())
         <div class="text-center py-4 text-sm" style="color:var(--text-dim);">No withdrawals recorded yet.</div>
     @else
-        <table class="w-full text-sm">
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table class="w-full text-sm" style="min-width:420px;">
             <thead>
                 <tr style="border-bottom:1px solid var(--border);">
                     <th class="text-left pb-2 text-xs font-semibold" style="color:var(--text-dim);">Time</th>
@@ -78,5 +79,6 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     @endif
 </div>

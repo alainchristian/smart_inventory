@@ -12,13 +12,30 @@
 @media (max-width:640px) {
     .dc-snap-tile      { padding:9px 10px; }
     .dc-snap-label     { font-size:8px; }
-    .dc-snap-num       { font-size:13px; }
+    .dc-snap-num       { font-size:12px; }
     .dc-snap-sub       { font-size:8px; }
     .dc-snap-brk       { font-size:8px; }
 
     /* Stack breakdown below the number instead of floating right */
     .dc-snap-tile-brk  { flex-direction:column; gap:3px; }
-    .dc-snap-brkwrap   { text-align:left;padding-top:0;display:flex;flex-wrap:wrap;gap:6px; }
+    .dc-snap-brkwrap   { text-align:left;padding-top:0;display:flex;flex-wrap:wrap;gap:4px; }
+
+    /* Collapse the multi-column grids so tiles never overflow the viewport.
+       Balance row: 2 columns (Cash+MoMo, Bank on next row if present)
+       Activity row: 2 columns (Revenue+Expenses, Withdrawals below) */
+    .dc-snap-grid-top  { grid-template-columns:1fr 1fr !important; }
+    .dc-snap-grid-act  { grid-template-columns:1fr 1fr !important; }
+}
+
+/* ── Extra-narrow (360px and below) ── */
+@media (max-width:400px) {
+    /* Single column on very small phones */
+    .dc-snap-grid-top  { grid-template-columns:1fr !important; }
+    .dc-snap-grid-act  { grid-template-columns:1fr 1fr !important; }
+    /* Shrink numbers further */
+    .dc-snap-num       { font-size:11px; }
+    .dc-snap-brk       { font-size:7px; }
+    .dc-snap-tile      { padding:7px 8px; }
 }
 </style>
 
@@ -53,7 +70,7 @@
 
     {{-- ── Balances row ── --}}
     @php $topCols = $settingAllowBank ? 3 : 2; @endphp
-    <div style="display:grid;grid-template-columns:repeat({{ $topCols }},1fr);background:var(--surface);border-bottom:1px solid var(--border);">
+    <div class="dc-snap-grid-top" style="display:grid;grid-template-columns:repeat({{ $topCols }},1fr);background:var(--surface);border-bottom:1px solid var(--border);">
 
         {{-- Cash in drawer — with formula breakdown --}}
         @php
@@ -150,7 +167,7 @@
     </div>
 
     {{-- ── Activity row ── --}}
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);">
+    <div class="dc-snap-grid-act" style="display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);">
 
         {{-- Revenue — with payment channel breakdown --}}
         @php

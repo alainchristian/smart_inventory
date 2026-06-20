@@ -7,6 +7,16 @@
     .dc-sess-body { padding:11px 14px; }
     .dc-sess-head { padding:9px 12px; }
     .dc-sess-form { padding:14px; }
+    /* Shrink balance input font at mobile width to avoid overflow */
+    .dc-sess-balance-input { font-size:15px !important; }
+    /* Stack input + button vertically so nothing clips horizontally */
+    .dc-sess-open-row { flex-direction:column !important; align-items:stretch !important; }
+    .dc-sess-open-row > div { min-width:0 !important; }
+}
+/* Extra-narrow refinements */
+@media (max-width:400px) {
+    .dc-sess-balance-input { font-size:14px !important; }
+    .dc-sess-active-sub    { word-break:break-word; }
 }
 </style>
     @if ($blockerSession)
@@ -41,7 +51,7 @@
                     </div>
                     <div>
                         <div style="font-size:14px;font-weight:700;color:var(--green);">Session Active</div>
-                        <div style="font-size:12px;color:var(--text-dim);margin-top:1px;">
+                        <div style="font-size:12px;color:var(--text-dim);margin-top:1px;" class="dc-sess-active-sub">
                             Opened at {{ $todaySession->opened_at->format('H:i') }}
                             · <span style="font-family:var(--mono);font-weight:600;color:var(--text);">{{ number_format($todaySession->opening_balance) }} RWF</span> opening balance
                         </div>
@@ -71,7 +81,7 @@
                 <p style="font-size:13px;color:var(--text-dim);margin:0 0 18px;">
                     Open today's session to start recording sales, expenses, and cash movements.
                 </p>
-                <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                <div class="dc-sess-open-row" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                     <div style="flex:1;min-width:160px;">
                         <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;
                                       letter-spacing:0.5px;color:var(--text-dim);margin-bottom:6px;">
@@ -81,6 +91,7 @@
                                wire:model="openingBalance"
                                value="{{ $openingBalance ?: '' }}"
                                min="0"
+                               class="dc-sess-balance-input"
                                style="width:100%;padding:10px 14px;border-radius:10px;font-size:18px;font-weight:700;
                                       font-family:var(--mono);text-align:right;background:var(--surface2);
                                       border:1.5px solid var(--border);color:var(--text);box-sizing:border-box;

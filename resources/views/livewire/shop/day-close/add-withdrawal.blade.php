@@ -1,4 +1,10 @@
 <div>
+<style>
+/* Stack the Cash / MoMo amount grid to a single column on very narrow screens */
+@media (max-width:400px) {
+    .aw-amounts-grid { grid-template-columns:1fr !important; }
+}
+</style>
     @if (session()->has('success'))
         <div class="mb-3 px-3 py-2 rounded-lg text-xs" style="background:var(--green-dim);color:var(--green);">{{ session('success') }}</div>
     @endif
@@ -8,7 +14,7 @@
 
     <div class="space-y-3">
         {{-- Two amount fields side by side --}}
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3 aw-amounts-grid">
             <div>
                 <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">Cash (RWF)</label>
                 <input type="number"

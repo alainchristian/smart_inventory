@@ -121,7 +121,7 @@
                         </div>
                     @else
                         <div style="padding:10px 16px;background:var(--surface2);border-top:1px solid var(--border);
-                                    display:flex;gap:8px;align-items:center;">
+                                    display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                             <button wire:click="payRequest({{ $request->id }})"
                                     wire:confirm="Pay {{ number_format($request->amount) }} RWF from today's session cash?"
                                     class="{{ ! $canAct ? 'pr-action-disabled' : '' }}"
