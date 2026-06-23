@@ -55,7 +55,8 @@
         openShopTransfers: {{ request()->routeIs('shop.transfers.*') ? 'true' : 'false' }},
         openWarehouseTransfers: {{ request()->routeIs('warehouse.transfers.*') ? 'true' : 'false' }},
         openFinance: {{ (request()->routeIs('owner.finance.*') || request()->routeIs('owner.credit.*')) ? 'true' : 'false' }},
-        openDayClose: {{ request()->routeIs('shop.day-close.*') ? 'true' : 'false' }}
+        openDayClose: {{ request()->routeIs('shop.day-close.*') ? 'true' : 'false' }},
+        openMasterData: {{ request()->routeIs('owner.categories.*') || request()->routeIs('owner.expense-categories.*') || request()->routeIs('owner.transporters.*') ? 'true' : 'false' }}
     }">
         @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
             {{-- OWNER / ADMIN MENU --}}
@@ -224,6 +225,40 @@
                     </div>
                 </div>
 
+                <!-- Master Data (Collapsible) -->
+                <div>
+                    <button @click="openMasterData = !openMasterData"
+                            class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all
+                                   {{ request()->routeIs('owner.categories.*') || request()->routeIs('owner.expense-categories.*') || request()->routeIs('owner.transporters.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            <span class="text-[14px] font-medium">Master Data</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="openMasterData ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="openMasterData" x-collapse class="ml-8 mt-1 space-y-1">
+                        <a href="{{ route('owner.categories.index') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.categories.*') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Product Categories
+                        </a>
+                        <a href="{{ route('owner.expense-categories.index') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.expense-categories.*') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Expense Categories
+                        </a>
+                        <a href="{{ route('owner.transporters.index') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.transporters.*') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Transporters
+                        </a>
+                    </div>
+                </div>
+
                 <a href="{{ route('owner.users.index') }}" wire:navigate
                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                           {{ request()->routeIs('owner.users.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
@@ -261,7 +296,7 @@
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
                     </svg>
-                    <span class="text-[14px] font-medium">System</span>
+                    <span class="text-[14px] font-medium">System & Data</span>
                 </a>
             </div>
 

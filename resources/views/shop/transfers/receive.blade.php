@@ -15,7 +15,7 @@
     border: 1.5px solid #d1d5db;
     border-radius: 8px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    font-size:14px;
+    font-size:17px;
     font-weight: 600;
     color: #374151;
     background: white;
@@ -41,22 +41,22 @@
         justify-content: center;
         width: 100%;
         padding: 11px 16px;
-        font-size:18px;
+        font-size:22px;
     }
     .page-header-wrap > div h1 {
-        font-size:26px;
+        font-size:31px;
     }
     .page-header-wrap > div p {
-        font-size:14px;
+        font-size:17px;
     }
 }
 
 @media(max-width:640px) {
     .page-header-wrap > div h1 {
-        font-size:24px;
+        font-size:29px;
     }
     .page-header-wrap > div p {
-        font-size:16px;
+        font-size:19px;
         margin-top: 4px;
     }
     .back-btn {
@@ -126,13 +126,13 @@
 @media(max-width:600px) {
     .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
     .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
+    .tl-step-num  { font-size:24px; }
     .tl-step-sub  { display:none; }
     .tl-card-top    { flex-direction:column; padding:0 14px; }
     .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
     .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
     .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-chip        { padding:4px 10px; font-size:13px; }
     .tl-search      { width:100%; margin-left:0; margin-top:6px; }
     .tl-search input{ width:100%; }
     .tl-route-dash-line { width:20px; }
@@ -140,7 +140,7 @@
     .tl-action      { flex:1; justify-content:center; }
     .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
     .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
+    .tl-page-header-left h1 { font-size:24px; }
     .tl-new-btn             { width:100%; justify-content:center; }
 }
 
@@ -151,14 +151,14 @@
 @media(max-width:600px) {
     .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
     .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
+    .tl-step-num  { font-size:24px; }
     .tl-step-sub  { display:none; }
     .tl-card-top    { flex-direction:column; padding:0 14px; }
     .tl-card-stats  { border-left:none; border-top:1px solid var(--border);
                       margin:0 0 8px; flex-wrap:wrap; }
     .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
     .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:9px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
     .tl-search      { width:100%; margin-left:0; margin-top:6px; }
     .tl-search input{ width:100%; }
     .tl-route-dash-line { width:20px; }
@@ -166,7 +166,7 @@
     .tl-action      { flex:1; justify-content:center; }
     .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
     .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
+    .tl-page-header-left h1 { font-size:24px; }
     .tl-new-btn             { width:100%; justify-content:center; }
 }
 
@@ -201,8 +201,8 @@
             <div class="mb-6">
                 <div class="page-header-wrap">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-900">Receive Transfer</h1>
-                        <p class="mt-1 text-xl text-gray-600">Scan boxes to receive them into your shop inventory</p>
+                        <h1 class="text-2xl font-bold text-gray-900">Receive Transfer</h1>
+                        <p class="mt-1 text-2xl text-gray-600">Scan boxes to receive them into your shop inventory</p>
                     </div>
                     <a href="{{ route('shop.transfers.index') }}" class="back-btn">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">

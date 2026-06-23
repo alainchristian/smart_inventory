@@ -258,7 +258,7 @@
 .upos-fulfillment-note { margin-top:8px; font-size:11px; color:var(--accent); display:flex; align-items:flex-start; gap:5px }
 
 /* Balance strip */
-.upos-bal-strip { background:color-mix(in srgb,var(--accent) 5%,var(--surface)); border:1.5px solid var(--accent-dim); border-radius:var(--rsm); padding:9px 12px }
+.upos-bal-strip { background:var(--surface); background:color-mix(in srgb,var(--accent) 5%,var(--surface)); border:1.5px solid var(--accent-dim); border-radius:var(--rsm); padding:9px 12px }
 .upos-bal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px }
 .upos-bal-label { font-size:11px; color:var(--text-dim) }
 .upos-bal-val { font-size:15px; font-weight:800; font-family:var(--mono); color:var(--text) }

@@ -11,14 +11,14 @@
 .tl-tab {
     display:inline-flex; align-items:center; gap:6px;
     padding:6px 14px; border-radius:6px; border:none;
-    font-size:12px; font-weight:500; color:var(--text-dim);
+    font-size:14px; font-weight:500; color:var(--text-dim);
     background:transparent; cursor:pointer; white-space:nowrap;
     transition:all .15s; line-height:1.4; flex-shrink:0;
 }
 .tl-tab:hover  { color:var(--text); background:rgba(0,0,0,.04); }
 .tl-tab.active { background:var(--accent); color:#fff; font-weight:600; }
 .tl-tab-badge {
-    font-size:10px; font-weight:700; padding:1px 6px;
+    font-size:12px; font-weight:700; padding:1px 6px;
     border-radius:10px; background:rgba(255,255,255,.25); color:inherit;
     line-height:1.5;
 }
@@ -48,20 +48,20 @@
 .tl-info { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 5px; min-width: 0; }
 
 .tl-meta   { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.tl-num    { font-size: 13px; font-weight: 800; color: var(--text); font-family: var(--mono); letter-spacing: -.2px; }
+.tl-num    { font-size:16px; font-weight: 800; color: var(--text); font-family: var(--mono); letter-spacing: -.2px; }
 .tl-badge  {
     display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px; font-size:12px; font-weight: 700;
     letter-spacing: .4px; text-transform: uppercase;
     background: var(--badge-bg); color: var(--badge-c);
 }
 
 .tl-route { display: flex; align-items: center; gap: 6px; }
-.tl-rnode { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.tl-rnode { font-size:14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
 .tl-rline { flex: 0 0 24px; border-top: 1.5px dashed var(--border); }
 
 .tl-dates { display: flex; gap: 10px; flex-wrap: wrap; }
-.tl-date  { font-size: 11px; color: var(--text-dim); }
+.tl-date  { font-size:13px; color: var(--text-dim); }
 .tl-date strong { color: var(--text); font-weight: 600; }
 
 /* ── Stats ──────────────────────────────────────────────── */
@@ -75,8 +75,8 @@
     border-right: 1px solid var(--border);
 }
 .tl-stat:last-child { border-right: none; }
-.tl-stat-v { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1; }
-.tl-stat-l { font-size: 9px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--text-dim); }
+.tl-stat-v { font-size:22px; font-weight: 800; color: var(--text); line-height: 1; }
+.tl-stat-l { font-size:11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--text-dim); }
 
 /* ── Footer ─────────────────────────────────────────────── */
 .tl-foot {
@@ -85,22 +85,22 @@
 }
 .tl-action {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+    padding: 5px 12px; border-radius: 7px; font-size:14px; font-weight: 600;
     border: 1px solid var(--border); cursor: pointer; text-decoration: none;
     background: #fff; color: var(--text); transition: all .15s;
 }
 .tl-action:hover         { border-color: var(--accent); color: var(--accent); }
 .tl-action.primary       { background: var(--accent); color: #fff; border-color: var(--accent); }
 .tl-action.primary:hover { opacity: .88; }
-.tl-foot-time { margin-left: auto; font-size: 11px; color: var(--text-dim); }
+.tl-foot-time { margin-left: auto; font-size:13px; color: var(--text-dim); }
 
 /* ── Empty state ────────────────────────────────────────── */
 .tl-empty {
     text-align: center; padding: 48px 24px;
     background: #fff; border: 1px solid var(--border); border-radius: 12px;
 }
-.tl-empty h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 12px 0 4px; }
-.tl-empty p  { font-size: 12px; color: var(--text-dim); margin: 0 0 16px; }
+.tl-empty h3 { font-size:18px; font-weight: 700; color: var(--text); margin: 12px 0 4px; }
+.tl-empty p  { font-size:14px; color: var(--text-dim); margin: 0 0 16px; }
 
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 640px) {
@@ -121,14 +121,14 @@
 @media(max-width:600px) {
     .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
     .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
+    .tl-step-num  { font-size:24px; }
     .tl-step-sub  { display:none; }
     .tl-body        { flex-direction:column; padding:12px 14px; }
     .tl-stats       { border-left:none; border-top:1px solid var(--border);
                       margin:0; flex-wrap:wrap; padding-top:8px; }
     .tl-stat        { padding:8px 14px; flex:1; min-width:80px; border-right:none; }
     .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-chip        { padding:4px 10px; font-size:13px; }
     .tl-search      { width:100%; margin-left:0; margin-top:6px; }
     .tl-search input{ width:100%; }
     .tl-route-dash-line { width:20px; }
@@ -136,7 +136,7 @@
     .tl-action      { flex:1; justify-content:center; }
     .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
     .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
+    .tl-page-header-left h1 { font-size:24px; }
     .tl-new-btn             { width:100%; justify-content:center; }
 }
 
@@ -146,6 +146,68 @@
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
     .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
 }
 
 </style>
@@ -215,7 +277,7 @@
             {{ $transfer->status->label() }}
           </span>
           @if($transfer->has_discrepancy)
-            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;
+            <span style="font-size:12px;font-weight:700;padding:2px 7px;border-radius:10px;
                          background:var(--red-dim);color:var(--red);">Discrepancy</span>
           @endif
         </div>
@@ -289,7 +351,7 @@
     <p>{{ $statusFilter==='all' ? 'No transfer history yet.' : 'No transfers match this filter.' }}</p>
     <a href="{{ route('shop.transfers.request') }}"
        style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;
-              background:var(--accent);color:#fff;font-size:12px;font-weight:700;text-decoration:none;">
+              background:var(--accent);color:#fff;font-size:14px;font-weight:700;text-decoration:none;">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
       </svg>

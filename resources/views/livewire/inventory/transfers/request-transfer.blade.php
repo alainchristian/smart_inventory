@@ -31,30 +31,30 @@
     background: var(--icon-bg, rgba(99,102,241,.12));
     color: var(--icon-c, var(--accent));
 }
-.rf-card-head h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0; }
+.rf-card-head h3 { font-size:17px; font-weight: 700; color: var(--text); margin: 0; }
 .rf-card-body    { padding: 16px; }
 
 /* ── Form fields ────────────────────────────────────────── */
 .rf-row2  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .rf-field { display: flex; flex-direction: column; gap: 4px; }
-.rf-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-dim); }
+.rf-label { font-size:12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-dim); }
 .rf-select, .rf-input, .rf-textarea {
     padding: 8px 10px; border-radius: 8px;
     border: 1px solid var(--border); background: #fff;
-    color: var(--text); font-size: 13px; outline: none;
+    color: var(--text); font-size:16px; outline: none;
     transition: border-color .15s; font-family: inherit;
     width: 100%; box-sizing: border-box;
 }
 .rf-select:focus, .rf-input:focus, .rf-textarea:focus { border-color: var(--accent); }
 .rf-textarea { min-height: 64px; resize: vertical; }
-.rf-error    { font-size: 11px; color: var(--red); margin-top: 2px; }
+.rf-error    { font-size:13px; color: var(--red); margin-top: 2px; }
 
 /* ── Search ─────────────────────────────────────────────── */
 .rf-search-wrap { position: relative; margin-bottom: 8px; }
 .rf-search-wrap input {
     width: 100%; padding: 9px 10px 9px 32px; border-radius: 8px;
     border: 1px solid var(--border); background: #fff;
-    color: var(--text); font-size: 13px; outline: none;
+    color: var(--text); font-size:16px; outline: none;
     transition: border-color .15s; box-sizing: border-box;
 }
 .rf-search-wrap input:focus { border-color: var(--accent); }
@@ -76,21 +76,21 @@
 .rf-prod-row.no-stock   { opacity: .4; }
 
 .rf-prod-info { flex: 1; min-width: 0; }
-.rf-prod-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rf-prod-name { font-size:16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rf-prod-meta { display: flex; align-items: center; gap: 5px; margin-top: 2px; flex-wrap: wrap; }
-.rf-prod-sku  { font-size: 10px; color: var(--text-dim); font-family: var(--mono); }
-.rf-prod-cat  { font-size: 10px; color: var(--text-dim); background: var(--surface2); padding: 1px 5px; border-radius: 4px; }
+.rf-prod-sku  { font-size:12px; color: var(--text-dim); font-family: var(--mono); }
+.rf-prod-cat  { font-size:12px; color: var(--text-dim); background: var(--surface2); padding: 1px 5px; border-radius: 4px; }
 
 /* ── Stock pill ─────────────────────────────────────────── */
 .rf-stock      { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex-shrink: 0; }
-.rf-stock-pill { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
-.rf-stock-sub  { font-size: 10px; color: var(--text-dim); }
+.rf-stock-pill { font-size:12px; font-weight: 700; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
+.rf-stock-sub  { font-size:12px; color: var(--text-dim); }
 
 /* ── Add button ─────────────────────────────────────────── */
 .rf-add-btn {
     min-width: 32px; min-height: 32px;
     padding: 5px 11px; border-radius: 7px;
-    font-size: 11px; font-weight: 700;
+    font-size:13px; font-weight: 700;
     border: 1.5px solid var(--accent); color: var(--accent); background: transparent;
     cursor: pointer; flex-shrink: 0;
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
@@ -111,26 +111,26 @@
 }
 .rf-item-row:last-child { border-bottom: none; }
 .rf-item-top  { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.rf-item-name { font-size: 12px; font-weight: 600; color: var(--text); }
-.rf-item-sub  { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
-.rf-item-rm   { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px 4px; transition: color .12s; flex-shrink: 0; }
+.rf-item-name { font-size:14px; font-weight: 600; color: var(--text); }
+.rf-item-sub  { font-size:12px; color: var(--text-dim); margin-top: 1px; }
+.rf-item-rm   { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size:17px; line-height: 1; padding: 2px 4px; transition: color .12s; flex-shrink: 0; }
 .rf-item-rm:hover { color: var(--red); }
 .rf-qty-row   { display: flex; align-items: center; justify-content: space-between; }
 .rf-qty-ctrl  { display: flex; align-items: center; gap: 6px; }
 .rf-qty-input {
     width: 54px; text-align: center; padding: 6px; border-radius: 6px;
     border: 1px solid var(--border); background: #fff;
-    color: var(--text); font-size: 13px; font-weight: 700;
+    color: var(--text); font-size:16px; font-weight: 700;
     font-family: var(--mono); outline: none;
 }
 .rf-qty-input:focus { border-color: var(--accent); }
 .rf-qty-input.over  { border-color: var(--red); color: var(--red); }
-.rf-qty-label { font-size: 11px; color: var(--text-dim); }
-.rf-qty-avail { font-size: 10px; color: var(--text-dim); }
+.rf-qty-label { font-size:13px; color: var(--text-dim); }
+.rf-qty-avail { font-size:12px; color: var(--text-dim); }
 .rf-qty-btn {
     width: 28px; height: 28px; border-radius: 6px;
     border: 1px solid var(--border); background: var(--surface2);
-    color: var(--text); font-size: 16px; font-weight: 700;
+    color: var(--text); font-size:19px; font-weight: 700;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; transition: background .12s, border-color .12s;
     line-height: 1; padding: 0;
@@ -139,26 +139,26 @@
 .rf-static {
     padding: 8px 10px; border-radius: 8px;
     border: 1px solid var(--border); background: var(--surface2);
-    color: var(--text); font-size: 13px; font-weight: 600;
+    color: var(--text); font-size:16px; font-weight: 600;
 }
-.rf-overstock-warn { font-size: 11px; font-weight: 600; color: var(--red); display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.rf-overstock-warn { font-size:13px; font-weight: 600; color: var(--red); display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
 /* ── Totals ─────────────────────────────────────────────── */
 .rf-totals { border-top: 1px solid var(--border); padding: 10px 0; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
 .rf-total-row   { display: flex; justify-content: space-between; align-items: center; }
-.rf-total-row .l { font-size: 12px; color: var(--text-dim); }
-.rf-total-row .v { font-size: 12px; font-weight: 700; color: var(--text); }
-.rf-total-row.big .v { font-size: 16px; font-weight: 800; color: var(--accent); }
+.rf-total-row .l { font-size:14px; color: var(--text-dim); }
+.rf-total-row .v { font-size:14px; font-weight: 700; color: var(--text); }
+.rf-total-row.big .v { font-size:19px; font-weight: 800; color: var(--accent); }
 
 /* ── Route ──────────────────────────────────────────────── */
 .rf-route { display: flex; align-items: center; gap: 7px; padding: 8px 0; margin-bottom: 10px; }
-.rf-route-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+.rf-route-name { font-size:14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
 .rf-route-line { flex: 1; border-top: 1.5px dashed var(--border); min-width: 8px; }
 
 /* ── Submit ─────────────────────────────────────────────── */
 .rf-submit {
     width: 100%; padding: 11px 14px; border-radius: 10px; border: none; cursor: pointer;
-    background: var(--accent); color: #fff; font-size: 13px; font-weight: 700;
+    background: var(--accent); color: #fff; font-size:16px; font-weight: 700;
     transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 7px;
     min-height: 44px;
 }
@@ -166,11 +166,11 @@
 .rf-submit:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ── Notices ────────────────────────────────────────────── */
-.rf-no-wh { text-align: center; padding: 28px 16px; color: var(--text-dim); font-size: 12px; }
+.rf-no-wh { text-align: center; padding: 28px 16px; color: var(--text-dim); font-size:14px; }
 .rf-empty-cart { text-align: center; padding: 22px 12px; color: var(--text-dim); }
-.rf-empty-cart p { font-size: 12px; margin: 8px 0 0; }
-.rf-flash-ok  { padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--green-dim); color: var(--green); margin-top: 10px; }
-.rf-flash-err { padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--red-dim);   color: var(--red);   margin-top: 10px; }
+.rf-empty-cart p { font-size:14px; margin: 8px 0 0; }
+.rf-flash-ok  { padding: 8px 12px; border-radius: 8px; font-size:14px; font-weight: 600; background: var(--green-dim); color: var(--green); margin-top: 10px; }
+.rf-flash-err { padding: 8px 12px; border-radius: 8px; font-size:14px; font-weight: 600; background: var(--red-dim);   color: var(--red);   margin-top: 10px; }
 
 /* ── Loading ────────────────────────────────────────────── */
 [wire\:loading] { display: none !important; }
@@ -216,6 +216,68 @@
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
     .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
 }
 
 </style>
@@ -356,7 +418,7 @@
 
               </div>
             @empty
-              <div style="text-align:center;padding:24px;font-size:12px;color:var(--text-dim);">
+              <div style="text-align:center;padding:24px;font-size:14px;color:var(--text-dim);">
                 No products match your search.
               </div>
             @endforelse
@@ -379,7 +441,7 @@
             <path d="M16 10a4 4 0 01-8 0"/>
           </svg>
         </div>
-        <h3>Summary&ensp;<span style="font-weight:400;color:var(--text-dim);font-size:11px;">{{ count($items) > 0 ? count($items).' item'.(count($items)===1?'':'s') : '' }}</span></h3>
+        <h3>Summary&ensp;<span style="font-weight:400;color:var(--text-dim);font-size:13px;">{{ count($items) > 0 ? count($items).' item'.(count($items)===1?'':'s') : '' }}</span></h3>
       </div>
       <div class="rf-card-body">
 
@@ -454,7 +516,7 @@
               <span class="l">Boxes requested</span><span class="v">{{ $totalBoxes }}</span>
             </div>
             <div class="rf-total-row big">
-              <span class="l" style="font-size:12px;color:var(--text);font-weight:600;">Est. items</span>
+              <span class="l" style="font-size:14px;color:var(--text);font-weight:600;">Est. items</span>
               <span class="v">~{{ number_format($estItems) }}</span>
             </div>
           </div>

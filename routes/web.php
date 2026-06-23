@@ -74,7 +74,11 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     // Categories
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/', function () { return view('owner.categories.index'); })->name('index');
-        Route::get('/create', function () { return view('owner.categories.create'); })->name('create');
+    });
+
+    // Expense Categories
+    Route::prefix('expense-categories')->name('expense-categories.')->group(function () {
+        Route::get('/', function () { return view('owner.expense-categories.index'); })->name('index');
     });
 
     // Boxes/Inventory
@@ -116,7 +120,6 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     // Transporters
     Route::prefix('transporters')->name('transporters.')->group(function () {
         Route::get('/', function () { return view('owner.transporters.index'); })->name('index');
-        Route::get('/create', function () { return view('owner.transporters.create'); })->name('create');
     });
 
     // Alerts

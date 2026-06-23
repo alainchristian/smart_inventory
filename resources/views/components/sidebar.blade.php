@@ -74,7 +74,8 @@
                 openWarehouseTransfers: {{ request()->routeIs('warehouse.transfers.*') ? 'true' : 'false' }},
                 openSales: {{ request()->routeIs('*.sales.*') ? 'true' : 'false' }},
                 openReturns: {{ request()->routeIs('*.returns.*') ? 'true' : 'false' }},
-                openTransfers: {{ request()->routeIs('*.transfers.*') && !request()->routeIs('shop.sales.*') ? 'true' : 'false' }}
+                openTransfers: {{ request()->routeIs('*.transfers.*') && !request()->routeIs('shop.sales.*') ? 'true' : 'false' }},
+                openMasterData: {{ request()->routeIs('categories.*') || request()->routeIs('expense-categories.*') || request()->routeIs('transporters.*') ? 'true' : 'false' }}
             }">
                 <div class="space-y-1">
                     @if(auth()->user()->isOwner())
@@ -243,6 +244,48 @@
                                    onmouseover="if (!'{{ request()->routeIs('owner.settings') }}') { this.style.background='var(--surface2)'; this.style.color='var(--text-sub)'; }"
                                    onmouseout="if (!'{{ request()->routeIs('owner.settings') }}') { this.style.background='transparent'; this.style.color='var(--text-dim)'; }">
                                     Settings
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Master Data -->
+                        <div class="pt-1.5">
+                            <button @click="openMasterData = !openMasterData"
+                                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all {{ request()->routeIs('categories.*') || request()->routeIs('expense-categories.*') || request()->routeIs('transporters.*') ? 'border' : '' }}"
+                                    style="{{ request()->routeIs('categories.*') || request()->routeIs('expense-categories.*') || request()->routeIs('transporters.*') ? 'background: var(--accent-glow); color: var(--accent); border-color: var(--accent);' : 'color: var(--text-sub);' }}"
+                                    onmouseover="if (!this.classList.contains('border')) { this.style.background='var(--surface2)'; this.style.color='var(--text)'; }"
+                                    onmouseout="if (!this.classList.contains('border')) { this.style.background='transparent'; this.style.color='var(--text-sub)'; }">
+                                <div class="flex items-center space-x-2.5">
+                                    <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <span class="text-[13px] font-medium">Master Data</span>
+                                </div>
+                                <svg class="w-3.5 h-3.5 transition-transform" :class="openMasterData ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="openMasterData" x-collapse class="ml-7 mt-1 space-y-0.5">
+                                <a href="{{ route('categories.index') }}"
+                                   class="block px-3 py-1.5 text-[12.5px] rounded-lg transition-colors"
+                                   style="{{ request()->routeIs('categories.*') ? 'background: var(--accent-dim); color: var(--accent);' : 'color: var(--text-dim);' }}"
+                                   onmouseover="if (!'{{ request()->routeIs('categories.*') }}') { this.style.background='var(--surface2)'; this.style.color='var(--text-sub)'; }"
+                                   onmouseout="if (!'{{ request()->routeIs('categories.*') }}') { this.style.background='transparent'; this.style.color='var(--text-dim)'; }">
+                                    Product Categories
+                                </a>
+                                <a href="{{ route('expense-categories.index') }}"
+                                   class="block px-3 py-1.5 text-[12.5px] rounded-lg transition-colors"
+                                   style="{{ request()->routeIs('expense-categories.*') ? 'background: var(--accent-dim); color: var(--accent);' : 'color: var(--text-dim);' }}"
+                                   onmouseover="if (!'{{ request()->routeIs('expense-categories.*') }}') { this.style.background='var(--surface2)'; this.style.color='var(--text-sub)'; }"
+                                   onmouseout="if (!'{{ request()->routeIs('expense-categories.*') }}') { this.style.background='transparent'; this.style.color='var(--text-dim)'; }">
+                                    Expense Categories
+                                </a>
+                                <a href="{{ route('transporters.index') }}"
+                                   class="block px-3 py-1.5 text-[12.5px] rounded-lg transition-colors"
+                                   style="{{ request()->routeIs('transporters.*') ? 'background: var(--accent-dim); color: var(--accent);' : 'color: var(--text-dim);' }}"
+                                   onmouseover="if (!'{{ request()->routeIs('transporters.*') }}') { this.style.background='var(--surface2)'; this.style.color='var(--text-sub)'; }"
+                                   onmouseout="if (!'{{ request()->routeIs('transporters.*') }}') { this.style.background='transparent'; this.style.color='var(--text-dim)'; }">
+                                    Transporters
                                 </a>
                             </div>
                         </div>

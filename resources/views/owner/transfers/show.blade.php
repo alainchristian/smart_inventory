@@ -11,7 +11,7 @@
 }
 .ots-back {
     display:inline-flex; align-items:center; gap:6px;
-    font-size:12px; font-weight:600; color:var(--text-dim);
+    font-size:14px; font-weight:600; color:var(--text-dim);
     text-decoration:none; transition:color .15s;
 }
 .ots-back:hover { color:var(--accent); }
@@ -23,14 +23,14 @@
     padding:10px 14px; border-bottom:1px solid var(--border);
     background:var(--surface2); flex-wrap:wrap;
 }
-.ots-card-title { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
+.ots-card-title { font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
 .ots-card-body  { padding:16px; }
 
 /* Transfer header */
-.ots-num  { font-size:14px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.ots-num  { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
 .ots-pill {
     display:inline-flex; align-items:center; gap:5px;
-    padding:2px 9px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+    padding:2px 9px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
     border:1px solid;
 }
 
@@ -41,8 +41,8 @@
     padding:12px 14px; border:1px solid var(--border);
 }
 .ots-route-node  { flex:1; }
-.ots-route-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.ots-route-name  { font-size:13px; font-weight:700; color:var(--text); margin-top:2px; }
+.ots-route-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.ots-route-name  { font-size:16px; font-weight:700; color:var(--text); margin-top:2px; }
 .ots-route-arrow {
     width:28px; height:28px; border-radius:50%;
     background:var(--accent-dim); color:var(--accent);
@@ -52,23 +52,23 @@
 /* Meta grid */
 .ots-meta-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
 .ots-meta-item  { display:flex; flex-direction:column; gap:3px; }
-.ots-meta-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.ots-meta-value { font-size:13px; font-weight:600; color:var(--text); }
-.ots-meta-sub   { font-size:11px; color:var(--text-dim); }
+.ots-meta-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.ots-meta-value { font-size:16px; font-weight:600; color:var(--text); }
+.ots-meta-sub   { font-size:13px; color:var(--text-dim); }
 
 /* Items table */
 .ots-table { width:100%; border-collapse:collapse; min-width:500px; }
 .ots-table thead th {
-    padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:.6px;
+    padding:8px 12px; font-size:12px; font-weight:700; letter-spacing:.6px;
     text-transform:uppercase; color:var(--text-dim);
     border-bottom:1px solid var(--border); text-align:left; background:var(--surface2);
 }
 .ots-table tbody tr { border-bottom:1px solid var(--border); }
 .ots-table tbody tr:last-child { border-bottom:none; }
 .ots-table tbody tr:hover { background:var(--surface2); }
-.ots-table tbody td { padding:10px 12px; font-size:12px; color:var(--text); vertical-align:middle; }
+.ots-table tbody td { padding:10px 12px; font-size:14px; color:var(--text); vertical-align:middle; }
 .ots-prod-name  { font-weight:600; }
-.ots-val        { font-family:var(--mono); font-weight:700; font-size:13px; }
+.ots-val        { font-family:var(--mono); font-weight:700; font-size:16px; }
 .ots-prog-wrap  { height:4px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-top:4px; min-width:60px; }
 .ots-prog-bar   { height:100%; border-radius:4px; transition:width .3s; }
 
@@ -84,7 +84,7 @@
 /* Action button */
 .ots-btn {
     display:inline-flex; align-items:center; gap:6px;
-    padding:7px 14px; border-radius:8px; font-size:12px; font-weight:600;
+    padding:7px 14px; border-radius:8px; font-size:14px; font-weight:600;
     text-decoration:none; border:1px solid var(--border);
     background:var(--surface2); color:var(--text); transition:all .15s;
 }
@@ -93,7 +93,7 @@
 /* Discrepancy banner */
 .ots-discrepancy {
     display:flex; align-items:flex-start; gap:10px;
-    padding:10px 14px; border-radius:10px; font-size:12px;
+    padding:10px 14px; border-radius:10px; font-size:14px;
     background:var(--red-dim); border:1px solid rgba(225,29,72,.25); color:var(--red); line-height:1.5;
 }
 
@@ -114,6 +114,68 @@
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
     .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
 }
 
 </style>
@@ -164,7 +226,7 @@
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <span style="font-size:11px;color:var(--text-dim)">{{ $transfer->requested_at?->format('d M Y · H:i') }}</span>
+            <span style="font-size:13px;color:var(--text-dim)">{{ $transfer->requested_at?->format('d M Y · H:i') }}</span>
         </div>
         <div class="ots-card-body" style="display:flex;flex-direction:column;gap:14px">
 
@@ -219,7 +281,7 @@
                 @if($transfer->notes)
                 <div class="ots-meta-item" style="grid-column:1/-1">
                     <span class="ots-meta-label">Notes</span>
-                    <span class="ots-meta-value" style="font-weight:400;font-size:12px;color:var(--text-dim)">{{ $transfer->notes }}</span>
+                    <span class="ots-meta-value" style="font-weight:400;font-size:14px;color:var(--text-dim)">{{ $transfer->notes }}</span>
                 </div>
                 @endif
             </div>
@@ -241,12 +303,12 @@
             <span class="ots-card-title">Transfer Items</span>
             @php $totalBoxes = $transfer->items->sum(fn($i) => (int) $i->quantity_requested); @endphp
             <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:11px;font-weight:700;font-family:var(--mono);
+                <span style="font-size:13px;font-weight:700;font-family:var(--mono);
                              background:var(--accent-dim);color:var(--accent);padding:3px 9px;border-radius:6px">
                     {{ $totalBoxes }} box{{ $totalBoxes === 1 ? '' : 'es' }} requested
                 </span>
                 @if($hasAnyDiscrepancy)
-                <span style="font-size:11px;font-weight:700;background:var(--red-dim);color:var(--red);padding:3px 9px;border-radius:6px">
+                <span style="font-size:13px;font-weight:700;background:var(--red-dim);color:var(--red);padding:3px 9px;border-radius:6px">
                     Discrepancy
                 </span>
                 @endif
@@ -277,18 +339,18 @@
                     <tr>
                         <td>
                             <span class="ots-prod-name">{{ $item->product->name ?? '—' }}</span>
-                            <div style="font-size:10px;color:var(--text-dim);margin-top:1px;font-family:var(--mono)">{{ $item->product->barcode ?? '' }}</div>
+                            <div style="font-size:12px;color:var(--text-dim);margin-top:1px;font-family:var(--mono)">{{ $item->product->barcode ?? '' }}</div>
                         </td>
                         <td>
                             <span class="ots-val">{{ $bxReq }}</span>
-                            <span style="font-size:11px;color:var(--text-dim)"> box{{ $bxReq === 1 ? '' : 'es' }}</span>
+                            <span style="font-size:13px;color:var(--text-dim)"> box{{ $bxReq === 1 ? '' : 'es' }}</span>
                         </td>
                         <td>
                             <span class="ots-val" style="{{ $bxShipped > 0 && $bxShipped < $bxReq ? 'color:var(--amber)' : ($bxShipped >= $bxReq && $bxShipped > 0 ? 'color:var(--green)' : '') }}">
                                 {{ $bxShipped ?: '—' }}
                             </span>
                             @if($bxShipped > 0)
-                            <span style="font-size:11px;color:var(--text-dim)"> box{{ $bxShipped === 1 ? '' : 'es' }}</span>
+                            <span style="font-size:13px;color:var(--text-dim)"> box{{ $bxShipped === 1 ? '' : 'es' }}</span>
                             <div class="ots-prog-wrap">
                                 <div class="ots-prog-bar" style="width:{{ $shipPct }}%;background:{{ $bxShipped >= $bxReq ? 'var(--green)' : 'var(--amber)' }}"></div>
                             </div>
@@ -299,7 +361,7 @@
                                 {{ $bxReceived ?: '—' }}
                             </span>
                             @if($bxReceived > 0)
-                            <span style="font-size:11px;color:var(--text-dim)"> box{{ $bxReceived === 1 ? '' : 'es' }}</span>
+                            <span style="font-size:13px;color:var(--text-dim)"> box{{ $bxReceived === 1 ? '' : 'es' }}</span>
                             <div class="ots-prog-wrap">
                                 <div class="ots-prog-bar" style="width:{{ $recvPct }}%;background:{{ $missing > 0 ? 'var(--red)' : 'var(--green)' }}"></div>
                             </div>
@@ -308,14 +370,14 @@
                         @if($hasAnyDiscrepancy)
                         <td>
                             @if($missing > 0)
-                                <span style="padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;
+                                <span style="padding:2px 8px;border-radius:5px;font-size:13px;font-weight:700;
                                              background:var(--red-dim);color:var(--red)">
                                     −{{ $missing }} box{{ $missing === 1 ? '' : 'es' }}
                                 </span>
                             @elseif($bxReceived > 0)
                                 <svg width="12" height="12" fill="none" stroke="var(--green)" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             @else
-                                <span style="color:var(--text-dim);font-size:11px">—</span>
+                                <span style="color:var(--text-dim);font-size:13px">—</span>
                             @endif
                         </td>
                         @endif
@@ -331,7 +393,7 @@
     <div class="ots-card">
         <div class="ots-card-head">
             <span class="ots-card-title">Boxes</span>
-            <span style="font-size:11px;font-weight:700;font-family:var(--mono);
+            <span style="font-size:13px;font-weight:700;font-family:var(--mono);
                          background:var(--accent-dim);color:var(--accent);padding:3px 9px;border-radius:6px">
                 {{ $transfer->boxes->count() }} box{{ $transfer->boxes->count() === 1 ? '' : 'es' }}
             </span>
@@ -349,18 +411,18 @@
                 <tbody>
                     @foreach($transfer->boxes->sortBy('is_received') as $tb)
                     <tr>
-                        <td><span style="font-family:var(--mono);font-weight:700;font-size:12px;
+                        <td><span style="font-family:var(--mono);font-weight:700;font-size:14px;
                                          color:var(--accent);background:var(--accent-dim);
                                          padding:2px 7px;border-radius:5px">{{ $tb->box->box_code }}</span></td>
                         <td>{{ $tb->box->product->name ?? '—' }}</td>
-                        <td style="font-family:var(--mono);font-size:12px">{{ number_format($tb->box->items_remaining) }}</td>
+                        <td style="font-family:var(--mono);font-size:14px">{{ number_format($tb->box->items_remaining) }}</td>
                         <td>
                             @if($tb->is_damaged)
-                                <span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;background:var(--red-dim);color:var(--red)">Damaged</span>
+                                <span style="padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;background:var(--red-dim);color:var(--red)">Damaged</span>
                             @elseif($tb->is_received)
-                                <span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;background:var(--green-dim);color:var(--green)">Received</span>
+                                <span style="padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;background:var(--green-dim);color:var(--green)">Received</span>
                             @else
-                                <span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;background:var(--amber-dim);color:var(--amber)">In Transit</span>
+                                <span style="padding:2px 7px;border-radius:5px;font-size:12px;font-weight:600;background:var(--amber-dim);color:var(--amber)">In Transit</span>
                             @endif
                         </td>
                     </tr>

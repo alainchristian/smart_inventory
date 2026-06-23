@@ -90,276 +90,67 @@
      SETUP TAB
 ══════════════════════════════════════════════════════════ --}}
 @if($activeTab === 'setup')
+<style>
+.sm-launchpad { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
+.sm-launch-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; display:flex; flex-direction:column; text-decoration:none; transition:all .15s; }
+.sm-launch-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+.sm-launch-head { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.sm-launch-icon { width:40px; height:40px; border-radius:10px; background:var(--surface2); display:flex; align-items:center; justify-content:center; color:var(--text-dim); }
+.sm-launch-card:hover .sm-launch-icon { background:var(--accent-dim); color:var(--accent); }
+.sm-launch-title { font-size:14px; font-weight:700; color:var(--text); }
+.sm-launch-desc { font-size:13px; color:var(--text-dim); line-height:1.4; margin-bottom:16px; flex:1; }
+.sm-launch-stat { display:inline-flex; align-items:center; background:var(--surface2); padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; color:var(--text); align-self:flex-start; }
+</style>
 
-{{-- Product Categories ─────────────────────────── --}}
-<div class="sm-section">
-    <div class="sm-section-head">
-        <span class="sm-section-title">Product Categories</span>
-        <button class="sm-btn primary" wire:click="$toggle('showCategoryForm')">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Add Category
-        </button>
-    </div>
-
-    @error('catDelete') <p class="sm-error" style="margin-bottom:10px">{{ $message }}</p> @enderror
-
-    <div class="sm-card">
-        @if($showCategoryForm)
-            <div class="sm-form">
-                <div class="sm-form-grid cols3" style="margin-bottom:10px">
-                    <div>
-                        <label class="sm-label">Name *</label>
-                        <input class="sm-input" type="text" wire:model="catName" placeholder="e.g. Electronics" />
-                        @error('catName') <p class="sm-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="sm-label">Code</label>
-                        <input class="sm-input" type="text" wire:model="catCode" placeholder="e.g. ELEC" />
-                    </div>
-                    <div>
-                        <label class="sm-label">Description</label>
-                        <input class="sm-input" type="text" wire:model="catDescription" placeholder="Optional" />
-                    </div>
-                </div>
-                <div style="display:flex;gap:8px">
-                    <button class="sm-btn primary" wire:click="saveProdCategory">Save Category</button>
-                    <button class="sm-btn" wire:click="$set('showCategoryForm',false)">Cancel</button>
-                </div>
+<div class="sm-launchpad">
+    <!-- Categories -->
+    <a href="{{ route('owner.categories.index') }}" wire:navigate class="sm-launch-card">
+        <div class="sm-launch-head">
+            <div class="sm-launch-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             </div>
-        @endif
+            <div class="sm-launch-title">Product Categories</div>
+        </div>
+        <div class="sm-launch-desc">Manage the hierarchy and grouping of your products across all locations.</div>
+        <div class="sm-launch-stat">{{ $totalCategories }} Categories</div>
+    </a>
 
-        @if($prodCategories->isEmpty())
-            <div class="sm-empty">No product categories yet. Add one above.</div>
-        @else
-            <div class="sm-table-wrap">
-            <table class="sm-table">
-                <thead><tr>
-                    <th>Name</th><th>Code</th><th>Status</th><th style="text-align:right">Actions</th>
-                </tr></thead>
-                <tbody>
-                @foreach($prodCategories as $cat)
-                    @if($catConfirmDelete === $cat->id)
-                        <tr class="sm-confirm-row">
-                            <td colspan="4">
-                                <div class="sm-confirm-inline">
-                                    <span style="font-size:12px;color:var(--text-dim)">Delete <strong style="color:var(--text)">{{ $cat->name }}</strong>? This cannot be undone.</span>
-                                    <button class="sm-yes" wire:click="deleteProdCategory">Yes, Delete</button>
-                                    <button class="sm-no" wire:click="$set('catConfirmDelete',null)">Cancel</button>
-                                </div>
-                            </td>
-                        </tr>
-                    @else
-                        <tr>
-                            <td style="font-weight:600;color:var(--text)">{{ $cat->name }}</td>
-                            <td style="color:var(--text-dim);font-family:var(--mono);font-size:12px">{{ $cat->code ?? '—' }}</td>
-                            <td>
-                                @if($cat->is_active)
-                                    <span class="sm-badge" style="background:var(--green-dim);color:var(--green)">Active</span>
-                                @else
-                                    <span class="sm-badge" style="background:var(--surface2);color:var(--text-dim)">Inactive</span>
-                                @endif
-                            </td>
-                            <td style="text-align:right">
-                                <div style="display:flex;gap:6px;justify-content:flex-end">
-                                    <button class="sm-btn sm" wire:click="toggleProdCategory({{ $cat->id }})">
-                                        {{ $cat->is_active ? 'Deactivate' : 'Activate' }}
-                                    </button>
-                                    <button class="sm-btn sm danger" wire:click="confirmDeleteProdCategory({{ $cat->id }})">Delete</button>
-                                </div>
-                            </td>
-                        </tr>
-                    @endif
-                @endforeach
-                </tbody>
-            </table>
+    <!-- Expense Categories -->
+    <a href="{{ route('owner.expense-categories.index') }}" wire:navigate class="sm-launch-card">
+        <div class="sm-launch-head">
+            <div class="sm-launch-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </div>
-        @endif
-    </div>
+            <div class="sm-launch-title">Expense Categories</div>
+        </div>
+        <div class="sm-launch-desc">Categorize store and warehouse expenses for detailed financial reporting.</div>
+        <div class="sm-launch-stat">{{ $totalExpCategories }} Expense Types</div>
+    </a>
+
+    <!-- Transporters -->
+    <a href="{{ route('owner.transporters.index') }}" wire:navigate class="sm-launch-card">
+        <div class="sm-launch-head">
+            <div class="sm-launch-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+            </div>
+            <div class="sm-launch-title">Transporters</div>
+        </div>
+        <div class="sm-launch-desc">Manage delivery drivers and transport companies moving your stock.</div>
+        <div class="sm-launch-stat">{{ $totalTransporters }} Transporters</div>
+    </a>
+
+    <!-- System Settings -->
+    <a href="{{ route('owner.settings') }}" wire:navigate class="sm-launch-card">
+        <div class="sm-launch-head">
+            <div class="sm-launch-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div class="sm-launch-title">Business Settings</div>
+        </div>
+        <div class="sm-launch-desc">Configure business-wide settings like currency and company information.</div>
+        <div class="sm-launch-stat">System Config</div>
+    </a>
 </div>
-
-{{-- Expense Categories ─────────────────────────── --}}
-<div class="sm-section">
-    <div class="sm-section-head">
-        <span class="sm-section-title">Expense Categories</span>
-        <button class="sm-btn primary" wire:click="$toggle('showExpCatForm')">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Add Category
-        </button>
-    </div>
-
-    @error('expCatDelete') <p class="sm-error" style="margin-bottom:10px">{{ $message }}</p> @enderror
-
-    <div class="sm-card">
-        @if($showExpCatForm)
-            <div class="sm-form">
-                <div class="sm-form-grid cols3" style="margin-bottom:10px">
-                    <div>
-                        <label class="sm-label">Name *</label>
-                        <input class="sm-input" type="text" wire:model="expCatName" placeholder="e.g. Utilities" />
-                        @error('expCatName') <p class="sm-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="sm-label">Applies To</label>
-                        <select class="sm-select" wire:model="expCatAppliesTo">
-                            <option value="shop">Shops only</option>
-                            <option value="warehouse">Warehouses only</option>
-                            <option value="both">Both</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="sm-label">Description</label>
-                        <input class="sm-input" type="text" wire:model="expCatDescription" placeholder="Optional" />
-                    </div>
-                </div>
-                <div style="display:flex;gap:8px">
-                    <button class="sm-btn primary" wire:click="saveExpenseCategory">Save Category</button>
-                    <button class="sm-btn" wire:click="$set('showExpCatForm',false)">Cancel</button>
-                </div>
-            </div>
-        @endif
-
-        @if($expCategories->isEmpty())
-            <div class="sm-empty">No expense categories yet.</div>
-        @else
-            <div class="sm-table-wrap">
-            <table class="sm-table">
-                <thead><tr>
-                    <th>Name</th><th>Applies To</th><th>Status</th><th style="text-align:right">Actions</th>
-                </tr></thead>
-                <tbody>
-                @foreach($expCategories as $cat)
-                    @if($expCatConfirmDelete === $cat->id)
-                        <tr class="sm-confirm-row">
-                            <td colspan="4">
-                                <div class="sm-confirm-inline">
-                                    <span style="font-size:12px;color:var(--text-dim)">Delete <strong style="color:var(--text)">{{ $cat->name }}</strong>?</span>
-                                    <button class="sm-yes" wire:click="deleteExpenseCategory">Yes, Delete</button>
-                                    <button class="sm-no" wire:click="$set('expCatConfirmDelete',null)">Cancel</button>
-                                </div>
-                            </td>
-                        </tr>
-                    @else
-                        <tr>
-                            <td>
-                                <span style="font-weight:600;color:var(--text)">{{ $cat->name }}</span>
-                                @if($cat->name === 'Cash Shortage')
-                                    <span class="sm-badge" style="background:var(--surface2);color:var(--text-dim);margin-left:6px">System</span>
-                                @endif
-                            </td>
-                            <td>
-                                <span class="sm-badge" style="background:var(--accent-dim);color:var(--accent)">
-                                    {{ ucfirst($cat->applies_to) }}
-                                </span>
-                            </td>
-                            <td>
-                                @if($cat->is_active)
-                                    <span class="sm-badge" style="background:var(--green-dim);color:var(--green)">Active</span>
-                                @else
-                                    <span class="sm-badge" style="background:var(--surface2);color:var(--text-dim)">Inactive</span>
-                                @endif
-                            </td>
-                            <td style="text-align:right">
-                                @if($cat->name !== 'Cash Shortage')
-                                    <div style="display:flex;gap:6px;justify-content:flex-end">
-                                        <button class="sm-btn sm" wire:click="toggleExpenseCategory({{ $cat->id }})">
-                                            {{ $cat->is_active ? 'Deactivate' : 'Activate' }}
-                                        </button>
-                                        <button class="sm-btn sm danger" wire:click="confirmDeleteExpCat({{ $cat->id }})">Delete</button>
-                                    </div>
-                                @else
-                                    <span style="font-size:11px;color:var(--text-dim)">Protected</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @endif
-                @endforeach
-                </tbody>
-            </table>
-            </div>
-        @endif
-    </div>
-</div>
-
-{{-- Transporters ───────────────────────────────── --}}
-<div class="sm-section">
-    <div class="sm-section-head">
-        <span class="sm-section-title">Transporters</span>
-        <button class="sm-btn primary" wire:click="$toggle('showTransporterForm')">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Add Transporter
-        </button>
-    </div>
-
-    @error('trDelete') <p class="sm-error" style="margin-bottom:10px">{{ $message }}</p> @enderror
-
-    <div class="sm-card">
-        @if($showTransporterForm)
-            <div class="sm-form">
-                <div class="sm-form-grid cols2" style="margin-bottom:10px">
-                    <div>
-                        <label class="sm-label">Full Name *</label>
-                        <input class="sm-input" type="text" wire:model="trName" placeholder="Driver name" />
-                        @error('trName') <p class="sm-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="sm-label">Phone</label>
-                        <input class="sm-input" type="text" wire:model="trPhone" placeholder="Phone number" />
-                    </div>
-                    <div>
-                        <label class="sm-label">Company</label>
-                        <input class="sm-input" type="text" wire:model="trCompany" placeholder="Company name (optional)" />
-                    </div>
-                    <div>
-                        <label class="sm-label">Vehicle / Plate</label>
-                        <input class="sm-input" type="text" wire:model="trVehicle" placeholder="Vehicle number (optional)" />
-                    </div>
-                </div>
-                <div style="display:flex;gap:8px">
-                    <button class="sm-btn primary" wire:click="saveTransporter">Save Transporter</button>
-                    <button class="sm-btn" wire:click="$set('showTransporterForm',false)">Cancel</button>
-                </div>
-            </div>
-        @endif
-
-        @if($transporters->isEmpty())
-            <div class="sm-empty">No transporters yet. Add one above.</div>
-        @else
-            <div class="sm-table-wrap">
-            <table class="sm-table">
-                <thead><tr>
-                    <th>Name</th><th>Company</th><th>Phone</th><th>Vehicle</th><th style="text-align:right">Actions</th>
-                </tr></thead>
-                <tbody>
-                @foreach($transporters as $tr)
-                    @if($trConfirmDelete === $tr->id)
-                        <tr class="sm-confirm-row">
-                            <td colspan="5">
-                                <div class="sm-confirm-inline">
-                                    <span style="font-size:12px;color:var(--text-dim)">Delete <strong style="color:var(--text)">{{ $tr->name }}</strong>?</span>
-                                    <button class="sm-yes" wire:click="deleteTransporter">Yes, Delete</button>
-                                    <button class="sm-no" wire:click="$set('trConfirmDelete',null)">Cancel</button>
-                                </div>
-                            </td>
-                        </tr>
-                    @else
-                        <tr>
-                            <td style="font-weight:600;color:var(--text)">{{ $tr->name }}</td>
-                            <td style="color:var(--text-dim)">{{ $tr->company_name ?? '—' }}</td>
-                            <td style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">{{ $tr->phone ?? '—' }}</td>
-                            <td style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">{{ $tr->vehicle_number ?? '—' }}</td>
-                            <td style="text-align:right">
-                                <button class="sm-btn sm danger" wire:click="confirmDeleteTransporter({{ $tr->id }})">Delete</button>
-                            </td>
-                        </tr>
-                    @endif
-                @endforeach
-                </tbody>
-            </table>
-            </div>
-        @endif
-    </div>
-</div>
-
 @endif {{-- end setup tab --}}
 
 {{-- ══════════════════════════════════════════════════════════

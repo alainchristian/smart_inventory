@@ -9,8 +9,8 @@
     padding:12px 14px; border-radius:10px;
     background:var(--accent-dim); border:1px solid var(--accent);
 }
-.td-alert-body p { margin:0; font-size:12px; color:var(--accent); }
-.td-alert-body p:first-child { font-weight:700; font-size:13px; margin-bottom:2px; }
+.td-alert-body p { margin:0; font-size:14px; color:var(--accent); }
+.td-alert-body p:first-child { font-weight:700; font-size:16px; margin-bottom:2px; }
 
 /* ── Hero banner ─────────────────────────────────────── */
 .td-hero {
@@ -21,23 +21,23 @@
     box-shadow:var(--shadow-card);
 }
 .td-hero-inner { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-.td-hero-num   { font-size:14px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.td-hero-num   { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
 .td-hero-badge {
     display:inline-flex; align-items:center; gap:4px;
-    padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700;
+    padding:2px 8px; border-radius:20px; font-size:12px; font-weight:700;
     letter-spacing:.4px; text-transform:uppercase;
     background:var(--badge-bg); color:var(--badge-color);
 }
 .td-hero-badge-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
 .td-hero-route { display:flex; align-items:center; gap:6px; }
-.td-hero-rnode { font-size:12px; font-weight:600; color:var(--text); }
+.td-hero-rnode { font-size:14px; font-weight:600; color:var(--text); }
 .td-hero-rnode svg { color:var(--text-dim); }
 .td-hero-divider { width:1px; height:20px; background:var(--border); }
-.td-hero-date { font-size:11px; color:var(--text-dim); }
-.td-hero-date strong { color:var(--text); font-weight:600; display:block; font-size:12px; }
+.td-hero-date { font-size:13px; color:var(--text-dim); }
+.td-hero-date strong { color:var(--text); font-weight:600; display:block; font-size:14px; }
 .td-disc-badge {
     display:inline-flex; align-items:center; gap:5px; margin-left:auto;
-    padding:2px 8px; border-radius:8px; font-size:10px; font-weight:700;
+    padding:2px 8px; border-radius:8px; font-size:12px; font-weight:700;
     background:var(--red-dim); color:var(--red);
 }
 
@@ -63,7 +63,7 @@
 .td-tl-step.done .td-tl-dot   { background:var(--green);  border-color:var(--green);  color:#fff; }
 .td-tl-step.active .td-tl-dot { background:var(--accent); border-color:var(--accent); color:#fff; }
 .td-tl-label {
-    font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+    font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
     color:var(--text-dim); text-align:center; line-height:1.3;
 }
 .td-tl-step.done .td-tl-label   { color:var(--green); }
@@ -93,24 +93,24 @@
     background:var(--icon-bg, rgba(99,102,241,.12));
     color:var(--icon-c, var(--accent));
 }
-.td-card-head h3 { font-size:13px; font-weight:700; color:var(--text); margin:0; }
-.td-card-head p  { font-size:11px; color:var(--text-dim); margin:0; }
+.td-card-head h3 { font-size:16px; font-weight:700; color:var(--text); margin:0; }
+.td-card-head p  { font-size:13px; color:var(--text-dim); margin:0; }
 .td-card-body    { overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
 /* ── Items table ─────────────────────────────────────── */
 .td-table { width:100%; border-collapse:collapse; min-width:480px; }
 .td-table thead th {
-    padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:.7px;
+    padding:8px 12px; font-size:12px; font-weight:700; letter-spacing:.7px;
     text-transform:uppercase; color:var(--text-dim);
     border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;
 }
 .td-table tbody tr { border-bottom:1px solid var(--border); }
 .td-table tbody tr:last-child { border-bottom:none; }
 .td-table tbody tr:hover { background:var(--surface2); }
-.td-table tbody td { padding:10px 12px; font-size:12px; color:var(--text); vertical-align:middle; }
-.td-table .col-product { font-weight:600; font-size:13px; }
-.td-table .col-sku     { font-size:10px; color:var(--text-dim); display:block; margin-top:1px; }
-.td-table .col-num     { font-weight:700; font-size:13px; font-family:var(--mono); }
+.td-table tbody td { padding:10px 12px; font-size:14px; color:var(--text); vertical-align:middle; }
+.td-table .col-product { font-weight:600; font-size:16px; }
+.td-table .col-sku     { font-size:12px; color:var(--text-dim); display:block; margin-top:1px; }
+.td-table .col-num     { font-weight:700; font-size:16px; font-family:var(--mono); }
 .td-table .col-disc    { color:var(--red); font-weight:700; }
 .td-table .col-ok      { color:var(--green); font-weight:700; }
 
@@ -122,17 +122,17 @@
 .td-box-row:last-child { border-bottom:none; }
 .td-box-row:hover { background:var(--surface2); }
 .td-box-code {
-    font-size:11px; font-weight:700; color:var(--text); font-family:var(--mono);
+    font-size:13px; font-weight:700; color:var(--text); font-family:var(--mono);
     background:var(--surface2); padding:2px 7px; border-radius:4px;
     border:1px solid var(--border); flex-shrink:0;
 }
 .td-box-status {
-    font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px;
+    font-size:12px; font-weight:700; padding:2px 7px; border-radius:4px;
     letter-spacing:.4px; text-transform:uppercase;
     background:var(--bs-bg); color:var(--bs-c); flex-shrink:0;
 }
-.td-box-items { font-size:11px; color:var(--text-dim); }
-.td-box-scan  { font-size:11px; color:var(--text-dim); margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
+.td-box-items { font-size:13px; color:var(--text-dim); }
+.td-box-scan  { font-size:13px; color:var(--text-dim); margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
 .td-box-scan strong { color:var(--text); font-weight:600; }
 
 /* ── Meta list ───────────────────────────────────────── */
@@ -142,17 +142,17 @@
     gap:10px; padding-bottom:10px; border-bottom:1px solid var(--border);
 }
 .td-meta-row:last-child { border-bottom:none; padding-bottom:0; }
-.td-meta-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+.td-meta-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
                  color:var(--text-dim); flex-shrink:0; }
-.td-meta-value { font-size:12px; font-weight:600; color:var(--text); text-align:right;
+.td-meta-value { font-size:14px; font-weight:600; color:var(--text); text-align:right;
                  word-break:break-word; }
-.td-meta-value.mono { font-family:var(--mono); font-size:11px; }
+.td-meta-value.mono { font-family:var(--mono); font-size:13px; }
 
 /* ── Transporter ─────────────────────────────────────── */
 .td-trans-body  { padding:12px 14px; }
-.td-trans-name  { font-size:14px; font-weight:700; color:var(--text); margin:0 0 2px; }
-.td-trans-co    { font-size:11px; color:var(--text-dim); margin:0 0 10px; }
-.td-trans-row   { display:flex; align-items:center; gap:7px; font-size:11px;
+.td-trans-name  { font-size:17px; font-weight:700; color:var(--text); margin:0 0 2px; }
+.td-trans-co    { font-size:13px; color:var(--text-dim); margin:0 0 10px; }
+.td-trans-row   { display:flex; align-items:center; gap:7px; font-size:13px;
                   color:var(--text-dim); margin-bottom:5px; }
 .td-trans-row:last-child { margin-bottom:0; }
 .td-trans-row svg { flex-shrink:0; color:var(--accent); }
@@ -162,7 +162,7 @@
 .td-actions-body { padding:12px; display:flex; flex-direction:column; gap:7px; }
 .td-btn {
     display:flex; align-items:center; justify-content:center; gap:7px;
-    padding:9px 14px; border-radius:8px; font-size:12px; font-weight:700;
+    padding:9px 14px; border-radius:8px; font-size:14px; font-weight:700;
     border:none; cursor:pointer; text-decoration:none; transition:all .15s;
     width:100%;
 }
@@ -176,13 +176,13 @@
 
 /* ── Notes ───────────────────────────────────────────── */
 .td-notes {
-    padding:10px 14px; font-size:12px; color:var(--text-dim);
+    padding:10px 14px; font-size:14px; color:var(--text-dim);
     line-height:1.6; font-style:italic;
     border-top:1px solid var(--border);
 }
 
 /* ── Empty state ─────────────────────────────────────── */
-.td-empty { text-align:center; padding:28px; color:var(--text-dim); font-size:12px; }
+.td-empty { text-align:center; padding:28px; color:var(--text-dim); font-size:14px; }
 .td-empty svg { display:block; margin:0 auto 8px; opacity:.25; }
 
 /* ── Responsive ──────────────────────────────────────── */
@@ -197,7 +197,7 @@
 }
 @media(max-width:480px) {
     .td-hero-inner  { gap:8px; }
-    .td-tl-label    { font-size:8px; padding:0 2px; }
+    .td-tl-label    { font-size:10px; padding:0 2px; }
     .td-tl-dot      { width:16px; height:16px; }
 }
 
@@ -207,6 +207,68 @@
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
     .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
 }
 
 </style>
@@ -354,17 +416,17 @@
                         <span class="col-sku">{{ $item->product->sku }}</span>
                       @endif
                     </td>
-                    <td><span class="col-num">{{ $bxReq }}</span> <small style="color:var(--text-dim);font-size:10px;">box{{ $bxReq === 1 ? '' : 'es' }}</small></td>
+                    <td><span class="col-num">{{ $bxReq }}</span> <small style="color:var(--text-dim);font-size:12px;">box{{ $bxReq === 1 ? '' : 'es' }}</small></td>
                     <td>
                       @if($bxShipped !== null)
-                        <span class="col-num">{{ $bxShipped }}</span> <small style="color:var(--text-dim);font-size:10px;">box{{ $bxShipped === 1 ? '' : 'es' }}</small>
+                        <span class="col-num">{{ $bxShipped }}</span> <small style="color:var(--text-dim);font-size:12px;">box{{ $bxShipped === 1 ? '' : 'es' }}</small>
                       @else
                         <span style="color:var(--text-dim);">—</span>
                       @endif
                     </td>
                     <td>
                       @if($bxReceived !== null)
-                        <span class="{{ $hasDisc ? 'col-disc' : 'col-ok' }}">{{ $bxReceived }}</span> <small style="color:var(--text-dim);font-size:10px;">box{{ $bxReceived === 1 ? '' : 'es' }}</small>
+                        <span class="{{ $hasDisc ? 'col-disc' : 'col-ok' }}">{{ $bxReceived }}</span> <small style="color:var(--text-dim);font-size:12px;">box{{ $bxReceived === 1 ? '' : 'es' }}</small>
                       @else
                         <span style="color:var(--text-dim);">—</span>
                       @endif
@@ -373,7 +435,7 @@
                       @if($hasDisc)
                         <span class="col-disc">{{ $bxDisc > 0 ? '+' : '' }}{{ $bxDisc }} box{{ abs($bxDisc) === 1 ? '' : 'es' }}</span>
                       @else
-                        <span class="col-ok" style="font-size:11px;">—</span>
+                        <span class="col-ok" style="font-size:13px;">—</span>
                       @endif
                     </td>
                   </tr>

@@ -7,7 +7,7 @@
 /* Alerts */
 .rt-alert {
     display:flex; align-items:flex-start; gap:10px;
-    padding:10px 14px; border-radius:10px; border:1px solid; font-size:12px; line-height:1.5;
+    padding:10px 14px; border-radius:10px; border:1px solid; font-size:14px; line-height:1.5;
 }
 .rt-alert.success { background:var(--green-dim);  border-color:rgba(16,185,129,.25); color:var(--green); }
 .rt-alert.error   { background:var(--red-dim);    border-color:rgba(225,29,72,.25);  color:var(--red); }
@@ -20,14 +20,14 @@
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     background:var(--surface2);
 }
-.rt-card-title { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
+.rt-card-title { font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
 .rt-card-body  { padding:16px; }
 
 /* Transfer header */
-.rt-num   { font-size:14px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.rt-num   { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
 .rt-pill  {
     display:inline-flex; align-items:center; gap:5px;
-    padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.3px;
+    padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.3px;
 }
 .rt-pill.pending  { background:var(--amber-dim); color:var(--amber); border:1px solid rgba(217,119,6,.25); }
 .rt-pill.approved { background:var(--green-dim);  color:var(--green);  border:1px solid rgba(16,185,129,.25); }
@@ -40,8 +40,8 @@
     padding:12px 14px; border:1px solid var(--border);
 }
 .rt-route-node  { flex:1; }
-.rt-route-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.rt-route-name  { font-size:13px; font-weight:700; color:var(--text); margin-top:2px; }
+.rt-route-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.rt-route-name  { font-size:16px; font-weight:700; color:var(--text); margin-top:2px; }
 .rt-route-arrow {
     display:flex; align-items:center; justify-content:center;
     width:28px; height:28px; border-radius:50%;
@@ -51,15 +51,15 @@
 /* Meta grid */
 .rt-meta-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:12px; }
 .rt-meta-item  { display:flex; flex-direction:column; gap:3px; }
-.rt-meta-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.rt-meta-value { font-size:13px; font-weight:600; color:var(--text); }
-.rt-meta-sub   { font-size:11px; color:var(--text-dim); }
+.rt-meta-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.rt-meta-value { font-size:16px; font-weight:600; color:var(--text); }
+.rt-meta-sub   { font-size:13px; color:var(--text-dim); }
 
 /* Notes box */
 .rt-notes {
     padding:10px 12px; background:var(--surface2);
     border-radius:8px; border:1px solid var(--border);
-    font-size:12px; color:var(--text-dim); line-height:1.6;
+    font-size:14px; color:var(--text-dim); line-height:1.6;
 }
 
 /* Product rows */
@@ -72,7 +72,7 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:10px 14px; background:var(--surface2); border-bottom:1px solid var(--border);
 }
-.rt-product-name { font-size:13px; font-weight:700; color:var(--text); }
+.rt-product-name { font-size:16px; font-weight:700; color:var(--text); }
 .rt-product-body {
     padding:14px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; align-items:start;
 }
@@ -80,9 +80,9 @@
 
 /* Stats inside product row */
 .rt-stat       { display:flex; flex-direction:column; gap:3px; }
-.rt-stat-label { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
-.rt-stat-value { font-size:22px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
-.rt-stat-sub   { font-size:11px; color:var(--text-dim); }
+.rt-stat-label { font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
+.rt-stat-value { font-size:26px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
+.rt-stat-sub   { font-size:13px; color:var(--text-dim); }
 .rt-stat-value.ok  { color:var(--green); }
 .rt-stat-value.bad { color:var(--red); }
 
@@ -91,7 +91,7 @@
     width:100%; padding:8px 12px;
     background:var(--surface); color:var(--text);
     border:1.5px solid var(--border); border-radius:8px;
-    font-size:14px; font-weight:700; font-family:var(--mono);
+    font-size:17px; font-weight:700; font-family:var(--mono);
     transition:border-color .15s, box-shadow .15s; outline:none;
 }
 .rt-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,.12); }
@@ -108,7 +108,7 @@
     display:inline-flex; align-items:center; gap:5px;
     padding:5px 10px; border-radius:7px; margin-top:10px;
     background:var(--red-dim); border:1px solid rgba(225,29,72,.25);
-    color:var(--red); font-size:11px; font-weight:600;
+    color:var(--red); font-size:13px; font-weight:600;
 }
 
 /* Action footer */
@@ -123,7 +123,7 @@
 .rt-btn {
     display:inline-flex; align-items:center; justify-content:center; gap:7px;
     padding:8px 18px; border-radius:9px;
-    font-size:12px; font-weight:700;
+    font-size:14px; font-weight:700;
     border:none; cursor:pointer; transition:all .15s; white-space:nowrap;
 }
 .rt-btn:active  { transform:scale(.97); }
@@ -145,15 +145,15 @@
 .rt-status-banner.approved { background:var(--green-dim); border-color:rgba(16,185,129,.3); color:var(--green); }
 .rt-status-banner.rejected { background:var(--red-dim);   border-color:rgba(225,29,72,.3);  color:var(--red); }
 .rt-status-banner-icon  { width:44px; height:44px; }
-.rt-status-banner-title { font-size:15px; font-weight:800; }
-.rt-status-banner-sub   { font-size:12px; opacity:.8; }
+.rt-status-banner-title { font-size:18px; font-weight:800; }
+.rt-status-banner-sub   { font-size:14px; opacity:.8; }
 
 /* Pack CTA */
 .rt-pack-cta {
     display:inline-flex; align-items:center; gap:7px;
     padding:8px 18px; border-radius:9px;
     background:var(--accent); color:#fff;
-    font-size:12px; font-weight:700; text-decoration:none; transition:opacity .15s;
+    font-size:14px; font-weight:700; text-decoration:none; transition:opacity .15s;
 }
 .rt-pack-cta:hover { opacity:.88; }
 
@@ -175,7 +175,7 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:14px 18px; border-bottom:1px solid var(--border);
 }
-.rt-modal-title { font-size:14px; font-weight:700; color:var(--text); }
+.rt-modal-title { font-size:17px; font-weight:700; color:var(--text); }
 .rt-modal-close {
     width:28px; height:28px; border-radius:7px; background:var(--surface2);
     border:1px solid var(--border); display:flex; align-items:center;
@@ -186,12 +186,12 @@
 .rt-modal-foot { display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:14px 18px; border-top:1px solid var(--border); }
 
 /* Field */
-.rt-field-label { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
-.rt-field-error { font-size:11px; color:var(--red); margin-top:4px; font-weight:600; }
+.rt-field-label { font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
+.rt-field-error { font-size:13px; color:var(--red); margin-top:4px; font-weight:600; }
 .rt-textarea {
     width:100%; padding:10px 12px; background:var(--surface); color:var(--text);
     border:1.5px solid var(--border); border-radius:8px;
-    font-size:13px; resize:vertical; min-height:100px; outline:none; transition:border-color .15s;
+    font-size:16px; resize:vertical; min-height:100px; outline:none; transition:border-color .15s;
 }
 .rt-textarea:focus { border-color:var(--accent); }
 
@@ -210,7 +210,7 @@
     .rt-action-bar { flex-direction:column; }
     .rt-btn { width:100%; }
     .rt-meta-grid { grid-template-columns:1fr; }
-    .rt-stat-value { font-size:18px; }
+    .rt-stat-value { font-size:22px; }
 }
 
 /* Responsive 2C — General Rules */
@@ -219,6 +219,68 @@
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
     .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
 }
 
 </style>
@@ -257,7 +319,7 @@
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <span style="font-size:11px;color:var(--text-dim);">{{ $transfer->requested_at?->format('d M Y · H:i') }}</span>
+            <span style="font-size:13px;color:var(--text-dim);">{{ $transfer->requested_at?->format('d M Y · H:i') }}</span>
         </div>
 
         <div class="rt-card-body" style="display:flex;flex-direction:column;gap:14px">
@@ -319,7 +381,7 @@
         <div class="rt-card-head">
             <span class="rt-card-title">Requested Products</span>
             @if($transfer->status === TransferStatus::PENDING)
-            <span style="font-size:11px;color:var(--text-dim);">You may adjust quantities before approving</span>
+            <span style="font-size:13px;color:var(--text-dim);">You may adjust quantities before approving</span>
             @endif
         </div>
 
@@ -344,7 +406,7 @@
                             </div>
                             <span class="rt-product-name">{{ $item['product_name'] }}</span>
                         </div>
-                        <span style="font-size:11px;color:var(--text-dim);background:var(--surface2);
+                        <span style="font-size:13px;color:var(--text-dim);background:var(--surface2);
                                      padding:2px 8px;border-radius:5px;font-weight:600">
                             {{ $item['items_per_box'] }} items/box
                         </span>
@@ -467,7 +529,7 @@
                 <div style="display:flex;align-items:flex-start;gap:10px;padding:12px;
                             background:var(--red-dim);border-radius:8px;border:1px solid rgba(225,29,72,.2)">
                     <svg width="14" height="14" fill="none" stroke="var(--red)" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    <span style="font-size:12px;color:var(--red);line-height:1.5">
+                    <span style="font-size:14px;color:var(--red);line-height:1.5">
                         This will reject the transfer request. The shop will need to submit a new request.
                     </span>
                 </div>

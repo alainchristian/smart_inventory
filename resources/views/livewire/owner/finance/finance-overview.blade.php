@@ -173,9 +173,9 @@
     padding:10px 14px;font-size:12px;font-weight:700;font-family:var(--mono);
 }
 
-/* Expanded detail — 3-column layout (Revenue | Expenses+Withdrawals | Cash Reconciliation) */
+/* Expanded detail — 2-column layout */
 .fo-expanded-detail {
-    display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+    display:grid;grid-template-columns:1fr 1fr;gap:0;
 }
 .fo-exp-col {
     padding:20px 22px;
@@ -1146,14 +1146,16 @@
 <style>
 .tx-modal-wrap {
     position:fixed;inset:0;z-index:110;
-    display:flex;align-items:center;justify-content:center;padding:20px;
+    display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;
     background:rgba(10,15,30,0.55);backdrop-filter:blur(4px);
+    overflow-y:auto;
 }
 .tx-modal {
     background:var(--surface);border-radius:16px;
     box-shadow:0 24px 80px rgba(0,0,0,0.28);
-    width:100%;max-width:980px;max-height:92vh;
-    display:flex;flex-direction:column;overflow:hidden;
+    width:100%;max-width:980px;
+    display:flex;flex-direction:column;
+    margin-bottom:40px;
 }
 .tx-modal-header {
     display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -1163,9 +1165,8 @@
 .tx-filter-bar {
     display:flex;align-items:center;gap:6px;padding:10px 20px;
     border-bottom:1px solid var(--border);background:var(--surface);
-    flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    flex-shrink:0;flex-wrap:wrap;
 }
-.tx-filter-bar::-webkit-scrollbar { display:none; }
 .tx-tab {
     padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;
     cursor:pointer;white-space:nowrap;border:1px solid var(--border);
@@ -1184,7 +1185,7 @@
 .tx-tab.tx-active.tx-wd      { background:var(--amber);border-color:var(--amber);color:#1a1a1a; }
 .tx-tab.tx-active.tx-deposit { background:var(--accent);border-color:var(--accent); }
 .tx-tab.tx-active.tx-rep     { background:var(--accent);border-color:var(--accent); }
-.tx-modal-body { overflow-y:auto;flex:1;overscroll-behavior:contain; }
+.tx-modal-body { flex:1; }
 .tx-table { width:100%;border-collapse:collapse;font-size:12px;min-width:640px; }
 .tx-table thead tr { background:var(--surface2);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:2; }
 .tx-table thead th { padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);text-align:left;white-space:nowrap; }
@@ -1210,12 +1211,26 @@
     padding:10px 20px;border-top:1px solid var(--border);background:var(--surface2);
     display:flex;align-items:center;justify-content:space-between;flex-shrink:0;flex-wrap:wrap;gap:8px;
 }
+@media(max-width:900px) {
+    .fo-expanded-detail { grid-template-columns:1fr; }
+    .fo-exp-col { border-right:none !important; border-bottom:1px solid var(--border); }
+}
 @media(max-width:640px) {
-    .tx-modal-wrap { padding:0;align-items:flex-end; }
-    .tx-modal { border-radius:16px 16px 0 0;max-height:92vh;max-width:100%; }
-    .tx-modal-header { padding:12px 14px; }
+    .tx-modal-wrap { padding:0;align-items:flex-start; }
+    .tx-modal { border-radius:0;max-width:100%;margin-bottom:0; }
+    .tx-modal-header { padding:12px 14px; flex-wrap:wrap; }
     .tx-filter-bar { padding:8px 12px; }
     .tx-modal-filters { padding:6px 12px; }
+}
+@media print {
+    body * { visibility:hidden; }
+    .tx-modal-wrap, .tx-modal-wrap * { visibility:visible; }
+    .tx-modal-wrap { position:absolute; left:0; top:0; background:none !important; padding:0; align-items:flex-start; backdrop-filter:none !important; }
+    .tx-modal { box-shadow:none; border-radius:0; max-height:none; width:100%; max-width:100%; border:none; }
+    .fo-modal-close, .tx-filter-bar, .tx-modal-filters, .tx-modal-footer button, .print-btn { display:none !important; }
+    .tx-modal-body { overflow-y:visible; }
+    .tx-scroll-wrap { overflow-x:visible; }
+    .tx-table { border:1px solid var(--border); }
 }
 </style>
 <div class="tx-modal-wrap" wire:click="closeTxModal">
@@ -1234,7 +1249,13 @@
                     @endif
                 </div>
             </div>
-            <button class="fo-modal-close" wire:click="closeTxModal">×</button>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="print-btn" onclick="window.print()" style="padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--text);display:flex;align-items:center;gap:6px;">
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    Print
+                </button>
+                <button class="fo-modal-close" wire:click="closeTxModal">×</button>
+            </div>
         </div>
 
         {{-- Type filter tabs --}}
@@ -1344,90 +1365,117 @@
             </div>
         @endif
 
-        {{-- Cash drawer formula strip --}}
-        <div class="fo-recon-strip" style="flex-shrink:0;">
-            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:8px;">
-                Cash drawer formula · aggregated
-            </div>
-            <div class="fo-recon-eq">
-                <div class="fo-recon-item">
-                    <span class="fo-recon-label">Opening</span>
-                    <span class="fo-recon-val">{{ number_format($sm['opening_balance'] ?? 0) }}</span>
-                </div>
-                @if (($sm['total_sales_cash'] ?? 0) > 0)
-                    <span class="fo-recon-op" style="color:var(--accent);">+</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Cash Sales</span>
-                        <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($sm['total_sales_cash']) }}</span>
-                    </div>
-                @endif
-                @if (($sm['total_repayments_cash'] ?? 0) > 0)
-                    <span class="fo-recon-op" style="color:var(--accent);">+</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Repayments</span>
-                        <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($sm['total_repayments_cash']) }}</span>
-                    </div>
-                @endif
-                @if (($sm['total_refunds_cash'] ?? 0) > 0)
-                    <span class="fo-recon-op" style="color:var(--amber);">−</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Refunds</span>
-                        <span class="fo-recon-val" style="color:var(--amber);">{{ number_format($sm['total_refunds_cash']) }}</span>
-                    </div>
-                @endif
-                @if (($sm['total_expenses_cash'] ?? 0) > 0)
-                    <span class="fo-recon-op" style="color:var(--red);">−</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Expenses</span>
-                        <span class="fo-recon-val" style="color:var(--red);">{{ number_format($sm['total_expenses_cash']) }}</span>
-                    </div>
-                @endif
-                @if (($sm['total_withdrawals_cash'] ?? 0) > 0)
-                    <span class="fo-recon-op" style="color:var(--amber);">−</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Withdrawals</span>
-                        <span class="fo-recon-val" style="color:var(--amber);">{{ number_format($sm['total_withdrawals_cash']) }}</span>
-                    </div>
-                @endif
-                @if (($sm['cash_deposits'] ?? 0) > 0)
-                    <span class="fo-recon-op" style="color:var(--accent);">−</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Banked</span>
-                        <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($sm['cash_deposits']) }}</span>
-                    </div>
-                @endif
-                <span class="fo-recon-eq-sign" style="color:var(--text-dim);">=</span>
-                <div class="fo-recon-item">
-                    <span class="fo-recon-label">Expected</span>
-                    <span class="fo-recon-val" style="font-size:13px;">{{ number_format($sm['expected_cash'] ?? 0) }}</span>
-                </div>
-                @if ($openCount === 0)
-                    <span class="fo-recon-eq-sign" style="color:{{ $sv === 0 ? 'var(--green)' : ($sv < 0 ? 'var(--red)' : 'var(--amber)') }};">
-                        {{ $sv === 0 ? '=' : '≠' }}
-                    </span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Counted</span>
-                        <span class="fo-recon-val" style="font-size:13px;color:{{ $sv === 0 ? 'var(--green)' : ($sv < 0 ? 'var(--red)' : 'var(--amber)') }};">
-                            {{ number_format($sm['actual_cash_counted'] ?? 0) }}
-                        </span>
-                    </div>
-                    @if ($sv !== 0)
-                        <span class="fo-recon-eq-sign" style="color:var(--text-dim);">·</span>
-                        <div class="fo-recon-item">
-                            <span class="fo-recon-label">{{ $sv < 0 ? 'Shortage' : 'Surplus' }}</span>
-                            <span class="fo-recon-val" style="font-size:13px;font-weight:800;color:{{ $sv < 0 ? 'var(--red)' : 'var(--amber)' }};">
-                                {{ ($sv > 0 ? '+' : '') . number_format($sv) }}
-                            </span>
-                        </div>
+        {{-- Unified Reconciliation Matrix --}}
+        <div class="tx-scroll-wrap" style="border-bottom:1px solid var(--border);">
+            <table class="tx-table">
+                <thead>
+                    <tr>
+                        <th style="width:140px;">FUNDS FLOW</th>
+                        <th class="r">Cash</th>
+                        <th class="r">Mobile Money</th>
+                        <th class="r">Bank / Card</th>
+                        <th class="r">Credit (A/R)</th>
+                        <th class="r" style="border-left:1px solid var(--border);">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color:var(--text-dim);font-weight:600;">Opening Balance</td>
+                        <td class="r">{{ number_format($sm['opening_balance'] ?? 0) }}</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="border-left:1px solid var(--border);">{{ number_format($sm['opening_balance'] ?? 0) }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-dim);font-weight:600;">Revenue (Sales)</td>
+                        <td class="r">{{ number_format($sm['total_sales_cash'] ?? 0) }}</td>
+                        <td class="r">{{ number_format($sm['total_sales_momo'] ?? 0) }}</td>
+                        <td class="r">{{ number_format(($sm['total_sales_card'] ?? 0) + ($sm['total_sales_bank_transfer'] ?? 0)) }}</td>
+                        <td class="r">{{ number_format($sm['total_sales_credit'] ?? 0) }}</td>
+                        <td class="r" style="border-left:1px solid var(--border);color:var(--green);">{{ number_format($sm['total_sales'] ?? 0) }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-dim);font-weight:600;">Repayments</td>
+                        <td class="r">{{ number_format($sm['total_repayments_cash'] ?? 0) }}</td>
+                        <td class="r">{{ number_format($sm['total_repayments_momo'] ?? 0) }}</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="color:var(--text-dim);">{{ ($sm['total_repayments'] ?? 0) > 0 ? '-' . number_format($sm['total_repayments']) : 0 }}</td>
+                        <td class="r" style="border-left:1px solid var(--border);color:var(--text-dim);">0 <span style="font-size:9px;font-weight:500;">(Transfer)</span></td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-dim);font-weight:600;">Refunds</td>
+                        <td class="r" style="color:var(--red);">{{ ($sm['total_refunds_cash'] ?? 0) > 0 ? '-' . number_format($sm['total_refunds_cash']) : 0 }}</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="border-left:1px solid var(--border);color:var(--red);">{{ ($sm['total_refunds_cash'] ?? 0) > 0 ? '-' . number_format($sm['total_refunds_cash']) : 0 }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-dim);font-weight:600;">Expenses</td>
+                        <td class="r" style="color:var(--red);">{{ ($sm['total_expenses_cash'] ?? 0) > 0 ? '-' . number_format($sm['total_expenses_cash']) : 0 }}</td>
+                        <td class="r" style="color:var(--red);">{{ ($sm['total_expenses_momo'] ?? 0) > 0 ? '-' . number_format($sm['total_expenses_momo']) : 0 }}</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="border-left:1px solid var(--border);color:var(--red);">{{ ($sm['total_expenses'] ?? 0) > 0 ? '-' . number_format($sm['total_expenses']) : 0 }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-dim);font-weight:600;">Withdrawals</td>
+                        <td class="r" style="color:var(--red);">{{ ($sm['total_withdrawals_cash'] ?? 0) > 0 ? '-' . number_format($sm['total_withdrawals_cash']) : 0 }}</td>
+                        <td class="r" style="color:var(--red);">{{ ($sm['total_withdrawals_momo'] ?? 0) > 0 ? '-' . number_format($sm['total_withdrawals_momo']) : 0 }}</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="border-left:1px solid var(--border);color:var(--red);">{{ ($sm['total_withdrawals'] ?? 0) > 0 ? '-' . number_format($sm['total_withdrawals']) : 0 }}</td>
+                    </tr>
+                    @php
+                        $momoOut = ($sm['momo_deposits'] ?? 0) + ($sm['momo_settled'] ?? 0) + ($sm['cash_to_owner_momo'] ?? 0);
+                        $cashOut = $sm['cash_deposits'] ?? 0;
+                        $bankIn  = $cashOut + $momoOut;
+                    @endphp
+                    <tr>
+                        <td style="color:var(--text-dim);font-weight:600;">Banked/Settled</td>
+                        <td class="r" style="color:var(--red);">{{ $cashOut > 0 ? '-' . number_format($cashOut) : 0 }}</td>
+                        <td class="r" style="color:var(--red);">{{ $momoOut > 0 ? '-' . number_format($momoOut) : 0 }}</td>
+                        <td class="r" style="color:var(--green);">{{ $bankIn > 0 ? '+' . number_format($bankIn) : 0 }}</td>
+                        <td class="r" style="color:var(--text-dim);">—</td>
+                        <td class="r" style="border-left:1px solid var(--border);color:var(--text-dim);">0 <span style="font-size:9px;font-weight:500;">(Transfer)</span></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    @php
+                        $expectedMomo = ($sm['total_sales_momo'] ?? 0) + ($sm['total_repayments_momo'] ?? 0)
+                                      - ($sm['total_expenses_momo'] ?? 0) - ($sm['total_withdrawals_momo'] ?? 0) - $momoOut;
+                        
+                        $expectedBank = ($sm['total_sales_card'] ?? 0) + ($sm['total_sales_bank_transfer'] ?? 0) + $bankIn;
+                        
+                        $expectedCredit = ($sm['total_sales_credit'] ?? 0) - ($sm['total_repayments'] ?? 0);
+                        
+                        $totalExpected = ($sm['opening_balance'] ?? 0) + ($sm['total_sales'] ?? 0) - ($sm['total_refunds_cash'] ?? 0) - ($sm['total_expenses'] ?? 0) - ($sm['total_withdrawals'] ?? 0);
+                    @endphp
+                    <tr>
+                        <td style="color:var(--text);">EXPECTED RETAINED</td>
+                        <td class="r" style="color:var(--text);">{{ number_format($sm['expected_cash'] ?? 0) }}</td>
+                        <td class="r" style="color:var(--text);">{{ number_format($expectedMomo) }}</td>
+                        <td class="r" style="color:var(--text);">{{ number_format($expectedBank) }}</td>
+                        <td class="r" style="color:var(--text);">{{ number_format($expectedCredit) }}</td>
+                        <td class="r" style="border-left:1px solid var(--border);color:var(--text);">{{ number_format($totalExpected) }}</td>
+                    </tr>
+                    @if ($openCount === 0)
+                        <tr>
+                            <td style="color:var(--text-dim);font-size:11px;">ACTUAL COUNTED</td>
+                            <td class="r" style="color:var(--text-dim);font-size:11px;">{{ number_format($sm['actual_cash_counted'] ?? 0) }}</td>
+                            <td class="r" colspan="4"></td>
+                        </tr>
+                        @if ($sv !== 0)
+                        <tr>
+                            <td style="color:{{ $sv < 0 ? 'var(--red)' : 'var(--amber)' }};font-size:11px;">VARIANCE</td>
+                            <td class="r" style="color:{{ $sv < 0 ? 'var(--red)' : 'var(--amber)' }};font-size:11px;">{{ ($sv > 0 ? '+' : '') . number_format($sv) }}</td>
+                            <td class="r" colspan="4"></td>
+                        </tr>
+                        @endif
                     @endif
-                @else
-                    <span class="fo-recon-eq-sign" style="color:var(--accent);">·</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Counted</span>
-                        <span class="fo-recon-val" style="font-size:12px;color:var(--text-dim);">{{ $openCount }} open</span>
-                    </div>
-                @endif
-            </div>
+                </tfoot>
+            </table>
         </div>
 
         {{-- 3-col detail body --}}
@@ -1532,45 +1580,9 @@
                         <span class="fo-exp-line-val" style="color:var(--amber);font-weight:700;font-size:13px;">{{ number_format($sm['total_withdrawals']) }}</span>
                     </div>
                     @endif
-                </div>
-
-                {{-- Col 3: Cash Reconciliation + Bank Deposits --}}
-                <div class="fo-exp-col">
-                    <div class="fo-exp-col-title">Cash Reconciliation</div>
-                    @foreach([
-                        ['Opening balance', $sm['opening_balance']     ?? null, 'var(--text-dim)', false],
-                        ['Expected cash',   $sm['expected_cash']       ?? null, 'var(--text)',     false],
-                        ['Counted',         $openCount > 0 ? null : ($sm['actual_cash_counted'] ?? null), 'var(--text)', false],
-                        ['Variance',        $sv, $sv < 0 ? 'var(--red)' : ($sv > 0 ? 'var(--amber)' : 'var(--text-dim)'), $sv !== 0 && $openCount === 0],
-                        ['Cash banked',     $sm['total_bank_deposits'] ?? 0, 'var(--accent)', false],
-                        ['Cash retained',   $sm['cash_retained']       ?? 0, 'var(--green)',  false],
-                    ] as [$rl, $rlv, $rlc, $isAlert])
-                        @if ($isAlert)
-                            <div class="fo-variance-alert"
-                                 style="background:{{ $sv < 0 ? 'var(--red-dim)' : 'var(--amber-dim)' }};">
-                                <span style="font-weight:700;color:{{ $rlc }};">{{ $rl }}</span>
-                                <span style="font-weight:700;font-family:var(--mono);font-size:13px;color:{{ $rlc }};">
-                                    {{ ($sv > 0 ? '+' : '') . number_format($sv) }}
-                                    <span style="font-size:10px;font-weight:500;"> RWF</span>
-                                </span>
-                            </div>
-                        @else
-                            <div class="fo-exp-line">
-                                <span class="fo-exp-line-label">{{ $rl }}</span>
-                                <span class="fo-exp-line-val" style="color:{{ $rlc }};">
-                                    @if ($rlv === null)
-                                        <span style="color:var(--text-dim);">live</span>
-                                    @else
-                                        {{ number_format($rlv) }}
-                                        <span style="font-size:10px;font-weight:400;color:var(--text-dim);"> RWF</span>
-                                    @endif
-                                </span>
-                            </div>
-                        @endif
-                    @endforeach
 
                     @if (!empty($txSummary['bank_deposits']))
-                    <div class="fo-exp-col-title" style="margin-top:16px;">Bank Deposits</div>
+                    <div class="fo-exp-col-title" style="margin-top:18px;">Bank Deposits</div>
                     @foreach ($txSummary['bank_deposits'] as $dep)
                     <div class="fo-exp-line">
                         <span class="fo-exp-line-label">

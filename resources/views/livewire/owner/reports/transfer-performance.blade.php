@@ -1,15 +1,15 @@
 <div style="font-family:var(--font)">
 <style>
 /* ── Transfer Performance (tp-) ───────────────────────────────── */
-.tp-title        { font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.5px }
-.tp-subtitle     { font-size:13px;color:var(--text-dim);margin-top:3px }
+.tp-title        { font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px }
+.tp-subtitle     { font-size:16px;color:var(--text-dim);margin-top:3px }
 
 /* Filters */
 .tp-filters      { margin-bottom:20px;min-width:0 }
 .tp-ctrl-wrap    { display:flex;align-items:center;gap:8px }
-.tp-ctrl-label   { font-size:12px;color:var(--text-dim);flex-shrink:0;white-space:nowrap }
+.tp-ctrl-label   { font-size:14px;color:var(--text-dim);flex-shrink:0;white-space:nowrap }
 .tp-ctrl-select  { padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;
-                   font-size:12px;background:var(--surface);color:var(--text);
+                   font-size:14px;background:var(--surface);color:var(--text);
                    outline:none;cursor:pointer;font-family:var(--font) }
 .tp-ctrl-select:focus { border-color:var(--accent) }
 
@@ -25,15 +25,15 @@
 .tp-kpi-body     { flex:1;min-width:0 }
 .tp-kpi-label    { font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
                    color:var(--text-dim);line-height:1.2 }
-.tp-kpi-sub      { font-size:11px;color:var(--text-dim);margin-top:2px }
-.tp-kpi-val      { font-size:22px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
+.tp-kpi-sub      { font-size:13px;color:var(--text-dim);margin-top:2px }
+.tp-kpi-val      { font-size:26px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
 .tp-kpi-bar      { height:3px;border-radius:3px }
 .tp-kpi-divider  { height:1px;background:var(--border) }
 .tp-kpi-footer   { display:grid;grid-template-columns:repeat(3,1fr) }
 .tp-kpi-stat     { display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 0;min-width:0 }
-.tp-kpi-stat-v   { font-size:11px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
+.tp-kpi-stat-v   { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
                    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.tp-kpi-stat-l   { font-size:10px;color:var(--text-dim);letter-spacing:.3px;text-align:center }
+.tp-kpi-stat-l   { font-size:12px;color:var(--text-dim);letter-spacing:.3px;text-align:center }
 
 /* Tabs */
 .tp-tabs         { display:grid;grid-template-columns:repeat(4,1fr);
@@ -42,7 +42,7 @@
 .tp-tab          { display:flex;align-items:center;justify-content:center;gap:6px;
                    padding:12px 10px;border:none;border-radius:0;
                    border-bottom:2.5px solid transparent;border-right:1px solid var(--border);
-                   cursor:pointer;font-size:12px;font-weight:600;
+                   cursor:pointer;font-size:14px;font-weight:600;
                    font-family:var(--font);background:transparent;color:var(--text-dim);
                    transition:all var(--tr);white-space:nowrap }
 .tp-tab:last-child  { border-right:none }
@@ -54,8 +54,8 @@
                    box-shadow:var(--shadow-card);padding:20px;margin-bottom:16px }
 .tp-card-head    { display:flex;align-items:flex-start;justify-content:space-between;
                    margin-bottom:18px;gap:12px }
-.tp-card-title   { font-size:14px;font-weight:700;color:var(--text) }
-.tp-card-sub     { font-size:12px;color:var(--text-dim);margin-top:2px }
+.tp-card-title   { font-size:17px;font-weight:700;color:var(--text) }
+.tp-card-sub     { font-size:14px;color:var(--text-dim);margin-top:2px }
 
 /* 2-col grid */
 .tp-grid-2       { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px }
@@ -70,14 +70,14 @@
 .tp-tbl tbody tr:last-child { border-bottom:none }
 .tp-tbl tbody tr:hover { background:var(--surface2) }
 .tp-tbl tfoot tr { border-top:2px solid var(--border);background:var(--bg) }
-.tp-tbl td       { padding:11px 14px;font-size:13px;vertical-align:middle }
+.tp-tbl td       { padding:11px 14px;font-size:16px;vertical-align:middle }
 .tp-num          { font-family:var(--mono);text-align:right;white-space:nowrap }
 
 /* Route success bar */
 .tp-success-bar  { display:flex;align-items:center;gap:8px }
 .tp-success-track { flex:1;height:4px;border-radius:4px;background:var(--surface2);min-width:40px }
 .tp-success-fill  { height:100%;border-radius:4px }
-.tp-success-val   { font-family:var(--mono);font-size:12px;font-weight:700;white-space:nowrap }
+.tp-success-val   { font-family:var(--mono);font-size:14px;font-weight:700;white-space:nowrap }
 
 /* Status badge */
 .tp-status       { display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
@@ -88,13 +88,13 @@
 .tp-stepper      { display:flex;align-items:center;gap:0;margin-bottom:20px }
 .tp-step         { flex:1;display:flex;flex-direction:column;align-items:center;position:relative }
 .tp-step-circle  { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
-                   justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);
+                   justify-content:center;font-size:13px;font-weight:700;font-family:var(--mono);
                    z-index:1;position:relative }
 .tp-step-line    { position:absolute;top:18px;left:50%;width:100%;height:2px;z-index:0 }
 .tp-step:last-child .tp-step-line { display:none }
-.tp-step-label   { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+.tp-step-label   { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
                    color:var(--text-dim);margin-top:6px;text-align:center }
-.tp-step-count   { font-size:11px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
+.tp-step-count   { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
                    margin-top:2px }
 
 /* Discrepancy card */
@@ -102,14 +102,14 @@
                    background:var(--amber-dim);border-radius:9px;margin-bottom:10px }
 .tp-disc-item:last-child { margin-bottom:0 }
 .tp-disc-head    { display:flex;align-items:center;justify-content:space-between;margin-bottom:6px }
-.tp-disc-num     { font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono) }
-.tp-disc-date    { font-size:11px;color:var(--text-dim) }
-.tp-disc-route   { font-size:12px;color:var(--text-sub);margin-bottom:4px }
-.tp-disc-note    { font-size:12px;color:var(--text-dim);font-style:italic }
+.tp-disc-num     { font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono) }
+.tp-disc-date    { font-size:13px;color:var(--text-dim) }
+.tp-disc-route   { font-size:14px;color:var(--text-sub);margin-bottom:4px }
+.tp-disc-note    { font-size:14px;color:var(--text-dim);font-style:italic }
 
 /* Rank badges */
 .tp-rank         { width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;
-                   justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono) }
+                   justify-content:center;font-size:13px;font-weight:700;font-family:var(--mono) }
 .tp-rank-1       { background:rgba(217,119,6,.15);color:var(--amber) }
 .tp-rank-2       { background:rgba(100,116,139,.12);color:var(--text-sub) }
 .tp-rank-3       { background:rgba(180,120,50,.12);color:#c97d3a }
@@ -121,8 +121,8 @@
 
 /* Empty state */
 .tp-empty        { padding:48px 20px;text-align:center }
-.tp-empty-title  { font-size:14px;font-weight:700;color:var(--text-sub);margin-bottom:6px }
-.tp-empty-sub    { font-size:12px;color:var(--text-dim) }
+.tp-empty-title  { font-size:17px;font-weight:700;color:var(--text-sub);margin-bottom:6px }
+.tp-empty-sub    { font-size:14px;color:var(--text-dim) }
 
 /* Responsive */
 @media(max-width:900px) {
@@ -134,7 +134,7 @@
 @media(max-width:640px) {
     .tp-kpis    { grid-template-columns:1fr 1fr;gap:8px }
     .tp-kpi     { padding:14px 12px;gap:10px }
-    .tp-kpi-val { font-size:18px }
+    .tp-kpi-val { font-size:22px }
     .tp-kpi-footer { grid-template-columns:repeat(3,1fr) }
     .tp-tabs    { display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
                   scrollbar-width:none;flex-wrap:nowrap }
@@ -153,6 +153,68 @@
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
     .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
 }
 
 </style>
@@ -189,7 +251,7 @@
                     <path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/>
                 </svg>
                 <input type="date" wire:model.live="dateFrom" class="db-date-input">
-                <span style="font-size:13px;color:var(--text-dim);flex-shrink:0">→</span>
+                <span style="font-size:16px;color:var(--text-dim);flex-shrink:0">→</span>
                 <input type="date" wire:model.live="dateTo" class="db-date-input">
             </div>
             <div class="db-period-ctrl-seg tp-ctrl-wrap">
@@ -277,7 +339,7 @@
                 <div class="tp-kpi-sub">Request to receipt</div>
             </div>
         </div>
-        <div class="tp-kpi-val" style="color:{{ $compColor }}">{{ number_format($compHrs, 1) }}<span style="font-size:14px;font-weight:600">h</span></div>
+        <div class="tp-kpi-val" style="color:{{ $compColor }}">{{ number_format($compHrs, 1) }}<span style="font-size:17px;font-weight:600">h</span></div>
         <div class="tp-kpi-divider"></div>
         <div class="tp-kpi-footer">
             <div class="tp-kpi-stat">
@@ -306,7 +368,7 @@
                 <div class="tp-kpi-sub">Transfers with issues</div>
             </div>
         </div>
-        <div class="tp-kpi-val" style="color:{{ $discColor }}">{{ number_format($discRate, 2) }}<span style="font-size:16px;font-weight:700">%</span></div>
+        <div class="tp-kpi-val" style="color:{{ $discColor }}">{{ number_format($discRate, 2) }}<span style="font-size:19px;font-weight:700">%</span></div>
         <div class="tp-kpi-divider"></div>
         <div class="tp-kpi-footer">
             <div class="tp-kpi-stat">
@@ -335,7 +397,7 @@
                 <div class="tp-kpi-sub">Clean transfers</div>
             </div>
         </div>
-        <div class="tp-kpi-val" style="color:{{ $successRate >= 95 ? 'var(--green)' : ($successRate >= 80 ? 'var(--accent)' : 'var(--amber)') }}">{{ number_format($successRate, 1) }}<span style="font-size:16px;font-weight:700">%</span></div>
+        <div class="tp-kpi-val" style="color:{{ $successRate >= 95 ? 'var(--green)' : ($successRate >= 80 ? 'var(--accent)' : 'var(--amber)') }}">{{ number_format($successRate, 1) }}<span style="font-size:19px;font-weight:700">%</span></div>
         <div class="tp-kpi-divider"></div>
         <div class="tp-kpi-footer">
             <div class="tp-kpi-stat">
@@ -406,22 +468,22 @@
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
         <div style="background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);padding:16px 18px">
             <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:8px">Busiest Day</div>
-            <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:var(--violet)">
+            <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--violet)">
                 {{ $peakDate ? \Carbon\Carbon::parse($peakDate)->format('M j') : '—' }}
             </div>
-            <div style="font-size:12px;color:var(--text-dim);margin-top:4px">{{ $peakCount }} transfers</div>
+            <div style="font-size:14px;color:var(--text-dim);margin-top:4px">{{ $peakCount }} transfers</div>
         </div>
         <div style="background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);padding:16px 18px">
             <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:8px">Daily Average</div>
-            <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:var(--text)">{{ number_format($avgDaily, 1) }}</div>
-            <div style="font-size:12px;color:var(--text-dim);margin-top:4px">transfers per day</div>
+            <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--text)">{{ number_format($avgDaily, 1) }}</div>
+            <div style="font-size:14px;color:var(--text-dim);margin-top:4px">transfers per day</div>
         </div>
         <div style="background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);padding:16px 18px">
             <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:8px">Active Days</div>
-            <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:var(--text)">
-                {{ $daysWithActivity }}<span style="font-size:13px;color:var(--text-dim)"> / {{ $days }}</span>
+            <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--text)">
+                {{ $daysWithActivity }}<span style="font-size:16px;color:var(--text-dim)"> / {{ $days }}</span>
             </div>
-            <div style="font-size:12px;color:var(--text-dim);margin-top:4px">
+            <div style="font-size:14px;color:var(--text-dim);margin-top:4px">
                 {{ $days > 0 ? round($daysWithActivity / $days * 100) : 0 }}% of days had transfers
             </div>
         </div>
@@ -507,7 +569,7 @@
                          style="min-height:260px"></div>
                 </div>
                 <div style="margin-top:12px">
-                    <table class="tp-tbl" style="font-size:12px">
+                    <table class="tp-tbl" style="font-size:14px">
                         <thead><tr><th>Status</th><th style="text-align:right">Count</th><th style="text-align:right">Share</th></tr></thead>
                         <tbody>
                             @php $totalDist = collect($statusDist)->sum('count') ?: 1 @endphp
@@ -554,8 +616,8 @@
                         @if($cnt > 0)
                         <div style="margin-bottom:10px">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-                                <span style="font-size:12px;font-weight:600;color:var(--text-sub)">{{ $bucket }}</span>
-                                <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $cnt }} ({{ $pct }}%)</span>
+                                <span style="font-size:14px;font-weight:600;color:var(--text-sub)">{{ $bucket }}</span>
+                                <span style="font-size:13px;font-family:var(--mono);color:var(--text-dim)">{{ $cnt }} ({{ $pct }}%)</span>
                             </div>
                             <div style="height:5px;border-radius:5px;background:var(--surface2)">
                                 <div style="height:100%;border-radius:5px;background:{{ $compBucketColors[$bi] }};width:{{ $pct }}%"></div>
@@ -622,7 +684,7 @@
                                 <td class="tp-num">{{ number_format($r['transfer_count']) }}</td>
                                 <td class="tp-num">
                                     @if($r['discrepancy_count'] > 0)
-                                        <span style="background:var(--amber-dim);color:var(--amber);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">{{ $r['discrepancy_count'] }}</span>
+                                        <span style="background:var(--amber-dim);color:var(--amber);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700">{{ $r['discrepancy_count'] }}</span>
                                     @else
                                         <span style="color:var(--green);font-weight:700;font-family:var(--mono)">0</span>
                                     @endif
@@ -686,14 +748,14 @@
                                         <div style="width:28px;height:28px;border-radius:8px;background:var(--green-dim);color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0">
                                             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
                                         </div>
-                                        <span style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $wh['warehouse_name'] }}</span>
+                                        <span style="font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $wh['warehouse_name'] }}</span>
                                     </div>
                                 </td>
                                 <td class="tp-num">{{ number_format($wh['total_transfers']) }}</td>
                                 <td class="tp-num" style="color:{{ $avgHrsColor }};font-weight:700">{{ number_format($wh['avg_completion_hours'], 1) }}h</td>
                                 <td class="tp-num">
                                     @if($wh['discrepancy_count'] > 0)
-                                        <span style="background:var(--amber-dim);color:var(--amber);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">{{ $wh['discrepancy_count'] }}</span>
+                                        <span style="background:var(--amber-dim);color:var(--amber);padding:2px 8px;border-radius:6px;font-size:13px;font-weight:700">{{ $wh['discrepancy_count'] }}</span>
                                     @else
                                         <span style="color:var(--green);font-weight:700;font-family:var(--mono)">0</span>
                                     @endif
@@ -807,7 +869,7 @@
                     <div class="tp-card-sub">Last 10 transfers flagged with quantity mismatches</div>
                 </div>
                 @if(count($discrepancies))
-                <span style="background:var(--amber-dim);color:var(--amber);font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap">
+                <span style="background:var(--amber-dim);color:var(--amber);font-size:13px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap">
                     {{ count($discrepancies) }} found
                 </span>
                 @endif
@@ -826,7 +888,7 @@
                                 <span style="font-weight:600">{{ $d['to_shop'] }}</span>
                                 <span style="margin-left:8px">
                                     @php $sc = $statusColors[$d['status']] ?? ['bg'=>'var(--surface2)','c'=>'var(--text-dim)'] @endphp
-                                    <span class="tp-status" style="background:{{ $sc['bg'] }};color:{{ $sc['c'] }};font-size:10px">
+                                    <span class="tp-status" style="background:{{ $sc['bg'] }};color:{{ $sc['c'] }};font-size:12px">
                                         {{ ucwords(str_replace('_', ' ', $d['status'])) }}
                                     </span>
                                 </span>
@@ -835,7 +897,7 @@
                                 <div class="tp-disc-note">"{{ Str::limit($d['discrepancy_notes'], 90) }}"</div>
                             @endif
                             @if($d['received_at'])
-                                <div style="font-size:11px;color:var(--text-dim);margin-top:4px">
+                                <div style="font-size:13px;color:var(--text-dim);margin-top:4px">
                                     Received: {{ \Carbon\Carbon::parse($d['received_at'])->format('M j, Y H:i') }}
                                 </div>
                             @endif
@@ -865,7 +927,7 @@ function _tpInitTrend() {
     const counts = JSON.parse(el.dataset.counts     || '[]');
     if (_tpTrend) { _tpTrend.destroy(); _tpTrend = null; }
     if (!ts.length) {
-        el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text-dim);font-size:13px">No transfer data for this period</div>';
+        el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text-dim);font-size:16px">No transfer data for this period</div>';
         return;
     }
     const paired = ts.map((t, i) => ({ x: t, y: counts[i] }));

@@ -544,7 +544,7 @@ class SaleService
                 'credit_amount'    => $creditAmount,
                 'has_credit'       => $hasCredit,
                 // Fulfillment — only set when warehouse items are present
-                'fulfillment_type'           => $hasWarehouse ? 'warehouse_direct' : null,
+                'fulfillment_type'           => $hasWarehouse ? 'warehouse_direct' : 'shop',
                 'source_warehouse_id'        => $hasWarehouse ? $warehouseId : null,
                 'fulfillment_status'         => $hasWarehouse ? 'pending' : null,
                 'fulfillment_method'         => $hasWarehouse ? ($data['fulfillment_method'] ?? null) : null,

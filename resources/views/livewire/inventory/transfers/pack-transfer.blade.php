@@ -11,22 +11,22 @@
     padding:10px 14px; border-bottom:1px solid var(--border);
     background:var(--surface2); flex-wrap:wrap;
 }
-.pt-card-title { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
+.pt-card-title { font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
 .pt-card-body  { padding:16px; }
 
 /* Flash */
 .pt-flash {
     display:flex; align-items:flex-start; gap:10px;
-    padding:10px 14px; border-radius:10px; font-size:12px; border:1px solid; line-height:1.5;
+    padding:10px 14px; border-radius:10px; font-size:14px; border:1px solid; line-height:1.5;
 }
 .pt-flash.ok  { background:var(--green-dim);  border-color:rgba(16,185,129,.25); color:var(--green); }
 .pt-flash.err { background:var(--red-dim);    border-color:rgba(225,29,72,.25);  color:var(--red); }
 
 /* Transfer header */
-.pt-num  { font-size:14px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
+.pt-num  { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
 .pt-pill {
     display:inline-flex; align-items:center; gap:5px;
-    padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.3px;
+    padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.3px;
     background:var(--accent-dim); color:var(--accent); border:1px solid rgba(99,102,241,.2);
 }
 
@@ -37,8 +37,8 @@
     padding:12px 14px; border:1px solid var(--border);
 }
 .pt-route-node  { flex:1; }
-.pt-route-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.pt-route-name  { font-size:13px; font-weight:700; color:var(--text); margin-top:2px; }
+.pt-route-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.pt-route-name  { font-size:16px; font-weight:700; color:var(--text); margin-top:2px; }
 .pt-route-arrow {
     width:28px; height:28px; border-radius:50%;
     background:var(--accent-dim); color:var(--accent);
@@ -50,17 +50,17 @@
     background:var(--surface2); border:1px solid var(--border);
     border-radius:12px; padding:14px; border-left:3px solid var(--accent);
 }
-.pt-scan-label { font-size:10px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+.pt-scan-label { font-size:12px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
 .pt-scan-row   { display:flex; gap:8px; }
 .pt-scan-input {
     flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
-    font-size:14px; font-weight:700; font-family:var(--mono);
+    font-size:17px; font-weight:700; font-family:var(--mono);
     background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
 }
 .pt-scan-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
 .pt-scan-btn {
     padding:10px 20px; background:var(--accent); color:#fff;
-    border:none; border-radius:8px; font-size:12px; font-weight:700;
+    border:none; border-radius:8px; font-size:14px; font-weight:700;
     cursor:pointer; white-space:nowrap; transition:opacity .15s;
 }
 .pt-scan-btn:hover { opacity:.88; }
@@ -78,15 +78,15 @@
     box-shadow:0 24px 60px rgba(0,0,0,.15); animation:ptSlideUp .2s ease;
 }
 @keyframes ptSlideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-.pt-qty-title { font-size:15px; font-weight:800; color:var(--text); text-align:center; margin-bottom:3px; }
-.pt-qty-sub   { font-size:12px; color:var(--text-dim); text-align:center; margin-bottom:16px; }
+.pt-qty-title { font-size:18px; font-weight:800; color:var(--text); text-align:center; margin-bottom:3px; }
+.pt-qty-sub   { font-size:14px; color:var(--text-dim); text-align:center; margin-bottom:16px; }
 .pt-qty-input {
     width:100%; padding:12px; border:2px solid var(--accent); border-radius:10px;
-    font-size:28px; font-weight:800; text-align:center;
+    font-size:34px; font-weight:800; text-align:center;
     background:var(--surface); color:var(--text); font-family:var(--mono);
     outline:none; box-sizing:border-box; display:block;
 }
-.pt-qty-hint { font-size:11px; color:var(--text-dim); text-align:center; margin-top:8px; }
+.pt-qty-hint { font-size:13px; color:var(--text-dim); text-align:center; margin-top:8px; }
 
 /* Product rows */
 .pt-prod-row { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
@@ -95,11 +95,11 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--border); gap:8px; flex-wrap:wrap;
 }
-.pt-prod-name   { font-size:13px; font-weight:700; color:var(--text); }
+.pt-prod-name   { font-size:16px; font-weight:700; color:var(--text); }
 .pt-prod-body   { padding:12px 14px; }
 .pt-prog-info   { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
-.pt-prog-text   { font-size:12px; color:var(--text-dim); }
-.pt-prog-nums   { font-size:12px; font-weight:700; color:var(--text); font-family:var(--mono); }
+.pt-prog-text   { font-size:14px; color:var(--text-dim); }
+.pt-prog-nums   { font-size:14px; font-weight:700; color:var(--text); font-family:var(--mono); }
 .pt-prog-bar-wrap { height:5px; background:var(--surface2); border-radius:4px; overflow:hidden; }
 .pt-prog-bar    { height:100%; border-radius:4px; transition:width .3s; }
 .pt-prog-bar.partial  { background:var(--amber); }
@@ -109,34 +109,34 @@
 /* Packed boxes table */
 .pt-table { width:100%; border-collapse:collapse; min-width:400px; }
 .pt-table thead th {
-    padding:7px 12px; font-size:10px; font-weight:700; letter-spacing:.6px;
+    padding:7px 12px; font-size:12px; font-weight:700; letter-spacing:.6px;
     text-transform:uppercase; color:var(--text-dim); border-bottom:1px solid var(--border); text-align:left;
 }
 .pt-table tbody tr { border-bottom:1px solid var(--border); }
 .pt-table tbody tr:last-child { border-bottom:none; }
 .pt-table tbody tr:hover { background:var(--surface2); }
-.pt-table tbody td { padding:8px 12px; font-size:12px; color:var(--text); vertical-align:middle; }
-.pt-code-cell { font-family:var(--mono); font-weight:700; font-size:12px; color:var(--accent); }
+.pt-table tbody td { padding:8px 12px; font-size:14px; color:var(--text); vertical-align:middle; }
+.pt-code-cell { font-family:var(--mono); font-weight:700; font-size:14px; color:var(--accent); }
 
 /* Summary strip */
 .pt-summary { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
 .pt-sum-box  { text-align:center; padding:12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border); }
-.pt-sum-v    { font-size:20px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
-.pt-sum-l    { font-size:10px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); margin-top:2px; }
+.pt-sum-v    { font-size:24px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
+.pt-sum-l    { font-size:12px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); margin-top:2px; }
 
 /* Transporter select */
 .pt-select {
     width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:8px;
-    font-size:13px; background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
+    font-size:16px; background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
 }
 .pt-select:focus { border-color:var(--accent); }
-.pt-field-label { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
-.pt-field-error { font-size:11px; color:var(--red); margin-top:4px; font-weight:600; }
+.pt-field-label { font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
+.pt-field-error { font-size:13px; color:var(--red); margin-top:4px; font-weight:600; }
 
 /* Ship button */
 .pt-ship-btn {
     width:100%; padding:11px; background:var(--accent); color:#fff;
-    border:none; border-radius:9px; font-size:13px; font-weight:700;
+    border:none; border-radius:9px; font-size:16px; font-weight:700;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
     gap:8px; transition:opacity .15s;
 }
@@ -157,6 +157,68 @@
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
     .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
 }
 
 </style>
@@ -195,7 +257,7 @@
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <span style="font-size:11px;color:var(--text-dim)">{{ $transfer->requested_at?->format('d M Y') }}</span>
+            <span style="font-size:13px;color:var(--text-dim)">{{ $transfer->requested_at?->format('d M Y') }}</span>
         </div>
         <div class="pt-card-body">
             <div class="pt-route">
@@ -230,7 +292,7 @@
             </button>
         </div>
         @error('scanInput')
-            <p style="font-size:11px;color:var(--red);margin-top:5px">{{ $message }}</p>
+            <p style="font-size:13px;color:var(--red);margin-top:5px">{{ $message }}</p>
         @enderror
     </div>
 
@@ -252,28 +314,28 @@
                    x-init="$nextTick(() => $el.select())"
                    class="pt-qty-input">
             @error('pendingQty')
-                <div style="font-size:11px;color:var(--red);margin-top:6px;text-align:center">{{ $message }}</div>
+                <div style="font-size:13px;color:var(--red);margin-top:6px;text-align:center">{{ $message }}</div>
             @enderror
             @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
             <div class="pt-qty-hint">
                 After adding: <strong style="color:{{ $afterAdd === 0 ? 'var(--green)' : 'var(--text)' }}">{{ $afterAdd }} box{{ $afterAdd === 1 ? '' : 'es' }} still needed</strong>
             </div>
-            <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-                Press <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px">Enter</kbd>
+            <div style="font-size:13px;color:var(--text-dim);text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+                Press <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:13px">Enter</kbd>
                 to confirm &nbsp;·&nbsp;
-                <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px">Esc</kbd>
+                <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:13px">Esc</kbd>
                 to cancel
             </div>
             <div style="display:flex;gap:8px;margin-top:14px">
                 <button @click="$wire.closeQuantityPanel()"
                         style="flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);
-                               background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;color:var(--text)">
+                               background:var(--surface);font-size:14px;font-weight:700;cursor:pointer;color:var(--text)">
                     Cancel
                 </button>
                 <button @click="$wire.confirmScannedQuantity()"
                         wire:loading.attr="disabled" wire:target="confirmScannedQuantity"
                         style="flex:2;padding:9px;border-radius:9px;border:none;
-                               background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                               background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer">
                     <span wire:loading.remove wire:target="confirmScannedQuantity">Add {{ $pendingQty }} Box{{ (int) $pendingQty === 1 ? '' : 'es' }}</span>
                     <span wire:loading wire:target="confirmScannedQuantity" style="display:none">Adding…</span>
                 </button>
@@ -292,7 +354,7 @@
                 $totalNeeded    = collect($packingSummary)->sum('boxes_needed');
                 $totalRemaining = $totalNeeded - $totalPacked;
             @endphp
-            <span style="font-size:11px;font-weight:700;font-family:var(--mono);
+            <span style="font-size:13px;font-weight:700;font-family:var(--mono);
                          padding:3px 10px;border-radius:6px;border:1px solid;
                          {{ $totalRemaining > 0
                              ? 'background:var(--amber-dim);color:var(--amber);border-color:rgba(217,119,6,.2)'
@@ -312,14 +374,14 @@
                         <div style="display:flex;align-items:center;gap:8px">
                             <span class="pt-prod-name">{{ $summary['product_name'] }}</span>
                             @if($summary['complete'])
-                                <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;
+                                <span style="padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;
                                              background:var(--green-dim);color:var(--green)">Complete</span>
                             @else
-                                <span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;
+                                <span style="padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;
                                              background:var(--amber-dim);color:var(--amber)">{{ $remaining }} left</span>
                             @endif
                         </div>
-                        <span style="font-size:11px;font-family:var(--mono);color:var(--text-dim);
+                        <span style="font-size:13px;font-family:var(--mono);color:var(--text-dim);
                                      background:var(--surface2);padding:2px 8px;border-radius:5px">
                             {{ $summary['barcode'] }}
                         </span>
@@ -346,7 +408,7 @@
     <div class="pt-card">
         <div class="pt-card-head">
             <span class="pt-card-title">Packed Boxes</span>
-            <span style="font-size:12px;font-weight:700;font-family:var(--mono);
+            <span style="font-size:14px;font-weight:700;font-family:var(--mono);
                          background:var(--accent-dim);color:var(--accent);padding:3px 10px;border-radius:6px">
                 {{ count($packedBoxes) }} box{{ count($packedBoxes) === 1 ? '' : 'es' }}
             </span>
@@ -371,7 +433,7 @@
                             @if($box['scanned_out'] ?? false)
                                 <svg width="13" height="13" fill="none" stroke="var(--green)" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             @else
-                                <span style="font-size:10px;color:var(--text-dim)">Pending</span>
+                                <span style="font-size:12px;color:var(--text-dim)">Pending</span>
                             @endif
                         </td>
                     </tr>
@@ -416,7 +478,7 @@
             <div>
                 <label class="pt-field-label">
                     Transporter <span style="color:var(--red)">*</span>
-                    <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px">Select existing or type to add new</span>
+                    <span style="font-size:12px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px">Select existing or type to add new</span>
                 </label>
                 <input type="text"
                        wire:model="transporterInput"
@@ -432,7 +494,7 @@
                 @error('transporterInput')
                     <span class="pt-field-error">{{ $message }}</span>
                 @enderror
-                <p style="font-size:11px;color:var(--text-dim);margin-top:4px">
+                <p style="font-size:13px;color:var(--text-dim);margin-top:4px">
                     New names are saved automatically when you ship.
                 </p>
             </div>
@@ -450,7 +512,7 @@
                 <span wire:loading.remove wire:target="shipTransfer">Ship Transfer</span>
                 <span wire:loading wire:target="shipTransfer" style="display:none">Shipping…</span>
             </button>
-            <p style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:-6px">
+            <p style="font-size:13px;color:var(--text-dim);text-align:center;margin-top:-6px">
                 Partial shipments are allowed. Pack at least one box before shipping.
             </p>
         </div>

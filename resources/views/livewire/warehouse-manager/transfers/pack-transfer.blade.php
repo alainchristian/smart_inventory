@@ -9,43 +9,43 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:10px 14px; border-bottom:1px solid var(--border); background:var(--surface2);
 }
-.pt-card-head h3 { font-size:13px; font-weight:700; color:var(--text); margin:0; }
-.pt-card-head p  { font-size:11px; color:var(--text-dim); margin:0; }
+.pt-card-head h3 { font-size:16px; font-weight:700; color:var(--text); margin:0; }
+.pt-card-head p  { font-size:13px; color:var(--text-dim); margin:0; }
 .pt-card-body    { padding:14px; }
 
 /* Flash messages */
 .pt-flash {
     display:flex; align-items:flex-start; gap:10px;
-    padding:10px 14px; border-radius:10px; font-size:12px; border:1px solid;
+    padding:10px 14px; border-radius:10px; font-size:14px; border:1px solid;
 }
 .pt-flash.ok  { background:var(--green-dim); border-color:rgba(16,185,129,.25); color:var(--green); }
 .pt-flash.err { background:var(--red-dim);   border-color:rgba(225,29,72,.25);  color:var(--red); }
 
 /* Transfer header */
-.pt-num   { font-size:16px; font-weight:800; color:var(--text); font-family:var(--mono); }
-.pt-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; text-transform:uppercase; }
+.pt-num   { font-size:19px; font-weight:800; color:var(--text); font-family:var(--mono); }
+.pt-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; }
 .pt-meta-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:12px; }
-.pt-meta-label { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.pt-meta-value { font-size:12px; font-weight:600; color:var(--text); margin-top:2px; }
+.pt-meta-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
+.pt-meta-value { font-size:14px; font-weight:600; color:var(--text); margin-top:2px; }
 
 /* Phone scanner states */
 .pt-scanner-row { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-.pt-scanner-title { font-size:13px; font-weight:700; color:var(--text); margin:0; }
-.pt-scanner-sub   { font-size:11px; color:var(--text-dim); margin:2px 0 0; }
+.pt-scanner-title { font-size:16px; font-weight:700; color:var(--text); margin:0; }
+.pt-scanner-sub   { font-size:13px; color:var(--text-dim); margin:2px 0 0; }
 .pt-connected-pill {
     display:inline-flex; align-items:center; gap:6px;
-    padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600;
+    padding:3px 10px; border-radius:20px; font-size:13px; font-weight:600;
     background:var(--green-dim); color:var(--green);
 }
 .pt-connected-dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
 .pt-expired-pill  {
     display:inline-flex; align-items:center; gap:6px;
-    padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600;
+    padding:3px 10px; border-radius:20px; font-size:13px; font-weight:600;
     background:var(--amber-dim); color:var(--amber);
 }
 .pt-scanner-btn {
     display:inline-flex; align-items:center; gap:6px;
-    padding:6px 14px; border-radius:8px; font-size:12px; font-weight:700;
+    padding:6px 14px; border-radius:8px; font-size:14px; font-weight:700;
     cursor:pointer; border:1px solid var(--border); text-decoration:none;
     background:var(--surface); color:var(--text); transition:all .15s; white-space:nowrap;
 }
@@ -64,7 +64,7 @@
 .pt-manual-code {
     margin-top:8px; padding:10px 12px; background:var(--surface2);
     border-radius:8px; border:1px solid var(--border);
-    font-size:18px; font-weight:800; font-family:var(--mono);
+    font-size:22px; font-weight:800; font-family:var(--mono);
     letter-spacing:4px; text-align:center; color:var(--text);
 }
 
@@ -74,17 +74,17 @@
     border-radius:12px; padding:14px;
     border-left:3px solid var(--accent);
 }
-.pt-scan-label { font-size:10px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+.pt-scan-label { font-size:12px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
 .pt-scan-row   { display:flex; gap:8px; }
 .pt-scan-input {
     flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
-    font-size:14px; font-weight:700; font-family:var(--mono);
+    font-size:17px; font-weight:700; font-family:var(--mono);
     background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
 }
 .pt-scan-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
 .pt-scan-btn {
     padding:10px 20px; background:var(--accent); color:#fff;
-    border:none; border-radius:8px; font-size:12px; font-weight:700;
+    border:none; border-radius:8px; font-size:14px; font-weight:700;
     cursor:pointer; white-space:nowrap; transition:opacity .15s;
 }
 .pt-scan-btn:hover { opacity:.88; }
@@ -94,15 +94,15 @@
     background:var(--accent-dim); border:1.5px solid var(--accent);
     border-radius:12px; padding:16px;
 }
-.pt-qty-title { font-size:14px; font-weight:800; color:var(--accent); }
-.pt-qty-sub   { font-size:11px; color:var(--text-dim); margin-top:2px; }
+.pt-qty-title { font-size:17px; font-weight:800; color:var(--accent); }
+.pt-qty-sub   { font-size:13px; color:var(--text-dim); margin-top:2px; }
 .pt-qty-input {
     width:100%; padding:10px 14px; border:2px solid var(--accent); border-radius:9px;
-    font-size:28px; font-weight:800; text-align:center;
+    font-size:34px; font-weight:800; text-align:center;
     background:var(--surface); color:var(--text); font-family:var(--mono);
     outline:none; box-sizing:border-box; margin-top:10px;
 }
-.pt-qty-hint  { font-size:11px; color:var(--text-dim); text-align:center; margin-top:5px; }
+.pt-qty-hint  { font-size:13px; color:var(--text-dim); text-align:center; margin-top:5px; }
 
 /* Product rows */
 .pt-prod-row { background:var(--surface); border:none; border-radius:10px; overflow:hidden; box-shadow:var(--shadow-card); }
@@ -112,54 +112,54 @@
     padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--border);
     gap:8px; flex-wrap:wrap;
 }
-.pt-prod-name   { font-size:13px; font-weight:700; color:var(--text); }
+.pt-prod-name   { font-size:16px; font-weight:700; color:var(--text); }
 .pt-complete-badge {
-    padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;
+    padding:2px 8px; border-radius:10px; font-size:12px; font-weight:700;
     background:var(--green-dim); color:var(--green);
 }
 .pt-prod-body   { padding:12px 14px; }
 .pt-prog-info   { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
-.pt-prog-text   { font-size:12px; color:var(--text-dim); }
-.pt-prog-nums   { font-size:12px; font-weight:700; color:var(--text); font-family:var(--mono); }
+.pt-prog-text   { font-size:14px; color:var(--text-dim); }
+.pt-prog-nums   { font-size:14px; font-weight:700; color:var(--text); font-family:var(--mono); }
 .pt-prog-bar-wrap { height:5px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-bottom:12px; }
 .pt-prog-bar    { height:100%; border-radius:4px; background:var(--accent); transition:width .3s; }
 .pt-prog-bar.done { background:var(--green); }
-.pt-boxes-label { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:7px; }
+.pt-boxes-label { font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:7px; }
 .pt-boxes-grid  { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:6px; }
 .pt-box-chip {
     padding:7px 9px; border:1px solid var(--border); border-radius:8px;
     cursor:pointer; transition:all .15s; background:var(--surface); text-align:left;
 }
 .pt-box-chip:hover { border-color:var(--accent); background:var(--accent-dim); }
-.pt-box-code  { font-size:11px; font-weight:700; font-family:var(--mono); color:var(--text); }
-.pt-box-meta  { font-size:10px; color:var(--text-dim); margin-top:1px; }
+.pt-box-code  { font-size:13px; font-weight:700; font-family:var(--mono); color:var(--text); }
+.pt-box-meta  { font-size:12px; color:var(--text-dim); margin-top:1px; }
 .pt-add-btn {
     display:inline-flex; align-items:center; gap:5px;
-    padding:5px 12px; border-radius:7px; font-size:11px; font-weight:700;
+    padding:5px 12px; border-radius:7px; font-size:13px; font-weight:700;
     background:var(--accent); color:#fff; border:none; cursor:pointer;
     transition:opacity .15s; white-space:nowrap;
 }
 .pt-add-btn:hover { opacity:.88; }
-.pt-no-boxes { font-size:11px; color:var(--text-dim); text-align:center; padding:10px 0; }
+.pt-no-boxes { font-size:13px; color:var(--text-dim); text-align:center; padding:10px 0; }
 
 /* Assigned boxes table */
 .pt-table { width:100%; border-collapse:collapse; min-width:420px; }
 .pt-table thead th {
-    padding:7px 12px; font-size:10px; font-weight:700; letter-spacing:.6px;
+    padding:7px 12px; font-size:12px; font-weight:700; letter-spacing:.6px;
     text-transform:uppercase; color:var(--text-dim); border-bottom:1px solid var(--border); text-align:left;
 }
 .pt-table tbody tr { border-bottom:1px solid var(--border); }
 .pt-table tbody tr:last-child { border-bottom:none; }
 .pt-table tbody tr:hover { background:var(--surface2); }
-.pt-table tbody td { padding:8px 12px; font-size:12px; color:var(--text); vertical-align:middle; }
-.pt-box-code-cell { font-family:var(--mono); font-weight:700; font-size:12px; }
+.pt-table tbody td { padding:8px 12px; font-size:14px; color:var(--text); vertical-align:middle; }
+.pt-box-code-cell { font-family:var(--mono); font-weight:700; font-size:14px; }
 .pt-status-chip {
     display:inline-flex; padding:2px 7px; border-radius:5px;
-    font-size:10px; font-weight:700; text-transform:uppercase;
+    font-size:12px; font-weight:700; text-transform:uppercase;
     background:var(--green-dim); color:var(--green);
 }
 .pt-remove-btn {
-    padding:3px 9px; border-radius:5px; font-size:11px; font-weight:600;
+    padding:3px 9px; border-radius:5px; font-size:13px; font-weight:600;
     background:var(--red-dim); color:var(--red); border:none; cursor:pointer; transition:all .15s;
 }
 .pt-remove-btn:hover { background:var(--red); color:#fff; }
@@ -167,13 +167,13 @@
 /* Summary */
 .pt-summary { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
 .pt-sum-box  { text-align:center; padding:12px; background:var(--surface2); border-radius:8px; }
-.pt-sum-v    { font-size:20px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
-.pt-sum-l    { font-size:10px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); margin-top:2px; }
+.pt-sum-v    { font-size:24px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
+.pt-sum-l    { font-size:12px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); margin-top:2px; }
 
 /* Ship button */
 .pt-ship-btn {
     width:100%; padding:11px; background:var(--accent); color:#fff;
-    border:none; border-radius:9px; font-size:13px; font-weight:700;
+    border:none; border-radius:9px; font-size:16px; font-weight:700;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
     gap:8px; transition:opacity .15s;
 }
@@ -191,7 +191,7 @@
     width:100%; max-width:480px; box-shadow:0 24px 60px rgba(0,0,0,.15);
 }
 .pt-modal-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); }
-.pt-modal-head h3 { font-size:14px; font-weight:700; color:var(--text); margin:0; }
+.pt-modal-head h3 { font-size:17px; font-weight:700; color:var(--text); margin:0; }
 .pt-modal-close {
     width:28px; height:28px; border-radius:7px; background:var(--surface2);
     border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
@@ -200,15 +200,15 @@
 .pt-modal-close:hover { background:var(--border); }
 .pt-modal-body { padding:18px; display:flex; flex-direction:column; gap:14px; }
 .pt-modal-foot { display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:14px 18px; border-top:1px solid var(--border); }
-.pt-field-label { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
+.pt-field-label { font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; display:block; }
 .pt-select {
     width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:8px;
-    font-size:13px; background:var(--surface); color:var(--text); outline:none;
+    font-size:16px; background:var(--surface); color:var(--text); outline:none;
 }
 .pt-select:focus { border-color:var(--accent); }
 .pt-btn {
     display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700;
+    padding:8px 16px; border-radius:8px; font-size:14px; font-weight:700;
     cursor:pointer; border:1px solid var(--border); transition:all .15s;
 }
 .pt-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
@@ -224,7 +224,7 @@
 }
 @media(max-width:480px) {
     .pt-scan-row  { flex-direction:column; }
-    .pt-qty-input { font-size:22px; }
+    .pt-qty-input { font-size:26px; }
 }
 
 /* Responsive 2C — General Rules */
@@ -233,6 +233,68 @@
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
     .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
+}
+
+
+/* Responsive base — applied to all transfer pages */
+@media(max-width:600px) {
+    /* Cards */
+    .tl-card, .rf-card {
+        border-radius:var(--rsm, 8px);
+    }
+    /* Tables inside cards — make them scroll horizontally */
+    table {
+        display:block;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        white-space:nowrap;
+    }
+    /* Prevent text overflow on narrow screens */
+    .tl-num, .rf-prod-name, .tl-route-node {
+        max-width:140px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    /* Badges wrap instead of overflow */
+    .tl-card-meta, .tl-dates {
+        flex-wrap:wrap;
+        gap:4px;
+    }
+}
+@media(max-width:900px) {
+    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media(max-width:600px) {
+    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
+    .tl-pipeline-step { padding:10px 12px; }
+    .tl-step-num  { font-size:20px; }
+    .tl-step-sub  { display:none; }
+    .tl-card-top    { flex-direction:column; padding:0 14px; }
+    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
+    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
+    .tl-bar         { gap:4px; padding:8px 10px; }
+    .tl-chip        { padding:4px 10px; font-size:11px; }
+    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
+    .tl-search input{ width:100%; }
+    .tl-route-dash-line { width:20px; }
+    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
+    .tl-action      { flex:1; justify-content:center; }
+    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
+    .tl-page-header         { flex-direction:column; align-items:flex-start; }
+    .tl-page-header-left h1 { font-size:20px; }
+    .tl-new-btn             { width:100%; justify-content:center; }
+    .rf-row2 { grid-template-columns:1fr; }
+    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
+    .rf-prod-info   { width:100%; }
+    .rf-stock       { align-items:flex-start; }
+    .rf-add-btn     { width:100%; justify-content:center; }
+    .rf-item-top    { flex-wrap:wrap; }
+    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
+}
+@media(max-width:860px) {
+    .rf-layout { grid-template-columns:1fr; }
+    .rf-summary { position:static; }
 }
 
 </style>
@@ -270,7 +332,7 @@
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <span style="font-size:11px;color:var(--text-dim);">{{ $transfer->requested_at?->format('d M Y') }}</span>
+            <span style="font-size:13px;color:var(--text-dim);">{{ $transfer->requested_at?->format('d M Y') }}</span>
         </div>
         <div class="pt-card-body">
             <div class="pt-meta-grid">
@@ -320,7 +382,7 @@
                             <span class="pt-connected-dot"></span>
                             Phone Connected
                         </span>
-                        <span style="font-size:11px;color:var(--text-dim)">Point camera at barcodes to scan</span>
+                        <span style="font-size:13px;color:var(--text-dim)">Point camera at barcodes to scan</span>
                     </div>
                     <div style="display:flex;gap:6px">
                         <button type="button" wire:click="$toggle('showScannerQR')" class="pt-scanner-btn">Show QR</button>
@@ -328,7 +390,7 @@
                     </div>
                 </div>
                 <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
-                            display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim)">
+                            display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim)">
                     <span>Code: <strong style="font-family:var(--mono);color:var(--text)">{{ $scannerSession->session_code }}</strong></span>
                     <span>Expires {{ $scannerSession->expires_at->diffForHumans() }}</span>
                 </div>
@@ -339,7 +401,7 @@
                 <div class="pt-scanner-row">
                     <div style="display:flex;align-items:center;gap:8px">
                         <span class="pt-expired-pill">Session Expired</span>
-                        <span style="font-size:11px;color:var(--text-dim)">Your phone scanner session has expired</span>
+                        <span style="font-size:13px;color:var(--text-dim)">Your phone scanner session has expired</span>
                     </div>
                     <button type="button" wire:click="generateScannerSession" class="pt-scanner-btn primary">Reconnect Phone</button>
                 </div>
@@ -359,16 +421,16 @@
                         {!! QrCode::size(140)->generate($scannerUrl) !!}
                     </div>
                     <div>
-                        <p style="font-size:11px;font-weight:700;color:var(--text);margin:0 0 8px;">Setup steps:</p>
-                        <ol style="font-size:12px;color:var(--text-dim);margin:0;padding-left:16px;line-height:1.8">
+                        <p style="font-size:13px;font-weight:700;color:var(--text);margin:0 0 8px;">Setup steps:</p>
+                        <ol style="font-size:14px;color:var(--text-dim);margin:0;padding-left:16px;line-height:1.8">
                             <li>Open your phone camera app</li>
                             <li>Point at the QR code</li>
                             <li>Tap the notification to open the scanner</li>
                             <li>Start scanning box barcodes</li>
                         </ol>
-                        <p style="font-size:11px;color:var(--text-dim);margin:10px 0 4px;">Or go to <strong style="color:var(--text)">{{ url('/scanner') }}</strong> and enter:</p>
+                        <p style="font-size:13px;color:var(--text-dim);margin:10px 0 4px;">Or go to <strong style="color:var(--text)">{{ url('/scanner') }}</strong> and enter:</p>
                         <div class="pt-manual-code">{{ $scannerSession->session_code }}</div>
-                        <p style="font-size:11px;color:var(--text-dim);margin:8px 0 0;">Expires {{ $scannerSession->expires_at->diffForHumans() }}</p>
+                        <p style="font-size:13px;color:var(--text-dim);margin:8px 0 0;">Expires {{ $scannerSession->expires_at->diffForHumans() }}</p>
                     </div>
                 </div>
                 <div wire:poll.2s="checkForScans"></div>
@@ -392,7 +454,7 @@
             </button>
         </div>
         @error('scanInput')
-            <p style="font-size:11px;color:var(--red);margin-top:5px">{{ $message }}</p>
+            <p style="font-size:13px;color:var(--red);margin-top:5px">{{ $message }}</p>
         @enderror
     </div>
 
@@ -407,9 +469,9 @@
                     <strong style="color:var(--text)">{{ $pendingMaxQty }} box{{ $pendingMaxQty === 1 ? '' : 'es' }} still needed</strong>
                 </div>
             </div>
-            <button wire:click="closeQuantityPanel" style="background:none;border:none;font-size:18px;color:var(--text-dim);cursor:pointer;line-height:1;padding:2px 4px">×</button>
+            <button wire:click="closeQuantityPanel" style="background:none;border:none;font-size:22px;color:var(--text-dim);cursor:pointer;line-height:1;padding:2px 4px">×</button>
         </div>
-        <label style="display:block;font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">
             How many boxes to add now?
         </label>
         <input wire:model.live="pendingQty"
@@ -417,18 +479,18 @@
                type="number" min="1" max="{{ $pendingMaxQty }}"
                class="pt-qty-input">
         @error('pendingQty')
-            <div style="font-size:11px;color:var(--red);margin-top:4px">{{ $message }}</div>
+            <div style="font-size:13px;color:var(--red);margin-top:4px">{{ $message }}</div>
         @enderror
         @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
         <div class="pt-qty-hint">After adding: <strong>{{ $afterAdd }}</strong> box{{ $afterAdd === 1 ? '' : 'es' }} still needed</div>
         <div style="display:flex;gap:8px;margin-top:12px">
             <button wire:click="closeQuantityPanel"
-                    style="flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;color:var(--text)">
+                    style="flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:700;cursor:pointer;color:var(--text)">
                 Continue Scanning
             </button>
             <button wire:click="confirmScannedQuantity"
                     wire:loading.attr="disabled" wire:target="confirmScannedQuantity"
-                    style="flex:2;padding:9px;border-radius:9px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                    style="flex:2;padding:9px;border-radius:9px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer">
                 <span wire:loading.remove wire:target="confirmScannedQuantity">Add {{ $pendingQty }} Box{{ (int) $pendingQty === 1 ? '' : 'es' }}</span>
                 <span wire:loading wire:target="confirmScannedQuantity">Adding…</span>
             </button>
@@ -576,7 +638,7 @@
                 </button>
             </div>
             <div class="pt-modal-body">
-                <p style="font-size:12px;color:var(--text-dim);margin:0">
+                <p style="font-size:14px;color:var(--text-dim);margin:0">
                     You are about to ship <strong style="color:var(--text)">{{ count($assignedBoxes) }} boxes</strong>
                     to <strong style="color:var(--text)">{{ $transfer->toShop->name }}</strong>.
                 </p>
