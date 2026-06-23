@@ -528,10 +528,18 @@ class ReceiveBoxes extends Component
             $rows = $data[0];
             array_shift($rows); // Remove header
 
+            // Auto-generate a batch number for this import session
+            $sessionBatch = 'BATCH-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
+
             // Convert to associative array with ALL product columns
             $parsed = [];
             foreach ($rows as $row) {
                 if (empty(array_filter($row))) continue; // Skip empty rows
+
+                $parsedBatch = trim($row[8] ?? '');
+                if (empty($parsedBatch)) {
+                    $parsedBatch = $sessionBatch;
+                }
 
                 $parsed[] = [
                     'barcode' => trim($row[0] ?? ''),
@@ -542,7 +550,7 @@ class ReceiveBoxes extends Component
                     'box_purchase_price' => $row[5] ?? '',
                     'box_selling_price' => $row[6] ?? '',
                     'boxes' => $row[7] ?? '',
-                    'batch_number' => trim($row[8] ?? ''),
+                    'batch_number' => $parsedBatch,
                     'expiry_date' => $row[9] ?? '',
                 ];
             }

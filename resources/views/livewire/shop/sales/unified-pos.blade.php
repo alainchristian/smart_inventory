@@ -592,7 +592,14 @@
         </div>
 
         {{-- Body --}}
-        <div class="upos-sm-body">
+        <div class="upos-sm-body" x-data="{
+            qty: @entangle('stagingQty'),
+            price: @entangle('stagingPrice'),
+            origPrice: {{ $stagingMode === 'box' ? $stagingProduct['box_price'] : $stagingProduct['selling_price'] }},
+            maxQty: {{ ($stagingProduct['source'] === 'warehouse') ? ($stagingProduct['box_count'] ?? ($stagingStock['total_boxes'] ?? 9999)) : ($stagingMode === 'box' ? ($stagingStock['full_boxes'] ?? 9999) : ($stagingStock['total_items'] ?? 9999)) }},
+            get isModified() { return parseInt(this.price) !== parseInt(this.origPrice); },
+            get isOverStock() { return parseInt(this.qty) > this.maxQty; }
+        }">
 
             {{-- Stock info --}}
             <div class="upos-sm-info">
@@ -623,9 +630,12 @@
             <div class="upos-field">
                 <label class="upos-label">{{ $stagingMode === 'box' ? 'Number of Boxes' : 'Number of Items' }}</label>
                 <div class="upos-stepper">
-                    <button type="button" class="upos-stepper-btn" wire:click="decrementStagingQty">−</button>
-                    <input class="upos-stepper-val" type="number" wire:model.live="stagingQty" min="1" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                    <button type="button" class="upos-stepper-btn" wire:click="incrementStagingQty">+</button>
+                    <button type="button" class="upos-stepper-btn" @click="if(qty > 1) qty--">−</button>
+                    <input class="upos-stepper-val" type="number" x-model.number="qty" min="1" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+                    <button type="button" class="upos-stepper-btn" @click="qty++">+</button>
+                </div>
+                <div x-show="isOverStock" style="display:none; color:var(--amber); font-size:12px; margin-top:4px; font-weight:600; padding:6px 10px; background:var(--amber-dim); border-radius:var(--rsm);">
+                    Warning: Only <span x-text="maxQty"></span> {{ $stagingMode === 'box' ? 'boxes' : 'items' }} available in stock.
                 </div>
             </div>
 
@@ -634,26 +644,22 @@
                 <label class="upos-label">{{ $stagingMode === 'box' ? 'Box Price (RWF)' : 'Item Price (RWF)' }}</label>
                 @if($settingAllowPriceOverride)
                 <div class="upos-price-row">
-                    <input class="upos-input" type="number" wire:model.live="stagingPrice" min="0">
-                    @if($stagingPriceModified)
-                    <span class="upos-price-modified-badge">Modified</span>
-                    @endif
+                    <input class="upos-input" type="number" x-model.number="price" min="0">
+                    <span class="upos-price-modified-badge" x-show="isModified" style="display:none">Modified</span>
                 </div>
-                @if($stagingPriceModified)
-                <div class="upos-field" style="margin-top:6px">
+                <div class="upos-field" style="margin-top:6px" x-show="isModified" style="display:none">
                     <label class="upos-label">Reason for price change</label>
                     <input class="upos-input" type="text" wire:model="stagingPriceReason" placeholder="Required">
                 </div>
-                @endif
                 @else
-                <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);padding:9px 0">{{ number_format($stagingPrice) }} RWF</div>
+                <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);padding:9px 0" x-text="new Intl.NumberFormat().format(price) + ' RWF'"></div>
                 @endif
             </div>
 
             {{-- Line total --}}
             <div class="upos-sm-total">
                 <span class="upos-sm-total-label">Line Total</span>
-                <span class="upos-sm-total-val">{{ number_format($stagingPrice * $stagingQty) }} RWF</span>
+                <span class="upos-sm-total-val" x-text="new Intl.NumberFormat().format(price * qty) + ' RWF'"></span>
             </div>
 
         </div>{{-- end .upos-sm-body --}}

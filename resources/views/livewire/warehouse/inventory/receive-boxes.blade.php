@@ -384,7 +384,8 @@
             <div class="rb-instr-title">Import Instructions</div>
             <ol>
                 <li>Download the CSV/Excel template</li>
-                <li>Fill in: <strong>barcode, product_name, sku, category, items_per_box, box_purchase_price, box_selling_price, boxes</strong> — plus optional batch_number and expiry_date</li>
+                <li>Fill in: <strong>barcode, product_name, category, items_per_box, box_purchase_price, box_selling_price, boxes</strong></li>
+                <li><strong>Optional:</strong> sku, batch_number, and expiry_date. (The system will automatically generate an SKU and a Batch Number for you if left blank)</li>
                 <li>Upload the file — the system auto-matches existing products by barcode, then by name</li>
                 <li>Review matches, correct any unknown products, then confirm the import</li>
             </ol>

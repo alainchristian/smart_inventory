@@ -13,6 +13,33 @@ class SystemManager extends Component
     public string $activeTab = 'setup';
 
     // ── Data wipe ─────────────────────────────────────
+    public array   $selected            = [];
+    public string  $confirmText         = '';
+    public bool    $showConfirm         = false;
+    public bool    $wipeDone            = false;
+    public ?string $wipeError          = null;
+
+    // ── Group definitions (label + description for UI) ─
+    public function groups(): array
+    {
+        return [
+            'reports'      => ['label' => 'Reports & History',      'desc' => 'Saved reports, run history, annotations, view logs'],
+            'logs'         => ['label' => 'Alerts & Activity Logs', 'desc' => 'System alerts and full activity audit trail'],
+            'sessions'     => ['label' => 'Daily Sessions',         'desc' => 'Sessions, expenses, withdrawals, bank deposits'],
+            'sales'        => ['label' => 'Sales & Payments',       'desc' => 'All sale transactions and split-payment records'],
+            'returns'      => ['label' => 'Returns',                'desc' => 'Customer return records and return items'],
+            'transfers'    => ['label' => 'Transfers',              'desc' => 'Transfer orders and assigned box records'],
+            'credit'       => ['label' => 'Credit & Repayments',   'desc' => 'Repayment history and credit write-offs'],
+            'boxes'        => ['label' => 'Boxes & Stock',          'desc' => 'All boxes, movements, damaged goods, snapshots'],
+            'customers'    => ['label' => 'Customers',              'desc' => 'Customer profiles and credit accounts'],
+            'users'        => ['label' => 'Users',                  'desc' => 'All staff accounts — your account is kept'],
+            'transporters' => ['label' => 'Transporters',           'desc' => 'Delivery drivers and transport records'],
+            'products'     => ['label' => 'Products',               'desc' => 'Full product catalogue and barcodes'],
+            'categories'   => ['label' => 'Product Categories',     'desc' => 'Product category hierarchy'],
+            'locations'    => ['label' => 'Warehouses & Shops',     'desc' => 'All warehouse and shop location records'],
+        ];
+    }
+
     public function toggleAll(): void
     {
         if (count($this->selected) === count($this->groups())) {
