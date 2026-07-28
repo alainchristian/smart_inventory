@@ -28,11 +28,27 @@ new #[Layout('layouts.login')] class extends Component
 <div>
     {{-- Session status --}}
     @if (session('status'))
-        <div class="auth-status">{{ session('status') }}</div>
+        <div class="auth-status">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            {{ session('status') }}
+        </div>
     @endif
 
     <div class="form-eyebrow">Inventory System</div>
-    <h1 class="form-heading">Welcome back</h1>
+    <div class="form-heading-row">
+        <div class="form-heading-wave">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 11V6a2 2 0 00-2-2v0a2 2 0 00-2 2v0"/>
+                <path d="M14 10V4a2 2 0 00-2-2v0a2 2 0 00-2 2v2"/>
+                <path d="M10 10.5V6a2 2 0 00-2-2v0a2 2 0 00-2 2v8"/>
+                <path d="M18 8a2 2 0 114 0v6a8 8 0 01-8 8h-2c-2.8 0-4.5-.86-6.53-3.34l-4-5c-.55-.65-.42-1.62.28-2.14v0a1.6 1.6 0 012.13.2L6 13"/>
+            </svg>
+        </div>
+        <h1 class="form-heading">Welcome back</h1>
+    </div>
     <p class="form-subheading">Sign in to your account to continue</p>
 
     <form wire:submit="login" novalidate>
@@ -40,15 +56,23 @@ new #[Layout('layouts.login')] class extends Component
         {{-- Email --}}
         <div class="field-group">
             <label for="email" class="field-label">Email address</label>
-            <input wire:model="form.email"
-                   id="email"
-                   type="email"
-                   name="email"
-                   class="field-input @error('form.email') has-error @enderror"
-                   placeholder="you@example.com"
-                   required
-                   autofocus
-                   autocomplete="username">
+            <div class="field-input-wrap">
+                <span class="field-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+                        <polyline points="22 6 12 13 2 6"/>
+                    </svg>
+                </span>
+                <input wire:model="form.email"
+                       id="email"
+                       type="email"
+                       name="email"
+                       class="field-input @error('form.email') has-error @enderror"
+                       placeholder="you@example.com"
+                       required
+                       autofocus
+                       autocomplete="username">
+            </div>
             @error('form.email')
                 <div class="field-error">{{ $message }}</div>
             @enderror
@@ -58,6 +82,12 @@ new #[Layout('layouts.login')] class extends Component
         <div class="field-group">
             <label for="password" class="field-label">Password</label>
             <div class="field-input-wrap" x-data="{ showPwd: false }">
+                <span class="field-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="10" rx="2"/>
+                        <path d="M7 11V7a5 5 0 0110 0v4"/>
+                    </svg>
+                </span>
                 <input wire:model="form.password"
                        id="password"
                        :type="showPwd ? 'text' : 'password'"
@@ -106,7 +136,7 @@ new #[Layout('layouts.login')] class extends Component
         <button type="submit" class="btn-login" wire:loading.attr="disabled">
             <span wire:loading.remove wire:target="login">
                 Sign In
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="margin-left:4px">
+                <svg class="btn-arrow" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="margin-left:4px">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                 </svg>
             </span>
@@ -115,6 +145,14 @@ new #[Layout('layouts.login')] class extends Component
                 Signing in…
             </span>
         </button>
+
+        <div class="trust-note">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="10" rx="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            Your credentials are encrypted and never shared
+        </div>
 
     </form>
 
