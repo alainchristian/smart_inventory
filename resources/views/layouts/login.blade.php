@@ -19,6 +19,7 @@
 
         html, body {
             height: 100%;
+            overflow: hidden;
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #0a0f1e;
             -webkit-font-smoothing: antialiased;
@@ -26,11 +27,16 @@
 
         /* ════════════════════════════════
            ROOT — two-column grid
+           Fixed to the viewport so the page itself never scrolls;
+           each side scrolls internally only if its own content
+           can't fit (safety net for very short/narrow windows).
         ════════════════════════════════ */
         .login-root {
-            min-height: 100vh;
+            height: 100vh;
+            height: 100dvh;
             display: grid;
             grid-template-columns: 58% 42%;
+            overflow: hidden;
         }
 
         /* ════════════════════════════════
@@ -44,8 +50,11 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none;
         }
+        .brand-panel::-webkit-scrollbar { display: none; }
 
         /*
          * Gradual left-to-right overlay:
@@ -221,7 +230,11 @@
             box-shadow: -32px 0 64px rgba(8, 13, 32, 0.38);
             position: relative;
             z-index: 4;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none;
         }
+        .form-panel::-webkit-scrollbar { display: none; }
 
         .form-inner {
             width: 100%;
@@ -469,6 +482,52 @@
         @media (min-width: 769px) and (min-height: 900px) {
             .brand-content { padding-top: 64px; padding-bottom: 64px; }
             .form-panel    { padding-top: 80px; padding-bottom: 80px; }
+        }
+
+        /* ════════════════════════════════
+           SHORT VIEWPORTS — compress vertical
+           rhythm so both panels fit without
+           needing to scroll internally
+        ════════════════════════════════ */
+        @media (min-width: 769px) and (max-height: 820px) {
+            .brand-content  { padding: 28px 0 28px 40px; }
+            .brand-tagline  { margin-bottom: 22px; }
+            .brand-features { gap: 8px; margin-bottom: 22px; }
+            .brand-feature  { padding: 8px 12px; }
+            .brand-stats    { display: none; }
+            .form-panel     { padding: 28px 40px; }
+            .form-card      { padding: 26px 26px; }
+        }
+        @media (min-width: 769px) and (max-height: 680px) {
+            .brand-divider  { margin-bottom: 16px; }
+            .brand-feature .feature-desc { display: none; }
+            .brand-features { margin-bottom: 14px; }
+            .form-heading   { font-size: 22px; }
+            .field-group    { margin-bottom: 14px; }
+            .form-subheading { margin-bottom: 18px; }
+        }
+        @media (min-width: 769px) and (max-height: 560px) {
+            .brand-content   { padding: 18px 0 18px 40px; }
+            .brand-features  { display: none; }
+            .brand-divider   { margin-bottom: 14px; }
+            .form-card       { padding: 20px 24px; }
+        }
+
+        @media (max-width: 768px) and (max-height: 700px) {
+            .brand-panel    { min-height: 110px; max-height: 130px; }
+            .brand-content  { padding: 14px 20px; }
+            .brand-logo     { width: 38px; height: 38px; border-radius: 10px; }
+            .brand-tagline  { display: none; }
+            .form-panel     { padding: 18px 20px 22px; justify-content: flex-start; }
+            .form-card      { padding: 20px 18px; }
+            .form-heading   { font-size: 20px; }
+            .form-subheading{ margin-bottom: 16px; }
+            .field-group    { margin-bottom: 12px; }
+            .form-footer    { margin-top: 10px; }
+        }
+        @media (max-width: 768px) and (max-height: 520px) {
+            .brand-panel    { min-height: 0; max-height: 0; padding: 0; border: none; }
+            .brand-panel *  { display: none; }
         }
     </style>
 </head>
