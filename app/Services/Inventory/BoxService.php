@@ -29,11 +29,12 @@ class BoxService
             $warehouse = Warehouse::findOrFail($warehouseId);
 
             $boxes = [];
+            $codes = $this->generateBoxCodes($numberOfBoxes);
 
             for ($i = 0; $i < $numberOfBoxes; $i++) {
                 $box = Box::create([
                     'product_id' => $product->id,
-                    'box_code' => $this->generateBoxCode(),
+                    'box_code' => $codes[$i],
                     'supplier_barcode' => $optional['supplier_barcode'] ?? null,
                     'status' => BoxStatus::FULL,
                     'items_total' => $product->items_per_box,
@@ -72,20 +73,37 @@ class BoxService
      */
     public function generateBoxCode(): string
     {
+        return $this->generateBoxCodes(1)[0];
+    }
+
+    /**
+     * Generate a batch of unique, sequential box codes with a fixed query
+     * cost instead of a COUNT + uniqueness-check pair per code (that pattern
+     * made bulk receives/imports do 2+ DB round-trips per box).
+     * Format: BOX-YYYYMMDD-XXXXX
+     */
+    public function generateBoxCodes(int $count): array
+    {
         $date = now()->format('Ymd');
         $sequence = Box::whereDate('created_at', today())->count() + 1;
-        $paddedSequence = str_pad($sequence, 5, '0', STR_PAD_LEFT);
 
-        $code = "BOX-{$date}-{$paddedSequence}";
-
-        // Ensure uniqueness
-        while (Box::where('box_code', $code)->exists()) {
-            $sequence++;
-            $paddedSequence = str_pad($sequence, 5, '0', STR_PAD_LEFT);
-            $code = "BOX-{$date}-{$paddedSequence}";
+        $codes = [];
+        for ($i = 0; $i < $count; $i++) {
+            $codes[] = "BOX-{$date}-" . str_pad($sequence + $i, 5, '0', STR_PAD_LEFT);
         }
 
-        return $code;
+        // Ensure uniqueness in one round-trip rather than one exists() check per code
+        $collisions = Box::whereIn('box_code', $codes)->pluck('box_code')->all();
+        while (!empty($collisions)) {
+            $sequence += $count;
+            $codes = [];
+            for ($i = 0; $i < $count; $i++) {
+                $codes[] = "BOX-{$date}-" . str_pad($sequence + $i, 5, '0', STR_PAD_LEFT);
+            }
+            $collisions = Box::whereIn('box_code', $codes)->pluck('box_code')->all();
+        }
+
+        return $codes;
     }
 
     /**

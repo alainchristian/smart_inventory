@@ -19,6 +19,22 @@ class ExcelProductMatcher
         $barcodeAssociations = [];
         $errors = [];
 
+        // Preload everything once instead of querying per row (was causing
+        // up to 6 DB round-trips per row and timing out on larger imports).
+        $activeProducts = Product::where('is_active', true)->get();
+        $productsByBarcode = $activeProducts->filter(fn ($p) => !empty($p->barcode))
+            ->keyBy(fn ($p) => $p->barcode);
+        $productsByNameLower = $activeProducts->keyBy(fn ($p) => strtolower($p->name));
+
+        $productBarcodesByBarcode = ProductBarcode::where('is_active', true)
+            ->with('product')
+            ->get()
+            ->filter(fn ($pb) => $pb->product)
+            ->keyBy('barcode');
+
+        $categories = Category::all();
+        $categoriesByNameLower = $categories->keyBy(fn ($c) => strtolower($c->name));
+
         foreach ($rows as $index => $row) {
             $barcode = trim($row['barcode'] ?? '');
             $productName = trim($row['product_name'] ?? '');
@@ -62,7 +78,7 @@ class ExcelProductMatcher
             // Find category by name
             $category = null;
             if (!empty($categoryName)) {
-                $category = $this->findCategoryByName($categoryName);
+                $category = $this->findCategoryByName($categoryName, $categoriesByNameLower, $categories);
             }
 
             $rowData = [
@@ -84,7 +100,8 @@ class ExcelProductMatcher
             // STEP 1: Try to find by BARCODE
             $productByBarcode = null;
             if (!empty($barcode)) {
-                $productByBarcode = $this->findProductByBarcode($barcode);
+                $productByBarcode = $productBarcodesByBarcode->get($barcode)?->product
+                    ?? $productsByBarcode->get($barcode);
             }
 
             if ($productByBarcode) {
@@ -102,7 +119,7 @@ class ExcelProductMatcher
             // STEP 2: Try by PRODUCT NAME
             $productByName = null;
             if (!empty($productName)) {
-                $productByName = $this->findProductByName($productName);
+                $productByName = $this->findProductByName($productName, $productsByNameLower, $activeProducts);
             }
 
             if ($productByName) {
@@ -146,69 +163,45 @@ class ExcelProductMatcher
     }
 
     /**
-     * Find product by barcode
+     * Find product by name (case-insensitive, fuzzy) against a preloaded set —
+     * avoids one DB round-trip per Excel row.
      */
-    private function findProductByBarcode(string $barcode): ?Product
-    {
-        $productBarcode = ProductBarcode::where('barcode', $barcode)
-            ->where('is_active', true)
-            ->with('product')
-            ->first();
-
-        if ($productBarcode && $productBarcode->product) {
-            return $productBarcode->product;
-        }
-
-        return Product::where('barcode', $barcode)
-            ->where('is_active', true)
-            ->first();
-    }
-
-    /**
-     * Find product by name (case-insensitive, fuzzy)
-     */
-    private function findProductByName(string $name): ?Product
+    private function findProductByName(string $name, Collection $productsByNameLower, Collection $activeProducts): ?Product
     {
         if (empty($name)) {
             return null;
         }
 
         // Exact match (case-insensitive)
-        $product = Product::whereRaw('LOWER(name) = ?', [strtolower($name)])
-            ->where('is_active', true)
-            ->first();
-
+        $product = $productsByNameLower->get(strtolower($name));
         if ($product) {
             return $product;
         }
 
         // Partial match
-        $product = Product::where('name', 'like', "%{$name}%")
-            ->where('is_active', true)
-            ->first();
-
-        return $product;
+        $needle = strtolower($name);
+        return $activeProducts->first(fn ($p) => str_contains(strtolower($p->name), $needle));
     }
 
     /**
-     * Find category by name (case-insensitive)
+     * Find category by name (case-insensitive) against a preloaded set —
+     * avoids one DB round-trip per Excel row.
      */
-    private function findCategoryByName(string $name): ?Category
+    private function findCategoryByName(string $name, Collection $categoriesByNameLower, Collection $categories): ?Category
     {
         if (empty($name)) {
             return null;
         }
 
         // Exact match
-        $category = Category::whereRaw('LOWER(name) = ?', [strtolower($name)])
-            ->first();
-
+        $category = $categoriesByNameLower->get(strtolower($name));
         if ($category) {
             return $category;
         }
 
         // Partial match
-        return Category::where('name', 'like', "%{$name}%")->first();
+        $needle = strtolower($name);
+        return $categories->first(fn ($c) => str_contains(strtolower($c->name), $needle));
     }
 
     /**
