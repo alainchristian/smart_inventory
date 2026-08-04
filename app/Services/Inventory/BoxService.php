@@ -28,42 +28,51 @@ class BoxService
             $product = Product::findOrFail($productId);
             $warehouse = Warehouse::findOrFail($warehouseId);
 
-            $boxes = [];
             $codes = $this->generateBoxCodes($numberOfBoxes);
+            $now = now()->toDateTimeString();
 
-            for ($i = 0; $i < $numberOfBoxes; $i++) {
-                $box = Box::create([
-                    'product_id' => $product->id,
-                    'box_code' => $codes[$i],
-                    'supplier_barcode' => $optional['supplier_barcode'] ?? null,
-                    'status' => BoxStatus::FULL,
-                    'items_total' => $product->items_per_box,
-                    'items_remaining' => $product->items_per_box,
-                    'location_type' => LocationType::WAREHOUSE,
-                    'location_id' => $warehouse->id,
-                    'received_by' => auth()->id(),
-                    'received_at' => now(),
-                    'batch_number' => $optional['batch_number'] ?? null,
-                    'expiry_date' => $optional['expiry_date'] ?? null,
-                ]);
+            // Bulk insert instead of one Box::create() + BoxMovement::create()
+            // per box (was 2+ queries per box; large receives/imports were
+            // hitting the 30s execution limit). Box/BoxMovement have no
+            // model observers, so bypassing Eloquent events here is safe.
+            $boxRows = array_map(fn ($code) => [
+                'product_id' => $product->id,
+                'box_code' => $code,
+                'supplier_barcode' => $optional['supplier_barcode'] ?? null,
+                'status' => BoxStatus::FULL->value,
+                'items_total' => $product->items_per_box,
+                'items_remaining' => $product->items_per_box,
+                'location_type' => LocationType::WAREHOUSE->value,
+                'location_id' => $warehouse->id,
+                'received_by' => auth()->id(),
+                'received_at' => $now,
+                'batch_number' => $optional['batch_number'] ?? null,
+                'expiry_date' => $optional['expiry_date'] ?? null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ], $codes);
 
-                // Create movement record
-                BoxMovement::create([
-                    'box_id' => $box->id,
-                    'from_location_type' => null,
-                    'from_location_id' => null,
-                    'to_location_type' => LocationType::WAREHOUSE,
-                    'to_location_id' => $warehouse->id,
-                    'movement_type' => 'received',
-                    'moved_by' => auth()->id(),
-                    'moved_at' => now(),
-                    'reason' => 'Initial warehouse receipt',
-                ]);
+            Box::insert($boxRows);
 
-                $boxes[] = $box;
-            }
+            $boxes = Box::whereIn('box_code', $codes)->get()->keyBy('box_code');
 
-            return $boxes;
+            $movementRows = array_map(fn ($code) => [
+                'box_id' => $boxes[$code]->id,
+                'from_location_type' => null,
+                'from_location_id' => null,
+                'to_location_type' => LocationType::WAREHOUSE->value,
+                'to_location_id' => $warehouse->id,
+                'movement_type' => 'received',
+                'moved_by' => auth()->id(),
+                'moved_at' => $now,
+                'reason' => 'Initial warehouse receipt',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ], $codes);
+
+            BoxMovement::insert($movementRows);
+
+            return $boxes->values()->all();
         });
     }
 
