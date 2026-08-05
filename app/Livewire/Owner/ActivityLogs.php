@@ -3,8 +3,7 @@
 namespace App\Livewire\Owner;
 
 use App\Models\ActivityLog;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -12,45 +11,133 @@ class ActivityLogs extends Component
 {
     use WithPagination;
 
-    public string $search       = '';
-    public string $filterUser   = '';
-    public string $filterAction = '';
-    public string $filterEntity = '';
-    public string $dateFrom     = '';
-    public string $dateTo       = '';
+    public string $search         = '';
+    public string $filterUser     = '';
+    public string $filterAction   = '';
+    public string $filterEntity   = '';
+    public string $filterModule   = '';
+    public string $filterSeverity = '';
+    public string $filterStatus   = '';
+    public string $filterActionType = '';
+    public ?string $filterTraceId = null;
+    public string $dateFrom       = '';
+    public string $dateTo         = '';
+    public string $rangePreset    = '';
 
-    // Expand row to show full details
-    public ?int $expandedId = null;
+    public string $sortBy  = 'created_at';
+    public string $sortDir = 'desc';
+
+    public int $perPage = 25;
+
+    // Slide-over drawer
+    public ?int $selectedLogId = null;
 
     protected $queryString = [
-        'search'       => ['except' => ''],
-        'filterUser'   => ['except' => ''],
-        'filterAction' => ['except' => ''],
-        'filterEntity' => ['except' => ''],
-        'dateFrom'     => ['except' => ''],
-        'dateTo'       => ['except' => ''],
+        'search'           => ['except' => ''],
+        'filterUser'       => ['except' => ''],
+        'filterAction'     => ['except' => ''],
+        'filterEntity'     => ['except' => ''],
+        'filterModule'     => ['except' => ''],
+        'filterSeverity'   => ['except' => ''],
+        'filterStatus'     => ['except' => ''],
+        'filterActionType' => ['except' => ''],
+        'dateFrom'         => ['except' => ''],
+        'dateTo'           => ['except' => ''],
+        'sortBy'           => ['except' => 'created_at'],
+        'sortDir'          => ['except' => 'desc'],
     ];
 
-    public function updatedSearch(): void    { $this->resetPage(); }
-    public function updatedFilterUser(): void   { $this->resetPage(); }
-    public function updatedFilterAction(): void { $this->resetPage(); }
-    public function updatedFilterEntity(): void { $this->resetPage(); }
-    public function updatedDateFrom(): void { $this->resetPage(); }
-    public function updatedDateTo(): void   { $this->resetPage(); }
+    public function updatedSearch(): void         { $this->resetPage(); }
+    public function updatedFilterUser(): void     { $this->resetPage(); }
+    public function updatedFilterAction(): void   { $this->resetPage(); }
+    public function updatedFilterEntity(): void   { $this->resetPage(); }
+    public function updatedFilterModule(): void   { $this->resetPage(); }
+    public function updatedFilterSeverity(): void { $this->resetPage(); }
+    public function updatedFilterStatus(): void   { $this->resetPage(); }
+    public function updatedFilterActionType(): void { $this->resetPage(); }
+    public function updatedPerPage(): void        { $this->resetPage(); }
 
-    public function toggleExpand(int $id): void
+    public function updatedDateFrom(): void
     {
-        $this->expandedId = ($this->expandedId === $id) ? null : $id;
+        $this->rangePreset = '';
+        $this->resetPage();
+    }
+
+    public function updatedDateTo(): void
+    {
+        $this->rangePreset = '';
+        $this->resetPage();
+    }
+
+    /**
+     * "24h" maps to the current calendar day rather than a rolling 24-hour
+     * window — the date pickers this row of buttons sits above are day-only
+     * (<input type="date">), so keeping the same granularity keeps the quick
+     * buttons and manual pickers visually consistent instead of half-broken.
+     */
+    public function setRangePreset(string $preset): void
+    {
+        $this->rangePreset = $preset;
+
+        [$this->dateFrom, $this->dateTo] = match ($preset) {
+            '24h' => [today()->toDateString(), today()->toDateString()],
+            '7d'  => [today()->subDays(6)->toDateString(), today()->toDateString()],
+            '30d' => [today()->subDays(29)->toDateString(), today()->toDateString()],
+            default => [$this->dateFrom, $this->dateTo],
+        };
+
+        $this->resetPage();
+    }
+
+    public function sortByColumn(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDir = 'asc';
+        }
+
+        $this->resetPage();
+    }
+
+    public function openDrawer(int $id): void
+    {
+        $this->selectedLogId = $id;
+    }
+
+    public function closeDrawer(): void
+    {
+        $this->selectedLogId = null;
+    }
+
+    public function viewRelated(string $traceId): void
+    {
+        $this->filterTraceId = $traceId;
+        $this->selectedLogId = null;
+        $this->resetPage();
+    }
+
+    public function clearTraceFilter(): void
+    {
+        $this->filterTraceId = null;
+        $this->resetPage();
     }
 
     public function clearFilters(): void
     {
-        $this->search       = '';
-        $this->filterUser   = '';
-        $this->filterAction = '';
-        $this->filterEntity = '';
-        $this->dateFrom     = '';
-        $this->dateTo       = '';
+        $this->search           = '';
+        $this->filterUser       = '';
+        $this->filterAction     = '';
+        $this->filterEntity     = '';
+        $this->filterModule     = '';
+        $this->filterSeverity   = '';
+        $this->filterStatus     = '';
+        $this->filterActionType = '';
+        $this->filterTraceId    = null;
+        $this->dateFrom         = '';
+        $this->dateTo           = '';
+        $this->rangePreset      = '';
         $this->resetPage();
     }
 
@@ -206,6 +293,40 @@ class ActivityLogs extends Component
         return implode(' · ', $parts);
     }
 
+    /**
+     * Coarse action-type bucket. Only the actions written by the new
+     * AuditLogger/Auditable path map cleanly onto create/update/delete/auth/
+     * access — the 19 files with pre-existing curated business actions
+     * (transfer_approved, sale_voided, etc.) don't fit that vocabulary, so
+     * they fall into a catch-all "action" bucket rather than being
+     * mislabeled as a generic CRUD verb they aren't.
+     */
+    public function actionTypeOf(string $action): array
+    {
+        $action = strtolower($action);
+
+        return match (true) {
+            in_array($action, ['signed_in', 'signed_out', 'login', 'logout', 'failed_login', 'login_failed', 'lockout']) => ['value' => 'auth', 'label' => 'Auth'],
+            $action === 'permission_denied' => ['value' => 'access', 'label' => 'Access'],
+            $action === 'created' => ['value' => 'create', 'label' => 'Create'],
+            $action === 'updated' => ['value' => 'update', 'label' => 'Update'],
+            $action === 'deleted' => ['value' => 'delete', 'label' => 'Delete'],
+            default => ['value' => 'action', 'label' => 'Business Action'],
+        };
+    }
+
+    public static function actionTypeOptions(): array
+    {
+        return [
+            ['value' => 'create', 'label' => 'Create'],
+            ['value' => 'update', 'label' => 'Update'],
+            ['value' => 'delete', 'label' => 'Delete'],
+            ['value' => 'auth', 'label' => 'Auth'],
+            ['value' => 'access', 'label' => 'Access'],
+            ['value' => 'action', 'label' => 'Business Action'],
+        ];
+    }
+
     // ── Distinct filter options ──────────────────────────────────────────────
 
     public function getDistinctActionsProperty(): array
@@ -231,6 +352,16 @@ class ActivityLogs extends Component
             ->toArray();
     }
 
+    public function getDistinctModulesProperty(): array
+    {
+        return ActivityLog::selectRaw('COALESCE(module, entity_type) as module_val')
+            ->whereRaw('COALESCE(module, entity_type) IS NOT NULL')
+            ->distinct()
+            ->orderBy('module_val')
+            ->pluck('module_val')
+            ->toArray();
+    }
+
     public function getDistinctUsersProperty(): array
     {
         return ActivityLog::select('user_id', 'user_name')
@@ -250,13 +381,37 @@ class ActivityLogs extends Component
             || $this->filterUser !== ''
             || $this->filterAction !== ''
             || $this->filterEntity !== ''
+            || $this->filterModule !== ''
+            || $this->filterSeverity !== ''
+            || $this->filterStatus !== ''
+            || $this->filterActionType !== ''
+            || $this->filterTraceId !== null
             || $this->dateFrom !== ''
             || $this->dateTo !== '';
     }
 
-    public function render()
+    public function getSelectedLogProperty(): ?ActivityLog
     {
-        $query = ActivityLog::query()->orderByDesc('created_at');
+        return $this->selectedLogId ? ActivityLog::find($this->selectedLogId) : null;
+    }
+
+    public function getRelatedLogsProperty(): \Illuminate\Support\Collection
+    {
+        if (!$this->selectedLog?->trace_id) {
+            return collect();
+        }
+
+        return ActivityLog::where('trace_id', $this->selectedLog->trace_id)
+            ->where('id', '!=', $this->selectedLog->id)
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    // ── Query building (shared by render() and exportCsv()) ──────────────────
+
+    private function buildQuery(): Builder
+    {
+        $query = ActivityLog::query();
 
         if ($this->search !== '') {
             $query->where(function ($q) {
@@ -274,14 +429,65 @@ class ActivityLogs extends Component
         if ($this->filterEntity !== '') {
             $query->where('entity_type', $this->filterEntity);
         }
+        if ($this->filterModule !== '') {
+            $query->whereRaw('COALESCE(module, entity_type) = ?', [$this->filterModule]);
+        }
+        if ($this->filterSeverity !== '') {
+            $query->where('severity', $this->filterSeverity);
+        }
+        if ($this->filterStatus !== '') {
+            $query->where('status', $this->filterStatus);
+        }
+        if ($this->filterActionType !== '') {
+            $actions = collect($this->getDistinctActionsProperty())
+                ->pluck('value')
+                ->filter(fn ($a) => $this->actionTypeOf($a)['value'] === $this->filterActionType)
+                ->values()
+                ->all();
+            $query->whereIn('action', $actions);
+        }
+        if ($this->filterTraceId !== null) {
+            $query->where('trace_id', $this->filterTraceId);
+        }
         if ($this->dateFrom !== '') {
-            $query->whereDate('created_at', '>=', $this->dateFrom);
+            $query->where('created_at', '>=', $this->dateFrom);
         }
         if ($this->dateTo !== '') {
-            $query->whereDate('created_at', '<=', $this->dateTo);
+            $query->where('created_at', '<=', $this->dateTo . ' 23:59:59');
         }
 
-        $logs = $query->paginate(50);
+        return $query->orderBy($this->sortBy, $this->sortDir);
+    }
+
+    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $rows = $this->buildQuery()->get();
+
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Time', 'User', 'Action', 'Module', 'Entity Type', 'Reference', 'Status', 'Severity', 'IP Address']);
+
+            foreach ($rows as $row) {
+                fputcsv($out, [
+                    $row->created_at->format('Y-m-d H:i:s'),
+                    $row->user_name ?? 'System',
+                    $row->action,
+                    $row->module ?? $row->entity_type,
+                    $row->entity_type,
+                    $row->entity_identifier,
+                    $row->status,
+                    $row->severity,
+                    $row->ip_address,
+                ]);
+            }
+
+            fclose($out);
+        }, 'activity-log-' . now()->format('Ymd-His') . '.csv');
+    }
+
+    public function render()
+    {
+        $logs = $this->buildQuery()->paginate($this->perPage);
 
         return view('livewire.owner.activity-logs', ['logs' => $logs]);
     }
