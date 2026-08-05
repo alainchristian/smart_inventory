@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
+    use LogsActivity;
+
     protected $fillable = ['key', 'value', 'type', 'group', 'label', 'description'];
 
     public function getTypedValue(): mixed
@@ -16,5 +19,10 @@ class Setting extends Model
             'json'    => json_decode($this->value, true) ?? [],
             default   => $this->value,
         };
+    }
+
+    protected function activityLogIdentifier(): ?string
+    {
+        return $this->label ?: $this->key;
     }
 }

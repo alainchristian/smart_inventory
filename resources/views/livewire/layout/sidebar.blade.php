@@ -271,6 +271,18 @@
                     <span class="text-[14px] font-medium">Users</span>
                 </a>
 
+                <a href="{{ route('owner.activity-logs.index') }}" wire:navigate
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                          {{ request()->routeIs('owner.activity-logs.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                    @if(request()->routeIs('owner.activity-logs.*'))
+                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                    @endif
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="text-[14px] font-medium">Activity Log</span>
+                </a>
+
                 <a href="{{ route('owner.settings') }}" wire:navigate
                    class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all relative
                           {{ request()->routeIs('owner.settings') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">

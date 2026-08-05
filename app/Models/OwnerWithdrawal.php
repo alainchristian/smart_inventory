@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OwnerWithdrawal extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'daily_session_id',
@@ -50,5 +51,10 @@ class OwnerWithdrawal extends Model
     public function isMobileMoney(): bool
     {
         return $this->method === 'mobile_money';
+    }
+
+    protected function activityLogIdentifier(): ?string
+    {
+        return number_format($this->amount) . ' RWF' . ($this->reason ? ' – ' . $this->reason : '');
     }
 }

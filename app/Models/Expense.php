@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Expense extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'daily_session_id',
@@ -55,5 +56,10 @@ class Expense extends Model
     public function canBeVoided(): bool
     {
         return ! $this->is_system_generated && $this->deleted_at === null;
+    }
+
+    protected function activityLogIdentifier(): ?string
+    {
+        return number_format($this->amount) . ' RWF' . ($this->description ? ' – ' . $this->description : '');
     }
 }

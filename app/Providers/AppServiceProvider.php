@@ -2,7 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\ActivityLog;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -41,5 +46,48 @@ class AppServiceProvider extends ServiceProvider
         if (request()->header('X-Forwarded-Proto') === 'https') {
             URL::forceScheme('https');
         }
+
+        Event::listen(Login::class, function (Login $event) {
+            ActivityLog::create([
+                'user_id'           => $event->user->id,
+                'user_name'         => $event->user->name,
+                'action'            => 'login',
+                'entity_type'       => 'User',
+                'entity_id'         => $event->user->id,
+                'entity_identifier' => $event->user->email,
+                'ip_address'        => request()->ip(),
+                'user_agent'        => request()->userAgent(),
+            ]);
+        });
+
+        Event::listen(Logout::class, function (Logout $event) {
+            if (!$event->user) {
+                return;
+            }
+
+            ActivityLog::create([
+                'user_id'           => $event->user->id,
+                'user_name'         => $event->user->name,
+                'action'            => 'logout',
+                'entity_type'       => 'User',
+                'entity_id'         => $event->user->id,
+                'entity_identifier' => $event->user->email,
+                'ip_address'        => request()->ip(),
+                'user_agent'        => request()->userAgent(),
+            ]);
+        });
+
+        Event::listen(Failed::class, function (Failed $event) {
+            ActivityLog::create([
+                'user_id'           => $event->user?->id,
+                'user_name'         => $event->user?->name ?? ($event->credentials['email'] ?? 'Unknown'),
+                'action'            => 'login_failed',
+                'entity_type'       => 'User',
+                'entity_id'         => $event->user?->id,
+                'entity_identifier' => $event->credentials['email'] ?? null,
+                'ip_address'        => request()->ip(),
+                'user_agent'        => request()->userAgent(),
+            ]);
+        });
     }
 }

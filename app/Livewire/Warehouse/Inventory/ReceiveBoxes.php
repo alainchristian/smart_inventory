@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Warehouse\Inventory;
 
+use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductBarcode;
@@ -442,6 +443,21 @@ class ReceiveBoxes extends Component
                 $this->recentBoxes = array_merge($boxes, array_slice($this->recentBoxes, 0, 20));
                 $this->sessionTotal += count($boxes);
             });
+
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()->name,
+                'action'            => 'stock_received',
+                'entity_type'       => 'Box',
+                'entity_identifier' => $this->productName,
+                'details'           => [
+                    'warehouse_name'  => Warehouse::find($this->warehouseId)?->name,
+                    'box_count'       => $this->numberOfBoxes,
+                    'is_new_product'  => $this->isNewProduct,
+                ],
+                'ip_address'        => request()->ip(),
+                'user_agent'        => request()->userAgent(),
+            ]);
 
             $message = "✓ ";
             if ($this->isNewProduct) {
@@ -933,6 +949,24 @@ class ReceiveBoxes extends Component
             $this->sessionTotal += count($created);
 
             $barcodesAssociated = count($this->excelBarcodeAssociations);
+            $warehouseName = Warehouse::find($this->warehouseId)?->name;
+
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()->name,
+                'action'            => 'stock_imported',
+                'entity_type'       => 'Box',
+                'entity_identifier' => $warehouseName,
+                'details'           => [
+                    'warehouse_name'      => $warehouseName,
+                    'box_count'           => count($created),
+                    'products_created'    => $productsCreated,
+                    'products_updated'    => $productsUpdated,
+                    'barcodes_associated' => $barcodesAssociated,
+                ],
+                'ip_address'        => request()->ip(),
+                'user_agent'        => request()->userAgent(),
+            ]);
 
             $message = "✓ Imported " . count($created) . " boxes";
             if ($productsCreated > 0) {

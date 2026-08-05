@@ -109,6 +109,12 @@ class ActivityLogs extends Component
         if (str_contains($action, 'box_received') || ($action === 'created' && $entity === 'box')) {
             return ['label' => 'Box received', 'icon' => 'box', 'color' => 'blue'];
         }
+        if ($action === 'stock_received') {
+            return ['label' => 'Stock received', 'icon' => 'box', 'color' => 'blue'];
+        }
+        if ($action === 'stock_imported') {
+            return ['label' => 'Stock imported', 'icon' => 'box', 'color' => 'blue'];
+        }
         if (str_contains($action, 'box_damaged') || str_contains($action, 'damaged')) {
             return ['label' => 'Box damaged', 'icon' => 'warning', 'color' => 'red'];
         }
@@ -124,17 +130,20 @@ class ActivityLogs extends Component
         if (str_contains($action, 'repayment') || str_contains($action, 'credit_repayment')) {
             return ['label' => 'Credit repayment', 'icon' => 'sale', 'color' => 'green'];
         }
-        if (str_contains($action, 'product') || $entity === 'product') {
-            return ['label' => 'Product updated', 'icon' => 'product', 'color' => 'blue'];
-        }
         if (str_contains($action, 'user') && str_contains($action, 'created')) {
             return ['label' => 'User created', 'icon' => 'user', 'color' => 'blue'];
         }
         if (str_contains($action, 'user')) {
             return ['label' => 'User updated', 'icon' => 'user', 'color' => 'default'];
         }
-        if (str_contains($action, 'login') || str_contains($action, 'logout')) {
-            return ['label' => ucfirst($action), 'icon' => 'user', 'color' => 'default'];
+        if ($action === 'login') {
+            return ['label' => 'Signed in', 'icon' => 'user', 'color' => 'default'];
+        }
+        if ($action === 'logout') {
+            return ['label' => 'Signed out', 'icon' => 'user', 'color' => 'default'];
+        }
+        if ($action === 'login_failed') {
+            return ['label' => 'Failed sign-in attempt', 'icon' => 'warning', 'color' => 'red'];
         }
         if ($action === 'created') {
             return ['label' => ucfirst($entity ?: 'Record') . ' created', 'icon' => 'default', 'color' => 'blue'];
