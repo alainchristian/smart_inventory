@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Concerns\LogsActivity;
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    use LogsActivity;
+    use Auditable;
 
     protected $fillable = ['key', 'value', 'type', 'group', 'label', 'description'];
 
@@ -21,7 +21,7 @@ class Setting extends Model
         };
     }
 
-    protected function activityLogIdentifier(): ?string
+    public function activityLogIdentifier(): ?string
     {
         return $this->label ?: $this->key;
     }

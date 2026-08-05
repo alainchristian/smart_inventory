@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use App\Models\ActivityLog;
+use App\Services\AuditLogger;
 use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -48,15 +49,13 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Event::listen(Login::class, function (Login $event) {
-            ActivityLog::create([
-                'user_id'           => $event->user->id,
-                'user_name'         => $event->user->name,
-                'action'            => 'login',
+            AuditLogger::log([
+                'actor'             => $event->user,
+                'action'            => 'signed_in',
+                'module'            => 'auth',
                 'entity_type'       => 'User',
                 'entity_id'         => $event->user->id,
                 'entity_identifier' => $event->user->email,
-                'ip_address'        => request()->ip(),
-                'user_agent'        => request()->userAgent(),
             ]);
         });
 
@@ -65,28 +64,38 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            ActivityLog::create([
-                'user_id'           => $event->user->id,
-                'user_name'         => $event->user->name,
-                'action'            => 'logout',
+            AuditLogger::log([
+                'actor'             => $event->user,
+                'action'            => 'signed_out',
+                'module'            => 'auth',
                 'entity_type'       => 'User',
                 'entity_id'         => $event->user->id,
                 'entity_identifier' => $event->user->email,
-                'ip_address'        => request()->ip(),
-                'user_agent'        => request()->userAgent(),
             ]);
         });
 
         Event::listen(Failed::class, function (Failed $event) {
-            ActivityLog::create([
-                'user_id'           => $event->user?->id,
-                'user_name'         => $event->user?->name ?? ($event->credentials['email'] ?? 'Unknown'),
-                'action'            => 'login_failed',
+            AuditLogger::log([
+                'actor'             => $event->user,
+                'actor_name'        => $event->user?->name ?? ($event->credentials['email'] ?? 'Unknown'),
+                'action'            => 'failed_login',
+                'module'            => 'auth',
                 'entity_type'       => 'User',
                 'entity_id'         => $event->user?->id,
                 'entity_identifier' => $event->credentials['email'] ?? null,
-                'ip_address'        => request()->ip(),
-                'user_agent'        => request()->userAgent(),
+                'status'            => 'failed',
+                'severity'          => 'warning',
+            ]);
+        });
+
+        Event::listen(Lockout::class, function (Lockout $event) {
+            AuditLogger::log([
+                'action'            => 'lockout',
+                'module'            => 'auth',
+                'entity_type'       => 'User',
+                'entity_identifier' => $event->request->input('email'),
+                'status'            => 'failed',
+                'severity'          => 'critical',
             ]);
         });
     }

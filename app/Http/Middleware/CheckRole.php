@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\AuditLogger;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,6 +42,17 @@ class CheckRole
                 return $next($request);
             }
         }
+
+        AuditLogger::log([
+            'actor'             => $user,
+            'action'            => 'permission_denied',
+            'module'            => 'auth',
+            'entity_type'       => 'Route',
+            'entity_identifier' => $request->path(),
+            'details'           => ['required_roles' => $roles, 'user_role' => $user->role->value],
+            'status'            => 'failed',
+            'severity'          => 'warning',
+        ]);
 
         abort(403, 'Unauthorized.');
     }

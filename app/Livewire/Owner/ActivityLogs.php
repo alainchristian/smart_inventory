@@ -136,14 +136,20 @@ class ActivityLogs extends Component
         if (str_contains($action, 'user')) {
             return ['label' => 'User updated', 'icon' => 'user', 'color' => 'default'];
         }
-        if ($action === 'login') {
+        if ($action === 'login' || $action === 'signed_in') {
             return ['label' => 'Signed in', 'icon' => 'user', 'color' => 'default'];
         }
-        if ($action === 'logout') {
+        if ($action === 'logout' || $action === 'signed_out') {
             return ['label' => 'Signed out', 'icon' => 'user', 'color' => 'default'];
         }
-        if ($action === 'login_failed') {
+        if ($action === 'login_failed' || $action === 'failed_login') {
             return ['label' => 'Failed sign-in attempt', 'icon' => 'warning', 'color' => 'red'];
+        }
+        if ($action === 'lockout') {
+            return ['label' => 'Account locked out', 'icon' => 'warning', 'color' => 'red'];
+        }
+        if ($action === 'permission_denied') {
+            return ['label' => 'Permission denied', 'icon' => 'warning', 'color' => 'red'];
         }
         if ($action === 'created') {
             return ['label' => ucfirst($entity ?: 'Record') . ' created', 'icon' => 'default', 'color' => 'blue'];

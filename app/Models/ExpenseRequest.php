@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Concerns\LogsActivity;
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class ExpenseRequest extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'reference_number',
@@ -85,7 +85,7 @@ class ExpenseRequest extends Model
         return 'EXPR-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
     }
 
-    protected function activityLogIdentifier(): ?string
+    public function activityLogIdentifier(): ?string
     {
         return $this->reference_number;
     }

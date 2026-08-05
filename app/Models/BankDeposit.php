@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Concerns\LogsActivity;
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BankDeposit extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity;
+    use HasFactory, SoftDeletes, Auditable;
 
     protected $fillable = [
         'daily_session_id',
@@ -43,7 +43,7 @@ class BankDeposit extends Model
         return $this->belongsTo(User::class, 'deposited_by');
     }
 
-    protected function activityLogIdentifier(): ?string
+    public function activityLogIdentifier(): ?string
     {
         return number_format($this->amount) . ' RWF' . ($this->bank_reference ? ' – ' . $this->bank_reference : '');
     }
