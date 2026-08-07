@@ -180,17 +180,17 @@ class UnifiedPos extends Component
     {
         $user = auth()->user();
 
-        if (!$user->isShopManager() && !$user->isOwner()) {
-            abort(403, 'Access denied. Shop managers and owners only.');
+        if (!$user->isShopManager() && !$user->isSuperUser()) {
+            abort(403, 'Access denied. Shop managers, owners, and admins only.');
         }
 
-        $this->isOwner = $user->isOwner();
+        $this->isOwner = $user->isSuperUser();
 
         if ($user->isShopManager()) {
             $this->shopId = $user->location_id;
         }
 
-        if ($user->isOwner()) {
+        if ($user->isSuperUser()) {
             $this->availableShops = Shop::orderBy('name')->get()->toArray();
             $this->shopId = request()->get('shop_id') ?? session('selected_shop_id');
 
@@ -1058,6 +1058,11 @@ class UnifiedPos extends Component
 
         if (empty($this->cart)) {
             $this->dispatch('notification', ['type' => 'error', 'message' => 'Cart is empty']);
+            return;
+        }
+
+        if (!$this->selectedCustomerId) {
+            $this->dispatch('notification', ['type' => 'error', 'message' => 'Please select or register a customer before completing the sale']);
             return;
         }
 

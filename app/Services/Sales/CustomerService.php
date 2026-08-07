@@ -17,7 +17,7 @@ class CustomerService
     /**
      * Create a new customer record.
      */
-    public function create(array $data, int $shopId): Customer
+    public function create(array $data, ?int $shopId = null): Customer
     {
         return Customer::create([
             'name'          => $data['name'],

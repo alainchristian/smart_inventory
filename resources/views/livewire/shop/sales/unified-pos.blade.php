@@ -730,7 +730,7 @@
 
                 {{-- Customer --}}
                 <div>
-                    <div class="upos-co-section-title">Customer (Optional)</div>
+                    <div class="upos-co-section-title">Customer <span style="color:var(--red)">*</span></div>
                     @if($selectedCustomerId)
                         <div class="upos-customer-selected">
                             <div>
@@ -901,9 +901,14 @@
                 </div>
 
                 {{-- Complete button --}}
-                <button class="upos-co-complete" @click="complete()" :disabled="remain !== 0 || cash < 0">
+                <button class="upos-co-complete" @click="complete()" :disabled="remain !== 0 || cash < 0 || {{ $selectedCustomerId ? 'false' : 'true' }}">
                     Complete Sale
                 </button>
+                @if(!$selectedCustomerId)
+                <div style="font-size:11px;color:var(--amber);text-align:center;margin-top:4px">
+                    Select or register a customer to continue
+                </div>
+                @endif
 
                 @php $hasPriceOverride = collect($cart)->contains(fn($i) => !empty($i['price_modified'])); @endphp
                 @if($hasPriceOverride)

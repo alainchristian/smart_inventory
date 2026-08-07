@@ -71,6 +71,11 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         })->name('edit');
     });
 
+    // Customers (owner/admin registration & management)
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/', function () { return view('owner.customers.index'); })->name('index');
+    });
+
     // Categories
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/', function () { return view('owner.categories.index'); })->name('index');
