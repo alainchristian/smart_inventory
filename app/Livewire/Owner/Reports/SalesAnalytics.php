@@ -55,6 +55,71 @@ class SalesAnalytics extends Component
         $this->activeTab = $tab;
     }
 
+    // ─── Export ───────────────────────────────────────────────────────────────
+    public function exportLedgerCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $csv = $this->buildCsv('Product Sales Ledger', $this->topProducts, [
+            'product_name'      => 'Product',
+            'quantity_sold'     => 'Units',
+            'transaction_count' => 'Transactions',
+            'avg_selling_price' => 'Avg Price (RWF)',
+            'revenue'           => 'Revenue (RWF)',
+            'gross_profit'      => 'Gross Profit (RWF)',
+            'margin_pct'        => 'Margin %',
+            'credit_revenue'    => 'Credit Sales (RWF)',
+        ]);
+
+        return $this->streamCsv($csv, 'sales-ledger');
+    }
+
+    public function exportSellersCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $csv = $this->buildCsv('Seller Performance', $this->sellerPerformance, [
+            'seller_name'  => 'Seller',
+            'shop_name'    => 'Shop',
+            'transactions' => 'Transactions',
+            'revenue'      => 'Revenue (RWF)',
+            'avg_order'    => 'Avg Order (RWF)',
+            'items_sold'   => 'Items Sold',
+            'gross_profit' => 'Gross Profit (RWF)',
+            'margin_pct'   => 'Margin %',
+            'total_discount' => 'Discounts (RWF)',
+            'override_count' => 'Overrides',
+            'void_count'   => 'Voided',
+        ]);
+
+        return $this->streamCsv($csv, 'seller-performance');
+    }
+
+    /** @param array<string,string> $columns map of data key => CSV header label */
+    private function buildCsv(string $title, array $rows, array $columns): string
+    {
+        $lines   = [];
+        $lines[] = '"' . $title . '"';
+        $lines[] = '"Period: ' . $this->dateFrom . ' to ' . $this->dateTo . '"';
+        $lines[] = '"Generated: ' . now()->format('d M Y H:i') . '"';
+        $lines[] = '';
+        $lines[] = implode(',', array_map(fn ($label) => '"' . $label . '"', array_values($columns)));
+
+        foreach ($rows as $row) {
+            $lines[] = implode(',', array_map(
+                fn ($key) => '"' . str_replace('"', '""', (string) ($row[$key] ?? '')) . '"',
+                array_keys($columns)
+            ));
+        }
+
+        return implode("\r\n", $lines);
+    }
+
+    private function streamCsv(string $csv, string $slug): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        return response()->streamDownload(function () use ($csv) {
+            echo $csv;
+        }, $slug . '-' . now()->format('Y-m-d') . '.csv', [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
     // ─── Actions ──────────────────────────────────────────────────────────────
     public function approvePriceOverride(int $saleId): void
     {
@@ -178,6 +243,12 @@ class SalesAnalytics extends Component
     {
         return app(SalesAnalyticsService::class)
             ->getRevenueTrend($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    public function getRecentTransactionsProperty(): array
+    {
+        return app(SalesAnalyticsService::class)
+            ->getRecentTransactions($this->dateFrom, $this->dateTo, $this->locationFilter);
     }
 
     public function getPaymentMethodsProperty(): array

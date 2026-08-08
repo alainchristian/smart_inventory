@@ -21,6 +21,10 @@
 .sa-preset:hover  { background:var(--surface2);color:var(--text);border-color:var(--border) }
 .sa-preset.active { background:var(--accent);color:#fff;border-color:var(--accent);
                     box-shadow:0 2px 8px var(--accent-glow) }
+.sa-export-btn { display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:7px;
+                 border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:600;
+                 cursor:pointer;font-family:var(--font);color:var(--text-sub);transition:all var(--tr) }
+.sa-export-btn:hover { border-color:var(--accent);color:var(--accent) }
 .sa-controls { display:flex;align-items:center;gap:0;flex-wrap:wrap }
 .sa-ctrl-seg { display:flex;align-items:center;gap:8px;padding:10px 16px;
                border-right:1px solid var(--border);flex-shrink:0 }
@@ -369,7 +373,11 @@
                 <div class="sa-kpi-sub">{{ number_format($rev['transactions_count']) }} transactions</div>
             </div>
             @php $rg = $rev['growth_percentage'] @endphp
+            @if($rg === null)
+            <span class="sa-growth neutral">New</span>
+            @else
             <span class="sa-growth {{ $rg >= 0 ? 'up' : 'down' }}">{{ $rg >= 0 ? '↑' : '↓' }} {{ abs($rg) }}%</span>
+            @endif
         </div>
         <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($rev['total_revenue']) }}</div>
         <div class="sa-kpi-divider"></div>
@@ -402,7 +410,11 @@
                 <div class="sa-kpi-sub">After cost of goods</div>
             </div>
             @php $gg = $gp['gross_profit_growth'] @endphp
+            @if($gg === null)
+            <span class="sa-growth neutral">New</span>
+            @else
             <span class="sa-growth {{ $gg >= 0 ? 'up' : 'down' }}">{{ $gg >= 0 ? '↑' : '↓' }} {{ abs($gg) }}%</span>
+            @endif
         </div>
         <div class="sa-kpi-val" style="color:var(--green)">{{ number_format($gp['gross_profit']) }}</div>
         <div class="sa-kpi-bar" style="background:var(--green-dim)">
@@ -439,7 +451,11 @@
                 <div class="sa-kpi-sub">Units in period</div>
             </div>
             @php $ig = $iss['growth'] @endphp
+            @if($ig === null)
+            <span class="sa-growth neutral">New</span>
+            @else
             <span class="sa-growth {{ $ig >= 0 ? 'up' : 'down' }}">{{ $ig >= 0 ? '↑' : '↓' }} {{ abs($ig) }}%</span>
+            @endif
         </div>
         <div class="sa-kpi-val" style="color:var(--violet)">{{ number_format($iss['items_sold']) }}</div>
         <div class="sa-kpi-divider"></div>
@@ -567,7 +583,8 @@
              style="min-height:240px"
              data-dates='@json(array_column($trend, "date"))'
              data-revenues='@json(array_column($trend, "revenue"))'
-             data-transactions='@json(array_column($trend, "transactions"))'></div>
+             data-transactions='@json(array_column($trend, "transactions"))'
+             data-prev-revenues='@json(array_column($trend, "prev_revenue"))'></div>
     </div>
 </div>
 @endif
@@ -689,6 +706,56 @@
     </div>
 </div>
 
+{{-- ── Recent Transactions ──────────────────────────────────────────────── --}}
+@php $recentTxns = $this->recentTransactions @endphp
+<div class="sa-tbl-wrap" style="margin-bottom:20px">
+    <div class="sa-card-head">
+        <div>
+            <div class="sa-card-title">Recent Transactions</div>
+            <div class="sa-card-sub">Latest sales in this period · {{ $this->activeDateRangeLabel }}</div>
+        </div>
+        <span class="sa-card-badge">{{ count($recentTxns) }} shown</span>
+    </div>
+    <div class="sa-tbl-scroll">
+        <table class="sa-tbl" style="min-width:760px;table-layout:fixed">
+            <thead>
+                <tr>
+                    <th>Sale #</th>
+                    <th>Date</th>
+                    <th>Shop</th>
+                    <th>Sold By</th>
+                    <th>Customer</th>
+                    <th style="text-align:right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recentTxns as $txn)
+                <tr>
+                    <td>
+                        <a href="{{ route('owner.sales.show', $txn['id']) }}"
+                           style="font-family:var(--mono);font-weight:700;color:var(--accent);text-decoration:none">
+                            {{ $txn['sale_number'] }}
+                        </a>
+                    </td>
+                    <td style="color:var(--text-sub);font-size:12px">{{ \Carbon\Carbon::parse($txn['sale_date'])->format('d M · H:i') }}</td>
+                    <td style="color:var(--text-sub);font-size:12px">{{ $txn['shop_name'] }}</td>
+                    <td style="color:var(--text-sub);font-size:12px">{{ $txn['seller_name'] }}</td>
+                    <td style="color:var(--text-sub);font-size:12px">
+                        {{ $txn['customer'] ?? '—' }}
+                        @if($txn['has_credit'])
+                        <span class="sa-margin-pill" style="background:var(--amber-dim);color:var(--amber);margin-left:4px">Credit</span>
+                        @endif
+                    </td>
+                    <td style="text-align:right;font-family:var(--mono);font-weight:600;color:var(--text)">{{ number_format($txn['total']) }}</td>
+                </tr>
+                @empty
+                <tr><td colspan="6"><div class="sa-empty"><div class="sa-empty-title">No sales in this period</div></div></td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {{-- ── Bottom row: Top Products | Shop Performance + Payments ──────────── --}}
 @php $topProducts = $this->topProducts; $shops = $this->shopPerformance; $methods = $this->paymentMethods; @endphp
 <div class="sa-two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
@@ -715,7 +782,7 @@
                     <tr>
                         <td>
                             <div style="font-weight:600;color:var(--text);font-size:12px">{{ $p['product_name'] }}</div>
-                            <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:1px">{{ number_format($p['quantity_sold']) }} units · {{ $p['revenue_share'] }}% share</div>
+                            <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:1px">{{ number_format($p['quantity_sold']) }} {{ $p['is_full_box'] ? 'box' . ($p['quantity_sold'] === 1 ? '' : 'es') : 'item' . ($p['quantity_sold'] === 1 ? '' : 's') }} · {{ $p['revenue_share'] }}% share</div>
                         </td>
                         <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">{{ number_format($p['revenue']) }}</td>
                         <td style="text-align:right">
@@ -956,7 +1023,13 @@
             <div class="sa-card-title">Product Sales Ledger</div>
             <div class="sa-card-sub">Revenue, cost, and gross profit per product · {{ $this->activeDateRangeLabel }}</div>
         </div>
-        <span class="sa-card-badge">{{ count($topP) }} products</span>
+        <div style="display:flex;align-items:center;gap:8px">
+            <button wire:click="exportLedgerCsv" title="Export CSV" class="sa-export-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                CSV
+            </button>
+            <span class="sa-card-badge">{{ count($topP) }} products</span>
+        </div>
     </div>
     <div class="sa-tbl-scroll">
         <table class="sa-tbl sa-ledger-tbl" style="min-width:1150px;table-layout:fixed">
@@ -995,9 +1068,13 @@
                     <td>
                         <div style="font-weight:600;color:var(--text);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ $p['product_name'] }}">{{ $p['product_name'] }}</div>
                     </td>
-                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ number_format($p['quantity_sold']) }}</td>
+                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">
+                        {{ number_format($p['quantity_sold']) }} {{ $p['is_full_box'] ? 'box' . ($p['quantity_sold'] === 1 ? '' : 'es') : 'item' . ($p['quantity_sold'] === 1 ? '' : 's') }}
+                    </td>
                     <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ $p['transaction_count'] }}</td>
-                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub);font-size:12px">{{ number_format($p['avg_selling_price']) }}</td>
+                    <td style="text-align:right;font-family:var(--mono);color:var(--text-sub);font-size:12px">
+                        {{ number_format($p['avg_selling_price']) }}{{ $p['is_full_box'] ? '/box' : '' }}
+                    </td>
                     <td style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format($p['revenue']) }}</td>
                     <td style="text-align:right">
                         <div style="height:4px;background:var(--surface2);border-radius:2px;width:60px;display:inline-block;vertical-align:middle;margin-right:5px">
@@ -1101,7 +1178,10 @@
             <div style="font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Gross Profit in Hand</div>
             <div style="font-size:24px;font-weight:800;font-family:var(--mono);color:{{ $profitInHand < 0 ? 'var(--red)' : 'var(--text)' }};letter-spacing:-1px;margin-bottom:6px">{{ number_format($profitInHand) }}</div>
             <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono)">
-                {{ $collectedMarginPct }}% margin@if($profitGap > 0) · {{ number_format($profitGap) }} uncollected@endif
+                {{ $collectedMarginPct }}% margin
+                @if($profitGap > 0)
+                    · {{ number_format($profitGap) }} uncollected
+                @endif
             </div>
             @if(!$inHandIsGreen)
             <span class="sa-margin-pill" style="background:var(--surface2);color:var(--text-dim);margin-top:8px">Credit gap</span>
@@ -1335,7 +1415,13 @@
             <div class="sa-card-title">Seller Performance</div>
             <div class="sa-card-sub">{{ $this->activeDateRangeLabel }} · ranked by revenue</div>
         </div>
-        <span class="sa-card-badge">{{ count($sellers) }} sellers</span>
+        <div style="display:flex;align-items:center;gap:8px">
+            <button wire:click="exportSellersCsv" title="Export CSV" class="sa-export-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                CSV
+            </button>
+            <span class="sa-card-badge">{{ count($sellers) }} sellers</span>
+        </div>
     </div>
     <div class="sa-tbl-scroll">
         <table class="sa-tbl" style="min-width:1060px;table-layout:fixed">
@@ -1918,12 +2004,59 @@
         const dates        = JSON.parse(el.dataset.dates        || '[]');
         const revenues     = JSON.parse(el.dataset.revenues     || '[]');
         const transactions = JSON.parse(el.dataset.transactions || '[]');
+        const prevRevenues = JSON.parse(el.dataset.prevRevenues || '[]');
 
         if (_revChart) { _revChart.destroy(); _revChart = null; }
 
         if (!dates.length) {
             el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:240px;color:var(--text-sub);font-size:13px">No data available for this period</div>';
             return;
+        }
+
+        // Only overlay the previous-period line when there's something real to
+        // compare against — a flat zero dashed line on a brand-new period is noise.
+        const hasPrev = prevRevenues.some(v => v > 0);
+
+        const series      = [
+            { name: 'Revenue (RWF)', type: 'area', data: revenues },
+            { name: 'Transactions',  type: 'line', data: transactions },
+        ];
+        const colors      = ['#3b82f6', '#10b981'];
+        const strokeWidth = [2, 2];
+        const dashArray   = [0, 4];
+        const markerSize  = [3, 3];
+        const yaxis       = [
+            {
+                seriesName: 'Revenue (RWF)',
+                labels: {
+                    formatter: v => (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v),
+                    style: { colors: ['var(--text-sub)'], fontSize: '11px' },
+                },
+            },
+            {
+                seriesName: 'Transactions',
+                opposite: true,
+                labels: {
+                    formatter: v => Math.round(v),
+                    style: { colors: ['var(--text-sub)'], fontSize: '11px' },
+                },
+            },
+        ];
+        const tooltipY = [
+            { formatter: v => new Intl.NumberFormat().format(v) + ' RWF' },
+            { formatter: v => v + ' txns' },
+        ];
+
+        if (hasPrev) {
+            series.push({ name: 'Revenue (Previous Period)', type: 'line', data: prevRevenues });
+            colors.push('#94a3b8');
+            strokeWidth.push(2);
+            dashArray.push(6);
+            // a single-point range (e.g. "Today") has nothing to connect into a
+            // line, so a visible marker is the only way that point ever shows
+            markerSize.push(dates.length > 1 ? 0 : 3);
+            yaxis.push({ seriesName: 'Revenue (RWF)', show: false });
+            tooltipY.push({ formatter: v => new Intl.NumberFormat().format(v) + ' RWF' });
         }
 
         _revChart = new ApexCharts(el, {
@@ -1935,51 +2068,32 @@
                 background: 'transparent',
                 fontFamily: 'inherit',
             },
-            series: [
-                { name: 'Revenue (RWF)', type: 'area', data: revenues },
-                { name: 'Transactions',  type: 'line', data: transactions },
-            ],
+            series: series,
             xaxis: {
                 categories: dates,
                 labels: { style: { colors: 'var(--text-sub)', fontSize: '11px' }, rotate: -30, rotateAlways: false },
                 axisBorder: { show: false },
                 axisTicks:  { show: false },
             },
-            yaxis: [
-                {
-                    seriesName: 'Revenue (RWF)',
-                    labels: {
-                        formatter: v => (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v),
-                        style: { colors: ['var(--text-sub)'], fontSize: '11px' },
-                    },
-                },
-                {
-                    seriesName: 'Transactions',
-                    opposite: true,
-                    labels: {
-                        formatter: v => Math.round(v),
-                        style: { colors: ['var(--text-sub)'], fontSize: '11px' },
-                    },
-                },
-            ],
-            colors: ['#3b82f6', '#10b981'],
+            yaxis: yaxis,
+            colors: colors,
             fill: {
-                type: ['gradient', 'solid'],
+                type: ['gradient', 'solid', 'solid'],
                 gradient: { shade: 'dark', opacityFrom: 0.35, opacityTo: 0.03, stops: [0, 100] },
             },
-            stroke: { curve: 'smooth', width: [2, 2], dashArray: [0, 4] },
+            stroke: { curve: 'smooth', width: strokeWidth, dashArray: dashArray },
             grid: { borderColor: 'rgba(255,255,255,0.07)', strokeDashArray: 3, padding: { left: 8, right: 8 } },
-            markers: { size: [3, 3], hover: { size: 5 } },
+            markers: { size: markerSize, hover: { size: 5 } },
+            dataLabels: { enabled: false },
+            legend: { show: hasPrev, showForSingleSeries: false, position: 'top', horizontalAlign: 'right',
+                      fontSize: '11px', labels: { colors: 'var(--text-sub)' },
+                      markers: { size: 5 } },
             tooltip: {
                 shared: true,
                 intersect: false,
                 theme: 'dark',
-                y: [
-                    { formatter: v => new Intl.NumberFormat().format(v) + ' RWF' },
-                    { formatter: v => v + ' txns' },
-                ],
+                y: tooltipY,
             },
-            legend: { show: false },
         });
 
         _revChart.render();

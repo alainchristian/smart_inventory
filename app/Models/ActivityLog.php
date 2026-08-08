@@ -76,6 +76,8 @@ class ActivityLog extends Model
     {
         return match($this->action) {
             'sale_created'           => 'New Sale',
+            'mixed_sale_created'     => 'New Sale',
+            'warehouse_direct_sale'  => 'New Sale',
             'sale_voided'            => 'Sale Voided',
             'price_modified'         => 'Price Modified',
             'transfer_requested'     => 'Transfer Requested',

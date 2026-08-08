@@ -27,7 +27,7 @@ class Topbar extends Component
     private function notifiableActions(): array
     {
         return [
-            'sale_created', 'sale_voided', 'price_modified',
+            'sale_created', 'mixed_sale_created', 'warehouse_direct_sale', 'sale_voided', 'price_modified',
             'transfer_requested', 'transfer_approved', 'transfer_rejected',
             'transfer_packed', 'transfer_received', 'transfer_discrepancy',
             'daily_session_opened', 'daily_session_closed',

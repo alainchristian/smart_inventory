@@ -98,6 +98,26 @@ class Product extends Model
         return $this->box_selling_price ?? ($this->selling_price * $this->items_per_box);
     }
 
+    /**
+     * sale_items.quantity_sold is always stored in item units, even for
+     * full-box sales — convert to a box count for display when the line
+     * was actually sold by the box.
+     */
+    public function itemsToDisplayQty(int $totalItems, bool $isFullBox): int
+    {
+        return $isFullBox ? (int) round($totalItems / max(1, $this->items_per_box)) : $totalItems;
+    }
+
+    /**
+     * Companion to itemsToDisplayQty() — converts a per-item price into a
+     * per-box price when the line was sold by the box, so qty × unit price
+     * displayed together stay consistent.
+     */
+    public function displayUnitPrice(int $perItemPrice, bool $isFullBox): int
+    {
+        return $isFullBox ? $perItemPrice * max(1, $this->items_per_box) : $perItemPrice;
+    }
+
     public function isLowStock(string $locationType, int $locationId, int $boxThreshold = 2): bool
     {
         $boxCount = $this->boxes()

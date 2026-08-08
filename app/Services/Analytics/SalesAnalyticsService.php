@@ -5,6 +5,7 @@ namespace App\Services\Analytics;
 use App\Models\ReturnModel;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SalePayment;
 use App\Models\Product;
 use App\Models\Shop;
 use Carbon\Carbon;
@@ -122,7 +123,7 @@ class SalesAnalyticsService
                 'transactions_count'    => (int) $currentTransactions,
                 'avg_transaction_value' => (int) $avgValue,
                 'total_discount'        => (int) $currentDiscount,
-                'growth_percentage'     => $previousRevenue > 0 ? round((($currentRevenue - $previousRevenue) / $previousRevenue) * 100, 1) : 0,
+                'growth_percentage'     => $previousRevenue > 0 ? round((($currentRevenue - $previousRevenue) / $previousRevenue) * 100, 1) : null,
                 'transaction_growth'    => $previousTransactions > 0 ? round((($currentTransactions - $previousTransactions) / $previousTransactions) * 100, 1) : 0,
                 'avg_value_growth'      => $prevAvg > 0 ? round((($avgValue - $prevAvg) / $prevAvg) * 100, 1) : 0,
                 'previous_revenue'      => (int) $previousRevenue,
@@ -154,7 +155,7 @@ class SalesAnalyticsService
             return [
                 'items_sold'     => (int) $currentItems,
                 'previous_items' => (int) $previousItems,
-                'growth'         => $previousItems > 0 ? round((($currentItems - $previousItems) / $previousItems) * 100, 1) : 0,
+                'growth'         => $previousItems > 0 ? round((($currentItems - $previousItems) / $previousItems) * 100, 1) : null,
             ];
         });
     }
@@ -245,39 +246,109 @@ class SalesAnalyticsService
         $cacheKey = "analytics_revenue_trend_{$dateFrom}_{$dateTo}_{$locationFilter}";
 
         return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter) {
+            [$from, $to]         = $this->parseDateRange($dateFrom, $dateTo);
+            [$prevFrom, $prevTo] = $this->previousPeriod($dateFrom, $dateTo);
+
+            $fetch = function ($f, $t) use ($locationFilter) {
+                return $this->applyLocationFilter(
+                    Sale::notVoided()->whereBetween('sale_date', [$f, $t])
+                        ->selectRaw('DATE(sale_date) as date, SUM(total) as revenue, COUNT(*) as transactions, SUM(discount) as discount_total')
+                        ->groupBy('date'),
+                    $locationFilter
+                )->get()->keyBy('date');
+            };
+
+            $current  = $fetch($from, $to);
+            $previous = $fetch($prevFrom, $prevTo);
+
+            // Zero-fill every calendar day in both windows, then zip them by day
+            // offset so "day 3 of this period" lines up with "day 3 of last
+            // period" regardless of differing month lengths.
+            $currentDays  = iterator_to_array(CarbonPeriod::create($from->toDateString(), $to->toDateString()));
+            $previousDays = iterator_to_array(CarbonPeriod::create($prevFrom->toDateString(), $prevTo->toDateString()));
+
+            $result = [];
+            foreach ($currentDays as $i => $date) {
+                $d    = $date->format('Y-m-d');
+                $s    = $current[$d] ?? null;
+                $pDay = $previousDays[$i] ?? null;
+                $p    = $pDay ? ($previous[$pDay->format('Y-m-d')] ?? null) : null;
+
+                $result[] = [
+                    'date'           => $d,
+                    'revenue'        => $s ? (int) $s->revenue : 0,
+                    'transactions'   => $s ? (int) $s->transactions : 0,
+                    'discount_total' => $s ? (int) $s->discount_total : 0,
+                    'prev_revenue'   => $p ? (int) $p->revenue : 0,
+                ];
+            }
+
+            return $result;
+        });
+    }
+
+    /**
+     * Most recent individual sales in the period — lets an owner drill from a
+     * summary number down to the actual transactions behind it.
+     */
+    public function getRecentTransactions(string $dateFrom, string $dateTo, ?string $locationFilter = 'all', int $limit = 15): array
+    {
+        $cacheKey = "analytics_recent_transactions_{$dateFrom}_{$dateTo}_{$locationFilter}_{$limit}";
+
+        return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter, $limit) {
             [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
             $q = $this->applyLocationFilter(
-                Sale::notVoided()->whereBetween('sale_date', [$from, $to])
-                    ->selectRaw('DATE(sale_date) as date, SUM(total) as revenue, COUNT(*) as transactions, SUM(discount) as discount_total')
-                    ->groupBy('date')->orderBy('date'),
+                Sale::notVoided()
+                    ->whereBetween('sale_date', [$from, $to])
+                    ->with(['shop:id,name', 'soldBy:id,name', 'customer:id,name'])
+                    ->orderByDesc('sale_date')
+                    ->limit($limit),
                 $locationFilter
             );
-            return $q->get()->map(fn ($i) => [
-                'date'           => $i->date,
-                'revenue'        => (int) $i->revenue,
-                'transactions'   => (int) $i->transactions,
-                'discount_total' => (int) $i->discount_total,
+
+            return $q->get()->map(fn ($sale) => [
+                'id'          => $sale->id,
+                'sale_number' => $sale->sale_number,
+                'sale_date'   => $sale->sale_date,
+                'shop_name'   => $sale->shop->name ?? '—',
+                'seller_name' => $sale->soldBy->name ?? '—',
+                'customer'    => $sale->customer->name ?? null,
+                'total'       => (int) $sale->total,
+                'has_credit'  => (bool) $sale->has_credit,
             ])->toArray();
         });
     }
 
+    /**
+     * Payment method split. Must read from sale_payments, not sales.payment_method —
+     * a split-payment sale (is_split_payment = true) has one Sale row but several
+     * payment methods; grouping by sales.payment_method attributes the whole sale
+     * total to a single method and silently drops the rest. (Same rule documented
+     * for DailySessionService::computeLiveSummary().)
+     */
     public function getPaymentMethodBreakdown(string $dateFrom, string $dateTo, ?string $locationFilter = 'all'): array
     {
         $cacheKey = "analytics_payment_methods_{$dateFrom}_{$dateTo}_{$locationFilter}";
 
         return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter) {
             [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
-            $q = $this->applyLocationFilter(
-                Sale::notVoided()->whereBetween('sale_date', [$from, $to])
-                    ->selectRaw('payment_method, SUM(total) as revenue, COUNT(*) as count, AVG(total) as avg_value')
-                    ->groupBy('payment_method'),
-                $locationFilter
-            );
+            $q = SalePayment::join('sales', 'sale_payments.sale_id', '=', 'sales.id')
+                ->whereNull('sales.voided_at')
+                ->whereBetween('sales.sale_date', [$from, $to])
+                ->selectRaw('
+                    sale_payments.payment_method,
+                    SUM(sale_payments.amount) as revenue,
+                    COUNT(DISTINCT sale_payments.sale_id) as count
+                ')
+                ->groupBy('sale_payments.payment_method');
+            if ($locationFilter !== 'all') $q = $this->applyLocationFilterToJoin($q, $locationFilter);
+
             $results  = $q->get();
             $totalRev = $results->sum('revenue');
 
             return $results->map(function ($item) use ($totalRev) {
                 $m = $item->payment_method->value ?? $item->payment_method ?? 'Unknown';
+                $count = (int) $item->count;
                 return [
                     'method'        => $m,
                     'label'         => match (strtolower($m)) {
@@ -286,8 +357,8 @@ class SalesAnalyticsService
                         default => ucfirst(str_replace('_', ' ', $m)),
                     },
                     'revenue'       => (int) $item->revenue,
-                    'count'         => (int) $item->count,
-                    'avg_value'     => (int) $item->avg_value,
+                    'count'         => $count,
+                    'avg_value'     => $count > 0 ? (int) round($item->revenue / $count) : 0,
                     'revenue_share' => $totalRev > 0 ? round(($item->revenue / $totalRev) * 100, 1) : 0,
                 ];
             })->sortByDesc('revenue')->values()->toArray();
@@ -307,6 +378,7 @@ class SalesAnalyticsService
                 ->selectRaw('
                     products.id,
                     products.name,
+                    sale_items.is_full_box,
                     MIN(products.selling_price) as selling_price,
                     MIN(products.purchase_price) as purchase_price,
                     SUM(sale_items.quantity_sold) as quantity_sold,
@@ -324,28 +396,40 @@ class SalesAnalyticsService
                         ELSE 0 END
                     ) as credit_revenue
                 ')
-                ->groupBy('products.id', 'products.name')
+                // group by sale mode too — quantity_sold is always item-count, so a
+                // product sold both by-box and by-item must not be blended into one row
+                ->groupBy('products.id', 'products.name', 'sale_items.is_full_box')
                 ->orderByDesc('revenue')->limit($limit);
             if ($locationFilter !== 'all') $q = $this->applyLocationFilterToJoin($q, $locationFilter);
 
             $results  = $q->get();
             $totalRev = $results->sum('revenue');
 
-            return $results->map(fn ($item) => [
-                'product_id'        => $item->id,
-                'product_name'      => $item->name,
-                'quantity_sold'     => (int) $item->quantity_sold,
-                'revenue'           => (int) $item->revenue,
-                'gross_profit'      => (int) $item->gross_profit,
-                'margin_pct'        => $item->revenue > 0 ? round(($item->gross_profit / $item->revenue) * 100, 1) : 0,
-                'transaction_count' => (int) $item->transaction_count,
-                'avg_selling_price' => (int) $item->avg_selling_price,
-                'revenue_share'     => $totalRev > 0 ? round(($item->revenue / $totalRev) * 100, 1) : 0,
-                'credit_revenue'    => (int) $item->credit_revenue,
-                'credit_pct'        => $item->revenue > 0
-                    ? round(($item->credit_revenue / $item->revenue) * 100, 1)
-                    : 0,
-            ])->toArray();
+            $products = Product::whereIn('id', $results->pluck('id')->unique())
+                ->get(['id', 'items_per_box'])->keyBy('id');
+
+            return $results->map(function ($item) use ($totalRev, $products) {
+                $product    = $products[$item->id];
+                $isFullBox  = (bool) $item->is_full_box;
+                $displayQty = $product->itemsToDisplayQty((int) $item->quantity_sold, $isFullBox);
+
+                return [
+                    'product_id'        => $item->id,
+                    'product_name'      => $item->name,
+                    'quantity_sold'     => $displayQty,
+                    'is_full_box'       => $isFullBox,
+                    'revenue'           => (int) $item->revenue,
+                    'gross_profit'      => (int) $item->gross_profit,
+                    'margin_pct'        => $item->revenue > 0 ? round(($item->gross_profit / $item->revenue) * 100, 1) : 0,
+                    'transaction_count' => (int) $item->transaction_count,
+                    'avg_selling_price' => $product->displayUnitPrice((int) $item->avg_selling_price, $isFullBox),
+                    'revenue_share'     => $totalRev > 0 ? round(($item->revenue / $totalRev) * 100, 1) : 0,
+                    'credit_revenue'    => (int) $item->credit_revenue,
+                    'credit_pct'        => $item->revenue > 0
+                        ? round(($item->credit_revenue / $item->revenue) * 100, 1)
+                        : 0,
+                ];
+            })->toArray();
         });
     }
 
@@ -485,7 +569,7 @@ class SalesAnalyticsService
                 'margin_pct'           => $marginPct,
                 'net_revenue'          => $netRevenue,
                 'total_returned'       => (int) $totalReturned,
-                'gross_profit_growth'  => $prevGrossProfit > 0 ? round((($grossProfit - $prevGrossProfit) / $prevGrossProfit) * 100, 1) : 0,
+                'gross_profit_growth'  => $prevGrossProfit > 0 ? round((($grossProfit - $prevGrossProfit) / $prevGrossProfit) * 100, 1) : null,
                 'revenue_growth'       => $prevRevenue > 0 ? round((($revenue - $prevRevenue) / $prevRevenue) * 100, 1) : 0,
                 'margin_delta'         => round($marginPct - $prevMarginPct, 1),
                 'prev_gross_profit'    => $prevGrossProfit,
@@ -695,8 +779,11 @@ class SalesAnalyticsService
                 $totalItems = (int) $item->quantity_sold;
                 $itemsPerBox = (int) $item->items_per_box;
 
-                // Calculate number of boxes (if all sales were full boxes)
-                $boxCount = $hasFullBox && $itemsPerBox > 0 ? $lineCount : 0;
+                // Calculate number of boxes (if all sales were full boxes) — reuses the
+                // same items-per-box conversion as Product::itemsToDisplayQty() so this
+                // stays consistent with the Sale detail page and Top Products table.
+                $product  = new Product(['items_per_box' => $itemsPerBox]);
+                $boxCount = $hasFullBox ? $product->itemsToDisplayQty($totalItems, true) : 0;
 
                 // Format quantity display
                 if ($hasFullBox && !$hasItemSale) {

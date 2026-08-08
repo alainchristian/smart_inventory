@@ -3,18 +3,29 @@
 /* ── page prefix: rb- (receive-boxes) ─────── */
 
 /* Mode tabs */
-.rb-tabs { display:flex;gap:4px;margin-bottom:20px;align-items:center }
+.rb-tabs-row { display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px }
+.rb-tabs { display:flex;gap:4px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;
+           scrollbar-width:none }
+.rb-tabs::-webkit-scrollbar { display:none }
 .rb-tab  { padding:9px 20px;border-radius:9px;border:1.5px solid var(--border);
            font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);
            background:var(--surface);color:var(--text-dim);transition:all var(--tr);
-           display:flex;align-items:center;gap:7px;white-space:nowrap }
+           display:flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0 }
 .rb-tab:hover  { border-color:var(--accent);color:var(--accent) }
 .rb-tab.active { background:var(--accent);border-color:var(--accent);color:#fff }
 .rb-dl-btn { padding:8px 16px;background:var(--surface2);color:var(--text-sub);
              border:1.5px solid var(--border);border-radius:var(--rsm);font-size:12px;
              font-weight:600;cursor:pointer;font-family:var(--font);
-             transition:all var(--tr);display:inline-flex;align-items:center;gap:6px }
+             transition:all var(--tr);display:inline-flex;align-items:center;gap:6px;
+             white-space:nowrap;flex-shrink:0;margin-left:auto }
 .rb-dl-btn:hover { border-color:var(--accent);color:var(--accent) }
+
+@media(max-width:640px) {
+    .rb-tabs-row { flex-direction:column;align-items:stretch;gap:8px }
+    .rb-tabs     { display:grid;grid-template-columns:1fr 1fr;gap:6px;overflow:visible }
+    .rb-tab      { justify-content:center;padding:11px 10px }
+    .rb-dl-btn   { width:100%;justify-content:center;margin-left:0 }
+}
 
 /* Flash */
 .rb-flash { padding:12px 16px;border-radius:var(--rsm);font-size:13px;font-weight:500;
@@ -227,7 +238,9 @@
 /* Instructions */
 .rb-instr      { background:var(--bg);border-radius:var(--rsm);padding:14px 16px;margin-bottom:16px }
 .rb-instr-title { font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px }
-.rb-instr ol   { margin:0 0 0 18px;padding:0;font-size:12px;color:var(--text-sub);line-height:2 }
+.rb-instr ol   { list-style:decimal;list-style-position:outside;margin:0 0 0 18px;padding:0;
+                 font-size:12px;color:var(--text-sub);line-height:2 }
+.rb-instr ol li::marker { color:var(--text-dim);font-weight:700 }
 
 /* Responsive */
 @media(max-width:768px) {
@@ -239,35 +252,32 @@
     .rb-modal-foot { flex-direction:column }
     .rb-btn-confirm,.rb-btn-cancel { width:100%;text-align:center }
 }
-@media(max-width:480px) {
-    .rb-tabs { overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch }
-    .rb-tab  { flex-shrink:0 }
-    .rb-summary { grid-template-columns:1fr 1fr }
-}
 </style>
 
 {{-- ── Mode tabs ────────────────────────────────────────────────── --}}
-<div class="rb-tabs">
-    <button wire:click="switchMode('manual')" type="button"
-            class="rb-tab {{ $manualMode ? 'active' : '' }}">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
-        </svg>
-        Manual Entry
-    </button>
-    <button wire:click="switchMode('excel')" type="button"
-            class="rb-tab {{ !$manualMode ? 'active' : '' }}">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-            <polyline points="10 9 9 9 8 9"/>
-        </svg>
-        Excel / CSV Import
-    </button>
+<div class="rb-tabs-row">
+    <div class="rb-tabs">
+        <button wire:click="switchMode('manual')" type="button"
+                class="rb-tab {{ $manualMode ? 'active' : '' }}">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+            Manual Entry
+        </button>
+        <button wire:click="switchMode('excel')" type="button"
+                class="rb-tab {{ !$manualMode ? 'active' : '' }}">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Excel / CSV Import
+        </button>
+    </div>
     @if(!$manualMode)
-    <button wire:click="downloadTemplate" type="button" class="rb-dl-btn" style="margin-left:auto">
+    <button wire:click="downloadTemplate" type="button" class="rb-dl-btn">
         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>

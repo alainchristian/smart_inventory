@@ -7,6 +7,7 @@ use App\Http\Controllers\ShopManager\DashboardController as ShopDashboardControl
 use App\Http\Controllers\WarehouseManager\DashboardController as WarehouseDashboardController;
 use App\Http\Middleware\CheckLocation;
 use App\Http\Middleware\CheckRole;
+use App\Models\Sale;
 use App\Models\Transfer;
 use Illuminate\Support\Facades\Route;
 
@@ -106,8 +107,11 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
 
     // Sales
     Route::prefix('sales')->name('sales.')->group(function () {
-        Route::get('/', function () { return view('owner.sales.index'); })->name('index');
-        Route::get('/{sale}', function ($sale) { return view('owner.sales.show', compact('sale')); })->name('show');
+        Route::get('/', function () { return redirect()->route('owner.reports.sales'); })->name('index');
+        Route::get('/{sale}', function (int $saleId) {
+            $sale = Sale::withTrashed()->findOrFail($saleId);
+            return view('owner.sales.show', compact('sale'));
+        })->name('show');
     });
 
     // Returns

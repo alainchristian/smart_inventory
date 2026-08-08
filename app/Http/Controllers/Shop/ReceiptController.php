@@ -21,19 +21,19 @@ class ReceiptController extends Controller
         $groupedItems = $sale->items
             ->groupBy(fn ($i) => $i->product_id . '_' . $i->actual_unit_price . '_' . ($i->is_full_box ? 'b' : 'i'))
             ->map(function ($grp) {
-                $first       = $grp->first();
-                $isBox       = $first->is_full_box;
-                $ipb         = max(1, $first->product->items_per_box ?? 1);
-                $totalItems  = $grp->sum('quantity_sold');
+                $first      = $grp->first();
+                $isBox      = $first->is_full_box;
+                $product    = $first->product;
+                $totalItems = $grp->sum('quantity_sold');
 
                 return [
-                    'product_name'    => $first->product->name ?? '—',
-                    'quantity'        => $isBox ? (int) round($totalItems / $ipb) : $totalItems,
-                    'unit_price'      => $isBox ? $first->actual_unit_price * $ipb : $first->actual_unit_price,
+                    'product_name'    => $product->name ?? '—',
+                    'quantity'        => $product ? $product->itemsToDisplayQty($totalItems, $isBox) : $totalItems,
+                    'unit_price'      => $product ? $product->displayUnitPrice($first->actual_unit_price, $isBox) : $first->actual_unit_price,
                     'line_total'      => $grp->sum('line_total'),
                     'is_full_box'     => $isBox,
                     'price_modified'  => $grp->contains('price_was_modified', true),
-                    'original_price'  => $isBox ? $first->original_unit_price * $ipb : $first->original_unit_price,
+                    'original_price'  => $product ? $product->displayUnitPrice($first->original_unit_price, $isBox) : $first->original_unit_price,
                     'source'          => $first->box?->location_type?->value ?? 'shop',
                 ];
             })
