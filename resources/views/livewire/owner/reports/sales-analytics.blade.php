@@ -1278,9 +1278,9 @@
                     </td>
                     <td>
                         @if(($entry['seller_role'] ?? '') === 'owner')
-                        <span class="sa-margin-pill" style="background:var(--green-dim);color:var(--green)">✓ Owner</span>
+                        <span class="sa-margin-pill" style="background:var(--green-dim);color:var(--green);display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="10" /> Owner</span>
                         @elseif($entry['is_approved'])
-                        <span class="sa-margin-pill" style="background:var(--green-dim);color:var(--green)">✓ {{ $entry['approved_by'] }}</span>
+                        <span class="sa-margin-pill" style="background:var(--green-dim);color:var(--green);display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="10" /> {{ $entry['approved_by'] }}</span>
                         @else
                         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
                             <span class="sa-margin-pill" style="background:var(--amber-dim);color:var(--amber)">Pending</span>
@@ -1291,10 +1291,10 @@
                                     style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;
                                            border:1px solid var(--green);background:var(--green-dim);
                                            color:var(--green);cursor:pointer;white-space:nowrap;
-                                           font-family:var(--font);transition:all var(--tr)"
+                                           font-family:var(--font);transition:all var(--tr);display:inline-flex;align-items:center;gap:4px"
                                     onmouseover="this.style.background='var(--green)';this.style.color='#fff'"
                                     onmouseout="this.style.background='var(--green-dim)';this.style.color='var(--green)'">
-                                Approve ✓
+                                Approve <x-icon name="check" size="11" />
                             </button>
                             @endif
                         </div>

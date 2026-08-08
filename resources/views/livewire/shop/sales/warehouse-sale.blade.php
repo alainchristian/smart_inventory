@@ -880,8 +880,8 @@
             <span class="whs-bal-unit">RWF</span>
           </div>
           <div class="whs-bal-status" :style="isOver ? 'color:var(--red)' : 'color:var(--green)'">
-            <span x-show="isOk">✓ Balanced</span>
-            <span x-show="isOver" x-cloak>⚠ Over-allocated</span>
+            <span x-show="isOk" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="12" /> Balanced</span>
+            <span x-show="isOver" x-cloak style="display:inline-flex;align-items:center;gap:4px"><x-icon name="alert-triangle" size="12" /> Over-allocated</span>
           </div>
         </div>
         <div class="whs-bal-bar-wrap">

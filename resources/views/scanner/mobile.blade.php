@@ -72,7 +72,9 @@
             font-size: 1rem; font-weight: 600; display: none;
         }
         .feedback.success { background: #064e3b; border: 1px solid #10b981; color: #6ee7b7; }
+        .feedback.warning { background: #451a03; border: 1px solid #f59e0b; color: #fcd34d; }
         .feedback.error   { background: #450a0a; border: 1px solid #ef4444; color: #fca5a5; }
+        .feedback-icon { display: inline-flex; vertical-align: -3px; margin-right: 6px; }
 
         /* Stats */
         .stats { display: flex; gap: 0.75rem; }
@@ -111,7 +113,10 @@
 <body>
 
     <div class="header">
-        <h1>📦 Smart Inventory</h1>
+        <h1 style="display:flex;align-items:center;justify-content:center;gap:8px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Smart Inventory
+        </h1>
         <p id="header-status">Mobile Scanner</p>
     </div>
 
@@ -122,7 +127,10 @@
 
         <!-- Connect Panel -->
         <div class="connect-panel" id="connect-panel">
-            <h2>🔗 Enter Session Code</h2>
+            <h2 style="display:flex;align-items:center;gap:8px">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Enter Session Code
+            </h2>
             <input type="text" class="code-input" id="code-input" maxlength="6" placeholder="ABC123" autocomplete="off" autocorrect="off" spellcheck="false">
             <button class="btn btn-connect" onclick="connectScanner()">Connect</button>
         </div>
@@ -139,10 +147,13 @@
 
             <!-- Main scan button -->
             <div class="scan-area">
-                <div class="scan-icon">📷</div>
+                <div class="scan-icon" style="display:flex;justify-content:center;color:#94a3b8">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
                 <div class="scan-label">Tap the button below to scan a barcode</div>
-                <button class="btn btn-scan" onclick="triggerCameraCapture()">
-                    📸 Scan Barcode
+                <button class="btn btn-scan" onclick="triggerCameraCapture()" style="display:flex;align-items:center;justify-content:center;gap:8px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Scan Barcode
                 </button>
             </div>
 
@@ -163,8 +174,9 @@
         </div>
 
         <!-- Manual entry toggle -->
-        <button class="btn btn-manual" id="manual-toggle" onclick="toggleManual()" style="display:none;">
-            ✏️ Type Barcode Manually
+        <button class="btn btn-manual" id="manual-toggle" onclick="toggleManual()" style="display:none;align-items:center;justify-content:center;gap:8px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Type Barcode Manually
         </button>
         <div class="manual-section" id="manual-section">
             <h3>MANUAL ENTRY</h3>
@@ -190,6 +202,12 @@
         let heartbeat       = null;
         let csrfToken       = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+        const FEEDBACK_ICONS = {
+            success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+            warning: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+            error:   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+        };
+
         // ── Native camera input handler ───────────────────────────────────────
         document.getElementById('camera-input').addEventListener('change', async function(e) {
             const file = e.target.files[0];
@@ -214,7 +232,7 @@
 
             } catch (err) {
                 console.error('Decode failed:', err);
-                showFeedback('❌ Could not read barcode. Try again with better lighting.', false);
+                showFeedback('Could not read barcode. Try again with better lighting.', 'error');
             } finally {
                 document.getElementById('processing').style.display = 'none';
                 // Reset input so same file can be re-selected
@@ -245,25 +263,30 @@
                     document.getElementById('scan-count').textContent = scanCount;
                     document.getElementById('last-code').textContent = barcode.length > 10
                         ? barcode.substring(0, 10) + '…' : barcode;
-                    showFeedback('✅ ' + barcode, true);
+                    showFeedback(barcode, 'success');
                     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                     playBeep();
                 } else {
-                    showFeedback('⚠️ ' + (data.message || 'Error'), false);
+                    showFeedback(data.message || 'Error', 'warning');
                     if (data.message && data.message.includes('expired')) {
                         alert('Session expired. Please reconnect.'); disconnectScanner();
                     }
                 }
             } catch (err) {
                 console.error('API error:', err);
-                showFeedback('❌ Network error. Check connection.', false);
+                showFeedback('Network error. Check connection.', 'error');
             }
         }
 
-        function showFeedback(message, success) {
+        function showFeedback(message, type) {
             const el = document.getElementById('feedback');
-            el.textContent = message;
-            el.className = 'feedback ' + (success ? 'success' : 'error');
+            el.innerHTML = '';
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'feedback-icon';
+            iconSpan.innerHTML = FEEDBACK_ICONS[type] || FEEDBACK_ICONS.error;
+            el.appendChild(iconSpan);
+            el.appendChild(document.createTextNode(message));
+            el.className = 'feedback ' + (type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'error');
             el.style.display = 'block';
             setTimeout(() => { el.style.display = 'none'; }, 3000);
         }
@@ -295,7 +318,7 @@
                     sessionCode = code; isConnected = true;
                     document.getElementById('connect-panel').style.display = 'none';
                     document.getElementById('connected-panel').style.display = 'block';
-                    document.getElementById('manual-toggle').style.display = 'block';
+                    document.getElementById('manual-toggle').style.display = 'flex';
                     document.getElementById('session-code-display').textContent = code;
                     document.getElementById('header-status').textContent =
                         (data.session.transfer_number || data.session.page_type || 'Connected');

@@ -544,7 +544,7 @@
                                        background:var(--green);color:#fff;font-size:13px;font-weight:700;
                                        transition:opacity .15s"
                                 wire:loading.class="opacity-50">
-                            <span wire:loading.remove wire:target="approveHeldSale({{ $h['id'] }})">✓ Approve</span>
+                            <span wire:loading.remove wire:target="approveHeldSale({{ $h['id'] }})" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="12" /> Approve</span>
                             <span wire:loading wire:target="approveHeldSale({{ $h['id'] }})" style="display:none">Approving…</span>
                         </button>
                         <button wire:click="rejectHeldSale({{ $h['id'] }})"
@@ -560,7 +560,7 @@
                 </div>
                 @empty
                 <div style="padding:40px;text-align:center;color:var(--text-dim)">
-                    <div style="font-size:32px;margin-bottom:10px">✓</div>
+                    <div style="margin-bottom:10px;color:var(--green);display:flex;justify-content:center"><x-icon name="check" size="28" /></div>
                     <div style="font-size:14px;font-weight:600">All approvals handled</div>
                 </div>
                 @endforelse

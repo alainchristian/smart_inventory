@@ -71,7 +71,7 @@
                     border:1.5px solid rgba(225,29,72,.25);border-radius:10px;
                     display:flex;align-items:center;justify-content:space-between">
             <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-size:16px">⚠️</span>
+                <span style="color:var(--red,#e11d48);display:inline-flex"><x-icon name="alert-triangle" size="16" /></span>
                 <div>
                     <div style="font-size:12px;font-weight:700;color:var(--red,#e11d48)">Credit Outstanding</div>
                     <div style="font-size:11px;color:var(--text-sub);margin-top:1px">

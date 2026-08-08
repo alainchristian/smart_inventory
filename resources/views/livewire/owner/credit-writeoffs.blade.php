@@ -212,8 +212,9 @@
                                                 {{-- Step 2: confirm --}}
                                                 @php $balAfter = $this->selectedCustomer->outstanding_balance - $writeoffAmount; @endphp
 
-                                                <div class="cw-warn-banner">
-                                                    ⚠ You are about to permanently write off {{ number_format($writeoffAmount) }} RWF from {{ $this->selectedCustomer->name }}'s balance. This cannot be undone.
+                                                <div class="cw-warn-banner" style="display:flex;align-items:flex-start;gap:8px">
+                                                    <x-icon name="alert-triangle" size="15" />
+                                                    <span>You are about to permanently write off {{ number_format($writeoffAmount) }} RWF from {{ $this->selectedCustomer->name }}'s balance. This cannot be undone.</span>
                                                 </div>
 
                                                 <div class="cw-summary-card">

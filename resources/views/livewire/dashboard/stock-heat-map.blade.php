@@ -68,7 +68,7 @@
 
   @if(empty($products) || empty($locations))
     <div style="padding:56px 20px;text-align:center">
-      <div style="font-size:36px;margin-bottom:12px;opacity:.4">📊</div>
+      <div style="margin-bottom:12px;opacity:.4;color:var(--text-dim);display:flex;justify-content:center"><x-icon name="bar-chart" size="30" /></div>
       <div style="font-size:13px;color:var(--text-dim)">No stock data available</div>
     </div>
   @else
@@ -251,7 +251,7 @@
                                   background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.2);
                                   border-radius:4px;padding:1px 6px">
                         <span style="font-size:9px;font-weight:700;color:#6366f1">+{{ $cell['incoming'] }}</span>
-                        <span style="font-size:9px">🚚</span>
+                        <span style="color:#6366f1;display:inline-flex"><x-icon name="truck" size="9" /></span>
                       </div>
                     @endif
 
@@ -288,7 +288,7 @@
                       background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);
                       border-radius:4px;padding:2px 7px">
             <span style="font-size:9px;font-weight:700;color:#6366f1">+N</span>
-            <span style="font-size:9px">🚚</span>
+            <span style="color:#6366f1;display:inline-flex"><x-icon name="truck" size="9" /></span>
           </div>
           <span style="font-size:10px;color:var(--text-dim);font-weight:500">Incoming transfer</span>
         </div>

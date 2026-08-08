@@ -373,7 +373,7 @@
                     @elseif($user->isOwner() || $user->isAdmin())
                         <span style="color:var(--text-dim);font-size:11px">All locations</span>
                     @else
-                        <span style="color:var(--amber);font-size:11px">⚠ Unassigned</span>
+                        <span style="color:var(--amber);font-size:11px;display:inline-flex;align-items:center;gap:4px"><x-icon name="alert-triangle" size="11" /> Unassigned</span>
                     @endif
                 </td>
                 <td class="um-hide-mob" style="font-size:11px;color:var(--text-dim);
@@ -413,8 +413,8 @@
             <tr class="um-confirm-row">
                 <td colspan="8" style="padding:14px 16px">
                     <div class="um-confirm-box">
-                        <span style="font-size:18px">
-                            {{ $confirmToggleActive ? '⚠️' : '✅' }}
+                        <span style="color:{{ $confirmToggleActive ? 'var(--amber)' : 'var(--green)' }}">
+                            <x-icon :name="$confirmToggleActive ? 'alert-triangle' : 'check'" size="18" />
                         </span>
                         <span class="um-confirm-text">
                             @if($confirmToggleActive)
@@ -440,7 +440,7 @@
             <tr>
                 <td colspan="8">
                     <div class="um-empty">
-                        <div class="um-empty-icon">👥</div>
+                        <div class="um-empty-icon"><x-icon name="users" size="28" /></div>
                         <div class="um-empty-title">
                             @if($search)
                                 No users match "{{ $search }}"
@@ -578,8 +578,9 @@
                         @endif
                     </div>
                     <div>
-                        <div class="um-role-name" style="color:var(--red)">
-                            🔐 Admin
+                        <div class="um-role-name" style="color:var(--red);display:flex;align-items:center;gap:6px">
+                            <x-icon name="shield" />
+                            Admin
                         </div>
                         <div class="um-role-desc">
                             Full system access. Can manage warehouse and shop managers,
@@ -600,8 +601,9 @@
                         @endif
                     </div>
                     <div>
-                        <div class="um-role-name" style="color:var(--accent)">
-                            👑 Owner
+                        <div class="um-role-name" style="color:var(--accent);display:flex;align-items:center;gap:6px">
+                            <x-icon name="star" />
+                            Owner
                         </div>
                         <div class="um-role-desc">
                             Full system access. Can view purchase prices, manage
@@ -620,8 +622,9 @@
                         @endif
                     </div>
                     <div>
-                        <div class="um-role-name" style="color:var(--green)">
-                            🏭 Warehouse Manager
+                        <div class="um-role-name" style="color:var(--green);display:flex;align-items:center;gap:6px">
+                            <x-icon name="box" />
+                            Warehouse Manager
                         </div>
                         <div class="um-role-desc">
                             Manages warehouse inventory. Can receive boxes, approve
@@ -638,8 +641,9 @@
                         @endif
                     </div>
                     <div>
-                        <div class="um-role-name" style="color:var(--violet)">
-                            🏪 Shop Manager
+                        <div class="um-role-name" style="color:var(--violet);display:flex;align-items:center;gap:6px">
+                            <x-icon name="shopping-bag" />
+                            Shop Manager
                         </div>
                         <div class="um-role-desc">
                             Operates the point of sale. Can request transfers,

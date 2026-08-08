@@ -23,9 +23,13 @@
                         @php
                             try {
                                 echo QrCode::size(200)->generate('https://example.com/test1');
-                                echo '<p class="text-green-600 font-semibold mt-4">✓ SUCCESS</p>';
+                                echo '<p class="text-green-600 font-semibold mt-4 flex items-center gap-1">'
+                                    . view('components.icon', ['name' => 'check', 'size' => 16])->render()
+                                    . ' SUCCESS</p>';
                             } catch (\Exception $e) {
-                                echo '<p class="text-red-600 font-semibold mt-4">✗ ERROR: ' . $e->getMessage() . '</p>';
+                                echo '<p class="text-red-600 font-semibold mt-4 flex items-center gap-1">'
+                                    . view('components.icon', ['name' => 'x', 'size' => 16])->render()
+                                    . ' ERROR: ' . $e->getMessage() . '</p>';
                             }
                         @endphp
                     </div>
@@ -41,9 +45,13 @@
                         @php
                             try {
                                 echo \SimpleSoftwareIO\QrCode\Facades\QrCode::size(200)->generate('https://example.com/test2');
-                                echo '<p class="text-green-600 font-semibold mt-4">✓ SUCCESS</p>';
+                                echo '<p class="text-green-600 font-semibold mt-4 flex items-center gap-1">'
+                                    . view('components.icon', ['name' => 'check', 'size' => 16])->render()
+                                    . ' SUCCESS</p>';
                             } catch (\Exception $e) {
-                                echo '<p class="text-red-600 font-semibold mt-4">✗ ERROR: ' . $e->getMessage() . '</p>';
+                                echo '<p class="text-red-600 font-semibold mt-4 flex items-center gap-1">'
+                                    . view('components.icon', ['name' => 'x', 'size' => 16])->render()
+                                    . ' ERROR: ' . $e->getMessage() . '</p>';
                             }
                         @endphp
                     </div>
@@ -71,7 +79,7 @@
                             @endphp
                         </div>
                         <div class="mt-4 bg-purple-100 rounded-lg p-3">
-                            <p class="text-sm font-bold text-purple-900">📱 Scan This QR Code</p>
+                            <p class="text-sm font-bold text-purple-900 flex items-center justify-center gap-1"><x-icon name="smartphone" size="16" /> Scan This QR Code</p>
                             <p class="text-xs text-purple-700 mt-1">URL: {{ url('/scanner?code=ABC123') }}</p>
                         </div>
                     </div>
@@ -79,7 +87,7 @@
                     <!-- Instructions -->
                     <div class="flex flex-col justify-center">
                         <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg p-4">
-                            <p class="font-bold mb-3 text-lg">📷 Quick Setup:</p>
+                            <p class="font-bold mb-3 text-lg flex items-center gap-2"><x-icon name="camera" size="18" /> Quick Setup:</p>
                             <ol class="text-sm space-y-2">
                                 <li>1. Open phone camera app</li>
                                 <li>2. Point at QR code (left)</li>
@@ -89,7 +97,7 @@
                         </div>
 
                         <div class="mt-4 bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                            <p class="text-green-800 font-semibold">✓ If you see the QR code above, your system is working perfectly!</p>
+                            <p class="text-green-800 font-semibold flex items-start gap-1"><x-icon name="check" size="16" /> If you see the QR code above, your system is working perfectly!</p>
                         </div>
                     </div>
                 </div>
@@ -98,7 +106,7 @@
 
         <!-- Next Steps -->
         <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mt-6">
-            <h3 class="text-xl font-semibold text-blue-900 mb-3">✅ Next Steps</h3>
+            <h3 class="text-xl font-semibold text-blue-900 mb-3 flex items-center gap-2"><x-icon name="check" size="18" /> Next Steps</h3>
             <ul class="space-y-2 text-blue-800">
                 <li>1. If all 3 QR codes show above → Your system works perfectly</li>
                 <li>2. Go to your actual transfer page (e.g., /shop/transfers/14/receive)</li>
@@ -110,7 +118,7 @@
 
         <!-- Troubleshooting -->
         <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mt-6">
-            <h3 class="text-xl font-semibold text-yellow-900 mb-3">⚠️ If QR Codes Don't Show</h3>
+            <h3 class="text-xl font-semibold text-yellow-900 mb-3 flex items-center gap-2"><x-icon name="alert-triangle" size="18" /> If QR Codes Don't Show</h3>
             <div class="space-y-2 text-yellow-800 text-sm">
                 <p><strong>Error "Class 'QrCode' not found":</strong></p>
                 <pre class="bg-white p-2 rounded">php artisan config:clear

@@ -234,7 +234,7 @@
             <tr>
                 <td colspan="8">
                     <div style="padding:40px 20px;text-align:center">
-                        <div style="font-size:28px;margin-bottom:8px">📋</div>
+                        <div style="margin-bottom:8px;color:var(--text-dim);display:flex;justify-content:center"><x-icon name="clipboard" size="24" /></div>
                         <div style="font-size:14px;font-weight:700;color:var(--text-sub)">No movements recorded</div>
                         <div style="font-size:12px;color:var(--text-dim);margin-top:4px">
                             Box movements will appear here as items are transferred or consumed

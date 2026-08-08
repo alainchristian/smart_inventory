@@ -12,7 +12,7 @@
     <div class="dashboard-page-header">
         <div>
             <h1>Owner Dashboard</h1>
-            <p>Welcome back, {{ auth()->user()->name }} 👋</p>
+            <p>Welcome back, {{ auth()->user()->name }}</p>
         </div>
         <livewire:dashboard.time-filter />
     </div>

@@ -270,9 +270,9 @@
         <div class="db-kpi-bottom">
             <div class="db-kpi-stats">
                 @if($lowStockCount > 0)
-                <span class="db-change-text warn">⚠ Needs Attention</span>
+                <span class="db-change-text warn" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="alert-triangle" size="12" /> Needs Attention</span>
                 @else
-                <span class="db-change-text up">✓ All Clear</span>
+                <span class="db-change-text up" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="12" /> All Clear</span>
                 @endif
                 <span class="db-kpi-vs">current stock levels</span>
             </div>
@@ -405,7 +405,7 @@
                 <span class="db-stock-count">{{ $product->current_stock }} <span class="db-stock-unit">{{ $product->current_stock == 1 ? 'box' : 'boxes' }}</span></span>
             </div>
             @empty
-            <div style="padding:30px 0;text-align:center;color:var(--text-dim);font-size:13px;">All products well stocked ✓</div>
+            <div style="padding:30px 0;text-align:center;color:var(--text-dim);font-size:13px;display:flex;align-items:center;justify-content:center;gap:5px">All products well stocked <x-icon name="check" size="13" /></div>
             @endforelse
         </div>
     </div>

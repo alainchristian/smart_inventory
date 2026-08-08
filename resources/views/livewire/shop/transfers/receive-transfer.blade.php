@@ -394,11 +394,15 @@
                 $totalRemaining = $totalShipped - $totalReceived;
             @endphp
             <span style="font-size:13px;font-weight:700;font-family:var(--mono);
-                         padding:3px 10px;border-radius:6px;border:1px solid;
+                         padding:3px 10px;border-radius:6px;border:1px solid;display:inline-flex;align-items:center;gap:5px;
                          {{ $totalRemaining > 0
                              ? 'background:var(--amber-dim);color:var(--amber);border-color:rgba(217,119,6,.2)'
                              : 'background:var(--green-dim);color:var(--green);border-color:rgba(16,185,129,.2)' }}">
-                {{ $totalRemaining > 0 ? $totalRemaining . ' remaining' : '✓ Complete' }}
+                @if($totalRemaining > 0)
+                    {{ $totalRemaining }} remaining
+                @else
+                    <x-icon name="check" size="12" /> Complete
+                @endif
             </span>
         </div>
         <div class="rf-card-body" style="display:flex;flex-direction:column;gap:10px">
@@ -488,8 +492,13 @@
             <div style="display:flex;align-items:center;gap:6px;width:100%;margin-top:5px;padding-top:5px;border-top:1px solid rgba(0,0,0,.06)">
                 <button type="button"
                         @click="$wire.markAsDamaged({{ $box['box_id'] }}, {{ $box['is_damaged'] ? 'false' : 'true' }})"
-                        class="rf-damage-btn {{ $box['is_damaged'] ? 'active' : '' }}">
-                    {{ $box['is_damaged'] ? '✓ Damaged' : 'Mark Damaged' }}
+                        class="rf-damage-btn {{ $box['is_damaged'] ? 'active' : '' }}"
+                        style="display:inline-flex;align-items:center;gap:4px">
+                    @if($box['is_damaged'])
+                        <x-icon name="check" size="12" /> Damaged
+                    @else
+                        Mark Damaged
+                    @endif
                 </button>
                 @if($box['is_damaged'])
                 <input type="text"

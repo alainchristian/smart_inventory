@@ -567,7 +567,7 @@
                 </div>
                 @if($pendingRow)
                     <div class="la-alert">
-                        <div class="la-alert-title">⚠ {{ $pendingRow['count'] }} {{ Str::plural('item', $pendingRow['count']) }} still pending disposition</div>
+                        <div class="la-alert-title" style="display:flex;align-items:center;gap:6px"><x-icon name="alert-triangle" size="13" /> {{ $pendingRow['count'] }} {{ Str::plural('item', $pendingRow['count']) }} still pending disposition</div>
                         <div class="la-alert-sub">Estimated value: {{ number_format($pendingRow['loss']) }} RWF — visit Damaged Goods to assign dispositions</div>
                     </div>
                 @endif

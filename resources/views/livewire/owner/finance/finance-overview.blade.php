@@ -724,7 +724,7 @@
 @if(empty($rows))
     <div class="fo-table-wrap" style="border:1px solid var(--border);border-radius:14px;">
         <div style="padding:48px;text-align:center;">
-            <div style="font-size:32px;margin-bottom:12px;">📊</div>
+            <div style="margin-bottom:12px;color:var(--text-dim);display:flex;justify-content:center"><x-icon name="bar-chart" size="28" /></div>
             <div style="font-size:14px;font-weight:600;color:var(--text);">No data for this period</div>
             <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">
                 Try a different date range or shop filter.
@@ -865,8 +865,8 @@
                 Cash surplus of {{ number_format($_mTotalVar) }} RWF — counted more than expected
             </div>
         @elseif($_mAllLocked)
-            <div class="fo-verdict fo-verdict-seal">
-                🔒 All sessions sealed and balanced — records are immutable
+            <div class="fo-verdict fo-verdict-seal" style="display:flex;align-items:center;gap:8px">
+                <x-icon name="lock" size="15" /> All sessions sealed and balanced — records are immutable
             </div>
         @else
             <div class="fo-verdict fo-verdict-ok">
@@ -898,7 +898,7 @@
                         {{ $sv > 0 ? '+' : '' }}{{ number_format($sv) }} RWF
                     </span>
                 @elseif(!$sessOpen)
-                    <span style="margin-left:auto;color:var(--green);font-weight:600;">✓ Balanced</span>
+                    <span style="margin-left:auto;color:var(--green);font-weight:600;display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="13" /> Balanced</span>
                 @endif
             </div>
             @endif

@@ -226,8 +226,8 @@
     </button>
 
     @if($this->hasActiveFilters)
-    <button wire:click="clearFilters" class="al-clear-btn">
-        ✕ Clear
+    <button wire:click="clearFilters" class="al-clear-btn" style="display:inline-flex;align-items:center;gap:4px">
+        <x-icon name="x" size="11" /> Clear
     </button>
     @endif
 </div>
@@ -236,37 +236,37 @@
 @if($this->hasActiveFilters)
 <div class="al-chips">
     @if($search !== '')
-    <span class="al-chip">"{{ $search }}" <button class="al-chip-x" wire:click="$set('search','')">✕</button></span>
+    <span class="al-chip">"{{ $search }}" <button class="al-chip-x" wire:click="$set('search','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($filterUser !== '')
-    <span class="al-chip">User: {{ collect($this->distinctUsers)->firstWhere('id', (int)$filterUser)['name'] ?? $filterUser }} <button class="al-chip-x" wire:click="$set('filterUser','')">✕</button></span>
+    <span class="al-chip">User: {{ collect($this->distinctUsers)->firstWhere('id', (int)$filterUser)['name'] ?? $filterUser }} <button class="al-chip-x" wire:click="$set('filterUser','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($filterModule !== '')
-    <span class="al-chip">Module: {{ ucfirst(str_replace('_',' ',$filterModule)) }} <button class="al-chip-x" wire:click="$set('filterModule','')">✕</button></span>
+    <span class="al-chip">Module: {{ ucfirst(str_replace('_',' ',$filterModule)) }} <button class="al-chip-x" wire:click="$set('filterModule','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($filterActionType !== '')
-    <span class="al-chip">Type: {{ collect(\App\Livewire\Owner\ActivityLogs::actionTypeOptions())->firstWhere('value',$filterActionType)['label'] ?? $filterActionType }} <button class="al-chip-x" wire:click="$set('filterActionType','')">✕</button></span>
+    <span class="al-chip">Type: {{ collect(\App\Livewire\Owner\ActivityLogs::actionTypeOptions())->firstWhere('value',$filterActionType)['label'] ?? $filterActionType }} <button class="al-chip-x" wire:click="$set('filterActionType','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($filterAction !== '')
-    <span class="al-chip">Action: {{ ucfirst(str_replace('_',' ',$filterAction)) }} <button class="al-chip-x" wire:click="$set('filterAction','')">✕</button></span>
+    <span class="al-chip">Action: {{ ucfirst(str_replace('_',' ',$filterAction)) }} <button class="al-chip-x" wire:click="$set('filterAction','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($filterSeverity !== '')
-    <span class="al-chip">Severity: {{ ucfirst($filterSeverity) }} <button class="al-chip-x" wire:click="$set('filterSeverity','')">✕</button></span>
+    <span class="al-chip">Severity: {{ ucfirst($filterSeverity) }} <button class="al-chip-x" wire:click="$set('filterSeverity','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($filterStatus !== '')
-    <span class="al-chip">Status: {{ ucfirst($filterStatus) }} <button class="al-chip-x" wire:click="$set('filterStatus','')">✕</button></span>
+    <span class="al-chip">Status: {{ ucfirst($filterStatus) }} <button class="al-chip-x" wire:click="$set('filterStatus','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($filterEntity !== '')
-    <span class="al-chip">Entity: {{ $filterEntity }} <button class="al-chip-x" wire:click="$set('filterEntity','')">✕</button></span>
+    <span class="al-chip">Entity: {{ $filterEntity }} <button class="al-chip-x" wire:click="$set('filterEntity','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($filterTraceId !== null)
-    <span class="al-chip">Related to trace #{{ Str::limit($filterTraceId, 8, '') }} <button class="al-chip-x" wire:click="clearTraceFilter">✕</button></span>
+    <span class="al-chip">Related to trace #{{ Str::limit($filterTraceId, 8, '') }} <button class="al-chip-x" wire:click="clearTraceFilter"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($dateFrom !== '')
-    <span class="al-chip">From: {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }} <button class="al-chip-x" wire:click="$set('dateFrom','')">✕</button></span>
+    <span class="al-chip">From: {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }} <button class="al-chip-x" wire:click="$set('dateFrom','')"><x-icon name="x" size="10" /></button></span>
     @endif
     @if($dateTo !== '')
-    <span class="al-chip">To: {{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }} <button class="al-chip-x" wire:click="$set('dateTo','')">✕</button></span>
+    <span class="al-chip">To: {{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }} <button class="al-chip-x" wire:click="$set('dateTo','')"><x-icon name="x" size="10" /></button></span>
     @endif
 </div>
 @endif
@@ -408,7 +408,7 @@
                 <tr>
                     <td colspan="8">
                         <div class="al-empty">
-                            <div class="al-empty-icon">📋</div>
+                            <div class="al-empty-icon"><x-icon name="clipboard" size="28" /></div>
                             <div class="al-empty-title">No log entries found</div>
                             <div class="al-empty-sub">
                                 @if($this->hasActiveFilters)

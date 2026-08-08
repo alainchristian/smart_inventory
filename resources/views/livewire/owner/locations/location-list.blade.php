@@ -369,7 +369,7 @@
                                 <strong>{{ $confirmToggleName }}</strong>?
                             </div>
                             @if($confirmToggleWarning)
-                            <div class="lm-confirm-warn">⚠ {{ $confirmToggleWarning }}</div>
+                            <div class="lm-confirm-warn" style="display:flex;align-items:center;gap:6px"><x-icon name="alert-triangle" size="13" /> {{ $confirmToggleWarning }}</div>
                             @endif
                         </div>
                         <button wire:click="executeToggle" class="lm-confirm-yes">
@@ -504,7 +504,7 @@
                                 <strong>{{ $confirmToggleName }}</strong>?
                             </div>
                             @if($confirmToggleWarning)
-                            <div class="lm-confirm-warn">⚠ {{ $confirmToggleWarning }}</div>
+                            <div class="lm-confirm-warn" style="display:flex;align-items:center;gap:6px"><x-icon name="alert-triangle" size="13" /> {{ $confirmToggleWarning }}</div>
                             @endif
                         </div>
                         <button wire:click="executeToggle" class="lm-confirm-yes">

@@ -68,7 +68,7 @@ class BusinessInsights extends Component
                 'bg'       => 'var(--accent-dim)',
                 'icon'     => 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
                 'headline' => ($revGrowth >= 0 ? 'Revenue increased by ' : 'Revenue decreased by ').abs($revGrowth).'% vs last period.',
-                'detail'   => $revGrowth >= 0 ? 'Great job! Keep it up 🚀' : 'Review your sales strategy.',
+                'detail'   => $revGrowth >= 0 ? 'Great job! Keep it up.' : 'Review your sales strategy.',
             ],
             [
                 'color'    => 'var(--green)',
@@ -83,7 +83,7 @@ class BusinessInsights extends Component
                 'icon'     => 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
                 'headline' => $outstanding > 0
                     ? 'Receivables are High. Follow up with '.$creditCount.' '.($creditCount === 1 ? 'customer' : 'customers').'.'
-                    : 'No outstanding receivables. All clear! ✓',
+                    : 'No outstanding receivables. All clear!',
                 'detail'   => $outstanding > 0
                     ? 'Total pending: '.number_format($outstanding).' RWF'
                     : 'Excellent credit management.',

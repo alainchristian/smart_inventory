@@ -460,7 +460,7 @@
                 @if($held['needs_approval'] && !$held['is_approved'])
                     <span class="upos-held-approval-badge">Needs Approval</span>
                 @elseif($held['is_approved'])
-                    <span class="upos-held-approved-badge">✓ Approved</span>
+                    <span class="upos-held-approved-badge" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="11" /> Approved</span>
                 @endif
                 <button class="upos-held-action upos-held-resume" wire:click="resumeHeldSale({{ $held['id'] }})">Resume</button>
                 <button class="upos-held-action upos-held-discard" wire:click="discardHeldSale({{ $held['id'] }})">×</button>
@@ -834,8 +834,9 @@
                     <div class="upos-bal-progress">
                         <div class="upos-bal-progress-fill" :style="`width:${pct}%`"></div>
                     </div>
-                    <div class="upos-bal-remain" :class="remain > 0 ? 'red' : 'green'">
-                        <span x-text="remain > 0 ? number_format_js(remain) + ' RWF remaining' : remain < 0 ? number_format_js(Math.abs(remain)) + ' RWF overpaid' : 'Fully paid ✓'"></span>
+                    <div class="upos-bal-remain" :class="remain > 0 ? 'red' : 'green'" style="display:flex;align-items:center;gap:5px">
+                        <x-icon name="check" size="12" x-show="remain === 0" x-cloak />
+                        <span x-text="remain > 0 ? number_format_js(remain) + ' RWF remaining' : remain < 0 ? number_format_js(Math.abs(remain)) + ' RWF overpaid' : 'Fully paid'"></span>
                     </div>
                 </div>
 

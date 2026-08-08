@@ -556,7 +556,7 @@
         </button>
 
         @if(session('success'))
-          <div class="rf-flash-ok">✓ {{ session('success') }}</div>
+          <div class="rf-flash-ok" style="display:flex;align-items:center;gap:6px"><x-icon name="check" size="14" /> {{ session('success') }}</div>
         @endif
         @if(session('error'))
           <div class="rf-flash-err">{{ session('error') }}</div>

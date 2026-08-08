@@ -560,7 +560,7 @@
             <tr>
                 <td colspan="{{ $isOwner ? 10 : 9 }}">
                     <div class="bx-empty">
-                        <div class="bx-empty-icon">📦</div>
+                        <div class="bx-empty-icon"><x-icon name="box" size="28" /></div>
                         <div class="bx-empty-title">
                             @if($search || $locationType || $productId || $status || $expiringOnly)
                                 No boxes match your filters

@@ -174,12 +174,12 @@ $periodLabel = match($period ?? 'today') {
       <div>
         @if(($credit['outstanding'] ?? 0) > 0)
           <div style="display:flex;align-items:center;gap:4px">
-            <span style="font-size:13px">⚠</span>
+            <span style="color:#f97316"><x-icon name="alert-triangle" size="13" /></span>
             <span style="font-size:12px;font-weight:700;color:#f97316">Pending</span>
           </div>
           <div class="kpi5-period">{{ $credit['count'] ?? 0 }} customers</div>
         @else
-          <span style="font-size:12px;font-weight:700;color:#0e9e86">✓ All clear</span>
+          <span style="font-size:12px;font-weight:700;color:#0e9e86;display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="12" /> All clear</span>
           <div class="kpi5-period">no outstanding</div>
         @endif
       </div>

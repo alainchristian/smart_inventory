@@ -257,9 +257,9 @@
             In Stock
         </button>
         <button wire:click="$set('statusFilter','low')"
-                class="ss-tab {{ $statusFilter==='low' ? 'active' : '' }}">
+                class="ss-tab {{ $statusFilter==='low' ? 'active' : '' }}" style="display:inline-flex;align-items:center;gap:4px">
             @if(($lowStockCount ?? 0) > 0)
-                ⚠ Low ({{ $lowStockCount }})
+                <x-icon name="alert-triangle" size="11" /> Low ({{ $lowStockCount }})
             @else
                 Low Stock
             @endif
@@ -361,8 +361,8 @@
                 <td class="center">
                     @if($isCrit)
                         <span class="ss-badge"
-                              style="background:var(--red-dim);color:var(--red)">
-                            ⚠ Critical
+                              style="background:var(--red-dim);color:var(--red);display:inline-flex;align-items:center;gap:4px">
+                            <x-icon name="alert-triangle" size="11" /> Critical
                         </span>
                     @elseif($isLow)
                         <span class="ss-badge"
@@ -371,8 +371,8 @@
                         </span>
                     @else
                         <span class="ss-badge"
-                              style="background:var(--green-dim);color:var(--green)">
-                            ✓ OK
+                              style="background:var(--green-dim);color:var(--green);display:inline-flex;align-items:center;gap:4px">
+                            <x-icon name="check" size="11" /> OK
                         </span>
                     @endif
                 </td>
@@ -382,7 +382,7 @@
             <tr>
                 <td colspan="7">
                     <div class="ss-empty">
-                        <div class="ss-empty-icon">📦</div>
+                        <div class="ss-empty-icon"><x-icon name="box" size="28" /></div>
                         <div class="ss-empty-title">
                             @if($statusFilter === 'low')
                                 No low stock products
@@ -475,7 +475,7 @@
             <tr>
                 <td colspan="5">
                     <div class="ss-empty">
-                        <div class="ss-empty-icon">✅</div>
+                        <div class="ss-empty-icon" style="color:var(--green);display:flex;justify-content:center"><x-icon name="check" size="26" /></div>
                         <div class="ss-empty-title">No history yet</div>
                         <div class="ss-empty-sub">
                             Products appear here once fully sold out after a transfer.

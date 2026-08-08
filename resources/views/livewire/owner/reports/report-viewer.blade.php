@@ -405,7 +405,7 @@ function generateInsight(string $metricId, array $data): ?array
             <span class="rv-chip" style="background:var(--accent-dim);color:var(--accent)">Shared</span>
             @endif
             @if ($report->pinned_to_dashboard)
-            <span class="rv-chip" style="background:var(--amber-dim,rgba(255,180,0,.12));color:var(--amber)">📌 Pinned</span>
+            <span class="rv-chip" style="background:var(--amber-dim,rgba(255,180,0,.12));color:var(--amber);display:inline-flex;align-items:center;gap:4px"><x-icon name="pin" size="11" /> Pinned</span>
             @endif
         </div>
         @if ($report->description)

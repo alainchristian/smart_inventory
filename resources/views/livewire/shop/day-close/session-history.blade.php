@@ -275,7 +275,7 @@
                         @elseif ($isOpen)
                             <span class="sh-badge sh-badge-open">● Open</span>
                         @else
-                            <span class="sh-badge sh-badge-closed">✓ Closed</span>
+                            <span class="sh-badge sh-badge-closed" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="11" /> Closed</span>
                         @endif
                     </td>
 
@@ -419,8 +419,8 @@
                 Cash surplus of {{ number_format($sv) }} RWF — counted more than expected
             </div>
         @elseif ($isLock)
-            <div class="fo-verdict fo-verdict-seal">
-                🔒 Session sealed and balanced — records are immutable
+            <div class="fo-verdict fo-verdict-seal" style="display:flex;align-items:center;gap:8px">
+                <x-icon name="lock" size="15" /> Session sealed and balanced — records are immutable
             </div>
         @else
             <div class="fo-verdict fo-verdict-ok">

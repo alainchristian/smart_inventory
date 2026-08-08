@@ -374,7 +374,7 @@
          ════════════════════════════════════════ --}}
     @if($sessions->isEmpty())
         <div class="dcr-empty">
-            <div class="dcr-empty-icon">📋</div>
+            <div class="dcr-empty-icon"><x-icon name="clipboard" size="28" /></div>
             <div class="dcr-empty-title">No sessions found</div>
             <div class="dcr-empty-sub">
                 {{ \Carbon\Carbon::parse($reportDate)->format('d M Y') }} had no recorded activity.
@@ -726,12 +726,13 @@
                     <button class="dcr-lock-btn"
                             wire:click.stop="lockSession({{ $session->id }})"
                             wire:confirm="Lock this session? This cannot be undone."
+                            style="display:inline-flex;align-items:center;gap:4px"
                             @if(!$session->isClosed()) disabled @endif>
-                        🔒 Lock
+                        <x-icon name="lock" size="11" /> Lock
                     </button>
                 @else
-                    <span style="font-size:10px;color:var(--text-dim);white-space:nowrap;">
-                        🔒 {{ $session->locked_at?->format('H:i') }}
+                    <span style="font-size:10px;color:var(--text-dim);white-space:nowrap;display:inline-flex;align-items:center;gap:3px">
+                        <x-icon name="lock" size="10" /> {{ $session->locked_at?->format('H:i') }}
                     </span>
                 @endif
                 <svg class="dcr-chevron {{ $isExpanded ? 'dcr-open' : '' }}"
@@ -802,7 +803,8 @@
                 </div>
             @elseif($dcrmIsLocked)
                 <div class="dcr-verdict dcr-verdict-seal">
-                    🔒 Sealed — locked by {{ $dcrmSess->lockedBy->name ?? '—' }}
+                    <svg style="width:13px;height:13px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Sealed — locked by {{ $dcrmSess->lockedBy->name ?? '—' }}
                     on {{ $dcrmSess->locked_at?->format('d M Y') }} at {{ $dcrmSess->locked_at?->format('H:i') }}
                 </div>
             @elseif($dcrmSv === 0)
@@ -1081,8 +1083,8 @@
                 @if($dcrmIsOpen)
                     <span class="dcr-footer-note">Session is still running — the shop manager must close it before you can lock it.</span>
                 @elseif($dcrmIsLocked)
-                    <span class="dcr-footer-note">
-                        🔒 Permanently sealed · {{ $dcrmSess->lockedBy->name ?? '—' }}
+                    <span class="dcr-footer-note" style="display:inline-flex;align-items:center;gap:5px">
+                        <x-icon name="lock" size="12" /> Permanently sealed · {{ $dcrmSess->lockedBy->name ?? '—' }}
                         · {{ $dcrmSess->locked_at?->format('d M Y H:i') }}
                     </span>
                 @else
@@ -1103,8 +1105,9 @@
                         </button>
                         <button class="dcr-btn-lock"
                                 wire:click="lockSession({{ $expandedSessionId }})"
-                                wire:confirm="Lock this session permanently? This cannot be undone.">
-                            🔒 Lock Session
+                                wire:confirm="Lock this session permanently? This cannot be undone."
+                                style="display:inline-flex;align-items:center;gap:5px">
+                            <x-icon name="lock" size="13" /> Lock Session
                         </button>
                     </div>
                 @endif

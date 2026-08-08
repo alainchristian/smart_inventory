@@ -123,7 +123,7 @@ class ReceiveBoxes extends Component
     private function validateWarehouseSelected(): bool
     {
         if (empty($this->warehouseId)) {
-            session()->flash('error', '⚠️ Please select a warehouse first');
+            session()->flash('warning', 'Please select a warehouse first');
             return false;
         }
         return true;
@@ -260,7 +260,7 @@ class ReceiveBoxes extends Component
     {
         // Check warehouse is selected
         if (empty($this->warehouseId)) {
-            session()->flash('error', '⚠️ Please select a warehouse first');
+            session()->flash('warning', 'Please select a warehouse first');
             return;
         }
 
@@ -359,7 +359,7 @@ class ReceiveBoxes extends Component
     {
         // CRITICAL: Check warehouse is selected first
         if (empty($this->warehouseId)) {
-            session()->flash('error', '⚠️ Please select a warehouse first');
+            session()->flash('warning', 'Please select a warehouse first');
             $this->closeReceiveModal();
             return;
         }
@@ -456,7 +456,7 @@ class ReceiveBoxes extends Component
                 ],
             ]);
 
-            $message = "✓ ";
+            $message = "";
             if ($this->isNewProduct) {
                 $message .= "Product created and ";
             } elseif ($this->rememberBarcode && !$this->barcodeIsKnown) {
@@ -624,7 +624,7 @@ class ReceiveBoxes extends Component
             }
 
             $totalRows = count($allRows);
-            $message = "✓ Parsed {$totalRows} rows from Excel";
+            $message = "Parsed {$totalRows} rows from Excel";
 
             if (count($result['barcode_associations']) > 0) {
                 $message .= " • " . count($result['barcode_associations']) . " new barcodes to associate";
@@ -703,7 +703,7 @@ class ReceiveBoxes extends Component
         $this->editableProductSearchQuery[$rowNumber] = '';
         $this->liveSearchResults[$rowNumber] = [];
 
-        session()->flash('success', "✓ Matched to: {$product->name}");
+        session()->flash('success', "Matched to: {$product->name}");
     }
 
     /**
@@ -962,7 +962,7 @@ class ReceiveBoxes extends Component
                 ],
             ]);
 
-            $message = "✓ Imported " . count($created) . " boxes";
+            $message = "Imported " . count($created) . " boxes";
             if ($productsCreated > 0) {
                 $message .= ", created {$productsCreated} new product" . ($productsCreated > 1 ? 's' : '');
             }

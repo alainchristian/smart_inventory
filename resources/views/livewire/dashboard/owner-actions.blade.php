@@ -42,7 +42,7 @@
         @if(empty($sections))
         {{-- All clear state --}}
         <div style="padding:48px 20px;text-align:center">
-            <div style="font-size:36px;margin-bottom:12px">✅</div>
+            <div style="margin-bottom:12px;color:var(--green);display:flex;justify-content:center"><x-icon name="check" size="32" /></div>
             <div style="font-size:15px;font-weight:700;color:var(--text-sub);
                         margin-bottom:6px">All clear</div>
             <div style="font-size:13px;color:var(--text-dim);line-height:1.5">
