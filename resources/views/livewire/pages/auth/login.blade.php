@@ -37,27 +37,25 @@ new #[Layout('layouts.login')] class extends Component
         </div>
     @endif
 
-    <div class="form-eyebrow">Inventory System</div>
-    <div class="form-heading-row">
-        <div class="form-heading-wave">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 11V6a2 2 0 00-2-2v0a2 2 0 00-2 2v0"/>
-                <path d="M14 10V4a2 2 0 00-2-2v0a2 2 0 00-2 2v2"/>
-                <path d="M10 10.5V6a2 2 0 00-2-2v0a2 2 0 00-2 2v8"/>
-                <path d="M18 8a2 2 0 114 0v6a8 8 0 01-8 8h-2c-2.8 0-4.5-.86-6.53-3.34l-4-5c-.55-.65-.42-1.62.28-2.14v0a1.6 1.6 0 012.13.2L6 13"/>
+    <div class="form-avatar-wrap">
+        <span class="form-avatar-line"></span>
+        <div class="form-avatar-circle">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
             </svg>
         </div>
-        <h1 class="form-heading">Welcome back</h1>
+        <span class="form-avatar-line"></span>
     </div>
-    <p class="form-subheading">Sign in to your account to continue</p>
+    <p class="form-caption">Sign in to your account</p>
 
     <form wire:submit="login" novalidate>
 
         {{-- Email --}}
         <div class="field-group">
-            <label for="email" class="field-label">Email address</label>
+            <label for="email" class="sr-only">Email address</label>
             <div class="field-input-wrap">
-                <span class="field-icon">
+                <span class="field-icon-box">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/>
                         <polyline points="22 6 12 13 2 6"/>
@@ -68,7 +66,7 @@ new #[Layout('layouts.login')] class extends Component
                        type="email"
                        name="email"
                        class="field-input @error('form.email') has-error @enderror"
-                       placeholder="you@example.com"
+                       placeholder="Email address"
                        required
                        autofocus
                        autocomplete="username">
@@ -80,9 +78,9 @@ new #[Layout('layouts.login')] class extends Component
 
         {{-- Password --}}
         <div class="field-group">
-            <label for="password" class="field-label">Password</label>
+            <label for="password" class="sr-only">Password</label>
             <div class="field-input-wrap" x-data="{ showPwd: false }">
-                <span class="field-icon">
+                <span class="field-icon-box">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="11" width="18" height="10" rx="2"/>
                         <path d="M7 11V7a5 5 0 0110 0v4"/>
@@ -93,7 +91,7 @@ new #[Layout('layouts.login')] class extends Component
                        :type="showPwd ? 'text' : 'password'"
                        name="password"
                        class="field-input @error('form.password') has-error @enderror"
-                       placeholder="••••••••"
+                       placeholder="Password"
                        required
                        autocomplete="current-password">
                 <button type="button" class="field-eye" @click="showPwd = !showPwd"
@@ -122,7 +120,14 @@ new #[Layout('layouts.login')] class extends Component
         {{-- Remember / forgot --}}
         <div class="form-meta">
             <label class="remember-label" for="remember">
-                <input wire:model="form.remember" id="remember" type="checkbox" name="remember">
+                <span class="xx-checkbox">
+                    <input wire:model="form.remember" id="remember" type="checkbox" name="remember">
+                    <span class="xx-checkbox-box" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </span>
+                </span>
                 Remember me
             </label>
             @if (Route::has('password.request'))
@@ -134,28 +139,16 @@ new #[Layout('layouts.login')] class extends Component
 
         {{-- Submit --}}
         <button type="submit" class="btn-login" wire:loading.attr="disabled">
-            <span wire:loading.remove wire:target="login">
-                Sign In
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="margin-left:4px">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-            </span>
+            <span wire:loading.remove wire:target="login">Sign In</span>
             <span wire:loading wire:target="login" class="btn-loading" style="display:none">
                 <span class="spinner"></span>
                 Signing in…
             </span>
         </button>
 
-        <div class="trust-note">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="10" rx="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
-            </svg>
-            Your credentials are encrypted and never shared
-        </div>
-
     </form>
 
+    <div class="form-divider"></div>
     <div class="form-footer">
         Powered by Smart Inventory &copy; {{ date('Y') }}
     </div>

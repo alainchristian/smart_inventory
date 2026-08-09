@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sign In — New Shoes Ltd</title>
+    <title>Sign In — {{ config('tenant.name') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -92,21 +92,29 @@
             animation: fadeInUp .55s .15s ease both;
         }
 
-        /* Logo mark */
+        /* Logo mark — icon + tenant name displayed inline, at every breakpoint */
+        .brand-logo-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
         .brand-logo {
             width: 52px;
             height: 52px;
+            flex-shrink: 0;
             border-radius: 14px;
             background: linear-gradient(135deg, #3b6fd4, #5b8fe8);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 22px;
             box-shadow: 0 8px 28px rgba(59,111,212,.45), 0 0 0 1px rgba(255,255,255,.1);
         }
-        .brand-logo svg {
-            width: 26px;
-            height: 26px;
+        .brand-logo-mono {
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            line-height: 1;
             color: #fff;
         }
 
@@ -116,7 +124,6 @@
             color: #ffffff;
             letter-spacing: -0.5px;
             line-height: 1.1;
-            margin-bottom: 5px;
             text-shadow: 0 2px 12px rgba(0,0,0,.4);
         }
         .brand-tagline {
@@ -220,7 +227,9 @@
            RIGHT — Form panel
         ════════════════════════════════ */
         .form-panel {
-            background: #f4f6fb;
+            background:
+                linear-gradient(to right, rgba(59,111,212,.35), rgba(59,111,212,0) 6px),
+                #f4f6fb;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -236,22 +245,30 @@
         }
         .form-panel::-webkit-scrollbar { display: none; }
 
-        /* Soft ambient glows for warmth — purely decorative, sit behind the card */
-        .form-panel::before,
-        .form-panel::after {
+        /* Soft ambient glows for warmth — purely decorative, sit behind the card.
+           Clipped to their own layer (not .form-panel directly) so their
+           intentionally-negative offsets never register as real scrollable
+           content on .form-panel's overflow-y:auto. */
+        .form-panel-glow {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .form-panel-glow::before,
+        .form-panel-glow::after {
             content: '';
             position: absolute;
             border-radius: 50%;
             filter: blur(60px);
-            pointer-events: none;
-            z-index: 0;
         }
-        .form-panel::before {
+        .form-panel-glow::before {
             width: 320px; height: 320px;
             top: -80px; right: -100px;
             background: radial-gradient(circle, rgba(59,111,212,.14), transparent 70%);
         }
-        .form-panel::after {
+        .form-panel-glow::after {
             width: 280px; height: 280px;
             bottom: -100px; left: -90px;
             background: radial-gradient(circle, rgba(139,180,239,.16), transparent 70%);
@@ -264,108 +281,100 @@
             z-index: 1;
         }
 
-        .brand-text { /* used in mobile compact mode */ }
-
-        /* Form card */
+        /* Form card — white base, blue used only as a sparing accent.
+           Structure (avatar circle + lines, icon-box pill-ish inputs,
+           divider + footer) follows the reference; radii kept modest
+           (>=10px) rather than full pill/stadium shapes. */
         .form-card {
+            position: relative;
             background: #ffffff;
             border: 1px solid #e2e6f3;
-            border-radius: 18px;
-            padding: 36px 32px;
+            border-radius: 22px;
+            padding: 40px 32px 32px;
+            color: #1a1f36;
             box-shadow: 0 2px 12px rgba(26,31,54,.07), 0 8px 32px rgba(26,31,54,.05);
             animation: fadeInUp .35s ease both;
         }
 
-        .form-eyebrow {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #3b6fd4;
-            margin-bottom: 8px;
+        .sr-only {
+            position: absolute; width: 1px; height: 1px;
+            padding: 0; margin: -1px; overflow: hidden;
+            clip: rect(0,0,0,0); white-space: nowrap; border: 0;
         }
-        .form-heading-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 4px;
+
+        /* Avatar header — circle + flanking lines, replaces the old text heading */
+        .form-avatar-wrap {
+            display: flex; align-items: center; gap: 14px;
+            margin-bottom: 14px;
         }
-        .form-heading-wave {
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, rgba(59,111,212,.14), rgba(139,180,239,.20));
-            border: 1px solid rgba(59,111,212,.18);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+        .form-avatar-line {
+            flex: 1; height: 1px;
+            background: linear-gradient(to right, transparent, #e2e6f3, transparent);
         }
-        .form-heading-wave svg { width: 17px; height: 17px; color: #3b6fd4; }
-        .form-heading {
-            font-size: 26px;
-            font-weight: 800;
-            color: #1a1f36;
-            letter-spacing: -0.5px;
+        .form-avatar-circle {
+            width: 64px; height: 64px; flex-shrink: 0;
+            border-radius: 50%;
+            border: 1.5px solid rgba(28,36,64,.22);
+            background: linear-gradient(135deg, rgba(28,36,64,.12), rgba(59,111,212,.06));
+            display: flex; align-items: center; justify-content: center;
         }
-        .form-subheading {
-            font-size: 13.5px;
+        .form-avatar-circle svg { width: 26px; height: 26px; color: #1c2440; }
+        .form-caption {
+            text-align: center; font-size: 13px;
             color: #4a5372;
-            margin-bottom: 28px;
+            margin-bottom: 26px;
         }
 
         /* Field */
-        .field-group { margin-bottom: 18px; }
-        .field-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #1a1f36;
-            margin-bottom: 6px;
-        }
-        .field-input {
-            width: 100%;
-            padding: 10px 13px;
+        .field-group { margin-bottom: 16px; }
+        .field-input-wrap {
+            display: flex; align-items: stretch;
             border: 1.5px solid #e2e6f3;
             border-radius: 10px;
-            font-size: 14px;
-            font-family: 'DM Sans', sans-serif;
-            color: #1a1f36;
             background: #f4f6fb;
-            transition: border-color .15s, box-shadow .15s, background .15s;
-            outline: none;
+            overflow: hidden;
+            transition: border-color .15s, background .15s, box-shadow .15s;
         }
-        .field-input:focus {
+        .field-input-wrap:focus-within {
             border-color: #3b6fd4;
             background: #fff;
             box-shadow: 0 0 0 3px rgba(59,111,212,.12);
         }
-        .field-input::placeholder { color: #7a81a0; }
-
-        /* Leading icon inside inputs */
-        .field-input-wrap { position: relative; }
-        .field-input-wrap .field-input { padding-left: 38px; }
-        .field-icon {
-            position: absolute; left: 12px; top: 50%;
-            transform: translateY(-50%);
-            color: #7a81a0;
-            display: flex; align-items: center; justify-content: center;
-            pointer-events: none;
-            transition: color .15s;
+        .field-input-wrap:has(.field-input.has-error) {
+            border-color: #e11d48;
+            background: #fff;
         }
-        .field-icon svg { width: 16px; height: 16px; }
-        .field-input-wrap:focus-within .field-icon { color: #3b6fd4; }
+        .field-icon-box {
+            width: 44px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-right: 1.5px solid #e2e6f3;
+            color: #7a81a0;
+        }
+        .field-icon-box svg { width: 16px; height: 16px; }
+        .field-input-wrap:focus-within .field-icon-box { color: #3b6fd4; }
+        .field-input {
+            flex: 1; min-width: 0;
+            padding: 11px 16px;
+            border: none;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            color: #1a1f36;
+            background: transparent;
+            outline: none;
+        }
+        .field-input::placeholder {
+            color: #7a81a0;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
 
         .field-error {
             font-size: 12px;
             color: #e11d48;
-            margin-top: 5px;
-        }
-
-        .field-input.has-error { border-color: #e11d48; background: #fff; }
-        .field-input.has-error:focus {
-            border-color: #e11d48;
-            box-shadow: 0 0 0 3px rgba(225,29,72,.12);
+            margin-top: 6px;
+            padding-left: 6px;
         }
 
         .field-input:-webkit-autofill,
@@ -376,15 +385,12 @@
             transition: background-color 5000s ease-in-out 0s;
         }
 
-        .field-input-wrap { position: relative; }
-        .field-input-wrap .field-input { padding-right: 42px; }
         .field-eye {
-            position: absolute; right: 11px; top: 50%;
-            transform: translateY(-50%);
+            width: 44px; flex-shrink: 0;
             background: none; border: none; cursor: pointer;
-            padding: 4px; color: #7a81a0;
+            color: #7a81a0;
             display: flex; align-items: center; justify-content: center;
-            border-radius: 6px; transition: color .15s; line-height: 0;
+            transition: color .15s; line-height: 0;
         }
         .field-eye:hover { color: #1a1f36; }
         .field-eye svg { width: 16px; height: 16px; }
@@ -392,17 +398,35 @@
         .form-meta {
             display: flex; align-items: center;
             justify-content: space-between;
-            margin-bottom: 24px; gap: 8px;
+            margin-bottom: 22px; gap: 8px;
         }
         .remember-label {
             display: flex; align-items: center;
-            gap: 7px; font-size: 13px;
+            gap: 8px; font-size: 13px;
             color: #4a5372; cursor: pointer; user-select: none;
         }
-        .remember-label input[type="checkbox"] {
-            width: 15px; height: 15px;
-            border-radius: 4px; accent-color: #3b6fd4;
-            cursor: pointer; flex-shrink: 0;
+        .xx-checkbox { position: relative; width: 17px; height: 17px; flex-shrink: 0; display: inline-flex; }
+        .xx-checkbox input {
+            position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer;
+        }
+        .xx-checkbox-box {
+            position: absolute; inset: 0;
+            border: 1.5px solid #e2e6f3; border-radius: 5px; background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .15s, border-color .15s, box-shadow .15s;
+        }
+        .xx-checkbox-box svg {
+            width: 11px; height: 11px; stroke: #fff; fill: none;
+            opacity: 0; transform: scale(.6);
+            transition: opacity .12s, transform .12s;
+        }
+        .xx-checkbox input:checked ~ .xx-checkbox-box {
+            background: #3b6fd4;
+            border-color: #3b6fd4;
+        }
+        .xx-checkbox input:checked ~ .xx-checkbox-box svg { opacity: 1; transform: scale(1); }
+        .xx-checkbox input:focus-visible ~ .xx-checkbox-box {
+            box-shadow: 0 0 0 3px rgba(59,111,212,.25);
         }
         .forgot-link {
             font-size: 13px; font-weight: 500;
@@ -412,29 +436,27 @@
 
         .btn-login {
             position: relative;
-            width: 100%; padding: 13px;
+            width: 100%; padding: 10px;
             background: linear-gradient(160deg, #1c2440, #0f1626);
             color: #fff;
-            border: none; border-radius: 8px;
-            font-size: 14.5px; font-weight: 700;
+            border: none; border-radius: 10px;
+            font-size: 13.5px; font-weight: 700;
             font-family: 'DM Sans', sans-serif;
             letter-spacing: 0.2px; cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,.25);
+            box-shadow: 0 3px 10px rgba(10,15,30,.3);
             transition: background .15s ease, box-shadow .15s ease;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
+            display: flex; align-items: center; justify-content: center;
         }
-        .btn-login:hover {
-            background: linear-gradient(160deg, #262f52, #141b30);
-        }
+        .btn-login:hover { background: linear-gradient(160deg, #262f52, #141b30); }
         .btn-login:active { background: #0f1626; }
         .btn-login:focus-visible {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(28,36,64,.28), 0 2px 6px rgba(0,0,0,.25);
+            box-shadow: 0 0 0 3px rgba(28,36,64,.28), 0 3px 10px rgba(10,15,30,.3);
         }
         .btn-login:disabled { opacity: .65; cursor: not-allowed; }
 
         .spinner {
-            width: 16px; height: 16px;
+            width: 14px; height: 14px;
             border: 2px solid rgba(255,255,255,.3);
             border-top-color: #fff;
             border-radius: 50%;
@@ -442,14 +464,6 @@
             flex-shrink: 0;
         }
         .btn-loading { display: inline-flex; align-items: center; gap: 8px; }
-
-        /* Trust microcopy under the button */
-        .trust-note {
-            display: flex; align-items: center; justify-content: center;
-            gap: 5px; margin-top: 14px;
-            font-size: 11.5px; color: #7a81a0;
-        }
-        .trust-note svg { width: 12px; height: 12px; flex-shrink: 0; color: #9aa2bd; }
 
         .auth-status {
             display: flex; align-items: center; gap: 8px;
@@ -460,11 +474,15 @@
         }
         .auth-status svg { width: 15px; height: 15px; flex-shrink: 0; }
 
-        .form-footer {
-            margin-top: 20px; text-align: center;
-            font-size: 12px; color: #7a81a0; line-height: 1.6;
+        .form-divider {
+            height: 1px;
+            background: #e2e6f3;
+            margin: 22px 0 16px;
         }
-        .form-footer strong { color: #4a5372; }
+        .form-footer {
+            text-align: center;
+            font-size: 11.5px; color: #7a81a0; line-height: 1.6;
+        }
 
         /* ════════════════════════════════
            KEYFRAMES
@@ -512,33 +530,40 @@
                 width: 100%;
                 padding: 20px 24px;
                 display: flex;
-                align-items: center;
-                gap: 14px;
+                flex-direction: column;
+                justify-content: center;
                 animation: none;
             }
+            .brand-logo-row { gap: 12px; margin-bottom: 2px; }
             .brand-logo {
                 width: 44px; height: 44px;
-                border-radius: 12px; margin-bottom: 0; flex-shrink: 0;
+                border-radius: 12px; flex-shrink: 0;
             }
-            .brand-text { flex: 1; min-width: 0; }
-            .brand-name    { font-size: 20px; margin-bottom: 1px; }
+            .brand-name    { font-size: 20px; }
             .brand-tagline { font-size: 12px; margin-bottom: 0; }
             .brand-divider, .brand-features, .brand-stats { display: none; }
-            .form-panel { justify-content: flex-start; padding: 36px 24px 40px; }
+            .form-panel {
+                justify-content: flex-start; padding: 36px 24px 40px;
+                background:
+                    linear-gradient(to bottom, rgba(59,111,212,.35), rgba(59,111,212,0) 6px),
+                    #f4f6fb;
+            }
             .form-inner { max-width: 500px; }
             .form-card  { padding: 28px 24px; }
-            .form-heading { font-size: 22px; }
         }
 
         @media (max-width: 480px) {
             .brand-panel   { min-height: 130px; max-height: 160px; }
             .brand-content { padding: 16px 20px; }
+            .brand-logo-row { gap: 10px; }
             .brand-logo    { width: 38px; height: 38px; border-radius: 10px; }
+            .brand-logo-mono { font-size: 16px; }
             .brand-name    { font-size: 17px; }
             .brand-tagline { display: none; }
             .form-panel    { padding: 28px 16px 32px; }
             .form-card     { padding: 24px 20px; border-radius: 14px; }
-            .form-heading  { font-size: 20px; }
+            .form-avatar-circle { width: 56px; height: 56px; }
+            .form-avatar-circle svg { width: 24px; height: 24px; }
             .field-input   { font-size: 16px; }
             .btn-login     { font-size: 15px; padding: 13px; }
         }
@@ -572,15 +597,17 @@
             .brand-divider  { margin-bottom: 16px; }
             .brand-feature .feature-desc { display: none; }
             .brand-features { margin-bottom: 14px; }
-            .form-heading   { font-size: 22px; }
+            .form-avatar-circle { width: 52px; height: 52px; }
+            .form-avatar-circle svg { width: 22px; height: 22px; }
             .field-group    { margin-bottom: 14px; }
-            .form-subheading { margin-bottom: 18px; }
+            .form-caption   { margin-bottom: 18px; }
         }
         @media (min-width: 769px) and (max-height: 560px) {
             .brand-content   { padding: 18px 0 18px 40px; }
             .brand-features  { display: none; }
             .brand-divider   { margin-bottom: 14px; }
             .form-card       { padding: 20px 24px; }
+            .form-divider, .form-footer { display: none; }
         }
 
         @media (max-width: 768px) and (max-height: 700px) {
@@ -590,10 +617,10 @@
             .brand-tagline  { display: none; }
             .form-panel     { padding: 18px 20px 22px; justify-content: flex-start; }
             .form-card      { padding: 20px 18px; }
-            .form-heading   { font-size: 20px; }
-            .form-subheading{ margin-bottom: 16px; }
+            .form-avatar-circle { width: 48px; height: 48px; }
+            .form-avatar-circle svg { width: 20px; height: 20px; }
+            .form-caption   { margin-bottom: 16px; }
             .field-group    { margin-bottom: 12px; }
-            .form-footer    { margin-top: 10px; }
         }
         @media (max-width: 768px) and (max-height: 520px) {
             .brand-panel    { min-height: 0; max-height: 0; padding: 0; border: none; }
@@ -612,24 +639,17 @@
 
         <div class="brand-content">
 
-            {{-- Logo mark --}}
-            <div class="brand-logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                     stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12h20M2 12c0 0 2-4 6-5s8 1 12 5"/>
-                    <path d="M4 12v4a1 1 0 001 1h14a1 1 0 001-1v-4"/>
-                    <path d="M8 12V9"/>
-                    <circle cx="8" cy="17" r="1.5"/>
-                    <circle cx="16" cy="17" r="1.5"/>
-                </svg>
+            {{-- Logo mark + tenant name, always inline --}}
+            <div class="brand-logo-row">
+                <div class="brand-logo">
+                    <span class="brand-logo-mono">{{ config('tenant.monogram') }}</span>
+                </div>
+                <div class="brand-name">{{ config('tenant.name') }}</div>
             </div>
 
-            <div class="brand-text">
-                <div class="brand-name">New Shoes Ltd</div>
-                <div class="brand-tagline">
-                    Your trusted partner in <strong>wholesale footwear</strong><br>
-                    and everyday <strong>grocery essentials</strong>.
-                </div>
+            <div class="brand-tagline">
+                Your trusted partner in <strong>wholesale footwear</strong><br>
+                and everyday <strong>grocery essentials</strong>.
             </div>
 
             <div class="brand-divider"></div>
@@ -717,17 +737,12 @@
          RIGHT — Form panel
     ══════════════════════════════ --}}
     <div class="form-panel">
-        <div class="form-inner">
+        <div class="form-panel-glow"></div>
 
+        <div class="form-inner">
             <div class="form-card">
                 {{ $slot }}
             </div>
-
-            <div class="form-footer">
-                <strong>New Shoes Ltd</strong> &mdash; Wholesale Shoes &amp; Groceries<br>
-                Powered by Smart Inventory &copy; {{ date('Y') }}
-            </div>
-
         </div>
     </div>
 
