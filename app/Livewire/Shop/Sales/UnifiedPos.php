@@ -1176,12 +1176,6 @@ class UnifiedPos extends Component
         }
     }
 
-    public function printReceipt(): void
-    {
-        if (!$this->completedSale) return;
-        $this->dispatch('open-print-window', url: route('shop.receipt.print', $this->completedSale->id));
-    }
-
     public function closeReceipt(): void
     {
         $this->showReceiptModal = false;
