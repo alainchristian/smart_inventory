@@ -90,14 +90,14 @@
 {{-- ── Filters ──────────────────────────────────────────────────────────────── --}}
 <div class="rs-filters">
     {{-- Preset pills --}}
-    <div class="rs-presets-row">
+    <div class="rs-presets-row" @if($search) style="opacity:.45;pointer-events:none" @endif>
         @foreach(['today'=>'Today','yesterday'=>'Yesterday','this_week'=>'This Week','this_month'=>'This Month','last_month'=>'Last Month','last_30'=>'Last 30 Days'] as $key => $label)
             <button class="rs-preset-btn {{ $preset === $key ? 'active' : '' }}" wire:click="setPreset('{{ $key }}')">{{ $label }}</button>
         @endforeach
     </div>
     {{-- Filter row --}}
     <div class="rs-filter-row">
-        <div class="rs-filter-seg">
+        <div class="rs-filter-seg" @if($search) style="opacity:.45;pointer-events:none" @endif>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-dim);flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
             <input class="rs-date-input" type="date" wire:model.live="dateFrom">
             <span style="font-size:12px;color:var(--text-dim)">→</span>
@@ -110,6 +110,11 @@
             </div>
         </div>
     </div>
+    @if($search)
+    <div style="padding:0 14px 10px;font-size:12px;color:var(--text-dim)">
+        Searching all dates — clear search to use the date filter
+    </div>
+    @endif
 </div>
 
 {{-- ── Results table ────────────────────────────────────────────────────────── --}}

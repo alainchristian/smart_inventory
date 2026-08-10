@@ -132,8 +132,14 @@
         </button>
     </div>
 
+    @if($search)
+    <div style="padding:8px 12px 0;font-size:12px;color:var(--text-dim)">
+        Searching all dates &amp; payment methods — clear search to use filters
+    </div>
+    @endif
+
     {{-- ── Filter rows: always visible desktop, dropdown on mobile ── --}}
-    <div class="sli-filter-rows" :class="{ 'is-open': open }">
+    <div class="sli-filter-rows" :class="{ 'is-open': open }" @if($search) style="opacity:.45;pointer-events:none" @endif>
         <div class="sli-filter-divider"></div>
 
         {{-- Period --}}
@@ -295,12 +301,12 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                        @foreach($expandedSale->items as $item)
+                                        @foreach($expandedGroupedItems as $item)
                                         <tr>
-                                            <td>{{ $item->product?->name ?? '—' }}</td>
-                                            <td class="r mono">{{ number_format($item->quantity_sold) }}</td>
-                                            <td class="r mono">{{ number_format($item->actual_unit_price) }} RWF</td>
-                                            <td class="r mono bold">{{ number_format($item->line_total) }} RWF</td>
+                                            <td>{{ $item['product_name'] }}</td>
+                                            <td class="r mono">{{ number_format($item['quantity']) }}</td>
+                                            <td class="r mono">{{ number_format($item['unit_price']) }} RWF</td>
+                                            <td class="r mono bold">{{ number_format($item['line_total']) }} RWF</td>
                                         </tr>
                                         @endforeach
                                         </tbody>

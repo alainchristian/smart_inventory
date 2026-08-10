@@ -55,9 +55,9 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 </head>
 <body>
 
-{{-- Shop header --}}
-<div class="shop-name">{{ $sale->shop->name ?? config('app.name') }}</div>
-<div class="shop-sub">Receipt</div>
+{{-- Company / shop header --}}
+<div class="shop-name">{{ config('tenant.name') }}</div>
+<div class="shop-sub">{{ $sale->shop->name ?? '' }}</div>
 
 <hr class="dashed">
 

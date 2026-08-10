@@ -92,13 +92,12 @@ class SalesIndex extends Component
     {
         [$from, $to] = $this->getDateRange();
 
-        // ── Main table query (search + payment + date) ─────────────
+        // ── Main table query — search takes priority over filters ──
+        // While searching, the date and payment/voided filters are skipped
+        // entirely so a match is never hidden by whatever filter happens to
+        // be selected. Filters only apply once the search box is empty.
         $query = Sale::with(['soldBy', 'items', 'payments', 'customer'])
             ->where('shop_id', $this->shopId);
-
-        if ($from && $to) {
-            $query->whereBetween('sale_date', [$from, $to]);
-        }
 
         if ($this->search !== '') {
             $s = $this->search;
@@ -107,9 +106,12 @@ class SalesIndex extends Component
                 ->orWhere('customer_name',  'ilike', "%{$s}%")
                 ->orWhere('customer_phone', 'ilike', "%{$s}%")
             );
+        } else {
+            if ($from && $to) {
+                $query->whereBetween('sale_date', [$from, $to]);
+            }
+            $this->applyPaymentFilter($query);
         }
-
-        $this->applyPaymentFilter($query);
 
         $totalFiltered  = (clone $query)->count();
         $this->hasMore  = $totalFiltered > $this->perPage;
@@ -153,8 +155,9 @@ class SalesIndex extends Component
 
         // ── Expanded detail ─────────────────────────────────────────
         $expandedSale = $this->expandedId
-            ? Sale::with(['items.product', 'payments', 'soldBy', 'customer'])->find($this->expandedId)
+            ? Sale::with(['items.product', 'items.box', 'payments', 'soldBy', 'customer'])->find($this->expandedId)
             : null;
+        $expandedGroupedItems = $expandedSale?->groupedItems();
 
         $activePeriodLabel = [
             'today'      => 'Today',
@@ -168,7 +171,7 @@ class SalesIndex extends Component
         return view('livewire.shop.sales.sales-index', compact(
             'sales', 'totalFiltered',
             'summaryTotal', 'summaryCount', 'summaryAvg', 'summaryCash', 'summaryCredit',
-            'expandedSale', 'activePeriodLabel'
+            'expandedSale', 'expandedGroupedItems', 'activePeriodLabel'
         ));
     }
 }

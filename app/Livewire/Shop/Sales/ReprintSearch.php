@@ -96,11 +96,14 @@ class ReprintSearch extends Component
         $user   = auth()->user();
         $shopId = $user->isOwner() ? null : $user->location_id;
 
+        // Search takes priority over the date filter — while searching, the
+        // dateFrom/dateTo bounds are skipped so a match is never hidden by
+        // whatever preset/date range happens to be selected.
         $query = Sale::with(['shop', 'soldBy', 'payments', 'items.product'])
             ->whereNull('voided_at')
             ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('sale_date', '>=', $this->dateFrom))
-            ->when($this->dateTo,   fn ($q) => $q->whereDate('sale_date', '<=', $this->dateTo))
+            ->when($this->search === '' && $this->dateFrom, fn ($q) => $q->whereDate('sale_date', '>=', $this->dateFrom))
+            ->when($this->search === '' && $this->dateTo,   fn ($q) => $q->whereDate('sale_date', '<=', $this->dateTo))
             ->when($this->search, function ($q) {
                 $term = '%' . $this->search . '%';
                 $q->where(function ($inner) use ($term) {

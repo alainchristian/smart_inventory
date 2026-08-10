@@ -96,6 +96,36 @@ class Sale extends Model
         return $this->hasMany(SaleItem::class);
     }
 
+    /**
+     * Sale items grouped by product + unit price + sale type, with quantity
+     * and line total summed — collapses duplicate line entries for the same
+     * product (e.g. scanned twice at POS) into a single row. Expects
+     * items.product and items.box to be eager-loaded.
+     */
+    public function groupedItems(): \Illuminate\Support\Collection
+    {
+        return $this->items
+            ->groupBy(fn ($i) => $i->product_id . '_' . $i->actual_unit_price . '_' . ($i->is_full_box ? 'b' : 'i'))
+            ->map(function ($grp) {
+                $first      = $grp->first();
+                $isBox      = $first->is_full_box;
+                $product    = $first->product;
+                $totalItems = $grp->sum('quantity_sold');
+
+                return [
+                    'product_name'    => $product->name ?? '—',
+                    'quantity'        => $product ? $product->itemsToDisplayQty($totalItems, $isBox) : $totalItems,
+                    'unit_price'      => $product ? $product->displayUnitPrice($first->actual_unit_price, $isBox) : $first->actual_unit_price,
+                    'line_total'      => $grp->sum('line_total'),
+                    'is_full_box'     => $isBox,
+                    'price_modified'  => $grp->contains('price_was_modified', true),
+                    'original_price'  => $product ? $product->displayUnitPrice($first->original_unit_price, $isBox) : $first->original_unit_price,
+                    'source'          => $first->box?->location_type?->value ?? 'shop',
+                ];
+            })
+            ->values();
+    }
+
     public function returns(): HasMany
     {
         return $this->hasMany(ReturnModel::class);
