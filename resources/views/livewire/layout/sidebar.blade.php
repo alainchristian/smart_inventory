@@ -437,6 +437,18 @@
                         <span class="text-[14px] font-medium">Point of Sale</span>
                     </a>
 
+                    <a href="{{ route('shop.sales.index') }}" wire:navigate.reload
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('shop.sales.index') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('shop.sales.index'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">Sales History</span>
+                    </a>
+
                 </div>
             </div>
 
