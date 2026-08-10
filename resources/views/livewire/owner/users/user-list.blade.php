@@ -185,7 +185,7 @@
             Team Members
         </div>
         <div style="font-size:14px;color:var(--text-dim);margin-top:3px">
-            Manage who has access to Smart Inventory and what they can do
+            Manage who has access to {{ config('tenant.name') }} and what they can do
         </div>
     </div>
     <button wire:click="openCreate" class="um-btn-new">

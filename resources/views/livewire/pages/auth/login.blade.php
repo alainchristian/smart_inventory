@@ -150,6 +150,6 @@ new #[Layout('layouts.login')] class extends Component
 
     <div class="form-divider"></div>
     <div class="form-footer">
-        Powered by Smart Inventory &copy; {{ date('Y') }}
+        Powered by {{ config('tenant.name') }} &copy; {{ date('Y') }}
     </div>
 </div>
