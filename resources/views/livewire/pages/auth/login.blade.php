@@ -21,7 +21,7 @@ new #[Layout('layouts.login')] class extends Component
         Session::regenerate();
         Session::forget('url.intended');
 
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+        $this->redirect(route('dashboard', absolute: false));
     }
 }; ?>
 
