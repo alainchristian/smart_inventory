@@ -726,3 +726,76 @@ Rules followed when adding templates:
 - `color` uses CSS variable tokens only (`--accent`, `--green`, `--amber`, `--red`, `--violet`).
 - Icons are inner-SVG path data sized for the `viewBox="0 0 24 24"` wrapper in `report-library.blade.php`.
 - No `text_block` entries and no `comparison_mode` in the template config.
+
+---
+
+## Security Hardening Pass (2026-08-12)
+
+Ran through a 7-point hardening checklist:
+
+1. **Mass assignment audit** — clean, no fix needed. `User::$fillable`
+   includes `role`/`location_type`/`location_id`, and `Product::$fillable`
+   includes `purchase_price`/`is_active`, but a full-codebase search found
+   `$request->all()` used only inside `Validator::make()` calls
+   (`ScannerController.php`) — never passed to a model create/update/fill.
+   Every `Model::create($data)`/`->update($data)` site builds `$data` as an
+   explicit hand-listed array (reference pattern:
+   `app/Livewire/Owner/Users/UserList.php::save()`). Latent risk noted for
+   the future: these fields being fillable means any new code path that
+   swaps an explicit array for `$request->all()`/`$request->validated()`
+   without dropping `role`/`purchase_price` would reopen this.
+2. **Login rate limiting** — confirmed active, no fix needed. App uses
+   Livewire Volt for auth (not Breeze's `AuthenticatedSessionController`).
+   `app/Livewire/Forms/LoginForm.php::ensureIsNotRateLimited()` /
+   `authenticate()` implement standard 5-attempts-per-key throttling,
+   unmodified.
+3. **Session regeneration on login** — confirmed active, no fix needed.
+   `resources/views/livewire/pages/auth/login.blade.php` calls
+   `Session::regenerate()` immediately after successful
+   `$this->form->authenticate()`, before redirect.
+4. **CSV export formula injection** — fixed. Added `csv_safe()` to
+   `app/helpers.php` (prefixes a leading `=`/`+`/`-`/`@` with `'`).
+   Applied to `user_name` and `entity_identifier` in
+   `app/Livewire/Owner/ActivityLogs.php::exportCsv()` — the only *live,
+   reachable* CSV export of free-text data.
+   `app/Livewire/Owner/Products/UploadPurchasePrices.php` has the same
+   unsanitized pattern but is confirmed orphaned (see #5) — left
+   untouched since the code is unreachable.
+   `ReceiveBoxes::downloadTemplate()` only writes a static template, not
+   vulnerable.
+5. **Defense-in-depth authorization on the product/stock upload flow** —
+   fixed, with a scope correction. `UploadPurchasePrices.php` confirmed
+   orphaned (no route anywhere reaches it; not referenced in the "Box-Centric
+   Product Management & Owner Stock Intake" section above) — left untouched
+   per instruction. The actual live entry point is
+   `app/Livewire/Warehouse/Inventory/ReceiveBoxes.php`, reached via
+   `owner.inventory.receive` and the original warehouse route, both gated
+   `CheckRole:warehouse_manager,owner` — **not owner-only**, contrary to the
+   checklist's assumption. Added a method-level guard
+   (`isOwner() || isWarehouseManager()`) to `createBoxes()` and
+   `confirmExcelImport()`, matching the route's actual shared-role model
+   instead of copying `EditProduct::update()`'s stricter owner-only check
+   (which would have locked out legitimate warehouse manager stock
+   receiving). Verified against seeded users of all three roles that the
+   guard allows owner + warehouse_manager and denies shop_manager.
+6. **ActivityLog sensitive field redaction** — no active leak found (`User`
+   doesn't use the `Auditable` trait, so `password`/`remember_token` are
+   never auto-captured; the only UI rendering `old_values`/`new_values`
+   diffs is behind `CheckRole:owner` middleware, matching the
+   `viewPurchasePrice` gate's owner-only intent). Added defense-in-depth
+   anyway: `AuditLogger::log()` now redacts `password`/`remember_token` via
+   `Arr::except()` before every `ActivityLog::create()` call, regardless of
+   caller (covers both the automatic `Auditable` trait path and manual
+   call sites). `purchase_price` deliberately **not** blocklisted — it's
+   legitimate owner-facing audit data today; revisit only if a
+   non-owner-facing ActivityLog view is ever built.
+7. **`composer audit`** — 53 advisories across 16 packages, low to
+   critical. Notable: `phpoffice/phpspreadsheet` has two **critical**
+   advisories (CVE-2026-34084 SSRF/RCE via user-controlled filename in
+   `IOFactory::load`, and CVE-2026-45034, a patch bypass for the same) —
+   relevant since this package drives the Excel import in
+   `ReceiveBoxes.php`. Also multiple high/medium advisories in
+   `league/commonmark`, `guzzlehttp/guzzle`/`psr7`, and a CRLF-injection
+   advisory in `laravel/framework`. Reported only, per instructions — no
+   upgrades bundled into this pass; treat as a separate deliberate task.
+

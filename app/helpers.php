@@ -26,3 +26,18 @@ if (! function_exists('local_time')) {
         return Carbon::parse($dt)->copy()->setTimezone(config('tenant.timezone'));
     }
 }
+
+if (! function_exists('csv_safe')) {
+    /**
+     * Prefix a leading =, +, -, or @ with an apostrophe so spreadsheet apps
+     * (Excel, Sheets) treat the cell as text instead of a formula.
+     */
+    function csv_safe(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+
+        return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
+    }
+}

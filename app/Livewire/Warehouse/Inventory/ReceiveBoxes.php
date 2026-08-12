@@ -357,6 +357,14 @@ class ReceiveBoxes extends Component
      */
     public function createBoxes()
     {
+        // Defense in depth — route middleware already restricts this page to
+        // warehouse_manager/owner, but this component method could in principle
+        // be invoked directly if a request ever reaches a mounted instance.
+        if (! auth()->user()->isOwner() && ! auth()->user()->isWarehouseManager()) {
+            session()->flash('error', 'You are not authorized to receive stock.');
+            return;
+        }
+
         // CRITICAL: Check warehouse is selected first
         if (empty($this->warehouseId)) {
             session()->flash('warning', 'Please select a warehouse first');
@@ -767,6 +775,12 @@ class ReceiveBoxes extends Component
      */
     public function confirmExcelImport()
     {
+        // Defense in depth — see createBoxes() for rationale.
+        if (! auth()->user()->isOwner() && ! auth()->user()->isWarehouseManager()) {
+            session()->flash('error', 'You are not authorized to receive stock.');
+            return;
+        }
+
         // CRITICAL: Check warehouse is selected first
         if (!$this->validateWarehouseSelected()) {
             return;

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -34,8 +35,8 @@ class AuditLogger
             'entity_type'         => $data['entity_type'] ?? ($entity ? class_basename($entity) : null),
             'entity_id'           => $data['entity_id'] ?? $entity?->getKey(),
             'entity_identifier'   => $identifier,
-            'old_values'          => $data['old_values'] ?? null,
-            'new_values'          => $data['new_values'] ?? null,
+            'old_values'          => self::redact($data['old_values'] ?? null),
+            'new_values'          => self::redact($data['new_values'] ?? null),
             'details'             => $data['details'] ?? null,
             'status'              => $data['status'] ?? 'success',
             'severity'            => $data['severity'] ?? 'info',
@@ -54,6 +55,16 @@ class AuditLogger
     public static function newTraceId(): string
     {
         return (string) Str::uuid();
+    }
+
+    /**
+     * Defense in depth: strip credential-like fields before they ever reach
+     * storage, regardless of which caller/model built the diff (including the
+     * Auditable trait's unfiltered getAttributes() dumps).
+     */
+    protected static function redact(?array $values): ?array
+    {
+        return $values ? Arr::except($values, ['password', 'remember_token']) : $values;
     }
 
     /**

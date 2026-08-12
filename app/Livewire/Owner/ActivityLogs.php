@@ -470,11 +470,11 @@ class ActivityLogs extends Component
             foreach ($rows as $row) {
                 fputcsv($out, [
                     $row->created_at->format('Y-m-d H:i:s'),
-                    $row->user_name ?? 'System',
+                    csv_safe($row->user_name) ?? 'System',
                     $row->action,
                     $row->module ?? $row->entity_type,
                     $row->entity_type,
-                    $row->entity_identifier,
+                    csv_safe($row->entity_identifier),
                     $row->status,
                     $row->severity,
                     $row->ip_address,
