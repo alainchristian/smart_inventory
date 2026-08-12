@@ -51,6 +51,12 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 /* Customer / meta */
 .info-row   { font-size:10px; color:#444; margin:2px 0; }
 .footer     { text-align:center; font-size:9px; color:#666; margin-top:6px; }
+
+/* Barcode */
+.barcode-wrap  { text-align:center; margin:8px 0 4px; }
+.barcode-label { font-size:9px; font-weight:bold; text-transform:uppercase; letter-spacing:.5px; color:#444; margin-bottom:3px; }
+.barcode-wrap img { max-width:100%; height:auto; }
+.barcode-code  { font-size:11px; font-weight:bold; letter-spacing:1.5px; text-align:center; margin-top:3px; }
 </style>
 </head>
 <body>
@@ -147,6 +153,15 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 @if($sale->notes)
 <hr class="dashed">
 <div class="info-row"><em>Note: {{ $sale->notes }}</em></div>
+@endif
+
+@if($sale->fulfillment_pickup_code)
+<hr class="dashed">
+<div class="barcode-wrap">
+    <div class="barcode-label">Warehouse Pickup Code</div>
+    <img src="{{ app(\App\Services\Inventory\BarcodeService::class)->generateBarcodeImage($sale->fulfillment_pickup_code, 1, 40) }}" alt="Pickup code barcode">
+    <div class="barcode-code">{{ $sale->formatted_pickup_code }}</div>
+</div>
 @endif
 
 <hr class="dashed">

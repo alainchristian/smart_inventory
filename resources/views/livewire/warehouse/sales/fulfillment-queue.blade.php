@@ -2,49 +2,6 @@
 <style>
 /* ── Fulfillment Queue ── fq- ──────────────────────────────────── */
 
-/* Stat bar */
-.fq-stat-bar {
-    display:flex;align-items:stretch;
-    background:var(--surface);border-radius:var(--r);
-    box-shadow:var(--shadow-card);overflow:hidden;margin-bottom:24px;
-}
-.fq-stat {
-    flex:1;padding:18px 24px;border-right:1px solid var(--border);
-    display:flex;flex-direction:column;gap:3px;
-}
-.fq-stat:last-child { border-right:none }
-.fq-stat-val {
-    font-size:26px;font-weight:800;font-family:var(--mono);
-    letter-spacing:-1px;color:var(--text);line-height:1;
-}
-.fq-stat-lbl {
-    font-size:10px;font-weight:700;text-transform:uppercase;
-    letter-spacing:.6px;color:var(--text-dim);margin-top:2px;
-}
-.fq-stat-sub { font-size:11px;color:var(--text-faint) }
-
-/* Tabs */
-.fq-tabs {
-    display:flex;gap:2px;background:var(--surface2);
-    border-radius:8px;padding:3px;margin-bottom:20px;width:fit-content;
-}
-.fq-tab {
-    padding:6px 16px;border:none;border-radius:6px;cursor:pointer;
-    font-size:13px;font-weight:600;font-family:var(--font);
-    background:transparent;color:var(--text-dim);transition:all var(--tr);
-    display:inline-flex;align-items:center;gap:6px;
-}
-.fq-tab:hover { color:var(--text) }
-.fq-tab.active {
-    background:var(--surface);color:var(--accent);
-    box-shadow:0 1px 4px rgba(0,0,0,.08);
-}
-.fq-tab-ct {
-    font-size:10px;font-weight:800;padding:1px 6px;border-radius:4px;
-    background:var(--amber-dim);color:var(--amber);line-height:1.4;
-}
-.fq-tab.active .fq-tab-ct { background:var(--accent-dim);color:var(--accent) }
-
 /* Pending card */
 .fq-card {
     background:var(--surface);border-radius:var(--r);
@@ -117,7 +74,30 @@
 }
 .fq-confirm-msg { font-size:13px;color:var(--text) }
 .fq-confirm-sub { font-size:11px;color:var(--text-dim);margin-top:1px }
+.fq-confirm-body { display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;flex:1;min-width:0 }
+.fq-confirm-field { display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px }
+.fq-confirm-label { font-size:11px;font-weight:700;color:var(--text-sub) }
+.fq-confirm-input {
+    padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;
+    font-size:14px;background:var(--surface);color:var(--text);
+    outline:none;box-sizing:border-box;font-family:var(--font);
+    transition:border-color var(--tr);
+}
+.fq-confirm-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
+.fq-confirm-error { font-size:11px;color:var(--red);margin-top:2px }
 .fq-confirm-btns { display:flex;gap:7px;flex-shrink:0 }
+
+/* Signature pad */
+.fq-sig-canvas {
+    width:100%;max-width:400px;height:140px;border:1.5px solid var(--border);
+    border-radius:8px;background:var(--surface);touch-action:none;cursor:crosshair;
+}
+.fq-sig-clear {
+    margin-top:5px;background:none;border:none;padding:0;cursor:pointer;
+    font-size:11px;font-weight:600;color:var(--text-dim);font-family:var(--font);
+    text-decoration:underline;text-underline-offset:2px;
+}
+.fq-sig-clear:hover { color:var(--accent) }
 .fq-btn-cancel {
     padding:6px 14px;border-radius:7px;border:1.5px solid var(--border);
     background:transparent;color:var(--text-dim);cursor:pointer;
@@ -201,164 +181,178 @@
     font-size:11px;color:var(--text-dim);margin-bottom:12px;
 }
 
+/* Scan panel — primary lookup */
+.fq-scan-panel {
+    background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);
+    padding:18px 22px;margin-bottom:14px;
+}
+.fq-scan-title {
+    font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:7px;
+}
+.fq-scan-row { display:flex;gap:10px;align-items:center }
+.fq-scan-input-wrap { position:relative;flex:1;min-width:0 }
+.fq-scan-icon {
+    position:absolute;left:13px;top:50%;transform:translateY(-50%);
+    color:var(--text-dim);pointer-events:none;
+}
+.fq-scan-input {
+    width:100%;padding:13px 14px 13px 38px;border:1.5px solid var(--border);
+    border-radius:10px;font-size:16px;font-family:var(--mono);
+    background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;
+    transition:border-color var(--tr);
+}
+.fq-scan-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
+.fq-scan-btn {
+    padding:13px 20px;border-radius:10px;border:none;background:var(--accent);color:#fff;
+    font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);
+    box-shadow:0 3px 10px rgba(59,111,212,.25);transition:opacity var(--tr);
+    white-space:nowrap;flex-shrink:0;
+}
+.fq-scan-btn:hover { opacity:.88 }
+.fq-scan-toggle {
+    margin-top:10px;background:none;border:none;padding:0;cursor:pointer;
+    font-size:12px;font-weight:600;color:var(--text-dim);font-family:var(--font);
+    text-decoration:underline;text-underline-offset:2px;
+}
+.fq-scan-toggle:hover { color:var(--accent) }
+
+/* Secondary search-by-customer panel */
+.fq-cust-search { margin-top:12px;padding-top:12px;border-top:1px solid var(--border) }
+.fq-cust-search-row { position:relative }
+.fq-cust-search-input {
+    width:100%;padding:10px 12px 10px 36px;border:1.5px solid var(--border);
+    border-radius:9px;font-size:14px;background:var(--surface);color:var(--text);
+    outline:none;box-sizing:border-box;font-family:var(--font);
+    transition:border-color var(--tr);
+}
+.fq-cust-search-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
+
+/* Lookup result rows — fulfilled / cancelled / not found */
+.fq-result-info {
+    display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:10px;
+    margin-bottom:10px;font-size:13px;
+}
+.fq-result-fulfilled { background:var(--green-dim);color:var(--green) }
+.fq-result-cancelled { background:var(--red-dim);color:var(--red) }
+.fq-result-notfound {
+    background:var(--surface2);color:var(--text-dim);
+    display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:10px;margin-bottom:10px;font-size:13px;
+}
+.fq-result-ref { font-family:var(--mono);font-weight:700 }
+.fq-result-clear {
+    margin-left:auto;background:none;border:none;cursor:pointer;
+    color:inherit;opacity:.7;font-size:12px;font-family:var(--font);text-decoration:underline;
+}
+.fq-result-clear:hover { opacity:1 }
+
 /* Responsive */
 @media(max-width:900px) {
-    .fq-stat { flex:1 1 140px }
     .fq-exp-inner { grid-template-columns:1fr }
 }
 @media(max-width:600px) {
-    .fq-stat-bar { flex-direction:column }
-    .fq-stat { border-right:none;border-bottom:1px solid var(--border) }
-    .fq-stat:last-child { border-bottom:none }
     .fq-row-top { flex-direction:column;align-items:flex-start;gap:4px }
     .fq-act { flex-direction:column;align-items:flex-start }
     .fq-btn-dispatch { width:100%;justify-content:center }
     .fq-confirm { flex-direction:column;align-items:flex-start }
-    .fq-tabs { width:100% }
+    .fq-scan-row { flex-direction:column;align-items:stretch }
+    .fq-scan-btn { width:100% }
 }
 </style>
 
-{{-- ── Stat bar ────────────────────────────────────────────────────── --}}
-@php
-    $pendingBoxTotal = $pendingSales->sum(
-        fn($s) => $s->items->filter(fn($i) => $i->box?->location_type?->value === 'warehouse')->count()
-    );
-@endphp
-<div class="fq-stat-bar">
-    <div class="fq-stat">
-        <div class="fq-stat-val">{{ $pendingSales->count() }}</div>
-        <div class="fq-stat-lbl">Awaiting Dispatch</div>
-        <div class="fq-stat-sub">{{ $pendingBoxTotal }} {{ $pendingBoxTotal === 1 ? 'box' : 'boxes' }} to hand over</div>
+{{-- ── Receipt lookup (primary scan, secondary name/phone fallback) ──── --}}
+<div class="fq-scan-panel">
+    <div class="fq-scan-title">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10M7 8h4M7 16h7"/>
+        </svg>
+        Scan Receipt
     </div>
-    <div class="fq-stat">
-        <div class="fq-stat-val" style="color:var(--green)">{{ $fulfilledToday }}</div>
-        <div class="fq-stat-lbl">Fulfilled Today</div>
-        <div class="fq-stat-sub">dispatched this session</div>
+    <div class="fq-scan-row">
+        <div class="fq-scan-input-wrap">
+            <svg class="fq-scan-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M2 3h2v18H2zM7 3h1v18H7zM11 3h2v18h-2zM15 3h1v18h-1zM18 3h2v18h-2z"/>
+            </svg>
+            <input type="text" class="fq-scan-input" wire:model="receiptCode"
+                   wire:keydown.enter="scanReceipt"
+                   placeholder="Scan or type pickup code (e.g. 7K2-9XP-4QW-1ZM)"
+                   autocomplete="off" maxlength="15" data-code-input>
+        </div>
+        <button class="fq-scan-btn" wire:click="scanReceipt">Look Up</button>
     </div>
-    <div class="fq-stat">
-        <div class="fq-stat-val">{{ $boxesDispatchedToday }}</div>
-        <div class="fq-stat-lbl">Boxes Out Today</div>
-        <div class="fq-stat-sub">from {{ $warehouseName }}</div>
-    </div>
-</div>
-
-{{-- ── Tabs ────────────────────────────────────────────────────────── --}}
-<div class="fq-tabs">
-    <button class="fq-tab {{ $tab === 'pending' ? 'active' : '' }}" wire:click="setTab('pending')">
-        Pending
-        @if($pendingSales->count() > 0)
-            <span class="fq-tab-ct">{{ $pendingSales->count() }}</span>
-        @endif
+    <button class="fq-scan-toggle" wire:click="toggleCustomerSearch">
+        {{ $showCustomerSearch ? 'Hide name/phone search' : "Can't scan the receipt? Search by name or phone" }}
     </button>
-    <button class="fq-tab {{ $tab === 'history' ? 'active' : '' }}" wire:click="setTab('history')">
-        History
-    </button>
-</div>
 
-{{-- ══════════ PENDING ══════════ --}}
-@if($tab === 'pending')
-
-@if($pendingSales->isEmpty())
-<div class="fq-empty">
-    <svg class="fq-empty-icon" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-    </svg>
-    <div class="fq-empty-title">Queue is clear</div>
-    <div class="fq-empty-sub">All warehouse-sourced orders have been dispatched.</div>
-</div>
-@else
-
-@foreach($pendingSales as $sale)
-@php
-    $whItems    = $sale->items->filter(fn($i) => $i->box?->location_type?->value === 'warehouse');
-    $byProduct  = $whItems->groupBy(fn($i) => $i->product_id)->map(fn($g) => [
-        'name'  => $g->first()->product?->name ?? '—',
-        'boxes' => $g->count(),
-    ]);
-    $paidFull   = $sale->total > 0 && $sale->payments->sum('amount') >= $sale->total;
-    $ageMin     = (int) $sale->sale_date->diffInMinutes(now());
-    $urgency    = $ageMin >= 120 ? 'red' : ($ageMin >= 30 ? 'amber' : '');
-    $ageBadge   = $ageMin >= 120 ? 'fq-age-red' : ($ageMin >= 30 ? 'fq-age-amber' : 'fq-age-ok');
-    $ageLabel   = $ageMin < 60
-        ? "{$ageMin}m ago"
-        : floor($ageMin / 60).'h '.str_pad($ageMin % 60, 2, '0').'m';
-    $confirming = $confirmingFulfillmentId === $sale->id;
-@endphp
-
-<div class="fq-card" wire:key="card-{{ $sale->id }}">
-    <div class="fq-urgency {{ $urgency }}"></div>
-
-    {{-- Main body (always visible) --}}
-    <div class="fq-body">
-        <div class="fq-row-top">
-            <span class="fq-ref">{{ $sale->sale_number }}</span>
-            <span class="fq-shop">
-                {{ $sale->shop?->name ?? '—' }}
-                @if($sale->customer_name)
-                    &middot; {{ $sale->customer_name }}
-                @endif
-                &middot; {{ local_time($sale->sale_date)->format('d M, H:i') }}
-            </span>
-            <span class="fq-age {{ $ageBadge }}">{{ $ageLabel }}</span>
-        </div>
-
-        <div class="fq-prods">
-            @foreach($byProduct as $prod)
-                <span style="font-weight:600">{{ $prod['name'] }}</span>@if($prod['boxes'] > 1)<span class="fq-prod-qty"> &times;{{ $prod['boxes'] }}</span>@endif@if(!$loop->last)<span class="fq-dot">&middot;</span>@endif
-            @endforeach
-        </div>
-
-        @if(!$confirming)
-        <div class="fq-act">
-            <div class="fq-via">
-                @if($sale->fulfillment_method === 'transporter')
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                    Via&nbsp;<b>{{ $sale->fulfillmentTransporter?->name ?? 'Transporter' }}</b>
-                @else
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <b>Customer Pickup</b>
-                @endif
-                @if(!$paidFull)
-                    <span class="fq-outstanding" style="margin-left:6px">Balance outstanding</span>
-                @endif
-            </div>
-            <button class="fq-btn-dispatch" wire:click="requestFulfillment({{ $sale->id }})">
-                Confirm Dispatch
-                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-        </div>
-        @endif
-    </div>
-
-    {{-- Confirm strip --}}
-    @if($confirming)
-    <div class="fq-confirm">
-        <div>
-            <div class="fq-confirm-msg">
-                Hand over <strong>{{ $whItems->count() }} {{ $whItems->count() === 1 ? 'box' : 'boxes' }}</strong>
-                to {{ $sale->fulfillment_method === 'transporter'
-                    ? ($sale->fulfillmentTransporter?->name ?? 'transporter')
-                    : 'customer' }}?
-            </div>
-            <div class="fq-confirm-sub">This action is permanent and cannot be undone.</div>
-        </div>
-        <div class="fq-confirm-btns">
-            <button class="fq-btn-cancel" wire:click="cancelFulfillment">Cancel</button>
-            <button class="fq-btn-yes" wire:click="markFulfilled({{ $sale->id }})">
-                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                Yes, Dispatched
-            </button>
+    @if($showCustomerSearch)
+    <div class="fq-cust-search">
+        <div class="fq-cust-search-row">
+            <svg class="fq-scan-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="left:11px">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" class="fq-cust-search-input" wire:model.live.debounce.300ms="customerSearch"
+                   placeholder="Customer name or phone…" autocomplete="off">
         </div>
     </div>
     @endif
-
 </div>
-@endforeach
-@endif
-@endif {{-- /pending --}}
 
-{{-- ══════════ HISTORY ══════════ --}}
-@if($tab === 'history')
+{{-- ── Lookup results ──────────────────────────────────────────────── --}}
+@if($scannedCode)
+    @if($scannedSale)
+        @if($scannedSale->fulfillment_status === 'pending')
+            @include('livewire.warehouse.sales.partials.pending-row', ['sale' => $scannedSale])
+        @elseif($scannedSale->fulfillment_status === 'fulfilled')
+            <div class="fq-result-info fq-result-fulfilled">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <span><span class="fq-result-ref">{{ $scannedSale->sale_number }}</span> — already dispatched
+                    to {{ $scannedSale->fulfillment_recipient_name ?? $scannedSale->fulfillmentTransporter?->name ?? 'customer' }}
+                    at {{ local_time($scannedSale->fulfillment_confirmed_at)?->format('d M, H:i') }}.</span>
+                <button class="fq-result-clear" wire:click="clearScan">Clear</button>
+            </div>
+        @else
+            <div class="fq-result-info fq-result-cancelled">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <span><span class="fq-result-ref">{{ $scannedSale->sale_number }}</span> — this sale was cancelled. Do not dispatch.</span>
+                <button class="fq-result-clear" wire:click="clearScan">Clear</button>
+            </div>
+        @endif
+    @else
+        <div class="fq-result-notfound">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>No warehouse order found for <span class="fq-result-ref">{{ $scannedCode }}</span> at {{ $warehouseName }}.</span>
+            <button class="fq-result-clear" wire:click="clearScan">Clear</button>
+        </div>
+    @endif
+@elseif($showCustomerSearch && $customerSearch !== '')
+    @if($customerSearchResults->isEmpty())
+        <div class="fq-result-notfound">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>No matching orders for "{{ $customerSearch }}" at {{ $warehouseName }}.</span>
+        </div>
+    @else
+        @foreach($customerSearchResults as $csale)
+            @if($csale->fulfillment_status === 'pending')
+                @include('livewire.warehouse.sales.partials.pending-row', ['sale' => $csale])
+            @elseif($csale->fulfillment_status === 'fulfilled')
+                <div class="fq-result-info fq-result-fulfilled">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span><span class="fq-result-ref">{{ $csale->sale_number }}</span> — already dispatched
+                        to {{ $csale->fulfillment_recipient_name ?? $csale->fulfillmentTransporter?->name ?? 'customer' }}
+                        at {{ local_time($csale->fulfillment_confirmed_at)?->format('d M, H:i') }}.</span>
+                </div>
+            @else
+                <div class="fq-result-info fq-result-cancelled">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    <span><span class="fq-result-ref">{{ $csale->sale_number }}</span> — this sale was cancelled. Do not dispatch.</span>
+                </div>
+            @endif
+        @endforeach
+    @endif
+@endif
+
+{{-- ── History (only remaining browsable section — audit/reference) ─── --}}
+<div class="section-label">Dispatch History</div>
 
 @if($fulfilledHistory->isEmpty())
 <div class="fq-empty">
@@ -459,13 +453,26 @@
                     </div>
                     @if($sale->customer_name)
                     <div class="fq-exp-row">
-                        <span class="fq-exp-key">Recipient</span>
+                        <span class="fq-exp-key">Customer</span>
                         <span class="fq-exp-val">
                             {{ $sale->customer_name }}
                             @if($sale->customer_phone)
                                 <span style="font-family:var(--mono);color:var(--text-dim);font-weight:400"> · {{ $sale->customer_phone }}</span>
                             @endif
                         </span>
+                    </div>
+                    @endif
+                    @if($sale->fulfillment_recipient_name)
+                    <div class="fq-exp-row">
+                        <span class="fq-exp-key">Picked up by</span>
+                        <span class="fq-exp-val">{{ $sale->fulfillment_recipient_name }}</span>
+                    </div>
+                    @endif
+                    @if($sale->fulfillment_signature)
+                    <div class="fq-exp-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+                        <span class="fq-exp-key">Signature</span>
+                        <img src="{{ $sale->fulfillment_signature }}" alt="Customer signature"
+                             style="max-width:220px;border:1px solid var(--border);border-radius:6px;background:#fff">
                     </div>
                     @endif
                     <div class="fq-exp-row">
@@ -510,6 +517,106 @@
 </div>
 
 @endif
-@endif {{-- /history --}}
 
 </div>
+
+{{--
+    Signature pad init lives here (the component's root view) rather than in
+    partials/pending-row.blade.php. @script inside a Blade partial rendered
+    via @include broke Livewire's AJAX response — the update response body
+    came back with the whole component's rendered HTML prepended raw before
+    the JSON envelope, which the client then failed to JSON.parse. Moving
+    @script to the root view file fixed it. _initSignaturePads() queries
+    [data-sig-canvas] globally, so it doesn't need to live next to the
+    canvas markup itself.
+--}}
+@script
+<script>
+    window._initSignaturePads = window._initSignaturePads || function () {
+        document.querySelectorAll('[data-sig-canvas]:not([data-sig-ready])').forEach(function (canvas) {
+            canvas.dataset.sigReady = '1';
+
+            const ctx = canvas.getContext('2d');
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = (getComputedStyle(document.documentElement).getPropertyValue('--text').trim()) || '#1a1f36';
+
+            let drawing = false;
+            let last = null;
+
+            function pos(e) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+                    y: (e.clientY - rect.top) * (canvas.height / rect.height),
+                };
+            }
+
+            function sync() {
+                const w = window.Livewire.find(canvas.closest('[wire\\:id]').getAttribute('wire:id'));
+                if (w) w.set('signatureData', canvas.toDataURL('image/png'));
+            }
+
+            canvas.addEventListener('pointerdown', function (e) {
+                drawing = true;
+                last = pos(e);
+                canvas.setPointerCapture(e.pointerId);
+            });
+            canvas.addEventListener('pointermove', function (e) {
+                if (!drawing) return;
+                const p = pos(e);
+                ctx.beginPath();
+                ctx.moveTo(last.x, last.y);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+                last = p;
+            });
+            canvas.addEventListener('pointerup', function () {
+                if (!drawing) return;
+                drawing = false;
+                sync();
+            });
+            canvas.addEventListener('pointerleave', function () {
+                if (drawing) { drawing = false; sync(); }
+            });
+
+            const clearBtn = document.querySelector('[data-sig-clear="' + canvas.id + '"]');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function () {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const w = window.Livewire.find(canvas.closest('[wire\\:id]').getAttribute('wire:id'));
+                    if (w) w.set('signatureData', '');
+                });
+            }
+        });
+    };
+
+    window._initSignaturePads();
+
+    // Cosmetic only: groups the code into 3-char blocks with dashes as the
+    // warehouse manager types, matching the receipt's printed format.
+    // scanReceipt() already strips non-alphanumeric characters and
+    // uppercases before matching, so dashes/case here don't affect lookup.
+    window._initCodeInput = window._initCodeInput || function () {
+        document.querySelectorAll('[data-code-input]:not([data-code-ready])').forEach(function (input) {
+            input.dataset.codeReady = '1';
+            input.addEventListener('input', function () {
+                const raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+                input.value = raw.match(/.{1,3}/g)?.join('-') ?? raw;
+            });
+        });
+    };
+
+    window._initCodeInput();
+
+    if (!window._sigPadsHookRegistered) {
+        window._sigPadsHookRegistered = true;
+        Livewire.hook('commit', ({ succeed }) => {
+            succeed(() => {
+                requestAnimationFrame(window._initSignaturePads);
+                requestAnimationFrame(window._initCodeInput);
+            });
+        });
+    }
+</script>
+@endscript

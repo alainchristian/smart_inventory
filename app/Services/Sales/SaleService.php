@@ -27,6 +27,26 @@ class SaleService
     }
 
     /**
+     * Random pickup code for warehouse-direct sales — this, not sale_number,
+     * is what gets barcoded on the receipt and scanned/typed at the
+     * warehouse. No 0/O, 1/I/L — avoids ambiguity when typed manually as
+     * the no-scanner fallback.
+     */
+    private function generateFulfillmentCode(): string
+    {
+        $alphabet = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+
+        do {
+            $code = '';
+            for ($i = 0; $i < 12; $i++) {
+                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            }
+        } while (Sale::where('fulfillment_pickup_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
      * Create a sale.
      * Items must pass total item quantity (not a specific box_id).
      * Boxes are selected automatically using FIFO (oldest received_at first).
@@ -328,6 +348,7 @@ class SaleService
                 'fulfillment_method'         => $data['fulfillment_method'],
                 'fulfillment_transporter_id' => $data['fulfillment_transporter_id'] ?? null,
                 'fulfillment_notes'          => $data['fulfillment_notes'] ?? null,
+                'fulfillment_pickup_code'    => $this->generateFulfillmentCode(),
             ]);
 
             $subtotal = 0;
@@ -551,6 +572,7 @@ class SaleService
                 'fulfillment_method'         => $hasWarehouse ? ($data['fulfillment_method'] ?? null) : null,
                 'fulfillment_transporter_id' => $hasWarehouse ? ($data['fulfillment_transporter_id'] ?? null) : null,
                 'fulfillment_notes'          => $hasWarehouse ? ($data['fulfillment_notes'] ?? null) : null,
+                'fulfillment_pickup_code'    => $hasWarehouse ? $this->generateFulfillmentCode() : null,
             ]);
 
             $subtotal         = 0;
@@ -775,6 +797,12 @@ class SaleService
                 'voided_at' => now(),
                 'voided_by' => auth()->id(),
                 'void_reason' => $reason,
+                // A voided sale must never remain dispatchable — without this,
+                // a warehouse-direct sale voided after packing but before
+                // pickup would still sit in the fulfillment queue.
+                'fulfillment_status' => $sale->fulfillment_status === 'pending'
+                    ? 'cancelled'
+                    : $sale->fulfillment_status,
             ]);
 
             // Return items to inventory

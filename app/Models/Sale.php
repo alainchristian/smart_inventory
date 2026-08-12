@@ -48,6 +48,9 @@ class Sale extends Model
         'fulfillment_method',
         'fulfillment_transporter_id',
         'fulfillment_notes',
+        'fulfillment_recipient_name',
+        'fulfillment_pickup_code',
+        'fulfillment_signature',
         'fulfillment_confirmed_at',
         'fulfillment_confirmed_by',
     ];
@@ -177,6 +180,16 @@ class Sale extends Model
         return $this->fulfillment_type === 'warehouse_direct';
     }
 
+    /** Dash-grouped display form of fulfillment_pickup_code, e.g. "7K2-9XP-4QW-1ZM". */
+    public function getFormattedPickupCodeAttribute(): ?string
+    {
+        if (!$this->fulfillment_pickup_code) {
+            return null;
+        }
+
+        return implode('-', str_split($this->fulfillment_pickup_code, 3));
+    }
+
     // Scopes
     public function scopeNotVoided($query)
     {
@@ -215,6 +228,9 @@ class Sale extends Model
 
     public function scopePendingFulfillment($query)
     {
-        return $query->where('fulfillment_status', 'pending');
+        // notVoided() is defense in depth: a voided sale should never be
+        // dispatchable even if something other than voidSale() ever sets
+        // voided_at without also clearing fulfillment_status.
+        return $query->where('fulfillment_status', 'pending')->notVoided();
     }
 }

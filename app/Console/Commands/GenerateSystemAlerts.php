@@ -8,6 +8,7 @@ use App\Models\Alert;
 use App\Models\Box;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\Sale;
 use App\Models\Transfer;
 use Illuminate\Console\Command;
 
@@ -44,6 +45,9 @@ class GenerateSystemAlerts extends Command
 
         // Generate pending transfer alerts
         $alertsCreated += $this->generatePendingTransferAlerts();
+
+        // Generate pending warehouse fulfillment alerts
+        $alertsCreated += $this->generatePendingFulfillmentAlerts();
 
         // Generate overdue credit alerts
         $alertsCreated += $this->generateOverdueCreditAlerts();
@@ -184,6 +188,47 @@ class GenerateSystemAlerts extends Command
         return $count;
     }
 
+    /**
+     * Generate alerts for warehouse-direct sales sitting unfulfilled too long.
+     */
+    private function generatePendingFulfillmentAlerts(): int
+    {
+        $count = 0;
+
+        $pendingSales = Sale::warehouseDirect()
+            ->pendingFulfillment()
+            ->where('sale_date', '<=', now()->subHours(24))
+            ->with('shop')
+            ->get();
+
+        foreach ($pendingSales as $sale) {
+            $existingAlert = Alert::where('entity_type', Sale::class)
+                ->where('entity_id', $sale->id)
+                ->where('title', 'Pending Fulfillment')
+                ->unresolved()
+                ->first();
+
+            if (!$existingAlert) {
+                // abs()+intval() — diffInHours() returns a signed float in this
+                // Carbon version (negative + fractional when sale_date is past).
+                $hoursPending = (int) abs(now()->diffInHours($sale->sale_date));
+
+                Alert::create([
+                    'title' => 'Pending Fulfillment',
+                    'message' => "Sale {$sale->sale_number} for {$sale->shop?->name} has been awaiting warehouse dispatch for {$hoursPending} hours.",
+                    'severity' => AlertSeverity::WARNING,
+                    'entity_type' => Sale::class,
+                    'entity_id' => $sale->id,
+                    'action_url' => route('warehouse.sales.fulfillment'),
+                    'action_label' => 'Review Queue',
+                ]);
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
     private function generateOverdueCreditAlerts(): int
     {
         $overdueDays = app(\App\Services\SettingsService::class)->overdueCreditDays();
@@ -298,6 +343,20 @@ class GenerateSystemAlerts extends Command
         foreach ($transferAlerts as $alert) {
             $transfer = Transfer::find($alert->entity_id);
             if ($transfer && $transfer->status !== TransferStatus::PENDING) {
+                $alert->markAsResolved();
+                $count++;
+            }
+        }
+
+        // Resolve fulfillment alerts once the sale is fulfilled, cancelled, or voided
+        $fulfillmentAlerts = Alert::where('title', 'Pending Fulfillment')
+            ->where('entity_type', Sale::class)
+            ->unresolved()
+            ->get();
+
+        foreach ($fulfillmentAlerts as $alert) {
+            $sale = Sale::find($alert->entity_id);
+            if (!$sale || $sale->fulfillment_status !== 'pending') {
                 $alert->markAsResolved();
                 $count++;
             }
