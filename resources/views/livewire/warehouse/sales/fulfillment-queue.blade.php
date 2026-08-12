@@ -297,7 +297,7 @@
                 @if($sale->customer_name)
                     &middot; {{ $sale->customer_name }}
                 @endif
-                &middot; {{ $sale->sale_date->format('d M, H:i') }}
+                &middot; {{ local_time($sale->sale_date)->format('d M, H:i') }}
             </span>
             <span class="fq-age {{ $ageBadge }}">{{ $ageLabel }}</span>
         </div>
@@ -429,8 +429,8 @@
         <td class="r" style="font-family:var(--mono);font-weight:700">{{ $histWh->count() }}</td>
         <td>
             @if($sale->fulfillment_confirmed_at)
-            <div style="font-size:12px;font-weight:600;color:var(--text)">{{ $sale->fulfillment_confirmed_at->format('H:i') }}</div>
-            <div class="fq-tbl-sub">{{ $sale->fulfillment_confirmed_at->format('d M Y') }}</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text)">{{ local_time($sale->fulfillment_confirmed_at)->format('H:i') }}</div>
+            <div class="fq-tbl-sub">{{ local_time($sale->fulfillment_confirmed_at)->format('d M Y') }}</div>
             @else
             <span class="fq-tbl-sub">—</span>
             @endif
@@ -451,7 +451,7 @@
                     </div>
                     <div class="fq-exp-row">
                         <span class="fq-exp-key">Dispatched at</span>
-                        <span class="fq-exp-val">{{ $sale->fulfillment_confirmed_at?->format('d M Y, H:i') ?? '—' }}</span>
+                        <span class="fq-exp-val">{{ local_time($sale->fulfillment_confirmed_at)?->format('d M Y, H:i') ?? '—' }}</span>
                     </div>
                     <div class="fq-exp-row">
                         <span class="fq-exp-key">Sold by</span>

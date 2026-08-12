@@ -65,7 +65,7 @@ class ExpenseRequestService
 
         $session = DailySession::open()
             ->forShop($user->location_id)
-            ->forDate(today()->toDateString())
+            ->forDate(business_today()->toDateString())
             ->first();
 
         if (! $session) {

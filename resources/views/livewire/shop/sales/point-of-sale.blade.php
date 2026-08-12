@@ -120,7 +120,7 @@
 
   {{-- Live clock --}}
   <div x-data="{t:''}"
-       x-init="t=new Date().toLocaleTimeString('en-RW',{hour:'2-digit',minute:'2-digit'});setInterval(()=>{const n=new Date();t=n.toLocaleTimeString('en-RW',{hour:'2-digit',minute:'2-digit'})},10000)"
+       x-init="t=new Date().toLocaleTimeString('en-RW',{hour:'2-digit',minute:'2-digit',timeZone:'{{ config('tenant.timezone') }}'});setInterval(()=>{const n=new Date();t=n.toLocaleTimeString('en-RW',{hour:'2-digit',minute:'2-digit',timeZone:'{{ config('tenant.timezone') }}'})},10000)"
        class="pos-clock"
        style="font-size:13px;font-weight:600;color:var(--text-sub);font-family:var(--mono)"
        x-text="t"></div>
@@ -2193,7 +2193,7 @@ document.addEventListener('livewire:initialized', function () {
         {{-- Footer meta --}}
         <hr class="rc-divider">
         <div class="rc-meta">
-          <span>{{ ($completedSale->sale_date ?? $completedSale->created_at)->format('d M Y H:i') }}</span>
+          <span>{{ local_time($completedSale->sale_date ?? $completedSale->created_at)->format('d M Y H:i') }}</span>
           <span>{{ $completedSale->soldBy->name ?? '—' }}</span>
         </div>
         <div style="text-align:center;font-size:10px;color:var(--text-dim);margin-top:10px;padding-bottom:4px">

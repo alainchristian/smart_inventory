@@ -61,12 +61,14 @@ class SalesIndex extends Component
 
     protected function getDateRange(): array
     {
+        $now = business_now();
+
         return match ($this->dateFilter) {
-            'today'      => [now()->startOfDay(),           now()->endOfDay()],
-            'yesterday'  => [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()],
-            'this_week'  => [now()->startOfWeek(),          now()->endOfDay()],
-            'this_month' => [now()->startOfMonth(),         now()->endOfDay()],
-            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'today'      => [$now->copy()->startOfDay()->utc(),           $now->copy()->endOfDay()->utc()],
+            'yesterday'  => [$now->copy()->subDay()->startOfDay()->utc(), $now->copy()->subDay()->endOfDay()->utc()],
+            'this_week'  => [$now->copy()->startOfWeek()->utc(),          $now->copy()->endOfDay()->utc()],
+            'this_month' => [$now->copy()->startOfMonth()->utc(),         $now->copy()->endOfDay()->utc()],
+            'last_30'    => [$now->copy()->subDays(29)->startOfDay()->utc(), $now->copy()->endOfDay()->utc()],
             default      => [null, null],
         };
     }

@@ -49,7 +49,7 @@
 
                     {{-- Time --}}
                     <span class="af-time" style="font-size:10px;font-family:var(--mono);color:var(--text-dim);flex-shrink:0;">
-                        {{ $item['time']?->format('H:i') }}
+                        {{ local_time($item['time'])?->format('H:i') }}
                     </span>
 
                     {{-- Label --}}

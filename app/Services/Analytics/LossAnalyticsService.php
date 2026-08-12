@@ -13,19 +13,29 @@ use Illuminate\Support\Facades\Cache;
 
 class LossAnalyticsService
 {
-    // processed_at / recorded_at are TIMESTAMP columns — always stamp startOfDay/endOfDay.
+    // processed_at / recorded_at are UTC-stored TIMESTAMP columns — $dateFrom/$dateTo
+    // are business-timezone calendar dates, so interpret them in that timezone and
+    // convert to UTC for the query (otherwise the boundary is off by the tz offset).
     private function parseDateRange(string $dateFrom, string $dateTo): array
     {
         return [
-            Carbon::parse($dateFrom)->startOfDay(),
-            Carbon::parse($dateTo)->endOfDay(),
+            Carbon::parse($dateFrom, config('tenant.timezone'))->startOfDay()->utc(),
+            Carbon::parse($dateTo, config('tenant.timezone'))->endOfDay()->utc(),
         ];
     }
 
     // Use a short TTL when the range includes today so live data appears quickly.
     private function cacheTtl(string $dateTo): int
     {
-        return Carbon::parse($dateTo)->isToday() ? 60 : 900;
+        return Carbon::parse($dateTo, config('tenant.timezone'))->isSameDay(business_today()) ? 60 : 900;
+    }
+
+    /** Postgres SQL fragment converting a UTC-stored timestamp column to its business-timezone calendar date. */
+    private function localDateSql(string $column): string
+    {
+        $tz = config('tenant.timezone');
+
+        return "DATE({$column} AT TIME ZONE 'UTC' AT TIME ZONE '{$tz}')";
     }
 
     /**
@@ -89,7 +99,7 @@ class LossAnalyticsService
             // Get daily refunds
             $refundsQuery = ReturnModel::whereBetween('processed_at', [$from, $to])
                 ->where('is_exchange', false)
-                ->selectRaw('DATE(processed_at) as date, SUM(refund_amount) as amount, COUNT(*) as count')
+                ->selectRaw($this->localDateSql('processed_at') . ' as date, SUM(refund_amount) as amount, COUNT(*) as count')
                 ->groupBy('date')
                 ->orderBy('date');
 
@@ -99,7 +109,7 @@ class LossAnalyticsService
             // Exclude return-sourced damaged goods — already captured by refund_amount above
             $damagedQuery = DamagedGood::whereBetween('recorded_at', [$from, $to])
                 ->where('source_type', '!=', 'return')
-                ->selectRaw('DATE(recorded_at) as date, SUM(estimated_loss) as amount, COUNT(*) as count')
+                ->selectRaw($this->localDateSql('recorded_at') . ' as date, SUM(estimated_loss) as amount, COUNT(*) as count')
                 ->groupBy('date')
                 ->orderBy('date');
 

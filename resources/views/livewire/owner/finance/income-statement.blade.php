@@ -215,7 +215,7 @@
                 @if($locationFilter !== 'all') · {{ $shopName }} @endif
             </div>
             <div style="font-size:12px;">
-                Generated: {{ now()->format('d M Y, H:i') }}
+                Generated: {{ business_now()->format('d M Y, H:i') }}
                 · {{ number_format($statement['transaction_count'] ?? 0) }} transactions
             </div>
         </div>

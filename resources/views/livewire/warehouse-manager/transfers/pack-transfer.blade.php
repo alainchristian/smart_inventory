@@ -332,7 +332,7 @@
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <span style="font-size:13px;color:var(--text-dim);">{{ $transfer->requested_at?->format('d M Y') }}</span>
+            <span style="font-size:13px;color:var(--text-dim);">{{ local_time($transfer->requested_at)?->format('d M Y') }}</span>
         </div>
         <div class="pt-card-body">
             <div class="pt-meta-grid">
@@ -346,7 +346,7 @@
                 </div>
                 <div>
                     <div class="pt-meta-label">Approved</div>
-                    <div class="pt-meta-value">{{ $transfer->reviewed_at?->format('d M Y, H:i') ?? '—' }}</div>
+                    <div class="pt-meta-value">{{ local_time($transfer->reviewed_at)?->format('d M Y, H:i') ?? '—' }}</div>
                 </div>
             </div>
         </div>

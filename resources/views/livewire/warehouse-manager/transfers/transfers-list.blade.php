@@ -368,15 +368,15 @@
 
                             {{-- Dates --}}
                             <div class="wtl-dates">
-                                <span class="wtl-date">Requested: <strong>{{ $transfer->requested_at?->format('d M Y') ?? '—' }}</strong></span>
+                                <span class="wtl-date">Requested: <strong>{{ local_time($transfer->requested_at)?->format('d M Y') ?? '—' }}</strong></span>
                                 @if($transfer->requestedBy)
                                 <span class="wtl-date">By: <strong>{{ $transfer->requestedBy->name }}</strong></span>
                                 @endif
                                 @if($transfer->delivered_at)
-                                <span class="wtl-date">Dispatched: <strong>{{ $transfer->delivered_at->format('d M Y') }}</strong></span>
+                                <span class="wtl-date">Dispatched: <strong>{{ local_time($transfer->delivered_at)->format('d M Y') }}</strong></span>
                                 @endif
                                 @if($transfer->received_at)
-                                <span class="wtl-date">Received: <strong>{{ $transfer->received_at->format('d M Y') }}</strong></span>
+                                <span class="wtl-date">Received: <strong>{{ local_time($transfer->received_at)->format('d M Y') }}</strong></span>
                                 @endif
                             </div>
 

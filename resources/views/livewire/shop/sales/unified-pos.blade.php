@@ -940,7 +940,7 @@
             </div>
             <div>
                 <h3 class="upos-rc-banner-title">Sale Complete</h3>
-                <p class="upos-rc-banner-sub">{{ $completedSale->sale_number }} · {{ $completedSale->sale_date->format('d M Y H:i') }}</p>
+                <p class="upos-rc-banner-sub">{{ $completedSale->sale_number }} · {{ local_time($completedSale->sale_date)->format('d M Y H:i') }}</p>
             </div>
         </div>
 

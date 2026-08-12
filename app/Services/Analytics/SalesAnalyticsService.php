@@ -20,17 +20,18 @@ class SalesAnalyticsService
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * sale_date is a DATETIME column. Passing plain date strings to whereBetween
-     * makes PostgreSQL treat them as midnight, excluding all same-day sales.
-     * Always stamp startOfDay / endOfDay.
+     * sale_date is a DATETIME column stored in UTC. $dateFrom/$dateTo are plain
+     * business-timezone calendar dates, so they're interpreted in the business
+     * timezone (Africa/Kigali) then converted to UTC for the query — otherwise
+     * whereBetween would compare against UTC midnight, off by the tz offset.
      *
      * @return array{0: Carbon, 1: Carbon}
      */
     private function parseDateRange(string $dateFrom, string $dateTo): array
     {
         return [
-            Carbon::parse($dateFrom)->startOfDay(),
-            Carbon::parse($dateTo)->endOfDay(),
+            Carbon::parse($dateFrom, config('tenant.timezone'))->startOfDay()->utc(),
+            Carbon::parse($dateTo, config('tenant.timezone'))->endOfDay()->utc(),
         ];
     }
 
@@ -41,20 +42,50 @@ class SalesAnalyticsService
      */
     private function previousPeriod(string $dateFrom, string $dateTo): array
     {
-        $from    = Carbon::parse($dateFrom);
-        $to      = Carbon::parse($dateTo);
+        $from    = Carbon::parse($dateFrom, config('tenant.timezone'));
+        $to      = Carbon::parse($dateTo, config('tenant.timezone'));
         $daySpan = $from->diffInDays($to) + 1;
 
         return [
-            $from->copy()->subDays($daySpan)->startOfDay(),
-            $from->copy()->subDay()->endOfDay(),
+            $from->copy()->subDays($daySpan)->startOfDay()->utc(),
+            $from->copy()->subDay()->endOfDay()->utc(),
+        ];
+    }
+
+    /**
+     * Plain business-timezone calendar-date strings (Y-m-d) for the previous
+     * period, for zero-fill display loops — deliberately NOT converted to UTC
+     * (unlike previousPeriod()) since these are just used as CarbonPeriod
+     * boundaries, not for querying UTC-stored columns.
+     */
+    private function previousPeriodDates(string $dateFrom, string $dateTo): array
+    {
+        $from    = Carbon::parse($dateFrom, config('tenant.timezone'));
+        $to      = Carbon::parse($dateTo, config('tenant.timezone'));
+        $daySpan = $from->diffInDays($to) + 1;
+
+        return [
+            $from->copy()->subDays($daySpan)->toDateString(),
+            $from->copy()->subDay()->toDateString(),
         ];
     }
 
     /** Short TTL when range includes today; longer for historical ranges. */
     private function cacheTtl(string $dateTo): int
     {
-        return Carbon::parse($dateTo)->isToday() ? 60 : 900;
+        return Carbon::parse($dateTo, config('tenant.timezone'))->isSameDay(business_today()) ? 60 : 900;
+    }
+
+    /**
+     * Postgres SQL fragment that converts a UTC-stored timestamp column to its
+     * business-timezone calendar date, so daily GROUP BYs bucket by Kigali days
+     * instead of UTC days.
+     */
+    private function localDateSql(string $column): string
+    {
+        $tz = config('tenant.timezone');
+
+        return "DATE({$column} AT TIME ZONE 'UTC' AT TIME ZONE '{$tz}')";
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -252,7 +283,7 @@ class SalesAnalyticsService
             $fetch = function ($f, $t) use ($locationFilter) {
                 return $this->applyLocationFilter(
                     Sale::notVoided()->whereBetween('sale_date', [$f, $t])
-                        ->selectRaw('DATE(sale_date) as date, SUM(total) as revenue, COUNT(*) as transactions, SUM(discount) as discount_total')
+                        ->selectRaw($this->localDateSql('sale_date') . ' as date, SUM(total) as revenue, COUNT(*) as transactions, SUM(discount) as discount_total')
                         ->groupBy('date'),
                     $locationFilter
                 )->get()->keyBy('date');
@@ -263,9 +294,12 @@ class SalesAnalyticsService
 
             // Zero-fill every calendar day in both windows, then zip them by day
             // offset so "day 3 of this period" lines up with "day 3 of last
-            // period" regardless of differing month lengths.
-            $currentDays  = iterator_to_array(CarbonPeriod::create($from->toDateString(), $to->toDateString()));
-            $previousDays = iterator_to_array(CarbonPeriod::create($prevFrom->toDateString(), $prevTo->toDateString()));
+            // period" regardless of differing month lengths. Built from the
+            // original business-timezone date strings, not the UTC query
+            // boundaries above (those are shifted by the tz offset).
+            [$prevFromDate, $prevToDate] = $this->previousPeriodDates($dateFrom, $dateTo);
+            $currentDays  = iterator_to_array(CarbonPeriod::create($dateFrom, $dateTo));
+            $previousDays = iterator_to_array(CarbonPeriod::create($prevFromDate, $prevToDate));
 
             $result = [];
             foreach ($currentDays as $i => $date) {
@@ -499,7 +533,7 @@ class SalesAnalyticsService
         return Cache::remember($cacheKey, $this->cacheTtl($dateTo), function () use ($dateFrom, $dateTo, $locationFilter) {
             [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
             $q = $this->applyLocationFilter(
-                Sale::notVoided()->whereBetween('sale_date', [$from, $to])->selectRaw('DATE(sale_date) as date, SUM(total) as revenue')->groupBy('date')->orderBy('date'),
+                Sale::notVoided()->whereBetween('sale_date', [$from, $to])->selectRaw($this->localDateSql('sale_date') . ' as date, SUM(total) as revenue')->groupBy('date')->orderBy('date'),
                 $locationFilter
             );
             return $q->get()->pluck('revenue')->map(fn ($v) => (int) $v)->toArray();
@@ -593,7 +627,7 @@ class SalesAnalyticsService
             // Sale-level daily aggregates
             $salesData = $this->applyLocationFilter(
                 Sale::notVoided()->whereBetween('sale_date', [$from, $to])
-                    ->selectRaw('DATE(sale_date) as day, SUM(total) as revenue, COUNT(*) as transactions, SUM(discount) as discounts')
+                    ->selectRaw($this->localDateSql('sale_date') . ' as day, SUM(total) as revenue, COUNT(*) as transactions, SUM(discount) as discounts')
                     ->groupBy('day')->orderBy('day'),
                 $locationFilter
             )->get()->keyBy('day');
@@ -604,7 +638,7 @@ class SalesAnalyticsService
                 ->whereNull('sales.voided_at')
                 ->whereBetween('sales.sale_date', [$from, $to])
                 ->selectRaw('
-                    DATE(sales.sale_date) as day,
+                    ' . $this->localDateSql('sales.sale_date') . ' as day,
                     SUM(sale_items.quantity_sold) as items_sold,
                     SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as gross_profit
                 ')
@@ -614,15 +648,15 @@ class SalesAnalyticsService
 
             // Returns per day (by processed_at)
             $returnQ = ReturnModel::whereBetween('processed_at', [$from, $to])
-                ->selectRaw("DATE(processed_at) as day, COUNT(*) as returns_count, SUM(refund_amount) as returned_amount");
+                ->selectRaw($this->localDateSql('processed_at') . ' as day, COUNT(*) as returns_count, SUM(refund_amount) as returned_amount');
             if ($locationFilter !== 'all' && str_starts_with($locationFilter, 'shop:')) {
                 $returnQ->where('shop_id', (int) explode(':', $locationFilter)[1]);
             }
             $returnsData = $returnQ->groupBy('day')->get()->keyBy('day');
 
-            // Fill every calendar day in the range
+            // Fill every calendar day in the range (business-timezone date strings)
             $result = [];
-            foreach (CarbonPeriod::create($from->toDateString(), $to->toDateString()) as $date) {
+            foreach (CarbonPeriod::create($dateFrom, $dateTo) as $date) {
                 $d       = $date->format('Y-m-d');
                 $s       = $salesData[$d]  ?? null;
                 $i       = $itemsData[$d]  ?? null;
@@ -633,7 +667,7 @@ class SalesAnalyticsService
                 $result[] = [
                     'date'            => $d,
                     'day_label'       => $date->format('D, M d'),
-                    'is_today'        => $date->isToday(),
+                    'is_today'        => $d === business_today()->toDateString(),
                     'revenue'         => $rev,
                     'transactions'    => $s ? (int) $s->transactions : 0,
                     'items_sold'      => $i ? (int) $i->items_sold : 0,

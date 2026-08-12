@@ -50,7 +50,7 @@
             @endif
             <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">
                 @if ($session)
-                    @if ($session->session_date->isToday())
+                    @if ($session->session_date->toDateString() === business_today()->toDateString())
                         Today's Snapshot
                     @else
                         Snapshot — {{ $session->session_date->format('d M Y') }}

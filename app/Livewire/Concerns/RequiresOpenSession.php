@@ -34,7 +34,7 @@ trait RequiresOpenSession
         }
 
         // Only today's session matters for the gate
-        $todaySession = DailySession::forShop($shopId)->forDate(today()->toDateString())->first();
+        $todaySession = DailySession::forShop($shopId)->forDate(business_today()->toDateString())->first();
 
         // Case 1: No session at all for today
         if (! $todaySession) {

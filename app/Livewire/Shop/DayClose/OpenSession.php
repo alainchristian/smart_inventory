@@ -47,7 +47,7 @@ class OpenSession extends Component
                 $user,
                 $user->location_id,
                 $this->openingBalance,
-                today()->toDateString()
+                business_today()->toDateString()
             );
 
             $this->dispatch('session-opened');
@@ -63,13 +63,13 @@ class OpenSession extends Component
         $shopId = $user->location_id;
 
         $todaySession = DailySession::forShop($shopId)
-            ->forDate(today()->toDateString())
+            ->forDate(business_today()->toDateString())
             ->first();
 
         // Any open session from a previous date that is blocking new sessions
         $blockerSession = DailySession::forShop($shopId)
             ->open()
-            ->where('session_date', '<', today()->toDateString())
+            ->where('session_date', '<', business_today()->toDateString())
             ->orderByDesc('session_date')
             ->first();
 

@@ -39,12 +39,12 @@ class DailyCloseReport extends Component
 
         // If no date was bound from URL, pick the most useful default
         if ($this->reportDate === '') {
-            $todayHasSessions = DailySession::forDate(today()->toDateString())->exists();
+            $todayHasSessions = DailySession::forDate(business_today()->toDateString())->exists();
             if ($todayHasSessions) {
-                $this->reportDate = today()->toDateString();
+                $this->reportDate = business_today()->toDateString();
             } else {
                 $latest = DailySession::orderByDesc('session_date')->value('session_date');
-                $this->reportDate = $latest ? \Carbon\Carbon::parse($latest)->toDateString() : today()->toDateString();
+                $this->reportDate = $latest ? \Carbon\Carbon::parse($latest)->toDateString() : business_today()->toDateString();
             }
         }
 
@@ -70,7 +70,7 @@ class DailyCloseReport extends Component
     public function nextDay(): void
     {
         $next = \Carbon\Carbon::parse($this->reportDate)->addDay();
-        if ($next->isFuture()) {
+        if ($next->toDateString() > business_today()->toDateString()) {
             return;
         }
         $this->reportDate        = $next->toDateString();
@@ -80,7 +80,7 @@ class DailyCloseReport extends Component
 
     public function goToToday(): void
     {
-        $this->reportDate        = today()->toDateString();
+        $this->reportDate        = business_today()->toDateString();
         $this->expandedSessionId = null;
         $this->loadSessions();
     }
@@ -117,9 +117,12 @@ class DailyCloseReport extends Component
             ->limit(15)
             ->get();
 
+        $reportDayStart = \Carbon\Carbon::parse($this->reportDate, config('tenant.timezone'))->startOfDay();
+        $reportDayRange = [$reportDayStart->copy()->utc(), $reportDayStart->copy()->endOfDay()->utc()];
+
         if ($shopIds->isNotEmpty()) {
             $this->todaySales = Sale::whereIn('shop_id', $shopIds)
-                ->whereDate('sale_date', $this->reportDate)
+                ->whereBetween('sale_date', $reportDayRange)
                 ->whereNull('voided_at')
                 ->orderByDesc('sale_date')
                 ->limit(50)
@@ -129,7 +132,7 @@ class DailyCloseReport extends Component
         }
 
         $this->creditRepaidToday = (int) CreditRepayment::when($shopIds->isNotEmpty(), fn ($q) => $q->whereIn('shop_id', $shopIds))
-            ->whereDate('created_at', $this->reportDate)
+            ->whereBetween('created_at', $reportDayRange)
             ->sum('amount');
     }
 

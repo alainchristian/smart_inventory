@@ -54,7 +54,7 @@ class CloseWizard extends Component
             }
 
             $session = DailySession::forShop($user->location_id)
-                ->forDate(today())
+                ->forDate(business_today()->toDateString())
                 ->first();
 
             if (! $session) {

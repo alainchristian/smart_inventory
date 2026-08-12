@@ -38,13 +38,15 @@ class SessionManager extends Component
         $user   = auth()->user();
         $shopId = $user->location_id;
 
+        $today = business_today();
+
         $this->unclosedPrevious = DailySession::forShop($shopId)
             ->open()
-            ->where('session_date', '<', today())
+            ->where('session_date', '<', $today->toDateString())
             ->first();
 
         $this->todaySession = DailySession::forShop($shopId)
-            ->forDate(today()->toDateString())
+            ->forDate($today->toDateString())
             ->first();
 
         if ($this->todaySession && $this->todaySession->isOpen()) {
@@ -52,7 +54,7 @@ class SessionManager extends Component
                 ->computeLiveSummary($this->todaySession);
 
             $this->warehouseDirectCount = Sale::where('shop_id', $shopId)
-                ->whereDate('sale_date', today())
+                ->whereBetween('sale_date', [$today->copy()->utc(), $today->copy()->endOfDay()->utc()])
                 ->whereNull('voided_at')
                 ->whereNull('deleted_at')
                 ->where('fulfillment_type', 'warehouse_direct')
@@ -92,7 +94,7 @@ class SessionManager extends Component
                 $user,
                 $user->location_id,
                 $this->openingBalance,
-                today()->toDateString()
+                business_today()->toDateString()
             );
 
             $this->openingBalance = 0;

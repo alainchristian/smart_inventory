@@ -257,8 +257,8 @@
                         <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">
                             {{ $session->session_date->format('D') }}
                             @if ($session->opened_at)
-                                · {{ $session->opened_at->format('H:i') }}
-                                @if ($session->closed_at) –{{ $session->closed_at->format('H:i') }} @endif
+                                · {{ local_time($session->opened_at)->format('H:i') }}
+                                @if ($session->closed_at) –{{ local_time($session->closed_at)->format('H:i') }} @endif
                             @endif
                         </div>
                     </td>
@@ -387,11 +387,11 @@
                     <span>{{ $sess->session_date->format('l') }}</span>
                     @if ($sess->opened_at)
                         <span>·</span>
-                        <span>Opened {{ $sess->opened_at->format('H:i') }}</span>
+                        <span>Opened {{ local_time($sess->opened_at)->format('H:i') }}</span>
                     @endif
                     @if ($sess->closed_at)
                         <span>–</span>
-                        <span>Closed {{ $sess->closed_at->format('H:i') }}</span>
+                        <span>Closed {{ local_time($sess->closed_at)->format('H:i') }}</span>
                     @endif
                 </div>
             </div>
@@ -437,7 +437,7 @@
                 <div class="sh-tl-node">
                     <div class="sh-tl-dot" style="background:var(--green);"></div>
                     <span style="font-size:11px;color:var(--text-dim);">Opened</span>
-                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ $sess->opened_at->format('H:i') }}</span>
+                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ local_time($sess->opened_at)->format('H:i') }}</span>
                     @if ($sess->openedBy)
                         <span style="font-size:11px;color:var(--text-dim);">by {{ $sess->openedBy->name }}</span>
                     @endif
@@ -448,7 +448,7 @@
                 <div class="sh-tl-node">
                     <div class="sh-tl-dot" style="background:var(--amber);"></div>
                     <span style="font-size:11px;color:var(--text-dim);">Closed</span>
-                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ $sess->closed_at->format('H:i') }}</span>
+                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ local_time($sess->closed_at)->format('H:i') }}</span>
                     @if ($sess->closedBy)
                         <span style="font-size:11px;color:var(--text-dim);">by {{ $sess->closedBy->name }}</span>
                     @endif
@@ -459,7 +459,7 @@
                 <div class="sh-tl-node">
                     <div class="sh-tl-dot" style="background:var(--text-dim);"></div>
                     <span style="font-size:11px;color:var(--text-dim);">Locked</span>
-                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ $sess->locked_at->format('d M · H:i') }}</span>
+                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ local_time($sess->locked_at)->format('d M · H:i') }}</span>
                     @if ($sess->lockedBy)
                         <span style="font-size:11px;color:var(--text-dim);">by {{ $sess->lockedBy->name }}</span>
                     @endif
@@ -725,7 +725,7 @@
                     <div class="fo-exp-col-title" style="margin-top:16px;">Bank Deposits</div>
                     @foreach ($sess->bankDeposits as $dep)
                     <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">{{ $dep->deposited_at?->format('H:i') ?? '—' }}</span>
+                        <span class="fo-exp-line-label">{{ local_time($dep->deposited_at)?->format('H:i') ?? '—' }}</span>
                         <span class="fo-exp-line-val" style="color:var(--accent);">{{ number_format($dep->amount) }} <span style="font-size:10px;font-weight:400;color:var(--text-dim);">RWF</span></span>
                     </div>
                     @endforeach
@@ -745,7 +745,7 @@
                                 background:var(--surface2);border:1px solid var(--border);">
                         <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-dim);">Locked by</div>
                         <div style="font-size:12px;color:var(--text);margin-top:3px;">
-                            {{ $sess->lockedBy->name ?? '—' }} · {{ $sess->locked_at?->format('d M Y H:i') }}
+                            {{ $sess->lockedBy->name ?? '—' }} · {{ local_time($sess->locked_at)?->format('d M Y H:i') }}
                         </div>
                     </div>
                     @endif

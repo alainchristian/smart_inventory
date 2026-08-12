@@ -164,8 +164,8 @@
                         <span style="font-size:10px;color:var(--text-dim);margin-left:2px">RWF</span>
                     </td>
                     <td class="rs-hide-mob" data-label="Date" style="white-space:nowrap">
-                        <div style="font-size:13px;color:var(--text-sub)">{{ ($sale->sale_date ?? $sale->created_at)->format('d M Y') }}</div>
-                        <div style="font-size:11px;color:var(--text-dim)">{{ ($sale->sale_date ?? $sale->created_at)->format('H:i') }}</div>
+                        <div style="font-size:13px;color:var(--text-sub)">{{ local_time($sale->sale_date ?? $sale->created_at)->format('d M Y') }}</div>
+                        <div style="font-size:11px;color:var(--text-dim)">{{ local_time($sale->sale_date ?? $sale->created_at)->format('H:i') }}</div>
                     </td>
                     <td data-label="Actions">
                         <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -234,7 +234,7 @@
                 <button class="rs-modal-close" wire:click="closeReceiptModal">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
-                <div style="font-size:11px;color:rgba(255,255,255,.75)">{{ ($selectedSale->sale_date ?? $selectedSale->created_at)->format('d M Y, H:i') }}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,.75)">{{ local_time($selectedSale->sale_date ?? $selectedSale->created_at)->format('d M Y, H:i') }}</div>
             </div>
         </div>
 

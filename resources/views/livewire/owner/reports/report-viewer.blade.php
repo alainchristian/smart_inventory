@@ -493,7 +493,7 @@ function generateInsight(string $metricId, array $data): ?array
         <div class="rv-history-item {{ $viewingHistoryId === $run->id ? 'active' : '' }}"
              wire:click="viewHistoryRun({{ $run->id }})">
             <div style="font-size:13px;font-weight:600;color:var(--text)">
-                {{ $run->run_at->format('d M Y H:i') }}
+                {{ local_time($run->run_at)->format('d M Y H:i') }}
                 @if ($run->was_scheduled) <span style="font-size:10px;color:var(--accent);font-weight:700;margin-left:4px">SCHEDULED</span> @endif
             </div>
             <div style="font-size:12px;color:var(--text-dim);margin-top:2px">

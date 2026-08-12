@@ -18,8 +18,9 @@ class SaleService
 {
     public function generateSaleNumber(): string
     {
-        $date = now()->format('Ymd');
-        $count = Sale::whereDate('created_at', today())->count() + 1;
+        $businessDay = business_today();
+        $date  = $businessDay->format('Ymd');
+        $count = Sale::whereBetween('created_at', [$businessDay->copy()->utc(), $businessDay->copy()->endOfDay()->utc()])->count() + 1;
         $sequence = str_pad($count, 5, '0', STR_PAD_LEFT);
 
         return "SALE-{$date}-{$sequence}";

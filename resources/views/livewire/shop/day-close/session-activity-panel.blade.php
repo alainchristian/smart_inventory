@@ -19,9 +19,9 @@
                                      background:{{ $selectedSession->isLocked() ? '#94a3b8' : 'var(--amber)' }};"></span>
                     @endif
                     <span style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                        {{ $selectedSession->session_date->isToday() ? 'Today' : $selectedSession->session_date->format('d M Y') }}
+                        {{ $selectedSession->session_date->toDateString() === business_today()->toDateString() ? 'Today' : $selectedSession->session_date->format('d M Y') }}
                         <span style="font-weight:400;color:var(--text-dim);font-size:11px;margin-left:4px;">
-                            {{ $selectedSession->opened_at?->format('H:i') }}{{ $selectedSession->closed_at ? ' – ' . $selectedSession->closed_at->format('H:i') : '' }}
+                            {{ local_time($selectedSession->opened_at)?->format('H:i') }}{{ $selectedSession->closed_at ? ' – ' . local_time($selectedSession->closed_at)->format('H:i') : '' }}
                         </span>
                     </span>
                     @if ($selectedSession->isOpen())
@@ -77,7 +77,7 @@
                             $month      = $sess->session_date->format('M Y');
                             $isSelected = $viewingSessionId === $sess->id;
                             $isOpen     = $sess->isOpen();
-                            $isToday    = $sess->session_date->isToday();
+                            $isToday    = $sess->session_date->toDateString() === business_today()->toDateString();
                         @endphp
 
                         {{-- Month group header --}}
@@ -129,7 +129,7 @@
                                                  background:var(--surface2);color:#94a3b8;border:1px solid var(--border);">Locked</span>
                                 @else
                                     <span style="font-size:10px;color:var(--text-dim);">
-                                        {{ $sess->opened_at?->format('H:i') }}
+                                        {{ local_time($sess->opened_at)?->format('H:i') }}
                                     </span>
                                 @endif
                             </div>

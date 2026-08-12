@@ -35,9 +35,9 @@ class Dashboard extends Component
         $data = [];
 
         for ($i = $days - 1; $i >= 0; $i--) {
-            $date = now()->subDays($i);
+            $date = business_now()->subDays($i)->startOfDay();
             $total = Sale::notVoided()
-                ->whereDate('sale_date', $date)
+                ->whereBetween('sale_date', [$date->copy()->utc(), $date->copy()->endOfDay()->utc()])
                 ->sum('total');
 
             $data[] = [
@@ -98,8 +98,8 @@ class Dashboard extends Component
 
     public function getReturnsThisMonth()
     {
-        $startOfMonth = now()->startOfMonth();
-        $endOfMonth = now()->endOfMonth();
+        $startOfMonth = business_now()->startOfMonth()->utc();
+        $endOfMonth = business_now()->endOfMonth()->utc();
 
         $returns = ReturnModel::whereBetween('processed_at', [$startOfMonth, $endOfMonth])
             ->where('is_exchange', false)
@@ -114,8 +114,8 @@ class Dashboard extends Component
 
     public function getDamagedGoodsLoss()
     {
-        $startOfMonth = now()->startOfMonth();
-        $endOfMonth = now()->endOfMonth();
+        $startOfMonth = business_now()->startOfMonth()->utc();
+        $endOfMonth = business_now()->endOfMonth()->utc();
 
         return DamagedGood::whereBetween('recorded_at', [$startOfMonth, $endOfMonth])
             ->sum('estimated_loss') ?? 0;
@@ -130,8 +130,8 @@ class Dashboard extends Component
     public function getTransferEfficiency()
     {
         $service = app(TransferAnalyticsService::class);
-        $last30Days = now()->subDays(30)->format('Y-m-d');
-        $today = now()->format('Y-m-d');
+        $last30Days = business_now()->subDays(30)->format('Y-m-d');
+        $today = business_now()->format('Y-m-d');
 
         $kpis = $service->getTransferKpis($last30Days, $today, null);
 

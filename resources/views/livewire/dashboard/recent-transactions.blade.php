@@ -10,7 +10,7 @@
     <div style="flex:1;overflow-y:auto;min-height:0;padding-bottom:4px">
         @forelse($transactions as $tx)
         @php
-            $ts = \Carbon\Carbon::parse($tx['ts']);
+            $ts = local_time($tx['ts']);
         @endphp
         <div style="display:flex;align-items:center;gap:12px;padding:10px 0;
                     {{ !$loop->last ? 'border-bottom:1px solid var(--border)' : '' }}">

@@ -51,7 +51,7 @@
                                     <span class="text-xs px-2 py-0.5 rounded" style="background:var(--accent-dim);color:var(--accent);">
                                         {{ $expense->category->name ?? '—' }}
                                     </span>
-                                    <span class="text-xs" style="color:var(--text-dim);">{{ $expense->recorded_at->format('H:i') }}</span>
+                                    <span class="text-xs" style="color:var(--text-dim);">{{ local_time($expense->recorded_at)->format('H:i') }}</span>
                                 </div>
                                 <div class="text-sm mt-1" style="color:var(--text);">{{ $expense->description }}</div>
                                 <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ str_replace('_', ' ', ucfirst($expense->payment_method)) }}</div>
@@ -154,7 +154,7 @@
                                     {{ number_format($expense->amount) }} RWF
                                 </td>
                                 <td class="py-2.5 px-2 text-right text-xs" style="color:var(--text-dim);">
-                                    {{ $expense->recorded_at->format('H:i') }}
+                                    {{ local_time($expense->recorded_at)->format('H:i') }}
                                 </td>
                                 <td class="py-2.5 px-2 text-right" style="white-space:nowrap;">
                                     @if (! ($expense->is_system_generated ?? false) && $session?->isEditable())

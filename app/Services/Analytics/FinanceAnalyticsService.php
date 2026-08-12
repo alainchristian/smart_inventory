@@ -18,7 +18,48 @@ class FinanceAnalyticsService
 
     private function cacheTtl(string $dateTo): int
     {
-        return Carbon::parse($dateTo)->isToday() ? 60 : 900;
+        return Carbon::parse($dateTo, config('tenant.timezone'))->isSameDay(business_today()) ? 60 : 900;
+    }
+
+    /**
+     * UTC datetime bounds for a business-timezone [dateFrom, dateTo] range —
+     * for querying UTC-stored datetime columns (sale_date, recorded_at,
+     * created_at). Do NOT use this for date-only columns like session_date.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function parseDateRange(string $dateFrom, string $dateTo): array
+    {
+        return [
+            Carbon::parse($dateFrom, config('tenant.timezone'))->startOfDay()->utc(),
+            Carbon::parse($dateTo, config('tenant.timezone'))->endOfDay()->utc(),
+        ];
+    }
+
+    /** Previous period of equal length, as UTC datetime bounds. */
+    private function previousPeriod(string $dateFrom, string $dateTo): array
+    {
+        $from    = Carbon::parse($dateFrom, config('tenant.timezone'));
+        $to      = Carbon::parse($dateTo, config('tenant.timezone'));
+        $daySpan = $from->diffInDays($to) + 1;
+
+        return [
+            $from->copy()->subDays($daySpan)->startOfDay()->utc(),
+            $from->copy()->subDay()->endOfDay()->utc(),
+        ];
+    }
+
+    /** Previous period of equal length, as plain date strings (for date-only columns like session_date). */
+    private function previousPeriodDateStrings(string $dateFrom, string $dateTo): array
+    {
+        $from    = Carbon::parse($dateFrom, config('tenant.timezone'));
+        $to      = Carbon::parse($dateTo, config('tenant.timezone'));
+        $daySpan = $from->diffInDays($to) + 1;
+
+        return [
+            $from->copy()->subDays($daySpan)->toDateString(),
+            $from->copy()->subDay()->toDateString(),
+        ];
     }
 
     /**
@@ -110,11 +151,7 @@ class FinanceAnalyticsService
             $grandTotal = (int) ($totals->total_expenses ?? 0);
 
             // Previous period (same length, immediately before)
-            $from     = Carbon::parse($dateFrom);
-            $to       = Carbon::parse($dateTo);
-            $daySpan  = $from->diffInDays($to) + 1;
-            $prevFrom = $from->copy()->subDays($daySpan)->toDateString();
-            $prevTo   = $from->copy()->subDay()->toDateString();
+            [$prevFrom, $prevTo] = $this->previousPeriodDateStrings($dateFrom, $dateTo);
 
             $prevBase = Expense::whereNull('expenses.deleted_at')
                 ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
@@ -205,10 +242,7 @@ class FinanceAnalyticsService
             use ($dateFrom, $dateTo, $locationFilter) {
 
             $base = OwnerWithdrawal::whereNull('owner_withdrawals.deleted_at')
-                ->whereBetween('owner_withdrawals.recorded_at', [
-                    Carbon::parse($dateFrom)->startOfDay(),
-                    Carbon::parse($dateTo)->endOfDay(),
-                ]);
+                ->whereBetween('owner_withdrawals.recorded_at', $this->parseDateRange($dateFrom, $dateTo));
             $base = $this->applyShopFilter($base, $locationFilter,
                 'owner_withdrawals.shop_id');
 
@@ -240,10 +274,7 @@ class FinanceAnalyticsService
                 ])->toArray();
 
             // Previous period
-            $from     = Carbon::parse($dateFrom);
-            $daySpan  = $from->diffInDays(Carbon::parse($dateTo)) + 1;
-            $prevFrom = $from->copy()->subDays($daySpan)->startOfDay();
-            $prevTo   = $from->copy()->subDay()->endOfDay();
+            [$prevFrom, $prevTo] = $this->previousPeriod($dateFrom, $dateTo);
 
             $prevBase = OwnerWithdrawal::whereNull('deleted_at')
                 ->whereBetween('recorded_at', [$prevFrom, $prevTo]);
@@ -379,13 +410,12 @@ class FinanceAnalyticsService
             $shopId = $this->shopId($locationFilter);
 
             // ── Revenue & COGS ────────────────────────────────────────────────
+            $currentRange = $this->parseDateRange($dateFrom, $dateTo);
+
             $itemQ = SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->whereNull('sales.voided_at')
-                ->whereBetween('sales.sale_date', [
-                    Carbon::parse($dateFrom)->startOfDay(),
-                    Carbon::parse($dateTo)->endOfDay(),
-                ])
+                ->whereBetween('sales.sale_date', $currentRange)
                 ->selectRaw("
                     COUNT(DISTINCT sales.id) as transaction_count,
                     SUM(sale_items.line_total) as gross_revenue,
@@ -396,10 +426,7 @@ class FinanceAnalyticsService
 
             // ── Returns ───────────────────────────────────────────────────────
             $returnQ = \App\Models\ReturnModel::where('is_exchange', false)
-                ->whereBetween('created_at', [
-                    Carbon::parse($dateFrom)->startOfDay(),
-                    Carbon::parse($dateTo)->endOfDay(),
-                ])
+                ->whereBetween('created_at', $currentRange)
                 ->selectRaw("SUM(refund_amount) as total_refunds, COUNT(*) as return_count");
             if ($shopId) $returnQ->where('shop_id', $shopId);
             $returnData = $returnQ->first();
@@ -426,10 +453,7 @@ class FinanceAnalyticsService
 
             // ── Owner withdrawals ─────────────────────────────────────────────
             $wdQ = OwnerWithdrawal::whereNull('owner_withdrawals.deleted_at')
-                ->whereBetween('owner_withdrawals.recorded_at', [
-                    Carbon::parse($dateFrom)->startOfDay(),
-                    Carbon::parse($dateTo)->endOfDay(),
-                ]);
+                ->whereBetween('owner_withdrawals.recorded_at', $currentRange);
             if ($shopId) $wdQ->where('owner_withdrawals.shop_id', $shopId);
             $totalWithdrawals = (int) $wdQ->sum('amount');
 
@@ -447,18 +471,13 @@ class FinanceAnalyticsService
             $netMarginPct       = $netRevenue > 0 ? round(($netResult / $netRevenue) * 100, 1) : 0;
 
             // ── Previous period ───────────────────────────────────────────────
-            $from     = Carbon::parse($dateFrom);
-            $daySpan  = $from->diffInDays(Carbon::parse($dateTo)) + 1;
-            $prevFrom = $from->copy()->subDays($daySpan)->toDateString();
-            $prevTo   = $from->copy()->subDay()->toDateString();
+            $prevRange = $this->previousPeriod($dateFrom, $dateTo);
+            [$prevFrom, $prevTo] = $this->previousPeriodDateStrings($dateFrom, $dateTo);
 
             $prevItemQ = SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->whereNull('sales.voided_at')
-                ->whereBetween('sales.sale_date', [
-                    Carbon::parse($prevFrom)->startOfDay(),
-                    Carbon::parse($prevTo)->endOfDay(),
-                ])
+                ->whereBetween('sales.sale_date', $prevRange)
                 ->selectRaw("
                     SUM(sale_items.line_total) as gross_revenue,
                     SUM(products.purchase_price * sale_items.quantity_sold) as total_cost
@@ -467,10 +486,7 @@ class FinanceAnalyticsService
             $prevSales = $prevItemQ->first();
 
             $prevReturnQ = \App\Models\ReturnModel::where('is_exchange', false)
-                ->whereBetween('created_at', [
-                    Carbon::parse($prevFrom)->startOfDay(),
-                    Carbon::parse($prevTo)->endOfDay(),
-                ])
+                ->whereBetween('created_at', $prevRange)
                 ->selectRaw("SUM(refund_amount) as total_refunds");
             if ($shopId) $prevReturnQ->where('shop_id', $shopId);
             $prevReturns = (int) ($prevReturnQ->first()?->total_refunds ?? 0);
@@ -483,10 +499,7 @@ class FinanceAnalyticsService
             $prevExpenses = (int) $prevExpQ->sum('expenses.amount');
 
             $prevWdQ = OwnerWithdrawal::whereNull('owner_withdrawals.deleted_at')
-                ->whereBetween('owner_withdrawals.recorded_at', [
-                    Carbon::parse($prevFrom)->startOfDay(),
-                    Carbon::parse($prevTo)->endOfDay(),
-                ]);
+                ->whereBetween('owner_withdrawals.recorded_at', $prevRange);
             if ($shopId) $prevWdQ->where('owner_withdrawals.shop_id', $shopId);
             $prevWithdrawals = (int) $prevWdQ->sum('amount');
 
@@ -565,10 +578,7 @@ class FinanceAnalyticsService
             $itemQ = \App\Models\SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->whereNull('sales.voided_at')
-                ->whereBetween('sales.sale_date', [
-                    Carbon::parse($dateFrom)->startOfDay(),
-                    Carbon::parse($dateTo)->endOfDay(),
-                ])
+                ->whereBetween('sales.sale_date', $this->parseDateRange($dateFrom, $dateTo))
                 ->selectRaw("
                     SUM(sale_items.line_total) as revenue,
                     SUM(products.purchase_price * sale_items.quantity_sold) as total_cost,
@@ -598,18 +608,13 @@ class FinanceAnalyticsService
             $netMargin    = $revenue > 0 ? round(($netResult / $revenue) * 100, 1) : 0;
 
             // Previous period
-            $from     = Carbon::parse($dateFrom);
-            $daySpan  = $from->diffInDays(Carbon::parse($dateTo)) + 1;
-            $prevFrom = $from->copy()->subDays($daySpan)->startOfDay()->toDateString();
-            $prevTo   = $from->copy()->subDay()->endOfDay()->toDateString();
+            $prevRange = $this->previousPeriod($dateFrom, $dateTo);
+            [$prevFrom, $prevTo] = $this->previousPeriodDateStrings($dateFrom, $dateTo);
 
             $prevItemQ = \App\Models\SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->whereNull('sales.voided_at')
-                ->whereBetween('sales.sale_date', [
-                    Carbon::parse($prevFrom)->startOfDay(),
-                    Carbon::parse($prevTo)->endOfDay(),
-                ])
+                ->whereBetween('sales.sale_date', $prevRange)
                 ->selectRaw("
                     SUM(sale_items.line_total
                         - (products.purchase_price * sale_items.quantity_sold)) as gross_profit

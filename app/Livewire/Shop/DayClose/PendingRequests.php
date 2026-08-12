@@ -81,7 +81,7 @@ class PendingRequests extends Component
 
         $openSession = \App\Models\DailySession::open()
             ->forShop($shopId)
-            ->forDate(today()->toDateString())
+            ->forDate(business_today()->toDateString())
             ->first();
 
         return view('livewire.shop.day-close.pending-requests', [

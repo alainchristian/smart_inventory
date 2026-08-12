@@ -53,7 +53,7 @@
                         </tr>
                     @else
                         <tr style="border-bottom:1px solid var(--border);">
-                            <td class="py-2 text-xs" style="color:var(--text-dim);">{{ $withdrawal->recorded_at->format('H:i') }}</td>
+                            <td class="py-2 text-xs" style="color:var(--text-dim);">{{ local_time($withdrawal->recorded_at)->format('H:i') }}</td>
                             <td class="py-2" style="color:var(--text);">{{ $withdrawal->reason }}</td>
                             <td class="py-2 text-xs" style="color:var(--text-dim);">
                                 {{ $withdrawal->method === 'mobile_money' ? 'MoMo' : 'Cash' }}

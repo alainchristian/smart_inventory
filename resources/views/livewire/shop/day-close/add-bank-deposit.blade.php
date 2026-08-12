@@ -113,7 +113,7 @@
                                 <span style="font-size:11px;color:var(--text-dim);">{{ $deposit->bank_reference }}</span>
                             @endif
                             <span style="font-size:11px;color:var(--text-dim);">
-                                {{ $deposit->deposited_at->format('H:i') }}
+                                {{ local_time($deposit->deposited_at)->format('H:i') }}
                             </span>
                         </div>
                         <button wire:click="voidDeposit({{ $deposit->id }})"

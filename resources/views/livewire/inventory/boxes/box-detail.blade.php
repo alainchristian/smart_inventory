@@ -230,7 +230,7 @@
                     <div class="bd-field">
                         <div class="bd-field-label">Received at</div>
                         <div class="bd-field-val" style="font-size:12px">
-                            {{ $box->received_at?->format('d M Y, H:i') ?? '—' }}
+                            {{ local_time($box->received_at)?->format('d M Y, H:i') ?? '—' }}
                         </div>
                     </div>
                     <div class="bd-field">
@@ -398,12 +398,12 @@
                             <div class="bd-tf-meta">
                                 @if($tf->scanned_out_at)
                                 <span style="font-size:11px;color:var(--text-dim)">
-                                    Out: {{ \Carbon\Carbon::parse($tf->scanned_out_at)->format('d M Y') }}
+                                    Out: {{ local_time($tf->scanned_out_at)->format('d M Y') }}
                                 </span>
                                 @endif
                                 @if($tf->scanned_in_at)
                                 <span style="font-size:11px;color:var(--text-dim)">
-                                    &middot; In: {{ \Carbon\Carbon::parse($tf->scanned_in_at)->format('d M Y') }}
+                                    &middot; In: {{ local_time($tf->scanned_in_at)->format('d M Y') }}
                                 </span>
                                 @endif
                                 @if($tf->is_received)

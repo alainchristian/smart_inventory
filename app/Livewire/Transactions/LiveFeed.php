@@ -114,16 +114,19 @@ class LiveFeed extends Component
 
     protected function dateRange(): array
     {
+        $now = business_now();
+        $tz  = config('tenant.timezone');
+
         return match ($this->period) {
-            'yesterday'  => [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()],
-            'this_week'  => [now()->startOfWeek(), now()->endOfDay()],
-            'this_month' => [now()->startOfMonth(), now()->endOfDay()],
-            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'yesterday'  => [$now->copy()->subDay()->startOfDay()->utc(), $now->copy()->subDay()->endOfDay()->utc()],
+            'this_week'  => [$now->copy()->startOfWeek()->utc(),          $now->copy()->endOfDay()->utc()],
+            'this_month' => [$now->copy()->startOfMonth()->utc(),         $now->copy()->endOfDay()->utc()],
+            'last_30'    => [$now->copy()->subDays(29)->startOfDay()->utc(), $now->copy()->endOfDay()->utc()],
             'custom'     => [
-                $this->dateFrom ? Carbon::parse($this->dateFrom)->startOfDay() : now()->startOfDay(),
-                $this->dateTo   ? Carbon::parse($this->dateTo)->endOfDay()     : now()->endOfDay(),
+                $this->dateFrom ? Carbon::parse($this->dateFrom, $tz)->startOfDay()->utc() : $now->copy()->startOfDay()->utc(),
+                $this->dateTo   ? Carbon::parse($this->dateTo, $tz)->endOfDay()->utc()     : $now->copy()->endOfDay()->utc(),
             ],
-            default      => [now()->startOfDay(), now()->endOfDay()],
+            default      => [$now->copy()->startOfDay()->utc(), $now->copy()->endOfDay()->utc()],
         };
     }
 
@@ -330,12 +333,14 @@ class LiveFeed extends Component
 
     protected function movementsDateRange(): array
     {
+        $now = business_now();
+
         return match ($this->movementsPeriod) {
-            'yesterday' => [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()],
-            'this_week' => [now()->startOfWeek(), now()->endOfDay()],
-            'last_7'    => [now()->subDays(6)->startOfDay(), now()->endOfDay()],
-            'last_30'   => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
-            default     => [now()->startOfDay(), now()->endOfDay()], // today
+            'yesterday' => [$now->copy()->subDay()->startOfDay()->utc(), $now->copy()->subDay()->endOfDay()->utc()],
+            'this_week' => [$now->copy()->startOfWeek()->utc(),          $now->copy()->endOfDay()->utc()],
+            'last_7'    => [$now->copy()->subDays(6)->startOfDay()->utc(), $now->copy()->endOfDay()->utc()],
+            'last_30'   => [$now->copy()->subDays(29)->startOfDay()->utc(), $now->copy()->endOfDay()->utc()],
+            default     => [$now->copy()->startOfDay()->utc(), $now->copy()->endOfDay()->utc()], // today
         };
     }
 

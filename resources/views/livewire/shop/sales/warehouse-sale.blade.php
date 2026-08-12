@@ -1226,8 +1226,8 @@
                             </span>
                         </td>
                         <td class="whs-hist-td" style="white-space:nowrap;font-size:12px">
-                            {{ $sale->sale_date->format('d M Y') }}
-                            <span style="color:var(--text-dim)">{{ $sale->sale_date->format('H:i') }}</span>
+                            {{ local_time($sale->sale_date)->format('d M Y') }}
+                            <span style="color:var(--text-dim)">{{ local_time($sale->sale_date)->format('H:i') }}</span>
                         </td>
                         <td class="whs-hist-td">
                             {{ $sale->items->count() }} box{{ $sale->items->count() !== 1 ? 'es' : '' }}

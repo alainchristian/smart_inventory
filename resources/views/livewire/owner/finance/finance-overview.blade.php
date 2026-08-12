@@ -890,7 +890,7 @@
                         text-transform:uppercase;letter-spacing:0.5px;
                         color:var(--text-dim);background:var(--surface2);
                         border-bottom:1px solid var(--border);">
-                <span>Session {{ $loop->iteration }} — opened {{ $sess->opened_at?->format('H:i') }}</span>
+                <span>Session {{ $loop->iteration }} — opened {{ local_time($sess->opened_at)?->format('H:i') }}</span>
                 <span class="fo-badge fo-badge-{{ $sess->status }}">{{ ucfirst($sess->status) }}</span>
                 @if(!$sessOpen && $sv !== 0)
                     <span style="margin-left:auto;font-family:var(--mono);font-weight:700;
@@ -1107,7 +1107,7 @@
                     <div class="fo-exp-col-title" style="margin-top:14px;">Bank Deposits</div>
                     @foreach($sess->bankDeposits as $dep)
                     <div class="fo-exp-line">
-                        <span style="color:var(--text-dim);">{{ $dep->deposited_at?->format('H:i') ?? '—' }}</span>
+                        <span style="color:var(--text-dim);">{{ local_time($dep->deposited_at)?->format('H:i') ?? '—' }}</span>
                         <span style="font-weight:600;font-family:var(--mono);color:var(--accent);">
                             {{ number_format($dep->amount) }}
                             <span style="font-size:10px;font-weight:400;color:var(--text-dim);"> RWF</span>
@@ -1123,7 +1123,7 @@
                                     letter-spacing:0.4px;color:var(--text-dim);">Locked by</div>
                         <div style="font-size:12px;color:var(--text);margin-top:3px;">
                             {{ $sess->lockedBy->name ?? '—' }}
-                            · {{ $sess->locked_at?->format('d M Y H:i') }}
+                            · {{ local_time($sess->locked_at)?->format('d M Y H:i') }}
                         </div>
                     </div>
                     @endif
@@ -1586,7 +1586,7 @@
                     @foreach ($txSummary['bank_deposits'] as $dep)
                     <div class="fo-exp-line">
                         <span class="fo-exp-line-label">
-                            {{ $dep['deposited_at'] ? \Carbon\Carbon::parse($dep['deposited_at'])->format('d M · H:i') : '—' }}
+                            {{ $dep['deposited_at'] ? local_time($dep['deposited_at'])->format('d M · H:i') : '—' }}
                             @if ($dep['bank_reference'])
                                 <span style="opacity:0.6;font-size:10px;"> {{ $dep['bank_reference'] }}</span>
                             @endif
@@ -1681,7 +1681,7 @@
                             };
                             $txSign = in_array($txType, ['sale','repayment']) ? '+' : '−';
                             $txTime = $tx['occurred_at']
-                                ? \Carbon\Carbon::parse($tx['occurred_at'])
+                                ? local_time($tx['occurred_at'])
                                 : null;
                         @endphp
                         <tr>

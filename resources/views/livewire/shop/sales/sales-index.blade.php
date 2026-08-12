@@ -223,8 +223,8 @@
                     </td>
 
                     <td class="sli-td">
-                        <span class="sli-date-d">{{ $sale->sale_date->format('M j, Y') }}</span>
-                        <span class="sli-date-t">{{ $sale->sale_date->format('g:i A') }}</span>
+                        <span class="sli-date-d">{{ local_time($sale->sale_date)->format('M j, Y') }}</span>
+                        <span class="sli-date-t">{{ local_time($sale->sale_date)->format('g:i A') }}</span>
                     </td>
 
                     <td class="sli-td">
@@ -387,7 +387,7 @@
                                         @if($expandedSale->voided_at)
                                         <div class="sli-meta-row">
                                             <span class="sli-meta-k">Voided at</span>
-                                            <span class="sli-meta-v" style="color:#e24b4a;">{{ $expandedSale->voided_at->format('M j, Y g:i A') }}</span>
+                                            <span class="sli-meta-v" style="color:#e24b4a;">{{ local_time($expandedSale->voided_at)->format('M j, Y g:i A') }}</span>
                                         </div>
                                         @if($expandedSale->void_reason)
                                         <div class="sli-meta-row">

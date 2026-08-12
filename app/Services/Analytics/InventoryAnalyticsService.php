@@ -586,8 +586,8 @@ class InventoryAnalyticsService
         $numWeeks = max(4, min(26, (int) round($days / 7)));
         $weeks = [];
         for ($i = $numWeeks - 1; $i >= 0; $i--) {
-            $start = now()->startOfWeek()->subWeeks($i);
-            $end   = $start->copy()->endOfWeek();
+            $start = business_now()->startOfWeek()->subWeeks($i)->utc();
+            $end   = $start->copy()->addWeek()->subSecond();
 
             $receivedQuery = DB::table('box_movements')
                 ->where('movement_type', 'received')

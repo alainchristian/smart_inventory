@@ -16,6 +16,19 @@ use Illuminate\Support\Facades\DB;
 class DailySessionService
 {
     /**
+     * UTC datetime bounds [start, end] for a business-timezone calendar date.
+     * session_date is a date-only column, but sale_date/processed_at/repayment_date
+     * are UTC-stored timestamps, so a plain whereDate() would compare against the
+     * UTC calendar day instead of the business (Kigali) calendar day.
+     */
+    private function businessDayRangeUtc(string $date): array
+    {
+        $start = \Carbon\Carbon::parse($date, config('tenant.timezone'))->startOfDay();
+
+        return [$start->copy()->utc(), $start->copy()->endOfDay()->utc()];
+    }
+
+    /**
      * Open a new daily session for a shop.
      */
     public function openSession(User $user, int $shopId, int $openingBalance, string $date): DailySession
@@ -63,6 +76,7 @@ class DailySessionService
     {
         $date   = $session->session_date->toDateString();
         $shopId = $session->shop_id;
+        $range  = $this->businessDayRangeUtc($date);
 
         // Sales breakdown via sale_payments (handles split payments correctly)
         $saleTotals = DB::table('sale_payments')
@@ -70,7 +84,7 @@ class DailySessionService
             ->where('sales.shop_id', $shopId)
             ->whereNull('sales.voided_at')
             ->whereNull('sales.deleted_at')
-            ->whereDate('sales.sale_date', $date)
+            ->whereBetween('sales.sale_date', $range)
             ->selectRaw("
                 SUM(CASE WHEN sale_payments.payment_method = 'cash'          THEN sale_payments.amount ELSE 0 END) as cash,
                 SUM(CASE WHEN sale_payments.payment_method = 'mobile_money'  THEN sale_payments.amount ELSE 0 END) as momo,
@@ -84,7 +98,7 @@ class DailySessionService
 
         // Cash refunds (cash returns only, no exchanges)
         $cashRefunds = ReturnModel::where('shop_id', $shopId)
-            ->whereDate('processed_at', $date)
+            ->whereBetween('processed_at', $range)
             ->whereNull('deleted_at')
             ->where('refund_method', 'cash')
             ->where('is_exchange', false)
@@ -116,7 +130,7 @@ class DailySessionService
 
         // Credit repayments received today (split by payment method)
         $repaymentQuery  = CreditRepayment::where('shop_id', $shopId)
-            ->whereDate('repayment_date', $date);
+            ->whereBetween('repayment_date', $range);
         $cashRepayments  = (int) (clone $repaymentQuery)->where('payment_method', 'cash')->sum('amount');
         $momoRepayments  = (int) (clone $repaymentQuery)->where('payment_method', 'mobile_money')->sum('amount');
         $bankRepayments  = (int) (clone $repaymentQuery)->whereIn('payment_method', ['bank_transfer', 'card'])->sum('amount');

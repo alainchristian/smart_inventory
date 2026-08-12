@@ -39,16 +39,18 @@ class TimeFilter extends Component
 
     private function resolveDates(): void
     {
+        $today = business_today();
+
         match ($this->preset) {
-            'today'      => [$this->dateFrom, $this->dateTo] = [today()->toDateString(), today()->toDateString()],
-            'yesterday'  => [$this->dateFrom, $this->dateTo] = [today()->subDay()->toDateString(), today()->subDay()->toDateString()],
-            'week'       => [$this->dateFrom, $this->dateTo] = [today()->startOfWeek()->toDateString(), today()->toDateString()],
-            'month'      => [$this->dateFrom, $this->dateTo] = [today()->startOfMonth()->toDateString(), today()->toDateString()],
+            'today'      => [$this->dateFrom, $this->dateTo] = [$today->toDateString(), $today->toDateString()],
+            'yesterday'  => [$this->dateFrom, $this->dateTo] = [$today->copy()->subDay()->toDateString(), $today->copy()->subDay()->toDateString()],
+            'week'       => [$this->dateFrom, $this->dateTo] = [$today->copy()->startOfWeek()->toDateString(), $today->toDateString()],
+            'month'      => [$this->dateFrom, $this->dateTo] = [$today->copy()->startOfMonth()->toDateString(), $today->toDateString()],
             'last_month' => [$this->dateFrom, $this->dateTo] = [
-                today()->subMonthNoOverflow()->startOfMonth()->toDateString(),
-                today()->subMonthNoOverflow()->endOfMonth()->toDateString(),
+                $today->copy()->subMonthNoOverflow()->startOfMonth()->toDateString(),
+                $today->copy()->subMonthNoOverflow()->endOfMonth()->toDateString(),
             ],
-            default      => [$this->dateFrom, $this->dateTo] = [now()->subDays(29)->toDateString(), today()->toDateString()],
+            default      => [$this->dateFrom, $this->dateTo] = [$today->copy()->subDays(29)->toDateString(), $today->toDateString()],
         };
     }
 

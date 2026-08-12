@@ -1073,8 +1073,8 @@
                                     $reorderBy = $gap <= 0
                                         ? ['label' => 'OVERDUE',                                          'color' => 'var(--red)']
                                         : ($gap <= 7
-                                            ? ['label' => 'Order by '.now()->addDays($gap)->format('d M'), 'color' => 'var(--amber)']
-                                            : ['label' => now()->addDays($gap)->format('d M'),             'color' => 'var(--text-dim)']);
+                                            ? ['label' => 'Order by '.business_now()->addDays($gap)->format('d M'), 'color' => 'var(--amber)']
+                                            : ['label' => business_now()->addDays($gap)->format('d M'),             'color' => 'var(--text-dim)']);
                                 } else {
                                     $reorderBy = null;
                                 }

@@ -25,8 +25,9 @@ class RunScheduledReports extends Command
                 continue;
             }
 
-            // Run if never scheduled before or cron is due
-            if ($report->last_scheduled_run_at && ! $cron->isDue()) {
+            // Run if never scheduled before or cron is due (evaluated in the
+            // business timezone, so e.g. "0 8 * * *" means 8am Kigali time)
+            if ($report->last_scheduled_run_at && ! $cron->isDue('now', config('tenant.timezone'))) {
                 continue;
             }
 

@@ -737,7 +737,7 @@
                             {{ $txn['sale_number'] }}
                         </a>
                     </td>
-                    <td style="color:var(--text-sub);font-size:12px">{{ \Carbon\Carbon::parse($txn['sale_date'])->format('d M · H:i') }}</td>
+                    <td style="color:var(--text-sub);font-size:12px">{{ local_time($txn['sale_date'])->format('d M · H:i') }}</td>
                     <td style="color:var(--text-sub);font-size:12px">{{ $txn['shop_name'] }}</td>
                     <td style="color:var(--text-sub);font-size:12px">{{ $txn['seller_name'] }}</td>
                     <td style="color:var(--text-sub);font-size:12px">
@@ -1320,8 +1320,8 @@
                 @php $isLargeDiscount = ($entry['discount_pct'] ?? 0) >= 20; @endphp
                 <tr style="{{ $isLargeDiscount ? 'background:var(--amber-dim);border-left:3px solid var(--amber)' : '' }}">
                     <td>
-                        <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">{{ \Carbon\Carbon::parse($entry['sale_date'])->format('M d, Y') }}</div>
-                        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:2px">{{ \Carbon\Carbon::parse($entry['sale_date'])->format('H:i') }}</div>
+                        <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">{{ local_time($entry['sale_date'])->format('M d, Y') }}</div>
+                        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:2px">{{ local_time($entry['sale_date'])->format('H:i') }}</div>
                     </td>
                     <td>
                         <div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--accent);margin-bottom:3px">{{ $entry['sale_number'] }}</div>

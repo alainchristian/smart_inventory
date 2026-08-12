@@ -7,7 +7,7 @@
             <p class="text-xs text-gray-500">{{ auth()->user()->location?->name }}</p>
         </div>
         <div class="flex items-center gap-4 text-sm text-gray-600">
-            <span>{{ now()->format('l, d M Y') }}</span>
+            <span>{{ business_now()->format('l, d M Y') }}</span>
             <span class="font-semibold text-gray-900" x-text="currentTime"></span>
         </div>
     </div>
@@ -532,7 +532,8 @@ function posPage() {
             this.currentTime = now.toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
-                second: '2-digit'
+                second: '2-digit',
+                timeZone: '{{ config('tenant.timezone') }}'
             });
         }
     };

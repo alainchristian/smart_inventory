@@ -343,11 +343,11 @@
             <input type="date"
                    class="dcr-date-input"
                    wire:model.live="reportDate"
-                   max="{{ today()->toDateString() }}">
+                   max="{{ business_today()->toDateString() }}">
             <button class="dcr-nav-btn"
                     wire:click="nextDay"
                     title="Next day"
-                    @if(\Carbon\Carbon::parse($reportDate)->isToday()) disabled @endif>›</button>
+                    @if($reportDate === business_today()->toDateString()) disabled @endif>›</button>
             <button class="dcr-today-btn" wire:click="goToToday">Today</button>
             <span class="dcr-day-label">
                 {{ \Carbon\Carbon::parse($reportDate)->format('l, d M Y') }}
@@ -570,7 +570,7 @@
                     <div class="dcr-feed-row">
                         <div class="dcr-feed-dot" style="background:{{ $txDot }};"></div>
                         <div class="dcr-feed-time">
-                            {{ $tx['time'] instanceof \Carbon\Carbon ? $tx['time']->format('H:i') : \Carbon\Carbon::parse($tx['time'])->format('H:i') }}
+                            {{ local_time($tx['time'])->format('H:i') }}
                         </div>
                         <div class="dcr-feed-desc" title="{{ $tx['desc'] }}">{{ $tx['desc'] }}</div>
                         <div class="dcr-feed-mth">{{ $tx['method'] ?? '' }}</div>
@@ -732,7 +732,7 @@
                     </button>
                 @else
                     <span style="font-size:10px;color:var(--text-dim);white-space:nowrap;display:inline-flex;align-items:center;gap:3px">
-                        <x-icon name="lock" size="10" /> {{ $session->locked_at?->format('H:i') }}
+                        <x-icon name="lock" size="10" /> {{ local_time($session->locked_at)?->format('H:i') }}
                     </span>
                 @endif
                 <svg class="dcr-chevron {{ $isExpanded ? 'dcr-open' : '' }}"
@@ -805,7 +805,7 @@
                 <div class="dcr-verdict dcr-verdict-seal">
                     <svg style="width:13px;height:13px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     Sealed — locked by {{ $dcrmSess->lockedBy->name ?? '—' }}
-                    on {{ $dcrmSess->locked_at?->format('d M Y') }} at {{ $dcrmSess->locked_at?->format('H:i') }}
+                    on {{ local_time($dcrmSess->locked_at)?->format('d M Y') }} at {{ local_time($dcrmSess->locked_at)?->format('H:i') }}
                 </div>
             @elseif($dcrmSv === 0)
                 <div class="dcr-verdict dcr-verdict-ok">
@@ -1060,7 +1060,7 @@
                                 @foreach($dcrmSess->bankDeposits as $dep)
                                     <div class="dcr-detail-line">
                                         <span class="dcr-detail-lbl">
-                                            {{ $dep->deposited_at?->format('H:i') ?? '—' }}
+                                            {{ local_time($dep->deposited_at)?->format('H:i') ?? '—' }}
                                             @if($dep->bank_reference)
                                                 <span style="color:var(--text-dim);"> · {{ $dep->bank_reference }}</span>
                                             @endif
@@ -1085,12 +1085,12 @@
                 @elseif($dcrmIsLocked)
                     <span class="dcr-footer-note" style="display:inline-flex;align-items:center;gap:5px">
                         <x-icon name="lock" size="12" /> Permanently sealed · {{ $dcrmSess->lockedBy->name ?? '—' }}
-                        · {{ $dcrmSess->locked_at?->format('d M Y H:i') }}
+                        · {{ local_time($dcrmSess->locked_at)?->format('d M Y H:i') }}
                     </span>
                 @else
                     <span class="dcr-footer-note">
                         Closed by {{ $dcrmSess->closedBy->name ?? '—' }}
-                        at {{ $dcrmSess->closed_at?->format('H:i') }}
+                        at {{ local_time($dcrmSess->closed_at)?->format('H:i') }}
                         @if($dcrmSv !== 0)
                             · <span style="color:{{ $dcrmSv < 0 ? 'var(--red)' : 'var(--amber)' }};font-weight:600;">
                                 {{ $dcrmSv < 0 ? 'Shortage' : 'Surplus' }}: {{ number_format(abs($dcrmSv)) }} RWF

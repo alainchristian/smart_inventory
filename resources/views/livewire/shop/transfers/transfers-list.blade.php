@@ -294,15 +294,15 @@
 
         {{-- Dates --}}
         <div class="tl-dates">
-          <span class="tl-date">Requested: <strong>{{ $transfer->requested_at?->format('d M Y') ?? '—' }}</strong></span>
+          <span class="tl-date">Requested: <strong>{{ local_time($transfer->requested_at)?->format('d M Y') ?? '—' }}</strong></span>
           @if($transfer->requestedBy)
             <span class="tl-date">By: <strong>{{ $transfer->requestedBy->name }}</strong></span>
           @endif
           @if($transfer->delivered_at)
-            <span class="tl-date">Delivered: <strong>{{ $transfer->delivered_at->format('d M Y') }}</strong></span>
+            <span class="tl-date">Delivered: <strong>{{ local_time($transfer->delivered_at)->format('d M Y') }}</strong></span>
           @endif
           @if($transfer->received_at)
-            <span class="tl-date">Received: <strong>{{ $transfer->received_at->format('d M Y') }}</strong></span>
+            <span class="tl-date">Received: <strong>{{ local_time($transfer->received_at)->format('d M Y') }}</strong></span>
           @endif
         </div>
 

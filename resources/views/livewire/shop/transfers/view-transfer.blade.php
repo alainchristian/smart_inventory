@@ -334,7 +334,7 @@
       <div class="td-hero-divider"></div>
 
       <div class="td-hero-date">
-        <strong>{{ $transfer->requested_at?->format('d M Y') ?? '—' }}</strong>
+        <strong>{{ local_time($transfer->requested_at)?->format('d M Y') ?? '—' }}</strong>
         Requested
       </div>
 
@@ -480,10 +480,10 @@
               <span class="td-box-items">{{ $box->items_remaining ?? '—' }} items</span>
               <div class="td-box-scan">
                 @if($tb->scanned_out_at)
-                  <span>Out: <strong>{{ $tb->scanned_out_at->format('d M, H:i') }}</strong></span>
+                  <span>Out: <strong>{{ local_time($tb->scanned_out_at)->format('d M, H:i') }}</strong></span>
                 @endif
                 @if($tb->scanned_in_at)
-                  <span style="color:var(--green)">In: <strong>{{ $tb->scanned_in_at->format('d M, H:i') }}</strong></span>
+                  <span style="color:var(--green)">In: <strong>{{ local_time($tb->scanned_in_at)->format('d M, H:i') }}</strong></span>
                 @endif
               </div>
             </div>
@@ -531,7 +531,7 @@
             </div>
             <div class="td-meta-row">
               <span class="td-meta-label">Requested</span>
-              <span class="td-meta-value">{{ $transfer->requested_at?->format('d M Y, H:i') ?? '—' }}</span>
+              <span class="td-meta-value">{{ local_time($transfer->requested_at)?->format('d M Y, H:i') ?? '—' }}</span>
             </div>
             @if($transfer->reviewedBy)
             <div class="td-meta-row">
@@ -542,19 +542,19 @@
             @if($transfer->reviewed_at)
             <div class="td-meta-row">
               <span class="td-meta-label">Reviewed</span>
-              <span class="td-meta-value">{{ $transfer->reviewed_at->format('d M Y, H:i') }}</span>
+              <span class="td-meta-value">{{ local_time($transfer->reviewed_at)->format('d M Y, H:i') }}</span>
             </div>
             @endif
             @if($transfer->delivered_at)
             <div class="td-meta-row">
               <span class="td-meta-label">Delivered</span>
-              <span class="td-meta-value">{{ $transfer->delivered_at->format('d M Y, H:i') }}</span>
+              <span class="td-meta-value">{{ local_time($transfer->delivered_at)->format('d M Y, H:i') }}</span>
             </div>
             @endif
             @if($transfer->received_at)
             <div class="td-meta-row">
               <span class="td-meta-label">Received</span>
-              <span class="td-meta-value" style="color:var(--green);">{{ $transfer->received_at->format('d M Y, H:i') }}</span>
+              <span class="td-meta-value" style="color:var(--green);">{{ local_time($transfer->received_at)->format('d M Y, H:i') }}</span>
             </div>
             @endif
             @if($transfer->receivedBy)

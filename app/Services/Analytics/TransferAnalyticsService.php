@@ -13,6 +13,28 @@ use Illuminate\Support\Facades\Cache;
 class TransferAnalyticsService
 {
     /**
+     * created_at is a UTC-stored TIMESTAMP column. $dateFrom/$dateTo are plain
+     * business-timezone calendar dates — interpret them in that timezone and
+     * convert to UTC, otherwise the range is both off by the tz offset and
+     * (passed as bare date strings) would exclude same-day rows entirely.
+     */
+    private function parseDateRange(string $dateFrom, string $dateTo): array
+    {
+        return [
+            \Carbon\Carbon::parse($dateFrom, config('tenant.timezone'))->startOfDay()->utc(),
+            \Carbon\Carbon::parse($dateTo, config('tenant.timezone'))->endOfDay()->utc(),
+        ];
+    }
+
+    /** Postgres SQL fragment converting a UTC-stored timestamp column to its business-timezone calendar date. */
+    private function localDateSql(string $column): string
+    {
+        $tz = config('tenant.timezone');
+
+        return "DATE({$column} AT TIME ZONE 'UTC' AT TIME ZONE '{$tz}')";
+    }
+
+    /**
      * Get transfer performance KPIs
      */
     public function getTransferKpis(string $dateFrom, string $dateTo, ?string $statusFilter = null): array
@@ -20,7 +42,7 @@ class TransferAnalyticsService
         $cacheKey = "analytics_transfer_kpis_{$dateFrom}_{$dateTo}_{$statusFilter}";
 
         return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $statusFilter) {
-            $query = Transfer::whereBetween('created_at', [$dateFrom, $dateTo]);
+            $query = Transfer::whereBetween('created_at', $this->parseDateRange($dateFrom, $dateTo));
 
             if ($statusFilter) {
                 $query->where('status', $statusFilter);
@@ -29,7 +51,7 @@ class TransferAnalyticsService
             $totalTransfers = $query->count();
 
             // Calculate average completion time (for completed transfers)
-            $completedQuery = Transfer::whereBetween('created_at', [$dateFrom, $dateTo])
+            $completedQuery = Transfer::whereBetween('created_at', $this->parseDateRange($dateFrom, $dateTo))
                 ->whereNotNull('received_at')
                 ->whereNotNull('requested_at')
                 ->selectRaw('AVG(EXTRACT(EPOCH FROM (received_at - requested_at)) / 3600) as avg_hours');
@@ -37,7 +59,7 @@ class TransferAnalyticsService
             $avgHours = $completedQuery->first()->avg_hours ?? 0;
 
             // Calculate discrepancy rate
-            $discrepancyQuery = Transfer::whereBetween('created_at', [$dateFrom, $dateTo])
+            $discrepancyQuery = Transfer::whereBetween('created_at', $this->parseDateRange($dateFrom, $dateTo))
                 ->where('has_discrepancy', true);
 
             if ($statusFilter && $statusFilter !== 'discrepancy') {
@@ -69,8 +91,8 @@ class TransferAnalyticsService
         $cacheKey = "analytics_transfer_trend_{$dateFrom}_{$dateTo}_{$statusFilter}";
 
         return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $statusFilter) {
-            $query = Transfer::whereBetween('created_at', [$dateFrom, $dateTo])
-                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            $query = Transfer::whereBetween('created_at', $this->parseDateRange($dateFrom, $dateTo))
+                ->selectRaw($this->localDateSql('created_at') . ' as date, COUNT(*) as count')
                 ->groupBy('date')
                 ->orderBy('date');
 
@@ -97,7 +119,7 @@ class TransferAnalyticsService
         return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo) {
             return Transfer::join('warehouses', 'transfers.from_warehouse_id', '=', 'warehouses.id')
                 ->join('shops', 'transfers.to_shop_id', '=', 'shops.id')
-                ->whereBetween('transfers.created_at', [$dateFrom, $dateTo])
+                ->whereBetween('transfers.created_at', $this->parseDateRange($dateFrom, $dateTo))
                 ->selectRaw('
                     warehouses.id as warehouse_id,
                     warehouses.name as warehouse_name,
@@ -130,7 +152,7 @@ class TransferAnalyticsService
         $cacheKey = "analytics_transfer_status_{$dateFrom}_{$dateTo}";
 
         return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo) {
-            return Transfer::whereBetween('created_at', [$dateFrom, $dateTo])
+            return Transfer::whereBetween('created_at', $this->parseDateRange($dateFrom, $dateTo))
                 ->selectRaw('status, COUNT(*) as count')
                 ->groupBy('status')
                 ->orderByDesc('count')
@@ -152,7 +174,7 @@ class TransferAnalyticsService
         $cacheKey = "analytics_completion_time_{$dateFrom}_{$dateTo}";
 
         return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo) {
-            return Transfer::whereBetween('created_at', [$dateFrom, $dateTo])
+            return Transfer::whereBetween('created_at', $this->parseDateRange($dateFrom, $dateTo))
                 ->whereNotNull('received_at')
                 ->whereNotNull('requested_at')
                 ->selectRaw("
@@ -185,7 +207,7 @@ class TransferAnalyticsService
         return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $limit) {
             return TransferItem::join('transfers', 'transfer_items.transfer_id', '=', 'transfers.id')
                 ->join('products', 'transfer_items.product_id', '=', 'products.id')
-                ->whereBetween('transfers.created_at', [$dateFrom, $dateTo])
+                ->whereBetween('transfers.created_at', $this->parseDateRange($dateFrom, $dateTo))
                 ->selectRaw('
                     products.id,
                     products.name,
@@ -220,7 +242,7 @@ class TransferAnalyticsService
 
         return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo, $limit) {
             return Transfer::with(['fromWarehouse', 'toShop'])
-                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->whereBetween('created_at', $this->parseDateRange($dateFrom, $dateTo))
                 ->where('has_discrepancy', true)
                 ->orderByDesc('created_at')
                 ->limit($limit)
@@ -232,8 +254,8 @@ class TransferAnalyticsService
                         'from_warehouse' => $transfer->fromWarehouse->name ?? 'Unknown',
                         'to_shop' => $transfer->toShop->name ?? 'Unknown',
                         'status' => $transfer->status->value ?? 'Unknown',
-                        'created_at' => $transfer->created_at->format('Y-m-d H:i:s'),
-                        'received_at' => $transfer->received_at?->format('Y-m-d H:i:s'),
+                        'created_at' => local_time($transfer->created_at)->format('Y-m-d H:i:s'),
+                        'received_at' => local_time($transfer->received_at)?->format('Y-m-d H:i:s'),
                         'discrepancy_notes' => $transfer->discrepancy_notes,
                     ];
                 })->toArray();
@@ -249,7 +271,7 @@ class TransferAnalyticsService
 
         return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo) {
             return Transfer::join('warehouses', 'transfers.from_warehouse_id', '=', 'warehouses.id')
-                ->whereBetween('transfers.created_at', [$dateFrom, $dateTo])
+                ->whereBetween('transfers.created_at', $this->parseDateRange($dateFrom, $dateTo))
                 ->whereNotNull('transfers.received_at')
                 ->whereNotNull('transfers.requested_at')
                 ->selectRaw('

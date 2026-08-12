@@ -331,8 +331,8 @@
 
                     {{-- Time --}}
                     <td>
-                        <div class="al-time">{{ $log->created_at->format('d M Y') }}</div>
-                        <div class="al-time-rel">{{ $log->created_at->format('H:i:s') }}</div>
+                        <div class="al-time">{{ local_time($log->created_at)->format('d M Y') }}</div>
+                        <div class="al-time-rel">{{ local_time($log->created_at)->format('H:i:s') }}</div>
                     </td>
 
                     {{-- User --}}
@@ -459,7 +459,7 @@
         <div class="al-drawer-head">
             <div>
                 <div class="al-drawer-title">{{ $parsed['label'] }}</div>
-                <div class="al-drawer-sub">Log #{{ $log->id }} · {{ $log->created_at->format('d M Y H:i:s') }}</div>
+                <div class="al-drawer-sub">Log #{{ $log->id }} · {{ local_time($log->created_at)->format('d M Y H:i:s') }}</div>
             </div>
             <button class="al-drawer-close" wire:click="closeDrawer">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

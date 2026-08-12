@@ -880,7 +880,7 @@
                         <div class="tp-disc-item">
                             <div class="tp-disc-head">
                                 <span class="tp-disc-num">{{ $d['transfer_number'] }}</span>
-                                <span class="tp-disc-date">{{ \Carbon\Carbon::parse($d['created_at'])->format('M j, Y') }}</span>
+                                <span class="tp-disc-date">{{ local_time($d['created_at'])->format('M j, Y') }}</span>
                             </div>
                             <div class="tp-disc-route">
                                 <span style="font-weight:600">{{ $d['from_warehouse'] }}</span>
@@ -898,7 +898,7 @@
                             @endif
                             @if($d['received_at'])
                                 <div style="font-size:13px;color:var(--text-dim);margin-top:4px">
-                                    Received: {{ \Carbon\Carbon::parse($d['received_at'])->format('M j, Y H:i') }}
+                                    Received: {{ local_time($d['received_at'])->format('M j, Y H:i') }}
                                 </div>
                             @endif
                         </div>

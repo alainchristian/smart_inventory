@@ -52,7 +52,7 @@
                     <div>
                         <div style="font-size:14px;font-weight:700;color:var(--green);">Session Active</div>
                         <div style="font-size:12px;color:var(--text-dim);margin-top:1px;" class="dc-sess-active-sub">
-                            Opened at {{ $todaySession->opened_at->format('H:i') }}
+                            Opened at {{ local_time($todaySession->opened_at)->format('H:i') }}
                             · <span style="font-family:var(--mono);font-weight:600;color:var(--text);">{{ number_format($todaySession->opening_balance) }} RWF</span> opening balance
                         </div>
                     </div>

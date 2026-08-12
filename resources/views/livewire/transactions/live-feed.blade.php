@@ -143,16 +143,17 @@
 
         {{-- Active date range indicator --}}
         @php
+            $_bNow = business_now();
             [$_rFrom, $_rTo] = match ($period) {
-                'yesterday'  => [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()],
-                'this_week'  => [now()->startOfWeek(), now()->endOfDay()],
-                'this_month' => [now()->startOfMonth(), now()->endOfDay()],
-                'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+                'yesterday'  => [$_bNow->copy()->subDay()->startOfDay(), $_bNow->copy()->subDay()->endOfDay()],
+                'this_week'  => [$_bNow->copy()->startOfWeek(), $_bNow->copy()->endOfDay()],
+                'this_month' => [$_bNow->copy()->startOfMonth(), $_bNow->copy()->endOfDay()],
+                'last_30'    => [$_bNow->copy()->subDays(29)->startOfDay(), $_bNow->copy()->endOfDay()],
                 'custom'     => [
-                    $dateFrom ? \Carbon\Carbon::parse($dateFrom)->startOfDay() : now()->startOfDay(),
-                    $dateTo   ? \Carbon\Carbon::parse($dateTo)->endOfDay()     : now()->endOfDay(),
+                    $dateFrom ? \Carbon\Carbon::parse($dateFrom) : $_bNow->copy()->startOfDay(),
+                    $dateTo   ? \Carbon\Carbon::parse($dateTo)   : $_bNow->copy()->endOfDay(),
                 ],
-                default      => [now()->startOfDay(), now()->endOfDay()],
+                default      => [$_bNow->copy()->startOfDay(), $_bNow->copy()->endOfDay()],
             };
             $_rangeStr = $_rFrom->isSameDay($_rTo)
                 ? $_rFrom->format('M j, Y')
@@ -206,7 +207,7 @@
                               border:1.5px solid {{ $dateFrom ? 'var(--accent)' : 'var(--border)' }};
                               background:var(--surface);color:var(--text);
                               outline:none;font-family:var(--mono);"
-                       max="{{ now()->format('Y-m-d') }}">
+                       max="{{ business_now()->format('Y-m-d') }}">
             </div>
             <div>
                 <label style="display:block;font-size:9px;font-weight:700;color:var(--text-faint);
@@ -216,7 +217,7 @@
                               border:1.5px solid {{ $dateTo ? 'var(--accent)' : 'var(--border)' }};
                               background:var(--surface);color:var(--text);
                               outline:none;font-family:var(--mono);"
-                       max="{{ now()->format('Y-m-d') }}"
+                       max="{{ business_now()->format('Y-m-d') }}"
                        min="{{ $dateFrom ?: '' }}">
             </div>
         </div>
@@ -366,7 +367,7 @@
 
             @foreach ($transactions as $tx)
                 @php
-                    $happenedAt = \Carbon\Carbon::parse($tx['happened_at']);
+                    $happenedAt = local_time($tx['happened_at']);
                     $dateLabel  = $happenedAt->isToday()
                         ? 'Today'
                         : ($happenedAt->isYesterday() ? 'Yesterday' : $happenedAt->format('d M Y'));
@@ -541,7 +542,7 @@
 
                 @foreach ($movements as $mv)
                     @php
-                        $movedAt = \Carbon\Carbon::parse($mv['moved_at']);
+                        $movedAt = local_time($mv['moved_at']);
                         if ($movedAt->isToday())     $rel = $movedAt->format('H:i');
                         elseif ($movedAt->isYesterday()) $rel = 'Yesterday ' . $movedAt->format('H:i');
                         else                         $rel = $movedAt->format('d M, H:i');

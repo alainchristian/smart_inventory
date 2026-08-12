@@ -352,15 +352,15 @@
 
                     {{-- Dates --}}
                     <div class="otl-dates">
-                        <span class="otl-date">Requested: <strong>{{ $transfer->requested_at?->format('d M Y') ?? '—' }}</strong></span>
+                        <span class="otl-date">Requested: <strong>{{ local_time($transfer->requested_at)?->format('d M Y') ?? '—' }}</strong></span>
                         @if($transfer->requestedBy)
                             <span class="otl-date">By: <strong>{{ $transfer->requestedBy->name }}</strong></span>
                         @endif
                         @if($transfer->shipped_at)
-                            <span class="otl-date">Shipped: <strong>{{ $transfer->shipped_at->format('d M Y') }}</strong></span>
+                            <span class="otl-date">Shipped: <strong>{{ local_time($transfer->shipped_at)->format('d M Y') }}</strong></span>
                         @endif
                         @if($transfer->received_at)
-                            <span class="otl-date">Received: <strong>{{ $transfer->received_at->format('d M Y') }}</strong></span>
+                            <span class="otl-date">Received: <strong>{{ local_time($transfer->received_at)->format('d M Y') }}</strong></span>
                         @endif
                     </div>
                 </div>

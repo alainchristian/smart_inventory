@@ -66,24 +66,29 @@ class Dashboard extends Component
 
     private function resolveDates(): void
     {
+        $today = business_today();
+
         match ($this->preset) {
-            'today'      => [$this->dateFrom, $this->dateTo] = [today()->toDateString(), today()->toDateString()],
-            'yesterday'  => [$this->dateFrom, $this->dateTo] = [today()->subDay()->toDateString(), today()->subDay()->toDateString()],
-            'week'       => [$this->dateFrom, $this->dateTo] = [today()->startOfWeek()->toDateString(), today()->toDateString()],
-            'month'      => [$this->dateFrom, $this->dateTo] = [today()->startOfMonth()->toDateString(), today()->toDateString()],
+            'today'      => [$this->dateFrom, $this->dateTo] = [$today->toDateString(), $today->toDateString()],
+            'yesterday'  => [$this->dateFrom, $this->dateTo] = [$today->copy()->subDay()->toDateString(), $today->copy()->subDay()->toDateString()],
+            'week'       => [$this->dateFrom, $this->dateTo] = [$today->copy()->startOfWeek()->toDateString(), $today->toDateString()],
+            'month'      => [$this->dateFrom, $this->dateTo] = [$today->copy()->startOfMonth()->toDateString(), $today->toDateString()],
             'last_month' => [$this->dateFrom, $this->dateTo] = [
-                today()->subMonthNoOverflow()->startOfMonth()->toDateString(),
-                today()->subMonthNoOverflow()->endOfMonth()->toDateString(),
+                $today->copy()->subMonthNoOverflow()->startOfMonth()->toDateString(),
+                $today->copy()->subMonthNoOverflow()->endOfMonth()->toDateString(),
             ],
-            default      => [$this->dateFrom, $this->dateTo] = [now()->subDays(29)->toDateString(), today()->toDateString()],
+            default      => [$this->dateFrom, $this->dateTo] = [$today->copy()->subDays(29)->toDateString(), $today->toDateString()],
         };
     }
 
+    // UTC query boundaries for the (business-timezone) dateFrom/dateTo selection —
+    // for querying UTC-stored datetime columns (sale_date, created_at). Do not use
+    // the returned Carbons for display formatting (see updatePeriodLabel).
     protected function getDateRange(): array
     {
         return [
-            Carbon::parse($this->dateFrom)->startOfDay(),
-            Carbon::parse($this->dateTo)->endOfDay(),
+            Carbon::parse($this->dateFrom, config('tenant.timezone'))->startOfDay()->utc(),
+            Carbon::parse($this->dateTo, config('tenant.timezone'))->endOfDay()->utc(),
         ];
     }
 
@@ -96,7 +101,10 @@ class Dashboard extends Component
 
     protected function updatePeriodLabel(): void
     {
-        [$from, $to] = $this->getDateRange();
+        // Plain business-timezone calendar dates — not the UTC query boundaries
+        // from getDateRange(), which would display the wrong calendar day.
+        $from = Carbon::parse($this->dateFrom);
+        $to   = Carbon::parse($this->dateTo);
         $this->periodLabel = $from->isSameDay($to)
             ? $from->format('M j, Y')
             : $from->format('M j') . ' – ' . $to->format('M j, Y');
