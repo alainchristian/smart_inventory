@@ -97,7 +97,7 @@ class GenerateSystemAlerts extends Command
                     'severity' => AlertSeverity::CRITICAL,
                     'entity_type' => Product::class,
                     'entity_id' => $product->id,
-                    'action_url' => '#',
+                    'action_url' => route('owner.products.edit', $product),
                     'action_label' => 'View Product',
                 ]);
                 $count++;
@@ -300,16 +300,21 @@ class GenerateSystemAlerts extends Command
 
         foreach ($lowStockAlerts as $alert) {
             $product = Product::find($alert->entity_id);
-            if ($product) {
-                $totalStock = $product->boxes()
-                    ->whereIn('status', ['full', 'partial'])
-                    ->sum('items_remaining');
+            if (!$product) {
+                // Product was deleted entirely — the alert is orphaned, resolve it.
+                $alert->markAsResolved();
+                $count++;
+                continue;
+            }
 
-                // If stock is above threshold or completely out, resolve the alert
-                if ($totalStock > $product->low_stock_threshold || $totalStock === 0) {
-                    $alert->markAsResolved();
-                    $count++;
-                }
+            $totalStock = $product->boxes()
+                ->whereIn('status', ['full', 'partial'])
+                ->sum('items_remaining');
+
+            // If stock is above threshold or completely out, resolve the alert
+            if ($totalStock > $product->low_stock_threshold || $totalStock === 0) {
+                $alert->markAsResolved();
+                $count++;
             }
         }
 
