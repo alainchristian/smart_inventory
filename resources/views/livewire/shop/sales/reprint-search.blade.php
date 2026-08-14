@@ -173,7 +173,7 @@
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                 View
                             </button>
-                            <a href="{{ route('shop.receipt.print', $sale->id) }}" target="_blank" class="rs-action print">
+                            <a href="{{ route('shop.receipt.print', ['sale' => $sale->id, 'full' => 1]) }}" target="_blank" class="rs-action print">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                                 Print
                             </a>
@@ -324,7 +324,7 @@
 
         {{-- Footer --}}
         <div class="rs-modal-foot">
-            <a href="{{ route('shop.receipt.print', $selectedSale->id) }}" target="_blank"
+            <a href="{{ route('shop.receipt.print', ['sale' => $selectedSale->id, 'full' => 1]) }}" target="_blank"
                style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--rsm);border:1.5px solid var(--border);background:transparent;color:var(--text-sub);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;transition:all var(--tr);font-family:var(--font)"
                onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-sub)'">

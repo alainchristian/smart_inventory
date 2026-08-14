@@ -120,7 +120,7 @@
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
             Back to Sales Reports
         </a>
-        <a href="{{ route('shop.sales.receipt', $sale) }}" target="_blank" class="oss-btn">
+        <a href="{{ route('shop.sales.receipt', ['sale' => $sale, 'full' => 1]) }}" target="_blank" class="oss-btn">
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"/></svg>
             Print Receipt
         </a>

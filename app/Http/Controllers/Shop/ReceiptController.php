@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
+use Illuminate\Http\Request;
 
 class ReceiptController extends Controller
 {
-    public function print(Sale $sale)
+    public function print(Sale $sale, Request $request)
     {
         $user = auth()->user();
 
@@ -19,6 +20,14 @@ class ReceiptController extends Controller
 
         $groupedItems = $sale->groupedItems();
 
-        return view('receipt.print', compact('sale', 'groupedItems'));
+        // The document that physically travels to the warehouse with a
+        // transporter must not disclose the sale amount — only the customer's
+        // own pickup receipt (or an explicit ?full=1 reprint, e.g. from Sales
+        // History / Reprint Search) shows pricing for a transporter dispatch.
+        $hideAmounts = $sale->fulfillment_method === 'transporter'
+            && $sale->fulfillment_pickup_code
+            && ! $request->boolean('full');
+
+        return view('receipt.print', compact('sale', 'groupedItems', 'hideAmounts'));
     }
 }
