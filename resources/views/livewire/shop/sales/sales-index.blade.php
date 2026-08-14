@@ -203,7 +203,7 @@
                         <span class="sli-sort {{ $sortBy==='sale_date' ? ($sortDir==='asc' ? 'asc' : 'desc') : '' }}"></span>
                     </th>
                     <th class="sli-th">Customer</th>
-                    <th class="sli-th sli-th--center">Items</th>
+                    <th class="sli-th sli-th--center">Boxes</th>
                     <th class="sli-th">Payment</th>
                     <th wire:click="sort('total')" class="sli-th sli-th--sortable sli-th--right">
                         <span>Amount</span>
@@ -446,6 +446,20 @@
     <div class="sli-all-loaded">All {{ number_format($totalFiltered) }} results shown</div>
     @endif
 
+</div>
+
+{{-- Sticky filtered-total summary bar --}}
+<div class="sli-summary-bar">
+    <span class="sli-summary-period">{{ $activePeriodLabel }}</span>
+    <div class="sli-summary-stat">
+        <span class="sli-summary-label">Boxes Sold</span>
+        <span class="sli-summary-value">{{ number_format($summaryBoxes) }}</span>
+    </div>
+    <div class="sli-summary-divider"></div>
+    <div class="sli-summary-stat">
+        <span class="sli-summary-label">Total Amount</span>
+        <span class="sli-summary-value">{{ number_format($summaryTotal) }}<span class="sli-summary-unit">RWF</span></span>
+    </div>
 </div>
 
 </div>{{-- /sli-root --}}

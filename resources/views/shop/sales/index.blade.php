@@ -437,6 +437,34 @@
 }
 @keyframes sli-spin { to { transform:rotate(360deg); } }
 .sli-spin { animation:sli-spin .8s linear infinite; }
+
+/* ═══════════════════════════════════════════════════
+   STICKY SUMMARY BAR
+═══════════════════════════════════════════════════ */
+.sli-summary-bar {
+    position:sticky; bottom:0; z-index:20;
+    display:flex; align-items:center; gap:20px;
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:12px 20px; box-shadow:0 -4px 16px rgba(0,0,0,.08);
+}
+.sli-summary-period {
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-dim); background:var(--surface2); border:1px solid var(--border);
+    border-radius:20px; padding:3px 9px; white-space:nowrap; flex-shrink:0;
+}
+.sli-summary-stat { display:flex; align-items:baseline; gap:8px; flex-shrink:0; }
+.sli-summary-label {
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-dim);
+}
+.sli-summary-value { font-size:16px; font-weight:800; color:var(--text); font-family:var(--mono, monospace); }
+.sli-summary-unit { font-size:11px; font-weight:500; color:var(--text-dim); margin-left:3px; }
+.sli-summary-divider { width:1px; height:20px; background:var(--border); flex-shrink:0; }
+
+@media(max-width:660px) {
+    .sli-summary-bar { flex-wrap:wrap; gap:10px 16px; padding:10px 16px; }
+    .sli-summary-divider { display:none; }
+}
 </style>
 @endpush
 

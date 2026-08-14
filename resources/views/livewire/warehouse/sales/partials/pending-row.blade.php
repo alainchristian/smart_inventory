@@ -73,15 +73,17 @@
                 </div>
                 <div class="fq-confirm-sub">This action is permanent and cannot be undone.</div>
             </div>
-            @if($sale->fulfillment_method === 'customer_pickup')
             <div class="fq-confirm-field">
-                <label class="fq-confirm-label">Who is picking this up?</label>
+                <label class="fq-confirm-label">
+                    {{ $sale->fulfillment_method === 'transporter' ? 'Transporter rep. name' : 'Who is picking this up?' }}
+                </label>
                 <input type="text" class="fq-confirm-input" wire:model="recipientName"
-                       placeholder="Name of person collecting" wire:key="recipient-{{ $sale->id }}">
+                       placeholder="{{ $sale->fulfillment_method === 'transporter' ? 'Name of driver/agent collecting' : 'Name of person collecting' }}"
+                       wire:key="recipient-{{ $sale->id }}">
                 @error('recipientName') <span class="fq-confirm-error">{{ $message }}</span> @enderror
             </div>
             <div class="fq-confirm-field">
-                <label class="fq-confirm-label">Customer signature</label>
+                <label class="fq-confirm-label">Signature</label>
                 <div wire:ignore wire:key="sig-wrap-{{ $sale->id }}">
                     <canvas id="sig-{{ $sale->id }}" class="fq-sig-canvas"
                             data-sig-canvas width="400" height="140"></canvas>
@@ -91,7 +93,6 @@
                      render even though the canvas above is frozen from re-renders. --}}
                 @error('signatureData') <span class="fq-confirm-error">{{ $message }}</span> @enderror
             </div>
-            @endif
         </div>
         <div class="fq-confirm-btns">
             <button class="fq-btn-cancel" wire:click="cancelFulfillment">Cancel</button>

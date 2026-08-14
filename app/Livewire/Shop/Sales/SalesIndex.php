@@ -155,6 +155,10 @@ class SalesIndex extends Component
 
         $summaryCredit = (int) (clone $sumBase)->where('has_credit', true)->sum('credit_amount');
 
+        $summaryBoxes = (int) (clone $sumBase)
+            ->join('sale_items', 'sale_items.sale_id', '=', 'sales.id')
+            ->count('sale_items.id');
+
         // ── Expanded detail ─────────────────────────────────────────
         $expandedSale = $this->expandedId
             ? Sale::with(['items.product', 'items.box', 'payments', 'soldBy', 'customer'])->find($this->expandedId)
@@ -172,7 +176,7 @@ class SalesIndex extends Component
 
         return view('livewire.shop.sales.sales-index', compact(
             'sales', 'totalFiltered',
-            'summaryTotal', 'summaryCount', 'summaryAvg', 'summaryCash', 'summaryCredit',
+            'summaryTotal', 'summaryCount', 'summaryAvg', 'summaryCash', 'summaryCredit', 'summaryBoxes',
             'expandedSale', 'expandedGroupedItems', 'activePeriodLabel'
         ));
     }

@@ -58,6 +58,11 @@ class UnifiedPos extends Component
     public string $fulfillmentMethod       = 'transporter';
     public ?int $fulfillmentTransporterId  = null;
     public string $fulfillmentNotes        = '';
+    public bool $showNewTransporterForm    = false;
+    public string $newTransporterName      = '';
+    public string $newTransporterPhone     = '';
+    public string $newTransporterCompany   = '';
+    public string $newTransporterVehicle   = '';
 
     // ── Checkout modal ────────────────────────────────────────────────────────
     public bool $showCheckoutModal = false;
@@ -924,6 +929,44 @@ class UnifiedPos extends Component
         $this->newCustomerNotes    = '';
     }
 
+    // ── Transporter ──────────────────────────────────────────────────────────
+
+    public function showCreateTransporterForm(): void
+    {
+        $this->showNewTransporterForm = true;
+    }
+
+    public function cancelNewTransporter(): void
+    {
+        $this->showNewTransporterForm = false;
+        $this->newTransporterName     = '';
+        $this->newTransporterPhone    = '';
+        $this->newTransporterCompany  = '';
+        $this->newTransporterVehicle  = '';
+    }
+
+    public function saveNewTransporter(): void
+    {
+        $this->validate([
+            'newTransporterName'    => 'required|string|min:2|max:100',
+            'newTransporterPhone'   => 'nullable|string|max:20',
+            'newTransporterCompany' => 'nullable|string|max:100',
+            'newTransporterVehicle' => 'nullable|string|max:50',
+        ]);
+
+        $transporter = Transporter::create([
+            'name'           => $this->newTransporterName,
+            'phone'          => $this->newTransporterPhone ?: null,
+            'company_name'   => $this->newTransporterCompany ?: null,
+            'vehicle_number' => $this->newTransporterVehicle ?: null,
+            'is_active'      => true,
+        ]);
+
+        $this->fulfillmentTransporterId = $transporter->id;
+        $this->cancelNewTransporter();
+        $this->dispatch('notification', ['type' => 'success', 'message' => 'Transporter registered successfully']);
+    }
+
     // ── Payment panel ─────────────────────────────────────────────────────────
 
     public function updatedPayAmtCredit(): void
@@ -1032,6 +1075,7 @@ class UnifiedPos extends Component
         $this->fulfillmentMethod    = 'transporter';
         $this->fulfillmentTransporterId = null;
         $this->fulfillmentNotes     = '';
+        $this->showNewTransporterForm = false;
 
         $this->showCheckoutModal = true;
     }

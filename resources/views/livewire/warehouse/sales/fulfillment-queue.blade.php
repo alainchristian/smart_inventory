@@ -112,6 +112,23 @@
 }
 .fq-btn-yes:hover { opacity:.88 }
 
+/* Consent recap — recipient name + signature shown again when an
+   already-fulfilled sale is looked up */
+.fq-result-card { margin-bottom:10px }
+.fq-result-card .fq-result-fulfilled { margin-bottom:0; border-radius:10px 10px 0 0 }
+.fq-consent-block {
+    background:var(--green-dim);border-radius:0 0 10px 10px;
+    padding:12px 18px 14px;display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start;
+    border-top:1px solid rgba(0,0,0,.06);
+}
+.fq-consent-item { display:flex;flex-direction:column;gap:5px }
+.fq-consent-label {
+    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--green);
+}
+.fq-consent-name { font-size:13px;font-weight:600;color:var(--text) }
+.fq-consent-sig-img { max-width:180px;max-height:70px;border-radius:6px;background:#fff;border:1px solid var(--border) }
+
 /* Empty state */
 .fq-empty { padding:60px 24px;text-align:center }
 .fq-empty-icon { color:var(--border);margin:0 auto 14px;display:block }
@@ -303,12 +320,30 @@
         @if($scannedSale->fulfillment_status === 'pending')
             @include('livewire.warehouse.sales.partials.pending-row', ['sale' => $scannedSale])
         @elseif($scannedSale->fulfillment_status === 'fulfilled')
-            <div class="fq-result-info fq-result-fulfilled">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <span><span class="fq-result-ref">{{ $scannedSale->sale_number }}</span> — already dispatched
-                    to {{ $scannedSale->fulfillment_recipient_name ?? $scannedSale->fulfillmentTransporter?->name ?? 'customer' }}
-                    at {{ local_time($scannedSale->fulfillment_confirmed_at)?->format('d M, H:i') }}.</span>
-                <button class="fq-result-clear" wire:click="clearScan">Clear</button>
+            <div class="fq-result-card">
+                <div class="fq-result-info fq-result-fulfilled">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span><span class="fq-result-ref">{{ $scannedSale->sale_number }}</span> — already dispatched
+                        to {{ $scannedSale->fulfillment_recipient_name ?? $scannedSale->fulfillmentTransporter?->name ?? 'customer' }}
+                        at {{ local_time($scannedSale->fulfillment_confirmed_at)?->format('d M, H:i') }}.</span>
+                    <button class="fq-result-clear" wire:click="clearScan">Clear</button>
+                </div>
+                @if($scannedSale->fulfillment_recipient_name || $scannedSale->fulfillment_signature)
+                <div class="fq-consent-block">
+                    @if($scannedSale->fulfillment_recipient_name)
+                    <div class="fq-consent-item">
+                        <span class="fq-consent-label">Picked up by</span>
+                        <span class="fq-consent-name">{{ $scannedSale->fulfillment_recipient_name }}</span>
+                    </div>
+                    @endif
+                    @if($scannedSale->fulfillment_signature)
+                    <div class="fq-consent-item">
+                        <span class="fq-consent-label">Signature on file</span>
+                        <img src="{{ $scannedSale->fulfillment_signature }}" alt="Customer signature" class="fq-consent-sig-img">
+                    </div>
+                    @endif
+                </div>
+                @endif
             </div>
         @else
             <div class="fq-result-info fq-result-cancelled">
@@ -335,11 +370,29 @@
             @if($csale->fulfillment_status === 'pending')
                 @include('livewire.warehouse.sales.partials.pending-row', ['sale' => $csale])
             @elseif($csale->fulfillment_status === 'fulfilled')
-                <div class="fq-result-info fq-result-fulfilled">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span><span class="fq-result-ref">{{ $csale->sale_number }}</span> — already dispatched
-                        to {{ $csale->fulfillment_recipient_name ?? $csale->fulfillmentTransporter?->name ?? 'customer' }}
-                        at {{ local_time($csale->fulfillment_confirmed_at)?->format('d M, H:i') }}.</span>
+                <div class="fq-result-card">
+                    <div class="fq-result-info fq-result-fulfilled">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span><span class="fq-result-ref">{{ $csale->sale_number }}</span> — already dispatched
+                            to {{ $csale->fulfillment_recipient_name ?? $csale->fulfillmentTransporter?->name ?? 'customer' }}
+                            at {{ local_time($csale->fulfillment_confirmed_at)?->format('d M, H:i') }}.</span>
+                    </div>
+                    @if($csale->fulfillment_recipient_name || $csale->fulfillment_signature)
+                    <div class="fq-consent-block">
+                        @if($csale->fulfillment_recipient_name)
+                        <div class="fq-consent-item">
+                            <span class="fq-consent-label">Picked up by</span>
+                            <span class="fq-consent-name">{{ $csale->fulfillment_recipient_name }}</span>
+                        </div>
+                        @endif
+                        @if($csale->fulfillment_signature)
+                        <div class="fq-consent-item">
+                            <span class="fq-consent-label">Signature on file</span>
+                            <img src="{{ $csale->fulfillment_signature }}" alt="Customer signature" class="fq-consent-sig-img">
+                        </div>
+                        @endif
+                    </div>
+                    @endif
                 </div>
             @else
                 <div class="fq-result-info fq-result-cancelled">

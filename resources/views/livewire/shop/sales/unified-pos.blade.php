@@ -799,15 +799,43 @@
                         <button type="button" class="upos-fulfillment-btn {{ $fulfillmentMethod === 'pickup' ? 'active' : '' }}" wire:click="$set('fulfillmentMethod','pickup')">Customer Pickup</button>
                     </div>
                     @if($fulfillmentMethod === 'transporter')
-                    <div class="upos-field" style="margin-bottom:8px">
-                        <label class="upos-label">Select Transporter</label>
-                        <select class="upos-select" wire:model="fulfillmentTransporterId">
-                            <option value="">— Choose transporter —</option>
-                            @foreach($transporters as $t)
-                            <option value="{{ $t->id }}">{{ $t->name }}@if($t->company) ({{ $t->company }})@endif</option>
-                            @endforeach
-                        </select>
-                    </div>
+                        @if($showNewTransporterForm)
+                        <div class="upos-new-customer-form" style="margin-bottom:8px">
+                            <div class="upos-field">
+                                <label class="upos-label">Transporter Name</label>
+                                <input class="upos-input" type="text" wire:model="newTransporterName" placeholder="Full name">
+                            </div>
+                            <div class="upos-field">
+                                <label class="upos-label">Phone</label>
+                                <input class="upos-input" type="text" wire:model="newTransporterPhone" placeholder="07X XXX XXXX (optional)">
+                            </div>
+                            <div class="upos-field">
+                                <label class="upos-label">Company</label>
+                                <input class="upos-input" type="text" wire:model="newTransporterCompany" placeholder="Company name (optional)">
+                            </div>
+                            <div class="upos-field">
+                                <label class="upos-label">Vehicle Number</label>
+                                <input class="upos-input" type="text" wire:model="newTransporterVehicle" placeholder="Plate number (optional)">
+                            </div>
+                            <div style="display:flex;gap:8px">
+                                <button class="upos-btn-ghost" style="flex:1;padding:8px" wire:click="cancelNewTransporter">Cancel</button>
+                                <button class="upos-btn-primary" style="flex:1;padding:8px" wire:click="saveNewTransporter">Save</button>
+                            </div>
+                        </div>
+                        @else
+                        <div class="upos-field" style="margin-bottom:8px">
+                            <label class="upos-label">Select Transporter</label>
+                            <div style="display:flex;gap:8px">
+                                <select class="upos-select" wire:model="fulfillmentTransporterId" style="flex:1">
+                                    <option value="">— Choose transporter —</option>
+                                    @foreach($transporters as $t)
+                                    <option value="{{ $t->id }}">{{ $t->name }}@if($t->company_name) ({{ $t->company_name }})@endif</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="upos-btn-sm" wire:click="showCreateTransporterForm">+ New</button>
+                            </div>
+                        </div>
+                        @endif
                     @endif
                     <div class="upos-field">
                         <label class="upos-label">Dispatch Notes</label>

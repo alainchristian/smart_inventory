@@ -163,19 +163,15 @@ class FulfillmentQueue extends Component
             ->where('source_warehouse_id', $this->warehouseId)
             ->findOrFail($saleId);
 
-        $recipientName = null;
-        $signature     = null;
-        if ($sale->fulfillment_method === 'customer_pickup') {
-            $this->validate([
-                'recipientName' => 'required|string|max:255',
-                'signatureData' => 'required|string',
-            ], [
-                'recipientName.required' => 'Enter who is picking this up before confirming.',
-                'signatureData.required' => "Please capture the customer's signature before confirming.",
-            ]);
-            $recipientName = trim($this->recipientName);
-            $signature     = $this->signatureData;
-        }
+        $this->validate([
+            'recipientName' => 'required|string|max:255',
+            'signatureData' => 'required|string',
+        ], [
+            'recipientName.required' => 'Enter who is picking this up before confirming.',
+            'signatureData.required' => 'Please capture a signature before confirming.',
+        ]);
+        $recipientName = trim($this->recipientName);
+        $signature     = $this->signatureData;
 
         $sale->update([
             'fulfillment_status'         => 'fulfilled',
