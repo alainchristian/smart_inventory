@@ -135,6 +135,8 @@
 <div id="wdb-data"
     data-spark-inbound="{{ json_encode($sparkInbound) }}"
     data-spark-outbound="{{ json_encode($sparkOutbound) }}"
+    data-spark-net="{{ json_encode($sparkNetStock) }}"
+    data-spark-lowstock="{{ json_encode($sparkLowStock) }}"
     data-trend-labels="{{ json_encode($trendLabels) }}"
     data-trend-current="{{ json_encode($trendCurrent) }}"
     data-trend-prev="{{ json_encode($trendPrev) }}"
@@ -162,9 +164,9 @@
     <div class="db-period-controls">
         <div class="db-period-ctrl-seg db-period-ctrl-grow">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--text-dim)"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
-            <input type="date" wire:model="dateFrom" class="db-date-input">
+            <input type="date" wire:model.live="dateFrom" class="db-date-input">
             <span style="font-size:13px;color:var(--text-dim);flex-shrink:0;">→</span>
-            <input type="date" wire:model="dateTo" class="db-date-input">
+            <input type="date" wire:model.live="dateTo" class="db-date-input">
         </div>
         <div class="db-period-ctrl-seg">
             <span class="db-sync-dot green"></span>
@@ -276,6 +278,7 @@
                 @endif
                 <span class="db-kpi-vs">current stock levels</span>
             </div>
+            <div class="db-kpi-spark"><canvas id="wdb-spark-3" wire:ignore width="90" height="36"></canvas></div>
         </div>
     </div>
 
@@ -515,6 +518,8 @@ Alpine.data('wdbDashboard', () => ({
 
         var sparkIn   = JSON.parse(d.dataset.sparkInbound  || '[]');
         var sparkOut  = JSON.parse(d.dataset.sparkOutbound || '[]');
+        var sparkNet  = JSON.parse(d.dataset.sparkNet      || '[]');
+        var sparkLow  = JSON.parse(d.dataset.sparkLowstock || '[]');
         var tLabels   = JSON.parse(d.dataset.trendLabels   || '[]');
         var tCurrent  = JSON.parse(d.dataset.trendCurrent  || '[]');
         var tPrev     = JSON.parse(d.dataset.trendPrev     || '[]');
@@ -524,9 +529,10 @@ Alpine.data('wdbDashboard', () => ({
         var partial   = parseInt(d.dataset.partialBoxes || '0');
         var damaged   = parseInt(d.dataset.damagedBoxes || '0');
 
-        this._buildSpark('wdb-spark-0', sparkIn,  'rgb(59,107,212)');
+        this._buildSpark('wdb-spark-0', sparkNet, 'rgb(59,107,212)');
         this._buildSpark('wdb-spark-1', sparkIn,  'rgb(16,185,129)');
         this._buildSpark('wdb-spark-2', sparkOut, 'rgb(249,115,22)');
+        this._buildSpark('wdb-spark-3', sparkLow, 'rgb(217,119,6)');
         this._buildTrend(tLabels, tCurrent, tPrev);
         this._buildFlowDonut(full, partial, damaged);
         if (catLabels.length) this._buildCatDonut(catLabels, catValues);
@@ -537,11 +543,16 @@ Alpine.data('wdbDashboard', () => ({
         if (!el) return;
         var existing = Chart.getChart(el);
         if (existing) { existing.destroy(); }
+        var ctx = el.getContext('2d');
+        // Gradient area-fill under the line, matching the shop dashboard sparklines.
+        var grad = ctx.createLinearGradient(0, 0, 0, el.height || 36);
+        grad.addColorStop(0, color.replace('rgb(', 'rgba(').replace(')', ',.27)'));
+        grad.addColorStop(1, color.replace('rgb(', 'rgba(').replace(')', ',0)'));
         new Chart(el, {
             type: 'line',
             data: {
                 labels: data.map(function(_,i){ return i; }),
-                datasets: [{ data: data, borderColor: color, borderWidth: 1.8, pointRadius: 0, tension: 0.4, fill: false }]
+                datasets: [{ data: data, borderColor: color, backgroundColor: grad, borderWidth: 1.8, pointRadius: 0, tension: 0.4, fill: true }]
             },
             options: {
                 animation: false, responsive: false, maintainAspectRatio: false,

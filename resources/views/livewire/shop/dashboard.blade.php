@@ -242,9 +242,9 @@ main { background-color: var(--surface) !important; }
     <div class="db-period-controls">
         <div class="db-period-ctrl-seg db-period-ctrl-grow">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--text-dim)"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
-            <input type="date" wire:model="dateFrom" class="db-date-input">
+            <input type="date" wire:model.live="dateFrom" class="db-date-input">
             <span style="font-size:13px;color:var(--text-dim);flex-shrink:0;">→</span>
-            <input type="date" wire:model="dateTo" class="db-date-input">
+            <input type="date" wire:model.live="dateTo" class="db-date-input">
         </div>
         <div class="db-period-ctrl-seg">
             <span class="db-sync-dot {{ $lastSync->diffInMinutes(now()) < 5 ? 'green' : 'amber' }}"></span>
@@ -259,6 +259,7 @@ main { background-color: var(--surface) !important; }
      data-spark-sales='@json($sparklineSales)'
      data-spark-txns='@json($sparklineTxns)'
      data-spark-returns='@json($sparklineReturns)'
+     data-spark-stock='@json($sparklineStock)'
      data-trend-labels='@json($trendLabels)'
      data-trend-current='@json($trendCurrent)'
      data-trend-prev='@json($trendPrev)'
@@ -357,12 +358,9 @@ main { background-color: var(--surface) !important; }
                 <span class="db-change-text" style="color:var(--text-dim);">
                     {{ number_format($stockItems) }} items remaining
                 </span>
+                <span class="db-kpi-vs">boxes received this period</span>
             </div>
-            <div style="height:36px;display:flex;align-items:center;flex:1;margin-left:12px;">
-                <div style="height:4px;width:100%;border-radius:2px;background:var(--surface2);overflow:hidden;">
-                    <div style="height:100%;width:{{ min(100, ($stockBoxes > 0 ? 70 : 0)) }}%;background:var(--violet);border-radius:2px;"></div>
-                </div>
-            </div>
+            <div class="db-kpi-spark"><canvas id="sp-stock" width="90" height="36"></canvas></div>
         </div>
     </div>
 
@@ -706,6 +704,7 @@ Alpine.data('dbShopDashboard', () => ({
         var sparkSales   = JSON.parse(el.dataset.sparkSales   || '[]');
         var sparkTxns    = JSON.parse(el.dataset.sparkTxns    || '[]');
         var sparkReturns = JSON.parse(el.dataset.sparkReturns || '[]');
+        var sparkStock   = JSON.parse(el.dataset.sparkStock   || '[]');
         var trendLabels  = JSON.parse(el.dataset.trendLabels  || '[]');
         var trendCurrent = JSON.parse(el.dataset.trendCurrent || '[]');
         var trendPrev    = JSON.parse(el.dataset.trendPrev    || '[]');
@@ -718,6 +717,7 @@ Alpine.data('dbShopDashboard', () => ({
         this._sparkline('sp-sales',   sparkSales,   '#3b82f6');
         this._sparkline('sp-txns',    sparkTxns,    '#10b981');
         this._sparkline('sp-returns', sparkReturns, '#f97316');
+        this._sparkline('sp-stock',   sparkStock,   '#7c3aed');
         this._trendChart(trendLabels, trendCurrent, trendPrev);
         this._cfDonut(cfCash, cfMomo, cfBank, cfCard, cfCredit);
     },

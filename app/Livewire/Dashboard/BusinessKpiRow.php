@@ -207,12 +207,22 @@ class BusinessKpiRow extends Component
         $this->creditSparkline  = $this->generateCreditSparkline($start, $end);
     }
 
+    // Buckets are always confined to [$start, $end] — never extend outside the
+    // selected period, or the sparkline stops reflecting the period picker.
     private function sparkBuckets(Carbon $start, Carbon $end): array
     {
-        $days = max((int) $start->diffInDays($end), 1);
+        if ($start->isSameDay($end)) {
+            // Single-day period: 7 fixed hourly slots covering that day's full 24h
+            // (mirrors App\Livewire\Shop\Dashboard's single-day sparkline bucketing).
+            $day = $start->copy()->startOfDay();
+            $hourSlots = [[0, 3], [4, 7], [8, 10], [11, 13], [14, 16], [17, 19], [20, 23]];
+            return array_map(fn ($slot) => [
+                $day->copy()->setTime($slot[0], 0, 0),
+                $day->copy()->setTime($slot[1], 59, 59),
+            ], $hourSlots);
+        }
 
-        // Always show at least 7 points; expand the window for short periods
-        if ($days < 7)        { $start = $end->copy()->subDays(6)->startOfDay(); $days = 7; }
+        $days = max((int) $start->diffInDays($end), 1) + 1;
 
         if ($days <= 31)      $step = 1;
         elseif ($days <= 91)  $step = 7;
@@ -221,7 +231,9 @@ class BusinessKpiRow extends Component
         $buckets = [];
         $cur = $start->copy()->startOfDay();
         while ($cur->lte($end)) {
-            $buckets[] = [$cur->copy(), $cur->copy()->addDays($step - 1)->endOfDay()];
+            $bucketEnd = $cur->copy()->addDays($step - 1)->endOfDay();
+            if ($bucketEnd->gt($end)) $bucketEnd = $end->copy();
+            $buckets[] = [$cur->copy(), $bucketEnd];
             $cur->addDays($step);
         }
         return array_slice($buckets, 0, 14);
@@ -260,14 +272,44 @@ class BusinessKpiRow extends Component
         $buckets);
     }
 
+    // Receivables' KPI value is the current OUTSTANDING BALANCE (a stock), not
+    // repayments collected (a flow) — so the sparkline must trend the balance
+    // itself. Reconstruct it per bucket (credit issued − repaid − written off),
+    // running-sum it, then anchor the final point to the live outstanding total
+    // so the chart always agrees with the number shown above it.
     private function generateCreditSparkline(Carbon $start, Carbon $end): array
     {
         $buckets = $this->sparkBuckets($start, $end);
-        return array_map(fn($b) =>
-            (float) DB::table('credit_repayments')
-                ->whereBetween('repayment_date', [$b[0]->toDateString(), $b[1]->toDateString()])
-                ->sum('amount'),
-        $buckets);
+
+        $deltas = array_map(function ($b) {
+            $issued = (float) Sale::notVoided()
+                ->where('has_credit', true)
+                ->whereBetween('sale_date', $b)
+                ->sum('credit_amount');
+
+            $repaid = (float) DB::table('credit_repayments')
+                ->whereBetween('repayment_date', $b)
+                ->sum('amount');
+
+            $writtenOff = (float) DB::table('credit_writeoffs')
+                ->whereBetween('written_off_at', $b)
+                ->sum('amount');
+
+            return $issued - $repaid - $writtenOff;
+        }, $buckets);
+
+        $running = [];
+        $sum = 0.0;
+        foreach ($deltas as $d) {
+            $sum += $d;
+            $running[] = $sum;
+        }
+
+        $target       = (float) ($this->credit['outstanding'] ?? 0);
+        $lastRunning  = end($running) ?: 0;
+        $offset       = $target - $lastRunning;
+
+        return array_map(fn ($v) => max($v + $offset, 0), $running);
     }
 
     private function periodRange(): array

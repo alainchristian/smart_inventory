@@ -186,6 +186,7 @@ class Dashboard extends Component
             ->limit(5)
             ->get();
         $lowStockCount = $lowStockProducts->count();
+        $lowStockProductIds = $lowStockProducts->pluck('id')->all();
 
         // ── Transfer pipeline ────────────────────────────────────────────
         $pendingTransfers = Transfer::where('from_warehouse_id',$wId)
@@ -255,7 +256,23 @@ class Dashboard extends Component
 
         // ── Sparklines (7 data points) ────────────────────────────────────
         $diffDays = (int) $from->copy()->startOfDay()->diffInDays($to->copy()->startOfDay());
-        $sparkInbound = $sparkOutbound = [];
+        $sparkInbound = $sparkOutbound = $sparkLowStock = [];
+
+        // Boxes dispatched for the products that are CURRENTLY low stock — shows
+        // whether today's shortage is being driven by recent outbound activity.
+        // (There's no historical stock-level snapshot to reconstruct a true
+        // "low-stock count over time" trend from, so this tracks the real,
+        // causally-relevant signal instead: depletion activity on those products.)
+        $lowStockDispatchQuery = function (Carbon $s, Carbon $e) use ($wId, $lowStockProductIds) {
+            if (empty($lowStockProductIds)) return 0;
+            return (int) DB::table('transfer_items')
+                ->join('transfers', 'transfer_items.transfer_id', '=', 'transfers.id')
+                ->where('transfers.from_warehouse_id', $wId)
+                ->whereIn('transfer_items.product_id', $lowStockProductIds)
+                ->whereBetween('transfers.shipped_at', [$s, $e])
+                ->whereNull('transfers.deleted_at')
+                ->sum('transfer_items.quantity_requested');
+        };
 
         if ($diffDays === 0) {
             $hourSlots = [[0,3],[4,7],[8,10],[11,13],[14,16],[17,19],[20,23]];
@@ -264,23 +281,35 @@ class Dashboard extends Component
                 $e = $from->copy()->setHour($eH)->setMinute(59)->setSecond(59);
                 $sparkInbound[]  = (int) Box::where('location_type','warehouse')->where('location_id',$wId)->whereBetween('created_at',[$s,$e])->count();
                 $sparkOutbound[] = (int) Transfer::where('from_warehouse_id',$wId)->whereBetween('shipped_at',[$s,$e])->count();
+                $sparkLowStock[] = $lowStockDispatchQuery($s, $e);
             }
         } elseif ($diffDays < 7) {
             for ($i = 0; $i <= $diffDays; $i++) {
-                $d = $from->copy()->addDays($i)->format('Y-m-d');
-                $sparkInbound[]  = (int) Box::where('location_type','warehouse')->where('location_id',$wId)->whereDate('created_at',$d)->count();
-                $sparkOutbound[] = (int) Transfer::where('from_warehouse_id',$wId)->whereDate('shipped_at',$d)->count();
+                $d  = $from->copy()->addDays($i);
+                $ds = $d->format('Y-m-d');
+                $sparkInbound[]  = (int) Box::where('location_type','warehouse')->where('location_id',$wId)->whereDate('created_at',$ds)->count();
+                $sparkOutbound[] = (int) Transfer::where('from_warehouse_id',$wId)->whereDate('shipped_at',$ds)->count();
+                $sparkLowStock[] = $lowStockDispatchQuery($d->copy()->startOfDay(), $d->copy()->endOfDay());
             }
         } else {
             $step = max(1,(int) round($diffDays / 6));
             for ($i = 0; $i <= 6; $i++) {
                 $day = $from->copy()->addDays($i * $step);
                 if ($day->gt($to)) break;
-                $d = $day->format('Y-m-d');
-                $sparkInbound[]  = (int) Box::where('location_type','warehouse')->where('location_id',$wId)->whereDate('created_at',$d)->count();
-                $sparkOutbound[] = (int) Transfer::where('from_warehouse_id',$wId)->whereDate('shipped_at',$d)->count();
+                $ds = $day->format('Y-m-d');
+                $sparkInbound[]  = (int) Box::where('location_type','warehouse')->where('location_id',$wId)->whereDate('created_at',$ds)->count();
+                $sparkOutbound[] = (int) Transfer::where('from_warehouse_id',$wId)->whereDate('shipped_at',$ds)->count();
+                $sparkLowStock[] = $lowStockDispatchQuery($day->copy()->startOfDay(), $day->copy()->endOfDay());
             }
         }
+
+        // "Total Stock Boxes" card needs its own net (inbound − outbound) trend —
+        // it must not reuse $sparkInbound, which belongs to the Inbound Boxes card.
+        $sparkNetStock = array_map(
+            fn ($in, $out) => $in - $out,
+            $sparkInbound,
+            $sparkOutbound
+        );
 
         // ── Trend chart (This Period vs Previous Period) ──────────────────
         $trendLabels = $trendCurrent = $trendPrev = [];
@@ -340,7 +369,7 @@ class Dashboard extends Component
             'lowStockCount', 'lowStockProducts',
             'pendingTransfers', 'awaitingShipment', 'inTransit',
             'activityFeed', 'categoryBreakdown', 'categoryTotal', 'inventoryValue',
-            'sparkInbound', 'sparkOutbound',
+            'sparkInbound', 'sparkOutbound', 'sparkNetStock', 'sparkLowStock',
             'trendLabels', 'trendCurrent', 'trendPrev',
             'prevPeriodLabel', 'insights',
             'from', 'to'

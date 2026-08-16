@@ -202,20 +202,35 @@ class Dashboard extends Component
             ->orderByDesc('revenue')->limit(5)->get();
 
         // ── Sparklines + Trend ────────────────────────────────────────
-        $diffDays = (int) $from->copy()->startOfDay()->diffInDays($to->copy()->startOfDay());
+        // Use the LOCAL calendar-day span, not $from/$to — those are already
+        // UTC-shifted for querying, and in a non-UTC business timezone (e.g.
+        // Africa/Kigali, UTC+2) a single local day straddles two UTC calendar
+        // dates. Diffing the UTC-shifted boundaries made "Today"/"Yesterday"
+        // miscount as a 1-day span and fall into the multi-day branch below,
+        // which then only ever produced a single (wrongly-dated) data point.
+        $diffDays = (int) Carbon::parse($this->dateFrom)->diffInDays(Carbon::parse($this->dateTo));
         $isSingleDay = $diffDays === 0;
-        $sparklineSales = $sparklineTxns = $sparklineReturns = [];
+        $sparklineSales = $sparklineTxns = $sparklineReturns = $sparklineStock = [];
         $trendLabels = $trendCurrent = $trendPrev = [];
 
         if ($isSingleDay) {
+            // Local-timezone anchor for building hour-slot boundaries below —
+            // setHour() on $from (UTC) would silently apply to the wrong day.
+            $localDay = Carbon::parse($this->dateFrom, config('tenant.timezone'));
+
             // Sparklines: 7 buckets covering the full 24h (tiny canvas, buckets are fine)
             $hourSlots = [[0,3],[4,7],[8,10],[11,13],[14,16],[17,19],[20,23]];
             foreach ($hourSlots as [$startH, $endH]) {
-                $slotS = $from->copy()->setHour($startH)->setMinute(0)->setSecond(0);
-                $slotE = $from->copy()->setHour($endH)->setMinute(59)->setSecond(59);
+                $slotS = $localDay->copy()->setTime($startH, 0, 0)->utc();
+                $slotE = $localDay->copy()->setTime($endH, 59, 59)->utc();
                 $sparklineSales[]   = (float) Sale::notVoided()->where('shop_id',$shopId)->whereBetween('sale_date',[$slotS,$slotE])->sum('total');
                 $sparklineTxns[]    = (int)   Sale::notVoided()->where('shop_id',$shopId)->whereBetween('sale_date',[$slotS,$slotE])->count();
                 $sparklineReturns[] = (float) ReturnModel::where('shop_id',$shopId)->whereBetween('created_at',[$slotS,$slotE])->sum('refund_amount');
+                // Boxes received into this shop (Box::moveTo() logs a 'transfer' movement to this location)
+                $sparklineStock[]   = (int) DB::table('box_movements')
+                    ->where('movement_type', 'transfer')
+                    ->where('to_location_type', 'shop')->where('to_location_id', $shopId)
+                    ->whereBetween('moved_at', [$slotS, $slotE])->count();
             }
 
             // Trend chart: one data point per individual sale at its exact time
@@ -226,12 +241,12 @@ class Dashboard extends Component
                 ->get(['sale_date', 'total']);
 
             foreach ($daySales as $sale) {
-                $trendLabels[]  = $sale->sale_date->format('g:i A');
+                $trendLabels[]  = local_time($sale->sale_date)->format('g:i A');
                 $trendCurrent[] = (float) $sale->total;
             }
 
             if (empty($trendLabels)) {
-                $trendLabels  = [$from->format('M j')];
+                $trendLabels  = [$localDay->format('M j')];
                 $trendCurrent = [0];
             }
             $trendPrev = []; // No previous-period overlay for per-sale bar chart
@@ -260,6 +275,16 @@ class Dashboard extends Component
                 ->groupByRaw("DATE(created_at)")
                 ->get()->keyBy('d');
 
+            // Boxes received into this shop, per day (Box::moveTo() logs a 'transfer'
+            // movement to this location — the accurate "stock received" event).
+            $stockByDay = DB::table('box_movements')
+                ->where('movement_type', 'transfer')
+                ->where('to_location_type', 'shop')->where('to_location_id', $shopId)
+                ->whereBetween('moved_at', [$from, $to])
+                ->selectRaw("DATE(moved_at) as d, COUNT(*) as boxes")
+                ->groupByRaw("DATE(moved_at)")
+                ->get()->keyBy('d');
+
             // Sparklines: 7 equal-width buckets — sum all days in each bucket so
             // sparse data (few transactions spread across a month) still shows variation
             $totalDays  = $diffDays + 1;
@@ -269,16 +294,18 @@ class Dashboard extends Component
                 if ($bStart->gt($to)) break;
                 $bEnd = $from->copy()->addDays(($i + 1) * $bucketSize - 1);
                 if ($bEnd->gt($to)) $bEnd = $to->copy();
-                $rev = 0.0; $txns = 0; $rets = 0.0;
+                $rev = 0.0; $txns = 0; $rets = 0.0; $stk = 0;
                 for ($cursor = $bStart->copy(); $cursor->lte($bEnd); $cursor->addDay()) {
                     $dk    = $cursor->format('Y-m-d');
                     $rev  += (float) ($salesByDay[$dk]->revenue   ?? 0);
                     $txns += (int)   ($salesByDay[$dk]->txns      ?? 0);
                     $rets += (float) ($returnsByDay[$dk]->total    ?? 0);
+                    $stk  += (int)   ($stockByDay[$dk]->boxes      ?? 0);
                 }
                 $sparklineSales[]   = $rev;
                 $sparklineTxns[]    = $txns;
                 $sparklineReturns[] = $rets;
+                $sparklineStock[]   = $stk;
             }
 
             // Trend chart: every day when ≤ 60 days, weekly buckets for longer periods
@@ -358,7 +385,7 @@ class Dashboard extends Component
             'stockItems', 'stockBoxes',
             'lowStockProducts', 'shopLowStockThreshold', 'recentSales', 'recentReturns',
             'topProducts',
-            'sparklineSales', 'sparklineTxns', 'sparklineReturns',
+            'sparklineSales', 'sparklineTxns', 'sparklineReturns', 'sparklineStock',
             'isSingleDay', 'trendLabels', 'trendCurrent', 'trendPrev',
             'allowCard', 'allowBankTransfer',
             'cfCash', 'cfMomo', 'cfBank', 'cfCard', 'cfTotal',

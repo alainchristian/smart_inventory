@@ -8,14 +8,16 @@
     </script>
     @endpush
 
-    {{-- Page header + global period filter --}}
+    {{-- Page header --}}
     <div class="dashboard-page-header">
         <div>
             <h1>Owner Dashboard</h1>
             <p>Welcome back, {{ auth()->user()->name }}</p>
         </div>
-        <livewire:dashboard.time-filter />
     </div>
+
+    {{-- Global period filter — full-width surface card, matching shop/warehouse dashboards --}}
+    <livewire:dashboard.time-filter />
 
     {{-- ── Row 1: 5 KPI Cards ──────────────────────────────────────────── --}}
     <livewire:dashboard.business-kpi-row wire:poll.60s />

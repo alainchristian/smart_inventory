@@ -15,6 +15,13 @@ if (!function_exists('kpiSparkPts')) {
         return implode(' ', $pts);
     }
 }
+if (!function_exists('kpiSparkArea')) {
+    // Closes the line points into a filled polygon (line points + bottom-right,
+    // bottom-left corners) so the gradient area-fill matches the shop dashboard sparklines.
+    function kpiSparkArea(array $data, int $w = 80, int $h = 32): string {
+        return kpiSparkPts($data, $w, $h) . " {$w},{$h} 0,{$h}";
+    }
+}
 
 $spSales   = !empty($salesSparkline)   ? $salesSparkline   : array_fill(0, 7, 0);
 $spProfit  = !empty($profitSparkline)  ? $profitSparkline  : array_fill(0, 7, 0);
@@ -63,6 +70,13 @@ $periodLabel = match($period ?? 'today') {
         <div class="kpi5-period">{{ $periodLabel }}</div>
       </div>
       <svg viewBox="0 0 80 32" width="80" height="32" style="flex-shrink:0;overflow:visible;margin-bottom:2px">
+        <defs>
+          <linearGradient id="sparkGradSales" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3b6fd4" stop-opacity=".27"/>
+            <stop offset="100%" stop-color="#3b6fd4" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#sparkGradSales)" stroke="none" points="{{ kpiSparkArea($spSales) }}"/>
         <polyline fill="none" stroke="#3b6fd4" stroke-width="1.8"
                   stroke-linecap="round" stroke-linejoin="round"
                   points="{{ kpiSparkPts($spSales) }}"/>
@@ -90,6 +104,13 @@ $periodLabel = match($period ?? 'today') {
         <div class="kpi5-period">margin</div>
       </div>
       <svg viewBox="0 0 80 32" width="80" height="32" style="flex-shrink:0;overflow:visible;margin-bottom:2px">
+        <defs>
+          <linearGradient id="sparkGradProfit" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0e9e86" stop-opacity=".27"/>
+            <stop offset="100%" stop-color="#0e9e86" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#sparkGradProfit)" stroke="none" points="{{ kpiSparkArea($spProfit) }}"/>
         <polyline fill="none" stroke="#0e9e86" stroke-width="1.8"
                   stroke-linecap="round" stroke-linejoin="round"
                   points="{{ kpiSparkPts($spProfit) }}"/>
@@ -119,6 +140,13 @@ $periodLabel = match($period ?? 'today') {
         <div class="kpi5-period">{{ $periodLabel }}</div>
       </div>
       <svg viewBox="0 0 80 32" width="80" height="32" style="flex-shrink:0;overflow:visible;margin-bottom:2px">
+        <defs>
+          <linearGradient id="sparkGradExp" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f97316" stop-opacity=".27"/>
+            <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#sparkGradExp)" stroke="none" points="{{ kpiSparkArea($spExp) }}"/>
         <polyline fill="none" stroke="#f97316" stroke-width="1.8"
                   stroke-linecap="round" stroke-linejoin="round"
                   points="{{ kpiSparkPts($spExp) }}"/>
@@ -149,6 +177,13 @@ $periodLabel = match($period ?? 'today') {
         <div class="kpi5-period">{{ $periodLabel }}</div>
       </div>
       <svg viewBox="0 0 80 32" width="80" height="32" style="flex-shrink:0;overflow:visible;margin-bottom:2px">
+        <defs>
+          <linearGradient id="sparkGradNet" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="{{ $netColor }}" stop-opacity=".27"/>
+            <stop offset="100%" stop-color="{{ $netColor }}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#sparkGradNet)" stroke="none" points="{{ kpiSparkArea($spNet) }}"/>
         <polyline fill="none" stroke="{{ $netColor }}" stroke-width="1.8"
                   stroke-linecap="round" stroke-linejoin="round"
                   points="{{ kpiSparkPts($spNet) }}"/>
@@ -184,6 +219,13 @@ $periodLabel = match($period ?? 'today') {
         @endif
       </div>
       <svg viewBox="0 0 80 32" width="80" height="32" style="flex-shrink:0;overflow:visible;margin-bottom:2px">
+        <defs>
+          <linearGradient id="sparkGradCredit" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".27"/>
+            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#sparkGradCredit)" stroke="none" points="{{ kpiSparkArea($spCredit) }}"/>
         <polyline fill="none" stroke="#8b5cf6" stroke-width="1.8"
                   stroke-linecap="round" stroke-linejoin="round"
                   points="{{ kpiSparkPts($spCredit) }}"/>
