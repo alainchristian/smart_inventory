@@ -8,14 +8,6 @@
     </script>
     @endpush
 
-    {{-- Page header --}}
-    <div class="dashboard-page-header">
-        <div>
-            <h1>Owner Dashboard</h1>
-            <p>Welcome back, {{ auth()->user()->name }}</p>
-        </div>
-    </div>
-
     {{-- Global period filter — full-width surface card, matching shop/warehouse dashboards --}}
     <livewire:dashboard.time-filter />
 
