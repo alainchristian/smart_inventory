@@ -12,7 +12,7 @@
     <livewire:dashboard.time-filter />
 
     {{-- ── Row 1: 5 KPI Cards ──────────────────────────────────────────── --}}
-    <livewire:dashboard.business-kpi-row wire:poll.60s />
+    <livewire:dashboard.business-kpi-row wire:poll.25s />
 
     {{-- ── Row 2: Revenue Trend · Sales by Shop · Revenue by Category ──── --}}
     <div class="row-trend-shops">

@@ -93,6 +93,9 @@ class ActivityLog extends Model
             'box_damaged'            => 'Box Damaged',
             'box_adjustment'         => 'Stock Adjusted',
             'credit_writeoff'        => 'Credit Written Off',
+            'held_sale_approved'     => 'Price Override Approved',
+            'held_sale_rejected'     => 'Price Override Rejected',
+            'price_override_approved' => 'Price Override Approved',
             default                  => ucwords(str_replace('_', ' ', $this->action)),
         };
     }
@@ -102,6 +105,7 @@ class ActivityLog extends Model
         return match($this->entity_type) {
             'Transfer'     => 'transfer',
             'Sale'         => 'sale',
+            'HeldSale'     => 'tag',
             'DailySession' => 'session',
             'Return'       => 'return',
             'Expense'      => 'expense',
@@ -113,8 +117,8 @@ class ActivityLog extends Model
     public function colorKey(): string
     {
         return match($this->action) {
-            'transfer_rejected', 'sale_voided', 'transfer_discrepancy', 'box_damaged' => 'red',
-            'transfer_approved', 'transfer_received', 'daily_session_closed'           => 'green',
+            'transfer_rejected', 'sale_voided', 'transfer_discrepancy', 'box_damaged', 'held_sale_rejected' => 'red',
+            'transfer_approved', 'transfer_received', 'daily_session_closed', 'held_sale_approved', 'price_override_approved' => 'green',
             'transfer_requested', 'return', 'price_modified'                           => 'amber',
             default                                                                     => 'accent',
         };
@@ -133,6 +137,15 @@ class ActivityLog extends Model
                 if ($viewer->isShopManager()) {
                     return route('shop.transfers.show', $this->entity_id);
                 }
+            } catch (\Exception) {}
+        }
+
+        if ($this->entity_type === 'HeldSale' && $this->entity_id) {
+            try {
+                if ($viewer->isShopManager()) {
+                    return route('shop.pos');
+                }
+                return route('owner.reports.sales') . '?activeTab=audit';
             } catch (\Exception) {}
         }
 

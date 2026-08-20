@@ -11,7 +11,6 @@ use App\Models\HeldSale;
 use App\Models\ReturnModel;
 use App\Models\Transfer;
 use App\Services\SettingsService;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class OwnerActions extends Component
@@ -266,39 +265,11 @@ class OwnerActions extends Component
             ];
         }
 
-        // ── 6. Pending price override approvals (was 5) ──────────────────────
-        $pendingOverrides = DB::table('sales')
-            ->join('users as seller', 'sales.sold_by', '=', 'seller.id')
-            ->join('shops', 'sales.shop_id', '=', 'shops.id')
-            ->whereNull('sales.voided_at')
-            ->whereNull('sales.deleted_at')
-            ->where('sales.has_price_override', true)
-            ->whereNull('sales.price_override_approved_at')
-            ->whereRaw("seller.role::text != 'owner'")
-            ->orderByDesc('sales.sale_date')
-            ->limit(5)
-            ->select('sales.id', 'sales.sale_number', 'sales.total', 'sales.sale_date', 'shops.name as shop_name', 'seller.name as seller_name')
-            ->get();
-
-        if ($pendingOverrides->isNotEmpty()) {
-            $sections[] = [
-                'type'  => 'price_overrides',
-                'label' => 'Price Override Approvals',
-                'icon'  => 'tag',
-                'color' => 'var(--amber)',
-                'bg'    => 'var(--amber-dim)',
-                'count' => $pendingOverrides->count(),
-                'items' => $pendingOverrides->map(fn($s) => [
-                    'id'          => $s->id,
-                    'title'       => $s->sale_number,
-                    'subtitle'    => $s->shop_name . ' · sold by ' . $s->seller_name,
-                    'value'       => number_format($s->total) . ' RWF',
-                    'value_color' => 'var(--amber)',
-                    'age'         => \Carbon\Carbon::parse($s->sale_date)->diffForHumans(),
-                    'link'        => route('owner.reports.sales') . '?activeTab=audit',
-                ])->toArray(),
-            ];
-        }
+        // Note: completed sales with has_price_override are NOT listed as an
+        // action here — per the price_override_threshold business setting,
+        // a sale can only complete directly (bypassing HeldSale) when it's
+        // within policy, so it needs no owner action. Only pending HeldSale
+        // rows (below) ever exceeded the threshold and need a real decision.
 
         // ── 6. Held sales needing price approval ──────────────────────────────
         $pendingHeld = HeldSale::where('needs_price_approval', true)
@@ -325,8 +296,7 @@ class OwnerActions extends Component
                     'value'       => number_format($h->cart_total) . ' RWF',
                     'value_color' => 'var(--amber)',
                     'age'         => $h->created_at->diffForHumans(),
-                    'link'        => null,
-                    'cart_data'   => $h->cart_data,
+                    'link'        => route('owner.reports.sales') . '?activeTab=audit',
                 ])->toArray(),
             ];
         }
@@ -396,76 +366,9 @@ class OwnerActions extends Component
             'message' => 'Session for ' . ($session->shop->name ?? 'shop') . ' has been closed.']);
     }
 
-    public function approveHeldSale(int $id): void
-    {
-        $user = auth()->user();
-        if (! $user->isOwner()) return;
-
-        $held = HeldSale::find($id);
-        if (! $held || $held->override_approved_at) return;
-
-        $held->update([
-            'override_approved_at' => now(),
-            'override_approved_by' => $user->id,
-        ]);
-
-        // Resolve the associated alert
-        Alert::where('entity_type', 'HeldSale')
-            ->where('entity_id', $held->id)
-            ->where('is_resolved', false)
-            ->each(fn($a) => $a->markAsResolved($user->id));
-
-        ActivityLog::create([
-            'user_id'           => $user->id,
-            'user_name'         => $user->name,
-            'action'            => 'held_sale_approved',
-            'entity_type'       => 'HeldSale',
-            'entity_id'         => $held->id,
-            'entity_identifier' => $held->hold_reference,
-            'details'           => ['seller' => $held->seller->name, 'cart_total' => $held->cart_total],
-            'ip_address'        => request()->ip(),
-        ]);
-
-        $this->loadActions();
-        $this->dispatch('notification', ['type' => 'success',
-            'message' => "{$held->hold_reference} approved."]);
-    }
-
-    public function rejectHeldSale(int $id, string $reason = ''): void
-    {
-        $user = auth()->user();
-        if (! $user->isOwner()) return;
-
-        $held = HeldSale::find($id);
-        if (! $held || $held->override_rejected_at) return;
-
-        $held->update([
-            'override_rejected_at' => now(),
-            'override_rejected_by' => $user->id,
-            'rejected_reason'      => $reason ?: 'Rejected by owner',
-        ]);
-
-        // Resolve the associated alert
-        Alert::where('entity_type', 'HeldSale')
-            ->where('entity_id', $held->id)
-            ->where('is_resolved', false)
-            ->each(fn($a) => $a->markAsResolved($user->id));
-
-        ActivityLog::create([
-            'user_id'           => $user->id,
-            'user_name'         => $user->name,
-            'action'            => 'held_sale_rejected',
-            'entity_type'       => 'HeldSale',
-            'entity_id'         => $held->id,
-            'entity_identifier' => $held->hold_reference,
-            'details'           => ['seller' => $held->seller->name, 'reason' => $reason],
-            'ip_address'        => request()->ip(),
-        ]);
-
-        $this->loadActions();
-        $this->dispatch('notification', ['type' => 'warning',
-            'message' => "{$held->hold_reference} rejected."]);
-    }
+    // Held-sale price-override approve/reject now lives in the Price Audit
+    // module (App\Livewire\Owner\Reports\SalesAnalytics) — this widget only
+    // links there (see the 'held_approvals' section above).
 
     public function render()
     {

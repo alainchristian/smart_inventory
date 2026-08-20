@@ -3,9 +3,13 @@
 namespace App\Livewire\Owner\Reports;
 
 use App\Models\ActivityLog;
+use App\Models\Alert;
+use App\Models\HeldSale;
 use App\Models\Sale;
 use App\Models\Shop;
 use App\Services\Analytics\SalesAnalyticsService;
+use App\Services\Sales\SaleService;
+use App\Services\SettingsService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -17,6 +21,11 @@ class SalesAnalytics extends Component
     public string $dateTo      = '';
     public string $locationFilter = 'all';
     public string $activeTab   = 'overview';   // overview | ledger | audit | sellers | payments | credit
+
+    // ─── Reject held-sale override modal ─────────────────────────────────────
+    public bool $showRejectHeldModal = false;
+    public ?int $rejectHeldId        = null;
+    public string $rejectHeldReason  = '';
 
     protected $queryString = [
         'dateFrom'       => ['except' => ''],
@@ -133,31 +142,119 @@ class SalesAnalytics extends Component
             return; // already approved or not found
         }
 
-        $sale->update([
-            'price_override_approved_at' => now(),
-            'price_override_approved_by' => $user->id,
-        ]);
+        app(SaleService::class)->approvePriceOverride($sale, '');
 
-        ActivityLog::create([
-            'user_id'           => $user->id,
-            'user_name'         => $user->name,
-            'action'            => 'price_override_approved',
-            'entity_type'       => 'Sale',
-            'entity_id'         => $sale->id,
-            'entity_identifier' => $sale->sale_number,
-            'details'           => [
-                'approved_at' => now()->toDateTimeString(),
-                'seller'      => $sale->soldBy?->name,
-            ],
-            'ip_address'        => request()->ip(),
-        ]);
-
-        // Bust the cached audit log for the current filter window
-        Cache::forget("analytics_price_audit_{$this->dateFrom}_{$this->dateTo}_{$this->locationFilter}");
+        Cache::flush();
 
         $this->dispatch('notification', [
             'type'    => 'success',
             'message' => "Price override on {$sale->sale_number} approved.",
+        ]);
+    }
+
+    public function approveHeldSale(int $id): void
+    {
+        $user = auth()->user();
+        if (! $user->isOwner() && ! $user->isAdmin()) {
+            return;
+        }
+
+        $held = HeldSale::find($id);
+        if (! $held || $held->override_approved_at) {
+            return;
+        }
+
+        $held->update([
+            'override_approved_at' => now(),
+            'override_approved_by' => $user->id,
+        ]);
+
+        Alert::where('entity_type', 'HeldSale')
+            ->where('entity_id', $held->id)
+            ->where('is_resolved', false)
+            ->each(fn ($a) => $a->markAsResolved($user->id));
+
+        ActivityLog::create([
+            'user_id'           => $user->id,
+            'user_name'         => $user->name,
+            'action'            => 'held_sale_approved',
+            'entity_type'       => 'HeldSale',
+            'entity_id'         => $held->id,
+            'entity_identifier' => $held->hold_reference,
+            'details'           => ['seller' => $held->seller->name, 'cart_total' => $held->cart_total],
+            'ip_address'        => request()->ip(),
+        ]);
+
+        Cache::flush();
+
+        $this->dispatch('notification', [
+            'type'    => 'success',
+            'message' => "{$held->hold_reference} approved.",
+        ]);
+    }
+
+    public function openRejectHeldModal(int $id): void
+    {
+        $this->rejectHeldId       = $id;
+        $this->rejectHeldReason   = '';
+        $this->showRejectHeldModal = true;
+    }
+
+    public function closeRejectHeldModal(): void
+    {
+        $this->showRejectHeldModal = false;
+        $this->rejectHeldId        = null;
+        $this->rejectHeldReason    = '';
+    }
+
+    public function rejectHeldSale(): void
+    {
+        $user = auth()->user();
+        if (! $user->isOwner() && ! $user->isAdmin()) {
+            return;
+        }
+
+        if (empty(trim($this->rejectHeldReason))) {
+            $this->addError('rejectHeldReason', 'Please provide a reason for rejection.');
+            return;
+        }
+
+        $held = HeldSale::find($this->rejectHeldId);
+        if (! $held || $held->override_approved_at || $held->override_rejected_at) {
+            $this->closeRejectHeldModal();
+            return;
+        }
+
+        $held->update([
+            'override_rejected_at' => now(),
+            'override_rejected_by' => $user->id,
+            'rejected_reason'      => $this->rejectHeldReason,
+        ]);
+
+        Alert::where('entity_type', 'HeldSale')
+            ->where('entity_id', $held->id)
+            ->where('is_resolved', false)
+            ->each(fn ($a) => $a->markAsResolved($user->id));
+
+        ActivityLog::create([
+            'user_id'           => $user->id,
+            'user_name'         => $user->name,
+            'action'            => 'held_sale_rejected',
+            'entity_type'       => 'HeldSale',
+            'entity_id'         => $held->id,
+            'entity_identifier' => $held->hold_reference,
+            'details'           => ['seller' => $held->seller->name, 'reason' => $this->rejectHeldReason],
+            'ip_address'        => request()->ip(),
+        ]);
+
+        Cache::flush();
+
+        $reference = $held->hold_reference;
+        $this->closeRejectHeldModal();
+
+        $this->dispatch('notification', [
+            'type'    => 'success',
+            'message' => "{$reference} rejected.",
         ]);
     }
 
@@ -307,6 +404,26 @@ class SalesAnalytics extends Component
             ->getSellerPerformance($this->dateFrom, $this->dateTo, $this->locationFilter);
     }
 
+    /**
+     * Seller performance grouped by shop (shop subtotal + its sellers,
+     * both ranked by revenue) — sellerPerformance stays flat for CSV export.
+     */
+    public function getSellersByShopProperty(): array
+    {
+        return collect($this->sellerPerformance)
+            ->groupBy('shop_name')
+            ->map(fn ($sellers, $shopName) => [
+                'shop_name'    => $shopName,
+                'revenue'      => $sellers->sum('revenue'),
+                'transactions' => $sellers->sum('transactions'),
+                'seller_count' => $sellers->count(),
+                'sellers'      => $sellers->values()->all(),
+            ])
+            ->sortByDesc('revenue')
+            ->values()
+            ->all();
+    }
+
     public function getCustomerRepeatAnalysisProperty(): array
     {
         return app(SalesAnalyticsService::class)
@@ -318,6 +435,40 @@ class SalesAnalytics extends Component
     {
         return app(SalesAnalyticsService::class)
             ->getPriceAuditLog($this->dateFrom, $this->dateTo, $this->locationFilter);
+    }
+
+    /**
+     * Business-setting threshold (%) — overrides at or below this need no
+     * owner action; only overrides above it are real pending approvals.
+     */
+    public function getPriceOverrideThresholdProperty(): int
+    {
+        return app(SettingsService::class)->priceOverrideThreshold();
+    }
+
+    /**
+     * Overrides that genuinely still need an owner decision — same rule
+     * the Audit tab uses per row: owner self-overrides, already-approved/
+     * rejected rows, and completed sales within the policy threshold are
+     * all excluded. Drives the Overview tab's "needs approval" banner —
+     * it should only show while this is non-empty.
+     */
+    public function getPendingPriceApprovalsProperty(): array
+    {
+        $threshold = $this->priceOverrideThreshold;
+
+        $pending = collect($this->priceAuditLog)->filter(function (array $e) use ($threshold) {
+            if (($e['seller_role'] ?? '') === 'owner') return false;
+            if ($e['source'] === 'held' && $e['is_rejected']) return false;
+            if ($e['is_approved']) return false;
+            if ($e['source'] === 'sale' && $e['discount_pct'] <= $threshold) return false;
+            return true;
+        });
+
+        return [
+            'count'          => $pending->count(),
+            'total_discount' => (int) $pending->sum('total_discount'),
+        ];
     }
 
     // ─── Render ───────────────────────────────────────────────────────────────

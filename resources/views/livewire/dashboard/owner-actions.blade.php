@@ -1,4 +1,4 @@
-<div wire:poll.30000ms="loadActions"
+<div wire:poll.20s="loadActions"
      style="background:var(--surface);border:1px solid var(--border);
             border-radius:var(--r);overflow:hidden">
 
@@ -143,76 +143,6 @@
             </div>
         </div>
 
-        @elseif($section['type'] === 'held_approvals')
-        {{-- Inline approve/reject card for held sales --}}
-        <div style="padding:12px 18px;border-bottom:1px solid var(--border)">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
-                <div style="min-width:0;flex:1">
-                    <div style="font-size:13px;font-weight:700;color:var(--text);
-                                font-family:var(--mono)">
-                        {{ $item['title'] }}
-                    </div>
-                    <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
-                        {{ $item['subtitle'] }}
-                    </div>
-                </div>
-                <div style="text-align:right;flex-shrink:0">
-                    <div style="font-size:12px;font-weight:700;font-family:var(--mono);
-                                color:{{ $item['value_color'] }}">
-                        {{ $item['value'] }}
-                    </div>
-                    <div style="font-size:10px;color:var(--text-dim);margin-top:2px">
-                        {{ $item['age'] }}
-                    </div>
-                </div>
-            </div>
-            {{-- Cart preview --}}
-            @if(!empty($item['cart_data']))
-            <div style="background:var(--surface2);border-radius:6px;padding:7px 10px;
-                        margin-bottom:8px;font-size:11px;color:var(--text-sub)">
-                @foreach(array_slice($item['cart_data'], 0, 3) as $line)
-                <div style="display:flex;justify-content:space-between;padding:2px 0">
-                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">
-                        {{ $line['product_name'] ?? '—' }}
-                    </span>
-                    <span style="flex-shrink:0;margin-left:8px;font-family:var(--mono);
-                                 {{ !empty($line['price_modified']) ? 'color:var(--amber)' : '' }}">
-                        @if(!empty($line['price_modified']))
-                            <span style="text-decoration:line-through;opacity:.6">
-                                {{ number_format($line['original_price'] ?? 0) }}
-                            </span>
-                            → {{ number_format($line['price']) }} RWF
-                        @else
-                            {{ number_format($line['price']) }} RWF
-                        @endif
-                    </span>
-                </div>
-                @endforeach
-                @if(count($item['cart_data']) > 3)
-                <div style="color:var(--text-dim);padding-top:2px">
-                    + {{ count($item['cart_data']) - 3 }} more item(s)
-                </div>
-                @endif
-            </div>
-            @endif
-            {{-- Approve / Reject buttons --}}
-            <div style="display:flex;gap:8px">
-                <button wire:click="approveHeldSale({{ $item['id'] }})"
-                        wire:loading.attr="disabled"
-                        style="flex:1;padding:6px 0;border-radius:7px;border:none;cursor:pointer;
-                               background:var(--green);color:#fff;font-size:12px;font-weight:700">
-                    Approve
-                </button>
-                <button wire:click="rejectHeldSale({{ $item['id'] }})"
-                        wire:confirm="Reject {{ $item['title'] }}? The seller will be notified."
-                        style="padding:6px 13px;border-radius:7px;cursor:pointer;
-                               border:1px solid var(--red);background:var(--red-dim);
-                               color:var(--red);font-size:12px;font-weight:700">
-                    Reject
-                </button>
-            </div>
-        </div>
-
         @else
         {{-- Standard link item --}}
         <a href="{{ $item['link'] }}"
@@ -245,8 +175,8 @@
 
         @endforeach
 
-        {{-- View all link (not for inline-action sections) --}}
-        @if($section['count'] >= 5 && $section['type'] !== 'held_approvals')
+        {{-- View all link --}}
+        @if($section['count'] >= 5)
         <a href="{{ $section['items'][0]['link'] }}"
            style="display:block;padding:8px 18px;font-size:12px;font-weight:600;
                   color:{{ $section['color'] }};text-decoration:none;

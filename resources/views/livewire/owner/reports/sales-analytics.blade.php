@@ -3,7 +3,7 @@
     │  Prefix: sa-  |  Tabs: Overview · Ledger · Audit · Sellers · Payments │
     │  Design system: box-shadow:var(--shadow-card), CSS variables only      │
     └─────────────────────────────────────────────────────────────────────────┘ --}}
-<div wire:poll.60s>
+<div wire:poll.20s>
 <style>
 /* ── Prefix: sa- (sales-analytics) ──────────────────────────────── */
 
@@ -73,11 +73,13 @@
 .sa-growth.down { background:var(--red-dim);color:var(--red) }
 .sa-growth.neutral { background:var(--surface2);color:var(--text-dim) }
 .sa-kpi-divider { height:1px;background:var(--border) }
-.sa-kpi-footer  { display:grid;grid-template-columns:repeat(3,1fr);gap:0 }
-.sa-kpi-stat    { text-align:center;padding:4px 0;min-width:0 }
-.sa-kpi-stat-v  { font-size:12px;font-weight:700;font-family:var(--mono);display:block;
-                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100% }
-.sa-kpi-stat-l  { font-size:10px;color:var(--text-dim);margin-top:1px;display:block }
+.sa-kpi-footer  { display:flex;flex-direction:column;gap:0 }
+.sa-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
+                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
+.sa-kpi-stat:last-child { border-bottom:none }
+.sa-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px;
+                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.sa-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
 .sa-kpi-bar     { height:3px;border-radius:3px;background:var(--surface2) }
 
 /* ── Generic card ────────────────────────────────────────────────── */
@@ -106,7 +108,7 @@
                border-radius:var(--r);overflow:hidden;margin-bottom:20px }
 .sa-tbl-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch }
 .sa-tbl      { width:100%;border-collapse:collapse;font-size:13px }
-.sa-tbl thead tr { background:var(--bg);border-bottom:1px solid var(--border) }
+.sa-tbl thead tr { border-bottom:1px solid var(--border) }
 .sa-tbl thead th { padding:10px 14px;text-align:left;font-size:11px;font-weight:700;
                    letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);
                    white-space:nowrap }
@@ -114,7 +116,7 @@
 .sa-tbl tbody tr:last-child { border-bottom:none }
 .sa-tbl tbody tr:hover { background:var(--surface2) }
 .sa-tbl td { padding:11px 14px;vertical-align:middle }
-.sa-tbl tfoot tr { background:var(--bg);border-top:2px solid var(--border) }
+.sa-tbl tfoot tr { border-top:2px solid var(--border) }
 .sa-tbl tfoot td { padding:10px 14px;font-weight:700 }
 
 /* ── Alert strip (price overrides) ──────────────────────────────── */
@@ -313,7 +315,7 @@
         </div>
         <div class="sa-ctrl-seg" style="gap:6px">
             <span style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></span>
-            <span style="font-size:12px;color:var(--text-dim)">Live · 60s</span>
+            <span style="font-size:12px;color:var(--text-dim)">Live · 20s</span>
         </div>
     </div>
 </div>
@@ -386,7 +388,7 @@
                 <span class="sa-kpi-stat-v" style="color:var(--text)">{{ number_format($rev['avg_transaction_value']) }}</span>
                 <span class="sa-kpi-stat-l">Avg Order</span>
             </div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="sa-kpi-stat">
                 <span class="sa-kpi-stat-v" style="color:{{ $rev['total_discount'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">{{ number_format($rev['total_discount']) }}</span>
                 <span class="sa-kpi-stat-l">Discounts</span>
             </div>
@@ -426,7 +428,7 @@
                 <span class="sa-kpi-stat-v" style="color:{{ $mp >= 30 ? 'var(--green)' : ($mp >= 15 ? 'var(--amber)' : 'var(--red)') }}">{{ $mp }}%</span>
                 <span class="sa-kpi-stat-l">Margin</span>
             </div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="sa-kpi-stat">
                 <span class="sa-kpi-stat-v" style="color:var(--text-dim)">{{ number_format($gp['total_cost']) }}</span>
                 <span class="sa-kpi-stat-l">COGS</span>
             </div>
@@ -464,7 +466,7 @@
                 <span class="sa-kpi-stat-v" style="color:var(--text-sub)">{{ $ov['override_sales_count'] }}</span>
                 <span class="sa-kpi-stat-l">Overrides</span>
             </div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="sa-kpi-stat">
                 <span class="sa-kpi-stat-v" style="color:var(--text-sub)">{{ $vo['voided_count'] }}</span>
                 <span class="sa-kpi-stat-l">Voided</span>
             </div>
@@ -497,7 +499,7 @@
                 <span class="sa-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($ret['returned_revenue']) }}</span>
                 <span class="sa-kpi-stat-l">Refunded</span>
             </div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="sa-kpi-stat">
                 <span class="sa-kpi-stat-v" style="color:var(--text-dim)">{{ $ret['exchange_count'] }}</span>
                 <span class="sa-kpi-stat-l">Exchanges</span>
             </div>
@@ -545,7 +547,11 @@
 @endif
 
 {{-- ── Price Override Alert ──────────────────────────────────────────────── --}}
-@if($ov['override_sales_count'] > 0)
+{{-- Only shown while something genuinely needs an owner decision — resolves
+     (approve/reject) or was never actionable (within policy threshold,
+     owner self-override) both make this disappear, per business setting --}}
+@php $pendingOverrides = $this->pendingPriceApprovals @endphp
+@if($pendingOverrides['count'] > 0)
 <div class="sa-alert-strip">
     <div style="display:flex;align-items:center;gap:12px;min-width:0">
         <div style="width:32px;height:32px;border-radius:8px;background:var(--amber);display:grid;place-items:center;flex-shrink:0;color:#fff">
@@ -555,16 +561,15 @@
             </svg>
         </div>
         <div>
-            <div style="font-size:12px;font-weight:700;color:var(--text)">Price Overrides Detected</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text)">Price Overrides Awaiting Your Approval</div>
             <div style="font-size:11px;color:var(--text-sub);margin-top:2px;font-family:var(--mono)">
-                <span style="color:var(--amber);font-weight:700">{{ $ov['override_sales_count'] }}</span> sales ·
-                <span style="color:var(--amber);font-weight:700">{{ $ov['override_items_count'] }}</span> items ·
-                <span style="color:var(--red);font-weight:700">{{ number_format($ov['total_discount_given']) }} RWF</span> discounted ·
-                {{ $ov['override_rate'] }}% override rate
+                <span style="color:var(--amber);font-weight:700">{{ $pendingOverrides['count'] }}</span>
+                {{ $pendingOverrides['count'] === 1 ? 'override' : 'overrides' }} ·
+                <span style="color:var(--red);font-weight:700">{{ number_format($pendingOverrides['total_discount']) }} RWF</span> discounted · exceeds policy threshold
             </div>
         </div>
     </div>
-    <button type="button" wire:click="setTab('audit')" class="sa-alert-btn">View Audit Trail →</button>
+    <button type="button" wire:click="setTab('audit')" class="sa-alert-btn">Review &amp; Approve →</button>
 </div>
 @endif
 
@@ -938,7 +943,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($gp['total_cost']) }}</span><span class="sa-kpi-stat-l">Cost</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ number_format($iss['items_sold']) }}</span><span class="sa-kpi-stat-l">Items</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($iss['items_sold']) }}</span><span class="sa-kpi-stat-l">Items</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $rev['transactions_count'] }}</span><span class="sa-kpi-stat-l">Txns</span></div>
         </div>
     </div>
@@ -959,7 +964,7 @@
         </div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $gp['margin_pct'] }}%</span><span class="sa-kpi-stat-l">Margin</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ number_format($gp['total_cost']) }}</span><span class="sa-kpi-stat-l">COGS</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($gp['total_cost']) }}</span><span class="sa-kpi-stat-l">COGS</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($iss['items_sold']) }}</span><span class="sa-kpi-stat-l">Units</span></div>
         </div>
     </div>
@@ -978,7 +983,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $rev['transactions_count'] }}</span><span class="sa-kpi-stat-l">Txns</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $iss['items_sold'] > 0 && $rev['transactions_count'] > 0 ? round($iss['items_sold'] / $rev['transactions_count'], 1) : '—' }}</span><span class="sa-kpi-stat-l">Per Txn</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $iss['items_sold'] > 0 && $rev['transactions_count'] > 0 ? round($iss['items_sold'] / $rev['transactions_count'], 1) : '—' }}</span><span class="sa-kpi-stat-l">Per Txn</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($rev['avg_transaction_value']) }}</span><span class="sa-kpi-stat-l">Avg Order</span></div>
         </div>
     </div>
@@ -997,7 +1002,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="sa-kpi-stat-l">Total Given</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ number_format($totalCreditRepaid) }}</span><span class="sa-kpi-stat-l">Repaid</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ number_format($totalCreditRepaid) }}</span><span class="sa-kpi-stat-l">Repaid</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $repaymentRate }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
         </div>
     </div>
@@ -1206,6 +1211,7 @@
     $auditLog  = $this->priceAuditLog;
     $overStat  = $this->priceOverrideStats;
     $totalDisc = array_sum(array_column($auditLog, 'total_discount'));
+    $overrideThreshold = $this->priceOverrideThreshold;
 @endphp
 
 @php $avgDiscount = $overStat['override_items_count'] > 0 ? round($overStat['total_discount_given'] / $overStat['override_items_count']) : 0 @endphp
@@ -1224,7 +1230,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $overStat['override_rate'] }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_rate'] }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDiscount) }}</span><span class="sa-kpi-stat-l">Avg Disc</span></div>
         </div>
     </div>
@@ -1243,7 +1249,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_sales_count'] }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $overStat['override_rate'] }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_rate'] }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDiscount) }}</span><span class="sa-kpi-stat-l">Avg/Item</span></div>
         </div>
     </div>
@@ -1262,7 +1268,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDiscount) }}</span><span class="sa-kpi-stat-l">Avg/Item</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_sales_count'] }}</span><span class="sa-kpi-stat-l">Sales</span></div>
         </div>
     </div>
@@ -1282,7 +1288,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_sales_count'] }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--red)">{{ number_format($overStat['total_discount_given']) }}</span><span class="sa-kpi-stat-l">Discounted</span></div>
         </div>
     </div>
@@ -1299,12 +1305,12 @@
         </span>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl sa-audit-tbl" style="min-width:1360px;table-layout:fixed">
+        <table class="sa-tbl sa-audit-tbl" style="min-width:1420px;table-layout:fixed">
             <colgroup>
-                <col style="width:130px"><col style="width:210px"><col style="width:140px">
-                <col style="width:155px"><col style="width:100px"><col style="width:100px">
-                <col style="width:105px"><col style="width:90px"><col style="width:165px">
-                <col style="width:165px">
+                <col style="width:130px"><col style="width:210px"><col style="width:160px">
+                <col style="width:130px"><col style="width:90px"><col style="width:95px">
+                <col style="width:100px"><col style="width:80px"><col style="width:145px">
+                <col style="width:280px">
             </colgroup>
             <thead>
                 <tr>
@@ -1317,14 +1323,19 @@
             </thead>
             <tbody>
                 @forelse($auditLog as $entry)
-                @php $isLargeDiscount = ($entry['discount_pct'] ?? 0) >= 20; @endphp
+                @php $isLargeDiscount = $entry['source'] === 'held' || ($entry['discount_pct'] ?? 0) > $overrideThreshold; @endphp
                 <tr style="{{ $isLargeDiscount ? 'background:var(--amber-dim);border-left:3px solid var(--amber)' : '' }}">
                     <td>
                         <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">{{ local_time($entry['sale_date'])->format('M d, Y') }}</div>
                         <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:2px">{{ local_time($entry['sale_date'])->format('H:i') }}</div>
                     </td>
                     <td>
-                        <div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--accent);margin-bottom:3px">{{ $entry['sale_number'] }}</div>
+                        <div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--accent);margin-bottom:3px;display:flex;align-items:center;gap:5px">
+                            {{ $entry['sale_number'] }}
+                            @if($entry['source'] === 'held')
+                            <span style="padding:1px 6px;background:var(--violet-dim);color:var(--violet);border-radius:8px;font-size:9px;font-weight:800;letter-spacing:.3px">HELD</span>
+                            @endif
+                        </div>
                         <div style="font-size:12px;color:var(--text);word-break:break-word">
                             {{ $entry['product_name'] }}
                             @if($entry['line_count'] > 1)
@@ -1337,21 +1348,36 @@
                         <div style="font-size:12px;font-weight:600;color:var(--text)">{{ $entry['seller_name'] }}</div>
                     </td>
                     <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--text-sub)">{{ $entry['quantity_display'] }}</td>
-                    <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--text-sub)">{{ number_format($entry['original_unit_price']) }}</td>
-                    <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text)">{{ number_format($entry['actual_unit_price']) }}</td>
-                    <td style="text-align:right">
-                        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red)">{{ number_format($entry['total_discount']) }}</div>
-                        <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono)">{{ $entry['discount_pct'] }}% off</div>
+                    <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--text-sub)">{{ $entry['original_unit_price'] !== null ? number_format($entry['original_unit_price']) : '—' }}</td>
+                    <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text)">
+                        {{ number_format($entry['actual_unit_price']) }}
+                        @if($entry['source'] === 'held')
+                        <div style="font-size:9px;font-weight:400;color:var(--text-dim);font-family:var(--font)">cart total</div>
+                        @endif
                     </td>
                     <td style="text-align:right">
+                        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red)">{{ number_format($entry['total_discount']) }}</div>
+                        @if($entry['source'] === 'sale')
+                        <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono)">{{ $entry['discount_pct'] }}% off</div>
+                        @endif
+                    </td>
+                    <td style="text-align:right">
+                        @if($entry['margin_at_sale'] === null)
+                        <span style="font-size:12px;color:var(--text-dim)">—</span>
+                        @else
                         @php $mas = $entry['margin_at_sale'] @endphp
                         <span style="font-size:12px;font-weight:700;font-family:var(--mono);
                             color:{{ $mas >= 20 ? 'var(--green)' : ($mas >= 5 ? 'var(--amber)' : 'var(--red)') }}">
                             {{ $mas }}%
                         </span>
+                        @endif
                     </td>
                     <td style="font-size:11px;color:var(--text-sub)">
+                        @if($entry['source'] === 'held' && $entry['is_rejected'])
+                        <div style="color:var(--red);word-break:break-word">{{ $entry['rejected_reason'] ?: '—' }}</div>
+                        @else
                         <div style="word-break:break-word">{{ $entry['reason'] ?? '—' }}</div>
+                        @endif
                         @if($entry['reference'])
                         <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Ref: {{ $entry['reference'] }}</div>
                         @endif
@@ -1359,23 +1385,40 @@
                     <td>
                         @if(($entry['seller_role'] ?? '') === 'owner')
                         <span class="sa-margin-pill" style="background:var(--green-dim);color:var(--green);display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="10" /> Owner</span>
+                        @elseif($entry['source'] === 'held' && $entry['is_rejected'])
+                        <span class="sa-margin-pill" style="background:var(--red-dim);color:var(--red);display:inline-flex;align-items:center;gap:4px">Rejected by {{ $entry['rejected_by'] }}</span>
                         @elseif($entry['is_approved'])
                         <span class="sa-margin-pill" style="background:var(--green-dim);color:var(--green);display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="10" /> {{ $entry['approved_by'] }}</span>
+                        @elseif($entry['source'] === 'sale' && $entry['discount_pct'] <= $overrideThreshold)
+                        {{-- Below the business-setting threshold — informational only, per policy no owner action is required --}}
+                        <span class="sa-margin-pill" style="background:var(--surface2);color:var(--text-dim)" title="{{ $entry['discount_pct'] }}% is within the {{ $overrideThreshold }}% policy threshold">
+                            Override — No Action Needed
+                        </span>
                         @else
                         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
                             <span class="sa-margin-pill" style="background:var(--amber-dim);color:var(--amber)">Pending</span>
                             @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
-                            <button wire:click="approvePriceOverride({{ $entry['sale_id'] }})"
-                                    wire:confirm="Approve price override on sale {{ $entry['sale_number'] }}?"
-                                    wire:loading.attr="disabled"
-                                    style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;
-                                           border:1px solid var(--green);background:var(--green-dim);
-                                           color:var(--green);cursor:pointer;white-space:nowrap;
-                                           font-family:var(--font);transition:all var(--tr);display:inline-flex;align-items:center;gap:4px"
-                                    onmouseover="this.style.background='var(--green)';this.style.color='#fff'"
-                                    onmouseout="this.style.background='var(--green-dim)';this.style.color='var(--green)'">
-                                Approve <x-icon name="check" size="11" />
-                            </button>
+                            <div style="display:flex;gap:6px">
+                                <button wire:click="{{ $entry['source'] === 'held' ? 'approveHeldSale('.$entry['sale_id'].')' : 'approvePriceOverride('.$entry['sale_id'].')' }}"
+                                        wire:confirm="Approve price override on {{ $entry['sale_number'] }}?"
+                                        wire:loading.attr="disabled"
+                                        style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;
+                                               border:1px solid var(--green);background:var(--green-dim);
+                                               color:var(--green);cursor:pointer;white-space:nowrap;
+                                               font-family:var(--font);transition:all var(--tr);display:inline-flex;align-items:center;gap:4px"
+                                        onmouseover="this.style.background='var(--green)';this.style.color='#fff'"
+                                        onmouseout="this.style.background='var(--green-dim)';this.style.color='var(--green)'">
+                                    Approve <x-icon name="check" size="11" />
+                                </button>
+                                @if($entry['source'] === 'held')
+                                <button wire:click="openRejectHeldModal({{ $entry['sale_id'] }})"
+                                        style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;
+                                               border:1px solid var(--red);background:var(--red-dim);
+                                               color:var(--red);cursor:pointer;white-space:nowrap">
+                                    Reject
+                                </button>
+                                @endif
+                            </div>
                             @endif
                         </div>
                         @endif
@@ -1403,33 +1446,39 @@
 ══════════════════════════════════════════════════════════════════════════ --}}
 @elseif($activeTab === 'sellers')
 @php
-    $sellers   = $this->sellerPerformance;
-    $customers = $this->customerRepeatAnalysis;
-    $ret       = $this->returnsImpact;
+    $sellers      = $this->sellerPerformance;
+    $sellersByShop = $this->sellersByShop;
+    $customers    = $this->customerRepeatAnalysis;
+    $ret          = $this->returnsImpact;
 @endphp
 
-{{-- Seller Performance Table --}}
+{{-- Seller Performance Table — grouped by shop, sellers ranked by revenue within each --}}
 <div class="sa-tbl-wrap">
     <div class="sa-card-head">
         <div class="sa-head-accent">
             <div class="sa-card-title">Seller Performance</div>
-            <div class="sa-card-sub">{{ $this->activeDateRangeLabel }} · ranked by revenue</div>
+            <div class="sa-card-sub">{{ $this->activeDateRangeLabel }} · grouped by shop · sellers ranked by revenue</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
             <button wire:click="exportSellersCsv" title="Export CSV" class="sa-export-btn">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 CSV
             </button>
-            <span class="sa-card-badge">{{ count($sellers) }} sellers</span>
+            <span class="sa-card-badge">{{ count($sellers) }} sellers · {{ count($sellersByShop) }} shops</span>
         </div>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl" style="min-width:1060px;table-layout:fixed">
+        <table class="sa-tbl" style="min-width:1056px;table-layout:fixed">
+            <colgroup>
+                <col style="width:36px"><col style="width:170px"><col style="width:60px">
+                <col style="width:110px"><col style="width:90px"><col style="width:90px">
+                <col style="width:70px"><col style="width:100px"><col style="width:80px">
+                <col style="width:90px"><col style="width:85px"><col style="width:75px">
+            </colgroup>
             <thead>
                 <tr>
-                    <th style="width:36px">#</th>
+                    <th>#</th>
                     <th>Seller</th>
-                    <th>Shop</th>
                     <th style="text-align:right">Txns</th>
                     <th style="text-align:right">Revenue</th>
                     <th style="text-align:right">Share</th>
@@ -1443,7 +1492,23 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($sellers as $i => $s)
+                @forelse($sellersByShop as $group)
+                <tr>
+                    <td colspan="12" style="background:var(--surface2);padding:8px 12px">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                            <div style="display:flex;align-items:center;gap:8px">
+                                <x-icon name="shopping-bag" size="13" style="color:var(--text-sub)" />
+                                <span style="font-size:12px;font-weight:800;color:var(--text)">{{ $group['shop_name'] ?? 'Unassigned' }}</span>
+                                <span style="font-size:10px;color:var(--text-dim)">{{ $group['seller_count'] }} seller{{ $group['seller_count'] === 1 ? '' : 's' }}</span>
+                            </div>
+                            <div style="display:flex;gap:16px;font-family:var(--mono);font-size:11px">
+                                <span style="color:var(--text-sub)">{{ $group['transactions'] }} txns</span>
+                                <span style="font-weight:700;color:var(--text)">{{ number_format($group['revenue']) }} RWF</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                @foreach($group['sellers'] as $i => $s)
                 @php $isTop = $i === 0; @endphp
                 <tr style="{{ $isTop ? 'background:var(--green-dim)' : '' }}">
                     <td style="font-size:11px;font-family:var(--mono);color:var(--text-dim)">{{ $i + 1 }}</td>
@@ -1456,11 +1521,10 @@
                             </div>
                             <div>
                                 <div style="font-weight:600;color:var(--text);font-size:12px">{{ $s['seller_name'] }}</div>
-                                @if($isTop)<div style="font-size:10px;color:var(--green);font-weight:600">Top seller</div>@endif
+                                @if($isTop)<div style="font-size:10px;color:var(--green);font-weight:600">Top in shop</div>@endif
                             </div>
                         </div>
                     </td>
-                    <td style="font-size:12px;color:var(--text-sub)">{{ $s['shop_name'] }}</td>
                     <td style="text-align:right;font-family:var(--mono);color:var(--text-sub)">{{ $s['transactions'] }}</td>
                     <td style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--text)">{{ number_format($s['revenue']) }}</td>
                     <td style="text-align:right">
@@ -1498,91 +1562,12 @@
                         @else<span style="color:var(--text-dim)">—</span>@endif
                     </td>
                 </tr>
+                @endforeach
                 @empty
-                <tr><td colspan="13"><div class="sa-empty"><div class="sa-empty-title">No sales data for this period</div></div></td></tr>
+                <tr><td colspan="12"><div class="sa-empty"><div class="sa-empty-title">No sales data for this period</div></div></td></tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-</div>
-
-{{-- Sellers KPI cards --}}
-<div class="sa-kpis">
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-            </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Known Customers</div>
-                <div class="sa-kpi-sub">Identified by name/phone</div>
-            </div>
-        </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ $customers['total_customers'] }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $customers['repeat_customers'] }}</span><span class="sa-kpi-stat-l">Repeat</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $customers['walkin_count'] }}</span><span class="sa-kpi-stat-l">Walk-ins</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $customers['repeat_rate'] }}%</span><span class="sa-kpi-stat-l">Repeat Rate</span></div>
-        </div>
-    </div>
-
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--green-dim);color:var(--green)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
-            </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Repeat Rate</div>
-                <div class="sa-kpi-sub">{{ $customers['repeat_customers'] }} returning customers</div>
-            </div>
-            <span class="sa-growth {{ $customers['repeat_rate'] >= 30 ? 'up' : 'neutral' }}">{{ $customers['repeat_rate'] >= 30 ? '↑ Strong' : '→ Building' }}</span>
-        </div>
-        <div class="sa-kpi-val" style="color:var(--green)">{{ $customers['repeat_rate'] }}%</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $customers['repeat_customers'] }}</span><span class="sa-kpi-stat-l">Returning</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $customers['walkin_count'] }}</span><span class="sa-kpi-stat-l">Walk-ins</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $customers['total_customers'] }}</span><span class="sa-kpi-stat-l">Identified</span></div>
-        </div>
-    </div>
-
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Returns</div>
-                <div class="sa-kpi-sub">{{ $ret['items_returned'] }} items returned</div>
-            </div>
-        </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ $ret['returns_count'] }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($ret['returned_revenue']) }}</span><span class="sa-kpi-stat-l">Refunded</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $ret['exchange_count'] }}</span><span class="sa-kpi-stat-l">Exchanges</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $ret['return_rate'] }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
-        </div>
-    </div>
-
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--pink-dim);color:var(--pink)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Refunded Amount</div>
-                <div class="sa-kpi-sub">{{ $ret['return_rate'] }}% return rate</div>
-            </div>
-        </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($ret['returned_revenue']) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $ret['returns_count'] }}</span><span class="sa-kpi-stat-l">Returns</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $ret['exchange_count'] }}</span><span class="sa-kpi-stat-l">Exchanges</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $ret['items_returned'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
-        </div>
     </div>
 </div>
 
@@ -1596,6 +1581,7 @@
                 <div class="sa-card-title">Customer Analysis</div>
                 <div class="sa-card-sub">Repeat rate and top spenders</div>
             </div>
+            <span class="sa-card-badge">{{ $customers['total_customers'] }} known · {{ $customers['repeat_rate'] }}% repeat</span>
         </div>
         <div style="overflow:auto;max-height:360px">
             <table class="sa-tbl" style="width:100%">
@@ -1715,7 +1701,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgTransactionValue) }}</span><span class="sa-kpi-stat-l">Avg Order</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $splitPaymentSales }}</span><span class="sa-kpi-stat-l">Split</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $splitPaymentSales }}</span><span class="sa-kpi-stat-l">Split</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditCount }}</span><span class="sa-kpi-stat-l">Credit Sales</span></div>
         </div>
     </div>
@@ -1736,7 +1722,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $paymentMethods['cash']['count'] }}</span><span class="sa-kpi-stat-l">Txns</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $paymentMethods['cash']['count'] > 0 ? number_format(round($paymentMethods['cash']['total'] / $paymentMethods['cash']['count'])) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Txn</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $paymentMethods['cash']['count'] > 0 ? number_format(round($paymentMethods['cash']['total'] / $paymentMethods['cash']['count'])) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Txn</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $cashPct }}%</span><span class="sa-kpi-stat-l">of Total</span></div>
         </div>
     </div>
@@ -1758,7 +1744,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $paymentMethods['mobile_money']['count'] }}</span><span class="sa-kpi-stat-l">Txns</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $paymentMethods['mobile_money']['count'] > 0 ? number_format(round($paymentMethods['mobile_money']['total'] / $paymentMethods['mobile_money']['count'])) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Txn</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $paymentMethods['mobile_money']['count'] > 0 ? number_format(round($paymentMethods['mobile_money']['total'] / $paymentMethods['mobile_money']['count'])) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Txn</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $mmPct }}%</span><span class="sa-kpi-stat-l">of Total</span></div>
         </div>
     </div>
@@ -1780,7 +1766,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditCount }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $creditCount > 0 ? number_format(round($paymentMethods['credit']['total'] / $creditCount)) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Sale</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditCount > 0 ? number_format(round($paymentMethods['credit']['total'] / $creditCount)) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Sale</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:{{ $crPct > 20 ? 'var(--amber)' : 'var(--text-sub)' }}">{{ $crPct }}%</span><span class="sa-kpi-stat-l">of Total</span></div>
         </div>
     </div>
@@ -1873,7 +1859,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="sa-kpi-stat-l">Total Given</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ number_format($totalRepaid) }}</span><span class="sa-kpi-stat-l">Repaid</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ number_format($totalRepaid) }}</span><span class="sa-kpi-stat-l">Repaid</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDebt) }}</span><span class="sa-kpi-stat-l">Avg Debt</span></div>
         </div>
     </div>
@@ -1892,7 +1878,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditSalesCount }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ $creditSalesCount > 0 ? number_format(round($creditGivenInPeriod / $creditSalesCount)) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Sale</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditSalesCount > 0 ? number_format(round($creditGivenInPeriod / $creditSalesCount)) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Sale</span></div>
             @php $periodRevenue = $this->grossProfitKpis['revenue'] @endphp
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $periodRevenue > 0 ? round(($creditGivenInPeriod / $periodRevenue) * 100, 1) : 0 }}%</span><span class="sa-kpi-stat-l">of Revenue</span></div>
         </div>
@@ -1912,7 +1898,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDebt) }}</span><span class="sa-kpi-stat-l">Avg Debt</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v">{{ number_format($totalOutstanding) }}</span><span class="sa-kpi-stat-l">Total Owed</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($totalOutstanding) }}</span><span class="sa-kpi-stat-l">Total Owed</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:{{ $repaymentRate >= 80 ? 'var(--green)' : ($repaymentRate >= 50 ? 'var(--amber)' : 'var(--red)') }}">{{ $repaymentRate }}%</span><span class="sa-kpi-stat-l">Repaid</span></div>
         </div>
     </div>
@@ -1933,7 +1919,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ number_format($totalRepaid) }}</span><span class="sa-kpi-stat-l">Repaid</span></div>
-            <div class="sa-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)"><span class="sa-kpi-stat-v" style="color:var(--red)">{{ number_format($totalOutstanding) }}</span><span class="sa-kpi-stat-l">Still Owed</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--red)">{{ number_format($totalOutstanding) }}</span><span class="sa-kpi-stat-l">Still Owed</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="sa-kpi-stat-l">Total Given</span></div>
         </div>
     </div>
@@ -1990,6 +1976,37 @@
 
 @endif
 
+{{-- Reject held-sale price override modal --}}
+@if($showRejectHeldModal)
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px">
+    <div style="background:var(--surface);border-radius:var(--r);max-width:420px;width:100%;padding:22px;box-shadow:var(--shadow-card-hover)">
+        <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px">Reject Price Override</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px">The seller will be notified. This cannot be undone.</div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-sub);display:block;margin-bottom:6px">
+            Reason for Rejection <span style="color:var(--red)">*</span>
+        </label>
+        <textarea wire:model="rejectHeldReason" rows="3"
+                  placeholder="Explain why this price override is being rejected…"
+                  style="width:100%;border:1px solid var(--border);border-radius:8px;background:var(--surface2);
+                         color:var(--text);font-size:13px;padding:10px;resize:vertical;font-family:var(--font)"></textarea>
+        @error('rejectHeldReason')
+        <div style="font-size:11px;color:var(--red);margin-top:4px">{{ $message }}</div>
+        @enderror
+        <div style="display:flex;gap:10px;margin-top:16px">
+            <button wire:click="closeRejectHeldModal" type="button"
+                    style="flex:1;padding:9px 0;border-radius:8px;border:1px solid var(--border);
+                           background:var(--surface2);color:var(--text-sub);font-size:13px;font-weight:700;cursor:pointer">
+                Cancel
+            </button>
+            <button wire:click="rejectHeldSale" wire:loading.attr="disabled"
+                    style="flex:1;padding:9px 0;border-radius:8px;border:none;
+                           background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer">
+                Reject Override
+            </button>
+        </div>
+    </div>
+</div>
+@endif
 
 </div>
 

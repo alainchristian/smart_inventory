@@ -49,7 +49,7 @@
                 <!-- Notifications Bell -->
                 <div x-data="{ open: false, tab: 'activity' }"
                      x-init="$watch('open', v => { if (v) { tab = {{ $this->unreadActivityCount > 0 ? "'activity'" : ($this->totalPendingActions > 0 ? "'actions'" : "'activity'") }}; $wire.markActivityRead(); } })"
-                     class="relative" wire:poll.60s>
+                     class="relative" wire:poll.15s>
                     <button @click="open = !open" class="relative w-9 h-9 flex items-center justify-center rounded-lg transition-all"
                             style="background: var(--surface2); border: 1px solid var(--border); color: var(--text-sub);"
                             onmouseover="this.style.background='var(--surface3)'; this.style.color='var(--text)';"
@@ -146,6 +146,9 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                                             @elseif($notif['icon'] === 'expense')
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            @elseif($notif['icon'] === 'tag')
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+                                                <circle cx="7" cy="7" r="1.5" fill="{{ $nColors['ic'] }}" stroke="none"/>
                                             @else
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             @endif
@@ -195,19 +198,12 @@
                                             default  => ['bg' => 'var(--accent-dim)','ic' => 'var(--accent)'],
                                         };
                                     @endphp
-                                    @if($action['route'])
-                                        <a href="{{ route($action['route']) }}"
+                                    @if(!empty($action['url']) || $action['route'])
+                                        <a href="{{ $action['url'] ?? route($action['route']) }}"
                                            class="flex items-center justify-between p-3.5 border-b transition-all"
                                            style="border-color: var(--border);"
                                            onmouseover="this.style.background='var(--surface2)'"
                                            onmouseout="this.style.background='transparent'">
-                                    @elseif(!empty($action['modal']))
-                                        <button type="button"
-                                                @click="open = false; $wire.openApprovalModal()"
-                                                class="w-full flex items-center justify-between p-3.5 border-b text-left transition-all"
-                                                style="border-color: var(--border); background: transparent; cursor: pointer;"
-                                                onmouseover="this.style.background='var(--surface2)'"
-                                                onmouseout="this.style.background='transparent'">
                                     @else
                                         <div class="flex items-center justify-between p-3.5 border-b" style="border-color: var(--border);">
                                     @endif
@@ -232,17 +228,15 @@
                                                 <div>
                                                     <h4 class="text-[13px] font-semibold" style="color: var(--text);">{{ $action['label'] }}</h4>
                                                     <p class="text-[12px] mt-0.5" style="color: var(--text-dim);">
-                                                        {{ $action['count'] }} {{ !empty($action['modal']) ? ($action['count'] === 1 ? 'sale' : 'sales') : 'pending' }}
+                                                        {{ $action['count'] }} {{ $action['type'] === 'price_approval' ? ($action['count'] === 1 ? 'sale' : 'sales') : 'pending' }}
                                                     </p>
                                                 </div>
                                             </div>
                                             <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color: var(--text-dim);">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                             </svg>
-                                    @if($action['route'])
+                                    @if(!empty($action['url']) || $action['route'])
                                         </a>
-                                    @elseif(!empty($action['modal']))
-                                        </button>
                                     @else
                                         </div>
                                     @endif
@@ -400,189 +394,5 @@
             </div>
         </div>
     </div>
-
-    {{-- ── Price Override Approval Modal ─────────────────────────────────────── --}}
-    @if($showApprovalModal)
-    <div x-data
-         x-init="document.body.style.overflow='hidden'"
-         x-destroy="document.body.style.overflow=''"
-         style="position:fixed;inset:0;z-index:300;display:flex;align-items:flex-start;
-                justify-content:center;padding:60px 16px 16px;
-                background:rgba(0,0,0,.55);backdrop-filter:blur(3px)">
-
-        <div @click.away="$wire.showApprovalModal = false"
-             style="background:var(--surface);border:1px solid var(--border);border-radius:16px;
-                    width:100%;max-width:580px;max-height:85vh;display:flex;flex-direction:column;
-                    box-shadow:0 24px 64px rgba(0,0,0,.4)">
-
-            {{-- Modal header --}}
-            <div style="padding:18px 20px;border-bottom:1px solid var(--border);
-                        display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-                <div style="display:flex;align-items:center;gap:10px">
-                    <div style="width:34px;height:34px;border-radius:9px;background:var(--amber-dim);
-                                display:flex;align-items:center;justify-content:center">
-                        <svg width="16" height="16" fill="none" stroke="var(--amber)" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
-                            <circle cx="7" cy="7" r="1" fill="var(--amber)" stroke="none"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div style="font-size:15px;font-weight:700;color:var(--text)">Price Override Approvals</div>
-                        <div style="font-size:12px;color:var(--text-dim);margin-top:1px">
-                            {{ count($pendingHeldSales) }} {{ count($pendingHeldSales) === 1 ? 'sale' : 'sales' }} waiting for your decision
-                        </div>
-                    </div>
-                </div>
-                <button wire:click="$set('showApprovalModal', false)"
-                        style="width:30px;height:30px;border-radius:8px;border:1px solid var(--border);
-                               background:var(--surface2);display:flex;align-items:center;justify-content:center;
-                               cursor:pointer;color:var(--text-dim)">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-
-            {{-- Modal body (scrollable) --}}
-            <div style="overflow-y:auto;flex:1;padding:12px">
-                @forelse($pendingHeldSales as $h)
-                <div wire:key="modal-held-{{ $h['id'] }}"
-                     style="border:1px solid var(--border);border-radius:12px;
-                            margin-bottom:10px;overflow:hidden">
-
-                    {{-- Card header --}}
-                    <div style="padding:12px 14px;background:var(--surface2);
-                                display:flex;align-items:center;justify-content:space-between">
-                        <div style="display:flex;align-items:center;gap:8px">
-                            <span style="font-size:13px;font-weight:800;font-family:var(--mono);color:var(--amber)">
-                                {{ $h['reference'] }}
-                            </span>
-                            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;
-                                         background:var(--amber-dim);color:var(--amber)">
-                                Pending
-                            </span>
-                        </div>
-                        <span style="font-size:11px;color:var(--text-dim)">{{ $h['age'] }}</span>
-                    </div>
-
-                    {{-- Card meta --}}
-                    <div style="padding:10px 14px;border-bottom:1px solid var(--border);
-                                display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-                        <div style="display:flex;align-items:center;gap:5px">
-                            <svg width="12" height="12" fill="none" stroke="var(--text-dim)" stroke-width="2" viewBox="0 0 24 24">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                                <polyline points="9 22 9 12 15 12 15 22"/>
-                            </svg>
-                            <span style="font-size:12px;color:var(--text-sub)">{{ $h['shop'] }}</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:5px">
-                            <svg width="12" height="12" fill="none" stroke="var(--text-dim)" stroke-width="2" viewBox="0 0 24 24">
-                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                            <span style="font-size:12px;color:var(--text-sub)">{{ $h['seller'] }}</span>
-                        </div>
-                        <div style="margin-left:auto;text-align:right">
-                            <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text)">
-                                {{ number_format($h['cart_total']) }} RWF
-                            </span>
-                            <span style="font-size:11px;color:var(--text-dim);margin-left:4px">
-                                · {{ $h['item_count'] }} item(s)
-                            </span>
-                        </div>
-                    </div>
-
-                    {{-- Cart preview --}}
-                    @php $items = array_slice($h['cart_data'], 0, 4); @endphp
-                    @if(!empty($items))
-                    <div style="padding:8px 14px;border-bottom:1px solid var(--border)">
-                        @foreach($items as $item)
-                        <div style="display:flex;align-items:center;justify-content:space-between;
-                                    padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"
-                             style="border-bottom:{{ !$loop->last ? '1px solid var(--border)' : 'none' }}">
-                            <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
-                                @if(!empty($item['price_modified']))
-                                <span style="width:6px;height:6px;border-radius:50%;background:var(--amber);flex-shrink:0"></span>
-                                @endif
-                                <span style="color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                                    {{ $item['product_name'] }}
-                                </span>
-                                <span style="font-size:11px;color:var(--text-dim);flex-shrink:0">
-                                    × {{ $item['quantity'] }}{{ $item['is_full_box'] ? ' box' : '' }}
-                                </span>
-                            </div>
-                            <div style="text-align:right;flex-shrink:0;margin-left:10px">
-                                @if(!empty($item['price_modified']))
-                                <span style="font-size:11px;color:var(--text-dim);text-decoration:line-through;margin-right:4px;font-family:var(--mono)">
-                                    {{ number_format($item['original_price']) }}
-                                </span>
-                                <span style="font-family:var(--mono);font-weight:700;color:var(--amber)">
-                                    {{ number_format($item['price']) }}
-                                </span>
-                                @else
-                                <span style="font-family:var(--mono);color:var(--text-sub)">
-                                    {{ number_format($item['price']) }}
-                                </span>
-                                @endif
-                            </div>
-                        </div>
-                        @endforeach
-                        @if(count($h['cart_data']) > 4)
-                        <div style="font-size:11px;color:var(--text-dim);padding-top:5px">
-                            + {{ count($h['cart_data']) - 4 }} more item(s)
-                        </div>
-                        @endif
-                    </div>
-                    @endif
-
-                    {{-- Approve / Reject --}}
-                    <div style="padding:10px 14px;display:flex;gap:8px">
-                        <button wire:click="approveHeldSale({{ $h['id'] }})"
-                                wire:loading.attr="disabled"
-                                wire:target="approveHeldSale({{ $h['id'] }})"
-                                style="flex:1;padding:8px 0;border-radius:8px;border:none;cursor:pointer;
-                                       background:var(--green);color:#fff;font-size:13px;font-weight:700;
-                                       transition:opacity .15s"
-                                wire:loading.class="opacity-50">
-                            <span wire:loading.remove wire:target="approveHeldSale({{ $h['id'] }})" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="12" /> Approve</span>
-                            <span wire:loading wire:target="approveHeldSale({{ $h['id'] }})" style="display:none">Approving…</span>
-                        </button>
-                        <button wire:click="rejectHeldSale({{ $h['id'] }})"
-                                wire:confirm="Reject {{ $h['reference'] }}? The seller will be notified."
-                                wire:loading.attr="disabled"
-                                style="padding:8px 16px;border-radius:8px;cursor:pointer;
-                                       border:1.5px solid var(--red);background:var(--red-dim);
-                                       color:var(--red);font-size:13px;font-weight:700">
-                            Reject
-                        </button>
-                    </div>
-
-                </div>
-                @empty
-                <div style="padding:40px;text-align:center;color:var(--text-dim)">
-                    <div style="margin-bottom:10px;color:var(--green);display:flex;justify-content:center"><x-icon name="check" size="28" /></div>
-                    <div style="font-size:14px;font-weight:600">All approvals handled</div>
-                </div>
-                @endforelse
-            </div>
-
-            {{-- Modal footer --}}
-            <div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;
-                        display:flex;align-items:center;justify-content:space-between">
-                <a href="{{ route('owner.reports.sales') }}?activeTab=audit"
-                   style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none">
-                    View Price Audit Trail →
-                </a>
-                <button wire:click="$set('showApprovalModal', false)"
-                        style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;
-                               border:1px solid var(--border);background:var(--surface2);
-                               color:var(--text-sub);cursor:pointer">
-                    Close
-                </button>
-            </div>
-
-        </div>
-    </div>
-    @endif
 
 </div>

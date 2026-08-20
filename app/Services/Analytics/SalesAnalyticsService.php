@@ -2,6 +2,7 @@
 
 namespace App\Services\Analytics;
 
+use App\Models\HeldSale;
 use App\Models\ReturnModel;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -806,7 +807,7 @@ class SalesAnalyticsService
                 $q->where('sales.shop_id', (int) explode(':', $locationFilter)[1]);
             }
 
-            return $q->get()->map(function ($item) {
+            $sales = $q->get()->map(function ($item) {
                 $lineCount = (int) $item->line_count;
                 $hasFullBox = (bool) $item->has_full_box;
                 $hasItemSale = (bool) $item->has_item_sale;
@@ -843,8 +844,9 @@ class SalesAnalyticsService
                     : 0;
 
                 return [
+                    'source'              => 'sale',
                     'sale_id'             => (int) $item->sale_id,
-                    'sale_date'           => $item->sale_date,
+                    'sale_date'           => Carbon::parse($item->sale_date),
                     'sale_number'         => $item->sale_number,
                     'shop_name'           => $item->shop_name,
                     'seller_name'         => $item->seller_name,
@@ -865,8 +867,67 @@ class SalesAnalyticsService
                     'approved_by'         => $item->approved_by_name,
                     'approved_at'         => $item->price_override_approved_at,
                     'is_approved'         => $item->price_override_approved_at !== null,
+                    'is_rejected'         => false,
+                    'rejected_by'         => null,
+                    'rejected_reason'     => null,
                 ];
             })->toArray();
+
+            // ── Pending pre-checkout holds (HeldSale) — same period/shop filter,
+            // merged in so the audit trail is the single place both override
+            // sources surface, not just completed sales.
+            $heldQ = HeldSale::where('needs_price_approval', true)
+                ->whereBetween('created_at', [$from, $to])
+                ->with(['seller', 'shop', 'approvedBy', 'rejectedBy'])
+                ->orderByDesc('created_at');
+
+            if ($locationFilter !== 'all' && str_starts_with($locationFilter, 'shop:')) {
+                $heldQ->where('shop_id', (int) explode(':', $locationFilter)[1]);
+            }
+
+            $held = $heldQ->get()->map(function (HeldSale $h) {
+                $cart = collect($h->cart_data ?? []);
+                $modifiedLines = $cart->filter(fn ($l) => !empty($l['price_modified']));
+                $discount = (int) $modifiedLines->sum(
+                    fn ($l) => (((int) ($l['original_price'] ?? $l['price'])) - (int) $l['price']) * (int) ($l['qty'] ?? 1)
+                );
+                $reason = $modifiedLines->pluck('price_modification_reason')->filter()->unique()->implode('; ');
+
+                return [
+                    'source'              => 'held',
+                    'sale_id'             => $h->id,
+                    'sale_date'           => $h->created_at,
+                    'sale_number'         => $h->hold_reference,
+                    'shop_name'           => $h->shop?->name,
+                    'seller_name'         => $h->seller?->name,
+                    'seller_role'         => $h->seller?->role instanceof \BackedEnum ? $h->seller->role->value : $h->seller?->role,
+                    'product_name'        => 'Held cart pending checkout',
+                    'quantity_sold'       => $h->item_count,
+                    'quantity_display'    => $h->item_count . ' item(s)',
+                    'line_count'          => $h->item_count,
+                    'is_full_box'         => false,
+                    'original_unit_price' => null,
+                    'actual_unit_price'   => $h->cart_total,
+                    'total_discount'      => $discount,
+                    'discount_pct'        => 0,
+                    'margin_at_sale'      => null,
+                    'line_total'          => $h->cart_total,
+                    'reason'              => $reason ?: null,
+                    'reference'           => null,
+                    'approved_by'         => $h->approvedBy?->name,
+                    'approved_at'         => $h->override_approved_at,
+                    'is_approved'         => $h->isApproved(),
+                    'is_rejected'         => $h->isRejected(),
+                    'rejected_by'         => $h->rejectedBy?->name,
+                    'rejected_reason'     => $h->rejected_reason,
+                ];
+            })->toArray();
+
+            return collect($held)
+                ->concat($sales)
+                ->sortByDesc('sale_date')
+                ->values()
+                ->all();
         });
     }
 

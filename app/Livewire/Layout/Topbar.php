@@ -14,9 +14,6 @@ class Topbar extends Component
     public $searchQuery = '';
     public $pageTitle;
 
-    public bool  $showApprovalModal = false;
-    public array $pendingHeldSales  = [];
-
     public function mount($pageTitle = 'Dashboard')
     {
         $this->pageTitle = $pageTitle;
@@ -34,6 +31,7 @@ class Topbar extends Component
             'return', 'return_approved',
             'box_damaged', 'box_adjustment',
             'credit_writeoff',
+            'held_sale_approved', 'held_sale_rejected',
         ];
     }
 
@@ -58,9 +56,22 @@ class Topbar extends Component
                   ->where('entity_type', 'Transfer')
                   ->whereIn('entity_id', Transfer::where('from_warehouse_id', $user->location_id)->pluck('id'));
         } elseif ($user->isShopManager()) {
-            $query->whereIn('action', ['transfer_approved', 'transfer_rejected', 'transfer_packed'])
-                  ->where('entity_type', 'Transfer')
-                  ->whereIn('entity_id', Transfer::where('to_shop_id', $user->location_id)->pluck('id'));
+            $shopTransferIds = Transfer::where('to_shop_id', $user->location_id)->pluck('id');
+            // Sellers only see the decision on holds THEY created — not every
+            // price-override decision made for the shop.
+            $ownHeldSaleIds  = HeldSale::where('seller_id', $user->id)->pluck('id');
+
+            $query->where(function ($q) use ($shopTransferIds, $ownHeldSaleIds) {
+                $q->where(function ($q2) use ($shopTransferIds) {
+                    $q2->whereIn('action', ['transfer_approved', 'transfer_rejected', 'transfer_packed'])
+                       ->where('entity_type', 'Transfer')
+                       ->whereIn('entity_id', $shopTransferIds);
+                })->orWhere(function ($q2) use ($ownHeldSaleIds) {
+                    $q2->whereIn('action', ['held_sale_approved', 'held_sale_rejected'])
+                       ->where('entity_type', 'HeldSale')
+                       ->whereIn('entity_id', $ownHeldSaleIds);
+                });
+            });
         } else {
             return [];
         }
@@ -157,6 +168,10 @@ class Topbar extends Component
                 'route' => null,
             ],
             [
+                // Completed sales with has_price_override are NOT counted here —
+                // per the price_override_threshold setting, a sale only completes
+                // directly when it's within policy, so it needs no owner action.
+                // Only HeldSale rows (blocked pre-checkout, over threshold) do.
                 'type'  => 'price_approval',
                 'count' => HeldSale::where('needs_price_approval', true)
                     ->whereNull('override_approved_at')
@@ -166,7 +181,7 @@ class Topbar extends Component
                 'icon'  => 'tag',
                 'color' => 'amber',
                 'route' => null,
-                'modal' => true,
+                'url'   => route('owner.reports.sales') . '?activeTab=audit',
             ],
         ];
     }
@@ -179,118 +194,9 @@ class Topbar extends Component
         return collect($this->pendingActions)->sum('count');
     }
 
-    // ── Approval Modal ────────────────────────────────────────────────────────
-
-    public function openApprovalModal(): void
-    {
-        $this->pendingHeldSales = HeldSale::where('needs_price_approval', true)
-            ->whereNull('override_approved_at')
-            ->whereNull('override_rejected_at')
-            ->with(['seller', 'shop'])
-            ->orderBy('created_at')
-            ->get()
-            ->map(fn($h) => [
-                'id'         => $h->id,
-                'reference'  => $h->hold_reference,
-                'shop'       => $h->shop?->name ?? '—',
-                'seller'     => $h->seller?->name ?? '—',
-                'item_count' => $h->item_count,
-                'cart_total' => $h->cart_total,
-                'age'        => $h->created_at->diffForHumans(),
-                'cart_data'  => collect($h->cart_data ?? [])->map(fn($item) => [
-                    'product_name'   => $item['product_name'] ?? '—',
-                    'quantity'       => $item['quantity'] ?? 1,
-                    'is_full_box'    => $item['is_full_box'] ?? false,
-                    'price'          => $item['price'] ?? 0,
-                    'original_price' => $item['original_price'] ?? $item['price'] ?? 0,
-                    'price_modified' => $item['price_modified'] ?? false,
-                    'line_total'     => $item['line_total'] ?? 0,
-                ])->toArray(),
-            ])
-            ->toArray();
-
-        $this->showApprovalModal = true;
-    }
-
-    public function approveHeldSale(int $id): void
-    {
-        $user = Auth::user();
-        if (! $user || ! $user->isOwner()) return;
-
-        $held = HeldSale::find($id);
-        if (! $held || $held->override_approved_at) return;
-
-        $held->update([
-            'override_approved_at' => now(),
-            'override_approved_by' => $user->id,
-        ]);
-
-        Alert::where('entity_type', 'HeldSale')
-            ->where('entity_id', $held->id)
-            ->where('is_resolved', false)
-            ->each(fn($a) => $a->markAsResolved($user->id));
-
-        ActivityLog::create([
-            'user_id'           => $user->id,
-            'user_name'         => $user->name,
-            'action'            => 'held_sale_approved',
-            'entity_type'       => 'HeldSale',
-            'entity_id'         => $held->id,
-            'entity_identifier' => $held->hold_reference,
-            'details'           => ['cart_total' => $held->cart_total, 'seller' => $held->seller?->name],
-            'ip_address'        => request()->ip(),
-        ]);
-
-        $this->pendingHeldSales = collect($this->pendingHeldSales)
-            ->filter(fn($h) => $h['id'] !== $id)
-            ->values()
-            ->toArray();
-
-        if (empty($this->pendingHeldSales)) {
-            $this->showApprovalModal = false;
-            $this->redirect(route('owner.reports.sales') . '?activeTab=audit');
-        }
-    }
-
-    public function rejectHeldSale(int $id): void
-    {
-        $user = Auth::user();
-        if (! $user || ! $user->isOwner()) return;
-
-        $held = HeldSale::find($id);
-        if (! $held || $held->override_rejected_at) return;
-
-        $held->update([
-            'override_rejected_at' => now(),
-            'override_rejected_by' => $user->id,
-            'rejected_reason'      => 'Rejected by owner',
-        ]);
-
-        Alert::where('entity_type', 'HeldSale')
-            ->where('entity_id', $held->id)
-            ->where('is_resolved', false)
-            ->each(fn($a) => $a->markAsResolved($user->id));
-
-        ActivityLog::create([
-            'user_id'           => $user->id,
-            'user_name'         => $user->name,
-            'action'            => 'held_sale_rejected',
-            'entity_type'       => 'HeldSale',
-            'entity_id'         => $held->id,
-            'entity_identifier' => $held->hold_reference,
-            'details'           => ['seller' => $held->seller?->name],
-            'ip_address'        => request()->ip(),
-        ]);
-
-        $this->pendingHeldSales = collect($this->pendingHeldSales)
-            ->filter(fn($h) => $h['id'] !== $id)
-            ->values()
-            ->toArray();
-
-        if (empty($this->pendingHeldSales)) {
-            $this->showApprovalModal = false;
-        }
-    }
+    // Held-sale and completed-sale price-override approve/reject now live in
+    // the Price Audit module (App\Livewire\Owner\Reports\SalesAnalytics) —
+    // this bell only links there (see the 'price_approval' action above).
 
     /**
      * Handle search
