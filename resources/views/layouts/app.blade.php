@@ -37,6 +37,38 @@
       @toggle-mobile-menu.window="mobileMenuOpen = !mobileMenuOpen"
       @close-mobile-menu.window="mobileMenuOpen = false">
 
+    {{-- Global toast stack — catches every $this->dispatch('notification', ['type'=>..,'message'=>..])
+         call app-wide. Livewire sends a single positional array arg as
+         event.detail = [{ type, message }] (array-wrapped), not a plain
+         object — unwrap it or the toast renders blank/undefined. --}}
+    <div x-data="{
+            toasts: [],
+            toast(detail) {
+              const d = Array.isArray(detail) ? detail[0] : detail;
+              const id = Date.now() + Math.random();
+              this.toasts.push({ id, msg: d?.message ?? '', type: d?.type ?? 'info' });
+              setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 3800);
+            }
+          }"
+         @notification.window="toast($event.detail)"
+         style="position:fixed;top:calc(var(--topbar-height) + 12px);right:16px;z-index:9000;
+                display:flex;flex-direction:column;gap:7px;pointer-events:none;max-width:calc(100vw - 32px)">
+        <template x-for="t in toasts" :key="t.id">
+            <div x-show="true"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 :style="`pointer-events:auto;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;
+                    font-family:var(--font);box-shadow:0 4px 16px rgba(26,31,54,.15);max-width:360px;
+                    background:${t.type==='success'?'var(--green)':t.type==='error'?'var(--red)':t.type==='warning'?'var(--amber)':'var(--accent)'};color:#fff`"
+                 x-text="t.msg">
+            </div>
+        </template>
+    </div>
+
     <div x-show="mobileMenuOpen"
          x-cloak
          @click="mobileMenuOpen = false; $dispatch('close-mobile-menu')"

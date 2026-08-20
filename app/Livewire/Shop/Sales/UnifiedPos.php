@@ -605,15 +605,29 @@ class UnifiedPos extends Component
             $this->stagingStock = $stock;
         } else {
             $whProduct = collect($this->warehouseStock)->firstWhere('id', $item['product_id']);
+            // Use the true catalog prices (from warehouseStock, or a fresh
+            // Product lookup if it fell out of the current stock list) —
+            // never $item['price'], which is this cart line's already
+            //-modified price. Reusing it here would make the price-override
+            // threshold check compare the discounted price against itself
+            // (0% diff), silently clearing requires_owner_approval on re-edit.
+            $trueSellingPrice = $whProduct['selling_price'] ?? null;
+            $trueBoxPrice     = $whProduct['box_price'] ?? null;
+            if ($trueSellingPrice === null || $trueBoxPrice === null) {
+                $product          = Product::find($item['product_id']);
+                $trueSellingPrice = $product?->selling_price ?? $item['price'];
+                $trueBoxPrice     = $product?->effective_box_selling_price ?? $item['price'];
+            }
+
             $this->stagingProduct = [
                 'id'                      => $item['product_id'],
                 'name'                    => $item['product_name'],
                 'sku'                     => $item['sku'] ?? '',
                 'category'                => $item['category'] ?? '',
                 'category_id'             => null,
-                'selling_price'           => $item['price'],
+                'selling_price'           => $trueSellingPrice,
                 'items_per_box'           => $item['items_per_box'],
-                'box_price'               => $item['price'],
+                'box_price'               => $trueBoxPrice,
                 'source'                  => 'warehouse',
                 'source_id'               => $this->warehouseId,
                 'source_name'             => $this->warehouseName,
@@ -1339,8 +1353,8 @@ class UnifiedPos extends Component
                 'entity_id'    => $held->id,
                 'is_resolved'  => false,
                 'is_dismissed' => false,
-                'action_url'   => route('owner.dashboard'),
-                'action_label' => 'Review on Dashboard',
+                'action_url'   => route('owner.reports.sales') . '?activeTab=audit',
+                'action_label' => 'Review in Price Audit',
             ]);
         }
 

@@ -8,31 +8,8 @@
 @else
 <div class="upos-page" style="font-family:var(--font)">
 
-{{-- Toast stack --}}
-<div x-data="{
-    toasts: [],
-    toast(msg, type) {
-      const id = Date.now() + Math.random();
-      this.toasts.push({ id, msg, type });
-      setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 3800);
-    }
-  }"
-  @notification.window="toast($event.detail.message, $event.detail.type)"
-  style="position:fixed;top:72px;right:16px;z-index:9000;display:flex;flex-direction:column;gap:7px;pointer-events:none">
-  <template x-for="t in toasts" :key="t.id">
-    <div x-show="true"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 translate-y-1"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         :style="`pointer-events:auto;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;font-family:var(--font);box-shadow:0 4px 16px rgba(26,31,54,.15);max-width:320px;
-           background:${t.type==='success'?'var(--green)':t.type==='error'?'var(--red)':t.type==='warning'?'var(--amber)':'var(--accent)'};color:#fff`"
-         x-text="t.msg">
-    </div>
-  </template>
-</div>
+{{-- Toast stack is now global — see layouts/app.blade.php. Do not add a
+     local one here again; it would double-fire alongside the global one. --}}
 <style>
 /* ── Scrollbars ────────────────────────────────────────────────────────── */
 .upos-page ::-webkit-scrollbar, .upos-overlay ::-webkit-scrollbar, .upos-cart-drawer ::-webkit-scrollbar { width:6px; height:6px }
@@ -939,8 +916,12 @@
                 </div>
                 @endif
 
-                @php $hasPriceOverride = collect($cart)->contains(fn($i) => !empty($i['price_modified'])); @endphp
-                @if($hasPriceOverride)
+                {{-- Only offer "Submit for Owner Approval" when a cart item actually
+                     exceeds the price_override_threshold setting — a modification
+                     within policy completes fine via "Complete Sale" above and
+                     needs no separate approval step. --}}
+                @php $needsOwnerApproval = collect($cart)->contains('requires_owner_approval', true); @endphp
+                @if($needsOwnerApproval)
                 <button class="upos-cart-action-btn" style="width:100%;margin-top:2px;background:var(--amber-dim);border-color:var(--amber);color:var(--amber)" wire:click="holdSale">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;margin-right:5px;vertical-align:middle"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     Submit for Owner Approval
