@@ -90,10 +90,13 @@
 .fo-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
 .fo-kpi-unit  { font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px }
 .fo-kpi-divider { height:1px;background:var(--border) }
-.fo-kpi-footer  { display:grid;grid-template-columns:repeat(3,1fr) }
-.fo-kpi-stat    { display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 }
-.fo-kpi-stat-v  { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text-sub) }
-.fo-kpi-stat-l  { font-size:10px;color:var(--text-dim);letter-spacing:.3px;text-align:center }
+.fo-kpi-footer  { display:flex;flex-direction:column;gap:0 }
+.fo-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
+                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
+.fo-kpi-stat:last-child { border-bottom:none }
+.fo-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
+                  letter-spacing:-.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.fo-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
 
 /* ── Shop ranking ── */
 .fo-ranking {
@@ -437,7 +440,7 @@
                 <span class="fo-kpi-stat-v">{{ number_format($sessionCount) }}</span>
                 <span class="fo-kpi-stat-l">Sessions</span>
             </div>
-            <div class="fo-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="fo-kpi-stat">
                 <span class="fo-kpi-stat-v">{{ number_format($totalRefunds) }}</span>
                 <span class="fo-kpi-stat-l">Refunds</span>
             </div>
@@ -467,7 +470,7 @@
                 <span class="fo-kpi-stat-v">{{ number_format($totalBanked) }}</span>
                 <span class="fo-kpi-stat-l">Banked</span>
             </div>
-            <div class="fo-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="fo-kpi-stat">
                 <span class="fo-kpi-stat-v">{{ number_format($svcWithdrawals) }}</span>
                 <span class="fo-kpi-stat-l">Withdrawn</span>
             </div>
@@ -497,7 +500,7 @@
                 <span class="fo-kpi-stat-v">{{ number_format($totalOpProfit) }}</span>
                 <span class="fo-kpi-stat-l">Op. Profit</span>
             </div>
-            <div class="fo-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="fo-kpi-stat">
                 <span class="fo-kpi-stat-v">{{ number_format($svcGross) }}</span>
                 <span class="fo-kpi-stat-l">Gross Profit</span>
             </div>
@@ -530,7 +533,7 @@
                 <span class="fo-kpi-stat-v">{{ number_format($sessionCount) }}</span>
                 <span class="fo-kpi-stat-l">Sessions</span>
             </div>
-            <div class="fo-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="fo-kpi-stat">
                 <span class="fo-kpi-stat-v">{{ number_format($closedCount) }}</span>
                 <span class="fo-kpi-stat-l">Closed</span>
             </div>

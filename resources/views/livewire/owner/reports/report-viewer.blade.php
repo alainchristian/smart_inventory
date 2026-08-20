@@ -23,6 +23,20 @@
 .rv-block-body { padding:16px }
 .rv-kpi-value { font-size:28px;font-weight:700;color:var(--text);letter-spacing:-1px;margin:0 }
 .rv-kpi-sub { font-size:12px;color:var(--text-dim);margin-top:4px }
+{{-- KPI card body — same icon/divider/footer anatomy as .iv-kpi/.sa-kpi,
+     minus the outer card chrome (rv-block-card already provides that) --}}
+.rv-kpi-row  { display:flex;align-items:flex-start;gap:12px }
+.rv-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+               justify-content:center;flex-shrink:0;background:var(--accent-dim);color:var(--accent) }
+.rv-kpi-body { flex:1;min-width:0 }
+.rv-kpi-divider { height:1px;background:var(--border);margin-top:14px }
+.rv-kpi-footer  { display:flex;flex-direction:column;gap:0;margin-top:10px }
+.rv-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
+                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
+.rv-kpi-stat:last-child { border-bottom:none }
+.rv-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px;
+                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.rv-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px;text-transform:capitalize }
 .rv-table { width:100%;border-collapse:collapse }
 .rv-table thead th { font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap }
 .rv-table tbody td { font-size:13px;color:var(--text);padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle }
@@ -646,17 +660,41 @@ function generateInsight(string $metricId, array $data): ?array
                             $delta = round((($curNum - $prevNum) / abs($prevNum)) * 100, 1);
                         }
                     }
+                    // Up to 3 secondary numeric fields, mirroring the .iv-kpi/.sa-kpi
+                    // 3-stat footer — only rendered when the block's data actually has them.
+                    $footerStats = collect($data)
+                        ->filter(fn ($v, $k) => !str_starts_with((string) $k, '_') && is_numeric($v))
+                        ->skip(1)
+                        ->take(3)
+                        ->map(fn ($v, $k) => [
+                            'label' => str_replace('_', ' ', (string) $k),
+                            'value' => is_float($v) ? round($v, 1) : number_format((float) $v),
+                        ])
+                        ->values();
                 @endphp
-                <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
-                    <p class="rv-kpi-value">{{ $kpiVal }}</p>
-                    @if ($delta !== null)
-                    <span class="rv-kpi-delta {{ $delta >= 0 ? 'up' : 'down' }}">
-                        {{ $delta >= 0 ? '▲' : '▼' }} {{ abs($delta) }}%
-                    </span>
-                    @endif
+                <div class="rv-kpi-row">
+                    <div class="rv-kpi-icon"><x-icon name="bar-chart" size="16" /></div>
+                    <div class="rv-kpi-body">
+                        <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                            <p class="rv-kpi-value">{{ $kpiVal }}</p>
+                            @if ($delta !== null)
+                            <span class="rv-kpi-delta {{ $delta >= 0 ? 'up' : 'down' }}">
+                                {{ $delta >= 0 ? '▲' : '▼' }} {{ abs($delta) }}%
+                            </span>
+                            @endif
+                        </div>
+                        @if ($kpiSub) <p class="rv-kpi-sub">{{ $kpiSub }}</p> @endif
+                        @if ($compPeriod) <p class="rv-kpi-sub" style="margin-top:4px">vs {{ $compPeriod }}</p> @endif
+                    </div>
                 </div>
-                @if ($kpiSub) <p class="rv-kpi-sub">{{ $kpiSub }}</p> @endif
-                @if ($compPeriod) <p class="rv-kpi-sub" style="margin-top:4px">vs {{ $compPeriod }}</p> @endif
+                @if ($footerStats->isNotEmpty())
+                <div class="rv-kpi-divider"></div>
+                <div class="rv-kpi-footer">
+                    @foreach ($footerStats as $stat)
+                    <div class="rv-kpi-stat"><span class="rv-kpi-stat-v">{{ $stat['value'] }}</span><span class="rv-kpi-stat-l">{{ $stat['label'] }}</span></div>
+                    @endforeach
+                </div>
+                @endif
 
                 {{-- TABLE --}}
                 @elseif ($viz === 'table')

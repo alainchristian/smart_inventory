@@ -1,9 +1,9 @@
 {{-- ┌─────────────────────────────────────────────────────────────────────────┐
     │  Owner · Customer Credit Report                                        │
     │  Track customer credit balances and payment history                   │
-    │  Consistent with .bkpi design system (app.css)                        │
+    │  KPI cards follow the .iv-kpi/.sa-kpi canonical structure              │
     └─────────────────────────────────────────────────────────────────────────┘ --}}
-<div wire:poll.60s>
+<div wire:poll.30s>
 <style>
 /* ── Font size increases for better readability ───────────────────── */
 .cc-page-title { font-size:26px !important; }
@@ -20,11 +20,33 @@
     .cc-page-subtitle { font-size:13px !important; }
 }
 
+/* ── KPI cards — same anatomy as inventory-valuation's .iv-kpi ──────── */
+.cc-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
+.cc-kpi  { background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);
+           padding:22px 20px;display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
+.cc-kpi:hover { box-shadow:var(--shadow-card-hover) }
+.cc-kpi-row  { display:flex;align-items:center;gap:12px }
+.cc-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+               justify-content:center;flex-shrink:0 }
+.cc-kpi-body { flex:1;min-width:0 }
+.cc-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+                color:var(--text-dim) }
+.cc-kpi-sub  { font-size:12px;color:var(--text-dim);margin-top:2px }
+.cc-kpi-val  { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px }
+.cc-kpi-divider { height:1px;background:var(--border) }
+.cc-kpi-footer  { display:flex;flex-direction:column;gap:0 }
+.cc-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
+                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
+.cc-kpi-stat:last-child { border-bottom:none }
+.cc-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px;
+                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.cc-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
+
+@media(max-width:900px) { .cc-kpis { grid-template-columns:1fr 1fr;gap:10px } }
 @media(max-width:640px) {
-    .biz-kpi-grid { grid-template-columns:1fr 1fr !important; gap:10px !important; }
-    .bkpi { padding:13px 14px !important; }
-    .bkpi-value { font-size:22px !important; }
-    .bkpi-label { font-size:12px !important; }
+    .cc-kpis { grid-template-columns:1fr;gap:8px }
+    .cc-kpi  { padding:14px }
+    .cc-kpi-val { font-size:20px }
 }
 
 
@@ -50,7 +72,7 @@
             @if($locationFilter !== 'all')
                 · {{ $this->selectedShopName }}
             @endif
-            · auto-refreshes every 60s
+            · auto-refreshes every 30s
         </div>
     </div>
 
@@ -69,45 +91,90 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      SUMMARY KPI GRID
 ══════════════════════════════════════════════════════════════════════════ --}}
-@php $summary = $this->creditSummary; @endphp
-<div class="biz-kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px">
+@php
+    $summary = $this->creditSummary;
+    $repaymentRate = $summary['total_credit_given'] > 0
+        ? round(($summary['total_repaid'] / $summary['total_credit_given']) * 100, 1)
+        : 0;
+@endphp
+<div class="cc-kpis">
     {{-- Total Outstanding --}}
-    <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);box-shadow:0 4px 12px rgba(239,68,68,0.3)">
-        <div class="bkpi-value" style="font-size:28px;font-weight:800;color:white;font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($summary['total_outstanding'], 0) }} RWF
+    <div class="cc-kpi">
+        <div class="cc-kpi-row">
+            <div class="cc-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+                <x-icon name="credit-card" size="16" />
+            </div>
+            <div class="cc-kpi-body">
+                <div class="cc-kpi-label">Total Outstanding</div>
+                <div class="cc-kpi-sub">Unpaid customer credit</div>
+            </div>
         </div>
-        <div class="bkpi-label" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);text-transform:uppercase;letter-spacing:0.8px">
-            Total Outstanding
+        <div class="cc-kpi-val" style="color:var(--red)">{{ number_format($summary['total_outstanding']) }}</div>
+        <div class="cc-kpi-divider"></div>
+        <div class="cc-kpi-footer">
+            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="cc-kpi-stat-l">Customers</span></div>
+            <div class="cc-kpi-stat" ><span class="cc-kpi-stat-v">{{ number_format($summary['total_credit_given']) }}</span><span class="cc-kpi-stat-l">Given</span></div>
+            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ $repaymentRate }}%</span><span class="cc-kpi-stat-l">Repaid</span></div>
         </div>
     </div>
 
     {{-- Customers with Credit --}}
-    <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
-        <div class="bkpi-value" style="font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($summary['total_customers_with_credit']) }}
+    <div class="cc-kpi">
+        <div class="cc-kpi-row">
+            <div class="cc-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <x-icon name="users" size="16" />
+            </div>
+            <div class="cc-kpi-body">
+                <div class="cc-kpi-label">Customers with Credit</div>
+                <div class="cc-kpi-sub">Balance &gt; 0</div>
+            </div>
         </div>
-        <div class="bkpi-label" style="font-size:12px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.8px">
-            Customers with Credit
+        <div class="cc-kpi-val" style="color:var(--text)">{{ number_format($summary['total_customers_with_credit']) }}</div>
+        <div class="cc-kpi-divider"></div>
+        <div class="cc-kpi-footer">
+            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="cc-kpi-stat-l">Outstanding</span></div>
+            <div class="cc-kpi-stat" ><span class="cc-kpi-stat-v">{{ number_format($summary['total_credit_given']) }}</span><span class="cc-kpi-stat-l">Given</span></div>
+            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_repaid']) }}</span><span class="cc-kpi-stat-l">Repaid</span></div>
         </div>
     </div>
 
     {{-- Total Credit Given --}}
-    <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
-        <div class="bkpi-value" style="font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($summary['total_credit_given'], 0) }} RWF
+    <div class="cc-kpi">
+        <div class="cc-kpi-row">
+            <div class="cc-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+                <x-icon name="dollar-sign" size="16" />
+            </div>
+            <div class="cc-kpi-body">
+                <div class="cc-kpi-label">Total Credit Given</div>
+                <div class="cc-kpi-sub">Lifetime, all customers</div>
+            </div>
         </div>
-        <div class="bkpi-label" style="font-size:12px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.8px">
-            Total Credit Given
+        <div class="cc-kpi-val" style="color:var(--text)">{{ number_format($summary['total_credit_given']) }}</div>
+        <div class="cc-kpi-divider"></div>
+        <div class="cc-kpi-footer">
+            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="cc-kpi-stat-l">Customers</span></div>
+            <div class="cc-kpi-stat" ><span class="cc-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="cc-kpi-stat-l">Outstanding</span></div>
+            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_repaid']) }}</span><span class="cc-kpi-stat-l">Repaid</span></div>
         </div>
     </div>
 
     {{-- Total Repaid --}}
-    <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
-        <div class="bkpi-value" style="font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($summary['total_repaid'], 0) }} RWF
+    <div class="cc-kpi">
+        <div class="cc-kpi-row">
+            <div class="cc-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <x-icon name="check" size="16" />
+            </div>
+            <div class="cc-kpi-body">
+                <div class="cc-kpi-label">Total Repaid</div>
+                <div class="cc-kpi-sub">Of {{ number_format($summary['total_credit_given']) }} given</div>
+            </div>
         </div>
-        <div class="bkpi-label" style="font-size:12px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.8px">
-            Total Repaid
+        <div class="cc-kpi-val" style="color:var(--green)">{{ number_format($summary['total_repaid']) }}</div>
+        <div class="cc-kpi-divider"></div>
+        <div class="cc-kpi-footer">
+            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ $repaymentRate }}%</span><span class="cc-kpi-stat-l">Rate</span></div>
+            <div class="cc-kpi-stat" ><span class="cc-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="cc-kpi-stat-l">Outstanding</span></div>
+            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="cc-kpi-stat-l">Customers</span></div>
         </div>
     </div>
 </div>
@@ -183,13 +250,13 @@
                         <td data-label="Customer" style="padding:12px 16px;font-weight:600;color:var(--text)">{{ $customer->name }}</td>
                         <td data-label="Phone" style="padding:12px 16px;font-family:var(--mono);color:var(--text-sub);font-size:12px">{{ $customer->phone }}</td>
                         <td data-label="Shop" style="padding:12px 16px;color:var(--text)">{{ $customer->shop?->name ?? 'N/A' }}</td>
-                        <td data-label="Outstanding" style="text-align:right;padding:12px 16px;font-family:var(--mono);font-weight:700;color:{{ $customer->outstanding_balance > 0 ? '#ef4444' : 'var(--text-sub)' }}">
+                        <td data-label="Outstanding" style="text-align:right;padding:12px 16px;font-family:var(--mono);font-weight:700;color:{{ $customer->outstanding_balance > 0 ? 'var(--red)' : 'var(--text-sub)' }}">
                             {{ number_format($customer->outstanding_balance, 0) }} RWF
                         </td>
                         <td data-label="Credit Given" style="text-align:right;padding:12px 16px;font-family:var(--mono);color:var(--text)">
                             {{ number_format($customer->total_credit_given, 0) }} RWF
                         </td>
-                        <td data-label="Repaid" style="text-align:right;padding:12px 16px;font-family:var(--mono);color:#10b981">
+                        <td data-label="Repaid" style="text-align:right;padding:12px 16px;font-family:var(--mono);color:var(--green)">
                             {{ number_format($customer->total_repaid, 0) }} RWF
                         </td>
                         <td data-label="Last Credit" style="text-align:center;padding:12px 16px;color:var(--text-sub);font-size:12px">
@@ -257,7 +324,7 @@
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px">
                     <div>
                         <div style="font-size:11px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Outstanding Balance</div>
-                        <div style="font-size:20px;font-weight:800;color:#ef4444;font-family:var(--mono)">
+                        <div style="font-size:20px;font-weight:800;color:var(--red);font-family:var(--mono)">
                             {{ number_format($this->selectedCustomer->outstanding_balance, 0) }} RWF
                         </div>
                     </div>
@@ -269,7 +336,7 @@
                     </div>
                     <div>
                         <div style="font-size:11px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Total Repaid</div>
-                        <div style="font-size:20px;font-weight:800;color:#10b981;font-family:var(--mono)">
+                        <div style="font-size:20px;font-weight:800;color:var(--green);font-family:var(--mono)">
                             {{ number_format($this->selectedCustomer->total_repaid, 0) }} RWF
                         </div>
                     </div>
@@ -301,7 +368,7 @@
                             <div style="font-size:18px;font-weight:800;color:var(--text);font-family:var(--mono)">
                                 {{ number_format($sale->total, 0) }} RWF
                             </div>
-                            <div style="font-size:11px;color:#ef4444;font-weight:600;margin-top:2px">
+                            <div style="font-size:11px;color:var(--red);font-weight:600;margin-top:2px">
                                 Credit: {{ number_format($sale->credit_amount, 0) }} RWF
                             </div>
                         </div>

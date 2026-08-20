@@ -1,9 +1,9 @@
 {{-- ┌─────────────────────────────────────────────────────────────────────────┐
     │  Owner · Payment Methods Report                                        │
     │  Track revenue by payment method and split payment analysis           │
-    │  Consistent with .bkpi design system (app.css)                        │
+    │  KPI cards follow the .iv-kpi/.sa-kpi canonical structure              │
     └─────────────────────────────────────────────────────────────────────────┘ --}}
-<div wire:poll.60s>
+<div wire:poll.30s>
 <style>
 /* ── Font size increases for better readability ───────────────────── */
 .pm-page-title { font-size:26px !important; }
@@ -28,11 +28,37 @@
     .pm-date-btn { font-size:13px !important; }
 }
 
+/* ── KPI cards — same anatomy as inventory-valuation's .iv-kpi ──────── */
+.pm-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
+.pm-kpi  { background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);
+           padding:22px 20px;display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
+.pm-kpi:hover { box-shadow:var(--shadow-card-hover) }
+.pm-kpi-row  { display:flex;align-items:center;gap:12px }
+.pm-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+               justify-content:center;flex-shrink:0 }
+.pm-kpi-body { flex:1;min-width:0 }
+.pm-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+                color:var(--text-dim) }
+.pm-kpi-sub  { font-size:12px;color:var(--text-dim);margin-top:2px }
+.pm-kpi-val  { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px }
+.pm-kpi-divider { height:1px;background:var(--border) }
+.pm-kpi-footer  { display:flex;flex-direction:column;gap:0 }
+.pm-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
+                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
+.pm-kpi-stat:last-child { border-bottom:none }
+.pm-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px;
+                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.pm-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
+.pm-growth   { font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;
+               font-family:var(--mono);white-space:nowrap;flex-shrink:0 }
+.pm-growth.up      { background:var(--green-dim);color:var(--green) }
+.pm-growth.neutral { background:var(--surface2);color:var(--text-dim) }
+
+@media(max-width:900px) { .pm-kpis { grid-template-columns:1fr 1fr;gap:10px } }
 @media(max-width:640px) {
-    .biz-kpi-grid { grid-template-columns:1fr 1fr !important; gap:10px !important; }
-    .bkpi { padding:13px 14px !important; }
-    .bkpi-value { font-size:22px !important; }
-    .bkpi-label { font-size:12px !important; }
+    .pm-kpis { grid-template-columns:1fr;gap:8px }
+    .pm-kpi  { padding:14px }
+    .pm-kpi-val { font-size:20px }
 }
 
 </style>
@@ -50,7 +76,7 @@
             @if($locationFilter !== 'all')
                 · {{ $this->selectedShopName }}
             @endif
-            · auto-refreshes every 60s
+            · auto-refreshes every 30s
         </div>
     </div>
 
@@ -103,44 +129,85 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      SUMMARY KPI GRID
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div class="biz-kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px">
+<div class="pm-kpis">
     {{-- Total Revenue --}}
-    <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);box-shadow:0 4px 12px rgba(102,126,234,0.3)">
-        <div class="bkpi-value" style="font-size:28px;font-weight:800;color:white;font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($this->totalRevenue / 100, 0) }} RWF
+    <div class="pm-kpi">
+        <div class="pm-kpi-row">
+            <div class="pm-kpi-icon" style="background:var(--pink-dim);color:var(--pink)">
+                <x-icon name="dollar-sign" size="16" />
+            </div>
+            <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Total Revenue</div>
+                <div class="pm-kpi-sub">{{ number_format($this->totalTransactions) }} transactions</div>
+            </div>
         </div>
-        <div class="bkpi-label" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);text-transform:uppercase;letter-spacing:0.8px">
-            Total Revenue
+        <div class="pm-kpi-val" style="color:var(--text)">{{ number_format($this->totalRevenue / 100) }}</div>
+        <div class="pm-kpi-divider"></div>
+        <div class="pm-kpi-footer">
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['split'] }}</span><span class="pm-kpi-stat-l">Split</span></div>
+            <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ $this->creditSalesStats['count'] }}</span><span class="pm-kpi-stat-l">Credit</span></div>
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalTransactions) }}</span><span class="pm-kpi-stat-l">Total Txns</span></div>
         </div>
     </div>
 
     {{-- Total Transactions --}}
-    <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
-        <div class="bkpi-value" style="font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($this->totalTransactions) }}
+    <div class="pm-kpi">
+        <div class="pm-kpi-row">
+            <div class="pm-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <x-icon name="clipboard" size="16" />
+            </div>
+            <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Transactions</div>
+                <div class="pm-kpi-sub">Non-voided sales</div>
+            </div>
         </div>
-        <div class="bkpi-label" style="font-size:12px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.8px">
-            Transactions
+        <div class="pm-kpi-val" style="color:var(--text)">{{ number_format($this->totalTransactions) }}</div>
+        <div class="pm-kpi-divider"></div>
+        <div class="pm-kpi-footer">
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['single'] }}</span><span class="pm-kpi-stat-l">Single</span></div>
+            <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['split'] }}</span><span class="pm-kpi-stat-l">Split</span></div>
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalRevenue / 100) }}</span><span class="pm-kpi-stat-l">Revenue</span></div>
         </div>
     </div>
 
     {{-- Split Payments --}}
-    <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
-        <div class="bkpi-value" style="font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:6px">
-            {{ $this->splitPaymentStats['split'] }} <span style="font-size:16px;color:var(--text-sub)">({{ $this->splitPaymentStats['split_percentage'] }}%)</span>
+    <div class="pm-kpi">
+        <div class="pm-kpi-row">
+            <div class="pm-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+                <x-icon name="credit-card" size="16" />
+            </div>
+            <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Split Payments</div>
+                <div class="pm-kpi-sub">Multiple methods per sale</div>
+            </div>
+            <span class="pm-growth {{ $this->splitPaymentStats['split_percentage'] >= 20 ? 'up' : 'neutral' }}">{{ $this->splitPaymentStats['split_percentage'] }}%</span>
         </div>
-        <div class="bkpi-label" style="font-size:12px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.8px">
-            Split Payments
+        <div class="pm-kpi-val" style="color:var(--violet)">{{ $this->splitPaymentStats['split'] }}</div>
+        <div class="pm-kpi-divider"></div>
+        <div class="pm-kpi-footer">
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['single'] }}</span><span class="pm-kpi-stat-l">Single</span></div>
+            <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['total'] }}</span><span class="pm-kpi-stat-l">Total</span></div>
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['split_percentage'] }}%</span><span class="pm-kpi-stat-l">Rate</span></div>
         </div>
     </div>
 
     {{-- Credit Sales --}}
-    <div class="bkpi" style="padding:20px 24px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
-        <div class="bkpi-value" style="font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono);margin-bottom:6px">
-            {{ number_format($this->creditSalesStats['total_credit_given'] / 100, 0) }} RWF
+    <div class="pm-kpi">
+        <div class="pm-kpi-row">
+            <div class="pm-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+                <x-icon name="tag" size="16" />
+            </div>
+            <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Credit Given</div>
+                <div class="pm-kpi-sub">{{ $this->creditSalesStats['count'] }} credit sales</div>
+            </div>
         </div>
-        <div class="bkpi-label" style="font-size:12px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.8px">
-            Credit Given ({{ $this->creditSalesStats['count'] }} sales)
+        <div class="pm-kpi-val" style="color:var(--red)">{{ number_format($this->creditSalesStats['total_credit_given'] / 100) }}</div>
+        <div class="pm-kpi-divider"></div>
+        <div class="pm-kpi-footer">
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->creditSalesStats['count'] }}</span><span class="pm-kpi-stat-l">Sales</span></div>
+            <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ number_format($this->totalTransactions) }}</span><span class="pm-kpi-stat-l">Total Txns</span></div>
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalRevenue / 100) }}</span><span class="pm-kpi-stat-l">Revenue</span></div>
         </div>
     </div>
 </div>
@@ -239,7 +306,7 @@
                         <td data-label="Total" style="text-align:right;padding:12px 16px;font-family:var(--mono);font-weight:700;color:var(--text)">
                             {{ number_format($sale->total / 100, 0) }} RWF
                             @if($sale->has_credit)
-                                <span style="font-size:10px;color:#ef4444;margin-left:4px">({{ number_format($sale->credit_amount / 100, 0) }} credit)</span>
+                                <span style="font-size:10px;color:var(--red);margin-left:4px">({{ number_format($sale->credit_amount / 100, 0) }} credit)</span>
                             @endif
                         </td>
                     </tr>

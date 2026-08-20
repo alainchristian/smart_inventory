@@ -29,11 +29,13 @@
 .tp-kpi-val      { font-size:26px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
 .tp-kpi-bar      { height:3px;border-radius:3px }
 .tp-kpi-divider  { height:1px;background:var(--border) }
-.tp-kpi-footer   { display:grid;grid-template-columns:repeat(3,1fr) }
-.tp-kpi-stat     { display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 0;min-width:0 }
+.tp-kpi-footer   { display:flex;flex-direction:column;gap:0 }
+.tp-kpi-stat     { display:flex;flex-direction:row-reverse;justify-content:space-between;
+                   align-items:center;padding:4px 0;border-bottom:1px solid var(--border);min-width:0 }
+.tp-kpi-stat:last-child { border-bottom:none }
 .tp-kpi-stat-v   { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
-                   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.tp-kpi-stat-l   { font-size:12px;color:var(--text-dim);letter-spacing:.3px;text-align:center }
+                   letter-spacing:-.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.tp-kpi-stat-l   { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
 
 /* Tabs */
 .tp-tabs         { display:grid;grid-template-columns:repeat(4,1fr);
@@ -135,7 +137,6 @@
     .tp-kpis    { grid-template-columns:1fr 1fr;gap:8px }
     .tp-kpi     { padding:14px 12px;gap:10px }
     .tp-kpi-val { font-size:22px }
-    .tp-kpi-footer { grid-template-columns:repeat(3,1fr) }
     .tp-tabs    { display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
                   scrollbar-width:none;flex-wrap:nowrap }
     .tp-tabs::-webkit-scrollbar { display:none }
@@ -317,7 +318,7 @@
                 <span class="tp-kpi-stat-v">{{ number_format($avgDaily, 1) }}</span>
                 <span class="tp-kpi-stat-l">Per Day</span>
             </div>
-            <div class="tp-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="tp-kpi-stat">
                 <span class="tp-kpi-stat-v">{{ $inTransitCount }}</span>
                 <span class="tp-kpi-stat-l">In Transit</span>
             </div>
@@ -346,7 +347,7 @@
                 <span class="tp-kpi-stat-v">{{ $receivedCount }}</span>
                 <span class="tp-kpi-stat-l">Completed</span>
             </div>
-            <div class="tp-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="tp-kpi-stat">
                 <span class="tp-kpi-stat-v" style="color:{{ $compColor }}">{{ $compLabel }}</span>
                 <span class="tp-kpi-stat-l">Performance</span>
             </div>
@@ -375,7 +376,7 @@
                 <span class="tp-kpi-stat-v">{{ $kpis['discrepancy_count'] }}</span>
                 <span class="tp-kpi-stat-l">Incidents</span>
             </div>
-            <div class="tp-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="tp-kpi-stat">
                 <span class="tp-kpi-stat-v" style="color:{{ $discColor }}">{{ $discLabel }}</span>
                 <span class="tp-kpi-stat-l">Risk Level</span>
             </div>
@@ -404,7 +405,7 @@
                 <span class="tp-kpi-stat-v">{{ $receivedCount }}</span>
                 <span class="tp-kpi-stat-l">Received</span>
             </div>
-            <div class="tp-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="tp-kpi-stat">
                 <span class="tp-kpi-stat-v">{{ $pendingCount }}</span>
                 <span class="tp-kpi-stat-l">Pending</span>
             </div>

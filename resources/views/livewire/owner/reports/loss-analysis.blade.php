@@ -31,11 +31,13 @@
 .la-kpi-val     { font-size:22px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
 .la-kpi-bar     { height:3px;border-radius:3px }
 .la-kpi-divider { height:1px;background:var(--border) }
-.la-kpi-footer  { display:grid;grid-template-columns:repeat(3,1fr) }
-.la-kpi-stat    { display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 0;min-width:0 }
-.la-kpi-stat-v  { font-size:11px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
-                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.la-kpi-stat-l  { font-size:10px;color:var(--text-dim);letter-spacing:.3px;text-align:center }
+.la-kpi-footer  { display:flex;flex-direction:column;gap:0 }
+.la-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
+                  align-items:center;padding:4px 0;border-bottom:1px solid var(--border);min-width:0 }
+.la-kpi-stat:last-child { border-bottom:none }
+.la-kpi-stat-v  { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
+                  letter-spacing:-.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.la-kpi-stat-l  { font-size:10px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
 
 /* Tabs */
 .la-tabs        { display:grid;grid-template-columns:repeat(4,1fr);
@@ -116,7 +118,6 @@
     .la-kpis    { grid-template-columns:1fr 1fr;gap:8px }
     .la-kpi     { padding:14px 12px;gap:10px }
     .la-kpi-val { font-size:18px }
-    .la-kpi-footer { grid-template-columns:repeat(3,1fr) }
     .la-tabs    { display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
                   scrollbar-width:none;flex-wrap:nowrap }
     .la-tabs::-webkit-scrollbar { display:none }
@@ -216,7 +217,7 @@
                 <span class="la-kpi-stat-v">{{ number_format($kpis['total_refunds']) }}</span>
                 <span class="la-kpi-stat-l">Refunds RWF</span>
             </div>
-            <div class="la-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="la-kpi-stat">
                 <span class="la-kpi-stat-v">{{ number_format($kpis['damaged_loss']) }}</span>
                 <span class="la-kpi-stat-l">Damaged RWF</span>
             </div>
@@ -245,7 +246,7 @@
                 <span class="la-kpi-stat-v">{{ $kpis['returns_count'] }}</span>
                 <span class="la-kpi-stat-l">Returns</span>
             </div>
-            <div class="la-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="la-kpi-stat">
                 <span class="la-kpi-stat-v">{{ number_format($avgRefund) }}</span>
                 <span class="la-kpi-stat-l">Avg / Return</span>
             </div>
@@ -274,7 +275,7 @@
                 <span class="la-kpi-stat-v">{{ $kpis['returns_count'] }}</span>
                 <span class="la-kpi-stat-l">Returns</span>
             </div>
-            <div class="la-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="la-kpi-stat">
                 <span class="la-kpi-stat-v" style="color:{{ $rateColor }}">{{ $rateLabel }}</span>
                 <span class="la-kpi-stat-l">Risk Level</span>
             </div>
@@ -303,7 +304,7 @@
                 <span class="la-kpi-stat-v">{{ $damagedCount }}</span>
                 <span class="la-kpi-stat-l">Incidents</span>
             </div>
-            <div class="la-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+            <div class="la-kpi-stat">
                 <span class="la-kpi-stat-v">{{ $damagedCount > 0 ? number_format((int) round($kpis['damaged_loss'] / $damagedCount)) : '—' }}</span>
                 <span class="la-kpi-stat-l">Avg / Incident</span>
             </div>
