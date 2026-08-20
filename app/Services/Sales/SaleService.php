@@ -7,6 +7,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\SaleType;
 use App\Events\Sales\SaleCompleted;
 use App\Models\ActivityLog;
+use App\Models\Alert;
 use App\Models\Box;
 use App\Models\Product;
 use App\Models\Sale;
@@ -16,6 +17,14 @@ use Illuminate\Support\Facades\DB;
 
 class SaleService
 {
+    // Note: completed sales with a price override do NOT get an Alert here.
+    // Per business setting (price_override_threshold), only overrides that
+    // exceed the threshold need owner action — and those are blocked from
+    // completing directly (UnifiedPos forces a HeldSale instead, which is
+    // what fires the "Price Override Needs Approval" alert). A completed
+    // sale's override is therefore always within policy and shows as
+    // informational-only on the Price Audit tab — no notification needed.
+
     public function generateSaleNumber(): string
     {
         $businessDay = business_today();
@@ -378,9 +387,12 @@ class SaleService
 
                 $priceModified  = (bool) ($itemData['price_modified'] ?? false);
                 $priceReason    = $itemData['price_modification_reason'] ?? null;
-                $actualUnitPrice = $product->items_per_box > 0
-                    ? (int) round($boxPrice / $product->items_per_box)
-                    : $product->selling_price;
+                // Box-total prices, matching line_total's scale — every other
+                // full-box write path (createSale, createMixedSale's shop
+                // branch) stores original/actual_unit_price as the box price,
+                // not per-item, and every reader (Price Audit Trail, receipts)
+                // assumes that. Storing a per-item value here broke both.
+                $originalBoxPrice = $product->calculateBoxPrice();
 
                 foreach ($boxes as $box) {
                     $itemsConsumed = $box->items_remaining;
@@ -391,8 +403,8 @@ class SaleService
                         'box_id'                     => $box->id,
                         'quantity_sold'              => $itemsConsumed,
                         'is_full_box'                => true,
-                        'original_unit_price'        => $product->selling_price,
-                        'actual_unit_price'          => $actualUnitPrice,
+                        'original_unit_price'        => $originalBoxPrice,
+                        'actual_unit_price'          => $boxPrice,
                         'line_total'                 => $lineTotal,
                         'price_was_modified'         => $priceModified,
                         'price_modification_reason'  => $priceReason,
@@ -487,6 +499,20 @@ class SaleService
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->header('User-Agent'),
             ]);
+
+            if ($hasPriceOverride) {
+                ActivityLog::create([
+                    'user_id'           => auth()->id(),
+                    'user_name'         => auth()->user()?->name,
+                    'action'            => 'price_modified',
+                    'entity_type'       => 'Sale',
+                    'entity_id'         => $sale->id,
+                    'entity_identifier' => $sale->sale_number,
+                    'details'           => ['total' => $sale->total, 'shop_name' => $shop?->name],
+                    'ip_address'        => request()->ip(),
+                    'user_agent'        => request()->header('User-Agent'),
+                ]);
+            }
 
             Cache::flush();
 
@@ -660,9 +686,9 @@ class SaleService
 
                 $priceModified   = (bool) ($itemData['price_modified'] ?? false);
                 if ($priceModified) $hasPriceOverride = true;
-                $actualUnitPrice = $product->items_per_box > 0
-                    ? (int) round($boxPrice / $product->items_per_box)
-                    : $product->selling_price;
+                // Box-total prices — see the matching comment in
+                // createWarehouseSale() above for why this must not be per-item.
+                $originalBoxPrice = $product->calculateBoxPrice();
 
                 foreach ($boxes as $box) {
                     $itemsConsumed = $box->items_remaining;
@@ -672,8 +698,8 @@ class SaleService
                         'box_id'                    => $box->id,
                         'quantity_sold'             => $itemsConsumed,
                         'is_full_box'               => true,
-                        'original_unit_price'       => $product->selling_price,
-                        'actual_unit_price'         => $actualUnitPrice,
+                        'original_unit_price'       => $originalBoxPrice,
+                        'actual_unit_price'         => $boxPrice,
                         'line_total'                => $boxPrice,
                         'price_was_modified'        => $priceModified,
                         'price_modification_reason' => $itemData['price_modification_reason'] ?? null,
@@ -876,6 +902,11 @@ class SaleService
             'ip_address' => request()->ip(),
             'user_agent' => request()->header('User-Agent'),
         ]);
+
+        Alert::where('entity_type', 'Sale')
+            ->where('entity_id', $sale->id)
+            ->where('is_resolved', false)
+            ->each(fn ($a) => $a->markAsResolved());
 
         // Invalidate analytics cache after approving price override
         Cache::flush();

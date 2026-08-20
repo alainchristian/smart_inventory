@@ -17,7 +17,9 @@
             return [
                 'product_name'   => $product->name ?? '—',
                 'quantity'       => $product ? $product->itemsToDisplayQty($totalItems, $isBox) : $totalItems,
-                'unit_price'     => $product ? $product->displayUnitPrice($first->actual_unit_price, $isBox) : $first->actual_unit_price,
+                // Already at line_total's scale (box-total for full-box lines) —
+                // do not route through displayUnitPrice(), see Sale::groupedItems().
+                'unit_price'     => $first->actual_unit_price,
                 'line_total'     => $grp->sum('line_total'),
                 'is_full_box'    => $isBox,
                 'price_modified' => $grp->contains('price_was_modified', true),

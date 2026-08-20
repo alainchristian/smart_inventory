@@ -118,11 +118,17 @@ class Sale extends Model
                 return [
                     'product_name'    => $product->name ?? '—',
                     'quantity'        => $product ? $product->itemsToDisplayQty($totalItems, $isBox) : $totalItems,
-                    'unit_price'      => $product ? $product->displayUnitPrice($first->actual_unit_price, $isBox) : $first->actual_unit_price,
+                    // original_unit_price/actual_unit_price are already stored
+                    // at the same scale as line_total (box-total for full-box
+                    // lines, per-item for individual lines) — no conversion
+                    // needed here. Do not route these through
+                    // displayUnitPrice(), which expects a per-item input and
+                    // would double the box price.
+                    'unit_price'      => $first->actual_unit_price,
                     'line_total'      => $grp->sum('line_total'),
                     'is_full_box'     => $isBox,
                     'price_modified'  => $grp->contains('price_was_modified', true),
-                    'original_price'  => $product ? $product->displayUnitPrice($first->original_unit_price, $isBox) : $first->original_unit_price,
+                    'original_price'  => $first->original_unit_price,
                     'source'          => $first->box?->location_type?->value ?? 'shop',
                 ];
             })
