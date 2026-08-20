@@ -5,7 +5,9 @@ namespace App\Livewire\Shop;
 use App\Enums\PaymentMethod;
 use App\Livewire\Concerns\RequiresOpenSession;
 use App\Models\CreditRepayment;
+use App\Models\CreditWriteoff;
 use App\Models\Customer;
+use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -148,9 +150,84 @@ class CreditRepayments extends Component
             }
         });
 
-        session()->flash('success', 'Credit repayment of ' . number_format($amount, 0) . ' RWF recorded successfully for ' . $customer->name);
+        $this->dispatch('notification', [
+            'type'    => 'success',
+            'message' => 'Credit repayment of ' . number_format($amount, 0) . ' RWF recorded for ' . $customer->name . '.',
+        ]);
 
         $this->cancelRepayment();
+    }
+
+    public function getStatsProperty()
+    {
+        $isShopManager = auth()->user()->isShopManager();
+        $shopId        = auth()->user()->location_id;
+
+        $scopeToShop = function ($query) use ($isShopManager, $shopId) {
+            if ($isShopManager) {
+                $query->where(function ($q) use ($shopId) {
+                    $q->where('shop_id', $shopId)->orWhereNull('shop_id');
+                });
+            }
+            return $query;
+        };
+
+        $outstandingBase = $scopeToShop(Customer::query()->where('outstanding_balance', '>', 0));
+
+        $totalOutstanding = (clone $outstandingBase)->sum('outstanding_balance');
+        $customerCount    = (clone $outstandingBase)->count();
+        $highestBalance   = (clone $outstandingBase)->max('outstanding_balance') ?? 0;
+        $avgBalance       = $customerCount > 0 ? intdiv($totalOutstanding, $customerCount) : 0;
+
+        // All-time totals across every customer in scope (not just those still owing)
+        $allBase        = $scopeToShop(Customer::query());
+        $allCreditGiven = (clone $allBase)->sum('total_credit_given');
+        $allRepaid      = (clone $allBase)->sum('total_repaid');
+        $repaymentRate  = $allCreditGiven > 0 ? round(($allRepaid / $allCreditGiven) * 100, 1) : 0;
+
+        $writtenOffQuery = CreditWriteoff::query();
+        if ($isShopManager) {
+            $writtenOffQuery->where('shop_id', $shopId);
+        }
+        $totalWrittenOff = $writtenOffQuery->sum('amount');
+
+        $repaymentsTodayQuery = CreditRepayment::query()->whereDate('repayment_date', today());
+        if ($isShopManager) {
+            $repaymentsTodayQuery->where('shop_id', $shopId);
+        }
+        $repaymentsToday       = $repaymentsTodayQuery->get(['amount', 'customer_id']);
+        $collectedToday        = $repaymentsToday->sum('amount');
+        $repaymentsTodayCount  = $repaymentsToday->count();
+        $customersPaidToday    = $repaymentsToday->pluck('customer_id')->unique()->count();
+        $avgPaymentToday       = $repaymentsTodayCount > 0 ? intdiv($collectedToday, $repaymentsTodayCount) : 0;
+
+        // Same overdue definition as GenerateSystemAlerts::generateOverdueCreditAlerts()
+        $overdueDays = app(SettingsService::class)->overdueCreditDays();
+        $cutoff      = now()->subDays($overdueDays);
+        $overdueCount = (clone $outstandingBase)
+            ->where(function ($q) use ($cutoff) {
+                $q->where(function ($qq) use ($cutoff) {
+                    $qq->whereNull('last_repayment_at')->where('last_credit_at', '<', $cutoff);
+                })->orWhere('last_repayment_at', '<', $cutoff);
+            })
+            ->count();
+
+        return [
+            'total_outstanding'      => $totalOutstanding,
+            'customer_count'         => $customerCount,
+            'highest_balance'        => $highestBalance,
+            'avg_balance'            => $avgBalance,
+            'all_credit_given'       => $allCreditGiven,
+            'all_repaid'             => $allRepaid,
+            'repayment_rate'         => $repaymentRate,
+            'total_written_off'      => $totalWrittenOff,
+            'collected_today'        => $collectedToday,
+            'repayments_today_count' => $repaymentsTodayCount,
+            'customers_paid_today'   => $customersPaidToday,
+            'avg_payment_today'      => $avgPaymentToday,
+            'overdue_count'          => $overdueCount,
+            'overdue_days'           => $overdueDays,
+        ];
     }
 
     public function getCustomersProperty()
@@ -158,9 +235,16 @@ class CreditRepayments extends Component
         $query = Customer::query()
             ->where('outstanding_balance', '>', 0);
 
-        // Filter by shop if user is shop manager
+        // Filter by shop if user is shop manager — but never hide a
+        // customer with no shop assigned (shop_id nullable; some existing
+        // customers were registered without one via the owner's Customers
+        // page). An unassigned customer should still be repayable from any
+        // shop rather than becoming invisible everywhere.
         if (auth()->user()->isShopManager()) {
-            $query->where('shop_id', auth()->user()->location_id);
+            $shopId = auth()->user()->location_id;
+            $query->where(function ($q) use ($shopId) {
+                $q->where('shop_id', $shopId)->orWhereNull('shop_id');
+            });
         }
 
         // Search filter

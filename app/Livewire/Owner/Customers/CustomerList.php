@@ -101,6 +101,10 @@ class CustomerList extends Component
             'form_phone'   => ['required', 'string', 'min:10', 'max:20'],
             'form_email'   => 'nullable|email|max:100',
             'form_notes'   => 'nullable|string|max:500',
+            // "Not shop-specific" (null) is intentional — see the drawer's
+            // hint text. Every shop-scoped query reading Customer.shop_id
+            // must treat NULL as "visible from any shop", not required
+            // here. See CreditRepayments::getCustomersProperty().
             'form_shop_id' => 'nullable|exists:shops,id',
         ];
 
