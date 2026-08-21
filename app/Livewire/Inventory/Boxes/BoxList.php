@@ -37,9 +37,17 @@ class BoxList extends Component
     {
         $user = auth()->user();
 
-        if (!$user->isOwner() && !$user->isAdmin()) {
-            abort(403);
+        if ($user->isOwner() || $user->isAdmin()) {
+            return;
         }
+
+        if ($user->isWarehouseManager()) {
+            $this->locationType = 'warehouse';
+            $this->locationId   = $user->location_id;
+            return;
+        }
+
+        abort(403);
     }
 
     public function updatingLocationType(): void
@@ -80,7 +88,16 @@ class BoxList extends Component
 
     public function render()
     {
-        $isOwner = auth()->user()->isOwner() || auth()->user()->isAdmin();
+        $user    = auth()->user();
+        $isOwner = $user->isOwner() || $user->isAdmin();
+
+        // Defense in depth: a warehouse manager is locked to their own
+        // warehouse regardless of the location filter's current property
+        // state — mount() only sets the initial value.
+        if (!$isOwner && $user->isWarehouseManager()) {
+            $this->locationType = 'warehouse';
+            $this->locationId   = $user->location_id;
+        }
 
         // ── Filtered base (all filters, no sort — used for both paginated query and aggregates) ──
         $baseQuery = Box::query()
@@ -193,6 +210,7 @@ class BoxList extends Component
             'filteredCount'      => $filteredCount,
             'filteredCostValue'  => $filteredCostValue,
             'isOwner'            => $isOwner,
+            'locationLocked'     => !$isOwner,
             'products'           => Product::active()->orderBy('name')->get(),
             'warehouses'         => Warehouse::active()->orderBy('name')->get(),
             'shops'              => Shop::active()->orderBy('name')->get(),

@@ -1,5 +1,8 @@
-{{-- Pending warehouse-direct sale card + confirm strip. Expects: $sale --}}
+{{-- Pending warehouse-direct sale card + confirm strip. Expects: $sale.
+     Optional: $source ('queue'|'scan') — tags how this row was reached, carried
+     through to the ActivityLog entry on confirm. Defaults to 'scan'. --}}
 @php
+    $source     = $source ?? 'scan';
     $whItems    = $sale->items->filter(fn($i) => $i->box?->location_type?->value === 'warehouse');
     $byProduct  = $whItems->groupBy(fn($i) => $i->product_id)->map(fn($g) => [
         'name'  => $g->first()->product?->name ?? '—',
@@ -34,7 +37,9 @@
 
         <div class="fq-prods">
             @foreach($byProduct as $prod)
-                <span style="font-weight:600">{{ $prod['name'] }}</span>@if($prod['boxes'] > 1)<span class="fq-prod-qty"> &times;{{ $prod['boxes'] }}</span>@endif@if(!$loop->last)<span class="fq-dot">&middot;</span>@endif
+                <div class="fq-prod-item">
+                    <span style="font-weight:600">{{ $prod['name'] }}</span>@if($prod['boxes'] > 1)<span class="fq-prod-qty"> &times;{{ $prod['boxes'] }}</span>@endif
+                </div>
             @endforeach
         </div>
 
@@ -52,7 +57,7 @@
                     <span class="fq-outstanding" style="margin-left:6px">Balance outstanding</span>
                 @endif
             </div>
-            <button class="fq-btn-dispatch" wire:click="requestFulfillment({{ $sale->id }})">
+            <button class="fq-btn-dispatch" wire:click="requestFulfillment({{ $sale->id }}, '{{ $source }}')">
                 Confirm Dispatch
                 <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
@@ -60,41 +65,47 @@
         @endif
     </div>
 
-    {{-- Confirm strip --}}
+    {{-- Confirm strip — header (what/warning) → 2-col field grid → footer actions --}}
     @if($confirming)
     <div class="fq-confirm">
-        <div class="fq-confirm-body">
-            <div>
-                <div class="fq-confirm-msg">
-                    Hand over <strong>{{ $whItems->count() }} {{ $whItems->count() === 1 ? 'box' : 'boxes' }}</strong>
-                    to {{ $sale->fulfillment_method === 'transporter'
-                        ? ($sale->fulfillmentTransporter?->name ?? 'transporter')
-                        : 'customer' }}?
-                </div>
-                <div class="fq-confirm-sub">This action is permanent and cannot be undone.</div>
+        <div class="fq-confirm-head">
+            <div class="fq-confirm-msg">
+                Hand over <strong>{{ $whItems->count() }} {{ $whItems->count() === 1 ? 'box' : 'boxes' }}</strong>
+                to {{ $sale->fulfillment_method === 'transporter'
+                    ? ($sale->fulfillmentTransporter?->name ?? 'transporter')
+                    : 'customer' }}?
             </div>
+            <div class="fq-confirm-sub">This action is permanent and cannot be undone.</div>
+        </div>
+
+        <div class="fq-confirm-grid">
             <div class="fq-confirm-field">
                 <label class="fq-confirm-label">
                     {{ $sale->fulfillment_method === 'transporter' ? 'Transporter rep. name' : 'Who is picking this up?' }}
                 </label>
-                <input type="text" class="fq-confirm-input" wire:model="recipientName"
-                       placeholder="{{ $sale->fulfillment_method === 'transporter' ? 'Name of driver/agent collecting' : 'Name of person collecting' }}"
-                       wire:key="recipient-{{ $sale->id }}">
+                <div class="fq-confirm-input-box">
+                    <input type="text" class="fq-confirm-input" wire:model="recipientName"
+                           placeholder="{{ $sale->fulfillment_method === 'transporter' ? 'Name of driver/agent collecting' : 'Name of person collecting' }}"
+                           wire:key="recipient-{{ $sale->id }}">
+                </div>
                 @error('recipientName') <span class="fq-confirm-error">{{ $message }}</span> @enderror
             </div>
             <div class="fq-confirm-field">
                 <label class="fq-confirm-label">Signature</label>
-                <div wire:ignore wire:key="sig-wrap-{{ $sale->id }}">
+                <div class="fq-sig-wrap" wire:ignore wire:key="sig-wrap-{{ $sale->id }}">
                     <canvas id="sig-{{ $sale->id }}" class="fq-sig-canvas"
                             data-sig-canvas width="400" height="140"></canvas>
-                    <button type="button" class="fq-sig-clear" data-sig-clear="sig-{{ $sale->id }}">Clear</button>
+                    <button type="button" class="fq-sig-clear" data-sig-clear="sig-{{ $sale->id }}" title="Clear signature">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
                 </div>
                 {{-- Outside the wire:ignore subtree — a validation error must still
                      render even though the canvas above is frozen from re-renders. --}}
                 @error('signatureData') <span class="fq-confirm-error">{{ $message }}</span> @enderror
             </div>
         </div>
-        <div class="fq-confirm-btns">
+
+        <div class="fq-confirm-foot">
             <button class="fq-btn-cancel" wire:click="cancelFulfillment">Cancel</button>
             <button class="fq-btn-yes" wire:click="markFulfilled({{ $sale->id }})">
                 <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>

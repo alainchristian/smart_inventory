@@ -190,6 +190,33 @@
     transform: translateX(19px);
 }
 
+/* ── Segmented control (2-option choice) ──── */
+.st-seg {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+    width: 100%;
+    max-width: 420px;
+}
+.st-seg-btn {
+    flex: 1;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all var(--tr, .18s);
+    text-align: center;
+}
+.st-seg-btn.on { background: var(--accent); color: #fff; font-weight: 700; }
+.st-seg-btn:hover:not(.on) { color: var(--text); }
+
 /* ── Number input ───────────────────────── */
 .st-input-wrap { display: flex; align-items: center; gap: 8px; }
 .st-input {
@@ -842,6 +869,46 @@
             <input type="checkbox" wire:model.live="allowBankTransferPayment">
             <div class="st-toggle-track"><div class="st-toggle-knob"></div></div>
         </label>
+    </div>
+</div>
+
+{{-- ══════════════════════════════════════════
+     SECTION 7: Fulfillment
+══════════════════════════════════════════ --}}
+<div class="page-section-label">Fulfillment</div>
+<div class="section-card">
+    <div class="section-card-header">
+        <div class="section-card-icon" style="background:var(--accent-dim)">
+            <svg width="18" height="18" fill="none" stroke="var(--accent)"
+                 stroke-width="2" viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+        </div>
+        <div>
+            <h3 class="section-card-title">Warehouse Pickup Dispatch</h3>
+            <p class="section-card-sub">How warehouse staff find and confirm warehouse-direct orders waiting for pickup.</p>
+        </div>
+    </div>
+
+    <div class="st-row full-width">
+        <div style="margin-bottom:10px">
+            <div class="st-label">Dispatch method</div>
+            <div class="st-hint">
+                <strong>Manager Confirms from List</strong> shows every order awaiting pickup so staff can browse and
+                confirm without a code. <strong>Scan Code</strong> requires scanning or typing the printed pickup code
+                (or searching by customer name/phone) before an order can be confirmed.
+            </div>
+        </div>
+        <div class="st-seg">
+            <button type="button" wire:click="$set('fulfillmentDispatchMethod', 'queue')"
+                    class="st-seg-btn {{ $fulfillmentDispatchMethod === 'queue' ? 'on' : '' }}">
+                Manager Confirms from List
+            </button>
+            <button type="button" wire:click="$set('fulfillmentDispatchMethod', 'scan')"
+                    class="st-seg-btn {{ $fulfillmentDispatchMethod === 'scan' ? 'on' : '' }}">
+                Scan Code
+            </button>
+        </div>
     </div>
 </div>
 

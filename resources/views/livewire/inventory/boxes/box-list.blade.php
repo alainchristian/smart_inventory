@@ -286,6 +286,14 @@
                placeholder="Search by box code…">
     </div>
 
+    @if($locationLocked)
+        {{-- Warehouse managers are scoped to their own warehouse server-side
+             (see BoxList::render()) — no location filter to show, since
+             switching it wouldn't do anything. --}}
+        <span class="bx-select" style="display:inline-flex;align-items:center;cursor:default;color:var(--text-dim)">
+            {{ $warehouses->firstWhere('id', $locationId)?->name ?? 'My Warehouse' }}
+        </span>
+    @else
     {{-- Location Type --}}
     <select wire:model.live="locationType" class="bx-select">
         <option value="">All Locations</option>
@@ -308,6 +316,7 @@
             <option value="{{ $shop->id }}">{{ $shop->name }}</option>
         @endforeach
     </select>
+    @endif
     @endif
 
     {{-- Product --}}

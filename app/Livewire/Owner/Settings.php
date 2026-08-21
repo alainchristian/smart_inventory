@@ -35,6 +35,9 @@ class Settings extends Component
     public int $lowStockBoxesShop      = 2;
     public int $lowStockBoxesWarehouse = 5;
 
+    // Fulfillment
+    public string $fulfillmentDispatchMethod = 'queue';
+
     public function mount(): void
     {
         if (!auth()->user()->isOwner()) abort(403);
@@ -56,6 +59,7 @@ class Settings extends Component
         $this->allowBankTransferPayment  = $svc->allowBankTransferPayment();
         $this->lowStockBoxesShop         = $svc->lowStockBoxesShop();
         $this->lowStockBoxesWarehouse    = $svc->lowStockBoxesWarehouse();
+        $this->fulfillmentDispatchMethod = $svc->fulfillmentDispatchMethod();
     }
 
     public function save(): void
@@ -68,6 +72,7 @@ class Settings extends Component
             'priceOverrideThreshold'  => 'required|integer|min:1|max:100',
             'lowStockBoxesShop'       => 'required|integer|min:1',
             'lowStockBoxesWarehouse'  => 'required|integer|min:1',
+            'fulfillmentDispatchMethod' => 'required|in:scan,queue',
         ]);
 
         $svc = app(SettingsService::class);
@@ -87,6 +92,7 @@ class Settings extends Component
         $svc->set('allow_bank_transfer_payment',  $this->allowBankTransferPayment);
         $svc->set('low_stock_boxes_shop',         $this->lowStockBoxesShop);
         $svc->set('low_stock_boxes_warehouse',    $this->lowStockBoxesWarehouse);
+        $svc->set('fulfillment_dispatch_method',  $this->fulfillmentDispatchMethod);
 
         $this->dispatch('notification', [
             'type'    => 'success',

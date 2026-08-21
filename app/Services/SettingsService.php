@@ -129,4 +129,9 @@ class SettingsService
     {
         return (int) $this->get('low_stock_boxes_warehouse', 5);
     }
+
+    public function fulfillmentDispatchMethod(): string
+    {
+        return (string) $this->get('fulfillment_dispatch_method', 'queue');
+    }
 }
