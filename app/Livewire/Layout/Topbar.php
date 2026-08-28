@@ -166,6 +166,7 @@ class Topbar extends Component
                 'icon' => 'alert-circle',
                 'color' => 'red',
                 'route' => null,
+                'url'   => route('owner.alerts.index') . '?filterStatus=unresolved&filterSeverity=critical',
             ],
             [
                 // Completed sales with has_price_override are NOT counted here —
