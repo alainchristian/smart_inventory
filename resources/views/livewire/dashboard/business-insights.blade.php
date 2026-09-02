@@ -12,7 +12,7 @@
         </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:10px;flex:1">
+    <div class="card-scroll" style="display:flex;flex-direction:column;gap:10px">
         @foreach($insights as $insight)
         <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;
                     background:var(--surface2);border-radius:10px;
