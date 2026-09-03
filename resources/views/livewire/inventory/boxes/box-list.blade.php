@@ -16,38 +16,100 @@
 .bkpi-pct.red      { background:var(--red-dim);color:var(--red) }
 .bkpi-pct.down     { background:var(--red-dim);color:var(--red) }
 
-/* ── Filter bar ──────────────────────────────────── */
-.bx-bar { display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;
-          background:var(--surface);border:none;box-shadow:var(--shadow-card);
-          border-radius:var(--r);padding:14px 16px;
-          position:sticky;top:var(--topbar-height);z-index:15 }
-.bx-search-wrap { flex:1;min-width:200px;position:relative }
+/* ── Filter panel ────────────────────────────────── */
+.bx-filter-panel {
+    background:var(--surface);border:none;box-shadow:var(--shadow-card);
+    border-radius:var(--r);padding:14px 16px;margin-bottom:16px;
+    position:sticky;top:var(--topbar-height);z-index:15
+}
+.bx-filter-panel.bx-open { position:static }
+
+/* Search row — always visible */
+.bx-search-row  { display:flex;align-items:center;gap:10px }
+.bx-search-wrap { flex:1;min-width:0;position:relative }
 .bx-search-icon { position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-dim);pointer-events:none }
 .bx-search {
-    width:100%;padding:9px 11px 9px 33px;
+    width:100%;padding:9px 34px 9px 33px;
     border:1.5px solid var(--border);border-radius:10px;
     font-size:13px;background:var(--surface);color:var(--text);
     outline:none;box-sizing:border-box;font-family:var(--font);
     transition:border-color var(--tr)
 }
 .bx-search:focus { border-color:var(--accent) }
+.bx-search-clear {
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    width:20px;height:20px;border:none;background:none;cursor:pointer;
+    color:var(--text-dim);display:flex;align-items:center;justify-content:center;border-radius:4px
+}
+.bx-search-clear:hover { color:var(--text) }
+.bx-result-count { font-size:12px;font-weight:600;color:var(--text-dim);white-space:nowrap;flex-shrink:0 }
+
+/* Mobile bar — active chips + Filters toggle (hidden on desktop) */
+.bx-mobile-bar { display:none;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap }
+.bx-active-chips { display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex:1;min-width:0 }
+.bx-ac {
+    display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;
+    font-size:11px;font-weight:700;white-space:nowrap;background:var(--surface2);color:var(--text-sub)
+}
+.bx-ac--none { color:var(--text-dim);font-weight:500;background:transparent }
+.bx-ac--removable {
+    border:none;cursor:pointer;font-family:var(--font);transition:all var(--tr)
+}
+.bx-ac--removable:hover { background:var(--red-dim,rgba(220,38,38,.12));color:var(--red) }
+.bx-filter-toggle {
+    display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border:1.5px solid var(--border);
+    border-radius:9px;background:var(--surface);font-size:12px;font-weight:600;color:var(--text-dim);
+    cursor:pointer;transition:all var(--tr);white-space:nowrap;flex-shrink:0;font-family:var(--font)
+}
+.bx-filter-toggle:hover,.bx-filter-toggle.is-open { border-color:var(--accent);color:var(--accent) }
+.bx-chevron { transition:transform .2s }
+.bx-chevron--up { transform:rotate(180deg) }
+
+/* Filter rows — always visible on desktop */
+.bx-filter-rows { display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:12px }
+.bx-filter-row  { display:flex;align-items:center;gap:8px }
+.bx-filter-label {
+    display:flex;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--text-dim);white-space:nowrap
+}
+.bx-pill {
+    flex-shrink:0;border:1.5px solid var(--border);border-radius:7px;background:var(--surface);
+    cursor:pointer;transition:all var(--tr);white-space:nowrap;line-height:1.4;font-family:var(--font);
+    padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-dim);
+    display:inline-flex;align-items:center;gap:5px
+}
+.bx-pill:hover { color:var(--text);background:var(--surface2) }
+.bx-pill.active { background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.12) }
+
 .bx-select {
     padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;
     font-size:13px;background:var(--surface);color:var(--text);
     outline:none;cursor:pointer;font-family:var(--font)
 }
-.bx-toggle-wrap {
-    display:flex;align-items:center;gap:7px;padding:7px 14px;
-    border:1.5px solid var(--border);border-radius:10px;background:var(--surface);
-    cursor:pointer;font-size:13px;color:var(--text-sub);white-space:nowrap
-}
-.bx-toggle-wrap.active { border-color:var(--amber);color:var(--amber);background:var(--amber-dim,rgba(217,119,6,.08)) }
+.bx-locked-pill { display:inline-flex;align-items:center;padding:6px 12px;border-radius:7px;background:var(--surface2);color:var(--text-dim);font-size:12px;font-weight:600 }
+.bx-sort-group { display:flex;gap:6px }
 .bx-btn-clear {
     padding:9px 16px;background:transparent;border:1.5px solid var(--border);
     border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
     font-family:var(--font);color:var(--text-sub);transition:all var(--tr);white-space:nowrap
 }
 .bx-btn-clear:hover { border-color:var(--border-hi);color:var(--text) }
+
+/* Mobile: collapse the filter rows behind the toggle */
+@media(max-width:660px) {
+    .bx-mobile-bar  { display:flex }
+    .bx-result-count { display:none }
+    .bx-filter-rows {
+        display:none;width:100%;flex-direction:column;align-items:stretch;gap:10px
+    }
+    .bx-filter-rows.is-open { display:flex;animation:bx-slide-down .18s ease }
+    .bx-filter-row  { flex-direction:column;align-items:stretch;gap:6px }
+    .bx-select,.bx-sort-group,.bx-locked-pill { width:100%;box-sizing:border-box }
+    .bx-select { font-size:14px;padding:10px 12px }
+    .bx-sort-group { flex-direction:column }
+    .bx-btn-clear { width:100%;padding:11px 16px }
+}
+@keyframes bx-slide-down { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
 
 /* ── Table ───────────────────────────────────────── */
 .bx-table-wrap { background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);overflow:hidden }
@@ -96,8 +158,6 @@
 @media(max-width:800px)  { .bx-hide-md { display:none !important } }
 @media(max-width:768px) {
     .bx-kpis { grid-template-columns:1fr 1fr;gap:8px }
-    .bx-bar  { flex-direction:column;align-items:stretch;gap:8px }
-    .bx-select,.bx-toggle-wrap,.bx-btn-clear,.bx-search-wrap { width:100% }
     .bx-table td,.bx-table th { padding:9px 10px }
 }
 @media(max-width:480px) {
@@ -273,96 +333,182 @@
 
 </div>
 
-{{-- ── Filter bar ─────────────────────────────────────────────── --}}
-<div class="bx-bar">
+{{-- ── Filter panel ──────────────────────────────────────────────── --}}
+@php
+    $anyFilterActive = $search || $locationType || $productId || $status || $expiringOnly;
 
-    {{-- Search --}}
-    <div class="bx-search-wrap">
-        <svg class="bx-search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input wire:model.live.debounce.300ms="search"
-               class="bx-search" type="text"
-               placeholder="Search by box code…">
+    $locationChipLabel = null;
+    if (!$locationLocked && $locationType) {
+        if ($locationType === 'warehouse') {
+            $locationChipLabel = $locationId
+                ? $warehouses->firstWhere('id', $locationId)?->name
+                : 'All Warehouses';
+        } elseif ($locationType === 'shop') {
+            $locationChipLabel = $locationId
+                ? $shops->firstWhere('id', $locationId)?->name
+                : 'All Shops';
+        }
+    }
+    $productChipLabel = $productId ? $products->firstWhere('id', $productId)?->name : null;
+@endphp
+<div class="bx-filter-panel" x-data="{ open: false }" :class="{ 'bx-open': open }" @click.outside="open = false">
+
+    {{-- Search row (always visible) --}}
+    <div class="bx-search-row">
+        <div class="bx-search-wrap">
+            <svg class="bx-search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input wire:model.live.debounce.300ms="search"
+                   class="bx-search" type="text"
+                   placeholder="Search by box code…">
+            @if($search)
+            <button wire:click="$set('search','')" class="bx-search-clear" title="Clear">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+            </button>
+            @endif
+        </div>
+        <div class="bx-result-count">{{ number_format($filteredCount) }} box{{ $filteredCount === 1 ? '' : 'es' }}</div>
     </div>
 
-    @if($locationLocked)
-        {{-- Warehouse managers are scoped to their own warehouse server-side
-             (see BoxList::render()) — no location filter to show, since
-             switching it wouldn't do anything. --}}
-        <span class="bx-select" style="display:inline-flex;align-items:center;cursor:default;color:var(--text-dim)">
-            {{ $warehouses->firstWhere('id', $locationId)?->name ?? 'My Warehouse' }}
-        </span>
-    @else
-    {{-- Location Type --}}
-    <select wire:model.live="locationType" class="bx-select">
-        <option value="">All Locations</option>
-        <option value="warehouse">Warehouse</option>
-        <option value="shop">Shop</option>
-    </select>
+    {{-- Mobile bar: active-filter chips + toggle (hidden on desktop) --}}
+    <div class="bx-mobile-bar">
+        <div class="bx-active-chips">
+            @if($locationLocked)
+                <span class="bx-ac">{{ $warehouses->firstWhere('id', $locationId)?->name ?? 'My Warehouse' }}</span>
+            @endif
+            @if($locationChipLabel)
+            <button type="button" wire:click="$set('locationType', ''); $set('locationId', '')" class="bx-ac bx-ac--removable">
+                {{ $locationChipLabel }}
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+            </button>
+            @endif
+            @if($productChipLabel)
+            <button type="button" wire:click="$set('productId', '')" class="bx-ac bx-ac--removable">
+                {{ $productChipLabel }}
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+            </button>
+            @endif
+            @if($status)
+            <button type="button" wire:click="$set('status', '')" class="bx-ac bx-ac--removable">
+                {{ ucfirst($status) }}
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+            </button>
+            @endif
+            @if($expiringOnly)
+            <button type="button" wire:click="$set('expiringOnly', false)" class="bx-ac bx-ac--removable">
+                Expiring
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+            </button>
+            @endif
+            @if(!$anyFilterActive)<span class="bx-ac bx-ac--none">No filters applied</span>@endif
+        </div>
+        <button @click="open = !open" class="bx-filter-toggle" :class="{ 'is-open': open }">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6" stroke-linecap="round"/><line x1="8" y1="12" x2="20" y2="12" stroke-linecap="round"/><line x1="12" y1="18" x2="20" y2="18" stroke-linecap="round"/></svg>
+            Filters
+            <svg class="bx-chevron" :class="{ 'bx-chevron--up': open }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+    </div>
 
-    {{-- Location (cascades) --}}
-    @if($locationType === 'warehouse')
-    <select wire:model.live="locationId" class="bx-select">
-        <option value="">All Warehouses</option>
-        @foreach($warehouses as $wh)
-            <option value="{{ $wh->id }}">{{ $wh->name }}</option>
-        @endforeach
-    </select>
-    @elseif($locationType === 'shop')
-    <select wire:model.live="locationId" class="bx-select">
-        <option value="">All Shops</option>
-        @foreach($shops as $shop)
-            <option value="{{ $shop->id }}">{{ $shop->name }}</option>
-        @endforeach
-    </select>
-    @endif
-    @endif
+    {{-- Filter rows: always visible desktop, collapsible on mobile --}}
+    <div class="bx-filter-rows" :class="{ 'is-open': open }">
 
-    {{-- Product --}}
-    <select wire:model.live="productId" class="bx-select">
-        <option value="">All Products</option>
-        @foreach($products as $product)
-            <option value="{{ $product->id }}">{{ $product->name }}</option>
-        @endforeach
-    </select>
+        {{-- Location --}}
+        <div class="bx-filter-row">
+            <span class="bx-filter-label">Location</span>
+            @if($locationLocked)
+                {{-- Warehouse managers are scoped to their own warehouse server-side
+                     (see BoxList::render()) — no location filter to show, since
+                     switching it wouldn't do anything. --}}
+                <span class="bx-locked-pill">{{ $warehouses->firstWhere('id', $locationId)?->name ?? 'My Warehouse' }}</span>
+            @else
+                <select wire:model.live="locationType" class="bx-select" @change="if (!$event.target.value) open = false">
+                    <option value="">All Locations</option>
+                    <option value="warehouse">Warehouse</option>
+                    <option value="shop">Shop</option>
+                </select>
+            @endif
+        </div>
 
-    {{-- Status --}}
-    <select wire:model.live="status" class="bx-select">
-        <option value="">All Statuses</option>
-        @foreach($statuses as $s)
-            <option value="{{ $s->value }}">{{ ucfirst($s->value) }}</option>
-        @endforeach
-    </select>
+        {{-- Location (cascades) --}}
+        @if(!$locationLocked && $locationType === 'warehouse')
+        <div class="bx-filter-row">
+            <select wire:model.live="locationId" class="bx-select" @change="open = false">
+                <option value="">All Warehouses</option>
+                @foreach($warehouses as $wh)
+                    <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @elseif(!$locationLocked && $locationType === 'shop')
+        <div class="bx-filter-row">
+            <select wire:model.live="locationId" class="bx-select" @change="open = false">
+                <option value="">All Shops</option>
+                @foreach($shops as $shop)
+                    <option value="{{ $shop->id }}">{{ $shop->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
 
-    {{-- Sort By --}}
-    <select wire:model.live="sortBy" class="bx-select">
-        <option value="received_at">Date received</option>
-        <option value="items_remaining">Items remaining</option>
-        <option value="cost_value">Cost value</option>
-        <option value="expiry_date">Expiry date</option>
-        <option value="status">Status</option>
-    </select>
+        {{-- Product --}}
+        <div class="bx-filter-row">
+            <span class="bx-filter-label">Product</span>
+            <select wire:model.live="productId" class="bx-select" @change="open = false">
+                <option value="">All Products</option>
+                @foreach($products as $product)
+                    <option value="{{ $product->id }}">{{ $product->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
-    {{-- Sort Direction --}}
-    <select wire:model.live="sortDirection" class="bx-select">
-        <option value="desc">Newest first</option>
-        <option value="asc">Oldest first</option>
-    </select>
+        {{-- Status --}}
+        <div class="bx-filter-row">
+            <span class="bx-filter-label">Status</span>
+            <select wire:model.live="status" class="bx-select" @change="open = false">
+                <option value="">All Statuses</option>
+                @foreach($statuses as $s)
+                    <option value="{{ $s->value }}">{{ ucfirst($s->value) }}</option>
+                @endforeach
+            </select>
+        </div>
 
-    {{-- Expiring toggle --}}
-    <label class="bx-toggle-wrap {{ $expiringOnly ? 'active' : '' }}" style="cursor:pointer">
-        <input type="checkbox" wire:model.live="expiringOnly" style="display:none">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
-        Expiring
-    </label>
+        {{-- Options: Expiring toggle --}}
+        <div class="bx-filter-row">
+            <span class="bx-filter-label">Options</span>
+            <label class="bx-pill {{ $expiringOnly ? 'active' : '' }}" style="cursor:pointer">
+                <input type="checkbox" wire:model.live="expiringOnly" @change="open = false" style="display:none">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Expiring only
+            </label>
+        </div>
 
-    {{-- Clear --}}
-    @if($search || $locationType || $productId || $status || $expiringOnly)
-    <button wire:click="clearFilters" class="bx-btn-clear">Clear</button>
-    @endif
+        {{-- Sort --}}
+        <div class="bx-filter-row">
+            <span class="bx-filter-label">Sort</span>
+            <div class="bx-sort-group">
+                <select wire:model.live="sortBy" class="bx-select" @change="open = false">
+                    <option value="received_at">Date received</option>
+                    <option value="items_remaining">Items remaining</option>
+                    <option value="cost_value">Cost value</option>
+                    <option value="expiry_date">Expiry date</option>
+                    <option value="status">Status</option>
+                </select>
+                <select wire:model.live="sortDirection" class="bx-select" @change="open = false">
+                    <option value="desc">Newest first</option>
+                    <option value="asc">Oldest first</option>
+                </select>
+            </div>
+        </div>
+
+        {{-- Clear --}}
+        @if($anyFilterActive)
+        <button wire:click="clearFilters" @click="open = false" class="bx-btn-clear">Clear all filters</button>
+        @endif
+
+    </div>
 
 </div>
 
