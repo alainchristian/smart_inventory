@@ -30,6 +30,9 @@
                 @if($sale->customer_name)
                     &middot; {{ $sale->customer_name }}
                 @endif
+                @if($sale->customer_phone)
+                    &middot; {{ $sale->customer_phone }}
+                @endif
                 &middot; {{ local_time($sale->sale_date)->format('d M, H:i') }}
             </span>
             <span class="fq-age {{ $ageBadge }}">{{ $ageLabel }}</span>
@@ -42,6 +45,10 @@
                 </div>
             @endforeach
         </div>
+
+        @if($sale->fulfillment_notes)
+        <div class="fq-notes">{{ $sale->fulfillment_notes }}</div>
+        @endif
 
         @if(!$confirming)
         <div class="fq-act">
@@ -57,6 +64,10 @@
                     <span class="fq-outstanding" style="margin-left:6px">Balance outstanding</span>
                 @endif
             </div>
+            <a class="fq-btn-print" href="{{ route('warehouse.sales.fulfillment.picking-slip', $sale->id) }}" target="_blank" rel="noopener">
+                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Picking Slip
+            </a>
             <button class="fq-btn-dispatch" wire:click="requestFulfillment({{ $sale->id }}, '{{ $source }}')">
                 Confirm Dispatch
                 <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>

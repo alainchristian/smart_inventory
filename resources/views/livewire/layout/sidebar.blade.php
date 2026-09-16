@@ -563,6 +563,18 @@
                         </svg>
                         <span class="text-[14px] font-medium">Close Register</span>
                     </a>
+
+                    <a href="{{ route('shop.reports.daily') }}" wire:navigate
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('shop.reports.daily') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('shop.reports.daily'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V9m4 8V5m4 12v-6M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">Daily Report</span>
+                    </a>
                 </div>
             </div>
         @endif

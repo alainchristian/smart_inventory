@@ -18,20 +18,24 @@ html, body { font-family:'Courier New', Courier, monospace; font-size:12px; colo
 .xlarge  { font-size:18px; }
 
 .shop-name { font-size:16px; font-weight:bold; text-align:center; margin-bottom:2px; }
-.shop-sub  { font-size:10px; text-align:center; color:#444; }
+.shop-sub  { font-size:10px; text-align:center; color:#000; }
 
-hr.dashed  { border:none; border-top:1px dashed #999; margin:6px 0; }
+{{-- Thermal/receipt printers are effectively 1-bit (black or nothing) —
+     mid/light greys (#444-#999) that look fine on a screen or laser printer
+     dither away to near-invisible on that hardware. Everything text/border
+     here is solid black; visual hierarchy comes from font-size/weight only. --}}
+hr.dashed  { border:none; border-top:1px dashed #333; margin:6px 0; }
 hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 
 /* Items table */
 .items { width:100%; border-collapse:collapse; margin:4px 0; }
 .items td { padding:2px 0; vertical-align:top; }
 .items .name { width:60%; font-size:11px; }
-.items .qty  { width:15%; text-align:right; font-size:11px; color:#444; }
+.items .qty  { width:15%; text-align:right; font-size:11px; color:#000; }
 .items .amt  { width:25%; text-align:right; font-size:11px; font-weight:bold; }
-.items .sub  { font-size:9px; color:#555; padding-left:0; }
-.items .mod  { font-size:9px; color:#b45309; }
-.wh-tag { font-size:8px; color:#888; font-style:italic; }
+.items .sub  { font-size:9px; color:#000; padding-left:0; }
+.items .mod  { font-size:9px; color:#000; }
+.wh-tag { font-size:8px; color:#000; font-style:italic; }
 
 /* Total */
 .total-row  { display:flex; justify-content:space-between; align-items:baseline; margin:4px 0; }
@@ -40,27 +44,27 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 
 /* Payments */
 .pay-row    { display:flex; justify-content:space-between; font-size:11px; padding:1px 0; }
-.pay-label  { color:#333; }
-.pay-ref    { font-size:9px; color:#666; margin-left:4px; }
+.pay-label  { color:#000; }
+.pay-ref    { font-size:9px; color:#000; margin-left:4px; }
 
 /* Credit badge */
-.credit-box { border:1px solid #b45309; border-radius:4px; padding:5px 7px; margin:6px 0; background:#fef3c7; }
-.credit-lbl { font-size:10px; font-weight:bold; color:#92400e; }
-.credit-amt { font-size:12px; font-weight:bold; color:#92400e; }
+.credit-box { border:1px solid #000; border-radius:4px; padding:5px 7px; margin:6px 0; background:#fef3c7; }
+.credit-lbl { font-size:10px; font-weight:bold; color:#000; }
+.credit-amt { font-size:12px; font-weight:bold; color:#000; }
 
 /* Customer / meta */
-.info-row   { font-size:10px; color:#444; margin:2px 0; }
-.footer     { text-align:center; font-size:9px; color:#666; margin-top:6px; }
+.info-row   { font-size:10px; color:#000; margin:2px 0; }
+.footer     { text-align:center; font-size:9px; color:#000; margin-top:6px; }
 
 /* Barcode */
 .barcode-wrap  { text-align:center; margin:8px 0 4px; }
-.barcode-label { font-size:9px; font-weight:bold; text-transform:uppercase; letter-spacing:.5px; color:#444; margin-bottom:3px; }
+.barcode-label { font-size:9px; font-weight:bold; text-transform:uppercase; letter-spacing:.5px; color:#000; margin-bottom:3px; }
 .barcode-wrap img { max-width:100%; height:auto; }
 .barcode-code  { font-size:11px; font-weight:bold; letter-spacing:1.5px; text-align:center; margin-top:3px; }
 
 /* Dispatch-slip notice (amounts withheld) */
-.slip-notice { border:1px dashed #666; border-radius:4px; padding:5px 7px; margin:6px 0; text-align:center; }
-.slip-notice-txt { font-size:9px; color:#333; }
+.slip-notice { border:1px dashed #000; border-radius:4px; padding:5px 7px; margin:6px 0; text-align:center; }
+.slip-notice-txt { font-size:9px; color:#000; }
 </style>
 </head>
 <body>
@@ -113,18 +117,17 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 @endif
 @endforeach
 @if($hasWarehouseItems)
-<tr><td colspan="3" class="sub" style="padding-top:4px;color:#777">† dispatched from warehouse</td></tr>
+<tr><td colspan="3" class="sub" style="padding-top:4px">† dispatched from warehouse</td></tr>
 @endif
 </table>
 
 <hr class="solid">
 
 @if($hideAmounts)
-{{-- Dispatch slip: amount intentionally withheld from the document that
-     travels with the transporter — only the customer's own receipt (or an
-     explicit full reprint) shows pricing. --}}
+{{-- Dispatch/picking slip: amount intentionally withheld — only the
+     customer's own receipt (or an explicit full reprint) shows pricing. --}}
 <div class="slip-notice">
-    <div class="slip-notice-txt">Amount withheld on transporter dispatch slip.<br>Ask the shop for the customer receipt if needed.</div>
+    <div class="slip-notice-txt">Prices are not shown on this slip.<br>Ask the shop for the customer receipt if needed.</div>
 </div>
 @else
 {{-- Total --}}

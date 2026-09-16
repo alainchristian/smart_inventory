@@ -10,6 +10,8 @@ use App\Models\DailySession;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\ReturnModel;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -190,6 +192,165 @@ class DailySessionService
             'bank_available'        => (int) $bankAvailable,
             'total_expenses_bank'   => $bankExpenses,
         ];
+    }
+
+    /**
+     * Reporting figures for a shop over a date range (business-timezone,
+     * inclusive on both ends). Unlike computeLiveSummary(), this is not
+     * tied to a single session — it has no opening_balance/expected_cash/
+     * momo_available concepts, which only mean something reconciled one
+     * cash drawer at a time. This is read-only reporting data.
+     */
+    public function computeRangeSummary(int $shopId, string $dateFrom, string $dateTo): array
+    {
+        $start = \Carbon\Carbon::parse($dateFrom, config('tenant.timezone'))->startOfDay()->utc();
+        $end   = \Carbon\Carbon::parse($dateTo, config('tenant.timezone'))->endOfDay()->utc();
+
+        // Sales / payment-channel breakdown via sale_payments (split-payment safe)
+        $saleTotals = DB::table('sale_payments')
+            ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
+            ->where('sales.shop_id', $shopId)
+            ->whereNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->whereBetween('sales.sale_date', [$start, $end])
+            ->selectRaw("
+                SUM(CASE WHEN sale_payments.payment_method = 'cash'          THEN sale_payments.amount ELSE 0 END) as cash,
+                SUM(CASE WHEN sale_payments.payment_method = 'mobile_money'  THEN sale_payments.amount ELSE 0 END) as momo,
+                SUM(CASE WHEN sale_payments.payment_method = 'card'          THEN sale_payments.amount ELSE 0 END) as card,
+                SUM(CASE WHEN sale_payments.payment_method = 'bank_transfer' THEN sale_payments.amount ELSE 0 END) as bank_transfer,
+                SUM(CASE WHEN sale_payments.payment_method = 'credit'        THEN sale_payments.amount ELSE 0 END) as credit_sales,
+                SUM(CASE WHEN sale_payments.payment_method NOT IN ('cash','mobile_money','card','bank_transfer','credit') THEN sale_payments.amount ELSE 0 END) as other,
+                SUM(sale_payments.amount) as total,
+                COUNT(DISTINCT sales.id) as transaction_count
+            ")->first();
+
+        // Total boxes sold: full-box line items only, on non-voided sales for this shop.
+        // Each is_full_box=true row IS one box — quantity_sold on that row holds the
+        // number of individual items inside the box (items_per_box), not a box count,
+        // so this must COUNT rows, never SUM(quantity_sold) (that would inflate the
+        // figure by items_per_box, e.g. 23 boxes of 24 showing as "552").
+        $totalBoxesSold = (int) SaleItem::whereHas('sale', function ($q) use ($shopId, $start, $end) {
+                $q->forShop($shopId)->notVoided()->dateRange($start, $end);
+            })
+            ->where('is_full_box', true)
+            ->count();
+
+        // Boxes sold, itemized per product (drives the "boxes per item" detail table)
+        $boxesByProduct = DB::table('sale_items')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
+            ->where('sales.shop_id', $shopId)
+            ->whereNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->whereBetween('sales.sale_date', [$start, $end])
+            ->where('sale_items.is_full_box', true)
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc(DB::raw('SUM(sale_items.line_total)'))
+            ->select(
+                'products.name as product_name',
+                DB::raw('COUNT(*) as boxes'),
+                DB::raw('SUM(sale_items.line_total) as amount')
+            )
+            ->get();
+
+        // Expenses recorded against this shop's daily sessions in range
+        // (session_date is a DATE column — plain date-string bounds, no tz conversion)
+        $totalExpenses = (int) Expense::whereHas('dailySession', function ($q) use ($shopId, $dateFrom, $dateTo) {
+                $q->where('shop_id', $shopId)->whereBetween('session_date', [$dateFrom, $dateTo]);
+            })
+            ->whereNull('deleted_at')
+            ->sum('amount');
+
+        // Expenses, itemized per line (drives the "detailed expenses" table).
+        // There is no structured "paid to" field on Expense — description is the
+        // only place a payee name could appear, so it's surfaced as-is per line
+        // rather than grouped, since grouping by category would hide it.
+        $expensesDetailed = DB::table('expenses')
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+            ->join('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
+            ->where('daily_sessions.shop_id', $shopId)
+            ->whereBetween('daily_sessions.session_date', [$dateFrom, $dateTo])
+            ->whereNull('expenses.deleted_at')
+            ->orderBy('daily_sessions.session_date')
+            ->select(
+                'daily_sessions.session_date',
+                'expense_categories.name as category',
+                'expenses.description',
+                'expenses.amount'
+            )
+            ->get();
+
+        // Sales per customer, one breakdown per payment channel (Cash / Mobile
+        // Money / Card / Bank Transfer / Credit) — each rendered on the report
+        // only when it actually has rows, so a disabled or unused channel simply
+        // doesn't appear rather than showing an empty table.
+        $cashByCustomer   = $this->salesByCustomerForMethod($shopId, 'cash', $start, $end);
+        $momoByCustomer   = $this->salesByCustomerForMethod($shopId, 'mobile_money', $start, $end);
+        $cardByCustomer   = $this->salesByCustomerForMethod($shopId, 'card', $start, $end);
+        $bankByCustomer   = $this->salesByCustomerForMethod($shopId, 'bank_transfer', $start, $end);
+        // Credit sales, itemized per customer (drives the "detailed credits" table —
+        // new credit issued, i.e. "Amadeni")
+        $creditsByCustomer = $this->salesByCustomerForMethod($shopId, 'credit', $start, $end);
+
+        // Credit repayments received, itemized per customer ("ABISHYUVE")
+        $repaymentsByCustomer = DB::table('credit_repayments')
+            ->join('customers', 'credit_repayments.customer_id', '=', 'customers.id')
+            ->where('credit_repayments.shop_id', $shopId)
+            ->whereBetween('credit_repayments.repayment_date', [$start, $end])
+            ->groupBy('customers.id', 'customers.name')
+            ->orderByDesc(DB::raw('SUM(credit_repayments.amount)'))
+            ->select(
+                'customers.name as customer_name',
+                DB::raw('SUM(credit_repayments.amount) as amount'),
+                DB::raw('COUNT(*) as repayment_count')
+            )
+            ->get();
+        $totalRepayments = (int) $repaymentsByCustomer->sum('amount');
+
+        return [
+            'total_sales_cash'          => (int) ($saleTotals->cash          ?? 0),
+            'total_sales_momo'          => (int) ($saleTotals->momo          ?? 0),
+            'total_sales_card'          => (int) ($saleTotals->card          ?? 0),
+            'total_sales_bank_transfer' => (int) ($saleTotals->bank_transfer ?? 0),
+            'total_sales_credit'        => (int) ($saleTotals->credit_sales  ?? 0),
+            'total_sales_other'        => (int) ($saleTotals->other         ?? 0),
+            'total_sales'              => (int) ($saleTotals->total         ?? 0),
+            'transaction_count'        => (int) ($saleTotals->transaction_count ?? 0),
+            'total_boxes_sold'         => $totalBoxesSold,
+            'boxes_by_product'         => $boxesByProduct,
+            'total_expenses'           => $totalExpenses,
+            'expenses_detailed'        => $expensesDetailed,
+            'credits_by_customer'      => $creditsByCustomer,
+            'total_repayments'         => $totalRepayments,
+            'repayments_by_customer'   => $repaymentsByCustomer,
+            'cash_by_customer'         => $cashByCustomer,
+            'momo_by_customer'         => $momoByCustomer,
+            'card_by_customer'         => $cardByCustomer,
+            'bank_by_customer'         => $bankByCustomer,
+        ];
+    }
+
+    /**
+     * Sales for one payment channel, grouped by customer — shared by every
+     * "<channel> — by Customer" breakdown table on the shop daily report.
+     */
+    private function salesByCustomerForMethod(int $shopId, string $paymentMethod, $start, $end)
+    {
+        return DB::table('sale_payments')
+            ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
+            ->where('sales.shop_id', $shopId)
+            ->where('sale_payments.payment_method', $paymentMethod)
+            ->whereNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->whereBetween('sales.sale_date', [$start, $end])
+            ->groupBy('sales.customer_name')
+            ->orderByDesc(DB::raw('SUM(sale_payments.amount)'))
+            ->select(
+                DB::raw("COALESCE(sales.customer_name, 'Unknown') as customer_name"),
+                DB::raw('SUM(sale_payments.amount) as amount'),
+                DB::raw('COUNT(DISTINCT sales.id) as sales_count')
+            )
+            ->get();
     }
 
     /**

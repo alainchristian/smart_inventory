@@ -46,6 +46,12 @@
 .fq-prod-item { line-height:1.4 }
 .fq-prod-qty  { color:var(--text-dim);font-size:11px }
 
+/* Fulfillment notes (delivery instructions etc.) */
+.fq-notes {
+    font-size:11px;color:var(--text-dim);font-style:italic;
+    margin:0 0 13px;line-height:1.4;
+}
+
 /* Action row */
 .fq-act {
     display:flex;align-items:center;gap:10px;flex-wrap:wrap;
@@ -67,6 +73,14 @@
     transition:all var(--tr);display:inline-flex;align-items:center;gap:5px;flex-shrink:0;
 }
 .fq-btn-dispatch:hover { background:var(--accent);color:#fff;border-color:var(--accent) }
+.fq-btn-print {
+    padding:7px 14px;border-radius:8px;cursor:pointer;
+    background:transparent;color:var(--text-sub);border:1.5px solid var(--border);
+    font-size:12px;font-weight:600;font-family:var(--font);
+    transition:all var(--tr);display:inline-flex;align-items:center;gap:5px;flex-shrink:0;
+    text-decoration:none;
+}
+.fq-btn-print:hover { border-color:var(--text-dim);color:var(--text) }
 
 /* Confirm strip — plain white continuation of the card (the card's own
    .fq-urgency stripe already supplies the left accent, so no second grey

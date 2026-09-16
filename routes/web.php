@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginRedirectController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
+use App\Http\Controllers\Shop\DailyReportController;
 use App\Http\Controllers\Shop\ReceiptController;
 use App\Http\Controllers\ShopManager\DashboardController as ShopDashboardController;
 use App\Http\Controllers\WarehouseManager\DashboardController as WarehouseDashboardController;
@@ -220,6 +221,12 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckL
             Route::get('/fulfillment', function () {
                 return view('warehouse.sales.fulfillment-queue');
             })->name('fulfillment');
+
+            // Picking slip — same stripped-down (no prices) print view as the
+            // transporter dispatch slip, reachable by the warehouse manager
+            // for any pending fulfillment regardless of fulfillment_method.
+            Route::get('/fulfillment/{sale}/picking-slip', [ReceiptController::class, 'print'])
+                ->name('fulfillment.picking-slip');
         });
     });
 
@@ -272,7 +279,8 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
 
         // Reports
         Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/sales', function () { return view('shop.reports.sales'); })->name('sales');
+            Route::get('/daily', function () { return view('shop.reports.daily'); })->name('daily');
+            Route::get('/daily/print', [DailyReportController::class, 'print'])->name('daily.print');
         });
 
         // Warehouse Sale (sell directly from warehouse stock)
