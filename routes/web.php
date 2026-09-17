@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginRedirectController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
+use App\Http\Controllers\Owner\Reports\DailyReportController as OwnerDailyReportController;
 use App\Http\Controllers\Shop\DailyReportController;
 use App\Http\Controllers\Shop\ReceiptController;
 use App\Http\Controllers\ShopManager\DashboardController as ShopDashboardController;
@@ -150,6 +151,8 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/losses', function () { return view('owner.reports.losses'); })->name('losses');
         Route::get('/payment-methods', function () { return view('owner.reports.payment-methods'); })->name('payment-methods');
         Route::get('/customer-credit', function () { return view('owner.reports.customer-credit'); })->name('customer-credit');
+        Route::get('/daily', function () { return view('owner.reports.daily'); })->name('daily');
+        Route::get('/daily/print', [OwnerDailyReportController::class, 'print'])->name('daily.print');
 
         // Custom report builder
         Route::get('/custom',            [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'library'])->name('custom.library');

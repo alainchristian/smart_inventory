@@ -39,6 +39,13 @@ body {
     color:#000; border-bottom:1px solid #000; padding-bottom:6px; margin-bottom:10px;
 }
 
+/* Grid — pairs shorter tables side by side to cut down on blank space,
+   same idea as the on-screen report. Wide/itemized tables span both
+   columns. */
+.grid   { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:18px 24px; margin-bottom:20px; grid-auto-flow:dense; }
+.span-2 { grid-column:span 2; }
+.cell table, .cell p { margin-bottom:0; }
+
 table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:24px; }
 thead th {
     background:#000; color:#fff; padding:9px 12px; text-align:left;
@@ -49,8 +56,6 @@ tbody tr:nth-child(even) { background:#f4f4f4; }
 tbody td { padding:8px 12px; border-bottom:1px solid #000; }
 tfoot td { padding:9px 12px; font-weight:700; border-top:2px solid #000; }
 tfoot td:last-child { text-align:right; }
-tbody tr.sub-row td { font-size:12px;font-weight:normal; }
-tbody tr.sub-row td:first-child { padding-left:28px; }
 
 .doc-footer {
     margin-top:28px; padding-top:12px; border-top:1px solid #000;
@@ -67,9 +72,12 @@ tbody tr.sub-row td:first-child { padding-left:28px; }
     .page { padding:18px 22px; }
     .no-print { display:none !important; }
     thead th { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .cell { break-inside:avoid; }
 }
 
 @media(max-width:640px) {
+    .grid { grid-template-columns:1fr; }
+    .span-2 { grid-column:span 1; }
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 }
 </style>
@@ -79,12 +87,6 @@ tbody tr.sub-row td:first-child { padding-left:28px; }
     $from = \Carbon\Carbon::parse($dateFrom);
     $to   = \Carbon\Carbon::parse($dateTo);
     $period = $from->isSameDay($to) ? $from->format('d M Y') : $from->format('d M Y') . ' – ' . $to->format('d M Y');
-
-    $daysInPeriod     = $from->diffInDays($to) + 1;
-    $avgBoxesPerTxn   = $summary['transaction_count'] > 0 ? $summary['total_boxes_sold'] / $summary['transaction_count'] : 0;
-    $creditSharePct   = $summary['total_sales'] > 0 ? ($summary['total_sales_credit'] / $summary['total_sales']) * 100 : 0;
-    $expenseSharePct  = $summary['total_sales'] > 0 ? ($summary['total_expenses'] / $summary['total_sales']) * 100 : 0;
-    $avgExpensePerDay = $daysInPeriod > 0 ? $summary['total_expenses'] / $daysInPeriod : 0;
 
     $channels = [
         ['label' => 'Cash',         'amount' => $summary['total_sales_cash']],
@@ -133,134 +135,292 @@ tbody tr.sub-row td:first-child { padding-left:28px; }
             <div class="meta-label">Printed</div>
             <div class="meta-value">{{ now()->format('d M Y, H:i') }}</div>
         </div>
+        <div class="meta-item">
+            <div class="meta-label">View</div>
+            <div class="meta-value">{{ $viewMode === 'transactions' ? 'Transactions' : 'Summary' }}</div>
+        </div>
     </div>
 
-    <div class="section-heading">Summary</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Metric</th>
-                <th>Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Boxes Sold</td>
-                <td style="text-align:right">{{ number_format($summary['total_boxes_sold']) }}</td>
-            </tr>
-            <tr class="sub-row">
-                <td>Transactions</td>
-                <td style="text-align:right">{{ number_format($summary['transaction_count']) }}</td>
-            </tr>
-            <tr class="sub-row">
-                <td>Avg / Sale</td>
-                <td style="text-align:right">{{ number_format($avgBoxesPerTxn, 1) }}</td>
-            </tr>
+    @php $isSingleDay = $dateFrom === $dateTo; @endphp
+    <div class="grid">
 
-            <tr>
-                <td>Total Sales</td>
-                <td style="text-align:right">{{ number_format($summary['total_sales']) }} RWF</td>
-            </tr>
-            <tr class="sub-row">
-                <td>Avg / Sale</td>
-                <td style="text-align:right">{{ number_format($summary['transaction_count'] > 0 ? $summary['total_sales'] / $summary['transaction_count'] : 0) }} RWF</td>
-            </tr>
+    {{-- Business Position — what the shop currently owns vs. what it can
+         assume it holds. Independent of the date filter above: a
+         point-in-time balance, not a period total, so it's shown regardless
+         of which range or view was printed. --}}
+    <div class="cell span-2">
+        <div class="section-heading">Business Position</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        Cash on Hand — Owned Now
+                        <div style="font-size:11px;color:#000;margin-top:2px">
+                            @if($position['as_of'])
+                                {{ $position['is_open'] ? 'Live figure — today’s session is still open' : 'As of ' . \Carbon\Carbon::parse($position['as_of'])->format('d M Y') }}
+                            @else
+                                No cash session recorded yet
+                            @endif
+                        </div>
+                    </td>
+                    <td style="text-align:right">{{ number_format($position['cash']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>
+                        Outstanding Receivables — Assumed Held
+                        <div style="font-size:11px;color:#000;margin-top:2px">
+                            Owed by {{ number_format($summary['customers_owing_count']) }} {{ Str::plural('customer', $summary['customers_owing_count']) }} — expected to be collected
+                        </div>
+                    </td>
+                    <td style="text-align:right">{{ number_format($summary['outstanding_receivables']) }} RWF</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-            <tr>
-                <td>Total Credits</td>
-                <td style="text-align:right">{{ number_format($summary['total_sales_credit']) }} RWF</td>
-            </tr>
-            <tr class="sub-row">
-                <td>% of Sales</td>
-                <td style="text-align:right">{{ number_format($creditSharePct, 1) }}%</td>
-            </tr>
-            <tr class="sub-row">
-                <td>Non-Credit Sales</td>
-                <td style="text-align:right">{{ number_format($summary['total_sales'] - $summary['total_sales_credit']) }} RWF</td>
-            </tr>
-
-            <tr>
-                <td>Total Expenses</td>
-                <td style="text-align:right">{{ number_format($summary['total_expenses']) }} RWF</td>
-            </tr>
-            <tr class="sub-row">
-                <td>% of Sales</td>
-                <td style="text-align:right">{{ number_format($expenseSharePct, 1) }}%</td>
-            </tr>
-            <tr class="sub-row">
-                <td>Avg / Day</td>
-                <td style="text-align:right">{{ number_format($avgExpensePerDay) }} RWF</td>
-            </tr>
-            <tr class="sub-row">
-                <td>Days in Period</td>
-                <td style="text-align:right">{{ $daysInPeriod }}</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="section-heading">Boxes Sold by Product</div>
-    @if(count($summary['boxes_by_product']) > 0)
-    <table>
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Boxes Sold</th>
-                <th>Amount (RWF)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($summary['boxes_by_product'] as $row)
-            <tr>
-                <td>{{ $row->product_name }}</td>
-                <td style="text-align:right">{{ number_format($row->boxes) }}</td>
-                <td style="text-align:right">{{ number_format($row->amount) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td>Total</td>
-                <td style="text-align:right">{{ number_format($summary['total_boxes_sold']) }}</td>
-                <td style="text-align:right">{{ number_format(collect($summary['boxes_by_product'])->sum('amount')) }}</td>
-            </tr>
-        </tfoot>
-    </table>
-    @else
-    <p style="margin-bottom:24px;color:#000">No boxes sold in this period.</p>
+    @if($viewMode === 'summary')
+    <div class="cell">
+        <div class="section-heading">Summary</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Boxes Sold</td>
+                    <td style="text-align:right">{{ number_format($summary['total_boxes_sold']) }}</td>
+                </tr>
+                <tr>
+                    <td>Total Sales</td>
+                    <td style="text-align:right">{{ number_format($summary['total_sales']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Total Credits</td>
+                    <td style="text-align:right">{{ number_format($summary['total_sales_credit']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Total Expenses</td>
+                    <td style="text-align:right">{{ number_format($summary['total_expenses']) }} RWF</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     @endif
 
-    <div class="section-heading">Distribution by Payment Channel</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Channel</th>
-                <th>Amount (RWF)</th>
-                <th>Share</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($channels as $channel)
-                @if($channel['amount'] > 0)
+    @if($viewMode === 'transactions')
+    <div class="cell span-2">
+        <div class="section-heading">All Sales</div>
+        @if(count($summary['all_sales']) > 0)
+        <table>
+            <thead>
                 <tr>
-                    <td>{{ $channel['label'] }}</td>
-                    <td style="text-align:right">{{ number_format($channel['amount']) }}</td>
-                    <td style="text-align:right">{{ number_format($summary['total_sales'] > 0 ? ($channel['amount'] / $summary['total_sales']) * 100 : 0, 1) }}%</td>
+                    <th>Sale #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Boxes</th>
+                    <th>Amount (RWF)</th>
                 </tr>
-                @endif
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td>Total</td>
-                <td style="text-align:right">{{ number_format($summary['total_sales']) }}</td>
-                <td style="text-align:right">100.0%</td>
-            </tr>
-        </tfoot>
-    </table>
+            </thead>
+            <tbody>
+                @foreach($summary['all_sales'] as $row)
+                <tr>
+                    <td>{{ $row->sale_number }}</td>
+                    <td>{{ \Carbon\Carbon::parse($row->sale_date)->format('d M Y') }}</td>
+                    <td>{{ $row->customer_name ?? '—' }}</td>
+                    <td style="text-align:right">{{ number_format($row->boxes) }}</td>
+                    <td style="text-align:right">{{ number_format($row->total) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">Grand Total</td>
+                    <td style="text-align:right">{{ number_format(collect($summary['all_sales'])->sum('boxes')) }}</td>
+                    <td style="text-align:right">{{ number_format(collect($summary['all_sales'])->sum('total')) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        @else
+        <p>No sales in this period.</p>
+        @endif
+    </div>
+    @endif
 
+    @if($viewMode === 'summary')
+    <div class="cell {{ !$isSingleDay ? 'span-2' : '' }}">
+        <div class="section-heading">Cash Register</div>
+        @if($cashRegister->isEmpty())
+        <p>No cash session opened {{ $isSingleDay ? 'on this date' : 'in this period' }}.</p>
+        @elseif($isSingleDay)
+        @php $day = $cashRegister->first(); @endphp
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Opening Balance</td>
+                    <td style="text-align:right">{{ number_format($day->opening) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Closing Balance{{ $day->is_open ? ' (as of now)' : '' }}</td>
+                    <td style="text-align:right">{{ number_format($day->closing) }} RWF</td>
+                </tr>
+                @unless($day->is_open)
+                <tr>
+                    <td>Variance</td>
+                    <td style="text-align:right">{{ $day->variance > 0 ? '+' : '' }}{{ number_format($day->variance) }} RWF</td>
+                </tr>
+                @endunless
+            </tbody>
+        </table>
+        @else
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Opening</th>
+                    <th>Closing</th>
+                    <th>Variance</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($cashRegister as $day)
+                <tr>
+                    <td>{{ $day->date->format('d M Y') }}</td>
+                    <td style="text-align:right">{{ number_format($day->opening) }}</td>
+                    <td style="text-align:right">{{ number_format($day->closing) }}{{ $day->is_open ? ' *' : '' }}</td>
+                    <td style="text-align:right">@if($day->is_open) — @else {{ $day->variance > 0 ? '+' : '' }}{{ number_format($day->variance) }} @endif</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">Total Variance</td>
+                    <td style="text-align:right">{{ number_format($cashRegister->whereNotNull('variance')->sum('variance')) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        @if($cashRegister->contains('is_open', true))
+        <p style="font-size:11px;margin-top:6px">* still open — closing shown is a live figure, not a final count</p>
+        @endif
+        @endif
+    </div>
+
+    <div class="cell">
+        <div class="section-heading">Boxes Sold by Product</div>
+        @if(count($summary['boxes_by_product']) > 0)
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Boxes Sold</th>
+                    <th>Amount (RWF)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($summary['boxes_by_product'] as $row)
+                <tr>
+                    <td>{{ $row->product_name }}</td>
+                    <td style="text-align:right">{{ number_format($row->boxes) }}</td>
+                    <td style="text-align:right">{{ number_format($row->amount) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>Total</td>
+                    <td style="text-align:right">{{ number_format($summary['total_boxes_sold']) }}</td>
+                    <td style="text-align:right">{{ number_format(collect($summary['boxes_by_product'])->sum('amount')) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        @else
+        <p>No boxes sold in this period.</p>
+        @endif
+    </div>
+
+    <div class="cell">
+        <div class="section-heading">Distribution by Payment Channel</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Channel</th>
+                    <th>Amount (RWF)</th>
+                    <th>Share</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($channels as $channel)
+                    @if($channel['amount'] > 0)
+                    <tr>
+                        <td>{{ $channel['label'] }}</td>
+                        <td style="text-align:right">{{ number_format($channel['amount']) }}</td>
+                        <td style="text-align:right">{{ number_format($summary['total_sales'] > 0 ? ($channel['amount'] / $summary['total_sales']) * 100 : 0, 1) }}%</td>
+                    </tr>
+                    @endif
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>Total</td>
+                    <td style="text-align:right">{{ number_format($summary['total_sales']) }}</td>
+                    <td style="text-align:right">100.0%</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
+
+    @if($viewMode === 'transactions')
     @foreach($paymentByCustomerTables as $table)
         @if(count($table['data']) > 0)
-        <div class="section-heading">{{ $table['label'] }}</div>
+        <div class="cell">
+            <div class="section-heading">{{ $table['label'] }}</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Sales</th>
+                        <th>Amount (RWF)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($table['data'] as $row)
+                    <tr>
+                        <td>{{ $row->customer_name }}</td>
+                        <td style="text-align:right">{{ number_format($row->sales_count) }}</td>
+                        <td style="text-align:right">{{ number_format($row->amount) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>Total</td>
+                        <td style="text-align:right">{{ number_format(collect($table['data'])->sum('sales_count')) }}</td>
+                        <td style="text-align:right">{{ number_format(collect($table['data'])->sum('amount')) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        @endif
+    @endforeach
+
+    @if(count($summary['credits_by_customer']) > 0)
+    <div class="cell">
+        <div class="section-heading">Detailed Credits — by Customer</div>
         <table>
             <thead>
                 <tr>
@@ -270,7 +430,7 @@ tbody tr.sub-row td:first-child { padding-left:28px; }
                 </tr>
             </thead>
             <tbody>
-                @foreach($table['data'] as $row)
+                @foreach($summary['credits_by_customer'] as $row)
                 <tr>
                     <td>{{ $row->customer_name }}</td>
                     <td style="text-align:right">{{ number_format($row->sales_count) }}</td>
@@ -281,103 +441,81 @@ tbody tr.sub-row td:first-child { padding-left:28px; }
             <tfoot>
                 <tr>
                     <td>Total</td>
-                    <td style="text-align:right">{{ number_format(collect($table['data'])->sum('sales_count')) }}</td>
-                    <td style="text-align:right">{{ number_format(collect($table['data'])->sum('amount')) }}</td>
+                    <td style="text-align:right">{{ number_format(collect($summary['credits_by_customer'])->sum('sales_count')) }}</td>
+                    <td style="text-align:right">{{ number_format($summary['total_sales_credit']) }}</td>
                 </tr>
             </tfoot>
         </table>
-        @endif
-    @endforeach
-
-    @if(count($summary['credits_by_customer']) > 0)
-    <div class="section-heading">Detailed Credits — by Customer</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Customer</th>
-                <th>Sales</th>
-                <th>Amount (RWF)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($summary['credits_by_customer'] as $row)
-            <tr>
-                <td>{{ $row->customer_name }}</td>
-                <td style="text-align:right">{{ number_format($row->sales_count) }}</td>
-                <td style="text-align:right">{{ number_format($row->amount) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td>Total</td>
-                <td style="text-align:right">{{ number_format(collect($summary['credits_by_customer'])->sum('sales_count')) }}</td>
-                <td style="text-align:right">{{ number_format($summary['total_sales_credit']) }}</td>
-            </tr>
-        </tfoot>
-    </table>
+    </div>
     @endif
 
     @if(count($summary['repayments_by_customer']) > 0)
-    <div class="section-heading">Credit Repayments — by Customer</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Customer</th>
-                <th>Repayments</th>
-                <th>Amount (RWF)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($summary['repayments_by_customer'] as $row)
-            <tr>
-                <td>{{ $row->customer_name }}</td>
-                <td style="text-align:right">{{ number_format($row->repayment_count) }}</td>
-                <td style="text-align:right">{{ number_format($row->amount) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td>Total</td>
-                <td style="text-align:right">{{ number_format(collect($summary['repayments_by_customer'])->sum('repayment_count')) }}</td>
-                <td style="text-align:right">{{ number_format($summary['total_repayments']) }}</td>
-            </tr>
-        </tfoot>
-    </table>
+    <div class="cell">
+        <div class="section-heading">Credit Repayments — by Customer</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Repayments</th>
+                    <th>Amount (RWF)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($summary['repayments_by_customer'] as $row)
+                <tr>
+                    <td>{{ $row->customer_name }}</td>
+                    <td style="text-align:right">{{ number_format($row->repayment_count) }}</td>
+                    <td style="text-align:right">{{ number_format($row->amount) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>Total</td>
+                    <td style="text-align:right">{{ number_format(collect($summary['repayments_by_customer'])->sum('repayment_count')) }}</td>
+                    <td style="text-align:right">{{ number_format($summary['total_repayments']) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
     @endif
 
-    <div class="section-heading">Detailed Expenses</div>
-    @if(count($summary['expenses_detailed']) > 0)
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Amount (RWF)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($summary['expenses_detailed'] as $row)
-            <tr>
-                <td>{{ \Carbon\Carbon::parse($row->session_date)->format('d M Y') }}</td>
-                <td>{{ $row->category }}</td>
-                <td>{{ $row->description ?: '—' }}</td>
-                <td style="text-align:right">{{ number_format($row->amount) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="3">Total</td>
-                <td style="text-align:right">{{ number_format($summary['total_expenses']) }}</td>
-            </tr>
-        </tfoot>
-    </table>
-    @else
-    <p style="margin-bottom:24px;color:#000">No expenses in this period.</p>
+    <div class="cell span-2">
+        <div class="section-heading">Detailed Expenses</div>
+        @if(count($summary['expenses_detailed']) > 0)
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount (RWF)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($summary['expenses_detailed'] as $row)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($row->session_date)->format('d M Y') }}</td>
+                    <td>{{ $row->category }}</td>
+                    <td>{{ $row->description ?: '—' }}</td>
+                    <td style="text-align:right">{{ number_format($row->amount) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">Total</td>
+                    <td style="text-align:right">{{ number_format($summary['total_expenses']) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        @else
+        <p>No expenses in this period.</p>
+        @endif
+    </div>
     @endif
+
+    </div>{{-- /.grid --}}
 
     <div class="doc-footer">
         {{ config('tenant.name') }} — {{ $shop->name ?? '' }} · Generated {{ now()->format('d M Y H:i') }}

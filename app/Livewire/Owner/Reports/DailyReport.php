@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Livewire\Shop\Reports;
+namespace App\Livewire\Owner\Reports;
 
+use App\Models\Shop;
 use App\Services\DayClose\DailySessionService;
 use App\Services\SettingsService;
 use Carbon\Carbon;
@@ -9,9 +10,10 @@ use Livewire\Component;
 
 class DailyReport extends Component
 {
-    public string $preset   = 'today';
-    public string $dateFrom = '';
-    public string $dateTo   = '';
+    public string $preset         = 'today';
+    public string $dateFrom       = '';
+    public string $dateTo         = '';
+    public string $locationFilter = 'all';
     /** 'summary' = totals & breakdowns; 'transactions' = line-by-line sales/expenses. */
     public string $viewMode = 'summary';
 
@@ -19,9 +21,10 @@ class DailyReport extends Component
     public bool $settingAllowBankTransfer = false;
 
     protected $queryString = [
-        'dateFrom' => ['except' => ''],
-        'dateTo'   => ['except' => ''],
-        'viewMode' => ['except' => 'summary'],
+        'dateFrom'       => ['except' => ''],
+        'dateTo'         => ['except' => ''],
+        'locationFilter' => ['except' => 'all'],
+        'viewMode'       => ['except' => 'summary'],
     ];
 
     public function setViewMode(string $mode): void
@@ -32,7 +35,7 @@ class DailyReport extends Component
     public function mount(): void
     {
         $user = auth()->user();
-        if (! $user->isShopManager()) {
+        if (! $user->isOwner()) {
             abort(403);
         }
 
@@ -78,6 +81,32 @@ class DailyReport extends Component
         };
     }
 
+    /** null = every shop combined ("All Shops"); otherwise the selected shop's id. */
+    private function resolveShopId(): ?int
+    {
+        if ($this->locationFilter === 'all') {
+            return null;
+        }
+
+        return (int) str_replace('shop:', '', $this->locationFilter);
+    }
+
+    public function getShopsProperty()
+    {
+        return Shop::orderBy('name')->get(['id', 'name']);
+    }
+
+    public function getSelectedShopNameProperty(): string
+    {
+        if ($this->locationFilter === 'all') {
+            return 'All Shops';
+        }
+
+        $shop = Shop::find($this->resolveShopId());
+
+        return $shop ? $shop->name : 'Unknown Shop';
+    }
+
     public function getActiveDateRangeLabelProperty(): string
     {
         $from = Carbon::parse($this->dateFrom);
@@ -92,30 +121,36 @@ class DailyReport extends Component
 
     public function getSummaryProperty(): array
     {
-        $shopId = auth()->user()->location_id;
-
-        return app(DailySessionService::class)->computeRangeSummary($shopId, $this->dateFrom, $this->dateTo);
+        return app(DailySessionService::class)->computeRangeSummary($this->resolveShopId(), $this->dateFrom, $this->dateTo);
     }
 
     public function getCashRegisterProperty(): \Illuminate\Support\Collection
     {
-        $shopId = auth()->user()->location_id;
+        $svc = app(DailySessionService::class);
 
-        return app(DailySessionService::class)->getCashRegisterByDay($shopId, $this->dateFrom, $this->dateTo);
+        if ($this->locationFilter === 'all') {
+            return $svc->getCashRegisterByShop($this->shops, $this->dateFrom, $this->dateTo);
+        }
+
+        return $svc->getCashRegisterByDay($this->resolveShopId(), $this->dateFrom, $this->dateTo);
     }
 
-    /** Real-time snapshot of what the shop currently holds — cash on hand
-     *  plus outstanding customer credit — independent of the date filter. */
+    /** Real-time snapshot of what the business currently holds — cash on
+     *  hand plus outstanding customer credit — independent of the date filter. */
     public function getPositionProperty(): array
     {
-        $shopId = auth()->user()->location_id;
+        $svc = app(DailySessionService::class);
 
-        return app(DailySessionService::class)->getCurrentCashPosition($shopId);
+        if ($this->locationFilter === 'all') {
+            return $svc->getCurrentCashPosition(null, $this->shops);
+        }
+
+        return $svc->getCurrentCashPosition($this->resolveShopId());
     }
 
     public function render()
     {
-        return view('livewire.shop.reports.daily-report', [
+        return view('livewire.owner.reports.daily-report', [
             'summary'      => $this->summary,
             'cashRegister' => $this->cashRegister,
             'position'     => $this->position,

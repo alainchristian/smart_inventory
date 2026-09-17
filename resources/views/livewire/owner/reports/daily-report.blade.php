@@ -1,83 +1,89 @@
 <div style="font-family:var(--font)">
 <style>
-/* ── Shop Daily Report ── dr- ──────────────────────────────────── */
+/* ── Owner Daily Report ── odr- ──────────────────────────────────── */
 
-.dr-header       { display:flex;align-items:flex-start;justify-content:space-between;
+.odr-header       { display:flex;align-items:flex-start;justify-content:space-between;
                    gap:16px;margin-bottom:24px;flex-wrap:wrap; }
-.dr-header-title { font-size:22px;font-weight:800;color:var(--text);margin:0 0 4px; }
-.dr-header-sub   { font-size:13px;color:var(--text-dim);margin:0; }
+.odr-header-title { font-size:22px;font-weight:800;color:var(--text);margin:0 0 4px; }
+.odr-header-sub   { font-size:13px;color:var(--text-dim);margin:0; }
 
 /* Filters */
-.dr-filters     { background:var(--surface);border:none;border-radius:var(--r);
+.odr-filters     { background:var(--surface);border:none;border-radius:var(--r);
                   box-shadow:var(--shadow-card);margin-bottom:20px;
                   min-width:0;max-width:100%; }
-.dr-presets-row { display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+.odr-presets-row { display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;
                   padding:10px 14px;border-bottom:1px solid var(--border);
                   scrollbar-width:none;flex-wrap:nowrap;min-width:0; }
-.dr-presets-row::-webkit-scrollbar { display:none; }
-.dr-preset-btn  { padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;
+.odr-presets-row::-webkit-scrollbar { display:none; }
+.odr-preset-btn  { padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;
                   border:1px solid transparent;background:transparent;color:var(--text-dim);
                   cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all var(--tr);
                   font-family:var(--font); }
-.dr-preset-btn:hover  { background:var(--surface2);color:var(--text);border-color:var(--border); }
-.dr-preset-btn.active { background:var(--accent);color:#fff;border-color:var(--accent);
+.odr-preset-btn:hover  { background:var(--surface2);color:var(--text);border-color:var(--border); }
+.odr-preset-btn.active { background:var(--accent);color:#fff;border-color:var(--accent);
                         box-shadow:0 2px 8px rgba(0,0,0,.12); }
-.dr-filter-row  { display:flex;align-items:center;flex-wrap:wrap; }
-.dr-filter-seg  { display:flex;align-items:center;gap:6px;padding:8px 14px;
+.odr-filter-row  { display:flex;align-items:center;flex-wrap:wrap; }
+.odr-filter-seg  { display:flex;align-items:center;gap:6px;padding:8px 14px;
                   border-right:1px solid var(--border);flex-shrink:0; }
-.dr-filter-seg:last-child { border-right:none; }
-.dr-date-input  { padding:0;border:none;background:transparent;color:var(--text);
+.odr-filter-seg:last-child { border-right:none; }
+.odr-date-input  { padding:0;border:none;background:transparent;color:var(--text);
                   font-size:13px;font-weight:600;font-family:var(--font);
                   cursor:pointer;width:130px;outline:none; }
-.dr-date-input:focus { color:var(--accent); }
+.odr-date-input:focus { color:var(--accent); }
+.odr-loc-select  { padding:0;border:none;background:transparent;color:var(--text);
+                  font-size:13px;font-weight:600;font-family:var(--font);
+                  cursor:pointer;outline:none; }
 
 /* Report grid — pairs narrower tables side by side on wide screens to cut
    down on dead white space; wide/many-column tables span both columns. */
-.dr-grid    { display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:20px;margin-bottom:20px;
+.odr-grid    { display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:20px;margin-bottom:20px;
               grid-auto-flow:dense; }
-.dr-span-2  { grid-column:span 2; }
+.odr-span-2  { grid-column:span 2; }
 
 @media(max-width:900px) {
-    .dr-grid   { grid-template-columns:1fr; }
-    .dr-span-2 { grid-column:span 1; }
+    .odr-grid   { grid-template-columns:1fr; }
+    .odr-span-2 { grid-column:span 1; }
 }
 
 /* Tables */
-.dr-table-wrap { background:var(--surface);border:none;border-radius:var(--r);
+.odr-table-wrap { background:var(--surface);border:none;border-radius:var(--r);
                  box-shadow:var(--shadow-card);min-width:0; }
-.dr-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
-.dr-table { width:100%;border-collapse:collapse; }
-.dr-table thead tr { border-bottom:2px solid var(--border); }
-.dr-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
+.odr-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+.odr-table { width:100%;border-collapse:collapse; }
+.odr-table thead tr { border-bottom:2px solid var(--border); }
+.odr-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
                      letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);
                      white-space:nowrap; }
-.dr-table tbody tr { border-bottom:1px solid var(--border); }
-.dr-table tbody tr:last-child { border-bottom:none; }
-.dr-table td { padding:13px 16px;font-size:13px;vertical-align:middle; }
-.dr-table tbody tr.dr-total-row td { font-weight:700;border-top:2px solid var(--border); }
-.dr-empty       { padding:40px 20px;text-align:center; }
-.dr-empty-title { font-size:14px;font-weight:700;color:var(--text-sub);margin-bottom:4px; }
-.dr-empty-sub   { font-size:12px;color:var(--text-dim); }
+.odr-table tbody tr { border-bottom:1px solid var(--border); }
+.odr-table tbody tr:last-child { border-bottom:none; }
+.odr-table td { padding:13px 16px;font-size:13px;vertical-align:middle; }
+.odr-table tbody tr.odr-total-row td { font-weight:700;border-top:2px solid var(--border); }
+.odr-empty       { padding:40px 20px;text-align:center; }
+.odr-empty-title { font-size:14px;font-weight:700;color:var(--text-sub);margin-bottom:4px; }
+.odr-empty-sub   { font-size:12px;color:var(--text-dim); }
 
-.dr-btn-primary { padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;
+.odr-btn-primary { padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;
                   cursor:pointer;font-family:var(--font);transition:all var(--tr);
                   display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
                   background:var(--accent);color:#fff;border:none;text-decoration:none;
                   box-shadow:0 3px 10px rgba(59,111,212,.25); }
-.dr-btn-primary:hover { opacity:.88; }
+.odr-btn-primary:hover { opacity:.88; }
 
 /* View mode toggle — Summary (totals & breakdowns) vs Transactions (every
    individual sale/expense line). */
-.dr-view-tabs { display:flex;gap:4px;flex-shrink:0; }
-.dr-view-tab  { display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;
+.odr-view-tabs { display:flex;gap:4px;flex-shrink:0; }
+.odr-view-tab  { display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;
                 border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;
                 font-family:var(--font);background:var(--surface);color:var(--text-dim);
                 transition:all var(--tr);white-space:nowrap; }
-.dr-view-tab:hover  { border-color:var(--accent);color:var(--accent); }
-.dr-view-tab.active { background:var(--accent);border-color:var(--accent);color:#fff; }
+.odr-view-tab:hover  { border-color:var(--accent);color:var(--accent); }
+.odr-view-tab.active { background:var(--accent);border-color:var(--accent);color:#fff; }
 </style>
 
 @php
+    $isAllShops = $locationFilter === 'all';
+    $isSingleDay = $dateFrom === $dateTo;
+
     $channels = [
         ['label' => 'Cash',          'amount' => $summary['total_sales_cash']],
         ['label' => 'Mobile Money',  'amount' => $summary['total_sales_momo']],
@@ -104,17 +110,17 @@
     ];
 @endphp
 
-<div class="dr-header">
+<div class="odr-header">
     <div>
-        <h1 class="dr-header-title">Daily Report</h1>
-        <p class="dr-header-sub">{{ $this->activeDateRangeLabel }} · {{ $summary['transaction_count'] }} {{ Str::plural('transaction', $summary['transaction_count']) }}</p>
+        <h1 class="odr-header-title">Daily Report</h1>
+        <p class="odr-header-sub">{{ $this->activeDateRangeLabel }} · {{ $this->selectedShopName }} · {{ $summary['transaction_count'] }} {{ Str::plural('transaction', $summary['transaction_count']) }}</p>
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <div class="dr-view-tabs">
-            <button class="dr-view-tab {{ $viewMode === 'summary' ? 'active' : '' }}" wire:click="setViewMode('summary')">Summary</button>
-            <button class="dr-view-tab {{ $viewMode === 'transactions' ? 'active' : '' }}" wire:click="setViewMode('transactions')">Transactions</button>
+        <div class="odr-view-tabs">
+            <button class="odr-view-tab {{ $viewMode === 'summary' ? 'active' : '' }}" wire:click="setViewMode('summary')">Summary</button>
+            <button class="odr-view-tab {{ $viewMode === 'transactions' ? 'active' : '' }}" wire:click="setViewMode('transactions')">Transactions</button>
         </div>
-        <a class="dr-btn-primary" href="{{ route('shop.reports.daily.print', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'view' => $viewMode]) }}" target="_blank" rel="noopener">
+        <a class="odr-btn-primary" href="{{ route('owner.reports.daily.print', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'shop' => $locationFilter, 'view' => $viewMode]) }}" target="_blank" rel="noopener">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print Report
         </a>
@@ -122,38 +128,50 @@
 </div>
 
 {{-- Filters --}}
-<div class="dr-filters">
-    <div class="dr-presets-row">
+<div class="odr-filters">
+    <div class="odr-presets-row">
         @foreach(['today' => 'Today', 'yesterday' => 'Yesterday', 'this_week' => 'This Week', 'this_month' => 'This Month', 'last_month' => 'Last Month', 'this_quarter' => 'This Quarter', 'this_year' => 'This Year'] as $key => $label)
-            <button class="dr-preset-btn {{ $preset === $key ? 'active' : '' }}" wire:click="setPreset('{{ $key }}')">{{ $label }}</button>
+            <button class="odr-preset-btn {{ $preset === $key ? 'active' : '' }}" wire:click="setPreset('{{ $key }}')">{{ $label }}</button>
         @endforeach
     </div>
-    <div class="dr-filter-row">
-        <div class="dr-filter-seg">
+    <div class="odr-filter-row">
+        <div class="odr-filter-seg">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--text-dim)">
                 <rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
-            <input type="date" wire:model.live="dateFrom" class="dr-date-input">
+            <input type="date" wire:model.live="dateFrom" class="odr-date-input">
             <span style="font-size:13px;color:var(--text-dim);flex-shrink:0;">→</span>
-            <input type="date" wire:model.live="dateTo" class="dr-date-input">
+            <input type="date" wire:model.live="dateTo" class="odr-date-input">
+        </div>
+        <div class="odr-filter-seg">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--text-dim)">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+            </svg>
+            <select wire:model.live="locationFilter" class="odr-loc-select">
+                <option value="all">All Shops</option>
+                @foreach($this->shops as $shop)
+                    <option value="shop:{{ $shop->id }}">{{ $shop->name }}</option>
+                @endforeach
+            </select>
         </div>
     </div>
 </div>
 
-<div class="dr-grid">
+<div class="odr-grid">
 
-{{-- Business Position — what the shop currently holds, right now. Independent
-     of the date filter above (it's a point-in-time snapshot, not a period total),
-     so it's shown regardless of which range or view mode is selected. --}}
-<div class="dr-table-wrap dr-span-2">
+{{-- Business Position — what the business currently holds, right now.
+     Independent of the date filter above (it's a point-in-time snapshot, not
+     a period total), so it's shown regardless of which range, shop, or view
+     mode is selected. --}}
+<div class="odr-table-wrap odr-span-2">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">Business Position</div>
         <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
-            What the shop owns right now — not limited to the period above
+            What {{ $isAllShops ? 'the business' : $this->selectedShopName }} owns right now — not limited to the period above
         </div>
     </div>
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Metric</th>
@@ -166,7 +184,7 @@
                     Cash on Hand
                     <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
                         @if($position['as_of'])
-                            {{ $position['is_open'] ? 'Live figure — today’s session is still open' : 'As of ' . \Carbon\Carbon::parse($position['as_of'])->format('d M Y') }}
+                            {{ $position['is_open'] ? 'Live figure — at least one session is still open' : 'As of ' . \Carbon\Carbon::parse($position['as_of'])->format('d M Y') }}
                         @else
                             No cash session recorded yet
                         @endif
@@ -178,7 +196,7 @@
                 <td>
                     Outstanding Receivables
                     <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
-                        Owed by {{ number_format($summary['customers_owing_count']) }} {{ Str::plural('customer', $summary['customers_owing_count']) }} — what the shop can assume it will collect
+                        Owed by {{ number_format($summary['customers_owing_count']) }} {{ Str::plural('customer', $summary['customers_owing_count']) }} — what {{ $isAllShops ? 'the business' : 'the shop' }} can assume it will collect
                     </div>
                 </td>
                 <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:var(--amber)">{{ number_format($summary['outstanding_receivables']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
@@ -190,12 +208,12 @@
 
 @if($viewMode === 'summary')
 {{-- Summary --}}
-<div class="dr-table-wrap">
+<div class="odr-table-wrap">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">Summary</div>
     </div>
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Metric</th>
@@ -225,13 +243,13 @@
 </div>
 
 {{-- Boxes Sold by Product --}}
-<div class="dr-table-wrap">
+<div class="odr-table-wrap">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">Boxes Sold by Product</div>
     </div>
     @if(count($summary['boxes_by_product']) > 0)
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Product</th>
@@ -249,7 +267,7 @@
                 </td>
             </tr>
             @endforeach
-            <tr class="dr-total-row">
+            <tr class="odr-total-row">
                 <td>Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_boxes_sold']) }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['boxes_by_product'])->sum('amount')) }} RWF</td>
@@ -258,9 +276,9 @@
     </table>
     </div>
     @else
-    <div class="dr-empty">
-        <div class="dr-empty-title">No boxes sold in this period</div>
-        <div class="dr-empty-sub">Try a different date range.</div>
+    <div class="odr-empty">
+        <div class="odr-empty-title">No boxes sold in this period</div>
+        <div class="odr-empty-sub">Try a different date range.</div>
     </div>
     @endif
 </div>
@@ -268,16 +286,17 @@
 
 @if($viewMode === 'transactions')
 {{-- All Sales --}}
-<div class="dr-table-wrap dr-span-2">
+<div class="odr-table-wrap odr-span-2">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">All Sales</div>
     </div>
     @if(count($summary['all_sales']) > 0)
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Sale #</th>
+                @if($isAllShops)<th>Shop</th>@endif
                 <th>Date</th>
                 <th>Customer</th>
                 <th style="text-align:right">Boxes</th>
@@ -288,6 +307,7 @@
             @foreach($summary['all_sales'] as $row)
             <tr>
                 <td style="font-family:var(--mono)">{{ $row->sale_number }}</td>
+                @if($isAllShops)<td style="color:var(--text-dim)">{{ $row->shop_name }}</td>@endif
                 <td style="color:var(--text-dim)">{{ \Carbon\Carbon::parse($row->sale_date)->format('d M Y') }}</td>
                 <td>{{ $row->customer_name ?? '—' }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($row->boxes) }}</td>
@@ -296,8 +316,8 @@
                 </td>
             </tr>
             @endforeach
-            <tr class="dr-total-row">
-                <td colspan="3">Grand Total</td>
+            <tr class="odr-total-row">
+                <td colspan="{{ $isAllShops ? 4 : 3 }}">Grand Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['all_sales'])->sum('boxes')) }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['all_sales'])->sum('total')) }} RWF</td>
             </tr>
@@ -305,9 +325,9 @@
     </table>
     </div>
     @else
-    <div class="dr-empty">
-        <div class="dr-empty-title">No sales in this period</div>
-        <div class="dr-empty-sub">Try a different date range.</div>
+    <div class="odr-empty">
+        <div class="odr-empty-title">No sales in this period</div>
+        <div class="odr-empty-sub">Try a different date range.</div>
     </div>
     @endif
 </div>
@@ -315,20 +335,54 @@
 
 @if($viewMode === 'summary')
 {{-- Cash Register (Opening/Closing Balance) --}}
-@php $isSingleDay = $dateFrom === $dateTo; @endphp
-<div class="dr-table-wrap {{ !$isSingleDay ? 'dr-span-2' : '' }}">
+<div class="odr-table-wrap {{ ($isAllShops || !$isSingleDay) ? 'odr-span-2' : '' }}">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">Cash Register</div>
     </div>
     @if($cashRegister->isEmpty())
-    <div class="dr-empty">
-        <div class="dr-empty-title">No cash session opened {{ $isSingleDay ? 'on this date' : 'in this period' }}</div>
-        <div class="dr-empty-sub">Try a different date range.</div>
+    <div class="odr-empty">
+        <div class="odr-empty-title">No cash session opened {{ $isSingleDay ? 'on this date' : 'in this period' }}</div>
+        <div class="odr-empty-sub">Try a different date range.</div>
     </div>
+    @elseif($isAllShops)
+    {{-- One row per shop: opening = its first session in range, closing = its last --}}
+    <div class="odr-table-scroll">
+    <table class="odr-table">
+        <thead>
+            <tr>
+                <th>Shop</th>
+                <th style="text-align:right">Opening</th>
+                <th style="text-align:right">Closing</th>
+                <th style="text-align:right">Variance</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($cashRegister as $row)
+            <tr>
+                <td>{{ $row->shop_name }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ number_format($row->opening) }}</td>
+                <td style="text-align:right;font-family:var(--mono)">
+                    {{ number_format($row->closing) }}{{ $row->is_open ? ' *' : '' }}
+                </td>
+                <td style="text-align:right;font-family:var(--mono);color:{{ $row->variance < 0 ? 'var(--red)' : ($row->variance > 0 ? 'var(--amber)' : 'var(--green)') }}">
+                    {{ $row->variance > 0 ? '+' : '' }}{{ number_format($row->variance) }}
+                </td>
+            </tr>
+            @endforeach
+            <tr class="odr-total-row">
+                <td colspan="3">Total Variance</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ number_format($cashRegister->sum('variance')) }} RWF</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+    @if($cashRegister->contains('is_open', true))
+    <div style="padding:8px 20px 14px;font-size:11px;color:var(--text-dim)">* still open — closing shown is a live figure, not a final count. Opening is that shop's first session in range; closing is its last.</div>
+    @endif
     @elseif($isSingleDay)
     @php $day = $cashRegister->first(); @endphp
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Metric</th>
@@ -356,8 +410,8 @@
     </table>
     </div>
     @else
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Date</th>
@@ -379,7 +433,7 @@
                 </td>
             </tr>
             @endforeach
-            <tr class="dr-total-row">
+            <tr class="odr-total-row">
                 <td colspan="3">Total Variance</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($cashRegister->whereNotNull('variance')->sum('variance')) }} RWF</td>
             </tr>
@@ -393,13 +447,13 @@
 </div>
 
 {{-- Payment channel distribution --}}
-<div class="dr-table-wrap">
+<div class="odr-table-wrap">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">Distribution by Payment Channel</div>
     </div>
     @if($summary['total_sales'] > 0)
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Channel</th>
@@ -419,7 +473,7 @@
                 </td>
             </tr>
             @endforeach
-            <tr class="dr-total-row">
+            <tr class="odr-total-row">
                 <td>Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_sales']) }} RWF</td>
                 <td style="text-align:right;font-family:var(--mono)">100.0%</td>
@@ -428,9 +482,9 @@
     </table>
     </div>
     @else
-    <div class="dr-empty">
-        <div class="dr-empty-title">No sales in this period</div>
-        <div class="dr-empty-sub">Try a different date range.</div>
+    <div class="odr-empty">
+        <div class="odr-empty-title">No sales in this period</div>
+        <div class="odr-empty-sub">Try a different date range.</div>
     </div>
     @endif
 </div>
@@ -440,12 +494,12 @@
 {{-- Payment method breakdowns — one per channel, only when it has data --}}
 @foreach($paymentByCustomerTables as $table)
     @if(count($table['data']) > 0)
-    <div class="dr-table-wrap">
+    <div class="odr-table-wrap">
         <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
             <div style="font-size:13px;font-weight:700;color:var(--text)">{{ $table['label'] }}</div>
         </div>
-        <div class="dr-table-scroll">
-        <table class="dr-table">
+        <div class="odr-table-scroll">
+        <table class="odr-table">
             <thead>
                 <tr>
                     <th>Customer</th>
@@ -463,7 +517,7 @@
                     </td>
                 </tr>
                 @endforeach
-                <tr class="dr-total-row">
+                <tr class="odr-total-row">
                     <td>Total</td>
                     <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($table['data'])->sum('sales_count')) }}</td>
                     <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($table['data'])->sum('amount')) }} RWF</td>
@@ -477,12 +531,12 @@
 
 {{-- Detailed Credits (Amadeni — new credit issued) --}}
 @if(count($summary['credits_by_customer']) > 0)
-<div class="dr-table-wrap">
+<div class="odr-table-wrap">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">Detailed Credits — by Customer</div>
     </div>
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Customer</th>
@@ -500,7 +554,7 @@
                 </td>
             </tr>
             @endforeach
-            <tr class="dr-total-row">
+            <tr class="odr-total-row">
                 <td>Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['credits_by_customer'])->sum('sales_count')) }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_sales_credit']) }} RWF</td>
@@ -513,12 +567,12 @@
 
 {{-- Credit Repayments (ABISHYUVE — repayments received) --}}
 @if(count($summary['repayments_by_customer']) > 0)
-<div class="dr-table-wrap">
+<div class="odr-table-wrap">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">Credit Repayments — by Customer</div>
     </div>
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Customer</th>
@@ -536,7 +590,7 @@
                 </td>
             </tr>
             @endforeach
-            <tr class="dr-total-row">
+            <tr class="odr-total-row">
                 <td>Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['repayments_by_customer'])->sum('repayment_count')) }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_repayments']) }} RWF</td>
@@ -548,16 +602,17 @@
 @endif
 
 {{-- Detailed Expenses --}}
-<div class="dr-table-wrap dr-span-2">
+<div class="odr-table-wrap odr-span-2">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;font-weight:700;color:var(--text)">Detailed Expenses</div>
     </div>
     @if(count($summary['expenses_detailed']) > 0)
-    <div class="dr-table-scroll">
-    <table class="dr-table">
+    <div class="odr-table-scroll">
+    <table class="odr-table">
         <thead>
             <tr>
                 <th>Date</th>
+                @if($isAllShops)<th>Shop</th>@endif
                 <th>Category</th>
                 <th>Description</th>
                 <th style="text-align:right">Amount</th>
@@ -567,6 +622,7 @@
             @foreach($summary['expenses_detailed'] as $row)
             <tr>
                 <td style="color:var(--text-dim)">{{ \Carbon\Carbon::parse($row->session_date)->format('d M Y') }}</td>
+                @if($isAllShops)<td style="color:var(--text-dim)">{{ $row->shop_name }}</td>@endif
                 <td>{{ $row->category }}</td>
                 <td style="color:var(--text-dim)">{{ $row->description ?: '—' }}</td>
                 <td style="text-align:right;white-space:nowrap">
@@ -574,17 +630,17 @@
                 </td>
             </tr>
             @endforeach
-            <tr class="dr-total-row">
-                <td colspan="3">Total</td>
+            <tr class="odr-total-row">
+                <td colspan="{{ $isAllShops ? 4 : 3 }}">Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_expenses']) }} RWF</td>
             </tr>
         </tbody>
     </table>
     </div>
     @else
-    <div class="dr-empty">
-        <div class="dr-empty-title">No expenses in this period</div>
-        <div class="dr-empty-sub">Try a different date range.</div>
+    <div class="odr-empty">
+        <div class="odr-empty-title">No expenses in this period</div>
+        <div class="odr-empty-sub">Try a different date range.</div>
     </div>
     @endif
 </div>

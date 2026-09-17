@@ -20,21 +20,37 @@ class DailyReportController extends Controller
         $validated = $request->validate([
             'date_from' => 'required|date',
             'date_to'   => 'required|date|after_or_equal:date_from',
+            'view'      => 'nullable|in:summary,transactions',
         ]);
+
+        $viewMode = $validated['view'] ?? 'summary';
 
         $shopId = $user->location_id;
 
-        $summary = app(DailySessionService::class)->computeRangeSummary(
+        $service = app(DailySessionService::class);
+
+        $summary = $service->computeRangeSummary(
             $shopId,
             $validated['date_from'],
             $validated['date_to']
         );
 
+        $cashRegister = $service->getCashRegisterByDay(
+            $shopId,
+            $validated['date_from'],
+            $validated['date_to']
+        );
+
+        $position = $service->getCurrentCashPosition($shopId);
+
         return view('shop.reports.daily-print', [
-            'summary'  => $summary,
-            'shop'     => Shop::find($shopId),
-            'dateFrom' => $validated['date_from'],
-            'dateTo'   => $validated['date_to'],
+            'summary'      => $summary,
+            'cashRegister' => $cashRegister,
+            'position'     => $position,
+            'shop'         => Shop::find($shopId),
+            'dateFrom'     => $validated['date_from'],
+            'dateTo'       => $validated['date_to'],
+            'viewMode'     => $viewMode,
         ]);
     }
 }

@@ -161,6 +161,11 @@
                                   {{ request()->routeIs('owner.reports.sales') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                             Sales
                         </a>
+                        <a href="{{ route('owner.reports.daily') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.reports.daily') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            Daily Report
+                        </a>
                         <a href="{{ route('owner.reports.inventory') }}" wire:navigate
                            class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
                                   {{ request()->routeIs('owner.reports.inventory') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">

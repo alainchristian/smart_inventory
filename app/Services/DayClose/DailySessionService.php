@@ -6,6 +6,7 @@ use App\Enums\AlertSeverity;
 use App\Models\ActivityLog;
 use App\Models\Alert;
 use App\Models\CreditRepayment;
+use App\Models\Customer;
 use App\Models\DailySession;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
@@ -195,13 +196,14 @@ class DailySessionService
     }
 
     /**
-     * Reporting figures for a shop over a date range (business-timezone,
-     * inclusive on both ends). Unlike computeLiveSummary(), this is not
-     * tied to a single session — it has no opening_balance/expected_cash/
-     * momo_available concepts, which only mean something reconciled one
-     * cash drawer at a time. This is read-only reporting data.
+     * Reporting figures over a date range (business-timezone, inclusive on
+     * both ends), for one shop or — when $shopId is null — combined across
+     * every shop (the owner's "All Shops" view). Unlike computeLiveSummary(),
+     * this is not tied to a single session — it has no opening_balance/
+     * expected_cash/momo_available concepts, which only mean something
+     * reconciled one cash drawer at a time. This is read-only reporting data.
      */
-    public function computeRangeSummary(int $shopId, string $dateFrom, string $dateTo): array
+    public function computeRangeSummary(?int $shopId, string $dateFrom, string $dateTo): array
     {
         $start = \Carbon\Carbon::parse($dateFrom, config('tenant.timezone'))->startOfDay()->utc();
         $end   = \Carbon\Carbon::parse($dateTo, config('tenant.timezone'))->endOfDay()->utc();
@@ -209,7 +211,7 @@ class DailySessionService
         // Sales / payment-channel breakdown via sale_payments (split-payment safe)
         $saleTotals = DB::table('sale_payments')
             ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
-            ->where('sales.shop_id', $shopId)
+            ->when($shopId !== null, fn ($q) => $q->where('sales.shop_id', $shopId))
             ->whereNull('sales.voided_at')
             ->whereNull('sales.deleted_at')
             ->whereBetween('sales.sale_date', [$start, $end])
@@ -224,13 +226,13 @@ class DailySessionService
                 COUNT(DISTINCT sales.id) as transaction_count
             ")->first();
 
-        // Total boxes sold: full-box line items only, on non-voided sales for this shop.
+        // Total boxes sold: full-box line items only, on non-voided sales.
         // Each is_full_box=true row IS one box — quantity_sold on that row holds the
         // number of individual items inside the box (items_per_box), not a box count,
         // so this must COUNT rows, never SUM(quantity_sold) (that would inflate the
         // figure by items_per_box, e.g. 23 boxes of 24 showing as "552").
         $totalBoxesSold = (int) SaleItem::whereHas('sale', function ($q) use ($shopId, $start, $end) {
-                $q->forShop($shopId)->notVoided()->dateRange($start, $end);
+                $q->when($shopId !== null, fn ($qq) => $qq->forShop($shopId))->notVoided()->dateRange($start, $end);
             })
             ->where('is_full_box', true)
             ->count();
@@ -239,7 +241,7 @@ class DailySessionService
         $boxesByProduct = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->where('sales.shop_id', $shopId)
+            ->when($shopId !== null, fn ($q) => $q->where('sales.shop_id', $shopId))
             ->whereNull('sales.voided_at')
             ->whereNull('sales.deleted_at')
             ->whereBetween('sales.sale_date', [$start, $end])
@@ -253,10 +255,38 @@ class DailySessionService
             )
             ->get();
 
-        // Expenses recorded against this shop's daily sessions in range
+        // Every individual sale in range, with its own box count (full-box
+        // line items on that sale) and its own total — drives the "All Sales"
+        // detail table, with a grand total row. shop_name is always included
+        // (cheap) so the "All Shops" view can show it; a single-shop view
+        // simply doesn't render that column.
+        $allSales = DB::table('sales')
+            ->leftJoin('sale_items', function ($join) {
+                $join->on('sale_items.sale_id', '=', 'sales.id')
+                     ->where('sale_items.is_full_box', true);
+            })
+            ->join('shops', 'sales.shop_id', '=', 'shops.id')
+            ->when($shopId !== null, fn ($q) => $q->where('sales.shop_id', $shopId))
+            ->whereNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->whereBetween('sales.sale_date', [$start, $end])
+            ->groupBy('sales.id', 'sales.sale_number', 'sales.sale_date', 'sales.customer_name', 'sales.total', 'shops.name')
+            ->orderBy('sales.sale_date')
+            ->select(
+                'sales.sale_number',
+                'sales.sale_date',
+                'sales.customer_name',
+                'sales.total',
+                'shops.name as shop_name',
+                DB::raw('COUNT(sale_items.id) as boxes')
+            )
+            ->get();
+
+        // Expenses recorded against daily sessions in range
         // (session_date is a DATE column — plain date-string bounds, no tz conversion)
         $totalExpenses = (int) Expense::whereHas('dailySession', function ($q) use ($shopId, $dateFrom, $dateTo) {
-                $q->where('shop_id', $shopId)->whereBetween('session_date', [$dateFrom, $dateTo]);
+                $q->when($shopId !== null, fn ($qq) => $qq->where('shop_id', $shopId))
+                  ->whereBetween('session_date', [$dateFrom, $dateTo]);
             })
             ->whereNull('deleted_at')
             ->sum('amount');
@@ -268,7 +298,8 @@ class DailySessionService
         $expensesDetailed = DB::table('expenses')
             ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
             ->join('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
-            ->where('daily_sessions.shop_id', $shopId)
+            ->join('shops', 'daily_sessions.shop_id', '=', 'shops.id')
+            ->when($shopId !== null, fn ($q) => $q->where('daily_sessions.shop_id', $shopId))
             ->whereBetween('daily_sessions.session_date', [$dateFrom, $dateTo])
             ->whereNull('expenses.deleted_at')
             ->orderBy('daily_sessions.session_date')
@@ -276,7 +307,8 @@ class DailySessionService
                 'daily_sessions.session_date',
                 'expense_categories.name as category',
                 'expenses.description',
-                'expenses.amount'
+                'expenses.amount',
+                'shops.name as shop_name'
             )
             ->get();
 
@@ -295,7 +327,7 @@ class DailySessionService
         // Credit repayments received, itemized per customer ("ABISHYUVE")
         $repaymentsByCustomer = DB::table('credit_repayments')
             ->join('customers', 'credit_repayments.customer_id', '=', 'customers.id')
-            ->where('credit_repayments.shop_id', $shopId)
+            ->when($shopId !== null, fn ($q) => $q->where('credit_repayments.shop_id', $shopId))
             ->whereBetween('credit_repayments.repayment_date', [$start, $end])
             ->groupBy('customers.id', 'customers.name')
             ->orderByDesc(DB::raw('SUM(credit_repayments.amount)'))
@@ -306,6 +338,17 @@ class DailySessionService
             )
             ->get();
         $totalRepayments = (int) $repaymentsByCustomer->sum('amount');
+
+        // Outstanding customer credit — what customers currently owe, i.e.
+        // what the business can assume it will eventually collect. This is a
+        // running balance (Customer::outstanding_balance), not scoped to the
+        // selected date range like the rest of this method — it reflects the
+        // present moment regardless of which period is being viewed.
+        $outstandingReceivables = (int) Customer::when($shopId !== null, fn ($q) => $q->where('shop_id', $shopId))
+            ->sum('outstanding_balance');
+        $customersOwingCount = (int) Customer::when($shopId !== null, fn ($q) => $q->where('shop_id', $shopId))
+            ->where('outstanding_balance', '>', 0)
+            ->count();
 
         return [
             'total_sales_cash'          => (int) ($saleTotals->cash          ?? 0),
@@ -318,6 +361,7 @@ class DailySessionService
             'transaction_count'        => (int) ($saleTotals->transaction_count ?? 0),
             'total_boxes_sold'         => $totalBoxesSold,
             'boxes_by_product'         => $boxesByProduct,
+            'all_sales'                => $allSales,
             'total_expenses'           => $totalExpenses,
             'expenses_detailed'        => $expensesDetailed,
             'credits_by_customer'      => $creditsByCustomer,
@@ -327,6 +371,8 @@ class DailySessionService
             'momo_by_customer'         => $momoByCustomer,
             'card_by_customer'         => $cardByCustomer,
             'bank_by_customer'         => $bankByCustomer,
+            'outstanding_receivables'  => $outstandingReceivables,
+            'customers_owing_count'    => $customersOwingCount,
         ];
     }
 
@@ -334,11 +380,11 @@ class DailySessionService
      * Sales for one payment channel, grouped by customer — shared by every
      * "<channel> — by Customer" breakdown table on the shop daily report.
      */
-    private function salesByCustomerForMethod(int $shopId, string $paymentMethod, $start, $end)
+    private function salesByCustomerForMethod(?int $shopId, string $paymentMethod, $start, $end)
     {
         return DB::table('sale_payments')
             ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
-            ->where('sales.shop_id', $shopId)
+            ->when($shopId !== null, fn ($q) => $q->where('sales.shop_id', $shopId))
             ->where('sale_payments.payment_method', $paymentMethod)
             ->whereNull('sales.voided_at')
             ->whereNull('sales.deleted_at')
@@ -351,6 +397,103 @@ class DailySessionService
                 DB::raw('COUNT(DISTINCT sales.id) as sales_count')
             )
             ->get();
+    }
+
+    /**
+     * Cash register position per day for a shop over a date range — the
+     * opening/closing balance report. One row per DailySession that actually
+     * exists in range (a day never opened is simply absent, same convention
+     * as every other breakdown on this report); a still-open session (e.g.
+     * today, mid-range) reports its live expected_cash rather than a final
+     * count, flagged via is_open.
+     */
+    public function getCashRegisterByDay(int $shopId, string $dateFrom, string $dateTo): \Illuminate\Support\Collection
+    {
+        return DailySession::forShop($shopId)
+            ->whereBetween('session_date', [$dateFrom, $dateTo])
+            ->orderBy('session_date')
+            ->get()
+            ->map(function (DailySession $session) {
+                $isOpen = $session->isOpen();
+
+                return (object) [
+                    'date'     => $session->session_date,
+                    'opening'  => (int) $session->opening_balance,
+                    'closing'  => $isOpen
+                        ? (int) $this->computeLiveSummary($session)['expected_cash']
+                        : (int) $session->actual_cash_counted,
+                    'variance' => $isOpen ? null : (int) $session->cash_variance,
+                    'is_open'  => $isOpen,
+                ];
+            });
+    }
+
+    /**
+     * Cash register position over a date range, one row per shop — the
+     * owner's "All Shops" equivalent of getCashRegisterByDay(). A single
+     * cash drawer can't be merged across shops, so this bookends each
+     * shop's own opening (its first session in range) and closing (its last
+     * session in range, live if still open) and sums that shop's variances
+     * across the range. Shops with no session at all in range are omitted,
+     * same "no data, no row" convention as the rest of this report.
+     */
+    public function getCashRegisterByShop(\Illuminate\Support\Collection $shops, string $dateFrom, string $dateTo): \Illuminate\Support\Collection
+    {
+        return $shops
+            ->map(function ($shop) use ($dateFrom, $dateTo) {
+                $days = $this->getCashRegisterByDay($shop->id, $dateFrom, $dateTo);
+
+                if ($days->isEmpty()) {
+                    return null;
+                }
+
+                return (object) [
+                    'shop_id'   => $shop->id,
+                    'shop_name' => $shop->name,
+                    'opening'   => $days->first()->opening,
+                    'closing'   => $days->last()->closing,
+                    'variance'  => (int) $days->whereNotNull('variance')->sum('variance'),
+                    'is_open'   => $days->last()->is_open,
+                ];
+            })
+            ->filter()
+            ->values();
+    }
+
+    /**
+     * What the business currently owns in cash, right now — independent of
+     * any report date filter. Uses each shop's most recent session (live
+     * expected_cash if still open, otherwise the final actual_cash_counted)
+     * rather than anything tied to the selected period, since "what do I
+     * currently hold" is a point-in-time question, not a period total.
+     * Pass $shopId for a single shop, or null + $shops for the owner's
+     * "All Shops" combined figure.
+     */
+    public function getCurrentCashPosition(?int $shopId, ?\Illuminate\Support\Collection $shops = null): array
+    {
+        if ($shopId !== null) {
+            $session = DailySession::forShop($shopId)->orderByDesc('session_date')->orderByDesc('id')->first();
+
+            if (! $session) {
+                return ['cash' => 0, 'as_of' => null, 'is_open' => false];
+            }
+
+            return [
+                'cash'    => $session->isOpen()
+                    ? (int) $this->computeLiveSummary($session)['expected_cash']
+                    : (int) $session->actual_cash_counted,
+                'as_of'   => $session->session_date,
+                'is_open' => $session->isOpen(),
+            ];
+        }
+
+        $perShop = ($shops ?? collect())->map(fn ($shop) => $this->getCurrentCashPosition($shop->id));
+
+        return [
+            'cash'    => (int) $perShop->sum('cash'),
+            'as_of'   => $perShop->pluck('as_of')->filter()->sort()->last(),
+            'is_open' => $perShop->contains('is_open', true),
+        ];
     }
 
     /**
