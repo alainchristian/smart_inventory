@@ -159,18 +159,22 @@ class SessionActivityFeed extends Component
                 ]);
             });
 
-        // Credit repayments — match service: query by shop + date (not session_id, which may be null on older rows)
+        // Credit repayments — match service: query by shop + date (not session_id, which may be null on older rows).
+        // A multi-channel repayment writes one row per channel, all sharing the
+        // same repayment_date — group them back into a single feed entry.
         CreditRepayment::where('shop_id', $shopId)
             ->whereDate('repayment_date', $date)
             ->with('customer')
             ->get()
-            ->each(function ($repayment) use (&$activities) {
+            ->groupBy(fn ($r) => $r->customer_id . '|' . $r->repayment_date)
+            ->each(function ($rows) use (&$activities) {
+                $first = $rows->first();
                 $activities->push([
                     'type'     => 'repayment',
-                    'time'     => $repayment->repayment_date ?? $repayment->created_at,
-                    'label'    => 'Repayment' . ($repayment->customer ? ' — ' . $repayment->customer->name : ''),
-                    'amount'   => $repayment->amount,
-                    'id'       => $repayment->id,
+                    'time'     => $first->repayment_date ?? $first->created_at,
+                    'label'    => 'Repayment' . ($first->customer ? ' — ' . $first->customer->name : ''),
+                    'amount'   => $rows->sum('amount'),
+                    'id'       => $first->id,
                     'voidable' => false,
                     'system'   => false,
                 ]);

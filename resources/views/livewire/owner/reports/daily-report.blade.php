@@ -159,16 +159,12 @@
 
 <div class="odr-grid">
 
-{{-- Business Position — what the business currently holds, right now.
-     Independent of the date filter above (it's a point-in-time snapshot, not
-     a period total), so it's shown regardless of which range, shop, or view
-     mode is selected. --}}
+{{-- Business Position (Cash on Hand / Outstanding Receivables) — hidden per
+     request; $position is still computed and passed to this view, just not
+     rendered. Re-enable by uncommenting this block.
 <div class="odr-table-wrap odr-span-2">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">Business Position</div>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
-            What {{ $isAllShops ? 'the business' : $this->selectedShopName }} owns right now — not limited to the period above
-        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">Business Position — As of Today</div>
     </div>
     <div class="odr-table-scroll">
     <table class="odr-table">
@@ -180,31 +176,18 @@
         </thead>
         <tbody>
             <tr>
-                <td>
-                    Cash on Hand
-                    <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
-                        @if($position['as_of'])
-                            {{ $position['is_open'] ? 'Live figure — at least one session is still open' : 'As of ' . \Carbon\Carbon::parse($position['as_of'])->format('d M Y') }}
-                        @else
-                            No cash session recorded yet
-                        @endif
-                    </div>
-                </td>
+                <td>Cash on Hand</td>
                 <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:var(--green)">{{ number_format($position['cash']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
             </tr>
             <tr>
-                <td>
-                    Outstanding Receivables
-                    <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
-                        Owed by {{ number_format($summary['customers_owing_count']) }} {{ Str::plural('customer', $summary['customers_owing_count']) }} — what {{ $isAllShops ? 'the business' : 'the shop' }} can assume it will collect
-                    </div>
-                </td>
+                <td>Outstanding Receivables</td>
                 <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:var(--amber)">{{ number_format($summary['outstanding_receivables']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
             </tr>
         </tbody>
     </table>
     </div>
 </div>
+--}}
 
 @if($viewMode === 'summary')
 {{-- Summary --}}
@@ -236,6 +219,17 @@
             <tr>
                 <td>Total Expenses</td>
                 <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:var(--red)">{{ number_format($summary['total_expenses']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
+            </tr>
+            <tr class="odr-total-row">
+                <td>Net for Period</td>
+                <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:{{ $summary['net_for_period'] >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $summary['net_for_period'] < 0 ? '−' : '' }}{{ number_format(abs($summary['net_for_period'])) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
+            </tr>
+            <tr>
+                <td>
+                    Credit Repayments Received
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Cash collected on prior credit — not new revenue, not part of Net for Period above</div>
+                </td>
+                <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:var(--green)">{{ number_format($summary['total_repayments']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
             </tr>
         </tbody>
     </table>

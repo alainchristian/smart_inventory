@@ -144,12 +144,11 @@ tfoot td:last-child { text-align:right; }
     @php $isSingleDay = $dateFrom === $dateTo; @endphp
     <div class="grid">
 
-    {{-- Business Position — what the shop currently owns vs. what it can
-         assume it holds. Independent of the date filter above: a
-         point-in-time balance, not a period total, so it's shown regardless
-         of which range or view was printed. --}}
+    {{-- Business Position (Cash on Hand / Outstanding Receivables) — hidden
+         per request; $position is still computed and passed to this view,
+         just not rendered. Re-enable by uncommenting this block.
     <div class="cell span-2">
-        <div class="section-heading">Business Position</div>
+        <div class="section-heading">Business Position — As of Today</div>
         <table>
             <thead>
                 <tr>
@@ -159,30 +158,17 @@ tfoot td:last-child { text-align:right; }
             </thead>
             <tbody>
                 <tr>
-                    <td>
-                        Cash on Hand — Owned Now
-                        <div style="font-size:11px;color:#000;margin-top:2px">
-                            @if($position['as_of'])
-                                {{ $position['is_open'] ? 'Live figure — today’s session is still open' : 'As of ' . \Carbon\Carbon::parse($position['as_of'])->format('d M Y') }}
-                            @else
-                                No cash session recorded yet
-                            @endif
-                        </div>
-                    </td>
+                    <td>Cash on Hand — Owned Now</td>
                     <td style="text-align:right">{{ number_format($position['cash']) }} RWF</td>
                 </tr>
                 <tr>
-                    <td>
-                        Outstanding Receivables — Assumed Held
-                        <div style="font-size:11px;color:#000;margin-top:2px">
-                            Owed by {{ number_format($summary['customers_owing_count']) }} {{ Str::plural('customer', $summary['customers_owing_count']) }} — expected to be collected
-                        </div>
-                    </td>
+                    <td>Outstanding Receivables — Assumed Held</td>
                     <td style="text-align:right">{{ number_format($summary['outstanding_receivables']) }} RWF</td>
                 </tr>
             </tbody>
         </table>
     </div>
+    --}}
 
     @if($viewMode === 'summary')
     <div class="cell">
@@ -210,6 +196,17 @@ tfoot td:last-child { text-align:right; }
                 <tr>
                     <td>Total Expenses</td>
                     <td style="text-align:right">{{ number_format($summary['total_expenses']) }} RWF</td>
+                </tr>
+                <tr style="font-weight:700">
+                    <td>Net for Period</td>
+                    <td style="text-align:right">{{ $summary['net_for_period'] < 0 ? '−' : '' }}{{ number_format(abs($summary['net_for_period'])) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>
+                        Credit Repayments Received
+                        <div style="font-size:10px;font-weight:400;margin-top:2px">Cash collected on prior credit — not new revenue, not part of Net for Period above</div>
+                    </td>
+                    <td style="text-align:right">{{ number_format($summary['total_repayments']) }} RWF</td>
                 </tr>
             </tbody>
         </table>

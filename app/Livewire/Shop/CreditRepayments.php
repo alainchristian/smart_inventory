@@ -20,14 +20,21 @@ class CreditRepayments extends Component
     public string $searchQuery = '';
     public ?int $selectedCustomerId = null;
 
-    // Repayment form
-    public $amount = '';
-    public string $paymentMethod = 'cash';
-    public string $reference = '';
+    // Repayment form — one input per channel (mirrors the checkout's
+    // multi-channel payment pattern); the total repayment amount is simply
+    // the sum of whatever channels are filled in, no separate total field.
+    public int $payAmt_cash          = 0;
+    public int $payAmt_card          = 0;
+    public int $payAmt_mobile_money  = 0;
+    public int $payAmt_bank_transfer = 0;
+    public string $payRef_card          = '';
+    public string $payRef_bank_transfer = '';
     public string $notes = '';
 
     // UI state
     public bool $showRepaymentForm = false;
+    public bool $settingAllowCardPayment  = false;
+    public bool $settingAllowBankTransfer = false;
 
     public function mount(): void
     {
@@ -35,12 +42,15 @@ class CreditRepayments extends Component
         if ($user->isShopManager()) {
             $this->checkSession($user->location_id);
         }
+
+        $settings = app(SettingsService::class);
+        $this->settingAllowCardPayment  = $settings->allowCardPayment();
+        $this->settingAllowBankTransfer = $settings->allowBankTransferPayment();
     }
 
     protected $rules = [
-        'amount' => 'required|numeric|min:1',
-        'paymentMethod' => 'required|in:cash,card,mobile_money,bank_transfer',
-        'reference' => 'nullable|string|max:255',
+        'payRef_card' => 'nullable|string|max:255',
+        'payRef_bank_transfer' => 'nullable|string|max:255',
         'notes' => 'nullable|string|max:500',
     ];
 
@@ -49,19 +59,27 @@ class CreditRepayments extends Component
         $this->resetPage();
     }
 
+    private function resetRepaymentForm(): void
+    {
+        $this->reset([
+            'payAmt_cash', 'payAmt_card', 'payAmt_mobile_money', 'payAmt_bank_transfer',
+            'payRef_card', 'payRef_bank_transfer',
+            'notes',
+        ]);
+    }
+
     public function selectCustomer(int $customerId)
     {
         $this->selectedCustomerId = $customerId;
         $this->showRepaymentForm = true;
-        $this->reset(['amount', 'paymentMethod', 'reference', 'notes']);
-        $this->paymentMethod = 'cash';
+        $this->resetRepaymentForm();
     }
 
     public function cancelRepayment()
     {
         $this->showRepaymentForm = false;
         $this->selectedCustomerId = null;
-        $this->reset(['amount', 'paymentMethod', 'reference', 'notes']);
+        $this->resetRepaymentForm();
     }
 
     public function recordRepayment()
@@ -69,34 +87,59 @@ class CreditRepayments extends Component
         $this->validate();
 
         $customer = Customer::findOrFail($this->selectedCustomerId);
-        $amount = (int) ($this->amount);
 
-        // Validate amount doesn't exceed outstanding balance
-        if ($amount > $customer->outstanding_balance) {
-            $this->addError('amount', 'Repayment amount cannot exceed outstanding balance of ' . number_format($customer->outstanding_balance, 0) . ' RWF');
+        // Channel breakdown — mirrors the checkout's payment-channel pattern,
+        // except there's no fixed target to allocate: the repayment total is
+        // simply the sum of whichever channels the user filled in.
+        $breakdown = [
+            'cash'          => ['amount' => (int) $this->payAmt_cash,          'reference' => null],
+            'card'          => ['amount' => (int) $this->payAmt_card,          'reference' => $this->payRef_card ?: null],
+            'mobile_money'  => ['amount' => (int) $this->payAmt_mobile_money,  'reference' => null],
+            'bank_transfer' => ['amount' => (int) $this->payAmt_bank_transfer, 'reference' => $this->payRef_bank_transfer ?: null],
+        ];
+
+        $totalAllocated = collect($breakdown)->sum('amount');
+
+        if ($totalAllocated <= 0) {
+            $this->addError('total', 'Enter a repayment amount in at least one payment channel.');
             return;
         }
 
-        DB::transaction(function () use ($customer, $amount) {
-            // 1. Create repayment record — link to active session when available
-            CreditRepayment::create([
-                'customer_id'      => $customer->id,
-                'shop_id'          => auth()->user()->location_id,
-                'daily_session_id' => $this->activeSession?->id,
-                'amount'           => $amount,
-                'payment_method'   => $this->paymentMethod,
-                'reference'        => $this->reference ?: null,
-                'notes'            => $this->notes ?: null,
-                'recorded_by'      => auth()->id(),
-                'repayment_date'   => now(),
-            ]);
+        // Validate amount doesn't exceed outstanding balance
+        if ($totalAllocated > $customer->outstanding_balance) {
+            $this->addError('total', 'Repayment amount cannot exceed outstanding balance of ' . number_format($customer->outstanding_balance, 0) . ' RWF');
+            return;
+        }
+
+        DB::transaction(function () use ($customer, $breakdown, $totalAllocated) {
+            // 1. Create one repayment row per channel used — all sharing the
+            // same timestamp so SessionActivityFeed can group them back into
+            // a single feed entry (customer_id + repayment_date).
+            $repaymentDate = now();
+            foreach ($breakdown as $method => $data) {
+                if ($data['amount'] <= 0) {
+                    continue;
+                }
+
+                CreditRepayment::create([
+                    'customer_id'      => $customer->id,
+                    'shop_id'          => auth()->user()->location_id,
+                    'daily_session_id' => $this->activeSession?->id,
+                    'amount'           => $data['amount'],
+                    'payment_method'   => $method,
+                    'reference'        => $data['reference'],
+                    'notes'            => $this->notes ?: null,
+                    'recorded_by'      => auth()->id(),
+                    'repayment_date'   => $repaymentDate,
+                ]);
+            }
 
             // 2. Update customer balances
-            $newBalance = max(0, $customer->outstanding_balance - $amount);
+            $newBalance = max(0, $customer->outstanding_balance - $totalAllocated);
             $customer->update([
-                'total_repaid'        => $customer->total_repaid + $amount,
+                'total_repaid'        => $customer->total_repaid + $totalAllocated,
                 'outstanding_balance' => $newBalance,
-                'last_repayment_at'   => now(),
+                'last_repayment_at'   => $repaymentDate,
             ]);
 
             // 3. Write activity log
@@ -108,9 +151,8 @@ class CreditRepayments extends Component
                 'entity_id'         => $customer->id,
                 'entity_identifier' => $customer->name . ' (' . $customer->phone . ')',
                 'details'           => [
-                    'amount'           => $amount,
-                    'payment_method'   => $this->paymentMethod,
-                    'reference'        => $this->reference ?: null,
+                    'amount'           => $totalAllocated,
+                    'breakdown'        => collect($breakdown)->filter(fn ($d) => $d['amount'] > 0)->map(fn ($d) => $d['amount'])->toArray(),
                     'new_balance'      => $newBalance,
                     'previous_balance' => $customer->outstanding_balance,
                     'fully_paid'       => $newBalance === 0,
@@ -152,7 +194,7 @@ class CreditRepayments extends Component
 
         $this->dispatch('notification', [
             'type'    => 'success',
-            'message' => 'Credit repayment of ' . number_format($amount, 0) . ' RWF recorded for ' . $customer->name . '.',
+            'message' => 'Credit repayment of ' . number_format($totalAllocated, 0) . ' RWF recorded for ' . $customer->name . '.',
         ]);
 
         $this->cancelRepayment();
@@ -264,19 +306,38 @@ class CreditRepayments extends Component
         if (!$this->selectedCustomerId) {
             return null;
         }
-        return Customer::with(['shop', 'creditRepayments' => function ($query) {
-            $query->orderBy('repayment_date', 'desc')->limit(10);
-        }])->find($this->selectedCustomerId);
+        return Customer::with('shop')->find($this->selectedCustomerId);
     }
 
-    public function getPaymentMethodsProperty()
+    /**
+     * Recent repayments, grouped back into one entry per submission — a
+     * multi-channel repayment writes one CreditRepayment row per channel
+     * (all sharing the same repayment_date), so group by that timestamp to
+     * show them as a single history entry with multiple method pills.
+     */
+    public function getRepaymentHistoryProperty()
     {
-        return [
-            'cash' => 'Cash',
-            'card' => 'Card',
-            'mobile_money' => 'Mobile Money',
-            'bank_transfer' => 'Bank Transfer',
-        ];
+        if (!$this->selectedCustomerId) {
+            return collect();
+        }
+
+        return CreditRepayment::where('customer_id', $this->selectedCustomerId)
+            ->orderBy('repayment_date', 'desc')
+            ->limit(40)
+            ->get()
+            ->groupBy(fn ($r) => $r->repayment_date->toDateTimeString())
+            ->map(fn ($rows) => [
+                'repayment_date' => $rows->first()->repayment_date,
+                'amount'         => $rows->sum('amount'),
+                'methods'        => $rows->map(fn ($r) => [
+                    'method'    => $r->payment_method,
+                    'amount'    => $r->amount,
+                    'reference' => $r->reference,
+                ])->values(),
+            ])
+            ->sortByDesc('repayment_date')
+            ->take(10)
+            ->values();
     }
 
     public function render()

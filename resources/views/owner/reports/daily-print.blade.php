@@ -54,23 +54,6 @@ body {
 .meta-value .pill { display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px;
                      font-weight:700; background:var(--accent-soft); color:var(--accent); }
 
-/* KPI row — always visible, headline figures regardless of view mode */
-.kpi-row   { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
-.kpi-card  { position:relative; border:1px solid var(--line); border-radius:8px; padding:12px 14px 11px;
-             overflow:hidden; }
-.kpi-card::before { content:""; position:absolute; top:0; left:0; right:0; height:3px; }
-.kpi-card.c-accent::before { background:var(--accent); }
-.kpi-card.c-green::before  { background:var(--green); }
-.kpi-card.c-amber::before  { background:var(--amber); }
-.kpi-card.c-red::before    { background:var(--red); }
-.kpi-label { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--dim); }
-.kpi-value { font-size:19px; font-weight:800; margin-top:5px; font-variant-numeric:tabular-nums; }
-.kpi-value.c-accent { color:var(--accent); }
-.kpi-value.c-green  { color:var(--green); }
-.kpi-value.c-amber  { color:var(--amber); }
-.kpi-value.c-red    { color:var(--red); }
-.kpi-unit  { font-size:10px; font-weight:600; color:var(--dim); margin-left:3px; }
-
 /* Section grid — pairs shorter tables side by side to cut down on blank
    space; wide/itemized tables span both columns. */
 .grid   { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px 18px; grid-auto-flow:dense; }
@@ -101,14 +84,6 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
 .callout { margin:10px 14px 12px; padding:8px 11px; border-radius:6px; font-size:10.5px;
            border-left:3px solid var(--amber); background:var(--amber-soft); color:#8a5a12; }
 
-/* Business Position — what's owned now (cash) vs what can be assumed held (receivables) */
-.position-split { display:flex; }
-.position-half  { flex:1; padding:14px 16px; }
-.position-half + .position-half { border-left:1px solid var(--line); }
-.position-label { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--dim); }
-.position-value { font-size:19px; font-weight:800; margin-top:6px; font-variant-numeric:tabular-nums; }
-.position-note  { font-size:10.5px; color:var(--dim); margin-top:5px; line-height:1.4; }
-
 .doc-footer { margin-top:22px; padding-top:14px; border-top:1px solid var(--line);
               text-align:center; font-size:11px; color:var(--dim); }
 
@@ -119,21 +94,18 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
     body { padding:0; }
     .page { padding:16px 20px 20px; }
     .no-print { display:none !important; }
-    .top-bar, thead th, .cell-head, .kpi-card, tfoot td, .callout, tbody tr:nth-child(even) {
+    .top-bar, thead th, .cell-head, tfoot td, .callout, tbody tr:nth-child(even) {
         -webkit-print-color-adjust:exact; print-color-adjust:exact;
     }
     .cell { break-inside:avoid; }
 }
 
 @media(max-width:640px) {
-    .kpi-row { grid-template-columns:repeat(2,1fr); }
     .grid { grid-template-columns:1fr; }
     .span-2 { grid-column:span 1; }
     .meta-strip { flex-direction:column; }
     .meta-cell { border-right:none; border-bottom:1px solid var(--line); }
     .meta-cell:last-child { border-bottom:none; }
-    .position-split { flex-direction:column; }
-    .position-half + .position-half { border-left:none; border-top:1px solid var(--line); }
     table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 }
 </style>
@@ -205,52 +177,74 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
         </div>
     </div>
 
-    {{-- Headline KPIs — always shown so the report's core message comes
+    {{-- Headline metrics — always shown so the report's core message comes
          across regardless of which detail view was printed. --}}
-    <div class="kpi-row">
-        <div class="kpi-card c-accent">
-            <div class="kpi-label">Boxes Sold</div>
-            <div class="kpi-value c-accent">{{ number_format($summary['total_boxes_sold']) }}</div>
-        </div>
-        <div class="kpi-card c-green">
-            <div class="kpi-label">Total Sales</div>
-            <div class="kpi-value c-green">{{ number_format($summary['total_sales']) }}<span class="kpi-unit">RWF</span></div>
-        </div>
-        <div class="kpi-card c-amber">
-            <div class="kpi-label">Total Credits</div>
-            <div class="kpi-value c-amber">{{ number_format($summary['total_sales_credit']) }}<span class="kpi-unit">RWF</span></div>
-        </div>
-        <div class="kpi-card c-red">
-            <div class="kpi-label">Total Expenses</div>
-            <div class="kpi-value c-red">{{ number_format($summary['total_expenses']) }}<span class="kpi-unit">RWF</span></div>
-        </div>
+    <div class="cell" style="margin-bottom:22px">
+        <div class="cell-head"><span class="dot c-accent"></span><span class="cell-title">Summary</span></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Boxes Sold</td>
+                    <td style="font-weight:800">{{ number_format($summary['total_boxes_sold']) }}</td>
+                </tr>
+                <tr>
+                    <td>Total Sales</td>
+                    <td style="font-weight:800;color:var(--green)">{{ number_format($summary['total_sales']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Total Credits</td>
+                    <td style="font-weight:800;color:var(--amber)">{{ number_format($summary['total_sales_credit']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Total Expenses</td>
+                    <td style="font-weight:800;color:var(--red)">{{ number_format($summary['total_expenses']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Net for Period</td>
+                    <td style="font-weight:800;color:{{ $summary['net_for_period'] >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $summary['net_for_period'] < 0 ? '−' : '' }}{{ number_format(abs($summary['net_for_period'])) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>
+                        Credit Repayments Received
+                        <div style="font-size:10px;font-weight:400;color:var(--dim);margin-top:2px">Cash collected on prior credit — not new revenue, not part of Net for Period above</div>
+                    </td>
+                    <td style="font-weight:800;color:var(--green)">{{ number_format($summary['total_repayments']) }} RWF</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
-    {{-- Business Position — what's owned right now vs. what can be assumed
-         held. Independent of the date filter above: a point-in-time balance,
-         not a period total, so it's shown regardless of which range or view
-         was printed. --}}
+    {{-- Business Position (Cash on Hand / Outstanding Receivables) — hidden
+         per request; the section and its data are still computed above,
+         just not rendered. Re-enable by uncommenting this block.
     <div class="cell" style="margin-bottom:22px">
-        <div class="cell-head"><span class="dot c-green"></span><span class="cell-title">Business Position</span></div>
-        <div class="position-split">
-            <div class="position-half">
-                <div class="position-label">Cash on Hand — Owned Now</div>
-                <div class="position-value" style="color:var(--green)">{{ number_format($position['cash']) }} <span style="font-size:11px;font-weight:600;color:var(--dim)">RWF</span></div>
-                <div class="position-note">
-                    @if($position['as_of'])
-                        {{ $position['is_open'] ? 'Live figure — at least one session is still open' : 'As of ' . \Carbon\Carbon::parse($position['as_of'])->format('d M Y') }}
-                    @else
-                        No cash session recorded yet
-                    @endif
-                </div>
-            </div>
-            <div class="position-half">
-                <div class="position-label">Outstanding Receivables — Assumed Held</div>
-                <div class="position-value" style="color:var(--amber)">{{ number_format($summary['outstanding_receivables']) }} <span style="font-size:11px;font-weight:600;color:var(--dim)">RWF</span></div>
-                <div class="position-note">Owed by {{ number_format($summary['customers_owing_count']) }} {{ Str::plural('customer', $summary['customers_owing_count']) }} — expected to be collected</div>
-            </div>
-        </div>
+        <div class="cell-head"><span class="dot c-green"></span><span class="cell-title">Business Position — As of Today</span></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Cash on Hand — Owned Now</td>
+                    <td style="font-weight:800;color:var(--green)">{{ number_format($position['cash']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Outstanding Receivables — Assumed Held</td>
+                    <td style="font-weight:800;color:var(--amber)">{{ number_format($summary['outstanding_receivables']) }} RWF</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
+    --}}
 
     <div class="grid">
 

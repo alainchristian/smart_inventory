@@ -82,6 +82,8 @@
                   flex-shrink:0;transition:background var(--tr) }
 .cr-modal-close:hover { background:var(--surface3) }
 
+.cr-modal-sticky { position:sticky;top:0;z-index:10;background:var(--surface);
+                    border-radius:var(--r) var(--r) 0 0;box-shadow:0 4px 12px rgba(26,31,54,.08) }
 .cr-modal-stats { padding:18px 22px;border-bottom:1px solid var(--border);display:grid;
                   grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px }
 .cr-modal-stat-l { font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;
@@ -97,13 +99,27 @@
 .cr-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
 .cr-error { font-size:11px;color:var(--red);margin-top:4px }
 
-.cr-pm-grid  { display:grid;grid-template-columns:repeat(2,1fr);gap:10px }
-.cr-pm-opt   { display:flex;align-items:center;padding:11px 12px;border-radius:10px;border:1.5px solid var(--border);
-               background:var(--surface);cursor:pointer;transition:all var(--tr) }
-.cr-pm-opt.active { border-color:var(--accent);background:var(--accent-dim) }
-.cr-pm-opt input { margin-right:9px }
-.cr-pm-opt-label { font-size:13px;font-weight:600;color:var(--text-sub) }
-.cr-pm-opt.active .cr-pm-opt-label { color:var(--accent) }
+/* Multi-channel payment rows — mirrors the POS checkout's payment pattern */
+.cr-bal-strip   { background:color-mix(in srgb,var(--accent) 5%,var(--surface));border:1.5px solid var(--accent-dim);
+                   border-radius:var(--rsm);padding:9px 12px;margin:0 22px 16px }
+.cr-bal-row     { display:flex;justify-content:space-between;align-items:center;margin-bottom:6px }
+.cr-bal-label   { font-size:11px;color:var(--text-dim) }
+.cr-bal-val     { font-size:15px;font-weight:800;font-family:var(--mono);color:var(--text) }
+.cr-bal-remain  { font-size:11px;color:var(--text-dim);text-align:right }
+.cr-bal-remain.red   { color:var(--red) }
+.cr-bal-remain.green { color:var(--green) }
+
+.cr-pay-section-title { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+                         color:var(--text-dim);padding:0 22px;margin-bottom:6px }
+.cr-pay-row      { display:flex;flex-direction:column;gap:3px;padding:0 22px;margin-bottom:14px }
+.cr-pay-label-row{ display:flex;align-items:center;justify-content:space-between }
+.cr-pay-label    { font-size:12px;font-weight:700;color:var(--text-sub) }
+.cr-pay-ref      { margin-top:2px }
+.cr-pay-ref .cr-pay-input { padding:7px 10px;font-size:12px !important;font-weight:600;font-family:var(--font) }
+.cr-pay-input    { padding:9px 12px;border-radius:var(--rsm);border:1.5px solid var(--border);
+                    background:var(--surface);color:var(--text);font-size:16px;font-weight:700;
+                    font-family:var(--mono);transition:border-color var(--tr);width:100%;box-sizing:border-box }
+.cr-pay-input:focus { outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
 
 .cr-modal-foot { padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px }
 .cr-cancel-btn { flex:1;padding:12px;background:transparent;border:1.5px solid var(--border);color:var(--text-sub);
@@ -122,11 +138,11 @@
 .cr-history-amt   { font-size:15px;font-weight:700;color:var(--green);font-family:var(--mono) }
 .cr-history-date  { font-size:11px;color:var(--text-dim);margin-top:2px }
 .cr-history-ref   { font-size:11px;color:var(--text-dim);margin-top:4px }
+.cr-history-pills { display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;flex-shrink:0 }
 .cr-history-pill  { padding:3px 9px;border-radius:6px;background:var(--surface2);font-size:10px;font-weight:700;
                      color:var(--text-dim);text-transform:uppercase;white-space:nowrap;flex-shrink:0 }
 
 @media(max-width:640px) {
-    .cr-pm-grid { grid-template-columns:1fr }
     .cr-modal-foot { flex-direction:column }
 }
 
@@ -360,62 +376,114 @@
     @endif
 </div>
 
-{{-- Repayment Modal --}}
+{{-- Repayment Modal — payment channels mirror the POS checkout pattern:
+     no separate total field, the repayment amount is simply the sum of
+     whichever channels (Cash / Mobile Money / Card / Bank Transfer) the
+     user fills in. --}}
 @if($showRepaymentForm && $this->selectedCustomer)
-    <div class="cr-modal-overlay" wire:click="cancelRepayment">
+    <div class="cr-modal-overlay" wire:click="cancelRepayment" x-data="{
+        cash: '', card: '', momo: '', bank: '',
+        outstanding: {{ (int) $this->selectedCustomer->outstanding_balance }},
+        get total() { return parseInt(this.cash||0)+parseInt(this.card||0)+parseInt(this.momo||0)+parseInt(this.bank||0) },
+        submit() {
+            $wire.set('payAmt_cash', parseInt(this.cash)||0)
+            $wire.set('payAmt_card', parseInt(this.card)||0)
+            $wire.set('payAmt_mobile_money', parseInt(this.momo)||0)
+            $wire.set('payAmt_bank_transfer', parseInt(this.bank)||0)
+            $wire.recordRepayment()
+        }
+    }">
         <div class="cr-modal" wire:click.stop>
 
-            <div class="cr-modal-head">
-                <div>
-                    <div class="cr-modal-title">Record Credit Repayment</div>
-                    <div class="cr-modal-sub">{{ $this->selectedCustomer->name }} · {{ $this->selectedCustomer->phone }}</div>
-                </div>
-                <button wire:click="cancelRepayment" class="cr-modal-close">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="cr-modal-stats">
-                <div>
-                    <div class="cr-modal-stat-l">Outstanding Balance</div>
-                    <div class="cr-modal-stat-v" style="color:var(--red)">{{ number_format($this->selectedCustomer->outstanding_balance) }}</div>
-                </div>
-                <div>
-                    <div class="cr-modal-stat-l">Total Credit Given</div>
-                    <div class="cr-modal-stat-v" style="color:var(--text)">{{ number_format($this->selectedCustomer->total_credit_given) }}</div>
-                </div>
-                <div>
-                    <div class="cr-modal-stat-l">Total Repaid</div>
-                    <div class="cr-modal-stat-v" style="color:var(--green)">{{ number_format($this->selectedCustomer->total_repaid) }}</div>
-                </div>
-            </div>
-
-            <form wire:submit.prevent="recordRepayment">
-                <div class="cr-field" style="margin-top:20px">
-                    <label class="cr-label">Repayment Amount (RWF) <span>*</span></label>
-                    <input type="number" wire:model="amount" min="1" step="1" placeholder="Enter amount…"
-                           class="cr-input" style="font-family:var(--mono);font-weight:600">
-                    @error('amount') <div class="cr-error">{{ $message }}</div> @enderror
+            {{-- Sticky: stays pinned to the top while scrolling through payment channels below --}}
+            <div class="cr-modal-sticky">
+                <div class="cr-modal-head">
+                    <div>
+                        <div class="cr-modal-title">Record Credit Repayment</div>
+                        <div class="cr-modal-sub">{{ $this->selectedCustomer->name }} · {{ $this->selectedCustomer->phone }}</div>
+                    </div>
+                    <button wire:click="cancelRepayment" class="cr-modal-close">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
 
-                <div class="cr-field">
-                    <label class="cr-label">Payment Method <span>*</span></label>
-                    <div class="cr-pm-grid">
-                        @foreach($this->paymentMethods as $value => $label)
-                            <label class="cr-pm-opt {{ $paymentMethod === $value ? 'active' : '' }}">
-                                <input type="radio" wire:model.live="paymentMethod" value="{{ $value }}">
-                                <span class="cr-pm-opt-label">{{ $label }}</span>
-                            </label>
-                        @endforeach
+                <div class="cr-modal-stats">
+                    <div>
+                        <div class="cr-modal-stat-l">Outstanding Balance</div>
+                        <div class="cr-modal-stat-v" style="color:var(--red)">{{ number_format($this->selectedCustomer->outstanding_balance) }}</div>
+                    </div>
+                    <div>
+                        <div class="cr-modal-stat-l">Total Credit Given</div>
+                        <div class="cr-modal-stat-v" style="color:var(--text)">{{ number_format($this->selectedCustomer->total_credit_given) }}</div>
+                    </div>
+                    <div>
+                        <div class="cr-modal-stat-l">Total Repaid</div>
+                        <div class="cr-modal-stat-v" style="color:var(--green)">{{ number_format($this->selectedCustomer->total_repaid) }}</div>
                     </div>
                 </div>
 
-                <div class="cr-field">
-                    <label class="cr-label">Reference / Transaction ID (Optional)</label>
-                    <input type="text" wire:model="reference" placeholder="e.g., transfer reference, receipt number…" class="cr-input">
+                {{-- Total repayment — auto-calculated from the channels below --}}
+                <div class="cr-bal-strip" x-show="total > 0" x-cloak style="margin-top:14px">
+                    <div class="cr-bal-row">
+                        <span class="cr-bal-label">Total Repayment</span>
+                        <span class="cr-bal-val" x-text="number_format_js(total) + ' RWF'"></span>
+                    </div>
+                    <div class="cr-bal-remain" :class="total > outstanding ? 'red' : 'green'">
+                        <span x-text="total > outstanding
+                            ? 'Exceeds outstanding balance by ' + number_format_js(total - outstanding) + ' RWF'
+                            : ((outstanding - total) > 0 ? number_format_js(outstanding - total) + ' RWF will remain owing' : 'Fully clears the balance')"></span>
+                    </div>
                 </div>
+            </div>
+
+            <form @submit.prevent="submit()">
+                <div class="cr-pay-section-title" style="margin-top:20px">Payment Channels</div>
+
+                {{-- Cash --}}
+                <div class="cr-pay-row">
+                    <div class="cr-pay-label-row">
+                        <label class="cr-pay-label">Cash</label>
+                    </div>
+                    <input class="cr-pay-input" type="number" x-model="cash" min="0" placeholder="0">
+                </div>
+
+                {{-- Mobile Money --}}
+                <div class="cr-pay-row">
+                    <div class="cr-pay-label-row">
+                        <label class="cr-pay-label">Mobile Money</label>
+                    </div>
+                    <input class="cr-pay-input" type="number" x-model="momo" min="0" placeholder="0">
+                </div>
+
+                @if($settingAllowCardPayment)
+                {{-- Card --}}
+                <div class="cr-pay-row">
+                    <div class="cr-pay-label-row">
+                        <label class="cr-pay-label">Card</label>
+                    </div>
+                    <input class="cr-pay-input" type="number" x-model="card" min="0" placeholder="0">
+                    <div class="cr-pay-ref">
+                        <input class="cr-pay-input" type="text" wire:model="payRef_card" placeholder="Card reference" style="font-size:11px">
+                    </div>
+                </div>
+                @endif
+
+                @if($settingAllowBankTransfer)
+                {{-- Bank Transfer --}}
+                <div class="cr-pay-row">
+                    <div class="cr-pay-label-row">
+                        <label class="cr-pay-label">Bank Transfer</label>
+                    </div>
+                    <input class="cr-pay-input" type="number" x-model="bank" min="0" placeholder="0">
+                    <div class="cr-pay-ref">
+                        <input class="cr-pay-input" type="text" wire:model="payRef_bank_transfer" placeholder="Transfer reference" style="font-size:11px">
+                    </div>
+                </div>
+                @endif
+
+                @error('total') <div class="cr-error" style="padding:0 22px;margin-bottom:16px">{{ $message }}</div> @enderror
 
                 <div class="cr-field" style="margin-bottom:20px">
                     <label class="cr-label">Notes (Optional)</label>
@@ -424,7 +492,8 @@
 
                 <div class="cr-modal-foot">
                     <button type="button" wire:click="cancelRepayment" class="cr-cancel-btn">Cancel</button>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="recordRepayment" class="cr-save-btn">
+                    <button type="submit" :disabled="total <= 0 || total > outstanding"
+                            wire:loading.attr="disabled" wire:target="recordRepayment" class="cr-save-btn">
                         <span wire:loading.remove wire:target="recordRepayment">Record Repayment</span>
                         <span wire:loading wire:target="recordRepayment" style="display:none;align-items:center;gap:8px;justify-content:center">
                             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:cr-spin 1s linear infinite">
@@ -436,19 +505,25 @@
                 </div>
             </form>
 
-            @if($this->selectedCustomer->creditRepayments->count() > 0)
+            @if($this->repaymentHistory->count() > 0)
                 <div class="cr-history">
                     <div class="cr-history-title">Recent Repayment History</div>
-                    @foreach($this->selectedCustomer->creditRepayments as $repayment)
+                    @foreach($this->repaymentHistory as $entry)
                         <div class="cr-history-row">
                             <div>
-                                <div class="cr-history-amt">{{ number_format($repayment->amount) }} RWF</div>
-                                <div class="cr-history-date">{{ $repayment->repayment_date->format('M d, Y h:i A') }}</div>
-                                @if($repayment->reference)
-                                    <div class="cr-history-ref">Ref: {{ $repayment->reference }}</div>
-                                @endif
+                                <div class="cr-history-amt">{{ number_format($entry['amount']) }} RWF</div>
+                                <div class="cr-history-date">{{ $entry['repayment_date']->format('M d, Y h:i A') }}</div>
+                                @foreach($entry['methods'] as $m)
+                                    @if($m['reference'])
+                                        <div class="cr-history-ref">{{ $m['method']->label() }} ref: {{ $m['reference'] }}</div>
+                                    @endif
+                                @endforeach
                             </div>
-                            <span class="cr-history-pill">{{ $repayment->payment_method->label() }}</span>
+                            <div class="cr-history-pills">
+                                @foreach($entry['methods'] as $m)
+                                    <span class="cr-history-pill">{{ $m['method']->label() }}</span>
+                                @endforeach
+                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -456,6 +531,12 @@
         </div>
     </div>
 @endif
+
+<script>
+function number_format_js(n) {
+    return Math.abs(parseInt(n||0)).toLocaleString();
+}
+</script>
 
 @endif {{-- end session gate --}}
 </div>

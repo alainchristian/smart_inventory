@@ -373,6 +373,12 @@ class DailySessionService
             'bank_by_customer'         => $bankByCustomer,
             'outstanding_receivables'  => $outstandingReceivables,
             'customers_owing_count'    => $customersOwingCount,
+            // What the business made during the selected period — top-line
+            // revenue (including credit sales, since they're still counted as
+            // a sale) minus operating expenses. This is period activity, not
+            // a cash-in-hand figure — unlike Business Position below, it DOES
+            // move with the date filter.
+            'net_for_period'           => (int) ($saleTotals->total ?? 0) - $totalExpenses,
         ];
     }
 
