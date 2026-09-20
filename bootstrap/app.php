@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.password.change' => \App\Http\Middleware\CheckPasswordChange::class,
         ]);
 
+        // Resolve and set the request's locale before anything else runs
+        // (flash messages, validation errors, etc. must already be in the right language)
+        $middleware->appendToGroup('web', \App\Http\Middleware\SetLocale::class);
+
         // Force password change wall for new users
         $middleware->appendToGroup('web', \App\Http\Middleware\CheckPasswordChange::class);
 

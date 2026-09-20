@@ -329,7 +329,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         </div>
         <div>
-            <h1 class="upos-header-title">Point of Sale</h1>
+            <h1 class="upos-header-title">{{ __('Point of Sale') }}</h1>
             <p class="upos-header-sub">
                 {{ $shopName }}
                 @if($warehouseName) · <span style="color:var(--accent)">+{{ $warehouseName }}</span>@endif
@@ -347,10 +347,10 @@
            onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Receipt History
+            {{ __('Receipt History') }}
         </a>
         @if(!empty($cart))
-            <span style="font-size:12px;color:var(--text-dim)">{{ count($cart) }} item{{ count($cart) !== 1 ? 's' : '' }} · <strong style="font-family:var(--mono)">{{ number_format($cartTotal) }} RWF</strong></span>
+            <span style="font-size:12px;color:var(--text-dim)">{{ trans_choice(':count item|:count items', count($cart), ['count' => count($cart)]) }} · <strong style="font-family:var(--mono)">{{ number_format($cartTotal) }} RWF</strong></span>
         @endif
     </div>
 </div>
@@ -366,29 +366,29 @@
         <div class="upos-search-row">
             <div class="upos-search-wrap">
                 <svg class="upos-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input class="upos-search-input" type="text" wire:model.live="searchQuery" placeholder="Search products…" autocomplete="off">
+                <input class="upos-search-input" type="text" wire:model.live="searchQuery" placeholder="{{ __('Search products…') }}" autocomplete="off">
             </div>
             <button class="upos-icon-btn {{ $showScannerPanel ? 'active' : '' }}"
                 wire:click="{{ $showScannerPanel ? 'disablePhoneScanner' : 'enablePhoneScanner' }}"
-                title="Phone scanner">
+                title="{{ __('Phone scanner') }}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01M12 12h.01"/></svg>
             </button>
         </div>
         <div class="upos-search-row">
-            <input class="upos-barcode-input" type="text" wire:model.live="barcodeInput" placeholder="Scan barcode…" autocomplete="off">
+            <input class="upos-barcode-input" type="text" wire:model.live="barcodeInput" placeholder="{{ __('Scan barcode…') }}" autocomplete="off">
         </div>
 
         {{-- Filter pills --}}
         <div class="upos-filter-strip">
             <button class="upos-filter-pill {{ $stockFilter === 'all' ? 'active' : '' }}" wire:click="setStockFilter('all')">
-                All <span class="count">{{ count($shopStock) + count($warehouseStock) }}</span>
+                {{ __('All') }} <span class="count">{{ count($shopStock) + count($warehouseStock) }}</span>
             </button>
             <button class="upos-filter-pill {{ $stockFilter === 'shop' ? 'active' : '' }}" wire:click="setStockFilter('shop')">
-                <span class="upos-badge shop" style="margin-right:2px">●</span> Shop <span class="count">{{ count($shopStock) }}</span>
+                <span class="upos-badge shop" style="margin-right:2px">●</span> {{ __('Shop') }} <span class="count">{{ count($shopStock) }}</span>
             </button>
             @if($warehouseId)
             <button class="upos-filter-pill {{ $stockFilter === 'warehouse' ? 'active' : '' }}" wire:click="setStockFilter('warehouse')">
-                <span class="upos-badge warehouse" style="margin-right:2px">●</span> Warehouse <span class="count">{{ count($warehouseStock) }}</span>
+                <span class="upos-badge warehouse" style="margin-right:2px">●</span> {{ __('Warehouse') }} <span class="count">{{ count($warehouseStock) }}</span>
             </button>
             @endif
         </div>
@@ -403,17 +403,17 @@
                 @if($qrAvailable)
                 {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(72)->generate(route('scanner.mobile') . '?session=' . $scannerSession->session_code) !!}
                 @else
-                <div style="width:72px;height:72px;background:var(--surface2);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:10px;text-align:center;padding:6px">QR unavailable</div>
+                <div style="width:72px;height:72px;background:var(--surface2);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:10px;text-align:center;padding:6px">{{ __('QR unavailable') }}</div>
                 @endif
             </div>
             <div class="upos-scanner-info">
-                <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Phone Scanner</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">{{ __('Phone Scanner') }}</div>
                 <div class="upos-scanner-code">{{ $scannerSession->session_code }}</div>
                 @if($lastProcessedScan)
                     <div style="font-size:11px;color:var(--green);margin-top:4px">Last scan: {{ $lastProcessedScan }}</div>
                 @endif
             </div>
-            <button class="upos-scanner-close" wire:click="disablePhoneScanner">Close</button>
+            <button class="upos-scanner-close" wire:click="disablePhoneScanner">{{ __('Close') }}</button>
         </div>
     </div>
     @endif
@@ -423,7 +423,7 @@
     <div class="upos-held-strip">
         <div class="upos-held-header">
             <span class="upos-held-title">Held Sales ({{ count($heldSales) }})</span>
-            <button class="upos-held-toggle" wire:click="$toggle('showHeldPanel')">{{ $showHeldPanel ? 'Hide' : 'Show' }}</button>
+            <button class="upos-held-toggle" wire:click="$toggle('showHeldPanel')">{{ $showHeldPanel ? __('Hide') : __('Show') }}</button>
         </div>
         @if($showHeldPanel)
         <div class="upos-held-list">
@@ -435,11 +435,11 @@
                 </div>
                 <span class="upos-held-total">{{ number_format($held['cart_total']) }}</span>
                 @if($held['needs_approval'] && !$held['is_approved'])
-                    <span class="upos-held-approval-badge">Needs Approval</span>
+                    <span class="upos-held-approval-badge">{{ __('Needs Approval') }}</span>
                 @elseif($held['is_approved'])
-                    <span class="upos-held-approved-badge" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="11" /> Approved</span>
+                    <span class="upos-held-approved-badge" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="11" /> {{ __('Approved') }}</span>
                 @endif
-                <button class="upos-held-action upos-held-resume" wire:click="resumeHeldSale({{ $held['id'] }})">Resume</button>
+                <button class="upos-held-action upos-held-resume" wire:click="resumeHeldSale({{ $held['id'] }})">{{ __('Resume') }}</button>
                 <button class="upos-held-action upos-held-discard" wire:click="discardHeldSale({{ $held['id'] }})">×</button>
             </div>
             @endforeach
@@ -460,8 +460,8 @@
         @php
             $isShop = $product['source'] === 'shop';
             $stockCount = $isShop
-                ? ($product['stock']['full_boxes'] ?? 0) . ' box' . (($product['stock']['full_boxes'] ?? 0) !== 1 ? 'es' : '')
-                : ($product['stock']['total_boxes'] ?? 0) . ' box' . (($product['stock']['total_boxes'] ?? 0) !== 1 ? 'es' : '');
+                ? trans_choice(':count box|:count boxes', $product['stock']['full_boxes'] ?? 0, ['count' => $product['stock']['full_boxes'] ?? 0])
+                : trans_choice(':count box|:count boxes', $product['stock']['total_boxes'] ?? 0, ['count' => $product['stock']['total_boxes'] ?? 0]);
             $maxStock = $isShop ? max(1, $product['stock']['total_items'] ?? 1) : max(1, ($product['stock']['total_items'] ?? 1));
             $barWidth = $isShop
                 ? min(100, round((($product['stock']['total_items'] ?? 0) / $maxStock) * 100))
@@ -469,7 +469,7 @@
         @endphp
         <div class="upos-tile" wire:key="tile-{{ $product['source'] }}-{{ $product['id'] }}">
             <div class="upos-tile-top">
-                <span class="upos-badge {{ $product['source'] }}">{{ $isShop ? 'Shop' : 'WH' }}</span>
+                <span class="upos-badge {{ $product['source'] }}">{{ $isShop ? __('Shop') : __('WH') }}</span>
                 <span class="upos-stock-count">{{ $stockCount }}</span>
             </div>
             <div class="upos-tile-name">{{ $product['name'] }}</div>
@@ -487,9 +487,9 @@
     @else
     <div class="upos-empty-state">
         <svg class="upos-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-        <p style="font-size:14px;font-weight:600;color:var(--text-dim);margin:0 0 4px">No products found</p>
+        <p style="font-size:14px;font-weight:600;color:var(--text-dim);margin:0 0 4px">{{ __('No products found') }}</p>
         <p style="font-size:12px;color:var(--text-dim);margin:0">
-            @if($searchQuery) No results for "{{ $searchQuery }}" @else No stock available @endif
+            @if($searchQuery) {{ __('No results for ":query"', ['query' => $searchQuery]) }} @else {{ __('No stock available') }} @endif
         </p>
     </div>
     @endif
@@ -519,7 +519,7 @@
     <div class="upos-cart-drawer" :class="drawerOpen ? 'open' : ''">
         <div class="upos-drawer-handle"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 10px;flex-shrink:0">
-            <span style="font-size:15px;font-weight:800;color:var(--text)">Cart</span>
+            <span style="font-size:15px;font-weight:800;color:var(--text)">{{ __('Cart') }}</span>
             <button style="background:none;border:none;cursor:pointer;color:var(--text-dim);padding:4px" @click="drawerOpen=false">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -535,12 +535,12 @@
 <div class="upos-overlay" style="z-index:800">
     <div class="upos-modal-card upos-shop-modal-card">
         <div class="upos-shop-modal-head">
-            <h2 class="upos-shop-modal-title">Select a Shop</h2>
-            <p class="upos-shop-modal-sub">Choose the shop you're operating from</p>
+            <h2 class="upos-shop-modal-title">{{ __('Select a Shop') }}</h2>
+            <p class="upos-shop-modal-sub">{{ __('Choose the shop you\'re operating from') }}</p>
         </div>
         <div style="padding:12px 24px 8px">
             <select class="upos-select" wire:model="shopId">
-                <option value="">— Select shop —</option>
+                <option value="">— {{ __('Select shop') }} —</option>
                 @foreach($availableShops as $shop)
                     <option value="{{ $shop['id'] }}">{{ $shop['name'] }}</option>
                 @endforeach
@@ -548,7 +548,7 @@
         </div>
         <div style="padding:12px 24px 20px">
             <button class="upos-btn-primary" style="width:100%" wire:click="selectShopFromModal" @if(!$shopId) disabled @endif>
-                Confirm Shop
+                {{ __('Confirm Shop') }}
             </button>
         </div>
     </div>
@@ -562,7 +562,7 @@
         {{-- Head --}}
         <div class="upos-sm-head">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                <span class="upos-badge {{ $stagingProduct['source'] }}">{{ $stagingProduct['source'] === 'shop' ? 'Shop Stock' : 'Warehouse Stock' }}</span>
+                <span class="upos-badge {{ $stagingProduct['source'] }}">{{ $stagingProduct['source'] === 'shop' ? __('Shop Stock') : __('Warehouse Stock') }}</span>
             </div>
             <h3 class="upos-sm-title">{{ $stagingProduct['name'] }}</h3>
             <p class="upos-sm-sub">{{ $stagingProduct['sku'] }}@if($stagingProduct['category']) · {{ $stagingProduct['category'] }}@endif</p>
@@ -575,44 +575,48 @@
             origPrice: {{ $stagingMode === 'box' ? $stagingProduct['box_price'] : $stagingProduct['selling_price'] }},
             maxQty: {{ ($stagingProduct['source'] === 'warehouse') ? ($stagingProduct['box_count'] ?? ($stagingStock['total_boxes'] ?? 9999)) : ($stagingMode === 'box' ? ($stagingStock['full_boxes'] ?? 9999) : ($stagingStock['total_items'] ?? 9999)) }},
             get isModified() { return parseInt(this.price) !== parseInt(this.origPrice); },
-            get isOverStock() { return parseInt(this.qty) > this.maxQty; }
+            get isOverStock() { return parseInt(this.qty) > this.maxQty; },
+            i18n: {
+                warningBoxes: @js(__('Warning: Only :qty boxes available in stock.')),
+                warningItems: @js(__('Warning: Only :qty items available in stock.')),
+            },
         }">
 
             {{-- Stock info --}}
             <div class="upos-sm-info">
                 @if($stagingProduct['source'] === 'shop')
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">Available items</span><span style="font-weight:700;font-family:var(--mono)">{{ number_format($stagingStock['total_items'] ?? 0) }}</span></div>
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">Full boxes</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['has_full_box'] ? ($stagingStock['full_boxes'] ?? '—') : 'None' }}</span></div>
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">Items/box</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['items_per_box'] }}</span></div>
+                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Available items') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ number_format($stagingStock['total_items'] ?? 0) }}</span></div>
+                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Full boxes') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['has_full_box'] ? ($stagingStock['full_boxes'] ?? '—') : 'None' }}</span></div>
+                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Items/box') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['items_per_box'] }}</span></div>
                 @else
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">Available boxes</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['box_count'] ?? ($stagingStock['total_boxes'] ?? 0) }}</span></div>
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">Items/box</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['items_per_box'] }}</span></div>
+                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Available boxes') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['box_count'] ?? ($stagingStock['total_boxes'] ?? 0) }}</span></div>
+                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Items/box') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['items_per_box'] }}</span></div>
                 @endif
             </div>
 
             {{-- Mode toggle (shop only) --}}
             @if($stagingProduct['source'] === 'shop' && ($stagingProduct['individual_sale_allowed'] ?? false))
             <div class="upos-field">
-                <label class="upos-label">Sell as</label>
+                <label class="upos-label">{{ __('Sell as') }}</label>
                 <div class="upos-mode-toggle">
-                    <button type="button" class="upos-mode-btn {{ $stagingMode === 'box' ? 'active' : '' }}" wire:click="$set('stagingMode','box')">Full Box</button>
-                    <button type="button" class="upos-mode-btn {{ $stagingMode === 'item' ? 'active' : '' }}" wire:click="$set('stagingMode','item')">Individual Items</button>
+                    <button type="button" class="upos-mode-btn {{ $stagingMode === 'box' ? 'active' : '' }}" wire:click="$set('stagingMode','box')">{{ __('Full Box') }}</button>
+                    <button type="button" class="upos-mode-btn {{ $stagingMode === 'item' ? 'active' : '' }}" wire:click="$set('stagingMode','item')">{{ __('Individual Items') }}</button>
                 </div>
             </div>
             @elseif($stagingProduct['source'] === 'warehouse')
-            <div style="font-size:12px;color:var(--text-dim);padding:4px 0">Warehouse sales are full boxes only.</div>
+            <div style="font-size:12px;color:var(--text-dim);padding:4px 0">{{ __('Warehouse sales are full boxes only.') }}</div>
             @endif
 
             {{-- Quantity --}}
             <div class="upos-field">
-                <label class="upos-label">{{ $stagingMode === 'box' ? 'Number of Boxes' : 'Number of Items' }}</label>
+                <label class="upos-label">{{ $stagingMode === 'box' ? __('Number of Boxes') : __('Number of Items') }}</label>
                 <div class="upos-stepper">
                     <button type="button" class="upos-stepper-btn" @click="if(qty > 1) qty--">−</button>
                     <input class="upos-stepper-val" type="number" x-model.number="qty" min="1" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
                     <button type="button" class="upos-stepper-btn" @click="qty++">+</button>
                 </div>
-                <div x-show="isOverStock" style="display:none; color:var(--amber); font-size:12px; margin-top:4px; font-weight:600; padding:6px 10px; background:var(--amber-dim); border-radius:var(--rsm);">
-                    Warning: Only <span x-text="maxQty"></span> {{ $stagingMode === 'box' ? 'boxes' : 'items' }} available in stock.
+                <div x-show="isOverStock" style="display:none; color:var(--amber); font-size:12px; margin-top:4px; font-weight:600; padding:6px 10px; background:var(--amber-dim); border-radius:var(--rsm);"
+                     x-text="({{ $stagingMode === 'box' ? 'true' : 'false' }} ? i18n.warningBoxes : i18n.warningItems).replace(':qty', maxQty)">
                 </div>
             </div>
 
@@ -622,11 +626,11 @@
                 @if($settingAllowPriceOverride)
                 <div class="upos-price-row">
                     <input class="upos-input" type="number" x-model.number="price" min="0">
-                    <span class="upos-price-modified-badge" x-show="isModified" style="display:none">Modified</span>
+                    <span class="upos-price-modified-badge" x-show="isModified" style="display:none">{{ __('Modified') }}</span>
                 </div>
                 <div class="upos-field" style="margin-top:6px" x-show="isModified" style="display:none">
-                    <label class="upos-label">Reason for price change</label>
-                    <input class="upos-input" type="text" wire:model="stagingPriceReason" placeholder="Required">
+                    <label class="upos-label">{{ __('Reason for price change') }}</label>
+                    <input class="upos-input" type="text" wire:model="stagingPriceReason" placeholder="{{ __('Required') }}">
                 </div>
                 @else
                 <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);padding:9px 0" x-text="new Intl.NumberFormat().format(price) + ' RWF'"></div>
@@ -635,16 +639,16 @@
 
             {{-- Line total --}}
             <div class="upos-sm-total">
-                <span class="upos-sm-total-label">Line Total</span>
+                <span class="upos-sm-total-label">{{ __('Line Total') }}</span>
                 <span class="upos-sm-total-val" x-text="new Intl.NumberFormat().format(price * qty) + ' RWF'"></span>
             </div>
 
         </div>{{-- end .upos-sm-body --}}
 
         <div class="upos-sm-foot">
-            <button type="button" class="upos-btn-ghost" wire:click="closeAddModal">Cancel</button>
+            <button type="button" class="upos-btn-ghost" wire:click="closeAddModal">{{ __('Cancel') }}</button>
             <button type="button" class="upos-btn-primary" wire:click="confirmAddToCart">
-                {{ $stagingCartIndex !== null ? 'Update Item' : 'Add to Cart' }}
+                {{ $stagingCartIndex !== null ? __('Update Item') : __('Add to Cart') }}
             </button>
         </div>
     </div>
@@ -672,7 +676,7 @@
     <div class="upos-modal-card upos-co-card" @click.stop>
         {{-- Head --}}
         <div class="upos-co-head">
-            <h3 class="upos-co-title">Checkout</h3>
+            <h3 class="upos-co-title">{{ __('Checkout') }}</h3>
             <button class="upos-co-close" wire:click="closeCheckoutModal">×</button>
         </div>
 
@@ -684,7 +688,7 @@
 
                 {{-- Order summary --}}
                 <div>
-                    <div class="upos-co-section-title">Order Summary</div>
+                    <div class="upos-co-section-title">{{ __('Order Summary') }}</div>
                     <div class="upos-order-summary">
                         @foreach($cart as $item)
                         <div class="upos-order-row">
@@ -693,13 +697,13 @@
                                     {{ $item['product_name'] }}
                                     <span class="upos-badge {{ $item['source'] ?? 'shop' }}" style="margin-left:4px;vertical-align:middle">{{ ($item['source'] ?? 'shop') === 'shop' ? 'S' : 'WH' }}</span>
                                 </div>
-                                <div style="font-size:11px;color:var(--text-dim)">{{ $item['qty'] }} × {{ number_format($item['price']) }} ({{ $item['mode'] === 'box' ? 'box' : 'item' }})</div>
+                                <div style="font-size:11px;color:var(--text-dim)">{{ $item['qty'] }} × {{ number_format($item['price']) }} ({{ $item['mode'] === 'box' ? __('box') : __('item') }})</div>
                             </div>
                             <div class="upos-order-item-total">{{ number_format($item['line_total']) }}</div>
                         </div>
                         @endforeach
                         <div class="upos-order-total-row">
-                            <span class="upos-order-total-label">Total</span>
+                            <span class="upos-order-total-label">{{ __('Total') }}</span>
                             <span class="upos-order-total-val">{{ number_format($cartTotal) }} RWF</span>
                         </div>
                     </div>
@@ -707,34 +711,34 @@
 
                 {{-- Customer --}}
                 <div>
-                    <div class="upos-co-section-title">Customer <span style="color:var(--red)">*</span></div>
+                    <div class="upos-co-section-title">{{ __('Customer') }} <span style="color:var(--red)">*</span></div>
                     @if($selectedCustomerId)
                         <div class="upos-customer-selected">
                             <div>
                                 <div style="font-size:13px;font-weight:700;color:var(--text)">{{ $selectedCustomerName }}</div>
                                 <div style="font-size:11px;color:var(--text-dim)">{{ $selectedCustomerPhone }}</div>
                             </div>
-                            <button class="upos-btn-sm" wire:click="clearCustomer">Change</button>
+                            <button class="upos-btn-sm" wire:click="clearCustomer">{{ __('Change') }}</button>
                         </div>
                     @elseif($showNewCustomerForm)
                         <div class="upos-new-customer-form">
                             <div class="upos-field">
-                                <label class="upos-label">Full Name</label>
-                                <input class="upos-input" type="text" wire:model="newCustomerName" placeholder="Customer name">
+                                <label class="upos-label">{{ __('Full Name') }}</label>
+                                <input class="upos-input" type="text" wire:model="newCustomerName" placeholder="{{ __('Customer name') }}">
                             </div>
                             <div class="upos-field">
-                                <label class="upos-label">Phone</label>
+                                <label class="upos-label">{{ __('Phone') }}</label>
                                 <input class="upos-input" type="text" wire:model="newCustomerPhone" placeholder="07X XXX XXXX">
                             </div>
                             <div style="display:flex;gap:8px">
-                                <button class="upos-btn-ghost" style="flex:1;padding:8px" wire:click="cancelNewCustomer">Cancel</button>
-                                <button class="upos-btn-primary" style="flex:1;padding:8px" wire:click="saveNewCustomer">Save</button>
+                                <button class="upos-btn-ghost" style="flex:1;padding:8px" wire:click="cancelNewCustomer">{{ __('Cancel') }}</button>
+                                <button class="upos-btn-primary" style="flex:1;padding:8px" wire:click="saveNewCustomer">{{ __('Save') }}</button>
                             </div>
                         </div>
                     @else
                         <div class="upos-customer-search-wrap">
                             <div class="upos-customer-input-row">
-                                <input class="upos-input" type="text" wire:model.live="customerSearch" wire:focus="openCustomerSearch" placeholder="Search by name or phone…">
+                                <input class="upos-input" type="text" wire:model.live="customerSearch" wire:focus="openCustomerSearch" placeholder="{{ __('Search by name or phone…') }}">
                                 <button class="upos-btn-sm" wire:click="showCreateCustomerForm">+ New</button>
                             </div>
                             @if($showCustomerSearch && count($customerResults) > 0)
@@ -742,7 +746,7 @@
                                 @foreach($customerResults as $cust)
                                 <div class="upos-customer-row" wire:click="selectCustomer({{ $cust['id'] }})">
                                     <span class="upos-customer-row-name">{{ $cust['name'] }}</span>
-                                    <span class="upos-customer-row-phone">{{ $cust['phone'] }} @if($cust['outstanding_balance'] > 0) · <span style="color:var(--amber)">{{ number_format($cust['outstanding_balance']) }} RWF credit</span>@endif</span>
+                                    <span class="upos-customer-row-phone">{{ $cust['phone'] }} @if($cust['outstanding_balance'] > 0) · <span style="color:var(--amber)">{{ __(':amount RWF credit', ['amount' => number_format($cust['outstanding_balance'])]) }}</span>@endif</span>
                                 </div>
                                 @endforeach
                             </div>
@@ -760,8 +764,8 @@
 
                 {{-- Notes --}}
                 <div class="upos-field">
-                    <label class="upos-label">Sale Notes (optional)</label>
-                    <input class="upos-input" type="text" wire:model="notes" placeholder="e.g. delivery instructions…" style="padding:7px 10px;font-size:13px">
+                    <label class="upos-label">{{ __('Sale Notes (optional)') }}</label>
+                    <input class="upos-input" type="text" wire:model="notes" placeholder="{{ __('e.g. delivery instructions…') }}" style="padding:7px 10px;font-size:13px">
                 </div>
 
                 {{-- Fulfillment (warehouse items only) --}}
@@ -769,39 +773,39 @@
                 <div class="upos-fulfillment-block">
                     <div class="upos-fulfillment-title">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                        Warehouse Dispatch
+                        {{ __('Warehouse Dispatch') }}
                     </div>
                     <div class="upos-fulfillment-toggle">
-                        <button type="button" class="upos-fulfillment-btn {{ $fulfillmentMethod === 'transporter' ? 'active' : '' }}" wire:click="$set('fulfillmentMethod','transporter')">Transporter</button>
-                        <button type="button" class="upos-fulfillment-btn {{ $fulfillmentMethod === 'pickup' ? 'active' : '' }}" wire:click="$set('fulfillmentMethod','pickup')">Customer Pickup</button>
+                        <button type="button" class="upos-fulfillment-btn {{ $fulfillmentMethod === 'transporter' ? 'active' : '' }}" wire:click="$set('fulfillmentMethod','transporter')">{{ __('Transporter') }}</button>
+                        <button type="button" class="upos-fulfillment-btn {{ $fulfillmentMethod === 'pickup' ? 'active' : '' }}" wire:click="$set('fulfillmentMethod','pickup')">{{ __('Customer Pickup') }}</button>
                     </div>
                     @if($fulfillmentMethod === 'transporter')
                         @if($showNewTransporterForm)
                         <div class="upos-new-customer-form" style="margin-bottom:8px">
                             <div class="upos-field">
-                                <label class="upos-label">Transporter Name</label>
-                                <input class="upos-input" type="text" wire:model="newTransporterName" placeholder="Full name">
+                                <label class="upos-label">{{ __('Transporter Name') }}</label>
+                                <input class="upos-input" type="text" wire:model="newTransporterName" placeholder="{{ __('Full name') }}">
                             </div>
                             <div class="upos-field">
-                                <label class="upos-label">Phone</label>
+                                <label class="upos-label">{{ __('Phone') }}</label>
                                 <input class="upos-input" type="text" wire:model="newTransporterPhone" placeholder="07X XXX XXXX (optional)">
                             </div>
                             <div class="upos-field">
-                                <label class="upos-label">Company</label>
-                                <input class="upos-input" type="text" wire:model="newTransporterCompany" placeholder="Company name (optional)">
+                                <label class="upos-label">{{ __('Company') }}</label>
+                                <input class="upos-input" type="text" wire:model="newTransporterCompany" placeholder="{{ __('Company name (optional)') }}">
                             </div>
                             <div class="upos-field">
-                                <label class="upos-label">Vehicle Number</label>
-                                <input class="upos-input" type="text" wire:model="newTransporterVehicle" placeholder="Plate number (optional)">
+                                <label class="upos-label">{{ __('Vehicle Number') }}</label>
+                                <input class="upos-input" type="text" wire:model="newTransporterVehicle" placeholder="{{ __('Plate number (optional)') }}">
                             </div>
                             <div style="display:flex;gap:8px">
-                                <button class="upos-btn-ghost" style="flex:1;padding:8px" wire:click="cancelNewTransporter">Cancel</button>
-                                <button class="upos-btn-primary" style="flex:1;padding:8px" wire:click="saveNewTransporter">Save</button>
+                                <button class="upos-btn-ghost" style="flex:1;padding:8px" wire:click="cancelNewTransporter">{{ __('Cancel') }}</button>
+                                <button class="upos-btn-primary" style="flex:1;padding:8px" wire:click="saveNewTransporter">{{ __('Save') }}</button>
                             </div>
                         </div>
                         @else
                         <div class="upos-field" style="margin-bottom:8px">
-                            <label class="upos-label">Select Transporter</label>
+                            <label class="upos-label">{{ __('Select Transporter') }}</label>
                             <div style="display:flex;gap:8px">
                                 <select class="upos-select" wire:model="fulfillmentTransporterId" style="flex:1">
                                     <option value="">— Choose transporter —</option>
@@ -815,12 +819,12 @@
                         @endif
                     @endif
                     <div class="upos-field">
-                        <label class="upos-label">Dispatch Notes</label>
-                        <input class="upos-input" type="text" wire:model="fulfillmentNotes" placeholder="Optional notes for warehouse team…">
+                        <label class="upos-label">{{ __('Dispatch Notes') }}</label>
+                        <input class="upos-input" type="text" wire:model="fulfillmentNotes" placeholder="{{ __('Optional notes for warehouse team…') }}">
                     </div>
                     <div class="upos-fulfillment-note">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                        Warehouse items will be dispatched to the customer after payment is collected.
+                        {{ __('Warehouse items will be dispatched to the customer after payment is collected.') }}
                     </div>
                 </div>
                 @endif
@@ -833,7 +837,7 @@
                 {{-- Balance strip --}}
                 <div class="upos-bal-strip">
                     <div class="upos-bal-row">
-                        <span class="upos-bal-label">Total</span>
+                        <span class="upos-bal-label">{{ __('Total') }}</span>
                         <span class="upos-bal-val" style="font-family:var(--mono)">{{ number_format($cartTotal) }} RWF</span>
                     </div>
                     <div class="upos-bal-progress">
@@ -846,12 +850,12 @@
                 </div>
 
                 {{-- Payment channels --}}
-                <div class="upos-co-section-title">Payment</div>
+                <div class="upos-co-section-title">{{ __('Payment') }}</div>
 
                 {{-- MoMo --}}
                 <div class="upos-pay-row">
                     <div class="upos-pay-label-row">
-                        <label class="upos-pay-label">Mobile Money</label>
+                        <label class="upos-pay-label">{{ __('Mobile Money') }}</label>
                     </div>
                     <input class="upos-pay-input" type="number" x-model="momo" min="0" placeholder="0">
                 </div>
@@ -860,11 +864,11 @@
                 {{-- Card --}}
                 <div class="upos-pay-row">
                     <div class="upos-pay-label-row">
-                        <label class="upos-pay-label">Card</label>
+                        <label class="upos-pay-label">{{ __('Card') }}</label>
                     </div>
                     <input class="upos-pay-input" type="number" x-model="card" min="0" placeholder="0">
                     <div class="upos-pay-ref">
-                        <input class="upos-pay-input" type="text" wire:model="payRef_card" placeholder="Card reference" style="font-size:11px">
+                        <input class="upos-pay-input" type="text" wire:model="payRef_card" placeholder="{{ __('Card reference') }}" style="font-size:11px">
                     </div>
                 </div>
                 @endif
@@ -873,11 +877,11 @@
                 {{-- Bank --}}
                 <div class="upos-pay-row">
                     <div class="upos-pay-label-row">
-                        <label class="upos-pay-label">Bank Transfer</label>
+                        <label class="upos-pay-label">{{ __('Bank Transfer') }}</label>
                     </div>
                     <input class="upos-pay-input" type="number" x-model="bank" min="0" placeholder="0">
                     <div class="upos-pay-ref">
-                        <input class="upos-pay-input" type="text" wire:model="payRef_bank_transfer" placeholder="Transfer reference" style="font-size:11px">
+                        <input class="upos-pay-input" type="text" wire:model="payRef_bank_transfer" placeholder="{{ __('Transfer reference') }}" style="font-size:11px">
                     </div>
                 </div>
                 @endif
@@ -886,9 +890,9 @@
                 {{-- Credit --}}
                 <div class="upos-pay-row">
                     <div class="upos-pay-label-row">
-                        <label class="upos-pay-label">Credit</label>
+                        <label class="upos-pay-label">{{ __('Credit') }}</label>
                         @if($settingCreditRequiresCustomer && !$selectedCustomerId)
-                        <span style="font-size:10px;color:var(--amber)">Select customer first</span>
+                        <span style="font-size:10px;color:var(--amber)">{{ __('Select customer first') }}</span>
                         @endif
                     </div>
                     <input class="upos-pay-input" type="number" x-model="credit" min="0" placeholder="0"
@@ -900,19 +904,19 @@
                 {{-- Cash (auto) --}}
                 <div style="background:var(--bg);border-radius:var(--rsm);padding:8px 12px">
                     <div class="upos-pay-label-row" style="margin-bottom:4px">
-                        <label class="upos-pay-label">Cash</label>
-                        <span class="upos-pay-auto-badge">auto</span>
+                        <label class="upos-pay-label">{{ __('Cash') }}</label>
+                        <span class="upos-pay-auto-badge">{{ __('auto') }}</span>
                     </div>
                     <div class="upos-cash-display" x-text="number_format_js(cash) + ' RWF'"></div>
                 </div>
 
                 {{-- Complete button --}}
                 <button class="upos-co-complete" @click="complete()" :disabled="remain !== 0 || cash < 0 || {{ $selectedCustomerId ? 'false' : 'true' }}">
-                    Complete Sale
+                    {{ __('Complete Sale') }}
                 </button>
                 @if(!$selectedCustomerId)
                 <div style="font-size:11px;color:var(--amber);text-align:center;margin-top:4px">
-                    Select or register a customer to continue
+                    {{ __('Select or register a customer to continue') }}
                 </div>
                 @endif
 
@@ -924,11 +928,11 @@
                 @if($needsOwnerApproval)
                 <button class="upos-cart-action-btn" style="width:100%;margin-top:2px;background:var(--amber-dim);border-color:var(--amber);color:var(--amber)" wire:click="holdSale">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;margin-right:5px;vertical-align:middle"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    Submit for Owner Approval
+                    {{ __('Submit for Owner Approval') }}
                 </button>
                 @else
                 <button class="upos-btn-ghost" style="width:100%;font-size:12px;padding:8px;margin-top:2px" wire:click="closeCheckoutModal">
-                    Cancel — back to cart
+                    {{ __('Cancel — back to cart') }}
                 </button>
                 @endif
 
@@ -948,7 +952,7 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <div>
-                <h3 class="upos-rc-banner-title">Sale Complete</h3>
+                <h3 class="upos-rc-banner-title">{{ __('Sale Complete') }}</h3>
                 <p class="upos-rc-banner-sub">{{ $completedSale->sale_number }} · {{ local_time($completedSale->sale_date)->format('d M Y H:i') }}</p>
             </div>
         </div>
@@ -957,14 +961,14 @@
             {{-- Customer --}}
             @if($completedSale->customer_name)
             <div style="font-size:13px;color:var(--text-sub)">
-                <strong>Customer:</strong> {{ $completedSale->customer_name }}
+                <strong>{{ __('Customer:') }}</strong> {{ $completedSale->customer_name }}
                 @if($completedSale->customer_phone) · {{ $completedSale->customer_phone }}@endif
             </div>
             @endif
 
             {{-- Items --}}
             <div>
-                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:6px">Items</div>
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:6px">{{ __('Items') }}</div>
                 <div class="upos-rc-items">
                     @php
                         $groupedItems = collect($completedSale->items)
@@ -998,7 +1002,7 @@
             <div class="upos-rc-wh-note">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                 <div>
-                    <strong>Warehouse items pending dispatch.</strong>
+                    <strong>{{ __('Warehouse items pending dispatch.') }}</strong>
                     The warehouse team has been notified and will dispatch items via
                     {{ $completedSale->fulfillment_method === 'transporter' && $completedSale->fulfillmentTransporter
                         ? $completedSale->fulfillmentTransporter->name
@@ -1009,7 +1013,7 @@
 
             {{-- Payments --}}
             <div>
-                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:6px">Payments</div>
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:6px">{{ __('Payments') }}</div>
                 <div class="upos-rc-payments">
                     @foreach($completedSale->payments as $payment)
                     <div class="upos-rc-pay-row">
@@ -1018,7 +1022,7 @@
                     </div>
                     @endforeach
                     <div class="upos-rc-total-row">
-                        <span class="upos-rc-total-label">Total</span>
+                        <span class="upos-rc-total-label">{{ __('Total') }}</span>
                         <span class="upos-rc-total-val">{{ number_format($completedSale->total) }} RWF</span>
                     </div>
                 </div>
@@ -1026,18 +1030,18 @@
         </div>
 
         <div class="upos-rc-foot">
-            <button class="upos-btn-ghost" wire:click="closeReceipt">New Sale</button>
+            <button class="upos-btn-ghost" wire:click="closeReceipt">{{ __('New Sale') }}</button>
             <a href="{{ route('shop.receipts') }}" target="_blank"
                style="display:inline-flex;align-items:center;gap:5px;padding:10px 14px;border-radius:var(--rsm);border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-size:13px;font-weight:600;text-decoration:none;transition:all var(--tr)"
                onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                History
+                {{ __('History') }}
             </a>
             <a class="upos-btn-primary" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none"
                href="{{ route('shop.receipt.print', $completedSale->id) }}" target="_blank" rel="noopener">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;margin-right:5px;vertical-align:middle"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print
+                {{ __('Print') }}
             </a>
         </div>
     </div>

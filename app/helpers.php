@@ -27,6 +27,19 @@ if (! function_exists('local_time')) {
     }
 }
 
+if (! function_exists('multilingual_enabled')) {
+    /**
+     * Whether the owner has turned on language switching (Business Settings
+     * → Localization). When false, the language switcher UI must stay
+     * hidden — SetLocale already forces everyone to the default language
+     * regardless of what's in this check.
+     */
+    function multilingual_enabled(): bool
+    {
+        return app(\App\Services\SettingsService::class)->multilingualEnabled();
+    }
+}
+
 if (! function_exists('csv_safe')) {
     /**
      * Prefix a leading =, +, -, or @ with an apostrophe so spreadsheet apps

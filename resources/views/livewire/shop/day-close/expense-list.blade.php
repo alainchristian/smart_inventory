@@ -4,7 +4,7 @@
     @endif
 
     @if ($expenses->isEmpty())
-        <div class="text-center py-8 text-sm" style="color:var(--text-dim);">No expenses recorded yet.</div>
+        <div class="text-center py-8 text-sm" style="color:var(--text-dim);">{{ __('No expenses recorded yet.') }}</div>
     @else
         {{-- Mobile: card layout --}}
         <div class="space-y-2 sm:hidden">
@@ -20,27 +20,27 @@
                                     <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                                 @endforeach
                             </select>
-                            <input wire:model="editDescription" type="text" placeholder="Description"
+                            <input wire:model="editDescription" type="text" placeholder="{{ __('Description') }}"
                                    class="w-full text-xs rounded px-2 py-1.5"
                                    style="background:var(--surface);border:1px solid var(--border);color:var(--text);" />
-                            <input wire:model="editAmount" type="number" placeholder="Amount (RWF)" min="1"
+                            <input wire:model="editAmount" type="number" placeholder="{{ __('Amount (RWF)') }}" min="1"
                                    class="w-full text-xs rounded px-2 py-1.5"
                                    style="background:var(--surface);border:1px solid var(--border);color:var(--text);" />
                             <select wire:model="editPaymentMethod" class="w-full text-xs rounded px-2 py-1.5"
                                     style="background:var(--surface);border:1px solid var(--border);color:var(--text);">
-                                <option value="cash">Cash</option>
-                                <option value="mobile_money">Mobile Money</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="other">Other</option>
+                                <option value="cash">{{ __('Cash') }}</option>
+                                <option value="mobile_money">{{ __('Mobile Money') }}</option>
+                                <option value="bank_transfer">{{ __('Bank Transfer') }}</option>
+                                <option value="other">{{ __('Other') }}</option>
                             </select>
                         </div>
                         <div class="flex gap-2">
                             <button wire:click="saveExpense"
                                     class="flex-1 text-xs py-1 rounded font-semibold"
-                                    style="background:var(--accent);color:#fff;">Save</button>
+                                    style="background:var(--accent);color:#fff;">{{ __('Save') }}</button>
                             <button wire:click="cancelEdit"
                                     class="text-xs px-3 py-1 rounded"
-                                    style="background:var(--surface);border:1px solid var(--border);color:var(--text-dim);">Cancel</button>
+                                    style="background:var(--surface);border:1px solid var(--border);color:var(--text-dim);">{{ __('Cancel') }}</button>
                         </div>
                     </div>
                 @else
@@ -63,13 +63,13 @@
                                         <button wire:click="editExpense({{ $expense->id }})"
                                                 class="text-xs px-2 py-1 rounded"
                                                 style="color:var(--accent);background:var(--accent-dim);">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </button>
                                         <button wire:click="voidExpense({{ $expense->id }})"
-                                                wire:confirm="Void this expense?"
+                                                wire:confirm="{{ __('Void this expense?') }}"
                                                 class="text-xs px-2 py-1 rounded"
                                                 style="color:var(--red);background:var(--red-dim);">
-                                            Void
+                                            {{ __('Void') }}
                                         </button>
                                     </div>
                                 @endif
@@ -79,7 +79,7 @@
                 @endif
             @endforeach
             <div class="flex justify-between text-sm font-semibold pt-1 px-1">
-                <span style="color:var(--text-dim);">Total</span>
+                <span style="color:var(--text-dim);">{{ __('Total') }}</span>
                 <span class="font-mono" style="color:var(--text);">{{ number_format($expenses->sum('amount')) }} RWF</span>
             </div>
         </div>
@@ -89,11 +89,11 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr style="border-bottom:1px solid var(--border);">
-                        <th class="text-left pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">Category</th>
-                        <th class="text-left pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">Description</th>
-                        <th class="text-left pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">Method</th>
-                        <th class="text-right pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">Amount</th>
-                        <th class="text-right pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">Time</th>
+                        <th class="text-left pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">{{ __('Category') }}</th>
+                        <th class="text-left pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">{{ __('Description') }}</th>
+                        <th class="text-left pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">{{ __('Method') }}</th>
+                        <th class="text-right pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">{{ __('Amount') }}</th>
+                        <th class="text-right pb-2 px-2 text-xs font-semibold" style="color:var(--text-dim);">{{ __('Time') }}</th>
                         <th class="pb-2 px-2"></th>
                     </tr>
                 </thead>
@@ -110,16 +110,16 @@
                                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                                             @endforeach
                                         </select>
-                                        <input wire:model="editDescription" type="text" placeholder="Description"
+                                        <input wire:model="editDescription" type="text" placeholder="{{ __('Description') }}"
                                                style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);flex:1;min-width:120px;" />
-                                        <input wire:model="editAmount" type="number" placeholder="Amount" min="1"
+                                        <input wire:model="editAmount" type="number" placeholder="{{ __('Amount') }}" min="1"
                                                style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);width:110px;" />
                                         <select wire:model="editPaymentMethod"
                                                 style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
-                                            <option value="cash">Cash</option>
-                                            <option value="mobile_money">Mobile Money</option>
-                                            <option value="bank_transfer">Bank Transfer</option>
-                                            <option value="other">Other</option>
+                                            <option value="cash">{{ __('Cash') }}</option>
+                                            <option value="mobile_money">{{ __('Mobile Money') }}</option>
+                                            <option value="bank_transfer">{{ __('Bank Transfer') }}</option>
+                                            <option value="other">{{ __('Other') }}</option>
                                         </select>
                                     </div>
                                     @error('editAmount') <div style="font-size:11px;color:var(--red);margin-top:4px;">{{ $message }}</div> @enderror
@@ -129,11 +129,11 @@
                                 <td class="py-2 px-2 text-right" style="white-space:nowrap;">
                                     <button wire:click="saveExpense"
                                             style="font-size:12px;padding:4px 10px;border-radius:6px;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:700;margin-right:4px;">
-                                        Save
+                                        {{ __('Save') }}
                                     </button>
                                     <button wire:click="cancelEdit"
                                             style="font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-dim);">
-                                        Cancel
+                                        {{ __('Cancel') }}
                                     </button>
                                 </td>
                             </tr>
@@ -161,13 +161,13 @@
                                         <button wire:click="editExpense({{ $expense->id }})"
                                                 style="font-size:11px;padding:3px 8px;border-radius:5px;cursor:pointer;
                                                        color:var(--accent);background:var(--accent-dim);border:none;margin-right:4px;">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </button>
                                         <button wire:click="voidExpense({{ $expense->id }})"
-                                                wire:confirm="Void this expense?"
+                                                wire:confirm="{{ __('Void this expense?') }}"
                                                 style="font-size:11px;padding:3px 8px;border-radius:5px;cursor:pointer;
                                                        color:var(--red);background:var(--red-dim);border:none;">
-                                            Void
+                                            {{ __('Void') }}
                                         </button>
                                     @endif
                                 </td>
@@ -177,7 +177,7 @@
                 </tbody>
                 <tfoot>
                     <tr style="border-top:2px solid var(--border);">
-                        <td colspan="3" class="pt-2.5 px-2 text-xs font-semibold" style="color:var(--text-dim);">Total</td>
+                        <td colspan="3" class="pt-2.5 px-2 text-xs font-semibold" style="color:var(--text-dim);">{{ __('Total') }}</td>
                         <td class="pt-2.5 px-2 text-right font-mono text-sm font-bold" style="color:var(--text);">
                             {{ number_format($expenses->sum('amount')) }} RWF
                         </td>

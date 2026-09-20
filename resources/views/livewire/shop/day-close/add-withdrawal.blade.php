@@ -16,7 +16,7 @@
         {{-- Two amount fields side by side --}}
         <div class="grid grid-cols-2 gap-3 aw-amounts-grid">
             <div>
-                <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">Cash (RWF)</label>
+                <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">{{ __('Cash (RWF)') }}</label>
                 <input type="number"
                        wire:model="cashAmount"
                        inputmode="decimal"
@@ -28,13 +28,13 @@
                        onfocus="this.style.borderColor='var(--accent)';if(this.value==='0')this.value='';"
                        onblur="this.style.borderColor='var(--border)';if(this.value==='')this.value='';">
                 <div style="font-size:10px;margin-top:3px;color:{{ $summary['expected_cash'] > 0 ? 'var(--green)' : 'var(--text-dim)' }};">
-                    {{ number_format($summary['expected_cash']) }} RWF available
+                    {{ __(':amount RWF available', ['amount' => number_format($summary['expected_cash'])]) }}
                 </div>
                 @error('cashAmount') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
             </div>
 
             <div>
-                <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">Mobile Money (RWF)</label>
+                <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">{{ __('Mobile Money (RWF)') }}</label>
                 <input type="number"
                        wire:model="momoAmount"
                        inputmode="decimal"
@@ -46,7 +46,7 @@
                        onfocus="this.style.borderColor='var(--accent)';if(this.value==='0')this.value='';"
                        onblur="this.style.borderColor='var(--border)';if(this.value==='')this.value='';">
                 <div style="font-size:10px;margin-top:3px;color:{{ $summary['momo_available'] > 0 ? '#0ea5e9' : 'var(--text-dim)' }};">
-                    {{ number_format($summary['momo_available']) }} RWF available
+                    {{ __(':amount RWF available', ['amount' => number_format($summary['momo_available'])]) }}
                 </div>
                 @error('momoAmount') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
             </div>
@@ -54,32 +54,32 @@
 
         @if (($momoAmount ?? 0) > 0)
             <div>
-                <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">MoMo Reference <span style="opacity:.5;font-weight:400;">(optional)</span></label>
+                <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">{{ __('MoMo Reference') }} <span style="opacity:.5;font-weight:400;">(optional)</span></label>
                 <input type="text"
                        wire:model="momoReference"
                        enterkeyhint="next"
                        class="w-full px-3 py-2 rounded-lg text-sm"
                        style="background:var(--surface);border:1px solid var(--border);color:var(--text);"
-                       placeholder="Transaction ID or phone number">
+                       placeholder="{{ __('Transaction ID or phone number') }}">
                 @error('momoReference') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
             </div>
         @endif
 
         <div>
-            <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">Reason</label>
+            <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">{{ __('Reason') }}</label>
             <input type="text"
                    wire:model="reason"
                    wire:keydown.enter="saveWithdrawal"
                    enterkeyhint="done"
                    class="w-full px-3 py-2 rounded-lg text-sm"
                    style="background:var(--surface);border:1px solid var(--border);color:var(--text);"
-                   placeholder="e.g. school fees, personal use">
+                   placeholder="{{ __('e.g. school fees, personal use') }}">
             @error('reason') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
         </div>
 
         @if ((int) $cashAmount > 0 || (int) $momoAmount > 0)
             <div class="flex justify-between text-xs px-1" style="color:var(--text-dim);">
-                <span>Total</span>
+                <span>{{ __('Total') }}</span>
                 <span class="font-mono font-semibold" style="color:var(--text);">
                     {{ number_format((int) $cashAmount + (int) $momoAmount) }} RWF
                 </span>
@@ -97,8 +97,8 @@
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            <span wire:loading.remove wire:target="saveWithdrawal">Record Withdrawal</span>
-            <span wire:loading wire:target="saveWithdrawal" style="display:none;">Saving…</span>
+            <span wire:loading.remove wire:target="saveWithdrawal">{{ __('Record Withdrawal') }}</span>
+            <span wire:loading wire:target="saveWithdrawal" style="display:none;">{{ __('Saving…') }}</span>
         </button>
     </div>
 </div>

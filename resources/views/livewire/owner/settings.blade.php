@@ -35,7 +35,7 @@
 /* ── Status KPI strip ───────────────────── */
 .settings-kpi-strip {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 10px;
     margin-bottom: 28px;
 }
@@ -448,6 +448,13 @@
         <div class="settings-kpi-val {{ $allowBankTransferPayment ? 'on' : 'off' }}">
             <span class="settings-kpi-dot {{ $allowBankTransferPayment ? 'on' : 'off' }}"></span>
             {{ $allowBankTransferPayment ? 'On' : 'Off' }}
+        </div>
+    </div>
+    <div class="settings-kpi">
+        <div class="settings-kpi-label">Languages</div>
+        <div class="settings-kpi-val {{ $multilingualEnabled ? 'on' : 'off' }}">
+            <span class="settings-kpi-dot {{ $multilingualEnabled ? 'on' : 'off' }}"></span>
+            {{ $multilingualEnabled ? 'Multi' : strtoupper($defaultLocale) }}
         </div>
     </div>
 </div>
@@ -907,6 +914,63 @@
             <button type="button" wire:click="$set('fulfillmentDispatchMethod', 'scan')"
                     class="st-seg-btn {{ $fulfillmentDispatchMethod === 'scan' ? 'on' : '' }}">
                 Scan Code
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- ══════════════════════════════════════════
+     SECTION 8: Localization
+══════════════════════════════════════════ --}}
+<div class="page-section-label">Localization</div>
+<div class="section-card">
+    <div class="section-card-header">
+        <div class="section-card-icon" style="background:var(--accent-dim)">
+            <svg width="18" height="18" fill="none" stroke="var(--accent)"
+                 stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <path stroke-linecap="round" d="M2 12h20M12 2a15.3 15.3 0 010 20 15.3 15.3 0 010-20z"/>
+            </svg>
+        </div>
+        <div>
+            <h3 class="section-card-title">Language</h3>
+            <p class="section-card-sub">Control which language the app is shown in, and whether staff can switch it themselves</p>
+        </div>
+    </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Allow multiple languages</div>
+            <div class="st-hint">
+                When on, every user (including on the sign-in page) can pick English or
+                Kinyarwanda for themselves from the language switcher, independent of the
+                default below. When off, the switcher is hidden everywhere and the whole
+                app runs in the default language only &mdash; turn this off if the
+                Kinyarwanda translations aren't ready to show to staff yet.
+            </div>
+        </div>
+        <label class="st-toggle">
+            <input type="checkbox" wire:model.live="multilingualEnabled">
+            <div class="st-toggle-track"><div class="st-toggle-knob"></div></div>
+        </label>
+    </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Default language</div>
+            <div class="st-hint">
+                Used for every user who hasn't picked their own language, and for the
+                whole app when multiple languages are off above.
+            </div>
+        </div>
+        <div class="st-seg" style="max-width:260px">
+            <button type="button" wire:click="$set('defaultLocale', 'en')"
+                    class="st-seg-btn {{ $defaultLocale === 'en' ? 'on' : '' }}">
+                English
+            </button>
+            <button type="button" wire:click="$set('defaultLocale', 'rw')"
+                    class="st-seg-btn {{ $defaultLocale === 'rw' ? 'on' : '' }}">
+                Kinyarwanda
             </button>
         </div>
     </div>

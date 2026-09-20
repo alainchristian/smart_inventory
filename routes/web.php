@@ -28,6 +28,27 @@ Route::get('/scanner', function () {
     return view('scanner.mobile');
 })->name('scanner.mobile');
 
+// Language switcher — public (guests need it on the login page too).
+// Persists to the signed-in user's own record; always stashes it in the
+// session as well so it survives for guests across the login flow.
+Route::post('/locale/{locale}', function (string $locale) {
+    if (!in_array($locale, \App\Http\Middleware\SetLocale::AVAILABLE, true)) {
+        abort(404);
+    }
+
+    if (!app(\App\Services\SettingsService::class)->multilingualEnabled()) {
+        abort(404);
+    }
+
+    session(['locale' => $locale]);
+
+    if (auth()->check()) {
+        auth()->user()->update(['locale' => $locale]);
+    }
+
+    return back();
+})->where('locale', 'en|rw')->name('locale.set');
+
 // Authentication routes
 require __DIR__.'/auth.php';
 

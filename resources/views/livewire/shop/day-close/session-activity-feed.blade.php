@@ -13,7 +13,7 @@
 
     @if ($activities->isEmpty())
         <div style="text-align:center;padding:24px 0;font-size:12px;color:var(--text-dim);">
-            No activity yet for this session
+            {{ __('No activity yet for this session') }}
         </div>
     @else
         <div style="display:flex;flex-direction:column;gap:2px;">
@@ -79,7 +79,7 @@
                             };
                         @endphp
                         <button wire:click="{{ $voidMethod }}({{ $item['id'] }})"
-                                wire:confirm="Void this entry? This cannot be undone."
+                                wire:confirm="{{ __('Void this entry? This cannot be undone.') }}"
                                 style="flex-shrink:0;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;
                                        background:var(--red-dim);color:var(--red);border:1px solid var(--red-dim);cursor:pointer;">
                             ×
@@ -94,19 +94,19 @@
                     border:1px solid var(--border);background:var(--surface);">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
                 <div style="text-align:center;">
-                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">Total In</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">{{ __('Total In') }}</div>
                     <div class="af-total-val" style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--green);">
                         +{{ number_format($totalIn) }}
                     </div>
                 </div>
                 <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);">
-                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">Total Out</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">{{ __('Total Out') }}</div>
                     <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--red);">
                         −{{ number_format($totalOut) }}
                     </div>
                 </div>
                 <div style="text-align:center;">
-                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">Net</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">{{ __('Net') }}</div>
                     @php $net = $totalIn - $totalOut; @endphp
                     <div style="font-size:13px;font-weight:700;font-family:var(--mono);
                                 color:{{ $net >= 0 ? 'var(--green)' : 'var(--red)' }};">

@@ -134,4 +134,14 @@ class SettingsService
     {
         return (string) $this->get('fulfillment_dispatch_method', 'queue');
     }
+
+    public function defaultLocale(): string
+    {
+        return (string) $this->get('default_locale', 'en');
+    }
+
+    public function multilingualEnabled(): bool
+    {
+        return (bool) $this->get('multilingual_enabled', false);
+    }
 }

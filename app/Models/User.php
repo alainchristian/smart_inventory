@@ -28,6 +28,7 @@ class User extends Authenticatable
         'last_login_at',
         'must_change_password',
         'notifications_read_at',
+        'locale',
     ];
 
     protected $hidden = [

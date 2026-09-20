@@ -211,8 +211,8 @@ class Topbar extends Component
     public function render()
     {
         return view('livewire.layout.topbar', [
-            'currentMonth' => now()->format('M Y'),
-            'currentDate' => now()->format('l, F j, Y'),
+            'currentMonth' => now()->translatedFormat('M Y'),
+            'currentDate' => now()->translatedFormat('l, F j, Y'),
         ]);
     }
 }

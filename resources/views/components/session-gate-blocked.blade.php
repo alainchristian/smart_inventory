@@ -12,19 +12,17 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="font-semibold text-sm" style="color:var(--text);">No Active Session</div>
-                    <div class="text-xs" style="color:var(--text-dim);">Day not opened yet</div>
+                    <div class="font-semibold text-sm" style="color:var(--text);">{{ __('No Active Session') }}</div>
+                    <div class="text-xs" style="color:var(--text-dim);">{{ __('Day not opened yet') }}</div>
                 </div>
             </div>
             <p class="text-sm mb-5" style="color:var(--text-dim);">
-                Open today's session before recording any activity.
-                Sales, returns, transfers and expenses are all unavailable
-                until the day is opened.
+                {{ __("Open today's session before recording any activity. Sales, returns, transfers and expenses are all unavailable until the day is opened.") }}
             </p>
             <a href="{{ route('shop.session.open') }}"
                class="block w-full text-center px-4 py-2 rounded-lg text-sm font-semibold"
                style="background:var(--accent);color:white;">
-                Open Today's Session
+                {{ __("Open Today's Session") }}
             </a>
 
         @elseif ($reason === 'previous_open')
@@ -36,18 +34,17 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="font-semibold text-sm" style="color:var(--text);">Previous Session Not Closed</div>
-                    <div class="text-xs" style="color:var(--amber);">Action required</div>
+                    <div class="font-semibold text-sm" style="color:var(--text);">{{ __('Previous Session Not Closed') }}</div>
+                    <div class="text-xs" style="color:var(--amber);">{{ __('Action required') }}</div>
                 </div>
             </div>
             <p class="text-sm mb-5" style="color:var(--text-dim);">
-                The session for <strong style="color:var(--text);">{{ $sessionDate }}</strong> is still open.
-                You must close it before starting a new day.
+                {{ __('The session for :date is still open. You must close it before starting a new day.', ['date' => $sessionDate]) }}
             </p>
             <a href="{{ route('shop.session.close', ['session' => $sessionId]) }}"
                class="block w-full text-center px-4 py-2 rounded-lg text-sm font-semibold"
                style="background:var(--amber);color:#1a1a1a;">
-                Close {{ $sessionDate }} Session
+                {{ __('Close :date Session', ['date' => $sessionDate]) }}
             </a>
 
         @elseif ($reason === 'session_closed')
@@ -59,13 +56,12 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="font-semibold text-sm" style="color:var(--text);">Today's Session Is Closed</div>
-                    <div class="text-xs" style="color:var(--text-dim);">No further activity permitted</div>
+                    <div class="font-semibold text-sm" style="color:var(--text);">{{ __("Today's Session Is Closed") }}</div>
+                    <div class="text-xs" style="color:var(--text-dim);">{{ __('No further activity permitted') }}</div>
                 </div>
             </div>
             <p class="text-sm" style="color:var(--text-dim);">
-                Today's session has been closed. No further activity
-                can be recorded. Review history or wait for tomorrow.
+                {{ __('Today\'s session has been closed. No further activity can be recorded. Review history or wait for tomorrow.') }}
             </p>
         @endif
 

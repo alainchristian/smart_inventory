@@ -261,8 +261,8 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <div class="wiz-kpi-body">
-                        <div class="wiz-kpi-label" style="font-size:13px;letter-spacing:1px;">Total Sales Today</div>
-                        <div class="wiz-kpi-sub">Gross revenue from all channels</div>
+                        <div class="wiz-kpi-label" style="font-size:13px;letter-spacing:1px;">{{ __('Total Sales Today') }}</div>
+                        <div class="wiz-kpi-sub">{{ __('Gross revenue from all channels') }}</div>
                     </div>
                 </div>
                 
@@ -281,15 +281,15 @@
                 <div class="wiz-kpi-footer">
                     <div class="wiz-kpi-stat">
                         <span class="wiz-kpi-stat-v">{{ $summary['transaction_count'] ?? 0 }}</span>
-                        <span class="wiz-kpi-stat-l">Transactions</span>
+                        <span class="wiz-kpi-stat-l">{{ __('Transactions') }}</span>
                     </div>
                     <div class="wiz-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border);">
                         <span class="wiz-kpi-stat-v">{{ $cashPct }}%</span>
-                        <span class="wiz-kpi-stat-l">Cash Ratio</span>
+                        <span class="wiz-kpi-stat-l">{{ __('Cash Ratio') }}</span>
                     </div>
                     <div class="wiz-kpi-stat">
                         <span class="wiz-kpi-stat-v" style="color:var(--accent);">{{ number_format($summary['total_sales_momo'] ?? 0) }}</span>
-                        <span class="wiz-kpi-stat-l">Mobile Money</span>
+                        <span class="wiz-kpi-stat-l">{{ __('Mobile Money') }}</span>
                     </div>
                 </div>
             </div>
@@ -298,7 +298,7 @@
         {{-- Channel breakdown --}}
         <div class="rounded-2xl overflow-hidden mb-4" style="border:none;box-shadow:var(--shadow-card);">
             <div class="wiz-card-head">
-                <span class="wiz-card-title">By Payment Channel</span>
+                <span class="wiz-card-title">{{ __('By Payment Channel') }}</span>
             </div>
             <div style="background:var(--surface);">
                 @foreach ($channels as $__chRow)
@@ -333,7 +333,7 @@
         @if ($hasCashRefunds || $hasRepayments)
             <div class="rounded-2xl overflow-hidden" style="border:none;box-shadow:var(--shadow-card);">
                 <div class="wiz-card-head">
-                    <span class="wiz-card-title">Adjustments</span>
+                    <span class="wiz-card-title">{{ __('Adjustments') }}</span>
                 </div>
                 <div style="background:var(--surface);">
                     @if ($hasCashRefunds)
@@ -344,7 +344,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                                     </svg>
                                 </div>
-                                <span class="text-sm" style="color:var(--text);">Cash refunds</span>
+                                <span class="text-sm" style="color:var(--text);">{{ __('Cash refunds') }}</span>
                             </div>
                             <span class="font-mono text-sm font-semibold" style="color:var(--red);">−{{ number_format($summary['total_refunds_cash']) }} RWF</span>
                         </div>
@@ -361,26 +361,26 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
                                     </div>
-                                    <span class="text-sm font-medium" style="color:var(--text);">Credit repayments received</span>
+                                    <span class="text-sm font-medium" style="color:var(--text);">{{ __('Credit repayments received') }}</span>
                                 </div>
                                 <span class="font-mono text-sm font-semibold" style="color:var(--green);">+{{ number_format($summary['total_repayments']) }} RWF</span>
                             </div>
                             <div class="ml-8 space-y-1">
                                 @if (($summary['total_repayments_cash'] ?? 0) > 0)
                                     <div class="flex justify-between text-xs">
-                                        <span style="color:var(--text-dim);">Cash</span>
+                                        <span style="color:var(--text-dim);">{{ __('Cash') }}</span>
                                         <span class="font-mono" style="color:var(--green);">+{{ number_format($summary['total_repayments_cash']) }} RWF</span>
                                     </div>
                                 @endif
                                 @if (($summary['total_repayments_momo'] ?? 0) > 0)
                                     <div class="flex justify-between text-xs">
-                                        <span style="color:var(--text-dim);">Mobile Money</span>
+                                        <span style="color:var(--text-dim);">{{ __('Mobile Money') }}</span>
                                         <span class="font-mono" style="color:#6366f1;">+{{ number_format($summary['total_repayments_momo']) }} RWF</span>
                                     </div>
                                 @endif
                                 @if ($bankRep > 0)
                                     <div class="flex justify-between text-xs">
-                                        <span style="color:var(--text-dim);">Card / Bank Transfer</span>
+                                        <span style="color:var(--text-dim);">{{ __('Card / Bank Transfer') }}</span>
                                         <span class="font-mono" style="color:var(--accent);">+{{ number_format($bankRep) }} RWF</span>
                                     </div>
                                 @endif
@@ -408,7 +408,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l9-3 9 3M3 6v12l9 3 9-3V6M12 3v18"/></svg>
                     </div>
                     <div class="wiz-kpi-body">
-                        <div class="wiz-kpi-label">Deposits</div>
+                        <div class="wiz-kpi-label">{{ __('Deposits') }}</div>
                     </div>
                 </div>
                 <div class="wiz-kpi-val" style="color:var(--accent);">
@@ -417,7 +417,7 @@
                 <div class="wiz-kpi-divider"></div>
                 <div class="wiz-kpi-footer" style="grid-template-columns:1fr;">
                     <div class="wiz-kpi-stat" style="align-items:flex-start;padding:0;">
-                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ $summary['bank_deposit_count'] ?? 0 }} items</span>
+                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ __(':count items', ['count' => $summary['bank_deposit_count'] ?? 0]) }}</span>
                     </div>
                 </div>
             </div>
@@ -429,7 +429,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
                     </div>
                     <div class="wiz-kpi-body">
-                        <div class="wiz-kpi-label">Expenses</div>
+                        <div class="wiz-kpi-label">{{ __('Expenses') }}</div>
                     </div>
                 </div>
                 <div class="wiz-kpi-val" style="color:var(--red);">
@@ -438,7 +438,7 @@
                 <div class="wiz-kpi-divider"></div>
                 <div class="wiz-kpi-footer" style="grid-template-columns:1fr;">
                     <div class="wiz-kpi-stat" style="align-items:flex-start;padding:0;">
-                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ $summary['expense_count'] ?? 0 }} items</span>
+                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ __(':count items', ['count' => $summary['expense_count'] ?? 0]) }}</span>
                     </div>
                 </div>
             </div>
@@ -450,7 +450,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     </div>
                     <div class="wiz-kpi-body">
-                        <div class="wiz-kpi-label">Withdrawals</div>
+                        <div class="wiz-kpi-label">{{ __('Withdrawals') }}</div>
                     </div>
                 </div>
                 <div class="wiz-kpi-val" style="color:var(--amber);">
@@ -459,7 +459,7 @@
                 <div class="wiz-kpi-divider"></div>
                 <div class="wiz-kpi-footer" style="grid-template-columns:1fr;">
                     <div class="wiz-kpi-stat" style="align-items:flex-start;padding:0;">
-                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ $summary['withdrawal_count'] ?? 0 }} items</span>
+                        <span class="wiz-kpi-stat-v" style="font-size:13px;">{{ __(':count items', ['count' => $summary['withdrawal_count'] ?? 0]) }}</span>
                     </div>
                 </div>
             </div>
@@ -474,19 +474,19 @@
                         @click="activeTab = 'deposits'"
                         :class="{ 'active': activeTab === 'deposits' }"
                         class="wiz-tab">
-                    Bank Deposits
+                    {{ __('Bank Deposits') }}
                 </button>
                 <button type="button"
                         @click="activeTab = 'expenses'"
                         :class="{ 'active': activeTab === 'expenses' }"
                         class="wiz-tab">
-                    Expenses
+                    {{ __('Expenses') }}
                 </button>
                 <button type="button"
                         @click="activeTab = 'withdrawals'"
                         :class="{ 'active': activeTab === 'withdrawals' }"
                         class="wiz-tab">
-                    Withdrawals
+                    {{ __('Withdrawals') }}
                 </button>
             </div>
 
@@ -581,7 +581,7 @@
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-card);">
 
             <div class="wiz-card-head">
-                <span style="font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.7px;">Cash Drawer</span>
+                <span style="font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.7px;">{{ __('Cash Drawer') }}</span>
             </div>
 
             @php
@@ -612,7 +612,7 @@
 
             <div style="padding:14px 16px;border-top:1px solid var(--border);background:var(--surface);">
                 <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:13px;font-weight:600;color:var(--text);">Expected cash</span>
+                    <span style="font-size:13px;font-weight:600;color:var(--text);">{{ __('Expected cash') }}</span>
                     <span style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--accent);letter-spacing:-0.5px;">
                         {{ number_format($summary['expected_cash'] ?? 0) }}
                         <span style="font-size:12px;font-weight:400;color:var(--text-dim);">RWF</span>
@@ -627,10 +627,10 @@
 
             <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow-card);">
                 <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">
-                    Count the physical cash
+                    {{ __('Count the physical cash') }}
                 </label>
                 <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;">
-                    Enter the total cash in the drawer right now.
+                    {{ __('Enter the total cash in the drawer right now.') }}
                 </p>
 
                 <div style="position:relative;">
@@ -662,7 +662,7 @@
                 @if (!$hasInput)
                     <div style="padding:16px 20px;background:var(--surface2);text-align:center;">
                         <div style="font-size:12px;color:var(--text-dim);">
-                            Enter the cash count above to see the variance
+                            {{ __('Enter the cash count above to see the variance') }}
                         </div>
                     </div>
                 @elseif ($variance === 0)
@@ -674,8 +674,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <div style="font-size:14px;font-weight:700;color:var(--green);">Perfectly Balanced</div>
-                                <div style="font-size:12px;color:var(--text-dim);">Drawer matches expected — no variance</div>
+                                <div style="font-size:14px;font-weight:700;color:var(--green);">{{ __('Perfectly Balanced') }}</div>
+                                <div style="font-size:12px;color:var(--text-dim);">{{ __('Drawer matches expected — no variance') }}</div>
                             </div>
                         </div>
                     </div>
@@ -689,13 +689,13 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <div style="font-size:14px;font-weight:700;color:var(--amber);">Surplus Detected</div>
-                                    <div style="font-size:12px;color:var(--text-dim);">Extra cash will be retained in the drawer</div>
+                                    <div style="font-size:14px;font-weight:700;color:var(--amber);">{{ __('Surplus Detected') }}</div>
+                                    <div style="font-size:12px;color:var(--text-dim);">{{ __('Extra cash will be retained in the drawer') }}</div>
                                 </div>
                             </div>
                             <div class="wiz-variance-card-right" style="text-align:right;flex-shrink:0;">
                                 <div style="font-size:20px;font-weight:800;color:var(--amber);font-family:var(--mono);">+{{ number_format($variance) }}</div>
-                                <div style="font-size:10px;color:var(--text-dim);">RWF over</div>
+                                <div style="font-size:10px;color:var(--text-dim);">{{ __('RWF over') }}</div>
                             </div>
                         </div>
                     </div>
@@ -709,13 +709,13 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <div style="font-size:14px;font-weight:700;color:var(--red);">Shortage</div>
-                                    <div style="font-size:12px;color:var(--text-dim);">Will be auto-recorded as a cash loss</div>
+                                    <div style="font-size:14px;font-weight:700;color:var(--red);">{{ __('Shortage') }}</div>
+                                    <div style="font-size:12px;color:var(--text-dim);">{{ __('Will be auto-recorded as a cash loss') }}</div>
                                 </div>
                             </div>
                             <div style="text-align:right;flex-shrink:0;">
                                 <div style="font-size:20px;font-weight:800;color:var(--red);font-family:var(--mono);">−{{ number_format(abs($variance)) }}</div>
-                                <div style="font-size:10px;color:var(--text-dim);">RWF short</div>
+                                <div style="font-size:10px;color:var(--text-dim);">{{ __('RWF short') }}</div>
                             </div>
                         </div>
                     </div>
@@ -738,7 +738,7 @@
             $vColor  = $vState === 'exact' ? 'var(--green)'       : ($vState === 'over' ? 'var(--amber)'     : 'var(--red)');
             $vBg     = $vState === 'exact' ? 'var(--green-dim)'   : ($vState === 'over' ? 'var(--amber-dim)' : 'var(--red-dim)');
             $vBorder = $vState === 'exact' ? 'var(--green)'       : ($vState === 'over' ? 'var(--amber)'     : 'var(--red)');
-            $vLabel  = $vState === 'exact' ? 'Cash Balanced'      : ($vState === 'over' ? 'Cash Surplus'     : 'Cash Shortage');
+            $vLabel  = $vState === 'exact' ? __('Cash Balanced')  : ($vState === 'over' ? __('Cash Surplus') : __('Cash Shortage'));
             $vIcon   = $vState === 'exact'
                 ? '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>'
                 : ($vState === 'over'
@@ -803,9 +803,9 @@
                     </div>
                 </div>
                 <div class="wiz-variance-right" style="text-align:right;flex-shrink:0;">
-                    <div style="font-size:11px;color:{{ $vColor }};opacity:0.8;margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Expected</div>
+                    <div style="font-size:11px;color:{{ $vColor }};opacity:0.8;margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">{{ __('Expected') }}</div>
                     <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:{{ $vColor }};">{{ number_format($summary['expected_cash'] ?? 0) }}</div>
-                    <div style="font-size:11px;color:{{ $vColor }};opacity:0.8;margin:8px 0 4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Counted</div>
+                    <div style="font-size:11px;color:{{ $vColor }};opacity:0.8;margin:8px 0 4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">{{ __('Counted') }}</div>
                     <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:{{ $vColor }};">{{ number_format((int) $actualCashCounted) }}</div>
                 </div>
             </div>
@@ -818,7 +818,7 @@
                     <svg style="width:14px;height:14px;" fill="none" stroke="var(--amber)" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
-                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">Cash Disposition</span>
+                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">{{ __('Cash Disposition') }}</span>
                 </div>
 
                 <div style="background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:14px;">
@@ -826,9 +826,9 @@
                     {{-- Transfer row: drawer → owner --}}
                     <div>
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                            <label style="font-size:12px;font-weight:600;color:var(--text-dim);">Send to Owner via MoMo</label>
+                            <label style="font-size:12px;font-weight:600;color:var(--text-dim);">{{ __('Send to Owner via MoMo') }}</label>
                             <span style="font-size:10px;padding:2px 8px;border-radius:999px;
-                                         background:var(--amber-dim);color:var(--amber);font-weight:600;">Optional</span>
+                                         background:var(--amber-dim);color:var(--amber);font-weight:600;">{{ __('Optional') }}</span>
                         </div>
                         <input type="number" wire:model.live="cashToOwnerMomo" min="0"
                                @input="$dispatch('momo-deduction-changed', { val: parseInt($event.target.value) || 0 })"
@@ -847,19 +847,19 @@
 
                     @if ((int) $cashToOwnerMomo > 0)
                         <div>
-                            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;">MoMo Reference</label>
+                            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;">{{ __('MoMo Reference') }}</label>
                             <input type="text" wire:model="ownerMomoReference"
                                    style="width:100%;padding:9px 12px;border-radius:8px;font-size:13px;font-family:var(--mono);
                                           background:var(--surface);border:1.5px solid var(--border);color:var(--text);box-sizing:border-box;"
-                                   placeholder="Transaction ID or confirmation code">
+                                   placeholder="{{ __('Transaction ID or confirmation code') }}">
                         </div>
                     @endif
 
                     {{-- Retained display --}}
                     <div class="wiz-kpi wiz-retained-kpi" style="padding:24px 32px; flex-direction:row; align-items:center; justify-content:space-between; margin-top:8px; margin-bottom:8px;">
                         <div>
-                            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:4px;">Retained in Shop</div>
-                            <div style="font-size:13px;color:var(--text-dim);">Cash stays in the register</div>
+                            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:4px;">{{ __('Retained in Shop') }}</div>
+                            <div style="font-size:13px;color:var(--text-dim);">{{ __('Cash stays in the register') }}</div>
                         </div>
                         <div class="wiz-retained-val" style="font-size:32px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;color:{{ $cashRetained >= 0 ? 'var(--text)' : 'var(--red)' }};">
                             {{ number_format($cashRetained) }}
@@ -875,9 +875,9 @@
                             <svg style="width:14px;height:14px;" fill="none" stroke="#6366f1" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                             </svg>
-                            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">Non-Cash Settlement</span>
+                            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">{{ __('Non-Cash Settlement') }}</span>
                         </div>
-                        <div style="font-size:11px;color:var(--text-dim);padding-left:22px;">Confirm how each channel's collections were transferred to the owner</div>
+                        <div style="font-size:11px;color:var(--text-dim);padding-left:22px;">{{ __('Confirm how each channel\'s collections were transferred to the owner') }}</div>
                     </div>
 
                     <div style="background:var(--surface);">
@@ -902,7 +902,7 @@
                                     <div class="wiz-nc-row-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                                         <div>
                                             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;
-                                                        color:var(--text-dim);margin-bottom:4px;">Settled (RWF)</div>
+                                                        color:var(--text-dim);margin-bottom:4px;">{{ __('Settled (RWF)') }}</div>
                                             <input type="number" wire:model.blur="{{ $field }}" min="0"
                                                    style="width:100%;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:700;
                                                           font-family:var(--mono);text-align:right;
@@ -914,12 +914,12 @@
                                         </div>
                                         <div>
                                             <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;
-                                                        color:var(--text-dim);margin-bottom:4px;">Reference</div>
+                                                        color:var(--text-dim);margin-bottom:4px;">{{ __('Reference') }}</div>
                                             <input type="text" wire:model="{{ $refField }}"
                                                    style="width:100%;padding:8px 10px;border-radius:8px;font-size:12px;
                                                           background:var(--surface);border:1.5px solid var(--border);
                                                           color:var(--text);box-sizing:border-box;"
-                                                   placeholder="Txn ID…">
+                                                   placeholder="{{ __('Txn ID…') }}">
                                         </div>
                                     </div>
                                 </div>
@@ -931,8 +931,8 @@
                                 <div style="display:flex;align-items:center;gap:8px;">
                                     <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;"></div>
                                     <div>
-                                        <div style="font-size:12px;font-weight:600;color:var(--amber);">Credit Sales</div>
-                                        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">Tracked on customer accounts — no settlement needed</div>
+                                        <div style="font-size:12px;font-weight:600;color:var(--amber);">{{ __('Credit Sales') }}</div>
+                                        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">{{ __('Tracked on customer accounts — no settlement needed') }}</div>
                                     </div>
                                 </div>
                                 <span style="font-size:13px;font-family:var(--mono);font-weight:700;color:var(--amber);white-space:nowrap;">
@@ -956,7 +956,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>
-                    Back
+                    {{ __('Back') }}
                 </button>
             @endif
         </div>
@@ -966,7 +966,7 @@
                 <button wire:click="nextStep"
                         wire:key="btn-next-step"
                         class="wiz-btn wiz-btn-primary" style="min-width:140px;">
-                    <span>Continue</span>
+                    <span>{{ __('Continue') }}</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                     </svg>
@@ -975,18 +975,18 @@
                 <button wire:click="submitClose"
                         wire:key="btn-submit-close"
                         wire:loading.attr="disabled"
-                        wire:confirm="Close the day and submit? You can re-open it for corrections until the owner locks the session."
+                        wire:confirm="{{ __('Close the day and submit? You can re-open it for corrections until the owner locks the session.') }}"
                         class="wiz-btn wiz-btn-amber py-3.5 px-8 rounded-xl">
                     <span wire:loading.remove wire:target="submitClose">
                         <svg class="w-4 h-4 inline mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Close Register & Submit
+                        {{ __('Close Register & Submit') }}
                     </span>
-                    <span wire:loading wire:target="submitClose" style="display:none;">Closing…</span>
+                    <span wire:loading wire:target="submitClose" style="display:none;">{{ __('Closing…') }}</span>
                 </button>
                 <div class="wiz-nav-hint text-right w-full mt-2">
-                    <p class="text-xs inline-block" style="color:var(--text-dim);">Re-openable until owner locks the session</p>
+                    <p class="text-xs inline-block" style="color:var(--text-dim);">{{ __('Re-openable until owner locks the session') }}</p>
                 </div>
             @endif
         </div>
@@ -1055,7 +1055,7 @@
 
         {{-- Header --}}
         <div style="padding:9px 12px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
-            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-dim);">Live Balances</span>
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-dim);">{{ __('Live Balances') }}</span>
             <button @click="open = false" style="background:none;border:none;cursor:pointer;padding:2px;line-height:0;">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="color:var(--text-dim);">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
@@ -1073,7 +1073,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                     </div>
-                    <span style="font-size:11px;font-weight:600;color:var(--text-dim);">Cash</span>
+                    <span style="font-size:11px;font-weight:600;color:var(--text-dim);">{{ __('Cash') }}</span>
                 </div>
                 <span style="font-size:13px;font-weight:700;font-family:var(--font-mono,monospace);"
                       :style="displayCash >= 0 ? 'color:var(--green)' : 'color:var(--red)'"
@@ -1095,7 +1095,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                         </svg>
                     </div>
-                    <span style="font-size:11px;font-weight:600;color:var(--text-dim);">Mobile Money</span>
+                    <span style="font-size:11px;font-weight:600;color:var(--text-dim);">{{ __('Mobile Money') }}</span>
                 </div>
                 <span style="font-size:13px;font-weight:700;font-family:var(--font-mono,monospace);"
                       :style="momoBalance >= 0 ? 'color:var(--accent)' : 'color:var(--red)'"
@@ -1109,7 +1109,7 @@
 
         {{-- Footer hint --}}
         <div style="padding:5px 12px 8px;text-align:center;">
-            <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Updates as you record · RWF</span>
+            <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">{{ __('Updates as you record · RWF') }}</span>
         </div>
     </div>
 </div>

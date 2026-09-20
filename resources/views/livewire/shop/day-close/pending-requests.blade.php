@@ -27,7 +27,7 @@
             <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4M12 16h.01"/>
             </svg>
-            No open session today — open today's session first to pay or reject requests.
+            {{ __('No open session today — open today\'s session first to pay or reject requests.') }}
         </div>
     @endif
 
@@ -38,7 +38,7 @@
                  stroke-width="2" style="color:var(--green);flex-shrink:0;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            No pending warehouse requests
+            {{ __('No pending warehouse requests') }}
         </div>
     @else
         <div style="display:flex;flex-direction:column;gap:10px;">
@@ -62,7 +62,7 @@
                             </span>
                             <span style="padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;
                                          background:var(--amber-dim);color:var(--amber);">
-                                Pending
+                                {{ __('Pending') }}
                             </span>
                             @if ($ageLabel)
                                 <span class="pr-age-badge">
@@ -95,12 +95,12 @@
                     @if ($rejectingId === $request->id)
                         <div style="padding:12px 16px;background:var(--surface2);border-top:1px solid var(--border);">
                             <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:5px;">
-                                Rejection Reason
+                                {{ __('Rejection Reason') }}
                             </label>
                             <input type="text" wire:model="rejectionReason"
                                    style="width:100%;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:8px;
                                           background:var(--surface);border:1px solid var(--border);color:var(--text);box-sizing:border-box;"
-                                   placeholder="Reason for rejection…">
+                                   placeholder="{{ __('Reason for rejection…') }}">
                             @error('rejectionReason')
                                 <div style="font-size:11px;margin-bottom:8px;color:var(--red);">{{ $message }}</div>
                             @enderror
@@ -110,12 +110,12 @@
                                         @if(! $canAct) disabled @endif
                                         style="padding:7px 16px;border-radius:8px;font-size:12px;font-weight:700;
                                                background:var(--red);color:white;border:none;cursor:pointer;">
-                                    Confirm Reject
+                                    {{ __('Confirm Reject') }}
                                 </button>
                                 <button wire:click="cancelReject"
                                         style="padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;
                                                background:var(--surface);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;">
-                                    Cancel
+                                    {{ __('Cancel') }}
                                 </button>
                             </div>
                         </div>
@@ -123,7 +123,7 @@
                         <div style="padding:10px 16px;background:var(--surface2);border-top:1px solid var(--border);
                                     display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                             <button wire:click="payRequest({{ $request->id }})"
-                                    wire:confirm="Pay {{ number_format($request->amount) }} RWF from today's session cash?"
+                                    wire:confirm="{{ __('Pay :amount RWF from today\'s session cash?', ['amount' => number_format($request->amount)]) }}"
                                     class="{{ ! $canAct ? 'pr-action-disabled' : '' }}"
                                     @if(! $canAct) disabled @endif
                                     style="padding:7px 16px;border-radius:8px;font-size:12px;font-weight:700;
@@ -132,17 +132,17 @@
                                 <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                 </svg>
-                                Pay from Cash
+                                {{ __('Pay from Cash') }}
                             </button>
                             <button wire:click="showRejectForm({{ $request->id }})"
                                     class="{{ ! $canAct ? 'pr-action-disabled' : '' }}"
                                     @if(! $canAct) disabled @endif
                                     style="padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;
                                            background:var(--red-dim);color:var(--red);border:1px solid var(--red-dim);cursor:pointer;">
-                                Reject
+                                {{ __('Reject') }}
                             </button>
                             @if (! $canAct)
-                                <span style="font-size:11px;color:var(--text-dim);margin-left:4px;">Open today's session first</span>
+                                <span style="font-size:11px;color:var(--text-dim);margin-left:4px;">{{ __('Open today\'s session first') }}</span>
                             @endif
                         </div>
                     @endif

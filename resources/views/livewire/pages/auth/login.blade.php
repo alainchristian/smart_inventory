@@ -47,7 +47,7 @@ new #[Layout('layouts.login')] class extends Component
         </div>
         <span class="form-avatar-line"></span>
     </div>
-    <p class="form-caption">Sign in to your account</p>
+    <p class="form-caption">{{ __('Sign in to your account') }}</p>
 
     <form wire:submit="login" novalidate>
 
@@ -66,7 +66,7 @@ new #[Layout('layouts.login')] class extends Component
                        type="email"
                        name="email"
                        class="field-input @error('form.email') has-error @enderror"
-                       placeholder="Email address"
+                       placeholder="{{ __('Email address') }}"
                        required
                        autofocus
                        autocomplete="username">
@@ -91,7 +91,7 @@ new #[Layout('layouts.login')] class extends Component
                        :type="showPwd ? 'text' : 'password'"
                        name="password"
                        class="field-input @error('form.password') has-error @enderror"
-                       placeholder="Password"
+                       placeholder="{{ __('Password') }}"
                        required
                        autocomplete="current-password">
                 <button type="button" class="field-eye" @click="showPwd = !showPwd"
@@ -128,21 +128,21 @@ new #[Layout('layouts.login')] class extends Component
                         </svg>
                     </span>
                 </span>
-                Remember me
+                {{ __('Remember me') }}
             </label>
             @if (Route::has('password.request'))
                 <a class="forgot-link" href="{{ route('password.request') }}" wire:navigate>
-                    Forgot password?
+                    {{ __('Forgot password?') }}
                 </a>
             @endif
         </div>
 
         {{-- Submit --}}
         <button type="submit" class="btn-login" wire:loading.attr="disabled">
-            <span wire:loading.remove wire:target="login">Sign In</span>
+            <span wire:loading.remove wire:target="login">{{ __('Sign In') }}</span>
             <span wire:loading wire:target="login" class="btn-loading" style="display:none">
                 <span class="spinner"></span>
-                Signing in…
+                {{ __('Signing in…') }}
             </span>
         </button>
 
@@ -150,6 +150,6 @@ new #[Layout('layouts.login')] class extends Component
 
     <div class="form-divider"></div>
     <div class="form-footer">
-        Powered by {{ config('tenant.name') }} &copy; {{ date('Y') }}
+        {{ __('Powered by :tenant', ['tenant' => config('tenant.name')]) }} &copy; {{ date('Y') }}
     </div>
 </div>

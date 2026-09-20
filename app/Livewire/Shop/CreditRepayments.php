@@ -101,13 +101,13 @@ class CreditRepayments extends Component
         $totalAllocated = collect($breakdown)->sum('amount');
 
         if ($totalAllocated <= 0) {
-            $this->addError('total', 'Enter a repayment amount in at least one payment channel.');
+            $this->addError('total', __('Enter a repayment amount in at least one payment channel.'));
             return;
         }
 
         // Validate amount doesn't exceed outstanding balance
         if ($totalAllocated > $customer->outstanding_balance) {
-            $this->addError('total', 'Repayment amount cannot exceed outstanding balance of ' . number_format($customer->outstanding_balance, 0) . ' RWF');
+            $this->addError('total', __('Repayment amount cannot exceed outstanding balance of :amount RWF', ['amount' => number_format($customer->outstanding_balance, 0)]));
             return;
         }
 
@@ -194,7 +194,10 @@ class CreditRepayments extends Component
 
         $this->dispatch('notification', [
             'type'    => 'success',
-            'message' => 'Credit repayment of ' . number_format($totalAllocated, 0) . ' RWF recorded for ' . $customer->name . '.',
+            'message' => __('Credit repayment of :amount RWF recorded for :name.', [
+                'amount' => number_format($totalAllocated, 0),
+                'name'   => $customer->name,
+            ]),
         ]);
 
         $this->cancelRepayment();

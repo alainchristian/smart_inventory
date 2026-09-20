@@ -152,8 +152,8 @@
 {{-- Page Header --}}
 <div class="cr-header">
     <div>
-        <h1 class="cr-header-title">Credit Repayments</h1>
-        <p class="cr-header-sub">Record customer credit repayments and track payment history</p>
+        <h1 class="cr-header-title">{{ __('Credit Repayments') }}</h1>
+        <p class="cr-header-sub">{{ __('Record customer credit repayments and track payment history') }}</p>
     </div>
 </div>
 
@@ -168,8 +168,8 @@
                 </svg>
             </div>
             <div class="cr-kpi-body">
-                <div class="cr-kpi-label">Total Outstanding</div>
-                <div class="cr-kpi-sub">Owed across all customers</div>
+                <div class="cr-kpi-label">{{ __('Total Outstanding') }}</div>
+                <div class="cr-kpi-sub">{{ __('Owed across all customers') }}</div>
             </div>
         </div>
         <div class="cr-kpi-val" style="color:var(--red)">{{ number_format($this->stats['total_outstanding']) }}<span style="font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px">RWF</span></div>
@@ -177,15 +177,15 @@
         <div class="cr-kpi-footer">
             <div class="cr-kpi-stat">
                 <span class="cr-kpi-stat-v">{{ $this->stats['customer_count'] }}</span>
-                <span class="cr-kpi-stat-l">Customers</span>
+                <span class="cr-kpi-stat-l">{{ __('Customers') }}</span>
             </div>
             <div class="cr-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
                 <span class="cr-kpi-stat-v">{{ number_format($this->stats['highest_balance']) }}</span>
-                <span class="cr-kpi-stat-l">Highest</span>
+                <span class="cr-kpi-stat-l">{{ __('Highest') }}</span>
             </div>
             <div class="cr-kpi-stat">
                 <span class="cr-kpi-stat-v">{{ number_format($this->stats['avg_balance']) }}</span>
-                <span class="cr-kpi-stat-l">Avg Balance</span>
+                <span class="cr-kpi-stat-l">{{ __('Avg Balance') }}</span>
             </div>
         </div>
     </div>
@@ -199,8 +199,8 @@
                 </svg>
             </div>
             <div class="cr-kpi-body">
-                <div class="cr-kpi-label">Collected Today</div>
-                <div class="cr-kpi-sub">Repayments recorded today</div>
+                <div class="cr-kpi-label">{{ __('Collected Today') }}</div>
+                <div class="cr-kpi-sub">{{ __('Repayments recorded today') }}</div>
             </div>
         </div>
         <div class="cr-kpi-val" style="color:var(--green)">{{ number_format($this->stats['collected_today']) }}<span style="font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px">RWF</span></div>
@@ -208,15 +208,15 @@
         <div class="cr-kpi-footer">
             <div class="cr-kpi-stat">
                 <span class="cr-kpi-stat-v">{{ $this->stats['repayments_today_count'] }}</span>
-                <span class="cr-kpi-stat-l">Payments</span>
+                <span class="cr-kpi-stat-l">{{ __('Payments') }}</span>
             </div>
             <div class="cr-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
                 <span class="cr-kpi-stat-v">{{ number_format($this->stats['avg_payment_today']) }}</span>
-                <span class="cr-kpi-stat-l">Avg Payment</span>
+                <span class="cr-kpi-stat-l">{{ __('Avg Payment') }}</span>
             </div>
             <div class="cr-kpi-stat">
                 <span class="cr-kpi-stat-v">{{ $this->stats['customers_paid_today'] }}</span>
-                <span class="cr-kpi-stat-l">Customers</span>
+                <span class="cr-kpi-stat-l">{{ __('Customers') }}</span>
             </div>
         </div>
     </div>
@@ -230,8 +230,8 @@
                 </svg>
             </div>
             <div class="cr-kpi-body">
-                <div class="cr-kpi-label">Repayment Rate</div>
-                <div class="cr-kpi-sub">All-time, credit given vs repaid</div>
+                <div class="cr-kpi-label">{{ __('Repayment Rate') }}</div>
+                <div class="cr-kpi-sub">{{ __('All-time, credit given vs repaid') }}</div>
             </div>
         </div>
         <div class="cr-kpi-val" style="color:var(--accent)">{{ $this->stats['repayment_rate'] }}<span style="font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px">%</span></div>
@@ -239,15 +239,15 @@
         <div class="cr-kpi-footer">
             <div class="cr-kpi-stat">
                 <span class="cr-kpi-stat-v">{{ number_format($this->stats['all_credit_given']) }}</span>
-                <span class="cr-kpi-stat-l">Credit Given</span>
+                <span class="cr-kpi-stat-l">{{ __('Credit Given') }}</span>
             </div>
             <div class="cr-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
                 <span class="cr-kpi-stat-v">{{ number_format($this->stats['all_repaid']) }}</span>
-                <span class="cr-kpi-stat-l">Repaid</span>
+                <span class="cr-kpi-stat-l">{{ __('Repaid') }}</span>
             </div>
             <div class="cr-kpi-stat">
                 <span class="cr-kpi-stat-v">{{ number_format($this->stats['total_written_off']) }}</span>
-                <span class="cr-kpi-stat-l">Written Off</span>
+                <span class="cr-kpi-stat-l">{{ __('Written Off') }}</span>
             </div>
         </div>
     </div>
@@ -261,8 +261,8 @@
                 </svg>
             </div>
             <div class="cr-kpi-body">
-                <div class="cr-kpi-label">Overdue Customers</div>
-                <div class="cr-kpi-sub">No repayment in {{ $this->stats['overdue_days'] }}+ days</div>
+                <div class="cr-kpi-label">{{ __('Overdue Customers') }}</div>
+                <div class="cr-kpi-sub">{{ __('No repayment in :days+ days', ['days' => $this->stats['overdue_days']]) }}</div>
             </div>
         </div>
         <div class="cr-kpi-val" style="color:var(--amber)">{{ $this->stats['overdue_count'] }}</div>
@@ -270,15 +270,15 @@
         <div class="cr-kpi-footer">
             <div class="cr-kpi-stat">
                 <span class="cr-kpi-stat-v">{{ $this->stats['customer_count'] }}</span>
-                <span class="cr-kpi-stat-l">Total Owing</span>
+                <span class="cr-kpi-stat-l">{{ __('Total Owing') }}</span>
             </div>
             <div class="cr-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
                 <span class="cr-kpi-stat-v">{{ $this->stats['customer_count'] > 0 ? round(($this->stats['overdue_count'] / $this->stats['customer_count']) * 100) : 0 }}%</span>
-                <span class="cr-kpi-stat-l">Of Total</span>
+                <span class="cr-kpi-stat-l">{{ __('Of Total') }}</span>
             </div>
             <div class="cr-kpi-stat">
                 <span class="cr-kpi-stat-v">{{ $this->stats['overdue_days'] }}d</span>
-                <span class="cr-kpi-stat-l">Threshold</span>
+                <span class="cr-kpi-stat-l">{{ __('Threshold') }}</span>
             </div>
         </div>
     </div>
@@ -290,7 +290,7 @@
         <svg class="cr-search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.3-4.3"/>
         </svg>
-        <input type="text" wire:model.live.debounce.300ms="searchQuery" placeholder="Search by customer name or phone…" class="cr-search">
+        <input type="text" wire:model.live.debounce.300ms="searchQuery" placeholder="{{ __('Search by customer name or phone…') }}" class="cr-search">
     </div>
 </div>
 
@@ -305,12 +305,12 @@
                 </colgroup>
                 <thead>
                     <tr>
-                        <th>Customer</th>
-                        <th style="text-align:right">Outstanding</th>
-                        <th style="text-align:right">Credit Given</th>
-                        <th style="text-align:right">Repaid</th>
-                        <th>Last Payment</th>
-                        <th style="text-align:center">Action</th>
+                        <th>{{ __('Customer') }}</th>
+                        <th style="text-align:right">{{ __('Outstanding') }}</th>
+                        <th style="text-align:right">{{ __('Credit Given') }}</th>
+                        <th style="text-align:right">{{ __('Repaid') }}</th>
+                        <th>{{ __('Last Payment') }}</th>
+                        <th style="text-align:center">{{ __('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -327,7 +327,7 @@
                                     {{ $customer->name }}
                                     @if($isOverdue)
                                         <span class="cr-badge" style="background:var(--red-dim);color:var(--red)">
-                                            <span class="cr-badge-dot" style="background:var(--red)"></span>Overdue
+                                            <span class="cr-badge-dot" style="background:var(--red)"></span>{{ __('Overdue') }}
                                         </span>
                                     @endif
                                 </div>
@@ -343,11 +343,11 @@
                                 <span style="font-family:var(--mono);color:var(--green);font-size:13px;font-weight:600">{{ number_format($customer->total_repaid) }}</span>
                             </td>
                             <td style="color:var(--text-dim);font-size:12px">
-                                {{ $customer->last_repayment_at?->diffForHumans() ?? 'Never' }}
+                                {{ $customer->last_repayment_at?->diffForHumans() ?? __('Never') }}
                             </td>
                             <td style="text-align:center">
                                 <button wire:click="selectCustomer({{ $customer->id }})" class="cr-action">
-                                    Record Payment
+                                    {{ __('Record Payment') }}
                                 </button>
                             </td>
                         </tr>
@@ -367,10 +367,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <div class="cr-empty-title">
-                @if($searchQuery) No customers match "{{ $searchQuery }}" @else No Customers with Outstanding Credit @endif
+                @if($searchQuery) {{ __('No customers match ":query"', ['query' => $searchQuery]) }} @else {{ __('No Customers with Outstanding Credit') }} @endif
             </div>
             <div class="cr-empty-sub">
-                @if($searchQuery) Try a different name or phone number @else All customers have cleared their balances @endif
+                @if($searchQuery) {{ __('Try a different name or phone number') }} @else {{ __('All customers have cleared their balances') }} @endif
             </div>
         </div>
     @endif
@@ -384,6 +384,11 @@
     <div class="cr-modal-overlay" wire:click="cancelRepayment" x-data="{
         cash: '', card: '', momo: '', bank: '',
         outstanding: {{ (int) $this->selectedCustomer->outstanding_balance }},
+        i18n: {
+            exceeds: @js(__('Exceeds outstanding balance by')),
+            remaining: @js(__('will remain owing')),
+            cleared: @js(__('Fully clears the balance')),
+        },
         get total() { return parseInt(this.cash||0)+parseInt(this.card||0)+parseInt(this.momo||0)+parseInt(this.bank||0) },
         submit() {
             $wire.set('payAmt_cash', parseInt(this.cash)||0)
@@ -399,7 +404,7 @@
             <div class="cr-modal-sticky">
                 <div class="cr-modal-head">
                     <div>
-                        <div class="cr-modal-title">Record Credit Repayment</div>
+                        <div class="cr-modal-title">{{ __('Record Credit Repayment') }}</div>
                         <div class="cr-modal-sub">{{ $this->selectedCustomer->name }} · {{ $this->selectedCustomer->phone }}</div>
                     </div>
                     <button wire:click="cancelRepayment" class="cr-modal-close">
@@ -411,15 +416,15 @@
 
                 <div class="cr-modal-stats">
                     <div>
-                        <div class="cr-modal-stat-l">Outstanding Balance</div>
+                        <div class="cr-modal-stat-l">{{ __('Outstanding Balance') }}</div>
                         <div class="cr-modal-stat-v" style="color:var(--red)">{{ number_format($this->selectedCustomer->outstanding_balance) }}</div>
                     </div>
                     <div>
-                        <div class="cr-modal-stat-l">Total Credit Given</div>
+                        <div class="cr-modal-stat-l">{{ __('Total Credit Given') }}</div>
                         <div class="cr-modal-stat-v" style="color:var(--text)">{{ number_format($this->selectedCustomer->total_credit_given) }}</div>
                     </div>
                     <div>
-                        <div class="cr-modal-stat-l">Total Repaid</div>
+                        <div class="cr-modal-stat-l">{{ __('Total Repaid') }}</div>
                         <div class="cr-modal-stat-v" style="color:var(--green)">{{ number_format($this->selectedCustomer->total_repaid) }}</div>
                     </div>
                 </div>
@@ -427,24 +432,24 @@
                 {{-- Total repayment — auto-calculated from the channels below --}}
                 <div class="cr-bal-strip" x-show="total > 0" x-cloak style="margin-top:14px">
                     <div class="cr-bal-row">
-                        <span class="cr-bal-label">Total Repayment</span>
+                        <span class="cr-bal-label">{{ __('Total Repayment') }}</span>
                         <span class="cr-bal-val" x-text="number_format_js(total) + ' RWF'"></span>
                     </div>
                     <div class="cr-bal-remain" :class="total > outstanding ? 'red' : 'green'">
                         <span x-text="total > outstanding
-                            ? 'Exceeds outstanding balance by ' + number_format_js(total - outstanding) + ' RWF'
-                            : ((outstanding - total) > 0 ? number_format_js(outstanding - total) + ' RWF will remain owing' : 'Fully clears the balance')"></span>
+                            ? i18n.exceeds + ' ' + number_format_js(total - outstanding) + ' RWF'
+                            : ((outstanding - total) > 0 ? number_format_js(outstanding - total) + ' RWF ' + i18n.remaining : i18n.cleared)"></span>
                     </div>
                 </div>
             </div>
 
             <form @submit.prevent="submit()">
-                <div class="cr-pay-section-title" style="margin-top:20px">Payment Channels</div>
+                <div class="cr-pay-section-title" style="margin-top:20px">{{ __('Payment Channels') }}</div>
 
                 {{-- Cash --}}
                 <div class="cr-pay-row">
                     <div class="cr-pay-label-row">
-                        <label class="cr-pay-label">Cash</label>
+                        <label class="cr-pay-label">{{ __('Cash') }}</label>
                     </div>
                     <input class="cr-pay-input" type="number" x-model="cash" min="0" placeholder="0">
                 </div>
@@ -452,7 +457,7 @@
                 {{-- Mobile Money --}}
                 <div class="cr-pay-row">
                     <div class="cr-pay-label-row">
-                        <label class="cr-pay-label">Mobile Money</label>
+                        <label class="cr-pay-label">{{ __('Mobile Money') }}</label>
                     </div>
                     <input class="cr-pay-input" type="number" x-model="momo" min="0" placeholder="0">
                 </div>
@@ -461,11 +466,11 @@
                 {{-- Card --}}
                 <div class="cr-pay-row">
                     <div class="cr-pay-label-row">
-                        <label class="cr-pay-label">Card</label>
+                        <label class="cr-pay-label">{{ __('Card') }}</label>
                     </div>
                     <input class="cr-pay-input" type="number" x-model="card" min="0" placeholder="0">
                     <div class="cr-pay-ref">
-                        <input class="cr-pay-input" type="text" wire:model="payRef_card" placeholder="Card reference" style="font-size:11px">
+                        <input class="cr-pay-input" type="text" wire:model="payRef_card" placeholder="{{ __('Card reference') }}" style="font-size:11px">
                     </div>
                 </div>
                 @endif
@@ -474,11 +479,11 @@
                 {{-- Bank Transfer --}}
                 <div class="cr-pay-row">
                     <div class="cr-pay-label-row">
-                        <label class="cr-pay-label">Bank Transfer</label>
+                        <label class="cr-pay-label">{{ __('Bank Transfer') }}</label>
                     </div>
                     <input class="cr-pay-input" type="number" x-model="bank" min="0" placeholder="0">
                     <div class="cr-pay-ref">
-                        <input class="cr-pay-input" type="text" wire:model="payRef_bank_transfer" placeholder="Transfer reference" style="font-size:11px">
+                        <input class="cr-pay-input" type="text" wire:model="payRef_bank_transfer" placeholder="{{ __('Transfer reference') }}" style="font-size:11px">
                     </div>
                 </div>
                 @endif
@@ -486,20 +491,20 @@
                 @error('total') <div class="cr-error" style="padding:0 22px;margin-bottom:16px">{{ $message }}</div> @enderror
 
                 <div class="cr-field" style="margin-bottom:20px">
-                    <label class="cr-label">Notes (Optional)</label>
-                    <textarea wire:model="notes" rows="3" placeholder="Any additional notes…" class="cr-input" style="resize:vertical"></textarea>
+                    <label class="cr-label">{{ __('Notes (Optional)') }}</label>
+                    <textarea wire:model="notes" rows="3" placeholder="{{ __('Any additional notes…') }}" class="cr-input" style="resize:vertical"></textarea>
                 </div>
 
                 <div class="cr-modal-foot">
-                    <button type="button" wire:click="cancelRepayment" class="cr-cancel-btn">Cancel</button>
+                    <button type="button" wire:click="cancelRepayment" class="cr-cancel-btn">{{ __('Cancel') }}</button>
                     <button type="submit" :disabled="total <= 0 || total > outstanding"
                             wire:loading.attr="disabled" wire:target="recordRepayment" class="cr-save-btn">
-                        <span wire:loading.remove wire:target="recordRepayment">Record Repayment</span>
+                        <span wire:loading.remove wire:target="recordRepayment">{{ __('Record Repayment') }}</span>
                         <span wire:loading wire:target="recordRepayment" style="display:none;align-items:center;gap:8px;justify-content:center">
                             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:cr-spin 1s linear infinite">
                                 <path d="M21 12a9 9 0 11-6.219-8.56"/>
                             </svg>
-                            Recording…
+                            {{ __('Recording…') }}
                         </span>
                     </button>
                 </div>
@@ -507,15 +512,15 @@
 
             @if($this->repaymentHistory->count() > 0)
                 <div class="cr-history">
-                    <div class="cr-history-title">Recent Repayment History</div>
+                    <div class="cr-history-title">{{ __('Recent Repayment History') }}</div>
                     @foreach($this->repaymentHistory as $entry)
                         <div class="cr-history-row">
                             <div>
                                 <div class="cr-history-amt">{{ number_format($entry['amount']) }} RWF</div>
-                                <div class="cr-history-date">{{ $entry['repayment_date']->format('M d, Y h:i A') }}</div>
+                                <div class="cr-history-date">{{ $entry['repayment_date']->translatedFormat('M d, Y h:i A') }}</div>
                                 @foreach($entry['methods'] as $m)
                                     @if($m['reference'])
-                                        <div class="cr-history-ref">{{ $m['method']->label() }} ref: {{ $m['reference'] }}</div>
+                                        <div class="cr-history-ref">{{ $m['method']->label() }} {{ __('ref:') }} {{ $m['reference'] }}</div>
                                     @endif
                                 @endforeach
                             </div>

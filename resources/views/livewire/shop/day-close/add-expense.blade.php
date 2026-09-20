@@ -6,15 +6,15 @@
         <div class="mb-3 px-3 py-2 rounded-lg text-xs" style="background:var(--red-dim);color:var(--red);">{{ session('error') }}</div>
     @endif
 
-    <div class="text-sm font-semibold mb-3" style="color:var(--text);">Record Expense</div>
+    <div class="text-sm font-semibold mb-3" style="color:var(--text);">{{ __('Record Expense') }}</div>
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">Category</label>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Category') }}</label>
             <select wire:model="categoryId"
                     class="w-full px-3 py-2.5 rounded-lg text-sm"
                     style="background:var(--surface);border:1px solid var(--border);color:var(--text);">
-                <option value="0">Select category…</option>
+                <option value="0">{{ __('Select category…') }}</option>
                 @foreach ($categories as $cat)
                     <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                 @endforeach
@@ -23,7 +23,7 @@
         </div>
 
         <div>
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">Amount (RWF)</label>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Amount (RWF)') }}</label>
             <input type="number"
                    wire:model="amount"
                    inputmode="decimal"
@@ -38,25 +38,25 @@
         </div>
 
         <div class="sm:col-span-2">
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">Description <span style="opacity:.5;font-weight:400;">(optional)</span></label>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Description') }} <span style="opacity:.5;font-weight:400;">(optional)</span></label>
             <input type="text"
                    wire:model="description"
                    enterkeyhint="next"
                    class="w-full px-3 py-2.5 rounded-lg text-sm"
                    style="background:var(--surface);border:1px solid var(--border);color:var(--text);"
-                   placeholder="What was this expense for?">
+                   placeholder="{{ __('What was this expense for?') }}">
             @error('description') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
         </div>
 
         <div>
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">Payment Method</label>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Payment Method') }}</label>
             <select wire:model.live="paymentMethod"
                     class="w-full px-3 py-2.5 rounded-lg text-sm"
                     style="background:var(--surface);border:1px solid var(--border);color:var(--text);">
-                <option value="cash">Cash</option>
-                <option value="mobile_money">Mobile Money</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="other">Other</option>
+                <option value="cash">{{ __('Cash') }}</option>
+                <option value="mobile_money">{{ __('Mobile Money') }}</option>
+                <option value="bank_transfer">{{ __('Bank Transfer') }}</option>
+                <option value="other">{{ __('Other') }}</option>
             </select>
             @php
                 $avail = match($paymentMethod) {
@@ -74,14 +74,14 @@
         </div>
 
         <div>
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">Receipt Ref <span style="opacity:.5;font-weight:400;">(optional)</span></label>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Receipt Ref') }} <span style="opacity:.5;font-weight:400;">(optional)</span></label>
             <input type="text"
                    wire:model="receiptReference"
                    wire:keydown.enter="saveExpense"
                    enterkeyhint="done"
                    class="w-full px-3 py-2.5 rounded-lg text-sm"
                    style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);"
-                   placeholder="Receipt or reference number">
+                   placeholder="{{ __('Receipt or reference number') }}">
         </div>
     </div>
 
@@ -97,8 +97,8 @@
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            <span wire:loading.remove wire:target="saveExpense">Add Expense</span>
-            <span wire:loading wire:target="saveExpense" style="display:none;">Saving…</span>
+            <span wire:loading.remove wire:target="saveExpense">{{ __('Add Expense') }}</span>
+            <span wire:loading wire:target="saveExpense" style="display:none;">{{ __('Saving…') }}</span>
         </button>
     </div>
 </div>

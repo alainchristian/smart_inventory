@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sign In — {{ config('tenant.name') }}</title>
+    <title>{{ __('Sign In') }} — {{ config('tenant.name') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -648,8 +648,7 @@
             </div>
 
             <div class="brand-tagline">
-                Your trusted partner in <strong>wholesale footwear</strong><br>
-                and everyday <strong>grocery essentials</strong>.
+                {!! __('Your trusted partner in :footwear<br> and everyday :grocery.', ['footwear' => '<strong>' . __('wholesale footwear') . '</strong>', 'grocery' => '<strong>' . __('grocery essentials') . '</strong>']) !!}
             </div>
 
             <div class="brand-divider"></div>
@@ -664,8 +663,8 @@
                         </svg>
                     </div>
                     <div>
-                        <div class="feature-title">Premium Footwear Selection</div>
-                        <div class="feature-desc">Formal, casual, sport &amp; custom orders at wholesale prices.</div>
+                        <div class="feature-title">{{ __('Premium Footwear Selection') }}</div>
+                        <div class="feature-desc">{{ __('Formal, casual, sport & custom orders at wholesale prices.') }}</div>
                     </div>
                 </div>
 
@@ -679,8 +678,8 @@
                         </svg>
                     </div>
                     <div>
-                        <div class="feature-title">Grocery &amp; FMCG Supplies</div>
-                        <div class="feature-desc">Bulk grocery sourced directly from certified suppliers.</div>
+                        <div class="feature-title">{{ __('Grocery & FMCG Supplies') }}</div>
+                        <div class="feature-desc">{{ __('Bulk grocery sourced directly from certified suppliers.') }}</div>
                     </div>
                 </div>
 
@@ -695,8 +694,8 @@
                         </svg>
                     </div>
                     <div>
-                        <div class="feature-title">Nationwide Distribution</div>
-                        <div class="feature-desc">Fast delivery to retailers &amp; distribution points countrywide.</div>
+                        <div class="feature-title">{{ __('Nationwide Distribution') }}</div>
+                        <div class="feature-desc">{{ __('Fast delivery to retailers & distribution points countrywide.') }}</div>
                     </div>
                 </div>
 
@@ -708,8 +707,8 @@
                         </svg>
                     </div>
                     <div>
-                        <div class="feature-title">Real-Time Inventory Tracking</div>
-                        <div class="feature-desc">Live stock, session cash management &amp; full audit trails.</div>
+                        <div class="feature-title">{{ __('Real-Time Inventory Tracking') }}</div>
+                        <div class="feature-desc">{{ __('Live stock, session cash management & full audit trails.') }}</div>
                     </div>
                 </div>
             </div>
@@ -718,15 +717,15 @@
             <div class="brand-stats">
                 <div class="brand-stat">
                     <div class="stat-value">500+</div>
-                    <div class="stat-label">Retail Partners</div>
+                    <div class="stat-label">{{ __('Retail Partners') }}</div>
                 </div>
                 <div class="brand-stat">
                     <div class="stat-value">12K+</div>
-                    <div class="stat-label">SKUs Available</div>
+                    <div class="stat-label">{{ __('SKUs Available') }}</div>
                 </div>
                 <div class="brand-stat">
-                    <div class="stat-value">8 yrs</div>
-                    <div class="stat-label">In Business</div>
+                    <div class="stat-value">8 {{ __('yrs') }}</div>
+                    <div class="stat-label">{{ __('In Business') }}</div>
                 </div>
             </div>
 
@@ -738,6 +737,19 @@
     ══════════════════════════════ --}}
     <div class="form-panel">
         <div class="form-panel-glow"></div>
+
+        @if(multilingual_enabled())
+        <div style="position:absolute; top:20px; right:20px; z-index:2; display:flex; gap:6px;">
+            <form method="POST" action="{{ route('locale.set', 'en') }}">
+                @csrf
+                <button type="submit" style="padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; background: {{ app()->getLocale() === 'en' ? '#1c2440' : '#e2e6f3' }}; color: {{ app()->getLocale() === 'en' ? '#fff' : '#4a5372' }};">EN</button>
+            </form>
+            <form method="POST" action="{{ route('locale.set', 'rw') }}">
+                @csrf
+                <button type="submit" style="padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; background: {{ app()->getLocale() === 'rw' ? '#1c2440' : '#e2e6f3' }}; color: {{ app()->getLocale() === 'rw' ? '#fff' : '#4a5372' }};">RW</button>
+            </form>
+        </div>
+        @endif
 
         <div class="form-inner">
             <div class="form-card">

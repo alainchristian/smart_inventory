@@ -186,7 +186,7 @@ class UnifiedPos extends Component
         $user = auth()->user();
 
         if (!$user->isShopManager() && !$user->isSuperUser()) {
-            abort(403, 'Access denied. Shop managers, owners, and admins only.');
+            abort(403, __('Access denied. Shop managers, owners, and admins only.'));
         }
 
         $this->isOwner = $user->isSuperUser();
@@ -215,7 +215,7 @@ class UnifiedPos extends Component
         }
 
         $shop = Shop::find($this->shopId);
-        $this->shopName      = $shop?->name ?? 'Unknown Shop';
+        $this->shopName      = $shop?->name ?? __('Unknown Shop');
         $this->warehouseId   = $shop?->default_warehouse_id;
         $this->warehouseName = $shop?->defaultWarehouse?->name ?? '';
 
@@ -372,7 +372,7 @@ class UnifiedPos extends Component
         $product = $this->findProductByBarcode($barcode);
 
         if (!$product) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => "Product not found for barcode: {$barcode}"]);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Product not found for barcode: :barcode', ['barcode' => $barcode])]);
             return;
         }
 
@@ -380,7 +380,7 @@ class UnifiedPos extends Component
         $shopStock = $product->getCurrentStock('shop', $this->shopId);
         if ($shopStock['total_items'] > 0) {
             $this->openProductModal($product->id, 'shop');
-            $this->dispatch('notification', ['type' => 'info', 'message' => "Scanned: {$product->name}"]);
+            $this->dispatch('notification', ['type' => 'info', 'message' => __('Scanned: :name', ['name' => $product->name])]);
             return;
         }
 
@@ -388,12 +388,12 @@ class UnifiedPos extends Component
             $whStock = collect($this->warehouseStock)->firstWhere('id', $product->id);
             if ($whStock && $whStock['stock']['total_items'] > 0) {
                 $this->openProductModal($product->id, 'warehouse');
-                $this->dispatch('notification', ['type' => 'info', 'message' => "Scanned (warehouse): {$product->name}"]);
+                $this->dispatch('notification', ['type' => 'info', 'message' => __('Scanned (warehouse): :name', ['name' => $product->name])]);
                 return;
             }
         }
 
-        $this->dispatch('notification', ['type' => 'error', 'message' => "{$product->name} is out of stock"]);
+        $this->dispatch('notification', ['type' => 'error', 'message' => __(':name is out of stock', ['name' => $product->name])]);
     }
 
     private function findProductByBarcode(string $barcode): ?Product
@@ -441,7 +441,7 @@ class UnifiedPos extends Component
             $this->scannerSession->update(['last_scanned_barcode' => null, 'last_scan_at' => now()]);
         } catch (\Throwable $e) {
             $this->scannerSession->update(['last_scanned_barcode' => null, 'last_scan_at' => now()]);
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Scanner error: ' . $e->getMessage()]);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Scanner error: :error', ['error' => $e->getMessage()])]);
         }
     }
 
@@ -460,7 +460,7 @@ class UnifiedPos extends Component
             $stock   = $product->getCurrentStock('shop', $this->shopId);
 
             if ($stock['total_items'] === 0) {
-                $this->dispatch('notification', ['type' => 'error', 'message' => 'Product is out of stock at shop']);
+                $this->dispatch('notification', ['type' => 'error', 'message' => __('Product is out of stock at shop')]);
                 return;
             }
 
@@ -520,7 +520,7 @@ class UnifiedPos extends Component
             $whProduct = collect($this->warehouseStock)->firstWhere('id', $productId);
 
             if (!$whProduct || $whProduct['stock']['total_items'] === 0) {
-                $this->dispatch('notification', ['type' => 'error', 'message' => 'Product is out of stock at warehouse']);
+                $this->dispatch('notification', ['type' => 'error', 'message' => __('Product is out of stock at warehouse')]);
                 return;
             }
 
@@ -675,7 +675,7 @@ class UnifiedPos extends Component
             $max = $this->stagingStock['total_items'];
             if ($this->stagingQty > $max) {
                 $this->stagingQty = $max;
-                $this->dispatch('notification', ['type' => 'warning', 'message' => "Only {$max} items available"]);
+                $this->dispatch('notification', ['type' => 'warning', 'message' => __('Only :max items available', ['max' => $max])]);
             }
         }
     }
@@ -706,18 +706,18 @@ class UnifiedPos extends Component
         // Validate individual item sales setting
         if ($source === 'shop' && $this->stagingMode === 'item') {
             if (!($this->stagingProduct['individual_sale_allowed'] ?? true)) {
-                $this->dispatch('notification', ['type' => 'error', 'message' => 'Individual item sales not allowed for this category']);
+                $this->dispatch('notification', ['type' => 'error', 'message' => __('Individual item sales not allowed for this category')]);
                 return;
             }
         }
 
         if (!$this->settingAllowPriceOverride && $this->stagingPriceModified) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Price modifications are not allowed']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Price modifications are not allowed')]);
             return;
         }
 
         if ($this->stagingQty < 1) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Quantity must be at least 1']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Quantity must be at least 1')]);
             return;
         }
 
@@ -731,21 +731,21 @@ class UnifiedPos extends Component
                 if ($this->stagingQty > $availableFullBoxes) {
                     $this->dispatch('notification', ['type' => 'error', 'message' =>
                         $availableFullBoxes === 0
-                            ? 'No full boxes available — sell remaining items individually'
-                            : "Only {$availableFullBoxes} full box(es) available"
+                            ? __('No full boxes available — sell remaining items individually')
+                            : __('Only :count full box(es) available', ['count' => $availableFullBoxes])
                     ]);
                     return;
                 }
             } else {
                 if ($this->stagingQty > $this->stagingStock['total_items']) {
-                    $this->dispatch('notification', ['type' => 'error', 'message' => 'Only ' . $this->stagingStock['total_items'] . ' items available']);
+                    $this->dispatch('notification', ['type' => 'error', 'message' => __('Only :count items available', ['count' => $this->stagingStock['total_items']])]);
                     return;
                 }
             }
         } else { // warehouse
             $maxBoxes = $this->stagingProduct['box_count'] ?? 0;
             if ($this->stagingQty > $maxBoxes) {
-                $this->dispatch('notification', ['type' => 'error', 'message' => "Only {$maxBoxes} boxes available at warehouse"]);
+                $this->dispatch('notification', ['type' => 'error', 'message' => __('Only :max boxes available at warehouse', ['max' => $maxBoxes])]);
                 return;
             }
         }
@@ -786,10 +786,10 @@ class UnifiedPos extends Component
 
         if ($this->stagingCartIndex !== null && isset($this->cart[$this->stagingCartIndex])) {
             $this->cart[$this->stagingCartIndex] = $cartItem;
-            $message = 'Cart item updated';
+            $message = __('Cart item updated');
         } else {
             $this->cart[] = $cartItem;
-            $message = 'Added to cart';
+            $message = __('Added to cart');
         }
 
         $this->calculateCartTotal();
@@ -931,7 +931,7 @@ class UnifiedPos extends Component
         $this->newCustomerEmail = '';
         $this->newCustomerNotes = '';
         $this->showNewCustomerForm = false;
-        $this->dispatch('notification', ['type' => 'success', 'message' => 'Customer registered successfully']);
+        $this->dispatch('notification', ['type' => 'success', 'message' => __('Customer registered successfully')]);
     }
 
     public function cancelNewCustomer(): void
@@ -978,7 +978,7 @@ class UnifiedPos extends Component
 
         $this->fulfillmentTransporterId = $transporter->id;
         $this->cancelNewTransporter();
-        $this->dispatch('notification', ['type' => 'success', 'message' => 'Transporter registered successfully']);
+        $this->dispatch('notification', ['type' => 'success', 'message' => __('Transporter registered successfully')]);
     }
 
     // ── Payment panel ─────────────────────────────────────────────────────────
@@ -993,13 +993,13 @@ class UnifiedPos extends Component
 
         if (!$this->settingAllowCreditSales) {
             $this->payAmt_credit = 0;
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Credit sales are disabled by the owner']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Credit sales are disabled by the owner')]);
             return;
         }
 
         if ($this->settingCreditRequiresCustomer && !$this->selectedCustomerId) {
             $this->payAmt_credit = 0;
-            $this->dispatch('notification', ['type' => 'warning', 'message' => 'A registered customer must be selected before using credit']);
+            $this->dispatch('notification', ['type' => 'warning', 'message' => __('A registered customer must be selected before using credit')]);
             return;
         }
 
@@ -1010,7 +1010,7 @@ class UnifiedPos extends Component
                 if ($projected > $this->settingMaxCreditPerCustomer) {
                     $remaining = max(0, $this->settingMaxCreditPerCustomer - $customer->outstanding_balance);
                     $this->payAmt_credit = $remaining;
-                    $this->dispatch('notification', ['type' => 'warning', 'message' => 'Credit limit reached. Max remaining: ' . number_format($remaining) . ' RWF']);
+                    $this->dispatch('notification', ['type' => 'warning', 'message' => __('Credit limit reached. Max remaining: :amount RWF', ['amount' => number_format($remaining)])]);
                 }
             }
         }
@@ -1054,7 +1054,7 @@ class UnifiedPos extends Component
     public function openCheckout(): void
     {
         if (empty($this->cart)) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Cart is empty']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Cart is empty')]);
             return;
         }
 
@@ -1068,8 +1068,8 @@ class UnifiedPos extends Component
             if (!$resumeApproved) {
                 $this->dispatch('notification', ['type' => 'warning', 'message' =>
                     $this->resumingFromHeld
-                        ? 'Waiting for owner approval.'
-                        : 'Price overrides require owner approval. Use "Hold for Approval".'
+                        ? __('Waiting for owner approval.')
+                        : __('Price overrides require owner approval. Use "Hold for Approval".')
                 ]);
                 return;
             }
@@ -1115,12 +1115,12 @@ class UnifiedPos extends Component
         $this->validate(['notes' => 'nullable|string']);
 
         if (empty($this->cart)) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Cart is empty']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Cart is empty')]);
             return;
         }
 
         if (!$this->selectedCustomerId) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Please select or register a customer before completing the sale']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Please select or register a customer before completing the sale')]);
             return;
         }
 
@@ -1132,33 +1132,33 @@ class UnifiedPos extends Component
                 $resumeApproved = $heldRecord && $heldRecord->isApproved();
             }
             if (!$resumeApproved) {
-                $this->dispatch('notification', ['type' => 'error', 'message' => 'Cannot complete sale: price override pending owner approval.']);
+                $this->dispatch('notification', ['type' => 'error', 'message' => __('Cannot complete sale: price override pending owner approval.')]);
                 return;
             }
         }
 
         if ($this->totalAllocated < $this->cartTotal) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Payment does not cover total. Missing ' . number_format($this->cartTotal - $this->totalAllocated) . ' RWF']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Payment does not cover total. Missing :amount RWF', ['amount' => number_format($this->cartTotal - $this->totalAllocated)])]);
             return;
         }
 
         if ($this->totalAllocated > $this->cartTotal) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Payment exceeds total by ' . number_format($this->totalAllocated - $this->cartTotal) . ' RWF']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Payment exceeds total by :amount RWF', ['amount' => number_format($this->totalAllocated - $this->cartTotal)])]);
             return;
         }
 
         if ($this->payAmt_credit > 0 && !$this->settingAllowCreditSales) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Credit sales are disabled']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Credit sales are disabled')]);
             return;
         }
 
         if ($this->payAmt_credit > 0 && $this->settingCreditRequiresCustomer && !$this->selectedCustomerId) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'A registered customer must be selected for credit sales']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('A registered customer must be selected for credit sales')]);
             return;
         }
 
         if ($this->hasWarehouseItems && $this->fulfillmentMethod === 'transporter' && !$this->fulfillmentTransporterId) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Please select a transporter for warehouse items']);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Please select a transporter for warehouse items')]);
             return;
         }
 
@@ -1225,12 +1225,12 @@ class UnifiedPos extends Component
             $this->showCheckoutModal = false;
             $this->showReceiptModal  = true;
 
-            $this->dispatch('notification', ['type' => 'success', 'message' => 'Sale completed successfully!']);
+            $this->dispatch('notification', ['type' => 'success', 'message' => __('Sale completed successfully!')]);
             $this->dispatch('sale-completed');
 
         } catch (\Throwable $e) {
             \Log::error('UnifiedPos sale error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            $this->dispatch('notification', ['type' => 'error', 'message' => 'Error completing sale: ' . $e->getMessage()]);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Error completing sale: :error', ['error' => $e->getMessage()])]);
         }
     }
 
@@ -1247,12 +1247,12 @@ class UnifiedPos extends Component
         if (!$this->isOwner || !$this->shopId) return;
         session(['selected_shop_id' => $this->shopId]);
         $shop = Shop::find($this->shopId);
-        $this->shopName      = $shop?->name ?? 'Unknown Shop';
+        $this->shopName      = $shop?->name ?? __('Unknown Shop');
         $this->warehouseId   = $shop?->default_warehouse_id;
         $this->warehouseName = $shop?->defaultWarehouse?->name ?? '';
         $this->showShopSelectionModal = false;
         $this->loadStock();
-        $this->dispatch('notification', ['type' => 'success', 'message' => "Now operating at {$this->shopName}"]);
+        $this->dispatch('notification', ['type' => 'success', 'message' => __('Now operating at :shop', ['shop' => $this->shopName])]);
     }
 
     public function changeShop(): void
@@ -1261,11 +1261,11 @@ class UnifiedPos extends Component
         if (!empty($this->cart)) $this->clearCart();
         session(['selected_shop_id' => $this->shopId]);
         $shop = Shop::find($this->shopId);
-        $this->shopName      = $shop?->name ?? 'Unknown Shop';
+        $this->shopName      = $shop?->name ?? __('Unknown Shop');
         $this->warehouseId   = $shop?->default_warehouse_id;
         $this->warehouseName = $shop?->defaultWarehouse?->name ?? '';
         $this->loadStock();
-        $this->dispatch('notification', ['type' => 'success', 'message' => "Switched to {$this->shopName}"]);
+        $this->dispatch('notification', ['type' => 'success', 'message' => __('Switched to :shop', ['shop' => $this->shopName])]);
     }
 
     // ── Held sales ────────────────────────────────────────────────────────────
@@ -1364,8 +1364,8 @@ class UnifiedPos extends Component
         $this->loadHeldSales();
 
         $msg = $needsApproval
-            ? "Sale held ({$held->hold_reference}). Owner notified for price approval."
-            : "Sale held ({$held->hold_reference}).";
+            ? __('Sale held (:ref). Owner notified for price approval.', ['ref' => $held->hold_reference])
+            : __('Sale held (:ref).', ['ref' => $held->hold_reference]);
 
         $this->dispatch('notification', ['type' => 'success', 'message' => $msg]);
     }
@@ -1376,7 +1376,7 @@ class UnifiedPos extends Component
         if (!$held || $held->shop_id != $this->shopId) return;
 
         if ($held->isRejected()) {
-            $this->dispatch('notification', ['type' => 'error', 'message' => "Sale {$held->hold_reference} was rejected: {$held->rejected_reason}"]);
+            $this->dispatch('notification', ['type' => 'error', 'message' => __('Sale :ref was rejected: :reason', ['ref' => $held->hold_reference, 'reason' => $held->rejected_reason])]);
             return;
         }
 
@@ -1406,7 +1406,7 @@ class UnifiedPos extends Component
             $this->cartTotal        = 0;
         }
         $this->loadHeldSales();
-        $this->dispatch('notification', ['type' => 'info', 'message' => 'Held sale discarded.']);
+        $this->dispatch('notification', ['type' => 'info', 'message' => __('Held sale discarded.')]);
     }
 
     public function checkApprovals(): void
@@ -1415,7 +1415,7 @@ class UnifiedPos extends Component
         $this->loadHeldSales();
 
         foreach (collect($this->heldSales)->filter(fn ($h) => $h['is_approved'] && in_array($h['id'], $prevIds)) as $h) {
-            $this->dispatch('notification', ['type' => 'success', 'message' => "{$h['reference']} approved! Tap to resume."]);
+            $this->dispatch('notification', ['type' => 'success', 'message' => __(':ref approved! Tap to resume.', ['ref' => $h['reference']])]);
         }
     }
 

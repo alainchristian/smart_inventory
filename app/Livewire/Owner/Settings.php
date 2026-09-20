@@ -38,6 +38,10 @@ class Settings extends Component
     // Fulfillment
     public string $fulfillmentDispatchMethod = 'queue';
 
+    // Localization
+    public bool   $multilingualEnabled = false;
+    public string $defaultLocale       = 'en';
+
     public function mount(): void
     {
         if (!auth()->user()->isOwner()) abort(403);
@@ -60,6 +64,8 @@ class Settings extends Component
         $this->lowStockBoxesShop         = $svc->lowStockBoxesShop();
         $this->lowStockBoxesWarehouse    = $svc->lowStockBoxesWarehouse();
         $this->fulfillmentDispatchMethod = $svc->fulfillmentDispatchMethod();
+        $this->multilingualEnabled       = $svc->multilingualEnabled();
+        $this->defaultLocale             = $svc->defaultLocale();
     }
 
     public function save(): void
@@ -73,6 +79,7 @@ class Settings extends Component
             'lowStockBoxesShop'       => 'required|integer|min:1',
             'lowStockBoxesWarehouse'  => 'required|integer|min:1',
             'fulfillmentDispatchMethod' => 'required|in:scan,queue',
+            'defaultLocale'           => 'required|in:' . implode(',', \App\Http\Middleware\SetLocale::AVAILABLE),
         ]);
 
         $svc = app(SettingsService::class);
@@ -93,6 +100,8 @@ class Settings extends Component
         $svc->set('low_stock_boxes_shop',         $this->lowStockBoxesShop);
         $svc->set('low_stock_boxes_warehouse',    $this->lowStockBoxesWarehouse);
         $svc->set('fulfillment_dispatch_method',  $this->fulfillmentDispatchMethod);
+        $svc->set('multilingual_enabled',         $this->multilingualEnabled);
+        $svc->set('default_locale',               $this->defaultLocale);
 
         $this->dispatch('notification', [
             'type'    => 'success',

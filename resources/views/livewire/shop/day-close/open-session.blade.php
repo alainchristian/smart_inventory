@@ -32,7 +32,7 @@
                 <span style="font-size:12px;color:var(--text-dim);"> — remember to close it when you get a chance.</span>
                 <a href="{{ route('shop.session.close', ['session' => $blockerSession->id]) }}"
                    style="display:inline-block;margin-top:4px;font-size:12px;font-weight:600;color:var(--amber);text-decoration:underline;">
-                    Close it now →
+                    {{ __('Close it now →') }}
                 </a>
             </div>
         </div>
@@ -50,16 +50,16 @@
                         </svg>
                     </div>
                     <div>
-                        <div style="font-size:14px;font-weight:700;color:var(--green);">Session Active</div>
+                        <div style="font-size:14px;font-weight:700;color:var(--green);">{{ __('Session Active') }}</div>
                         <div style="font-size:12px;color:var(--text-dim);margin-top:1px;" class="dc-sess-active-sub">
                             Opened at {{ local_time($todaySession->opened_at)->format('H:i') }}
-                            · <span style="font-family:var(--mono);font-weight:600;color:var(--text);">{{ number_format($todaySession->opening_balance) }} RWF</span> opening balance
+                            · <span style="font-family:var(--mono);font-weight:600;color:var(--text);">{{ number_format($todaySession->opening_balance) }} RWF</span> {{ __('opening balance') }}
                         </div>
                     </div>
                 </div>
                 <span style="font-size:11px;padding:4px 12px;border-radius:999px;font-weight:700;
                              background:var(--green);color:white;white-space:nowrap;">
-                    {{ $todaySession->opened_at->diffForHumans(null, true) }} ago
+                    {{ __(':time ago', ['time' => $todaySession->opened_at->diffForHumans(null, true)]) }}
                 </span>
             </div>
         </div>
@@ -75,17 +75,17 @@
             <div class="dc-sess-head" style="background:var(--surface2);border-bottom:1px solid var(--border);
                         display:flex;align-items:center;gap:8px;">
                 <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);"></div>
-                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">No Active Session</span>
+                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">{{ __('No Active Session') }}</span>
             </div>
             <div class="dc-sess-form" style="background:var(--surface);">
                 <p style="font-size:13px;color:var(--text-dim);margin:0 0 18px;">
-                    Open today's session to start recording sales, expenses, and cash movements.
+                    {{ __('Open today\'s session to start recording sales, expenses, and cash movements.') }}
                 </p>
                 <div class="dc-sess-open-row" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                     <div style="flex:1;min-width:160px;">
                         <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;
                                       letter-spacing:0.5px;color:var(--text-dim);margin-bottom:6px;">
-                            Opening Cash Balance (RWF)
+                            {{ __('Opening Cash Balance (RWF)') }}
                         </label>
                         <input type="number"
                                wire:model="openingBalance"
@@ -125,9 +125,9 @@
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:4px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
                             </svg>
-                            Open Session
+                            {{ __('Open Session') }}
                         </span>
-                        <span wire:loading wire:target="openDay" style="display:none;">Opening…</span>
+                        <span wire:loading wire:target="openDay" style="display:none;">{{ __('Opening…') }}</span>
                     </button>
                 </div>
             </div>

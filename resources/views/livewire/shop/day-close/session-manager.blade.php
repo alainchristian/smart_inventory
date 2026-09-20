@@ -16,14 +16,14 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
             </svg>
             <div class="flex-1 min-w-0">
-                <div class="text-sm font-semibold" style="color:var(--amber);">Previous Session Not Closed</div>
+                <div class="text-sm font-semibold" style="color:var(--amber);">{{ __('Previous Session Not Closed') }}</div>
                 <div class="text-xs mt-1" style="color:var(--text-dim);">
-                    Session for <strong>{{ $unclosedPrevious->session_date->format('d M Y') }}</strong> is still open.
+                    {{ __('The session for :date is still open.', ['date' => $unclosedPrevious->session_date->translatedFormat('d M Y')]) }}
                 </div>
                 <a href="{{ route('shop.session.close', ['session' => $unclosedPrevious->id]) }}"
                    class="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold"
                    style="background:var(--amber);color:#1a1a1a;">
-                    Close Previous Session →
+                    {{ __('Close Previous Session →') }}
                 </a>
             </div>
         </div>
@@ -53,19 +53,19 @@
                     <div class="rounded-xl p-4" style="background:var(--surface2);border:1px solid var(--border);">
                         <div class="flex items-start justify-between gap-3 mb-3">
                             <div>
-                                <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Total Sales</div>
+                                <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">{{ __('Total Sales') }}</div>
                                 <div class="font-mono font-bold text-2xl leading-none" style="color:var(--green);">
                                     {{ number_format($liveSummary['total_sales']) }}
                                     <span class="text-sm font-normal" style="color:var(--text-dim);">RWF</span>
                                 </div>
                             </div>
                             <div class="text-right flex-shrink-0">
-                                <div class="text-xs" style="color:var(--text-dim);">{{ $liveSummary['transaction_count'] }} transactions</div>
+                                <div class="text-xs" style="color:var(--text-dim);">{{ __(':count transactions', ['count' => $liveSummary['transaction_count']]) }}</div>
                                 @if ($warehouseDirectCount > 0)
                                     <div class="text-xs mt-0.5 flex items-center justify-end gap-1">
                                         <span style="display:inline-block;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:700;
                                                      background:var(--accent-dim);color:var(--accent);">WH</span>
-                                        <span style="color:var(--text-dim);">{{ $warehouseDirectCount }} warehouse direct</span>
+                                        <span style="color:var(--text-dim);">{{ __(':count warehouse direct', ['count' => $warehouseDirectCount]) }}</span>
                                     </div>
                                 @endif
                             </div>
@@ -74,60 +74,60 @@
                         <div class="flex flex-wrap gap-2">
                             @if ($liveSummary['total_sales_cash'] > 0)
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--green-dim);">
-                                    <span class="text-xs font-medium" style="color:var(--green);">Cash</span>
+                                    <span class="text-xs font-medium" style="color:var(--green);">{{ __('Cash') }}</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--green);">{{ number_format($liveSummary['total_sales_cash']) }}</span>
                                 </div>
                             @endif
                             @if ($liveSummary['total_sales_momo'] > 0)
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--accent-dim);">
-                                    <span class="text-xs font-medium" style="color:var(--accent);">MoMo</span>
+                                    <span class="text-xs font-medium" style="color:var(--accent);">{{ __('MoMo') }}</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--accent);">{{ number_format($liveSummary['total_sales_momo']) }}</span>
                                 </div>
                             @endif
                             @if ($settingAllowCard && $liveSummary['total_sales_card'] > 0)
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);border:1px solid var(--border);">
-                                    <span class="text-xs font-medium" style="color:var(--text-dim);">Card</span>
+                                    <span class="text-xs font-medium" style="color:var(--text-dim);">{{ __('Card') }}</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--text);">{{ number_format($liveSummary['total_sales_card']) }}</span>
                                 </div>
                             @endif
                             @if ($settingAllowBank && ($liveSummary['total_sales_bank_transfer'] ?? 0) > 0)
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);border:1px solid var(--border);">
-                                    <span class="text-xs font-medium" style="color:var(--text-dim);">Bank Txfr</span>
+                                    <span class="text-xs font-medium" style="color:var(--text-dim);">{{ __('Bank Txfr') }}</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--text);">{{ number_format($liveSummary['total_sales_bank_transfer']) }}</span>
                                 </div>
                             @endif
                             @if (($liveSummary['total_sales_credit'] ?? 0) > 0)
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--amber-dim);border:1px solid var(--amber);">
-                                    <span class="text-xs font-medium" style="color:var(--amber);">Credit</span>
+                                    <span class="text-xs font-medium" style="color:var(--amber);">{{ __('Credit') }}</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--amber);">{{ number_format($liveSummary['total_sales_credit']) }}</span>
                                 </div>
                             @endif
                             @if (($liveSummary['total_repayments_cash'] ?? 0) > 0)
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--accent-dim);">
-                                    <span class="text-xs font-medium" style="color:var(--accent);">Repaid</span>
+                                    <span class="text-xs font-medium" style="color:var(--accent);">{{ __('Repaid') }}</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--accent);">{{ number_format($liveSummary['total_repayments_cash']) }}</span>
                                 </div>
                             @endif
                             @if (($liveSummary['total_sales_other'] ?? 0) > 0)
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style="background:var(--surface2);">
-                                    <span class="text-xs font-medium" style="color:var(--text-dim);">Other</span>
+                                    <span class="text-xs font-medium" style="color:var(--text-dim);">{{ __('Other') }}</span>
                                     <span class="text-xs font-mono font-bold" style="color:var(--text);">{{ number_format($liveSummary['total_sales_other']) }}</span>
                                 </div>
                             @endif
                             @if ($liveSummary['total_sales'] === 0)
-                                <span class="text-xs" style="color:var(--text-dim);">No sales yet</span>
+                                <span class="text-xs" style="color:var(--text-dim);">{{ __('No sales yet') }}</span>
                             @endif
                         </div>
                     </div>
 
                     {{-- Cash in Drawer — formula breakdown --}}
                     <div class="rounded-xl p-4" style="background:var(--surface2);border:1px solid var(--border);">
-                        <div class="text-xs font-medium mb-3" style="color:var(--text-dim);">Cash in Drawer</div>
+                        <div class="text-xs font-medium mb-3" style="color:var(--text-dim);">{{ __('Cash in Drawer') }}</div>
 
                         {{-- Formula rows --}}
                         <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <span style="font-size:11px;color:var(--text-dim);">Opening Balance</span>
+                                <span style="font-size:11px;color:var(--text-dim);">{{ __('Opening Balance') }}</span>
                                 <span style="font-size:12px;font-family:var(--mono);font-weight:600;color:var(--text-dim);">{{ number_format($liveSummary['opening_balance']) }}</span>
                             </div>
                             @if ($liveSummary['total_sales_cash'] > 0)
@@ -170,7 +170,7 @@
 
                         {{-- Divider + expected total --}}
                         <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-size:11px;font-weight:600;color:var(--text);">Expected in Drawer</span>
+                            <span style="font-size:11px;font-weight:600;color:var(--text);">{{ __('Expected in Drawer') }}</span>
                             <span style="font-size:16px;font-family:var(--mono);font-weight:800;color:var(--accent);">{{ number_format($liveSummary['expected_cash']) }} <span style="font-size:11px;font-weight:400;color:var(--text-dim);">RWF</span></span>
                         </div>
 
@@ -178,7 +178,7 @@
                         @if (($liveSummary['total_sales_credit'] ?? 0) > 0)
                             <div style="margin-top:8px;padding:6px 10px;border-radius:8px;background:var(--amber-dim);
                                         display:flex;justify-content:space-between;align-items:center;">
-                                <span style="font-size:11px;color:var(--amber);">Credit Extended (not in drawer)</span>
+                                <span style="font-size:11px;color:var(--amber);">{{ __('Credit Extended (not in drawer)') }}</span>
                                 <span style="font-size:12px;font-family:var(--mono);font-weight:700;color:var(--amber);">{{ number_format($liveSummary['total_sales_credit']) }}</span>
                             </div>
                         @endif
@@ -191,20 +191,20 @@
                     @endphp
                     <div class="grid gap-3" style="grid-template-columns: repeat({{ $smCols }}, 1fr);">
                         <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
-                            <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Expenses</div>
+                            <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">{{ __('Expenses') }}</div>
                             <div class="font-mono font-bold text-base" style="color:var(--red);">{{ number_format($liveSummary['total_expenses']) }}</div>
-                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ $liveSummary['expense_count'] }} items</div>
+                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ __(':count items', ['count' => $liveSummary['expense_count']]) }}</div>
                         </div>
                         <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
-                            <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Withdrawn</div>
+                            <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">{{ __('Withdrawn') }}</div>
                             <div class="font-mono font-bold text-base" style="color:var(--amber);">{{ number_format($liveSummary['total_withdrawals']) }}</div>
-                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ $liveSummary['withdrawal_count'] }} items</div>
+                            <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ __(':count items', ['count' => $liveSummary['withdrawal_count']]) }}</div>
                         </div>
                         @if (($liveSummary['total_repayments'] ?? 0) > 0)
                             <div class="rounded-xl p-3 text-center" style="background:var(--surface2);border:1px solid var(--border);">
-                                <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">Repayments</div>
+                                <div class="text-xs font-medium mb-1" style="color:var(--text-dim);">{{ __('Repayments') }}</div>
                                 <div class="font-mono font-bold text-base" style="color:var(--accent);">{{ number_format($liveSummary['total_repayments']) }}</div>
-                                <div class="text-xs mt-0.5" style="color:var(--text-dim);">Credit collected</div>
+                                <div class="text-xs mt-0.5" style="color:var(--text-dim);">{{ __('Credit collected') }}</div>
                             </div>
                         @endif
                     </div>
@@ -220,7 +220,7 @@
                     <span class="text-xs flex-1" style="color:var(--amber);">
                         {{ $pendingRequestsCount }} pending expense request{{ $pendingRequestsCount !== 1 ? 's' : '' }}
                     </span>
-                    <a href="{{ route('shop.session.requests') }}" class="text-xs font-semibold" style="color:var(--amber);">Review →</a>
+                    <a href="{{ route('shop.session.requests') }}" class="text-xs font-semibold" style="color:var(--amber);">{{ __('Review →') }}</a>
                 </div>
             @endif
 
@@ -234,7 +234,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                         </svg>
                     </span>
-                    <span class="text-sm">Add Expense</span>
+                    <span class="text-sm">{{ __('Add Expense') }}</span>
                 </a>
 
                 <a href="{{ route('shop.bank-deposits') }}"
@@ -245,7 +245,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l9-3 9 3M3 6v12l9 3 9-3V6M12 3v18"/>
                         </svg>
                     </span>
-                    <span class="text-sm">Bank Deposit</span>
+                    <span class="text-sm">{{ __('Bank Deposit') }}</span>
                 </a>
 
                 <a href="{{ route('shop.withdrawals.add') }}"
@@ -256,7 +256,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </span>
-                    <span class="text-sm">Withdrawal</span>
+                    <span class="text-sm">{{ __('Withdrawal') }}</span>
                 </a>
 
                 <a href="{{ route('shop.session.close', ['session' => $todaySession->id]) }}"
@@ -267,7 +267,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </span>
-                    <span class="text-sm">Close Day</span>
+                    <span class="text-sm">{{ __('Close Day') }}</span>
                 </a>
             </div>
 
@@ -280,25 +280,25 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <div class="text-sm font-semibold mb-1" style="color:var(--text);">Session Closed</div>
-            <div class="text-xs mb-4" style="color:var(--text-dim);">Today's session has been closed and submitted.</div>
-            <a href="{{ route('shop.session.history') }}" class="text-xs font-semibold" style="color:var(--accent);">View session history →</a>
+            <div class="text-sm font-semibold mb-1" style="color:var(--text);">{{ __('Session Closed') }}</div>
+            <div class="text-xs mb-4" style="color:var(--text-dim);">{{ __('Today\'s session has been closed and submitted.') }}</div>
+            <a href="{{ route('shop.session.history') }}" class="text-xs font-semibold" style="color:var(--accent);">{{ __('View session history →') }}</a>
         </div>
 
     @else
         <div class="rounded-xl p-5" style="background:var(--surface2);border:1px solid var(--border);">
-            <div class="text-sm font-semibold mb-4" style="color:var(--text);">Open Today's Session</div>
+            <div class="text-sm font-semibold mb-4" style="color:var(--text);">{{ __('Open Today\'s Session') }}</div>
 
             @if (! $showOpenForm)
                 <button wire:click="$set('showOpenForm', true)"
                         class="w-full px-4 py-3 rounded-xl text-sm font-semibold"
                         style="background:var(--accent);color:white;">
-                    Open Day
+                    {{ __('Open Day') }}
                 </button>
             @else
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">Opening cash balance (RWF)</label>
+                        <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Opening cash balance (RWF)') }}</label>
                         <input type="number" wire:model="openingBalance" min="0"
                                class="w-full px-4 py-3 rounded-lg text-base"
                                style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);"
@@ -313,13 +313,13 @@
                                 wire:loading.attr="disabled"
                                 class="flex-1 px-4 py-3 rounded-xl text-sm font-semibold"
                                 style="background:var(--green);color:white;">
-                            <span wire:loading.remove wire:target="openDay">Open Day</span>
-                            <span wire:loading wire:target="openDay" style="display:none;">Opening…</span>
+                            <span wire:loading.remove wire:target="openDay">{{ __('Open Day') }}</span>
+                            <span wire:loading wire:target="openDay" style="display:none;">{{ __('Opening…') }}</span>
                         </button>
                         <button wire:click="$set('showOpenForm', false)"
                                 class="px-4 py-3 rounded-xl text-sm"
                                 style="background:var(--surface);color:var(--text-dim);border:1px solid var(--border);">
-                            Cancel
+                            {{ __('Cancel') }}
                         </button>
                     </div>
                 </div>

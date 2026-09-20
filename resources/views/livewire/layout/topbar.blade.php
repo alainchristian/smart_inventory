@@ -33,7 +33,7 @@
                     <input
                         type="text"
                         wire:model.live.debounce.300ms="searchQuery"
-                        placeholder="Search boxes, products, transfers..."
+                        placeholder="{{ __('Search boxes, products, transfers...') }}"
                         class="w-full h-10 pl-10 pr-16 rounded-lg text-[14px] border focus:outline-none transition-all"
                         style="background: var(--surface2); border-color: var(--border); color: var(--text);"
                     />
@@ -85,7 +85,7 @@
                                     :style="tab === 'activity'
                                         ? 'border-color: var(--accent); color: var(--accent); font-weight:700;'
                                         : 'border-color: transparent; color: var(--text-dim); font-weight:500;'">
-                                Activity
+                                {{ __('Activity') }}
                                 @if($this->unreadActivityCount > 0)
                                     <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                                           style="background: var(--red); color: #fff; line-height:1.2;">
@@ -99,7 +99,7 @@
                                     :style="tab === 'actions'
                                         ? 'border-color: var(--accent); color: var(--accent); font-weight:700;'
                                         : 'border-color: transparent; color: var(--text-dim); font-weight:500;'">
-                                Actions
+                                {{ __('Actions') }}
                                 @if($this->totalPendingActions > 0)
                                     <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                                           style="background: var(--amber); color: #fff; line-height:1.2;">
@@ -179,8 +179,8 @@
                                     <svg class="w-10 h-10 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-sub);">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                                     </svg>
-                                    <p class="text-[13px] font-medium" style="color:var(--text-dim);">No recent activity</p>
-                                    <p class="text-[12px] mt-1" style="color:var(--text-dim);">Actions from the last 7 days appear here</p>
+                                    <p class="text-[13px] font-medium" style="color:var(--text-dim);">{{ __('No recent activity') }}</p>
+                                    <p class="text-[12px] mt-1" style="color:var(--text-dim);">{{ __('Actions from the last 7 days appear here') }}</p>
                                 </div>
                             @endforelse
                         </div>
@@ -228,7 +228,7 @@
                                                 <div>
                                                     <h4 class="text-[13px] font-semibold" style="color: var(--text);">{{ $action['label'] }}</h4>
                                                     <p class="text-[12px] mt-0.5" style="color: var(--text-dim);">
-                                                        {{ $action['count'] }} {{ $action['type'] === 'price_approval' ? ($action['count'] === 1 ? 'sale' : 'sales') : 'pending' }}
+                                                        {{ $action['count'] }} {{ $action['type'] === 'price_approval' ? ($action['count'] === 1 ? __('sale') : __('sales')) : __('pending') }}
                                                     </p>
                                                 </div>
                                             </div>
@@ -246,8 +246,8 @@
                                     <svg class="w-10 h-10 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--text-sub);">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
-                                    <p class="text-[13px] font-medium" style="color:var(--text-dim);">All caught up!</p>
-                                    <p class="text-[12px] mt-1" style="color:var(--text-dim);">No pending actions</p>
+                                    <p class="text-[13px] font-medium" style="color:var(--text-dim);">{{ __('All caught up!') }}</p>
+                                    <p class="text-[12px] mt-1" style="color:var(--text-dim);">{{ __('No pending actions') }}</p>
                                 </div>
                             @endforelse
                         </div>
@@ -296,11 +296,11 @@
                             </div>
                             <div class="mt-2.5">
                                 @if(auth()->user()->isOwner())
-                                    <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--accent-glow); color: var(--accent);">OWNER</span>
+                                    <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--accent-glow); color: var(--accent);">{{ __('OWNER') }}</span>
                                 @elseif(auth()->user()->isWarehouseManager())
-                                    <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--green-glow); color: var(--green);">WAREHOUSE MANAGER</span>
+                                    <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--green-glow); color: var(--green);">{{ __('WAREHOUSE MANAGER') }}</span>
                                 @elseif(auth()->user()->isShopManager())
-                                    <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--violet); color: white;">SHOP MANAGER</span>
+                                    <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--violet); color: white;">{{ __('SHOP MANAGER') }}</span>
                                 @endif
                                 @if(auth()->user()->location)
                                     <span class="inline-flex px-2 py-1 text-[10px] font-medium ml-1.5" style="color: var(--text-sub);">{{ auth()->user()->location->name }}</span>
@@ -310,6 +310,27 @@
 
                         <!-- Menu Items -->
                         <div class="p-2">
+                            @if(multilingual_enabled())
+                            <!-- Language -->
+                            <div class="w-full flex items-center gap-2.5 px-3 py-2.5">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="color: var(--text-sub); flex-shrink:0;">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path stroke-linecap="round" d="M2 12h20M12 2a15.3 15.3 0 010 20 15.3 15.3 0 010-20z"/>
+                                </svg>
+                                <span class="text-[14px] font-medium" style="color: var(--text-sub); flex:1">{{ __('Language') }}</span>
+                                <div class="flex items-center gap-1">
+                                    <form method="POST" action="{{ route('locale.set', 'en') }}">
+                                        @csrf
+                                        <button type="submit" class="px-2 py-1 rounded text-[11px] font-bold" style="background: {{ app()->getLocale() === 'en' ? 'var(--accent)' : 'var(--surface2)' }}; color: {{ app()->getLocale() === 'en' ? '#fff' : 'var(--text-sub)' }};">EN</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('locale.set', 'rw') }}">
+                                        @csrf
+                                        <button type="submit" class="px-2 py-1 rounded text-[11px] font-bold" style="background: {{ app()->getLocale() === 'rw' ? 'var(--accent)' : 'var(--surface2)' }}; color: {{ app()->getLocale() === 'rw' ? '#fff' : 'var(--text-sub)' }};">RW</button>
+                                    </form>
+                                </div>
+                            </div>
+                            @endif
+
                             <!-- Profile -->
                             <a href="{{ route('profile') }}" wire:navigate
                                class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all"
@@ -319,7 +340,7 @@
                                 <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
-                                <span class="text-[14px] font-medium">Profile Settings</span>
+                                <span class="text-[14px] font-medium">{{ __('Profile Settings') }}</span>
                             </a>
 
                             @if(auth()->user()->isOwner())
@@ -336,7 +357,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                           d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
-                                <span class="text-[14px] font-medium">Business Settings</span>
+                                <span class="text-[14px] font-medium">{{ __('Business Settings') }}</span>
                             </a>
                             @endif
 
@@ -351,21 +372,21 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
-                                <span class="text-[14px] font-medium">System Settings</span>
+                                <span class="text-[14px] font-medium">{{ __('System Settings') }}</span>
                             </a>
                             @endif
 
                             <!-- Account Info -->
                             <div class="px-3 py-2 my-1">
-                                <div class="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style="color: var(--text-dim);">Account Info</div>
+                                <div class="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style="color: var(--text-dim);">{{ __('Account Info') }}</div>
                                 <div class="space-y-1 text-[13px]" style="color: var(--text-sub);">
                                     <div class="flex justify-between">
-                                        <span>Member since</span>
-                                        <span class="font-medium" style="color: var(--text);">{{ auth()->user()->created_at->format('M Y') }}</span>
+                                        <span>{{ __('Member since') }}</span>
+                                        <span class="font-medium" style="color: var(--text);">{{ auth()->user()->created_at->translatedFormat('M Y') }}</span>
                                     </div>
                                     @if(auth()->user()->location)
                                     <div class="flex justify-between">
-                                        <span>Location</span>
+                                        <span>{{ __('Location') }}</span>
                                         <span class="font-medium" style="color: var(--text);">{{ auth()->user()->location->name }}</span>
                                     </div>
                                     @endif
@@ -385,7 +406,7 @@
                                     <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                     </svg>
-                                    <span class="text-[14px] font-medium">Logout</span>
+                                    <span class="text-[14px] font-medium">{{ __('Logout') }}</span>
                                 </button>
                             </form>
                         </div>
