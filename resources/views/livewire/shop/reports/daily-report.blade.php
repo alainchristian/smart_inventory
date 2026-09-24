@@ -1068,10 +1068,39 @@
             @foreach($drSevSorted as $c)
             <tr>
                 <td><span class="dr-pill dr-pill-{{ $drSevPill[$c['severity']][0] ?? 'dim' }}">{{ $drSevPill[$c['severity']][1] ?? ucfirst($c['severity']) }}</span></td>
-                <td class="dr-msg">{{ $c['message'] }}</td>
+                                <td class="dr-msg">{{ $c['message'] }}
+                    @if(!empty($c['details']))
+                    @php $drCost = isset($c['details'][0]['cost']); @endphp
+                    <table class="dr-table" style="margin-top:8px;width:auto;min-width:100%">
+                        <thead><tr>
+                            <th>Sale</th><th>Product</th><th>Qty</th>
+                            <th style="text-align:right">List price</th><th style="text-align:right">Sold at</th>
+                            <th style="text-align:right">Discount</th><th style="text-align:right">% off</th>
+                            @if($drCost)<th style="text-align:right">Profit at list</th><th style="text-align:right">Profit sold</th>@endif
+                        </tr></thead>
+                        <tbody>
+                        @foreach($c['details'] as $d)
+                        <tr>
+                            <td style="font-family:var(--mono);white-space:nowrap">{{ $d['sale_number'] }}</td>
+                            <td>{{ $d['product'] }}</td>
+                            <td style="white-space:nowrap">{{ $d['qty'] }}</td>
+                            <td class="dr-num">{{ number_format($d['list']) }}</td>
+                            <td class="dr-num">{{ number_format($d['sold']) }}</td>
+                            <td class="dr-num" style="color:{{ $d['discount'] > 0 ? 'var(--red)' : 'var(--text-dim)' }}">{{ $d['discount'] > 0 ? '−' : '' }}{{ number_format(abs($d['discount'])) }}</td>
+                            <td class="dr-num" style="color:var(--text-dim)">{{ number_format($d['pct'], 1) }}%</td>
+                            @if($drCost)
+                            <td class="dr-num">{{ number_format($d['profit_at_list']) }}</td>
+                            <td class="dr-num" style="color:{{ $d['profit_sold'] >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ number_format($d['profit_sold']) }}</td>
+                            @endif
+                        </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                    @endif
+                </td>
                 
                 <td style="color:var(--text-dim);white-space:nowrap">{{ !empty($c['date']) ? \Carbon\Carbon::parse($c['date'])->format('d M Y') : '' }}</td>
-                <td class="dr-num">@if($c['amount'] !== null){{ ($c['amount'] > 0 ? '+' : '') . number_format($c['amount']) }}@endif</td>
+                <td class="dr-num">@if($c['amount'] !== null){{ (($c['code'] === 'cash_variance' && $c['amount'] > 0) ? '+' : '') . number_format($c['amount']) }}@endif</td>
             </tr>
             @endforeach
         </tbody>

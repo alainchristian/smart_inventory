@@ -75,7 +75,7 @@ class DailyReportController extends Controller
             'viewMode'     => $viewMode,
             'reconciliation' => $service->getCashReconciliation($shopId, $validated['date_from'], $validated['date_to']),
             'comparison'     => $service->computeComparisonTotals($shopId, $validated['date_from'], $validated['date_to']),
-            'checks'         => $service->getReportChecks($shopId, $validated['date_from'], $validated['date_to']),
+            'checks'         => $service->getReportChecks($shopId, $validated['date_from'], $validated['date_to'], $request->boolean('profit')),
             'generatedBy'    => $user->name,
             'showProfit'     => $request->boolean('profit'),
             'profitByProduct' => $request->boolean('profit')

@@ -400,10 +400,28 @@ tr { page-break-inside:avoid; }
         @foreach(collect($checks)->sortBy(fn ($c) => $sevOrder[$c['severity']] ?? 3) as $c)
         <tr>
             <td class="pill" style="color:{{ $sevCol[$c['severity']] ?? 'var(--text-dim)' }};">{{ $sevWord[$c['severity']] ?? ucfirst($c['severity']) }}</td>
-            <td>{{ $c['message'] }}</td>
+            <td>{{ $c['message'] }}
+                @if(!empty($c['details']))
+                @php $withCost = isset($c['details'][0]['cost']); @endphp
+                <table class="data" style="margin-top:1.5mm;">
+                    <thead><tr><th>Sale</th><th>Product</th><th>Qty</th><th class="r">List</th><th class="r">Sold</th><th class="r">Discount</th><th class="r">% off</th>@if($withCost)<th class="r">Profit list</th><th class="r">Profit sold</th>@endif</tr></thead>
+                    <tbody>
+                    @foreach($c['details'] as $d)
+                    <tr>
+                        <td class="nw">{{ $d['sale_number'] }}</td><td>{{ $d['product'] }}</td><td class="nw">{{ $d['qty'] }}</td>
+                        <td class="r">{{ $n($d['list']) }}</td><td class="r">{{ $n($d['sold']) }}</td>
+                        <td class="r" style="color:var(--red);">{{ $d['discount'] > 0 ? '−' : '' }}{{ number_format(abs($d['discount'])) }}</td>
+                        <td class="r dim">{{ number_format($d['pct'], 1) }}%</td>
+                        @if($withCost)<td class="r">{{ $n($d['profit_at_list']) }}</td><td class="r">{{ $n($d['profit_sold']) }}</td>@endif
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+                @endif
+            </td>
             @if($isAll)<td class="dim">{{ $c['shop_name'] ?? '' }}</td>@endif
             <td class="dim">{{ !empty($c['date']) ? \Carbon\Carbon::parse($c['date'])->format('d M Y') : '' }}</td>
-            <td class="r">{{ $c['amount'] !== null ? $sg($c['amount']) : '' }}</td>
+            <td class="r">{{ $c['amount'] !== null ? ($c['code'] === 'cash_variance' ? $sg($c['amount']) : $n($c['amount'])) : '' }}</td>
         </tr>
         @endforeach
         </tbody>

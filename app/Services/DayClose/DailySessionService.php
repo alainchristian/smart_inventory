@@ -901,8 +901,12 @@ class DailySessionService
      * (info|warning|critical), message, shop_name, date, amount (nullable).
      * `unlinked_sales` is intentionally absent: sales has no daily_session_id
      * column (V8), so a sale can never be "unlinked".
+     *
+     * price_overrides items also carry `details` (one row per modified sale line: list price,
+     * sold price, discount, % off). $withCost adds cost and margin per line — owner/admin ONLY,
+     * never pass true for a shop manager (purchase price must not reach them).
      */
-    public function getReportChecks(?int $shopId, string $dateFrom, string $dateTo): array
+    public function getReportChecks(?int $shopId, string $dateFrom, string $dateTo, bool $withCost = false): array
     {
         $checks = [];
         $add = function (string $code, string $severity, string $message, ?string $shopName = null, $date = null, ?int $amount = null) use (&$checks) {
@@ -917,6 +921,7 @@ class DailySessionService
         $start = \Carbon\Carbon::parse($dateFrom, $tz)->startOfDay()->utc();
         $end   = \Carbon\Carbon::parse($dateTo, $tz)->endOfDay()->utc();
         $fmt   = fn ($n) => number_format((int) $n);
+        $localDate = fn ($ts) => \Carbon\Carbon::parse($ts, 'UTC')->setTimezone($tz)->toDateString();
 
         $sessions = DailySession::with('shop')
             ->when($shopId !== null, fn ($q) => $q->where('shop_id', $shopId))
@@ -931,21 +936,25 @@ class DailySessionService
                 $s->shop->name ?? null, $s->session_date);
         }
 
-        // payments_mismatch
+        // payments_mismatch — one item per shop + business day so each carries shop, date and the gap
         $mismatch = DB::table('sales')
+            ->join('shops', 'sales.shop_id', '=', 'shops.id')
             ->leftJoin('sale_payments', 'sale_payments.sale_id', '=', 'sales.id')
             ->when($shopId !== null, fn ($q) => $q->where('sales.shop_id', $shopId))
             ->whereNull('sales.voided_at')
             ->whereNull('sales.deleted_at')
             ->whereBetween('sales.sale_date', [$start, $end])
-            ->groupBy('sales.id', 'sales.sale_number', 'sales.total')
+            ->groupBy('sales.id', 'sales.sale_number', 'sales.total', 'sales.sale_date', 'shops.name')
             ->havingRaw('sales.total <> COALESCE(SUM(sale_payments.amount), 0)')
-            ->orderBy('sales.sale_number')
-            ->pluck('sales.sale_number');
-        if ($mismatch->isNotEmpty()) {
+            ->orderBy('sales.sale_date')->orderBy('sales.sale_number')
+            ->select('sales.sale_number', 'sales.sale_date', 'shops.name as shop_name',
+                DB::raw('sales.total - COALESCE(SUM(sale_payments.amount), 0) as diff'))
+            ->get();
+        foreach ($mismatch->groupBy(fn ($r) => $r->shop_name . '|' . $localDate($r->sale_date)) as $rows) {
             $add('payments_mismatch', 'critical',
-                $mismatch->count() . ' sale(s) whose payments do not add up to the sale total: '
-                . $mismatch->take(10)->implode(', ') . ($mismatch->count() > 10 ? ', …' : '') . '.');
+                $rows->count() . ' sale(s) whose payments do not add up to the sale total: '
+                . $rows->take(10)->pluck('sale_number')->implode(', ') . ($rows->count() > 10 ? ', …' : '') . '.',
+                $rows->first()->shop_name, $localDate($rows->first()->sale_date), (int) $rows->sum('diff'));
         }
 
         // stored_vs_live (closed/locked sessions only, capped)
@@ -978,32 +987,98 @@ class DailySessionService
             }
         }
 
-        // price_overrides
-        $overrides = DB::table('sales')
-            ->when($shopId !== null, fn ($q) => $q->where('shop_id', $shopId))
-            ->where('has_price_override', true)
-            ->whereNull('voided_at')
-            ->whereNull('deleted_at')
-            ->whereBetween('sale_date', [$start, $end])
-            ->orderBy('sale_number')
-            ->pluck('sale_number');
-        if ($overrides->isNotEmpty()) {
+        // price_overrides — one item per shop + business day. `details` = every modified sale line with
+        // list price vs sold price; amount = revenue given up (list − sold) so the effect is visible at a glance.
+        // Box lines store box-total prices, item lines per-item prices (see sale_items convention).
+        $overrideLines = DB::table('sale_items')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->join('shops', 'sales.shop_id', '=', 'shops.id')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
+            ->when($shopId !== null, fn ($q) => $q->where('sales.shop_id', $shopId))
+            ->where('sale_items.price_was_modified', true)
+            ->whereNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->whereBetween('sales.sale_date', [$start, $end])
+            ->orderBy('sales.sale_date')->orderBy('sales.sale_number')->orderBy('sale_items.id')
+            ->select('sales.sale_number', 'sales.sale_date', 'shops.name as shop_name', 'products.name as product_name',
+                'products.purchase_price', 'sale_items.quantity_sold', 'sale_items.is_full_box',
+                'sale_items.original_unit_price', 'sale_items.line_total', 'sale_items.price_modification_reason')
+            ->get()
+            ->map(function ($r) use ($withCost) {
+                $list = (int) ($r->is_full_box ? $r->original_unit_price : $r->original_unit_price * $r->quantity_sold);
+                $sold = (int) $r->line_total;
+                $line = [
+                    'sale_number' => $r->sale_number,
+                    'product'     => $r->product_name,
+                    'boxes'       => $r->is_full_box ? 1 : 0,
+                    'items'       => $r->is_full_box ? 0 : (int) $r->quantity_sold,
+                    'list'        => $list,
+                    'sold'        => $sold,
+                    'discount'    => $list - $sold,
+                    'pct'         => $list > 0 ? round(($list - $sold) / $list * 100, 1) : 0,
+                    'reason'      => $r->price_modification_reason,
+                    'shop_name'   => $r->shop_name,
+                    'sale_date'   => $r->sale_date,
+                ];
+                if ($withCost) {
+                    $cost = (int) ($r->purchase_price * $r->quantity_sold);
+                    $line['cost']           = $cost;
+                    $line['profit_at_list'] = $list - $cost;
+                    $line['profit_sold']    = $sold - $cost;
+                }
+
+                return (object) $line;
+            });
+        foreach ($overrideLines->groupBy(fn ($r) => $r->shop_name . '|' . $localDate($r->sale_date)) as $rows) {
+            $sales = $rows->pluck('sale_number')->unique();
+            $discount = (int) $rows->sum('discount');
             $add('price_overrides', 'info',
-                $overrides->count() . ' sale(s) with a price override: '
-                . $overrides->take(10)->implode(', ') . ($overrides->count() > 10 ? ', …' : '') . '.');
+                $sales->count() . ' sale(s) with a price override: '
+                . $sales->take(10)->implode(', ') . ($sales->count() > 10 ? ', …' : '')
+                . '. Revenue given up: ' . $fmt($discount) . ' RWF.',
+                $rows->first()->shop_name, $localDate($rows->first()->sale_date), $discount);
+            // Aggregate identical products within a sale into one line (2 boxes of X = one row).
+            $checks[array_key_last($checks)]['details'] = $rows->groupBy(fn ($r) => $r->sale_number . '|' . $r->product)->map(function ($g) use ($withCost) {
+                $boxes = (int) $g->sum('boxes');
+                $items = (int) $g->sum('items');
+                $list  = (int) $g->sum('list');
+                $sold  = (int) $g->sum('sold');
+                $row = [
+                    'sale_number' => $g->first()->sale_number,
+                    'product'     => $g->first()->product,
+                    'qty'         => trim(($boxes ? $boxes . ' ' . \Illuminate\Support\Str::plural('box', $boxes) : '')
+                                     . ($boxes && $items ? ' + ' : '')
+                                     . ($items ? $items . ' ' . \Illuminate\Support\Str::plural('item', $items) : '')),
+                    'list'        => $list,
+                    'sold'        => $sold,
+                    'discount'    => $list - $sold,
+                    'pct'         => $list > 0 ? round(($list - $sold) / $list * 100, 1) : 0,
+                ];
+                if ($withCost) {
+                    $row['cost']           = (int) $g->sum('cost');
+                    $row['profit_at_list'] = $list - $row['cost'];
+                    $row['profit_sold']    = $sold - $row['cost'];
+                }
+
+                return $row;
+            })->values()->all();
         }
 
-        // voided_sales
+        // voided_sales — one item per shop + business day
         $voided = DB::table('sales')
-            ->when($shopId !== null, fn ($q) => $q->where('shop_id', $shopId))
-            ->whereNotNull('voided_at')
-            ->whereNull('deleted_at')
-            ->whereBetween('sale_date', [$start, $end])
-            ->selectRaw('COUNT(*) as c, COALESCE(SUM(total), 0) as t')
-            ->first();
-        if ((int) $voided->c > 0) {
+            ->join('shops', 'sales.shop_id', '=', 'shops.id')
+            ->when($shopId !== null, fn ($q) => $q->where('sales.shop_id', $shopId))
+            ->whereNotNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->whereBetween('sales.sale_date', [$start, $end])
+            ->orderBy('sales.sale_date')
+            ->select('sales.sale_number', 'sales.sale_date', 'sales.total', 'shops.name as shop_name')
+            ->get();
+        foreach ($voided->groupBy(fn ($r) => $r->shop_name . '|' . $localDate($r->sale_date)) as $rows) {
             $add('voided_sales', 'info',
-                (int) $voided->c . ' voided sale(s) totalling ' . $fmt($voided->t) . ' RWF.', null, null, (int) $voided->t);
+                $rows->count() . ' voided sale(s) totalling ' . $fmt($rows->sum('total')) . ' RWF: '
+                . $rows->take(10)->pluck('sale_number')->implode(', ') . ($rows->count() > 10 ? ', …' : '') . '.',
+                $rows->first()->shop_name, $localDate($rows->first()->sale_date), (int) $rows->sum('total'));
         }
 
         return $checks;

@@ -1182,10 +1182,39 @@
             @foreach($odrSevSorted as $c)
             <tr>
                 <td><span class="odr-pill odr-pill-{{ $odrSevPill[$c['severity']][0] ?? 'dim' }}">{{ $odrSevPill[$c['severity']][1] ?? ucfirst($c['severity']) }}</span></td>
-                <td class="odr-msg">{{ $c['message'] }}</td>
+                                <td class="odr-msg">{{ $c['message'] }}
+                    @if(!empty($c['details']))
+                    @php $odrCost = isset($c['details'][0]['cost']); @endphp
+                    <table class="odr-table" style="margin-top:8px;width:auto;min-width:100%">
+                        <thead><tr>
+                            <th>Sale</th><th>Product</th><th>Qty</th>
+                            <th style="text-align:right">List price</th><th style="text-align:right">Sold at</th>
+                            <th style="text-align:right">Discount</th><th style="text-align:right">% off</th>
+                            @if($odrCost)<th style="text-align:right">Profit at list</th><th style="text-align:right">Profit sold</th>@endif
+                        </tr></thead>
+                        <tbody>
+                        @foreach($c['details'] as $d)
+                        <tr>
+                            <td style="font-family:var(--mono);white-space:nowrap">{{ $d['sale_number'] }}</td>
+                            <td>{{ $d['product'] }}</td>
+                            <td style="white-space:nowrap">{{ $d['qty'] }}</td>
+                            <td class="odr-num">{{ number_format($d['list']) }}</td>
+                            <td class="odr-num">{{ number_format($d['sold']) }}</td>
+                            <td class="odr-num" style="color:{{ $d['discount'] > 0 ? 'var(--red)' : 'var(--text-dim)' }}">{{ $d['discount'] > 0 ? '−' : '' }}{{ number_format(abs($d['discount'])) }}</td>
+                            <td class="odr-num" style="color:var(--text-dim)">{{ number_format($d['pct'], 1) }}%</td>
+                            @if($odrCost)
+                            <td class="odr-num">{{ number_format($d['profit_at_list']) }}</td>
+                            <td class="odr-num" style="color:{{ $d['profit_sold'] >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ number_format($d['profit_sold']) }}</td>
+                            @endif
+                        </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                    @endif
+                </td>
                 @if($isAllShops)<td style="color:var(--text-dim)">{{ $c['shop_name'] ?? '' }}</td>@endif
                 <td style="color:var(--text-dim);white-space:nowrap">{{ !empty($c['date']) ? \Carbon\Carbon::parse($c['date'])->format('d M Y') : '' }}</td>
-                <td class="odr-num">@if($c['amount'] !== null){{ ($c['amount'] > 0 ? '+' : '') . number_format($c['amount']) }}@endif</td>
+                <td class="odr-num">@if($c['amount'] !== null){{ (($c['code'] === 'cash_variance' && $c['amount'] > 0) ? '+' : '') . number_format($c['amount']) }}@endif</td>
             </tr>
             @endforeach
         </tbody>

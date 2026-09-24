@@ -181,7 +181,7 @@ class DailyReport extends Component
 
     public function getChecksProperty(): array
     {
-        return app(DailySessionService::class)->getReportChecks($this->resolveShopId(), $this->dateFrom, $this->dateTo);
+        return app(DailySessionService::class)->getReportChecks($this->resolveShopId(), $this->dateFrom, $this->dateTo, $this->showProfit);
     }
 
     public function render()
