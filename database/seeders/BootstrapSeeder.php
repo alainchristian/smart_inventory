@@ -17,6 +17,14 @@ class BootstrapSeeder extends Seeder
         $this->command->info('🚀  SmartInventory — Bootstrap Seed');
         $this->command->info('────────────────────────────────────────');
 
+        // ── Settings ───────────────────────────────────
+        // Without this, the settings table has no rows for most business
+        // settings (Sales Rules, Returns Policy, Credit Policy, Price
+        // Override), and SettingsService::set() silently no-ops when a row
+        // doesn't already exist — so the owner settings page shows "Settings
+        // saved" but nothing actually persists.
+        $this->call(SettingsSeeder::class);
+
         // ── Users ──────────────────────────────────────
         $owner = User::create([
             'name'          => 'Jean-Pierre Habimana',

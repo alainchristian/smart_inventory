@@ -18,17 +18,27 @@ class SettingsService
 
     public function set(string $key, mixed $value): void
     {
+        // Previously a no-op when the row didn't exist yet — a key missing
+        // from the settings table (e.g. never seeded) would silently fail
+        // to save with no error, while the UI still reported success. Now
+        // creates the row on first write, inferring its type from the PHP
+        // value; an existing row keeps its established type.
         $setting = Setting::where('key', $key)->first();
-        if (!$setting) return;
 
-        // Serialize based on type
-        $serialized = match ($setting->type) {
+        $type = $setting?->type ?? match (true) {
+            is_bool($value)  => 'boolean',
+            is_array($value) => 'json',
+            is_int($value)   => 'integer',
+            default          => 'string',
+        };
+
+        $serialized = match ($type) {
             'boolean' => $value ? 'true' : 'false',
             'json'    => json_encode($value),
             default   => (string) $value,
         };
 
-        $setting->update(['value' => $serialized]);
+        Setting::updateOrCreate(['key' => $key], ['value' => $serialized, 'type' => $type]);
         $this->clearCache();
     }
 
