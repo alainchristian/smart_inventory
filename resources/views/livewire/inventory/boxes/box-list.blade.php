@@ -44,6 +44,23 @@
 .bx-search-clear:hover { color:var(--text) }
 .bx-result-count { font-size:12px;font-weight:600;color:var(--text-dim);white-space:nowrap;flex-shrink:0 }
 
+/* Product suggestions dropdown */
+.bx-suggest-panel {
+    position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;
+    background:var(--surface);border-radius:var(--rsm);box-shadow:var(--shadow-card-hover);
+    max-height:320px;overflow-y:auto
+}
+.bx-suggest-item {
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background var(--tr)
+}
+.bx-suggest-item:last-child { border-bottom:none }
+.bx-suggest-item:hover { background:var(--surface2) }
+.bx-suggest-main { font-size:13px;font-weight:700;color:var(--text) }
+.bx-suggest-sub { display:flex;align-items:center;gap:6px;margin-top:3px }
+.bx-suggest-stat { font-size:11px;font-weight:600;color:var(--text-dim);white-space:nowrap;flex-shrink:0 }
+.bx-suggest-empty { padding:14px;text-align:center;font-size:12px;color:var(--text-dim) }
+
 /* Mobile bar — active chips + Filters toggle (hidden on desktop) */
 .bx-mobile-bar { display:none;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap }
 .bx-active-chips { display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex:1;min-width:0 }
@@ -87,7 +104,6 @@
     outline:none;cursor:pointer;font-family:var(--font)
 }
 .bx-locked-pill { display:inline-flex;align-items:center;padding:6px 12px;border-radius:7px;background:var(--surface2);color:var(--text-dim);font-size:12px;font-weight:600 }
-.bx-sort-group { display:flex;gap:6px }
 .bx-btn-clear {
     padding:9px 16px;background:transparent;border:1.5px solid var(--border);
     border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
@@ -104,9 +120,8 @@
     }
     .bx-filter-rows.is-open { display:flex;animation:bx-slide-down .18s ease }
     .bx-filter-row  { flex-direction:column;align-items:stretch;gap:6px }
-    .bx-select,.bx-sort-group,.bx-locked-pill { width:100%;box-sizing:border-box }
+    .bx-select,.bx-locked-pill { width:100%;box-sizing:border-box }
     .bx-select { font-size:14px;padding:10px 12px }
-    .bx-sort-group { flex-direction:column }
     .bx-btn-clear { width:100%;padding:11px 16px }
 }
 @keyframes bx-slide-down { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
@@ -114,7 +129,7 @@
 /* ── Table ───────────────────────────────────────── */
 .bx-table-wrap { background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);overflow:hidden }
 .bx-table { width:100%;border-collapse:collapse;font-size:13px }
-.bx-table thead tr { background:var(--bg);border-bottom:1px solid var(--border) }
+.bx-table thead tr { border-bottom:2px solid var(--border) }
 .bx-table thead th {
     padding:10px 14px;text-align:left;
     font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
@@ -122,22 +137,26 @@
 }
 .bx-table thead th.sortable { cursor:pointer }
 .bx-table thead th.sortable:hover { color:var(--text) }
-.bx-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
-.bx-table tbody tr:last-child { border-bottom:none }
-.bx-table tbody tr:hover { background:var(--surface2) }
+.bx-table tbody tr.bx-row { border-bottom:1px solid var(--border);transition:background var(--tr);cursor:pointer }
+.bx-table tbody tr.bx-row:last-child { border-bottom:none }
+.bx-table tbody tr.bx-row:hover { background:var(--surface2) }
+.bx-table tbody tr.bx-row.is-open { background:var(--surface2) }
 .bx-table td { padding:11px 14px;vertical-align:middle }
 
 /* Badges */
 .bx-chip { display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap }
 .bx-badge-sm { display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap }
 
-/* View button */
+/* View / expand button */
 .bx-view-btn {
     padding:5px 12px;border-radius:7px;border:1.5px solid var(--border);
     background:transparent;font-size:12px;font-weight:600;cursor:pointer;
-    font-family:var(--font);color:var(--text-sub);transition:all var(--tr)
+    font-family:var(--font);color:var(--text-sub);transition:all var(--tr);
+    display:inline-flex;align-items:center;gap:5px
 }
 .bx-view-btn:hover { border-color:var(--accent);color:var(--accent) }
+.bx-view-btn .bx-caret { transition:transform .18s }
+.bx-view-btn.is-open .bx-caret { transform:rotate(180deg) }
 
 /* Box code chip */
 .bx-code-chip {
@@ -145,6 +164,25 @@
     padding:3px 9px;border-radius:7px;cursor:pointer;transition:opacity var(--tr)
 }
 .bx-code-chip:hover { opacity:.75 }
+
+/* Mini status breakdown (Boxes column) */
+.bx-mini-stats { display:flex;gap:10px }
+.bx-mini-stat  { text-align:center }
+.bx-mini-stat-v { font-size:11px;font-weight:700;font-family:var(--mono) }
+.bx-mini-stat-l { font-size:9px;color:var(--text-dim);margin-top:1px }
+
+/* Expand / drill-down panel */
+.bx-expand-row td { padding:0;background:var(--surface) }
+.bx-expand-inner { padding:16px 20px 18px;border-left:3px solid var(--accent) }
+.bx-expand-title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:10px }
+.bx-sub-table { width:100%;border-collapse:collapse;font-size:12.5px }
+.bx-sub-table thead tr { border-bottom:1px solid var(--border) }
+.bx-sub-table thead th { padding:6px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
+.bx-sub-table tbody tr { border-bottom:1px solid var(--border) }
+.bx-sub-table tbody tr:last-child { border-bottom:none }
+.bx-sub-table tbody tr:hover { background:var(--surface2) }
+.bx-sub-table td { padding:8px 10px;vertical-align:middle }
+.bx-sub-empty { padding:16px;text-align:center;font-size:12px;color:var(--text-dim) }
 
 /* Empty state */
 .bx-empty { padding:60px 20px;text-align:center }
@@ -171,7 +209,7 @@
 <div class="dashboard-page-header" style="margin-bottom:20px">
     <div>
         <h1 style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.4px;margin:0 0 4px">Boxes</h1>
-        <p style="font-size:14px;color:var(--text-dim);margin:0">Physical inventory — lifecycle, location, and value of every box</p>
+        <p style="font-size:14px;color:var(--text-dim);margin:0">Grouped by product — stock levels, sales performance, and expected revenue across every box</p>
     </div>
 </div>
 
@@ -195,7 +233,7 @@
                 </div>
                 <span class="bkpi-name">Sellable Boxes</span>
             </div>
-            <span class="bkpi-pct blue">of {{ number_format($activeTotal) }} active</span>
+            <span class="bkpi-pct blue">{{ number_format($distinctProducts) }} products</span>
         </div>
         <div class="bkpi-value" style="color:var(--accent)">{{ number_format($sellable) }}</div>
         <div class="bkpi-meta">Full &amp; partial in stock &middot; boxes</div>
@@ -209,8 +247,8 @@
                 <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Partial</div>
             </div>
             <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:{{ $stagnantCount > 0 ? 'var(--amber)' : 'var(--text-dim)' }};font-family:var(--mono)">{{ number_format($stagnantCount) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Stagnant</div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-dim);font-family:var(--mono)">{{ number_format($distinctProducts) }}</div>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Products</div>
             </div>
         </div>
     </div>
@@ -335,7 +373,7 @@
 
 {{-- ── Filter panel ──────────────────────────────────────────────── --}}
 @php
-    $anyFilterActive = $search || $locationType || $productId || $status || $expiringOnly;
+    $anyFilterActive = $search || $locationType || $categoryId || $status || $expiringOnly || $lowStockOnly || $periodActive;
 
     $locationChipLabel = null;
     if (!$locationLocked && $locationType) {
@@ -349,26 +387,55 @@
                 : 'All Shops';
         }
     }
-    $productChipLabel = $productId ? $products->firstWhere('id', $productId)?->name : null;
+    $categoryChipLabel = $categoryId ? $categories->firstWhere('id', $categoryId)?->name : null;
 @endphp
 <div class="bx-filter-panel" x-data="{ open: false }" :class="{ 'bx-open': open }" @click.outside="open = false">
 
-    {{-- Search row (always visible) --}}
-    <div class="bx-search-row">
+    {{-- Product filter — by name, SKU, or barcode, with a suggestions
+         dropdown on focus (still fully typeable — the dropdown just
+         narrows live alongside the same search filter) --}}
+    <div class="bx-search-row" x-data="{ suggestOpen: false }" @click.outside="suggestOpen = false">
+        <span class="bx-filter-label" style="flex-shrink:0">Product</span>
         <div class="bx-search-wrap">
             <svg class="bx-search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input wire:model.live.debounce.300ms="search"
-                   class="bx-search" type="text"
-                   placeholder="Search by box code…">
+                   class="bx-search" type="text" autocomplete="off"
+                   placeholder="Filter by name, SKU, or barcode…"
+                   @focus="suggestOpen = true"
+                   @keydown.escape="suggestOpen = false">
             @if($search)
-            <button wire:click="$set('search','')" class="bx-search-clear" title="Clear">
+            <button wire:click="$set('search','')" @click="suggestOpen = false" class="bx-search-clear" title="Clear">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
             </button>
             @endif
+
+            <div class="bx-suggest-panel" x-show="suggestOpen" x-cloak style="display:none">
+                @forelse($suggestions as $sug)
+                <div class="bx-suggest-item"
+                     wire:click="selectProductSuggestion({{ $sug->product_id }})"
+                     @click="suggestOpen = false"
+                     wire:key="sugg-{{ $sug->product_id }}">
+                    <div style="min-width:0">
+                        <div class="bx-suggest-main">{{ $sug->product_name }}</div>
+                        <div class="bx-suggest-sub">
+                            @if($sug->category_name)
+                            <span class="td-2l-badge" style="background:var(--accent-dim);color:var(--accent)">{{ $sug->category_name }}</span>
+                            @endif
+                            @if($sug->product_sku)
+                            <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">{{ $sug->product_sku }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <span class="bx-suggest-stat">{{ number_format($sug->sellable_box_count) }} {{ Str::plural('box', $sug->sellable_box_count) }}</span>
+                </div>
+                @empty
+                <div class="bx-suggest-empty">No products match{{ $search ? " \"{$search}\"" : '' }}</div>
+                @endforelse
+            </div>
         </div>
-        <div class="bx-result-count">{{ number_format($filteredCount) }} box{{ $filteredCount === 1 ? '' : 'es' }}</div>
+        <div class="bx-result-count">{{ number_format($filteredCount) }} product{{ $filteredCount === 1 ? '' : 's' }}</div>
     </div>
 
     {{-- Mobile bar: active-filter chips + toggle (hidden on desktop) --}}
@@ -383,9 +450,9 @@
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
             </button>
             @endif
-            @if($productChipLabel)
-            <button type="button" wire:click="$set('productId', '')" class="bx-ac bx-ac--removable">
-                {{ $productChipLabel }}
+            @if($categoryChipLabel)
+            <button type="button" wire:click="$set('categoryId', '')" class="bx-ac bx-ac--removable">
+                {{ $categoryChipLabel }}
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
             </button>
             @endif
@@ -398,6 +465,18 @@
             @if($expiringOnly)
             <button type="button" wire:click="$set('expiringOnly', false)" class="bx-ac bx-ac--removable">
                 Expiring
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+            </button>
+            @endif
+            @if($lowStockOnly)
+            <button type="button" wire:click="$set('lowStockOnly', false)" class="bx-ac bx-ac--removable">
+                Low stock
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+            </button>
+            @endif
+            @if($periodActive)
+            <button type="button" wire:click="setPeriodPreset('all_time')" class="bx-ac bx-ac--removable">
+                {{ \Carbon\Carbon::parse($dateFrom)->format('d M') }}–{{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
             </button>
             @endif
@@ -451,18 +530,37 @@
         </div>
         @endif
 
-        {{-- Product --}}
+        {{-- Category --}}
         <div class="bx-filter-row">
-            <span class="bx-filter-label">Product</span>
-            <select wire:model.live="productId" class="bx-select" @change="open = false">
-                <option value="">All Products</option>
-                @foreach($products as $product)
-                    <option value="{{ $product->id }}">{{ $product->name }}</option>
+            <span class="bx-filter-label">Category</span>
+            <select wire:model.live="categoryId" class="bx-select" @change="open = false">
+                <option value="">All Categories</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                 @endforeach
             </select>
         </div>
 
-        {{-- Status --}}
+        {{-- Period — scopes Sold/Revenue Produced to a date range, and (for
+             a range ending in the past) reconstructs Remaining as of that
+             date from the box movement history instead of live stock --}}
+        <div class="bx-filter-row" style="flex-wrap:wrap">
+            <span class="bx-filter-label">Period</span>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+                @foreach(['all_time'=>'All time','today'=>'Today','week'=>'This Week','month'=>'This Month','last_30'=>'Last 30 Days'] as $key => $label)
+                <button type="button" class="bx-pill {{ $periodPreset === $key ? 'active' : '' }}"
+                        wire:click="setPeriodPreset('{{ $key }}')" @click="open = false">{{ $label }}</button>
+                @endforeach
+            </div>
+            <input type="date" wire:model.live="dateFrom" class="bx-select" style="padding:6px 10px">
+            <span style="color:var(--text-dim);font-size:12px">→</span>
+            <input type="date" wire:model.live="dateTo" class="bx-select" style="padding:6px 10px">
+        </div>
+
+        {{-- Status — not shown for a historical period: box status history
+             (particularly "damaged") isn't reliably reconstructable from
+             the movement ledger, so the filter wouldn't mean anything --}}
+        @if(!$isHistorical)
         <div class="bx-filter-row">
             <span class="bx-filter-label">Status</span>
             <select wire:model.live="status" class="bx-select" @change="open = false">
@@ -472,8 +570,9 @@
                 @endforeach
             </select>
         </div>
+        @endif
 
-        {{-- Options: Expiring toggle --}}
+        {{-- Options: Expiring / Low stock toggles --}}
         <div class="bx-filter-row">
             <span class="bx-filter-label">Options</span>
             <label class="bx-pill {{ $expiringOnly ? 'active' : '' }}" style="cursor:pointer">
@@ -483,24 +582,14 @@
                 </svg>
                 Expiring only
             </label>
-        </div>
-
-        {{-- Sort --}}
-        <div class="bx-filter-row">
-            <span class="bx-filter-label">Sort</span>
-            <div class="bx-sort-group">
-                <select wire:model.live="sortBy" class="bx-select" @change="open = false">
-                    <option value="received_at">Date received</option>
-                    <option value="items_remaining">Items remaining</option>
-                    <option value="cost_value">Cost value</option>
-                    <option value="expiry_date">Expiry date</option>
-                    <option value="status">Status</option>
-                </select>
-                <select wire:model.live="sortDirection" class="bx-select" @change="open = false">
-                    <option value="desc">Newest first</option>
-                    <option value="asc">Oldest first</option>
-                </select>
-            </div>
+            <label class="bx-pill {{ $lowStockOnly ? 'active' : '' }}" style="cursor:pointer">
+                <input type="checkbox" wire:model.live="lowStockOnly" @change="open = false" style="display:none">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Low stock only
+            </label>
         </div>
 
         {{-- Clear --}}
@@ -512,36 +601,96 @@
 
 </div>
 
+{{-- ── Historical period banner ──────────────────────────────────── --}}
+@if($isHistorical)
+<div style="display:flex;align-items:flex-start;gap:10px;background:var(--amber-dim);border-radius:var(--r);padding:12px 16px;margin-bottom:16px">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--amber);flex-shrink:0;margin-top:1px">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <div style="font-size:12.5px;color:var(--text-sub);line-height:1.5">
+        <strong>Remaining, Boxes, Cost Value, and Revenue Expected are reconstructed as of {{ $asOfDate->format('d M Y, H:i') }}</strong>
+        from the box movement history — not live stock. Damage history isn't tracked, so historical boxes show as Full/Partial only.
+        Sold and Revenue Produced reflect sales within {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }}–{{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}.
+        The KPI cards above always show today's live inventory.
+    </div>
+</div>
+@elseif($periodActive)
+<div style="display:flex;align-items:center;gap:10px;background:var(--accent-dim);border-radius:var(--r);padding:10px 16px;margin-bottom:16px;font-size:12.5px;color:var(--text-sub)">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+    Sold and Revenue Produced reflect sales within {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }}–{{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}. Remaining stock is still today's live figure, since this period includes today.
+</div>
+@endif
+
 {{-- ── Table ──────────────────────────────────────────────────── --}}
 <div class="bx-table-wrap">
     <div style="overflow-x:auto">
     <table class="bx-table">
         <thead>
             <tr>
-                <th>Box Code</th>
-                <th>Product</th>
-                <th>Location</th>
-
-                {{-- Status — sortable --}}
-                <th wire:click="sortColumn('status')" class="sortable">
-                    Status
-                    @if($sortBy === 'status')
+                {{-- Product — sortable --}}
+                <th wire:click="sortColumn('name')" class="sortable">
+                    Product
+                    @if($sortBy === 'name')
                         <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                     @endif
                 </th>
 
-                {{-- Contents — sortable --}}
-                <th wire:click="sortColumn('items_remaining')" class="sortable">
-                    Contents
-                    @if($sortBy === 'items_remaining')
+                {{-- Boxes — sortable --}}
+                <th wire:click="sortColumn('box_count')" class="sortable">
+                    Boxes
+                    @if($sortBy === 'box_count')
                         <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                     @endif
                 </th>
 
-                {{-- Age — sortable --}}
-                <th wire:click="sortColumn('received_at')" class="sortable bx-hide-md">
-                    Age
-                    @if($sortBy === 'received_at')
+                {{-- Remaining — sortable --}}
+                <th wire:click="sortColumn('sellable_box_count')" class="sortable">
+                    Remaining{{ $isHistorical ? ' (as of)' : '' }}
+                    @if($sortBy === 'sellable_box_count')
+                        <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                    @endif
+                </th>
+
+                {{-- Sold — sortable --}}
+                <th wire:click="sortColumn('sold_qty')" class="sortable">
+                    Sold{{ $periodActive ? ' (period)' : '' }}
+                    @if($sortBy === 'sold_qty')
+                        <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                    @endif
+                </th>
+
+                @if($isOwner)
+                {{-- Revenue Produced — sortable --}}
+                <th wire:click="sortColumn('revenue_produced')" class="sortable bx-hide-lg" style="text-align:right">
+                    Revenue Produced
+                    @if($sortBy === 'revenue_produced')
+                        <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                    @endif
+                </th>
+
+                {{-- Revenue Expected — sortable --}}
+                <th wire:click="sortColumn('revenue_expected')" class="sortable bx-hide-lg" style="text-align:right">
+                    Revenue Expected
+                    @if($sortBy === 'revenue_expected')
+                        <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                    @endif
+                </th>
+
+                {{-- Cost Value — sortable --}}
+                <th wire:click="sortColumn('cost_value')" class="sortable bx-hide-lg" style="text-align:right">
+                    Cost Value
+                    @if($sortBy === 'cost_value')
+                        <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                    @endif
+                </th>
+                @endif
+
+                {{-- Restocked — sortable --}}
+                <th wire:click="sortColumn('last_received')" class="sortable bx-hide-md">
+                    Restocked
+                    @if($sortBy === 'last_received')
                         <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                     @endif
                 </th>
@@ -554,183 +703,235 @@
                     @endif
                 </th>
 
-                {{-- Cost Value — owner only, sortable --}}
-                @if($isOwner)
-                <th wire:click="sortColumn('cost_value')" class="sortable bx-hide-lg" style="text-align:right">
-                    Cost Value
-                    @if($sortBy === 'cost_value')
-                        <span style="color:var(--accent)">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
-                    @endif
-                </th>
-                @endif
-
-                <th class="bx-hide-lg">Batch</th>
                 <th style="text-align:right">Action</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($boxes as $box)
+            @php $colCount = $isOwner ? 10 : 7; @endphp
+            @forelse($rows as $row)
             @php
-                $statusColors = match($box->status->value) {
-                    'full'    => ['bg'=>'var(--green-dim,rgba(22,163,74,.12))',  'color'=>'var(--green)'],
-                    'partial' => ['bg'=>'var(--amber-dim,rgba(217,119,6,.12))', 'color'=>'var(--amber)'],
-                    'empty'   => ['bg'=>'var(--surface2)',                       'color'=>'var(--text-dim)'],
-                    'damaged' => ['bg'=>'var(--red-dim,rgba(220,38,38,.12))',    'color'=>'var(--red)'],
-                    default   => ['bg'=>'var(--surface2)',                       'color'=>'var(--text-dim)'],
-                };
+                $fillPct   = $row->items_total > 0 ? round(($row->items_remaining / $row->items_total) * 100) : 0;
+                $fillColor = $fillPct >= 60 ? 'var(--success,var(--green))'
+                           : ($fillPct >= 20 ? 'var(--warn,var(--amber))' : 'var(--danger,var(--red))');
 
-                // Fill bar
-                $fillPct   = $box->items_total > 0
-                    ? round(($box->items_remaining / $box->items_total) * 100)
-                    : 0;
-                $fillColor = $fillPct >= 60
-                    ? 'var(--success,var(--green))'
-                    : ($fillPct >= 20 ? 'var(--warn,var(--amber))' : 'var(--danger,var(--red))');
+                $lastRestockedDays = $row->last_received_at ? (int) \Carbon\Carbon::parse($row->last_received_at)->diffInDays(now()) : null;
+                $restockColor = $lastRestockedDays === null ? 'var(--text-dim)'
+                               : ($lastRestockedDays <= 30 ? 'var(--success,var(--green))'
+                               : ($lastRestockedDays <= 90 ? 'var(--warn,var(--amber))' : 'var(--danger,var(--red))'));
 
-                // Age
-                $ageDays   = $box->received_at ? (int) $box->received_at->diffInDays(now()) : null;
-                $ageColor  = $ageDays === null ? 'var(--text-dim)'
-                           : ($ageDays <= 30   ? 'var(--success,var(--green))'
-                           : ($ageDays <= 90   ? 'var(--warn,var(--amber))'
-                           :                     'var(--danger,var(--red))'));
+                $soonestExpiry = $row->soonest_expiry ? \Carbon\Carbon::parse($row->soonest_expiry) : null;
+                $daysToExpiry  = $soonestExpiry ? (int) now()->diffInDays($soonestExpiry, false) : null;
+                $expColor = $daysToExpiry === null ? null
+                          : ($daysToExpiry <= 7 ? 'var(--danger,var(--red))'
+                          : ($daysToExpiry <= 30 ? 'var(--warn,var(--amber))' : 'var(--success,var(--green))'));
 
-                // Location icon
-                $locIcon = $box->location_type?->value === 'warehouse'
-                    ? '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'
-                    : '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>';
-
-                // Cost value (owner)
-                $costVal = $isOwner && $box->product
-                    ? $box->items_remaining * $box->product->purchase_price
-                    : 0;
+                $isLowStock = $row->reorder_point > 0 && $row->items_remaining <= $row->reorder_point;
+                $isExpanded = $expandedProductId === $row->product_id;
             @endphp
-            <tr>
-                {{-- Box Code --}}
-                <td>
-                    <span class="bx-code-chip"
-                          style="background:{{ $statusColors['bg'] }};color:{{ $statusColors['color'] }}"
-                          wire:click="$dispatch('open-box-detail', {boxId: {{ $box->id }}})">
-                        {{ $box->box_code }}
-                    </span>
-                </td>
-
+            <tr class="bx-row {{ $isExpanded ? 'is-open' : '' }}" wire:click="toggleExpand({{ $row->product_id }})" wire:key="prow-{{ $row->product_id }}">
                 {{-- Product --}}
                 <td class="td-2l">
-                    <div class="td-2l-main">{{ $box->product?->name ?? '—' }}</div>
-                    @if($box->product?->category)
-                    <span class="td-2l-badge" style="background:var(--accent-dim);color:var(--accent)">
-                        {{ $box->product->category->name }}
-                    </span>
-                    @endif
+                    <div class="td-2l-main">{{ $row->product_name }}</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
+                        @if($row->category_name)
+                        <span class="td-2l-badge" style="background:var(--accent-dim);color:var(--accent)">{{ $row->category_name }}</span>
+                        @endif
+                        @if($row->product_sku)
+                        <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">{{ $row->product_sku }}</span>
+                        @endif
+                        @if($isLowStock)
+                        <span class="bx-badge-sm" style="background:var(--amber-dim);color:var(--amber)">Low stock</span>
+                        @endif
+                    </div>
                 </td>
 
-                {{-- Location --}}
-                <td class="td-2l">
-                    <div class="td-2l-main" style="display:flex;align-items:center;gap:5px">
-                        {!! $locIcon !!}
-                        {{ $box->location?->name ?? '—' }}
-                    </div>
-                    @if($box->location_type)
-                    <div class="td-2l-sub" style="text-transform:capitalize">
-                        {{ $box->location_type->value }}
-                    </div>
-                    @endif
-                </td>
-
-                {{-- Status --}}
+                {{-- Boxes — lifecycle composition --}}
                 <td>
-                    <span class="bx-chip"
-                          style="background:{{ $statusColors['bg'] }};color:{{ $statusColors['color'] }}">
-                        {{ ucfirst($box->status->value) }}
-                    </span>
+                    <div class="bx-mini-stats">
+                        <div class="bx-mini-stat">
+                            <div class="bx-mini-stat-v" style="color:var(--text)">{{ number_format($row->box_count) }}</div>
+                            <div class="bx-mini-stat-l">Total</div>
+                        </div>
+                        @if($row->damaged_count > 0)
+                        <div class="bx-mini-stat">
+                            <div class="bx-mini-stat-v" style="color:var(--red)">{{ number_format($row->damaged_count) }}</div>
+                            <div class="bx-mini-stat-l">Damaged</div>
+                        </div>
+                        @endif
+                    </div>
                 </td>
 
-                {{-- Contents --}}
-                <td style="min-width:130px">
-                    <div style="display:flex;align-items:center;gap:8px">
-                        <div style="flex:1;height:5px;background:var(--surface3);border-radius:3px;min-width:50px">
+                {{-- Remaining — sellable boxes (full + partial), boxes-first --}}
+                <td style="min-width:140px">
+                    <div style="font-size:15px;font-weight:800;font-family:var(--mono);color:{{ $fillColor }};line-height:1">
+                        {{ number_format($row->sellable_box_count) }} <span style="font-size:11px;font-weight:600;color:var(--text-dim)">{{ Str::plural('box', $row->sellable_box_count) }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+                        <div style="flex:1;height:4px;background:var(--surface3);border-radius:3px;min-width:40px">
                             <div style="height:100%;width:{{ $fillPct }}%;background:{{ $fillColor }};border-radius:3px"></div>
                         </div>
-                        <div style="text-align:right;flex-shrink:0">
-                            <div style="font-size:12px;font-weight:700;color:{{ $fillColor }};white-space:nowrap;line-height:1">
-                                {{ $fillPct }}%
-                            </div>
-                            <div style="font-size:10px;color:var(--text-dim);white-space:nowrap;margin-top:2px">
-                                {{ $box->items_remaining }}&nbsp;/&nbsp;{{ $box->items_total }}&nbsp;items
-                            </div>
+                        <div style="font-size:10px;color:var(--text-dim);white-space:nowrap">
+                            {{ number_format($row->items_remaining) }}/{{ number_format($row->items_total) }} items ({{ $fillPct }}%)
                         </div>
                     </div>
                 </td>
 
-                {{-- Age --}}
-                <td class="bx-hide-md">
-                    <span style="font-size:13px;font-weight:600;color:{{ $ageColor }}">
-                        {{ $ageDays !== null ? $ageDays . 'd' : '—' }}
-                    </span>
+                {{-- Sold — box count when the category is full-box-only
+                     (every sale is a whole box, so it's an exact figure);
+                     items otherwise, since individual sales don't divide
+                     cleanly into boxes --}}
+                <td>
+                    @if($row->box_only_sales)
+                        @php $soldBoxes = $row->items_per_box > 0 ? intdiv((int) $row->sold_qty, (int) $row->items_per_box) : 0; @endphp
+                        <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)">{{ number_format($soldBoxes) }} <span style="font-size:11px;font-weight:600;color:var(--text-dim)">{{ Str::plural('box', $soldBoxes) }}</span></span>
+                    @else
+                        <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)">{{ number_format($row->sold_qty) }} <span style="font-size:11px;font-weight:600;color:var(--text-dim)">{{ Str::plural('item', (int) $row->sold_qty) }}</span></span>
+                    @endif
                 </td>
 
-                {{-- Expiry --}}
-                <td class="bx-hide-md">
-                    @if($box->expiry_date)
-                        @php
-                            $daysToExpiry = (int) now()->diffInDays($box->expiry_date, false);
-                            $expColor = $daysToExpiry <= 7  ? 'var(--danger,var(--red))'
-                                      : ($daysToExpiry <= 30 ? 'var(--warn,var(--amber))'
-                                      :                        'var(--success,var(--green))');
-                        @endphp
-                        <span style="font-size:12px;font-weight:600;color:{{ $expColor }};
-                                     background:{{ $expColor }};
-                                     -webkit-background-clip:text;padding:2px 7px;border-radius:12px;
-                                     background:transparent;white-space:nowrap">
-                            {{ $box->expiry_date->format('d M Y') }}
-                        </span>
+                @if($isOwner)
+                {{-- Revenue Produced --}}
+                <td class="bx-hide-lg" style="text-align:right;white-space:nowrap">
+                    @if($row->revenue_produced > 0)
+                    <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--green)">{{ number_format($row->revenue_produced) }} <span style="font-size:10px;color:var(--text-dim)">RWF</span></span>
                     @else
-                        <span style="color:var(--text-dim);font-size:13px">—</span>
+                    <span style="color:var(--text-dim);font-size:12px">—</span>
+                    @endif
+                </td>
+
+                {{-- Revenue Expected --}}
+                <td class="bx-hide-lg" style="text-align:right;white-space:nowrap">
+                    @if($row->revenue_expected > 0)
+                    <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent)">{{ number_format($row->revenue_expected) }} <span style="font-size:10px;color:var(--text-dim)">RWF</span></span>
+                    @else
+                    <span style="color:var(--text-dim);font-size:12px">—</span>
                     @endif
                 </td>
 
                 {{-- Cost Value --}}
-                @if($isOwner)
                 <td class="bx-hide-lg" style="text-align:right;white-space:nowrap">
-                    @if($costVal > 0)
-                    <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);white-space:nowrap">{{ number_format($costVal) }} <span style="font-size:10px;color:var(--text-dim)">RWF</span></span>
+                    @if($row->cost_value > 0)
+                    <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">{{ number_format($row->cost_value) }} <span style="font-size:10px;color:var(--text-dim)">RWF</span></span>
                     @else
                     <span style="color:var(--text-dim);font-size:12px">—</span>
                     @endif
                 </td>
                 @endif
 
-                {{-- Batch --}}
-                <td class="bx-hide-lg" style="font-family:var(--mono);font-size:12px;color:var(--text-dim);white-space:nowrap">{{ $box->batch_number ?? '—' }}</td>
+                {{-- Restocked --}}
+                <td class="bx-hide-md">
+                    <span style="font-size:13px;font-weight:600;color:{{ $restockColor }}">
+                        {{ $lastRestockedDays !== null ? $lastRestockedDays . 'd ago' : '—' }}
+                    </span>
+                </td>
+
+                {{-- Expiry --}}
+                <td class="bx-hide-md">
+                    @if($soonestExpiry)
+                        <span style="font-size:12px;font-weight:600;color:{{ $expColor }};white-space:nowrap">
+                            {{ $soonestExpiry->format('d M Y') }}
+                        </span>
+                    @else
+                        <span style="color:var(--text-dim);font-size:13px">—</span>
+                    @endif
+                </td>
 
                 {{-- Action --}}
                 <td style="text-align:right">
-                    <button class="bx-view-btn"
-                            wire:click="$dispatch('open-box-detail', {boxId: {{ $box->id }}})">
+                    <button class="bx-view-btn {{ $isExpanded ? 'is-open' : '' }}" wire:click.stop="toggleExpand({{ $row->product_id }})">
                         View
+                        <svg class="bx-caret" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </td>
             </tr>
+
+            {{-- Drill-down: individual boxes for this product --}}
+            @if($isExpanded)
+            <tr class="bx-expand-row" wire:key="pexp-{{ $row->product_id }}">
+                <td colspan="{{ $colCount }}">
+                    <div class="bx-expand-inner">
+                        <div class="bx-expand-title">Individual boxes — {{ $row->product_name }}</div>
+                        @if($expandedBoxes->isEmpty())
+                            <div class="bx-sub-empty">No boxes match the current filters for this product.</div>
+                        @else
+                        <div style="overflow-x:auto">
+                        <table class="bx-sub-table">
+                            <thead>
+                                <tr>
+                                    <th>Box Code</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Contents</th>
+                                    <th>Age</th>
+                                    <th>Expiry</th>
+                                    <th>Batch</th>
+                                    <th style="text-align:right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($expandedBoxes as $box)
+                                @php
+                                    $bStatusColors = match($box->status->value) {
+                                        'full'    => ['bg'=>'var(--green-dim,rgba(22,163,74,.12))',  'color'=>'var(--green)'],
+                                        'partial' => ['bg'=>'var(--amber-dim,rgba(217,119,6,.12))', 'color'=>'var(--amber)'],
+                                        'damaged' => ['bg'=>'var(--red-dim,rgba(220,38,38,.12))',    'color'=>'var(--red)'],
+                                        default   => ['bg'=>'var(--surface2)',                       'color'=>'var(--text-dim)'],
+                                    };
+                                    $bFillPct  = $box->items_total > 0 ? round(($box->items_remaining / $box->items_total) * 100) : 0;
+                                    $bAgeDays  = $box->received_at ? (int) $box->received_at->diffInDays(now()) : null;
+                                @endphp
+                                <tr wire:key="box-{{ $box->id }}">
+                                    <td>
+                                        <span class="bx-code-chip"
+                                              style="background:{{ $bStatusColors['bg'] }};color:{{ $bStatusColors['color'] }}"
+                                              wire:click="$dispatch('open-box-detail', {boxId: {{ $box->id }}})">
+                                            {{ $box->box_code }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $box->location?->name ?? '—' }}</td>
+                                    <td>
+                                        <span class="bx-chip" style="background:{{ $bStatusColors['bg'] }};color:{{ $bStatusColors['color'] }}">
+                                            {{ ucfirst($box->status->value) }}
+                                        </span>
+                                    </td>
+                                    <td style="white-space:nowrap">{{ $box->items_remaining }} / {{ $box->items_total }} ({{ $bFillPct }}%)</td>
+                                    <td>{{ $bAgeDays !== null ? $bAgeDays . 'd' : '—' }}</td>
+                                    <td>{{ $box->expiry_date ? $box->expiry_date->format('d M Y') : '—' }}</td>
+                                    <td style="font-family:var(--mono);color:var(--text-dim)">{{ $box->batch_number ?? '—' }}</td>
+                                    <td style="text-align:right">
+                                        <button class="bx-view-btn" wire:click="$dispatch('open-box-detail', {boxId: {{ $box->id }}})">View</button>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        </div>
+                        @endif
+                    </div>
+                </td>
+            </tr>
+            @endif
+
             @empty
             <tr>
-                <td colspan="{{ $isOwner ? 10 : 9 }}">
+                <td colspan="{{ $colCount }}">
                     <div class="bx-empty">
                         <div class="bx-empty-icon"><x-icon name="box" size="28" /></div>
                         <div class="bx-empty-title">
-                            @if($search || $locationType || $productId || $status || $expiringOnly)
-                                No boxes match your filters
+                            @if($anyFilterActive)
+                                No products match your filters
                             @else
                                 No boxes in the system yet
                             @endif
                         </div>
                         <div class="bx-empty-sub">
-                            @if($search || $locationType || $productId || $status || $expiringOnly)
+                            @if($anyFilterActive)
                                 Try adjusting or clearing your filters
                             @else
                                 Boxes will appear here once they are received into a warehouse or shop
                             @endif
                         </div>
-                        @if($search || $locationType || $productId || $status || $expiringOnly)
+                        @if($anyFilterActive)
                         <button wire:click="clearFilters" class="bx-empty-btn">Clear Filters</button>
                         @endif
                     </div>
@@ -751,11 +952,11 @@
             display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
     <span style="font-size:12px;color:var(--text-dim)">
         Showing
-        <strong style="color:var(--text-sub);font-family:var(--mono)">{{ number_format($boxes->count()) }}</strong>
+        <strong style="color:var(--text-sub);font-family:var(--mono)">{{ number_format($rows->count()) }}</strong>
         of
         <strong style="color:var(--text-sub);font-family:var(--mono)">{{ number_format($filteredCount) }}</strong>
-        {{ $filteredCount === 1 ? 'box' : 'boxes' }}
-        @if($search || $locationType || $productId || $status || $expiringOnly)
+        {{ $filteredCount === 1 ? 'product' : 'products' }}
+        @if($anyFilterActive)
             <span style="font-weight:400"> matching filters</span>
         @endif
     </span>
@@ -782,7 +983,7 @@
 </div>
 @else
 <div style="padding:12px 0;text-align:center;font-size:12px;color:var(--text-dim)">
-    @if($filteredCount > 25) All {{ number_format($filteredCount) }} boxes loaded @endif
+    @if($filteredCount > 25) All {{ number_format($filteredCount) }} products loaded @endif
 </div>
 @endif
 
