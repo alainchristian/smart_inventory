@@ -25,13 +25,12 @@
     @endphp
 
     @if ($activeSession)
-        <div class="rounded-xl p-5 sm:p-6" style="background:var(--surface2);border:1px solid var(--border);">
+        <div style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:20px;max-width:560px;">
             <livewire:shop.day-close.add-withdrawal :dailySessionId="$activeSession->id" />
         </div>
 
-        {{-- Withdrawal list --}}
-        <div class="mt-6">
-            <div class="text-sm font-semibold mb-3" style="color:var(--text);">Today's Withdrawals</div>
+        <div style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);margin-top:20px;">
+            <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);">Today's Withdrawals</div>
             <livewire:shop.day-close.withdrawal-list :dailySessionId="$activeSession->id" />
         </div>
     @else

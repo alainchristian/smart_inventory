@@ -75,7 +75,7 @@ class WithdrawalList extends Component
             $this->editingId = null;
             $this->dispatch('withdrawal-updated');
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
@@ -89,7 +89,7 @@ class WithdrawalList extends Component
             app(OwnerWithdrawalService::class)->voidWithdrawal($withdrawal, auth()->user());
             $this->dispatch('withdrawal-voided');
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 

@@ -47,7 +47,7 @@ class SessionActivityFeed extends Component
             app(ExpenseService::class)->voidExpense($expense, auth()->user());
             $this->dispatch('expense-voided');
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
@@ -61,7 +61,7 @@ class SessionActivityFeed extends Component
             app(OwnerWithdrawalService::class)->voidWithdrawal($withdrawal, auth()->user());
             $this->dispatch('withdrawal-voided');
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
@@ -75,7 +75,7 @@ class SessionActivityFeed extends Component
             app(BankDepositService::class)->voidDeposit($deposit, auth()->user());
             $this->dispatch('deposit-voided');
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 

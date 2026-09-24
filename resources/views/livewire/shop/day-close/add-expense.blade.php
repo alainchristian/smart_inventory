@@ -1,104 +1,103 @@
-<div>
-    @if (session()->has('success'))
-        <div class="mb-3 px-3 py-2 rounded-lg text-xs" style="background:var(--green-dim);color:var(--green);">{{ session('success') }}</div>
-    @endif
-    @if (session()->has('error'))
-        <div class="mb-3 px-3 py-2 rounded-lg text-xs" style="background:var(--red-dim);color:var(--red);">{{ session('error') }}</div>
-    @endif
+<div style="font-family:var(--font)">
+<style>
+.ae-field     { margin-bottom:18px; }
+.ae-label     { display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;letter-spacing:.3px; }
+.ae-label span { color:var(--red); }
+.ae-label em  { font-style:normal;font-weight:500;color:var(--text-dim); }
+.ae-input     { width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;background:var(--surface);color:var(--text);
+                outline:none;box-sizing:border-box;font-family:var(--font);transition:border-color var(--tr); }
+.ae-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim); }
+.ae-money     { position:relative; }
+.ae-money .ae-input { font-family:var(--mono);font-size:18px;font-weight:700;text-align:right;padding-right:52px;-moz-appearance:textfield; }
+.ae-money-u   { position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text-dim);pointer-events:none; }
+.ae-seg       { display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:3px;border-radius:10px;border:1.5px solid var(--border); }
+.ae-seg button { padding:7px 4px;border:none;border-radius:7px;background:transparent;font-size:12px;font-weight:600;color:var(--text-dim);
+                 cursor:pointer;font-family:var(--font);transition:all var(--tr);white-space:nowrap; }
+.ae-seg button:hover  { color:var(--text);background:var(--surface2); }
+.ae-seg button.active { background:var(--accent);color:#fff; }
+.ae-hint      { font-size:12px;color:var(--text-dim);margin-top:6px; }
+.ae-error     { font-size:12px;color:var(--red);margin-top:5px; }
+.ae-actions   { display:flex;justify-content:flex-end;gap:8px;padding-top:16px;margin-top:4px;border-top:1px solid var(--border); }
+.ae-btn       { padding:10px 18px;border-radius:var(--rsm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all var(--tr);
+                display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap; }
+.ae-btn-ghost { background:var(--surface);color:var(--text-sub);border:1px solid var(--border); }
+.ae-btn-ghost:hover { background:var(--surface2);color:var(--text); }
+.ae-btn-primary { background:var(--accent);color:#fff;border:1px solid var(--accent);box-shadow:0 3px 10px rgba(59,111,212,.25); }
+.ae-btn-primary:hover { opacity:.88; }
+.ae-btn-primary:disabled { opacity:.5;cursor:not-allowed; }
+@keyframes ae-spin { to { transform:rotate(360deg) } }
+@media (max-width:640px) {
+    .ae-seg button { min-height:34px !important;min-width:0 !important;padding:7px 4px !important; }
+}
+@media (max-width:480px) {
+    .ae-actions { flex-direction:column-reverse; }
+    .ae-btn { width:100%; }
+}
+</style>
 
-    <div class="text-sm font-semibold mb-3" style="color:var(--text);">{{ __('Record Expense') }}</div>
-
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div>
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Category') }}</label>
-            <select wire:model="categoryId"
-                    class="w-full px-3 py-2.5 rounded-lg text-sm"
-                    style="background:var(--surface);border:1px solid var(--border);color:var(--text);">
-                <option value="0">{{ __('Select category…') }}</option>
-                @foreach ($categories as $cat)
-                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                @endforeach
-            </select>
-            @error('categoryId') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
-        </div>
-
-        <div>
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Amount (RWF)') }}</label>
-            <input type="number"
-                   wire:model="amount"
-                   inputmode="decimal"
-                   enterkeyhint="next"
-                   min="1"
-                   class="w-full px-3 py-2.5 rounded-lg text-sm"
-                   style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);text-align:right;"
-                   placeholder="0"
-                   onfocus="this.style.borderColor='var(--accent)';if(this.value==='0')this.value='';"
-                   onblur="this.style.borderColor='var(--border)';">
-            @error('amount') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
-        </div>
-
-        <div class="sm:col-span-2">
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Description') }} <span style="opacity:.5;font-weight:400;">(optional)</span></label>
-            <input type="text"
-                   wire:model="description"
-                   enterkeyhint="next"
-                   class="w-full px-3 py-2.5 rounded-lg text-sm"
-                   style="background:var(--surface);border:1px solid var(--border);color:var(--text);"
-                   placeholder="{{ __('What was this expense for?') }}">
-            @error('description') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
-        </div>
-
-        <div>
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Payment Method') }}</label>
-            <select wire:model.live="paymentMethod"
-                    class="w-full px-3 py-2.5 rounded-lg text-sm"
-                    style="background:var(--surface);border:1px solid var(--border);color:var(--text);">
-                <option value="cash">{{ __('Cash') }}</option>
-                <option value="mobile_money">{{ __('Mobile Money') }}</option>
-                <option value="bank_transfer">{{ __('Bank Transfer') }}</option>
-                <option value="other">{{ __('Other') }}</option>
-            </select>
-            @php
-                $avail = match($paymentMethod) {
-                    'cash'          => ['label' => 'Cash in drawer',  'amount' => $summary['expected_cash'],  'color' => 'var(--green)'],
-                    'mobile_money'  => ['label' => 'MoMo available',  'amount' => $summary['momo_available'], 'color' => '#0ea5e9'],
-                    'bank_transfer' => ['label' => 'Bank available',   'amount' => $summary['bank_available'], 'color' => '#7c3aed'],
-                    default         => null,
-                };
-            @endphp
-            @if ($avail)
-                <div style="margin-top:4px;font-size:11px;color:{{ $avail['amount'] > 0 ? $avail['color'] : 'var(--red)' }};">
-                    {{ $avail['label'] }}: <strong>{{ number_format($avail['amount']) }} RWF</strong>
-                </div>
-            @endif
-        </div>
-
-        <div>
-            <label class="block text-xs font-medium mb-1.5" style="color:var(--text-dim);">{{ __('Receipt Ref') }} <span style="opacity:.5;font-weight:400;">(optional)</span></label>
-            <input type="text"
-                   wire:model="receiptReference"
-                   wire:keydown.enter="saveExpense"
-                   enterkeyhint="done"
-                   class="w-full px-3 py-2.5 rounded-lg text-sm"
-                   style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);"
-                   placeholder="{{ __('Receipt or reference number') }}">
-        </div>
+<form wire:submit="saveExpense">
+    <div class="ae-field">
+        <label class="ae-label" for="ae-cat-{{ $this->getId() }}">Category <span>*</span></label>
+        <select id="ae-cat-{{ $this->getId() }}" wire:model="categoryId" class="ae-input">
+            <option value="0">Select a category…</option>
+            @foreach ($categories as $cat)
+                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+            @endforeach
+        </select>
+        @error('categoryId') <div class="ae-error">Choose a category.</div> @enderror
     </div>
 
-    {{-- Save button — primary action, full width on mobile --}}
-    <div class="mt-4">
-        <button wire:click="saveExpense"
-                wire:loading.attr="disabled"
-                style="width:100%;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:700;
-                       background:var(--accent);color:white;border:none;cursor:pointer;
-                       display:flex;align-items:center;justify-content:center;gap:8px;
-                       transition:opacity 0.15s;"
-                onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            <span wire:loading.remove wire:target="saveExpense">{{ __('Add Expense') }}</span>
-            <span wire:loading wire:target="saveExpense" style="display:none;">{{ __('Saving…') }}</span>
+    <div class="ae-field">
+        <label class="ae-label" for="ae-amt-{{ $this->getId() }}">Amount <span>*</span></label>
+        <div class="ae-money">
+            <input id="ae-amt-{{ $this->getId() }}" type="number" min="1" inputmode="numeric" wire:model="amount" placeholder="0" class="ae-input">
+            <span class="ae-money-u">RWF</span>
+        </div>
+        @error('amount') <div class="ae-error">{{ $message }}</div> @enderror
+    </div>
+
+    <div class="ae-field">
+        <label class="ae-label">Paid with</label>
+        <div class="ae-seg">
+            @foreach (['cash' => 'Cash', 'mobile_money' => 'MoMo', 'bank_transfer' => 'Bank', 'other' => 'Other'] as $key => $label)
+                <button type="button" class="{{ $paymentMethod === $key ? 'active' : '' }}" wire:click="$set('paymentMethod', '{{ $key }}')">{{ $label }}</button>
+            @endforeach
+        </div>
+        @php
+            $avail = match ($paymentMethod) {
+                'cash'          => ['Cash in drawer', $summary['expected_cash']],
+                'mobile_money'  => ['MoMo available', $summary['momo_available']],
+                'bank_transfer' => ['Bank available', $summary['bank_available']],
+                default         => null,
+            };
+        @endphp
+        @if ($avail)
+            <div class="ae-hint">{{ $avail[0] }}: <b style="font-family:var(--mono);color:{{ $avail[1] > 0 ? 'var(--text-sub)' : 'var(--red)' }}">{{ number_format($avail[1]) }} RWF</b></div>
+        @endif
+    </div>
+
+    <div class="ae-field">
+        <label class="ae-label" for="ae-desc-{{ $this->getId() }}">Description <span>*</span></label>
+        <input id="ae-desc-{{ $this->getId() }}" type="text" wire:model="description" placeholder="What was this for?" class="ae-input">
+        @error('description') <div class="ae-error">{{ $message }}</div> @enderror
+    </div>
+
+    <div class="ae-field">
+        <label class="ae-label" for="ae-ref-{{ $this->getId() }}">Receipt reference <em>(optional)</em></label>
+        <input id="ae-ref-{{ $this->getId() }}" type="text" wire:model="receiptReference" placeholder="Receipt or invoice number" class="ae-input" style="font-family:var(--mono)">
+    </div>
+
+    <div class="ae-actions">
+        @if ($inDrawer)
+            <button type="button" class="ae-btn ae-btn-ghost" @click="$dispatch('dc-record-close')">Cancel</button>
+        @endif
+        <button type="submit" class="ae-btn ae-btn-primary" wire:loading.attr="disabled" wire:target="saveExpense">
+            <span wire:loading.remove wire:target="saveExpense">Save expense</span>
+            <span wire:loading.flex wire:target="saveExpense" style="align-items:center;gap:6px">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:ae-spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                Saving…
+            </span>
         </button>
     </div>
+</form>
 </div>

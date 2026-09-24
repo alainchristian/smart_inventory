@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Shop\DayClose;
 
-use App\Models\BankDeposit;
 use App\Models\DailySession;
 use App\Services\DayClose\BankDepositService;
 use App\Services\DayClose\DailySessionService;
@@ -16,6 +15,7 @@ class AddBankDeposit extends Component
     public string $source         = 'cash';
     public string $bankReference  = '';
     public string $notes          = '';
+    public bool   $inDrawer       = false;
 
     public function mount(int $dailySessionId): void
     {
@@ -66,9 +66,9 @@ class AddBankDeposit extends Component
 
             $this->reset(['amount', 'bankReference', 'notes']);
             $this->dispatch('deposit-added');
-            session()->flash('success', 'Bank deposit recorded.');
+            $this->dispatch('notification', ['type' => 'success', 'message' => 'Bank deposit recorded.']);
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
@@ -84,31 +84,11 @@ class AddBankDeposit extends Component
         // Summary is recomputed fresh in render() — this just triggers a re-render.
     }
 
-    public function voidDeposit(int $depositId): void
-    {
-        $deposit = BankDeposit::findOrFail($depositId);
-        $user    = auth()->user();
-
-        try {
-            app(BankDepositService::class)->voidDeposit($deposit, $user);
-            $this->dispatch('deposit-voided');
-            session()->flash('success', 'Deposit voided.');
-        } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
-        }
-    }
-
     public function render()
     {
-        $session  = DailySession::findOrFail($this->dailySessionId);
-        $summary  = app(DailySessionService::class)->computeLiveSummary($session);
+        $session = DailySession::findOrFail($this->dailySessionId);
+        $summary = app(DailySessionService::class)->computeLiveSummary($session);
 
-        $deposits = BankDeposit::where('daily_session_id', $this->dailySessionId)
-            ->whereNull('deleted_at')
-            ->with('depositedBy')
-            ->orderByDesc('deposited_at')
-            ->get();
-
-        return view('livewire.shop.day-close.add-bank-deposit', compact('deposits', 'summary'));
+        return view('livewire.shop.day-close.add-bank-deposit', compact('summary'));
     }
 }

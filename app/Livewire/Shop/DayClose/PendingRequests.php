@@ -9,6 +9,7 @@ use Livewire\Component;
 
 class PendingRequests extends Component
 {
+    public ?int $payingId = null;
     public ?int $rejectingId = null;
     public string $rejectionReason = '';
 
@@ -26,17 +27,33 @@ class PendingRequests extends Component
         }
     }
 
-    public function payRequest(int $id): void
+    public function confirmPay(int $id): void
     {
-        $request = ExpenseRequest::findOrFail($id);
+        $this->payingId = $id;
+    }
+
+    public function cancelPay(): void
+    {
+        $this->payingId = null;
+    }
+
+    public function payRequest(): void
+    {
+        if (! $this->payingId) {
+            return;
+        }
+
+        $request = ExpenseRequest::findOrFail($this->payingId);
 
         try {
             app(ExpenseRequestService::class)->approveAndPay($request, auth()->user());
-            session()->flash('success', "Request {$request->reference_number} paid successfully.");
+            $this->dispatch('notification', ['type' => 'success', 'message' => "Request {$request->reference_number} paid."]);
             $this->dispatch('expense-added');
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
+
+        $this->payingId = null;
     }
 
     public function showRejectForm(int $id): void
@@ -61,9 +78,9 @@ class PendingRequests extends Component
 
         try {
             app(ExpenseRequestService::class)->rejectRequest($request, $this->rejectionReason, auth()->user());
-            session()->flash('success', "Request {$request->reference_number} rejected.");
+            $this->dispatch('notification', ['type' => 'success', 'message' => "Request {$request->reference_number} rejected."]);
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
 
         $this->cancelReject();

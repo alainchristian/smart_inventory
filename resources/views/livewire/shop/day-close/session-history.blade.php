@@ -1,761 +1,466 @@
-<div>
+<div class="sh-page" style="font-family:var(--font)">
 <style>
-/* ── KPI strip ── */
-.sh-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--surface);
-           border-radius:12px;overflow:hidden;border:none;
-           box-shadow:var(--shadow-card);margin-bottom:12px; }
-.sh-kpi  { padding:10px 14px;background:var(--surface);border-right:1px solid var(--border); }
-.sh-kpi:last-child { border-right:none; }
-.sh-kpi-lbl { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);margin-bottom:3px; }
-.sh-kpi-val { font-size:17px;font-weight:800;font-family:var(--mono);line-height:1; }
-.sh-kpi-sub { font-size:10px;color:var(--text-dim);margin-top:2px; }
+.sh-page { padding:0 0 80px; }
 
-/* ── Table ── */
-.fo-table-wrap   { border:none;border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow-card);margin-bottom:10px; }
-.fo-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border) transparent; }
-.fo-table-scroll::-webkit-scrollbar { height:4px; }
-.fo-table-scroll::-webkit-scrollbar-thumb { background:var(--border);border-radius:2px; }
-.fo-table { width:100%;border-collapse:collapse;min-width:780px;font-size:12px;background:var(--surface); }
-.fo-table thead tr { background:var(--surface2);border-bottom:1px solid var(--border); }
-.fo-table thead th {
-    padding:8px 12px;font-size:10px;font-weight:700;text-transform:uppercase;
-    letter-spacing:0.6px;color:var(--text-dim);text-align:left;white-space:nowrap;
-}
-.fo-table thead th.fo-num { text-align:right; }
-.fo-table tbody tr { border-bottom:1px solid var(--border);transition:background 0.08s;cursor:pointer;background:var(--surface); }
-.fo-table tbody tr:last-child { border-bottom:none; }
-.fo-table tbody tr:hover { background:var(--surface2); }
-.fo-table tbody tr.sh-row-active { background:var(--surface2); }
-.fo-table td { padding:10px 12px;color:var(--text);vertical-align:middle; }
-.fo-table td.fo-num { text-align:right;font-family:var(--mono);font-weight:700;white-space:nowrap;font-size:13px; }
-.fo-table tfoot tr { background:var(--surface2);border-top:1px solid var(--border); }
-.fo-table tfoot td { padding:8px 12px;font-size:12px;font-weight:700;font-family:var(--mono); }
+/* Header */
+.sh-header { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap; }
+.sh-head-l { display:flex;align-items:flex-start;gap:12px;min-width:0; }
+.sh-back   { width:36px;height:36px;border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+             background:var(--surface);color:var(--text-sub);box-shadow:var(--shadow-card);text-decoration:none;transition:all var(--tr); }
+.sh-back:hover { box-shadow:var(--shadow-card-hover);color:var(--text); }
+.sh-title  { font-size:22px;font-weight:800;color:var(--text);margin:0 0 4px; }
+.sh-sub    { font-size:13px;color:var(--text-dim);margin:0; }
+.sh-sub b  { color:var(--text-sub);font-weight:600; }
+.sh-select { padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--surface);color:var(--text);
+             outline:none;cursor:pointer;font-family:var(--font); }
+.sh-select:focus { border-color:var(--accent); }
 
-/* ── Status badges ── */
-.sh-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap; }
-.sh-badge-locked { background:var(--surface);color:var(--text-dim);border:1px solid var(--border); }
-.sh-badge-closed { background:var(--amber-dim);color:var(--amber); }
-.sh-badge-open   { background:var(--red-dim);color:var(--red); }
+/* KPIs (.iv-kpi anatomy) */
+.sh-kpis      { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
+.sh-kpi       { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0;transition:box-shadow var(--tr); }
+.sh-kpi:hover { box-shadow:var(--shadow-card-hover); }
+.sh-kpi-row   { display:flex;align-items:center;gap:12px; }
+.sh-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.sh-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);line-height:1.2; }
+.sh-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px; }
+.sh-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1;white-space:nowrap; }
+.sh-kpi-unit  { font-size:12px;font-weight:500;color:var(--text-dim);margin-left:4px;letter-spacing:0; }
+.sh-kpi-divider { height:1px;background:var(--border); }
+.sh-kpi-stat  { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border); }
+.sh-kpi-stat:last-child { border-bottom:none; }
+.sh-kpi-stat-l { font-size:11px;color:var(--text-dim);margin-right:8px; }
+.sh-kpi-stat-v { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);white-space:nowrap; }
 
-/* ── Variance chips ── */
-.sh-var-pos  { display:inline-block;padding:2px 7px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:700;background:var(--amber-dim);color:var(--amber); }
-.sh-var-neg  { display:inline-block;padding:2px 7px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:700;background:var(--red-dim);color:var(--red); }
-.sh-var-zero { display:inline-block;padding:2px 7px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:700;background:var(--green-dim);color:var(--green); }
+/* Table card */
+.sh-card      { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);min-width:0; }
+.sh-card-head { padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+.sh-card-title { font-size:13px;font-weight:700;color:var(--text); }
+.sh-pills     { display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap; }
+.sh-pills::-webkit-scrollbar { display:none; }
+.sh-pill      { padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid transparent;background:transparent;color:var(--text-dim);
+                cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all var(--tr);font-family:var(--font); }
+.sh-pill:hover  { background:var(--surface2);color:var(--text);border-color:var(--border); }
+.sh-pill.active { background:var(--accent);color:#fff;border-color:var(--accent); }
+.sh-pill-n    { font-family:var(--mono);font-size:11px;opacity:.75;margin-left:3px; }
+.sh-scroll    { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+.sh-table     { width:100%;border-collapse:collapse;table-layout:fixed; }
+.sh-table thead tr { border-bottom:2px solid var(--border); }
+.sh-table th  { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap; }
+.sh-table th.num, .sh-table td.num { text-align:right; }
+.sh-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr);cursor:pointer; }
+.sh-table tbody tr:hover, .sh-table tbody tr.active { background:var(--surface2); }
+.sh-table td  { padding:12px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub); }
+.sh-table td.num { font-family:var(--mono);font-weight:600;white-space:nowrap;color:var(--text); }
+.sh-table tfoot td { padding:12px 16px;font-size:13px;border-top:2px solid var(--border);font-weight:700;color:var(--text); }
+.sh-table tfoot td.num { font-family:var(--mono); }
+.sh-date      { font-weight:700;color:var(--text);white-space:nowrap; }
+.sh-date-sub  { font-size:12px;color:var(--text-dim);margin-top:2px;white-space:nowrap; }
+.sh-ellip     { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.sh-badge     { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap; }
+.sh-badge-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+.sh-var       { display:inline-block;font-size:12px;font-weight:700;font-family:var(--mono);padding:2px 8px;border-radius:6px;white-space:nowrap; }
+.sh-action    { padding:5px 11px;border-radius:7px;border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:600;cursor:pointer;
+                font-family:var(--font);color:var(--text-sub);transition:all var(--tr);white-space:nowrap;text-decoration:none;display:inline-block; }
+.sh-action:hover { border-color:var(--accent);color:var(--accent); }
+.sh-empty       { padding:56px 20px;text-align:center; }
+.sh-empty-title { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px; }
+.sh-empty-sub   { font-size:13px;color:var(--text-dim); }
+.sh-pager     { padding:12px 20px;border-top:1px solid var(--border); }
+.sh-pager:empty { display:none; }
 
-/* ── Detail button ── */
-.fo-detail-btn {
-    padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;
-    border:1px solid var(--accent);color:var(--accent);background:var(--accent-dim);
-    cursor:pointer;font-family:var(--font);white-space:nowrap;
-}
+/* Detail drawer */
+.sh-overlay { position:fixed;inset:0;z-index:400;background:rgba(26,31,54,.45);backdrop-filter:blur(2px); }
+.sh-drawer  { position:fixed;top:0;right:0;bottom:0;z-index:401;width:520px;max-width:100vw;background:var(--surface);border-left:1px solid var(--border);
+              box-shadow:-8px 0 40px rgba(26,31,54,.14);display:flex;flex-direction:column;animation:sh-in .22s cubic-bezier(.4,0,.2,1); }
+@keyframes sh-in { from { transform:translateX(100%) } to { transform:translateX(0) } }
+.sh-d-head  { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0; }
+.sh-d-title { font-size:16px;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.sh-d-sub   { font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.5; }
+.sh-d-close { width:32px;height:32px;border-radius:8px;border:none;background:var(--surface2);color:var(--text-sub);cursor:pointer;
+              display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background var(--tr); }
+.sh-d-close:hover { background:var(--surface3); }
+.sh-d-body  { flex:1;overflow-y:auto;overscroll-behavior:contain; }
+.sh-d-foot  { padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap; }
+.sh-verdict { margin:16px 22px 4px;padding:12px 14px;border-radius:var(--rsm);border:1px solid var(--border);border-left-width:3px;
+              display:flex;justify-content:space-between;align-items:center;gap:12px; }
+.sh-verdict-t { font-size:13px;font-weight:700; }
+.sh-verdict-s { font-size:12px;color:var(--text-dim);margin-top:2px; }
+.sh-verdict-v { font-size:16px;font-weight:800;font-family:var(--mono);white-space:nowrap; }
+.sh-sec     { padding:10px 22px 6px;margin-top:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--accent);
+              display:flex;justify-content:space-between;gap:8px; }
+.sh-sec span { color:var(--text-dim);letter-spacing:0;text-transform:none;font-weight:600;font-size:11px; }
+.sh-row     { display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 22px;border-bottom:1px solid var(--border);font-size:13px; }
+.sh-row-l   { color:var(--text-sub);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.sh-row-l small { color:var(--text-dim);font-size:12px; }
+.sh-row-v   { font-family:var(--mono);font-weight:600;white-space:nowrap;color:var(--text); }
+.sh-row.total { border-top:2px solid var(--border);border-bottom:none; }
+.sh-row.total .sh-row-l { color:var(--text);font-weight:700; }
+.sh-row.total .sh-row-v { font-size:15px;font-weight:800; }
+.sh-none    { padding:8px 22px;font-size:12px;color:var(--text-dim); }
+.sh-note    { margin:6px 22px 0;padding:10px 12px;border-left:3px solid var(--accent);font-size:13px;color:var(--text-sub);line-height:1.5; }
+.sh-tag     { font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;background:var(--amber-dim);color:var(--amber);margin-right:4px; }
+.sh-btn     { padding:9px 16px;border-radius:var(--rsm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all var(--tr);
+              display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none;border:1px solid var(--border);background:var(--surface);color:var(--text-sub); }
+.sh-btn:hover { background:var(--surface2);color:var(--text); }
+.sh-btn-primary { background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(59,111,212,.25); }
+.sh-btn-primary:hover { background:var(--accent);color:#fff;opacity:.88; }
+.sh-btn-dark { background:var(--text);border-color:var(--text);color:var(--surface); }
+.sh-btn-dark:hover { background:var(--text);color:var(--surface);opacity:.88; }
 
-/* ── Modal ── */
-.fo-modal-wrap {
-    position:fixed;inset:0;z-index:100;
-    display:flex;align-items:center;justify-content:center;padding:20px;
-    background:rgba(10,15,30,0.5);backdrop-filter:blur(3px);
+@media (max-width:1100px) { .sh-kpis { grid-template-columns:1fr 1fr; } }
+@media (max-width:768px) {
+    .sh-title { font-size:19px; }
+    .sh-kpi { padding:14px;gap:10px; }
+    .sh-kpi-val { font-size:20px; }
+    .sh-drawer { left:0;width:auto; }
 }
-.fo-modal {
-    background:var(--surface);border-radius:16px;
-    box-shadow:0 24px 80px rgba(0,0,0,0.25);
-    width:100%;max-width:900px;max-height:88vh;
-    display:flex;flex-direction:column;overflow:hidden;
-}
-.fo-modal-header {
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-    padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;
-}
-.fo-modal-body { overflow-y:auto;flex:1;overscroll-behavior:contain;background:var(--surface); }
-.fo-modal-close {
-    display:flex;align-items:center;justify-content:center;
-    width:30px;height:30px;border-radius:8px;border:1px solid var(--border);
-    background:var(--surface2);color:var(--text-dim);font-size:20px;
-    cursor:pointer;font-family:var(--font);line-height:1;flex-shrink:0;transition:all 0.15s;
-}
-.fo-modal-close:hover { border-color:var(--red);color:var(--red); }
-
-/* ── Verdict + formula ── */
-.fo-verdict {
-    display:flex;align-items:center;gap:10px;padding:10px 20px;
-    font-size:12px;font-weight:600;border-bottom:1px solid var(--border);flex-shrink:0;
-}
-.fo-verdict-ok   { background:var(--green-dim);color:var(--green); }
-.fo-verdict-err  { background:var(--red-dim);color:var(--red); }
-.fo-verdict-warn { background:var(--amber-dim);color:var(--amber); }
-.fo-verdict-seal { background:var(--surface2);color:var(--text-dim); }
-.fo-verdict-live { background:var(--accent-dim);color:var(--accent); }
-.fo-recon-strip {
-    padding:10px 20px 12px;background:var(--surface2);border-bottom:1px solid var(--border);
-    overflow-x:auto;-webkit-overflow-scrolling:touch;
-}
-.fo-recon-strip::-webkit-scrollbar { height:3px; }
-.fo-recon-strip::-webkit-scrollbar-thumb { background:var(--border);border-radius:2px; }
-.fo-recon-eq { display:flex;align-items:flex-end;gap:6px;min-width:max-content; }
-.fo-recon-item { display:flex;flex-direction:column;align-items:center;gap:2px; }
-.fo-recon-label { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-dim); }
-.fo-recon-val   { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text); }
-.fo-recon-op    { font-size:14px;font-weight:600;color:var(--text-dim);padding-bottom:2px;flex-shrink:0; }
-.fo-recon-eq-sign { font-size:16px;font-weight:700;padding-bottom:2px;flex-shrink:0; }
-
-/* ── 3-col detail grid ── */
-.fo-expanded-detail { display:grid;grid-template-columns:1fr 1fr 1fr;gap:0; }
-.fo-exp-col { padding:20px 22px; }
-.fo-exp-col:not(:last-child) { border-right:1px solid var(--border); }
-.fo-exp-col-title { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:10px; }
-.fo-exp-line {
-    display:flex;justify-content:space-between;align-items:baseline;
-    font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);gap:12px;
-}
-.fo-exp-line:last-child { border-bottom:none; }
-.fo-exp-line-label { color:var(--text-dim);overflow:hidden;text-overflow:ellipsis; }
-.fo-exp-line-val { font-family:var(--mono);font-weight:600;white-space:nowrap;flex-shrink:0; }
-
-/* Timeline */
-.sh-timeline {
-    display:flex;align-items:center;padding:11px 20px;border-bottom:1px solid var(--border);
-    gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:wrap;
-    background:var(--surface2);flex-shrink:0;
-}
-.sh-timeline::-webkit-scrollbar { display:none; }
-.sh-tl-node { display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0; }
-.sh-tl-dot  { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
-.sh-tl-sep  { width:24px;height:1px;background:var(--border);flex-shrink:0; }
-
-/* Variance alert inside 3-col */
-.fo-variance-alert {
-    display:flex;justify-content:space-between;align-items:baseline;
-    padding:6px 10px;margin:3px -10px;border-radius:6px;font-size:12px;
-}
-
-/* Lock button */
-.sh-btn-lock {
-    display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;
-    font-size:11px;font-weight:600;cursor:pointer;
-    background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);
-    font-family:var(--font);transition:opacity 0.12s;
-}
-.sh-btn-lock:hover { opacity:0.8; }
-
-/* ── Empty ── */
-.sh-empty { text-align:center;padding:56px 20px;border-radius:14px;border:1px solid var(--border);background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,0.05); }
-
-/* ── Responsive ── */
 @media (max-width:640px) {
-    .sh-kpis { grid-template-columns:repeat(2,1fr); }
-    .sh-kpi  { padding:8px 10px; }
-    .sh-kpi:nth-child(even) { border-right:none; }
-    .sh-kpi:nth-child(1),.sh-kpi:nth-child(2) { border-bottom:1px solid var(--border); }
-    .sh-kpi-val { font-size:15px; }
-    .fo-expanded-detail { grid-template-columns:1fr; }
-    .fo-exp-col { border-right:none !important;padding:14px 16px; }
-    .fo-exp-col:not(:last-child) { border-right:none;border-bottom:1px solid var(--border); }
-    .fo-modal-wrap { padding:0;align-items:flex-end; }
-    .fo-modal { border-radius:16px 16px 0 0;max-height:90vh;max-width:100%; }
-    .fo-modal-header { padding:12px 16px; }
+    .sh-pill, .sh-action { min-height:30px !important;min-width:0 !important;padding:5px 10px !important; }
+    .sh-back, .sh-d-close { min-height:0 !important;min-width:0 !important;padding:0 !important; }
+    .sh-card-head { padding:12px 14px; }
+    .sh-row, .sh-sec, .sh-none { padding-left:16px;padding-right:16px; }
+    .sh-verdict, .sh-note { margin-left:16px;margin-right:16px; }
 }
+@media (max-width:480px) { .sh-kpis { grid-template-columns:1fr; } }
 </style>
 
-{{-- Flash --}}
-@if (session()->has('success'))
-    <div style="margin-bottom:14px;padding:10px 14px;border-radius:10px;font-size:12px;
-                background:var(--green-dim);color:var(--green);border:1px solid var(--green);">{{ session('success') }}</div>
-@endif
-@if (session()->has('error'))
-    <div style="margin-bottom:14px;padding:10px 14px;border-radius:10px;font-size:12px;
-                background:var(--red-dim);color:var(--red);border:1px solid var(--red);">{{ session('error') }}</div>
-@endif
-
-{{-- KPI strip --}}
-@if ($sessions->isNotEmpty())
 @php
-    $col          = $sessions->getCollection();
-    $pageSales    = $col->sum('total_sales');
-    $pageExpenses = $col->sum('total_expenses');
-    $pageWithdraw = $col->sum('total_withdrawals');
-    $pageVariance = $col->sum('cash_variance');
-    $varC = $pageVariance < 0 ? 'var(--red)' : ($pageVariance > 0 ? 'var(--amber)' : 'var(--green)');
+    $fmtVar = fn ($v) => ($v > 0 ? '+' : ($v < 0 ? '−' : '')) . number_format(abs((int) $v));
+    $varStyle = fn ($v) => $v < 0
+        ? 'background:var(--red-dim);color:var(--red)'
+        : ($v > 0 ? 'background:var(--amber-dim);color:var(--amber)' : 'background:var(--green-dim);color:var(--green)');
+    $statusBadge = function ($s) {
+        if ($s->isOpen())   return ['Open',   'var(--green-dim)',  'var(--green)'];
+        if ($s->isLocked()) return ['Locked', 'var(--surface2)',   'var(--text-dim)'];
+        return ['Closed', 'var(--accent-dim)', 'var(--accent)'];
+    };
+    $paidOut = (int) $stats->expenses + (int) $stats->withdrawals;
+    $netVar  = (int) $stats->variance;
 @endphp
+
+{{-- ── Header ── --}}
+<div class="sh-header">
+    <div class="sh-head-l">
+        <a href="{{ route('shop.day-close.index') }}" class="sh-back" aria-label="Back to register">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div style="min-width:0">
+            <h1 class="sh-title">Session history</h1>
+            <p class="sh-sub">
+                @if ($shopName)<b>{{ $shopName }}</b> · @elseif ($isOwner)<b>All shops</b> · @endif
+                {{ number_format($stats->sessions) }} {{ (int) $stats->sessions === 1 ? 'session' : 'sessions' }}
+            </p>
+        </div>
+    </div>
+    @if ($isOwner && $shops->count() > 1)
+        <select class="sh-select" wire:model.live="shopId" aria-label="Filter by shop">
+            <option value="">All shops</option>
+            @foreach ($shops as $shop)
+                <option value="{{ $shop->id }}">{{ $shop->name }}</option>
+            @endforeach
+        </select>
+    @endif
+</div>
+
+@if ((int) $stats->sessions > 0)
+{{-- ── KPIs ── --}}
 <div class="sh-kpis">
     <div class="sh-kpi">
-        <div class="sh-kpi-lbl">Total Sessions</div>
-        <div class="sh-kpi-val" style="color:var(--text);">{{ $sessions->total() }}</div>
-        <div class="sh-kpi-sub">all time</div>
+        <div class="sh-kpi-row">
+            <div class="sh-kpi-icon" style="background:var(--accent-dim);color:var(--accent)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+            <div><div class="sh-kpi-label">Sessions</div><div class="sh-kpi-sub">All time</div></div>
+        </div>
+        <div class="sh-kpi-val" style="color:var(--text)">{{ number_format($stats->sessions) }}</div>
+        <div class="sh-kpi-divider"></div>
+        <div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Open</span><span class="sh-kpi-stat-v" style="{{ $stats->open ? 'color:var(--green)' : '' }}">{{ $stats->open }}</span></div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Closed, awaiting lock</span><span class="sh-kpi-stat-v">{{ $stats->closed }}</span></div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Locked</span><span class="sh-kpi-stat-v">{{ $stats->locked }}</span></div>
+        </div>
     </div>
+
     <div class="sh-kpi">
-        <div class="sh-kpi-lbl">Revenue</div>
-        <div class="sh-kpi-val" style="color:var(--green);">{{ number_format($pageSales) }}</div>
-        <div class="sh-kpi-sub">RWF · this page</div>
+        <div class="sh-kpi-row">
+            <div class="sh-kpi-icon" style="background:var(--success-dim);color:var(--success)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div>
+            <div><div class="sh-kpi-label">Sales</div><div class="sh-kpi-sub">Across all sessions</div></div>
+        </div>
+        <div class="sh-kpi-val" style="color:var(--text)">{{ number_format($stats->sales) }}<span class="sh-kpi-unit">RWF</span></div>
+        <div class="sh-kpi-divider"></div>
+        <div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Avg per session</span><span class="sh-kpi-stat-v">{{ number_format($stats->sessions ? $stats->sales / $stats->sessions : 0) }}</span></div>
+        </div>
     </div>
+
     <div class="sh-kpi">
-        <div class="sh-kpi-lbl">Paid Out</div>
-        <div class="sh-kpi-val" style="color:var(--red);">{{ number_format($pageExpenses + $pageWithdraw) }}</div>
-        <div class="sh-kpi-sub">exp + withdrawals</div>
+        <div class="sh-kpi-row">
+            <div class="sh-kpi-icon" style="background:var(--red-dim);color:var(--red)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg></div>
+            <div><div class="sh-kpi-label">Paid out</div><div class="sh-kpi-sub">Expenses + withdrawals</div></div>
+        </div>
+        <div class="sh-kpi-val" style="color:{{ $paidOut ? 'var(--red)' : 'var(--text-dim)' }}">{{ number_format($paidOut) }}<span class="sh-kpi-unit">RWF</span></div>
+        <div class="sh-kpi-divider"></div>
+        <div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Expenses</span><span class="sh-kpi-stat-v">{{ number_format($stats->expenses) }}</span></div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Withdrawals</span><span class="sh-kpi-stat-v">{{ number_format($stats->withdrawals) }}</span></div>
+        </div>
     </div>
+
     <div class="sh-kpi">
-        <div class="sh-kpi-lbl">Net Variance</div>
-        <div class="sh-kpi-val" style="color:{{ $varC }};">{{ $pageVariance >= 0 ? '+' : '' }}{{ number_format($pageVariance) }}</div>
-        <div class="sh-kpi-sub">RWF · this page</div>
+        <div class="sh-kpi-row">
+            <div class="sh-kpi-icon" style="background:var(--amber-dim);color:var(--amber)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg></div>
+            <div><div class="sh-kpi-label">Net variance</div><div class="sh-kpi-sub">Counted vs expected cash</div></div>
+        </div>
+        <div class="sh-kpi-val" style="color:{{ $netVar < 0 ? 'var(--red)' : ($netVar > 0 ? 'var(--amber)' : 'var(--green)') }}">{{ $fmtVar($netVar) }}<span class="sh-kpi-unit">RWF</span></div>
+        <div class="sh-kpi-divider"></div>
+        <div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Balanced days</span><span class="sh-kpi-stat-v" style="color:var(--green)">{{ $stats->balanced }}</span></div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Short days</span><span class="sh-kpi-stat-v" style="{{ $stats->short ? 'color:var(--red)' : '' }}">{{ $stats->short }}</span></div>
+            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Over days</span><span class="sh-kpi-stat-v" style="{{ $stats->over ? 'color:var(--amber)' : '' }}">{{ $stats->over }}</span></div>
+        </div>
     </div>
 </div>
 @endif
 
-{{-- Empty --}}
-@if ($sessions->isEmpty())
-    <div class="sh-empty">
-        <div style="width:46px;height:46px;border-radius:12px;background:var(--surface);border:1px solid var(--border);
-                    display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
-            <svg width="20" height="20" fill="none" stroke="var(--text-dim)" viewBox="0 0 24 24" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-        </div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">No sessions yet</div>
-        <div style="font-size:12px;color:var(--text-dim);">Closed sessions will appear here.</div>
-    </div>
-@else
-
 {{-- ── Sessions table ── --}}
-@php
-    $col          = $sessions->getCollection();
-    $totalSales   = $col->sum('total_sales');
-    $totalExp     = $col->sum('total_expenses');
-    $totalWd      = $col->sum('total_withdrawals');
-    $totalVar     = $col->sum('cash_variance');
-    $totalOpening = $col->sum('opening_balance');
-@endphp
-
-<div class="fo-table-wrap">
-    <div class="fo-table-scroll">
-        <table class="fo-table">
-            <thead>
-                <tr>
-                    <th style="min-width:160px;">Date</th>
-                    <th style="min-width:100px;">Status</th>
-                    <th class="fo-num" style="min-width:110px;">Opening</th>
-                    <th class="fo-num" style="min-width:110px;color:var(--green);">Sales</th>
-                    <th class="fo-num" style="min-width:110px;color:var(--red);">Expenses</th>
-                    <th class="fo-num" style="min-width:120px;color:var(--amber);">Withdrawals</th>
-                    <th class="fo-num" style="min-width:110px;">Variance</th>
-                    <th style="min-width:130px;text-align:center;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($sessions as $session)
-                @php
-                    $v      = $session->cash_variance ?? 0;
-                    $isLock = $session->isLocked();
-                    $isOpen = $session->isOpen();
-                    $isExp  = $expandedId === $session->id;
-                @endphp
-                <tr class="{{ $isExp ? 'sh-row-active' : '' }}"
-                    wire:click="toggleExpand({{ $session->id }})">
-
-                    {{-- Date --}}
-                    <td style="white-space:nowrap;">
-                        <div style="font-weight:700;font-size:13px;color:var(--text);">
-                            {{ $session->session_date->format('d M Y') }}
-                        </div>
-                        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">
-                            {{ $session->session_date->format('D') }}
-                            @if ($session->opened_at)
-                                · {{ local_time($session->opened_at)->format('H:i') }}
-                                @if ($session->closed_at) –{{ local_time($session->closed_at)->format('H:i') }} @endif
-                            @endif
-                        </div>
-                    </td>
-
-                    {{-- Status --}}
-                    <td>
-                        @if ($isLock)
-                            <span class="sh-badge sh-badge-locked">
-                                <svg width="8" height="8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                                Locked
-                            </span>
-                        @elseif ($isOpen)
-                            <span class="sh-badge sh-badge-open">● Open</span>
-                        @else
-                            <span class="sh-badge sh-badge-closed" style="display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="11" /> Closed</span>
-                        @endif
-                    </td>
-
-                    {{-- Opening --}}
-                    <td class="fo-num" style="color:var(--text-dim);">
-                        {{ number_format($session->opening_balance ?? 0) }}
-                    </td>
-
-                    {{-- Sales --}}
-                    <td class="fo-num" style="color:{{ ($session->total_sales ?? 0) > 0 ? 'var(--green)' : 'var(--text-dim)' }};">
-                        {{ number_format($session->total_sales ?? 0) }}
-                    </td>
-
-                    {{-- Expenses --}}
-                    <td class="fo-num" style="color:{{ ($session->total_expenses ?? 0) > 0 ? 'var(--red)' : 'var(--text-dim)' }};">
-                        {{ number_format($session->total_expenses ?? 0) }}
-                    </td>
-
-                    {{-- Withdrawals --}}
-                    <td class="fo-num" style="color:{{ ($session->total_withdrawals ?? 0) > 0 ? 'var(--amber)' : 'var(--text-dim)' }};">
-                        {{ number_format($session->total_withdrawals ?? 0) }}
-                    </td>
-
-                    {{-- Variance --}}
-                    <td class="fo-num">
-                        @if ($isOpen)
-                            <span style="font-size:11px;color:var(--text-dim);">—</span>
-                        @else
-                            <span class="{{ $v < 0 ? 'sh-var-neg' : ($v > 0 ? 'sh-var-pos' : 'sh-var-zero') }}">
-                                {{ $v >= 0 ? '+' : '' }}{{ number_format($v) }}
-                            </span>
-                        @endif
-                    </td>
-
-                    {{-- Actions --}}
-                    <td style="text-align:center;" wire:click.stop="">
-                        <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
-                            @if ($isOpen)
-                                <a href="{{ route('shop.day-close.close', ['session' => $session->id]) }}"
-                                   style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;
-                                          background:var(--amber);color:#1a1a1a;text-decoration:none;white-space:nowrap;">
-                                    Close
-                                </a>
-                            @else
-                                @if ($isLock === false && auth()->user()->isOwner())
-                                    <button wire:click="lockSession({{ $session->id }})"
-                                            wire:confirm="Lock this session permanently? This cannot be undone."
-                                            class="sh-btn-lock">
-                                        <svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                        </svg>
-                                        Lock
-                                    </button>
-                                @endif
-                                <button class="fo-detail-btn"
-                                        wire:click="toggleExpand({{ $session->id }})">
-                                    Details
-                                </button>
-                            @endif
-                        </div>
-                    </td>
-
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="2" style="font-size:11px;font-weight:600;color:var(--text-dim);font-family:var(--font);">
-                        Page totals · {{ $sessions->count() }} session{{ $sessions->count() !== 1 ? 's' : '' }}
-                    </td>
-                    <td class="fo-num" style="color:var(--text-dim);">{{ number_format($totalOpening) }}</td>
-                    <td class="fo-num" style="color:var(--green);">{{ number_format($totalSales) }}</td>
-                    <td class="fo-num" style="color:var(--red);">{{ number_format($totalExp) }}</td>
-                    <td class="fo-num" style="color:var(--amber);">{{ number_format($totalWd) }}</td>
-                    <td class="fo-num" style="color:{{ $totalVar < 0 ? 'var(--red)' : ($totalVar > 0 ? 'var(--amber)' : 'var(--text-dim)') }};">
-                        {{ $totalVar >= 0 ? '+' : '' }}{{ number_format($totalVar) }}
-                    </td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
+<div class="sh-card">
+    <div class="sh-card-head">
+        <span class="sh-card-title">Sessions</span>
+        <div class="sh-pills">
+            @foreach (['all' => ['All', $stats->sessions], 'open' => ['Open', $stats->open], 'closed' => ['Closed', $stats->closed], 'locked' => ['Locked', $stats->locked]] as $key => $__p)
+                <button type="button" class="sh-pill {{ $status === $key ? 'active' : '' }}" wire:click="setStatus('{{ $key }}')">
+                    {{ $__p[0] }}<span class="sh-pill-n">{{ $__p[1] }}</span>
+                </button>
+            @endforeach
+        </div>
     </div>
+
+    @if ($sessions->isEmpty())
+        <div class="sh-empty">
+            <div class="sh-empty-title">{{ $status === 'all' ? 'No sessions yet' : 'No ' . $status . ' sessions' }}</div>
+            <div class="sh-empty-sub">{{ $status === 'all' ? 'Every day the register is opened appears here.' : 'Try another filter.' }}</div>
+        </div>
+    @else
+        @php
+            $cols = $showShopColumn
+                ? [150, 170, 100, 130, 120, 120, 130, 110, 90]
+                : [170, 100, 130, 120, 120, 130, 110, 90];
+        @endphp
+        <div class="sh-scroll">
+            <table class="sh-table" style="min-width:{{ array_sum($cols) }}px">
+                <colgroup>@foreach ($cols as $w)<col style="width:{{ $w }}px">@endforeach</colgroup>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        @if ($showShopColumn)<th>Shop</th>@endif
+                        <th>Status</th>
+                        <th class="num">Sales</th>
+                        <th class="num">Expenses</th>
+                        <th class="num">Withdrawals</th>
+                        <th class="num">Counted</th>
+                        <th class="num">Variance</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($sessions as $session)
+                        @php
+                            [$bLabel, $bBg, $bColor] = $statusBadge($session);
+                            $v = (int) ($session->cash_variance ?? 0);
+                        @endphp
+                        <tr wire:key="sh-{{ $session->id }}" class="{{ $expandedId === $session->id ? 'active' : '' }}" wire:click="toggleExpand({{ $session->id }})">
+                            <td>
+                                <div class="sh-date">{{ $session->session_date->format('D, d M Y') }}</div>
+                                <div class="sh-date-sub">
+                                    {{ $session->opened_at ? local_time($session->opened_at)->format('H:i') : '—' }}@if ($session->closed_at) – {{ local_time($session->closed_at)->format('H:i') }}@endif
+                                </div>
+                            </td>
+                            @if ($showShopColumn)<td><div class="sh-ellip" title="{{ $session->shop?->name }}">{{ $session->shop?->name ?? '—' }}</div></td>@endif
+                            <td><span class="sh-badge" style="background:{{ $bBg }};color:{{ $bColor }}"><span class="sh-badge-dot" style="background:{{ $bColor }}"></span>{{ $bLabel }}</span></td>
+                            @if ($session->isOpen())
+                                <td class="num" colspan="3" style="color:var(--text-dim);font-family:var(--font);font-weight:500;font-size:12px" title="Totals are recorded when the register closes">Live — totals recorded at close</td>
+                            @else
+                                <td class="num">{{ number_format($session->total_sales ?? 0) }}</td>
+                                <td class="num" style="{{ ($session->total_expenses ?? 0) ? '' : 'color:var(--text-dim)' }}">{{ number_format($session->total_expenses ?? 0) }}</td>
+                                <td class="num" style="{{ ($session->total_withdrawals ?? 0) ? '' : 'color:var(--text-dim)' }}">{{ number_format($session->total_withdrawals ?? 0) }}</td>
+                            @endif
+                            <td class="num">{{ $session->isOpen() || $session->actual_cash_counted === null ? '—' : number_format($session->actual_cash_counted) }}</td>
+                            <td class="num">
+                                @if ($session->isOpen())
+                                    <span style="color:var(--text-dim)">—</span>
+                                @else
+                                    <span class="sh-var" style="{{ $varStyle($v) }}">{{ $fmtVar($v) }}</span>
+                                @endif
+                            </td>
+                            <td class="num" wire:click.stop>
+                                @if ($session->isOpen())
+                                    <a href="{{ route('shop.session.close', ['session' => $session->id]) }}" class="sh-action">Close</a>
+                                @else
+                                    <button type="button" class="sh-action" wire:click="toggleExpand({{ $session->id }})">View</button>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @if ($sessions->hasPages())
+            <div class="sh-pager">{{ $sessions->links() }}</div>
+        @endif
+    @endif
 </div>
 
-{{-- Pagination --}}
-<div>{{ $sessions->links() }}</div>
-
-@endif {{-- sessions not empty --}}
-
-{{-- ── Session detail modal ── --}}
+{{-- ── Session detail drawer ── --}}
 @if ($expandedId && $expandedSession)
 @php
     $sess   = $expandedSession;
-    $sv     = $sess->cash_variance ?? 0;
-    $isOpen = $sess->isOpen();
-    $isLock = $sess->isLocked();
+    $sv     = (int) ($sess->cash_variance ?? 0);
+    [$dLabel, $dBg, $dColor] = $statusBadge($sess);
+    $expenses    = $sess->expenses->whereNull('deleted_at');
+    $withdrawals = $sess->ownerWithdrawals->whereNull('deleted_at');
+    $deposits    = $sess->bankDeposits->whereNull('deleted_at');
+    $channels = array_filter([
+        ['Cash',          $sess->total_sales_cash ?? 0,          'var(--green)'],
+        ['Mobile money',  $sess->total_sales_momo ?? 0,          'var(--accent)'],
+        ['Card',          $sess->total_sales_card ?? 0,          'var(--text-sub)'],
+        ['Bank transfer', $sess->total_sales_bank_transfer ?? 0, 'var(--violet)'],
+        ['Credit',        $sess->total_sales_credit ?? 0,        'var(--amber)'],
+    ], fn ($c) => $c[1] > 0);
+    $ledger = [
+        ['Cash sales',        $sess->total_sales_cash ?? 0,       '+', 'var(--green)'],
+        ['Cash repayments',   $sess->total_repayments_cash ?? 0,  '+', 'var(--green)'],
+        ['Cash refunds',      $sess->total_refunds_cash ?? 0,     '−', 'var(--red)'],
+        ['Cash expenses',     $sess->total_expenses_cash ?? 0,    '−', 'var(--red)'],
+        ['Owner withdrawals', $sess->total_withdrawals_cash ?? 0, '−', 'var(--red)'],
+        ['Deposited to bank', $sess->cash_deposits ?? 0,          '−', 'var(--red)'],
+    ];
 @endphp
-<div class="fo-modal-wrap" wire:click="toggleExpand({{ $expandedId }})">
-    <div class="fo-modal" wire:click.stop>
-
-        {{-- Header --}}
-        <div class="fo-modal-header">
-            <div>
-                <div style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.2px;">
-                    {{ $sess->session_date->format('d M Y') }}
-                    @if ($sess->shop) · {{ $sess->shop->name }} @endif
-                </div>
-                <div style="font-size:12px;color:var(--text-dim);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <span>{{ $sess->session_date->format('l') }}</span>
-                    @if ($sess->opened_at)
-                        <span>·</span>
-                        <span>Opened {{ local_time($sess->opened_at)->format('H:i') }}</span>
-                    @endif
-                    @if ($sess->closed_at)
-                        <span>–</span>
-                        <span>Closed {{ local_time($sess->closed_at)->format('H:i') }}</span>
-                    @endif
+<div x-data @keydown.escape.window="$wire.closeDetail()" wire:key="sh-drawer-{{ $sess->id }}">
+    <div class="sh-overlay" wire:click="closeDetail"></div>
+    <aside class="sh-drawer" role="dialog" aria-modal="true" aria-labelledby="sh-d-title">
+        <div class="sh-d-head">
+            <div style="min-width:0">
+                <h2 class="sh-d-title" id="sh-d-title">
+                    {{ $sess->session_date->format('l, d M Y') }}
+                    <span class="sh-badge" style="background:{{ $dBg }};color:{{ $dColor }}"><span class="sh-badge-dot" style="background:{{ $dColor }}"></span>{{ $dLabel }}</span>
+                </h2>
+                <div class="sh-d-sub">
+                    @if ($sess->shop){{ $sess->shop->name }} · @endif
+                    @if ($sess->opened_at)Opened {{ local_time($sess->opened_at)->format('H:i') }}@if ($sess->openedBy) by {{ $sess->openedBy->name }}@endif @endif
+                    @if ($sess->closed_at)<br>Closed {{ local_time($sess->closed_at)->format('H:i') }}@if ($sess->closedBy) by {{ $sess->closedBy->name }}@endif @endif
+                    @if ($sess->locked_at)<br>Locked {{ local_time($sess->locked_at)->format('d M, H:i') }}@if ($sess->lockedBy) by {{ $sess->lockedBy->name }}@endif @endif
                 </div>
             </div>
-            <button class="fo-modal-close" wire:click="toggleExpand({{ $expandedId }})">×</button>
+            <button type="button" class="sh-d-close" wire:click="closeDetail" aria-label="Close">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
         </div>
 
-        {{-- Verdict banner --}}
-        @if ($isOpen)
-            <div class="fo-verdict fo-verdict-live">
-                <svg style="width:13px;height:13px;flex-shrink:0;" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
-                Session still open — figures are live and may change
-            </div>
-        @elseif ($sv < 0)
-            <div class="fo-verdict fo-verdict-err">
-                <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
-                </svg>
-                Cash shortage of {{ number_format(abs($sv)) }} RWF — counted less than expected
-            </div>
-        @elseif ($sv > 0)
-            <div class="fo-verdict fo-verdict-warn">
-                <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
-                </svg>
-                Cash surplus of {{ number_format($sv) }} RWF — counted more than expected
-            </div>
-        @elseif ($isLock)
-            <div class="fo-verdict fo-verdict-seal" style="display:flex;align-items:center;gap:8px">
-                <x-icon name="lock" size="15" /> Session sealed and balanced — records are immutable
-            </div>
-        @else
-            <div class="fo-verdict fo-verdict-ok">
-                <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                </svg>
-                Cash balanced — all money accounted for
-            </div>
-        @endif
+        <div class="sh-d-body">
+            @if ($sess->isOpen())
+                <div class="sh-verdict" style="border-left-color:var(--green)">
+                    <div><div class="sh-verdict-t" style="color:var(--green)">Still open</div><div class="sh-verdict-s">Sales and cash totals are recorded when the register closes.@if ($sess->session_date->isSameDay(business_today()) && ! $isOwner) <a href="{{ route('shop.day-close.index') }}" style="color:var(--accent);font-weight:600;text-decoration:none">See live figures →</a>@endif</div></div>
+                </div>
+            @elseif ($sv === 0)
+                <div class="sh-verdict" style="border-left-color:var(--green)">
+                    <div><div class="sh-verdict-t" style="color:var(--green)">Balanced</div><div class="sh-verdict-s">The counted cash matched the expected cash.</div></div>
+                    <div class="sh-verdict-v" style="color:var(--green)">0</div>
+                </div>
+            @elseif ($sv < 0)
+                <div class="sh-verdict" style="border-left-color:var(--red)">
+                    <div><div class="sh-verdict-t" style="color:var(--red)">Short</div><div class="sh-verdict-s">Counted less than expected — recorded as a cash-shortage expense.</div></div>
+                    <div class="sh-verdict-v" style="color:var(--red)">{{ $fmtVar($sv) }}</div>
+                </div>
+            @else
+                <div class="sh-verdict" style="border-left-color:var(--amber)">
+                    <div><div class="sh-verdict-t" style="color:var(--amber)">Over</div><div class="sh-verdict-s">Counted more than expected — the extra stayed in the drawer.</div></div>
+                    <div class="sh-verdict-v" style="color:var(--amber)">{{ $fmtVar($sv) }}</div>
+                </div>
+            @endif
 
-        {{-- Timeline strip --}}
-        <div class="sh-timeline">
-            @if ($sess->opened_at)
-                <div class="sh-tl-node">
-                    <div class="sh-tl-dot" style="background:var(--green);"></div>
-                    <span style="font-size:11px;color:var(--text-dim);">Opened</span>
-                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ local_time($sess->opened_at)->format('H:i') }}</span>
-                    @if ($sess->openedBy)
-                        <span style="font-size:11px;color:var(--text-dim);">by {{ $sess->openedBy->name }}</span>
-                    @endif
-                </div>
+            @if ($sess->notes)
+                <div class="sh-note">{{ $sess->notes }}</div>
             @endif
-            @if ($sess->closed_at)
-                <div class="sh-tl-sep"></div>
-                <div class="sh-tl-node">
-                    <div class="sh-tl-dot" style="background:var(--amber);"></div>
-                    <span style="font-size:11px;color:var(--text-dim);">Closed</span>
-                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ local_time($sess->closed_at)->format('H:i') }}</span>
-                    @if ($sess->closedBy)
-                        <span style="font-size:11px;color:var(--text-dim);">by {{ $sess->closedBy->name }}</span>
-                    @endif
-                </div>
-            @endif
-            @if ($sess->locked_at)
-                <div class="sh-tl-sep"></div>
-                <div class="sh-tl-node">
-                    <div class="sh-tl-dot" style="background:var(--text-dim);"></div>
-                    <span style="font-size:11px;color:var(--text-dim);">Locked</span>
-                    <span style="font-size:11px;font-weight:700;color:var(--text);">{{ local_time($sess->locked_at)->format('d M · H:i') }}</span>
-                    @if ($sess->lockedBy)
-                        <span style="font-size:11px;color:var(--text-dim);">by {{ $sess->lockedBy->name }}</span>
-                    @endif
-                </div>
-            @endif
-        </div>
 
-        {{-- Cash drawer formula strip (closed sessions only) --}}
-        @if (!$isOpen)
-        @php
-            $fCashSales = $sess->total_sales_cash      ?? 0;
-            $fCashRep   = $sess->total_repayments_cash  ?? 0;
-            $fCashRef   = $sess->total_refunds_cash     ?? 0;
-            $fCashExp   = $sess->total_expenses_cash    ?? 0;
-            $fCashWd    = $sess->total_withdrawals_cash ?? 0;
-            $fCashDep   = $sess->cash_deposits          ?? 0;
-            $fExpected  = $sess->expected_cash          ?? 0;
-            $fCounted   = $sess->actual_cash_counted;
-            $fOpening   = $sess->opening_balance        ?? 0;
-        @endphp
-        <div class="fo-recon-strip">
-            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:8px;">
-                Cash drawer formula
-            </div>
-            <div class="fo-recon-eq">
-                <div class="fo-recon-item">
-                    <span class="fo-recon-label">Opening</span>
-                    <span class="fo-recon-val">{{ number_format($fOpening) }}</span>
-                </div>
-                @if ($fCashSales > 0)
-                    <span class="fo-recon-op" style="color:var(--accent);">+</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Cash Sales</span>
-                        <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($fCashSales) }}</span>
-                    </div>
+            @unless ($sess->isOpen())
+                <div class="sh-sec">Cash drawer</div>
+                <div class="sh-row"><span class="sh-row-l">Opening balance</span><span class="sh-row-v">{{ number_format($sess->opening_balance ?? 0) }}</span></div>
+                @foreach ($ledger as $__l)
+                    @if ($__l[1] > 0)
+                        <div class="sh-row"><span class="sh-row-l">{{ $__l[0] }}</span><span class="sh-row-v" style="color:{{ $__l[3] }}">{{ $__l[2] }}{{ number_format($__l[1]) }}</span></div>
+                    @endif
+                @endforeach
+                <div class="sh-row"><span class="sh-row-l" style="color:var(--text);font-weight:600">Expected</span><span class="sh-row-v">{{ number_format($sess->expected_cash ?? 0) }}</span></div>
+                <div class="sh-row"><span class="sh-row-l" style="color:var(--text);font-weight:600">Counted</span><span class="sh-row-v">{{ $sess->actual_cash_counted !== null ? number_format($sess->actual_cash_counted) : '—' }}</span></div>
+                @if (($sess->cash_to_owner_momo ?? 0) > 0)
+                    <div class="sh-row"><span class="sh-row-l">Sent to owner (MoMo)@if ($sess->owner_momo_reference) <small>· {{ $sess->owner_momo_reference }}</small>@endif</span><span class="sh-row-v">−{{ number_format($sess->cash_to_owner_momo) }}</span></div>
                 @endif
-                @if ($fCashRep > 0)
-                    <span class="fo-recon-op" style="color:var(--accent);">+</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Repayments</span>
-                        <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($fCashRep) }}</span>
-                    </div>
-                @endif
-                @if ($fCashRef > 0)
-                    <span class="fo-recon-op" style="color:var(--amber);">−</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Refunds</span>
-                        <span class="fo-recon-val" style="color:var(--amber);">{{ number_format($fCashRef) }}</span>
-                    </div>
-                @endif
-                @if ($fCashExp > 0)
-                    <span class="fo-recon-op" style="color:var(--red);">−</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Expenses</span>
-                        <span class="fo-recon-val" style="color:var(--red);">{{ number_format($fCashExp) }}</span>
-                    </div>
-                @endif
-                @if ($fCashWd > 0)
-                    <span class="fo-recon-op" style="color:var(--amber);">−</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Withdrawals</span>
-                        <span class="fo-recon-val" style="color:var(--amber);">{{ number_format($fCashWd) }}</span>
-                    </div>
-                @endif
-                @if ($fCashDep > 0)
-                    <span class="fo-recon-op" style="color:var(--accent);">−</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">Banked</span>
-                        <span class="fo-recon-val" style="color:var(--accent);">{{ number_format($fCashDep) }}</span>
-                    </div>
-                @endif
-                <span class="fo-recon-eq-sign" style="color:var(--text-dim);">=</span>
-                <div class="fo-recon-item">
-                    <span class="fo-recon-label">Expected</span>
-                    <span class="fo-recon-val" style="font-size:13px;">{{ number_format($fExpected) }}</span>
-                </div>
-                <span class="fo-recon-eq-sign"
-                      style="color:{{ $sv === 0 ? 'var(--green)' : ($sv < 0 ? 'var(--red)' : 'var(--amber)') }};">
-                    {{ $sv === 0 ? '=' : '≠' }}
-                </span>
-                <div class="fo-recon-item">
-                    <span class="fo-recon-label">Counted</span>
-                    <span class="fo-recon-val" style="font-size:13px;
-                          color:{{ $sv === 0 ? 'var(--green)' : ($sv < 0 ? 'var(--red)' : 'var(--amber)') }};">
-                        {{ $fCounted !== null ? number_format($fCounted) : '—' }}
+                <div class="sh-row total"><span class="sh-row-l">Retained in drawer</span><span class="sh-row-v">{{ number_format($sess->cash_retained ?? 0) }} <small style="font-size:11px;font-weight:500;color:var(--text-dim)">RWF</small></span></div>
+            @endunless
+
+            @unless ($sess->isOpen())
+            <div class="sh-sec">Sales by channel <span>{{ $sess->transaction_count ?? 0 }} transactions</span></div>
+            @forelse ($channels as $__c)
+                <div class="sh-row"><span class="sh-row-l"><span class="sh-badge-dot" style="background:{{ $__c[2] }};display:inline-block;margin-right:8px"></span>{{ $__c[0] }}</span><span class="sh-row-v">{{ number_format($__c[1]) }}</span></div>
+            @empty
+                <div class="sh-none">No sales recorded.</div>
+            @endforelse
+            @if (count($channels))
+                <div class="sh-row total"><span class="sh-row-l">Total sales</span><span class="sh-row-v">{{ number_format($sess->total_sales ?? 0) }} <small style="font-size:11px;font-weight:500;color:var(--text-dim)">RWF</small></span></div>
+            @endif
+            @if (($sess->total_repayments ?? 0) > 0)
+                <div class="sh-row"><span class="sh-row-l">Credit repayments received</span><span class="sh-row-v" style="color:var(--green)">+{{ number_format($sess->total_repayments) }}</span></div>
+            @endif
+            @endunless
+
+            <div class="sh-sec">Expenses <span>{{ $expenses->count() }} · {{ number_format($expenses->sum('amount')) }} RWF</span></div>
+            @forelse ($expenses as $exp)
+                <div class="sh-row">
+                    <span class="sh-row-l" title="{{ $exp->description }}">
+                        @if ($exp->is_system_generated)<span class="sh-tag">Auto</span>@endif{{ $exp->category->name ?? 'Expense' }}@if ($exp->description) <small>— {{ $exp->description }}</small>@endif
                     </span>
+                    <span class="sh-row-v">{{ number_format($exp->amount) }}</span>
                 </div>
-                @if ($sv !== 0)
-                    <span class="fo-recon-eq-sign" style="color:var(--text-dim);">·</span>
-                    <div class="fo-recon-item">
-                        <span class="fo-recon-label">{{ $sv < 0 ? 'Shortage' : 'Surplus' }}</span>
-                        <span class="fo-recon-val" style="font-size:13px;font-weight:800;
-                              color:{{ $sv < 0 ? 'var(--red)' : 'var(--amber)' }};">
-                            {{ ($sv > 0 ? '+' : '') . number_format($sv) }}
-                        </span>
+            @empty
+                <div class="sh-none">None recorded.</div>
+            @endforelse
+
+            <div class="sh-sec">Owner withdrawals <span>{{ $withdrawals->count() }} · {{ number_format($withdrawals->sum('amount')) }} RWF</span></div>
+            @forelse ($withdrawals as $wd)
+                <div class="sh-row">
+                    <span class="sh-row-l" title="{{ $wd->reason }}">{{ $wd->reason ?: 'Owner withdrawal' }} <small>· {{ $wd->isCash() ? 'Cash' : 'MoMo' }}</small></span>
+                    <span class="sh-row-v">{{ number_format($wd->amount) }}</span>
+                </div>
+            @empty
+                <div class="sh-none">None recorded.</div>
+            @endforelse
+
+            @if ($deposits->isNotEmpty())
+                <div class="sh-sec">Bank deposits <span>{{ $deposits->count() }} · {{ number_format($deposits->sum('amount')) }} RWF</span></div>
+                @foreach ($deposits as $dep)
+                    <div class="sh-row">
+                        <span class="sh-row-l">{{ local_time($dep->deposited_at)?->format('H:i') }} <small>· {{ ($dep->source ?? 'cash') === 'mobile_money' ? 'MoMo' : 'Cash' }}@if ($dep->bank_reference) · {{ $dep->bank_reference }}@endif</small></span>
+                        <span class="sh-row-v">{{ number_format($dep->amount) }}</span>
                     </div>
-                @endif
-            </div>
+                @endforeach
+            @endif
+            <div style="height:16px"></div>
         </div>
-        @endif
 
-        {{-- ── 3-col detail body ── --}}
-        <div class="fo-modal-body">
-            <div class="fo-expanded-detail">
-
-                {{-- Revenue by Channel --}}
-                <div class="fo-exp-col">
-                    <div class="fo-exp-col-title">Revenue by Channel</div>
-                    @foreach([
-                        ['Cash',          $sess->total_sales_cash          ?? 0, 'var(--green)'],
-                        ['Mobile Money',  $sess->total_sales_momo          ?? 0, 'var(--accent)'],
-                        ['Card',          $sess->total_sales_card          ?? 0, 'var(--accent)'],
-                        ['Credit',        $sess->total_sales_credit        ?? 0, 'var(--amber)'],
-                        ['Bank Transfer', $sess->total_sales_bank_transfer ?? 0, 'var(--accent)'],
-                    ] as [$ch, $chv, $chc])
-                    @if ($chv > 0)
-                    <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">{{ $ch }}</span>
-                        <span class="fo-exp-line-val" style="color:{{ $chc }};">{{ number_format($chv) }}</span>
-                    </div>
-                    @endif
-                    @endforeach
-                    <div class="fo-exp-line" style="border-top:1.5px solid var(--border);margin-top:4px;">
-                        <span style="font-weight:700;color:var(--text);">Total Sales</span>
-                        <span class="fo-exp-line-val" style="color:var(--green);font-weight:700;font-size:13px;">{{ number_format($sess->total_sales ?? 0) }}</span>
-                    </div>
-                    @if (($sess->total_repayments_cash ?? 0) > 0 || ($sess->total_repayments_momo ?? 0) > 0)
-                    <div class="fo-exp-col-title" style="margin-top:16px;">Credit Repayments</div>
-                    @if (($sess->total_repayments_cash ?? 0) > 0)
-                    <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">Cash</span>
-                        <span class="fo-exp-line-val" style="color:var(--green);">{{ number_format($sess->total_repayments_cash) }}</span>
-                    </div>
-                    @endif
-                    @if (($sess->total_repayments_momo ?? 0) > 0)
-                    <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">Mobile Money</span>
-                        <span class="fo-exp-line-val" style="color:var(--accent);">{{ number_format($sess->total_repayments_momo) }}</span>
-                    </div>
-                    @endif
-                    @endif
-                </div>
-
-                {{-- Expenses + Withdrawals --}}
-                <div class="fo-exp-col">
-                    <div class="fo-exp-col-title">
-                        Expenses
-                        @if (isset($sess->expenses) && $sess->expenses->whereNull('deleted_at')->count())
-                            <span style="margin-left:4px;padding:1px 6px;border-radius:4px;font-size:10px;
-                                         background:var(--red-dim);color:var(--red);text-transform:none;letter-spacing:0;">
-                                {{ $sess->expenses->whereNull('deleted_at')->count() }}
-                            </span>
-                        @endif
-                    </div>
-                    @if (isset($sess->expenses))
-                    @forelse ($sess->expenses->whereNull('deleted_at') as $exp)
-                    <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">
-                            @if ($exp->is_system_generated)
-                                <span style="font-size:9px;padding:1px 4px;border-radius:3px;
-                                             background:var(--amber-dim);color:var(--amber);margin-right:3px;">auto</span>
-                            @endif
-                            {{ $exp->category->name ?? '—' }}
-                            @if ($exp->description)
-                                <span style="opacity:0.7;"> — {{ Str::limit($exp->description, 18) }}</span>
-                            @endif
-                        </span>
-                        <span class="fo-exp-line-val" style="color:var(--red);">{{ number_format($exp->amount) }}</span>
-                    </div>
-                    @empty
-                    <div style="font-size:11px;color:var(--text-dim);padding:6px 0;">None recorded</div>
-                    @endforelse
-                    @if ($sess->expenses->whereNull('deleted_at')->count() > 0)
-                    <div class="fo-exp-line" style="border-top:1.5px solid var(--border);margin-top:4px;">
-                        <span style="font-weight:700;color:var(--text);">Total</span>
-                        <span class="fo-exp-line-val" style="color:var(--red);font-weight:700;">{{ number_format($sess->total_expenses ?? 0) }}</span>
-                    </div>
-                    @endif
-                    @endif
-
-                    <div class="fo-exp-col-title" style="margin-top:18px;">
-                        Owner Withdrawals
-                        @if (isset($sess->ownerWithdrawals) && $sess->ownerWithdrawals->whereNull('deleted_at')->count())
-                            <span style="margin-left:4px;padding:1px 6px;border-radius:4px;font-size:10px;
-                                         background:var(--amber-dim);color:var(--amber);text-transform:none;letter-spacing:0;">
-                                {{ $sess->ownerWithdrawals->whereNull('deleted_at')->count() }}
-                            </span>
-                        @endif
-                    </div>
-                    @if (isset($sess->ownerWithdrawals))
-                    @forelse ($sess->ownerWithdrawals->whereNull('deleted_at') as $wd)
-                    <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">
-                            {{ Str::limit($wd->reason ?? 'Owner draw', 22) }}
-                            <span style="opacity:0.7;font-size:10px;"> ({{ ucfirst($wd->isCash() ? 'Cash' : 'MoMo') }})</span>
-                        </span>
-                        <span class="fo-exp-line-val" style="color:var(--amber);">{{ number_format($wd->amount) }}</span>
-                    </div>
-                    @empty
-                    <div style="font-size:11px;color:var(--text-dim);padding:6px 0;">None recorded</div>
-                    @endforelse
-                    @if ($sess->ownerWithdrawals->whereNull('deleted_at')->count() > 0)
-                    <div class="fo-exp-line" style="border-top:1.5px solid var(--border);margin-top:4px;">
-                        <span style="font-weight:700;color:var(--text);">Total</span>
-                        <span class="fo-exp-line-val" style="color:var(--amber);font-weight:700;">{{ number_format($sess->total_withdrawals ?? 0) }}</span>
-                    </div>
-                    @endif
-                    @endif
-                </div>
-
-                {{-- Cash Reconciliation --}}
-                <div class="fo-exp-col">
-                    <div class="fo-exp-col-title">Cash Reconciliation</div>
-                    @foreach([
-                        ['Opening balance', $sess->opening_balance     ?? null, 'var(--text-dim)', false],
-                        ['Expected cash',   $sess->expected_cash       ?? null, 'var(--text)',     false],
-                        ['Counted',         $sess->actual_cash_counted ?? null, 'var(--text)',     false],
-                        ['Variance',        $sv, $sv < 0 ? 'var(--red)' : ($sv > 0 ? 'var(--amber)' : 'var(--text-dim)'), $sv !== 0],
-                    ] as [$rl, $rlv, $rlc, $isAlert])
-                        @if ($isAlert)
-                            <div class="fo-variance-alert"
-                                 style="background:{{ $sv < 0 ? 'var(--red-dim)' : 'var(--amber-dim)' }};">
-                                <span style="font-weight:700;color:{{ $rlc }};">{{ $rl }}</span>
-                                <span style="font-weight:700;font-family:var(--mono);font-size:13px;color:{{ $rlc }};">
-                                    {{ ($sv > 0 ? '+' : '') . number_format($sv) }}
-                                    <span style="font-size:10px;font-weight:500;"> RWF</span>
-                                </span>
-                            </div>
-                        @else
-                            <div class="fo-exp-line">
-                                <span class="fo-exp-line-label">{{ $rl }}</span>
-                                <span class="fo-exp-line-val" style="color:{{ $rlc }};">
-                                    {{ $rlv !== null ? number_format($rlv) : '—' }}
-                                    @if ($rlv !== null) <span style="font-size:10px;font-weight:400;color:var(--text-dim);"> RWF</span> @endif
-                                </span>
-                            </div>
-                        @endif
-                    @endforeach
-
-                    @if (($sess->cash_to_owner_momo ?? 0) > 0)
-                    <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">→ MoMo to owner</span>
-                        <span class="fo-exp-line-val" style="color:var(--accent);">{{ number_format($sess->cash_to_owner_momo) }} <span style="font-size:10px;font-weight:400;color:var(--text-dim);">RWF</span></span>
-                    </div>
-                    @endif
-
-                    @if (($sess->total_bank_deposits ?? 0) > 0)
-                    <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">Banked</span>
-                        <span class="fo-exp-line-val" style="color:var(--accent);">{{ number_format($sess->total_bank_deposits) }} <span style="font-size:10px;font-weight:400;color:var(--text-dim);">RWF</span></span>
-                    </div>
-                    @endif
-
-                    <div class="fo-exp-line" style="border-top:1.5px solid var(--border);margin-top:4px;">
-                        <span style="font-weight:700;color:var(--text);">Retained in till</span>
-                        <span class="fo-exp-line-val" style="color:var(--green);font-weight:700;font-size:13px;">
-                            {{ number_format($sess->cash_retained ?? 0) }} <span style="font-size:10px;font-weight:400;color:var(--text-dim);">RWF</span>
-                        </span>
-                    </div>
-
-                    {{-- Bank deposits list --}}
-                    @if (isset($sess->bankDeposits) && $sess->bankDeposits->isNotEmpty())
-                    <div class="fo-exp-col-title" style="margin-top:16px;">Bank Deposits</div>
-                    @foreach ($sess->bankDeposits as $dep)
-                    <div class="fo-exp-line">
-                        <span class="fo-exp-line-label">{{ local_time($dep->deposited_at)?->format('H:i') ?? '—' }}</span>
-                        <span class="fo-exp-line-val" style="color:var(--accent);">{{ number_format($dep->amount) }} <span style="font-size:10px;font-weight:400;color:var(--text-dim);">RWF</span></span>
-                    </div>
-                    @endforeach
-                    @endif
-
-                    {{-- Notes --}}
-                    @if ($sess->notes)
-                    <div style="margin-top:12px;padding:8px 11px;border-radius:8px;font-size:11px;font-style:italic;
-                                background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">
-                        "{{ $sess->notes }}"
-                    </div>
-                    @endif
-
-                    {{-- Locked stamp --}}
-                    @if ($isLock)
-                    <div style="margin-top:12px;padding:8px 10px;border-radius:7px;
-                                background:var(--surface2);border:1px solid var(--border);">
-                        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-dim);">Locked by</div>
-                        <div style="font-size:12px;color:var(--text);margin-top:3px;">
-                            {{ $sess->lockedBy->name ?? '—' }} · {{ local_time($sess->locked_at)?->format('d M Y H:i') }}
-                        </div>
-                    </div>
-                    @endif
-                </div>
-
-            </div>{{-- /fo-expanded-detail --}}
-        </div>{{-- /fo-modal-body --}}
-
-    </div>{{-- /fo-modal --}}
-</div>{{-- /fo-modal-wrap --}}
+        <div class="sh-d-foot" x-data="{ c:false }">
+            @if ($sess->isOpen())
+                <a href="{{ route('shop.session.close', ['session' => $sess->id]) }}" class="sh-btn sh-btn-primary">Close this register</a>
+            @elseif ($isOwner && ! $sess->isLocked())
+                <span x-show="c" x-cloak style="font-size:12px;color:var(--text-dim);margin-right:auto">Locking is permanent — records can't be corrected after.</span>
+                <button type="button" class="sh-btn" x-show="!c" @click="c = true">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    Lock session
+                </button>
+                <button type="button" class="sh-btn" x-show="c" x-cloak @click="c = false">Cancel</button>
+                <button type="button" class="sh-btn sh-btn-dark" x-show="c" x-cloak wire:click="lockSession({{ $sess->id }})" @click="c = false">Lock permanently</button>
+            @else
+                <button type="button" class="sh-btn" wire:click="closeDetail">Done</button>
+            @endif
+        </div>
+    </aside>
+</div>
 @endif
-
 </div>

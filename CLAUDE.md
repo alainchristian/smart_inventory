@@ -615,3 +615,122 @@ this throttling.
 - P5 Shop route: routes/web.php `Route::get('/daily/print', [DailyReportController::class, 'print'])->name('daily.print');` inside `Route::prefix('reports')->name('reports.')` within the shop group `Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocation::class])->prefix('shop')` (the route group admits owners, but the controller itself aborts 403 unless isShopManager()). Owner route sits in `middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')`. Both anchors matched exactly; pdf routes inserted directly after each.
 - Key figures deltas: comparison data only exists for sales, cash, momo, credit, repayments, expenses — Bank, Owner withdrawals and Cash difference cells show no delta line. "Bank" = total − cash − MoMo − credit (so cells add up; includes card/other, labelled when non-zero). No cost/purchase price/gross profit appears anywhere in the PDF.
 - Downloads logged as report_pdf_downloaded.
+
+---
+
+## Cash Register, Close Register & Session History redesign (2026-09-24)
+
+User feedback: the day-close pages "looked AI-generated" — oversized
+numbers (42px heroes), full-width buttons, duplicated controls, inline
+forms. All three pages were rebuilt on the ui-design.md system.
+
+### Cash Register (`shop.day-close.index` / `shop.session.open`)
+- New `App\Livewire\Shop\DayClose\Register` (+ `register.blade.php`,
+  prefix `dc-`) owns the whole page: today's session state, the
+  open-register **modal** (was an inline form), 4 `.iv-kpi`-anatomy KPI
+  cards, the cash-drawer ledger, and a closed-day summary. The wrapper view
+  `shop/day-close/index.blade.php` is now just `<livewire:…register />`.
+- Header has exactly one primary action (Open / Close register / Daily
+  report), a `Record ▾` menu, and History. Don't re-add a Quick Actions
+  sidebar or duplicate Close buttons — that duplication was the complaint.
+- `OpenSession`, `SessionSnapshot`, `SessionActivityPanel` are now
+  **orphaned** (no view references them) — left in place per the
+  orphaned-code convention.
+- `session-activity-feed` now renders its own card: filter pills
+  (client-side Alpine), table, two-step inline Void (no `wire:confirm`).
+- `pending-requests`: compact rows; Pay opens a confirm modal
+  (`confirmPay`/`payRequest`, `$payingId`), Reject opens a reason modal.
+
+### Record drawer (`livewire/shop/day-close/partials/record-drawer.blade.php`)
+- Slide-in drawer holding `add-expense` / `add-withdrawal` /
+  `add-bank-deposit`. Open from anywhere with
+  `$dispatch('dc-record', { type: 'expense'|'withdrawal'|'deposit' })`;
+  closes on the child's `expense-added`/`withdrawal-added`/`deposit-added`
+  event or `dc-record-close`. Included on the Register page and in the
+  Close wizard (step 2 "Add" buttons).
+- The three add components got `public bool $inDrawer` (shows Cancel),
+  toasts instead of `session()->flash`, and `#[On]` listeners so their
+  "available balance" hints stay fresh.
+- The deposit list moved out of `AddBankDeposit` into a new
+  `DepositList` component (owns `voidDeposit`).
+- Standalone pages (`/shop/expenses/add`, `/shop/withdrawals/add`,
+  `/shop/bank-deposits`) still work and reuse the same components.
+
+### Close Register wizard (`close-wizard.blade.php`, prefix `cw-`)
+- Rewritten from scratch (was 1,116 lines with a stray `</div>` breaking
+  step-4 nesting, the whole CSS block pasted twice, and a floating widget
+  using a non-existent `--surface-rgb`). Header now lives in the component;
+  `shop/day-close/close.blade.php` is a thin wrapper.
+- Layout: compact numbered stepper (completed steps clickable →
+  `CloseWizard::goToStep()`, backwards only) + sticky "Closing summary"
+  rail (becomes a fixed bottom bar ≤1100px).
+- Step 3 has a **Count by denomination** modal (Alpine-only, `wire:ignore`;
+  notes 5000/2000/1000/500, coins 100/50/20/10/5/1) that writes the total
+  via `$wire.set('actualCashCounted', …)`.
+- Step 4 adds the **closing notes** textarea — `CloseWizard::$notes` was
+  always submitted to `closeSession()` but had no input before.
+- Final submit is a confirmation **modal** (`openConfirm()` →
+  `$showConfirm`), not `wire:confirm`. `validateDisposition()` treats an
+  empty "send to owner" as 0 (it used to fail `required`).
+
+### Session History (`session-history.blade.php`, prefix `sh-`)
+- KPIs aggregate over **all** sessions in scope (one `filter (where …)`
+  query), not just the current page. Status filter pills; detail is a
+  slide-in drawer (was a centered modal); owner Lock uses a two-step
+  inline confirm.
+- Bugs fixed: (1) the open-session "Close" link used
+  `shop.day-close.close?session=` — that route ignores the param and
+  closes *today's* session; now `shop.session.close`. (2) Owner shop
+  filter read `request()->query('shop_id')`, lost on every Livewire
+  request; now a `#[Url(as:'shop_id')]` property. (3) Detail lookup is
+  scoped to the manager's shop (previously any session id could be opened).
+- Open sessions show "Live — totals recorded at close": `daily_sessions`
+  total columns are only populated on close, so they read 0 while open.
+
+### Gotchas found along the way
+- **Global mobile touch-target CSS** (`app.css`, `@media (max-width:640px)`):
+  `button, a { min-height/min-width:44px }` plus
+  `button:not(.w-9)…{ padding:.625rem 1rem }` (specificity 0,4,1) and
+  `table td { padding-left/right:.75rem !important }`. These silently
+  inflate compact controls and card-transformed table cells on phones.
+  Each component overrides them locally with scoped `!important` rules
+  inside its own ≤640px block — do the same for any new compact control.
+- Fixed-position drawers must not use `width:100vw` on mobile (it
+  includes the scrollbar → 10px off-screen); use `left:0;width:auto`.
+- `User::shop()` adds a `location_type` constraint the `shops` table
+  doesn't have — use `Shop::find($user->location_id)` instead.
+- Blade `@foreach ($x as [$a, $b])` destructuring is avoided in this
+  codebase; destructure in a `@php` line inside the loop.
+
+---
+
+## Test database — tests must never touch `smart_inventory` (2026-09-24)
+
+**Incident:** running the whole suite (`php artisan test`) while
+phpunit.xml had no test DB let the stock Breeze tests (`RefreshDatabase` →
+`migrate:fresh`) **wipe every table in the dev database**. Restored only
+partially with `php artisan db:seed` (BootstrapSeeder: users, shops,
+warehouse, settings). Products, sales, sessions, customers and
+transfers were lost; there was no backup.
+
+**Now:**
+- `phpunit.xml` forces `DB_CONNECTION=pgsql`,
+  `DB_DATABASE=smart_inventory_test` (`force="true"`).
+- `tests/TestCase.php::setUpTraits()` throws before any DB trait runs
+  unless the database name ends in `_test`. Don't remove it.
+- The app itself (`.env`) still uses `smart_inventory`.
+- To migrate the test DB manually:
+  `DB_DATABASE=smart_inventory_test php artisan migrate --force`
+  (confirm the target with tinker `DB::connection()->getDatabaseName()`).
+- 9 stale Breeze tests (Auth/*, ExampleTest, ProfileTest) fail for
+  pre-existing reasons (e.g. no `password_reset_tokens` table) — not
+  regressions.
+- Day-close coverage: `tests/Feature/DayClose/RegisterRedesignTest.php`
+  (open → record → count → confirm → close) and `SessionHistoryTest.php`.
+
+**Verification method used for UI work without typing passwords:** a
+temporary local-only route calling `Auth::onceUsingId($shopManagerId)`
+inside `DB::beginTransaction()`/`rollBack()`, rendering the page to HTML
+(sample rows inserted, then rolled back). Screenshots only — follow-up
+Livewire requests run as whoever the browser session is. Always delete
+the route afterwards and check `git diff routes/web.php` is empty.

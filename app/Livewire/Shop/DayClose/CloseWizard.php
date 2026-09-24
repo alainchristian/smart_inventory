@@ -40,6 +40,9 @@ class CloseWizard extends Component
     // Computed
     public int $cashVariance = 0;
 
+    // Final confirmation modal
+    public bool $showConfirm = false;
+
     public function mount(?int $dailySessionId = null): void
     {
         $user = auth()->user();
@@ -114,6 +117,42 @@ class CloseWizard extends Component
         }
     }
 
+    /** Jump back to an already-completed step from the stepper. */
+    public function goToStep(int $step): void
+    {
+        if ($step >= 1 && $step < $this->currentStep) {
+            $this->currentStep = $step;
+        }
+    }
+
+    public function openConfirm(): void
+    {
+        if ($this->currentStep !== 4 || ! $this->validateDisposition()) {
+            return;
+        }
+
+        $this->showConfirm = true;
+    }
+
+    private function validateDisposition(): bool
+    {
+        if ($this->cashToOwnerMomo === '') {
+            $this->cashToOwnerMomo = '0';
+        }
+
+        $this->validate([
+            'actualCashCounted' => 'required|numeric|min:0',
+            'cashToOwnerMomo'   => 'required|numeric|min:0',
+        ]);
+
+        if ((int) $this->cashToOwnerMomo > (int) $this->actualCashCounted) {
+            $this->addError('cashToOwnerMomo', 'MoMo transfer cannot exceed actual cash counted.');
+            return false;
+        }
+
+        return true;
+    }
+
     public function updatedActualCashCounted(): void
     {
         $counted = (int) $this->actualCashCounted;
@@ -128,17 +167,8 @@ class CloseWizard extends Component
 
     public function submitClose(): void
     {
-        if ($this->currentStep !== 4) {
-            return;
-        }
-
-        $this->validate([
-            'actualCashCounted' => 'required|numeric|min:0',
-            'cashToOwnerMomo'   => 'required|numeric|min:0',
-        ]);
-
-        if ((int) $this->cashToOwnerMomo > (int) $this->actualCashCounted) {
-            $this->addError('cashToOwnerMomo', 'MoMo transfer cannot exceed actual cash counted.');
+        if ($this->currentStep !== 4 || ! $this->validateDisposition()) {
+            $this->showConfirm = false;
             return;
         }
 
@@ -163,7 +193,8 @@ class CloseWizard extends Component
             session()->flash('success', 'Day closed successfully.');
             $this->redirect(route('shop.dashboard'));
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->showConfirm = false;
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
@@ -182,15 +213,6 @@ class CloseWizard extends Component
             $this->summary      = app(DailySessionService::class)->computeLiveSummary($session);
             $this->cashVariance = (int) $this->actualCashCounted - ($this->summary['expected_cash'] ?? 0);
             $this->cashRetained = max(0, (int) $this->actualCashCounted - (int) $this->cashToOwnerMomo);
-
-            $cashBase = (int) $this->actualCashCounted > 0
-                ? (int) $this->actualCashCounted
-                : (int) ($this->summary['expected_cash'] ?? 0);
-
-            $this->dispatch('balance-updated',
-                cashBase:    $cashBase,
-                momoBalance: (int) ($this->summary['momo_available'] ?? 0),
-            );
         }
     }
 

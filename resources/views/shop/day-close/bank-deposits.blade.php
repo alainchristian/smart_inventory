@@ -26,20 +26,14 @@
             @endphp
 
             @if ($activeSession)
-                <div class="rounded-xl p-5 sm:p-6" style="background:var(--surface2);border:1px solid var(--border);">
+                <div style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:20px;max-width:560px;">
                     <livewire:shop.day-close.add-bank-deposit :dailySessionId="$activeSession->id" />
                 </div>
 
-                @if ($activeSession->bankDeposits()->whereNull('deleted_at')->sum('amount') > 0)
-                    <div class="mt-4 px-4 py-3 rounded-lg text-sm font-medium"
-                         style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);">
-                        Total banked today:
-                        <span class="font-mono font-bold">
-                            {{ number_format($activeSession->bankDeposits()->whereNull('deleted_at')->sum('amount')) }} RWF
-                        </span>
-                        across {{ $activeSession->bankDeposits()->whereNull('deleted_at')->count() }} deposit(s)
-                    </div>
-                @endif
+                <div style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);margin-top:20px;">
+                    <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);">Today's deposits</div>
+                    <livewire:shop.day-close.deposit-list :dailySessionId="$activeSession->id" />
+                </div>
             @else
                 <div class="rounded-xl p-8 text-center" style="background:var(--surface2);border:1px solid var(--border);">
                     <div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--amber-dim);">

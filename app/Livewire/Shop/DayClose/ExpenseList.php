@@ -77,7 +77,7 @@ class ExpenseList extends Component
             $this->editingId = null;
             $this->dispatch('expense-updated');
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
@@ -91,7 +91,7 @@ class ExpenseList extends Component
             app(ExpenseService::class)->voidExpense($expense, auth()->user());
             $this->dispatch('expense-voided');
         } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
