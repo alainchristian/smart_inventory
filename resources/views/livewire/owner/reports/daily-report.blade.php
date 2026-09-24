@@ -1166,55 +1166,56 @@
         $odrSevOrder  = ['critical' => 0, 'warning' => 1, 'info' => 2];
         $odrSevSorted = collect($checks)->sortBy(fn ($c) => $odrSevOrder[$c['severity']] ?? 3)->values();
         $odrSevPill   = ['critical' => ['red', 'Critical'], 'warning' => ['amber', 'Warning'], 'info' => ['dim', 'Info']];
+        // One flat row per check — price overrides expand to one row per product line, details sit in columns.
+        $odrRows = [];
+        foreach ($odrSevSorted as $c) {
+            if (! empty($c['details'])) {
+                foreach ($c['details'] as $d) { $odrRows[] = [$c, $d]; }
+            } else {
+                $odrRows[] = [$c, null];
+            }
+        }
+        $odrHasDetail = collect($odrRows)->contains(fn ($r) => $r[1] !== null);
+        $odrCost      = collect($odrRows)->contains(fn ($r) => $r[1] !== null && isset($r[1]['cost']));
     @endphp
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table" style="white-space:nowrap">
         <thead>
             <tr>
                 <th>Severity</th>
                 <th>Message</th>
                 @if($isAllShops)<th>Shop</th>@endif
                 <th>Date</th>
+                @if($odrHasDetail)
+                <th>Sale</th><th>Product</th><th>Qty</th>
+                <th style="text-align:right">List price</th><th style="text-align:right">Sold at</th>
+                <th style="text-align:right">Discount</th><th style="text-align:right">% off</th>
+                @if($odrCost)<th style="text-align:right">Profit at list</th><th style="text-align:right">Profit sold</th>@endif
+                @endif
                 <th style="text-align:right">Amount</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($odrSevSorted as $c)
+            @foreach($odrRows as [$c, $d])
             <tr>
                 <td><span class="odr-pill odr-pill-{{ $odrSevPill[$c['severity']][0] ?? 'dim' }}">{{ $odrSevPill[$c['severity']][1] ?? ucfirst($c['severity']) }}</span></td>
-                                <td class="odr-msg">{{ $c['message'] }}
-                    @if(!empty($c['details']))
-                    @php $odrCost = isset($c['details'][0]['cost']); @endphp
-                    <table class="odr-table" style="margin-top:8px;width:auto;min-width:100%">
-                        <thead><tr>
-                            <th>Sale</th><th>Product</th><th>Qty</th>
-                            <th style="text-align:right">List price</th><th style="text-align:right">Sold at</th>
-                            <th style="text-align:right">Discount</th><th style="text-align:right">% off</th>
-                            @if($odrCost)<th style="text-align:right">Profit at list</th><th style="text-align:right">Profit sold</th>@endif
-                        </tr></thead>
-                        <tbody>
-                        @foreach($c['details'] as $d)
-                        <tr>
-                            <td style="font-family:var(--mono);white-space:nowrap">{{ $d['sale_number'] }}</td>
-                            <td>{{ $d['product'] }}</td>
-                            <td style="white-space:nowrap">{{ $d['qty'] }}</td>
-                            <td class="odr-num">{{ number_format($d['list']) }}</td>
-                            <td class="odr-num">{{ number_format($d['sold']) }}</td>
-                            <td class="odr-num" style="color:{{ $d['discount'] > 0 ? 'var(--red)' : 'var(--text-dim)' }}">{{ $d['discount'] > 0 ? '−' : '' }}{{ number_format(abs($d['discount'])) }}</td>
-                            <td class="odr-num" style="color:var(--text-dim)">{{ number_format($d['pct'], 1) }}%</td>
-                            @if($odrCost)
-                            <td class="odr-num">{{ number_format($d['profit_at_list']) }}</td>
-                            <td class="odr-num" style="color:{{ $d['profit_sold'] >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ number_format($d['profit_sold']) }}</td>
-                            @endif
-                        </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                    @endif
-                </td>
+                <td>{{ $d ? 'Price override' : $c['message'] }}</td>
                 @if($isAllShops)<td style="color:var(--text-dim)">{{ $c['shop_name'] ?? '' }}</td>@endif
-                <td style="color:var(--text-dim);white-space:nowrap">{{ !empty($c['date']) ? \Carbon\Carbon::parse($c['date'])->format('d M Y') : '' }}</td>
-                <td class="odr-num">@if($c['amount'] !== null){{ (($c['code'] === 'cash_variance' && $c['amount'] > 0) ? '+' : '') . number_format($c['amount']) }}@endif</td>
+                <td style="color:var(--text-dim)">{{ !empty($c['date']) ? \Carbon\Carbon::parse($c['date'])->format('d M Y') : '' }}</td>
+                @if($odrHasDetail)
+                <td style="font-family:var(--mono)">{{ $d['sale_number'] ?? '' }}</td>
+                <td>{{ $d['product'] ?? '' }}</td>
+                <td>{{ $d['qty'] ?? '' }}</td>
+                <td class="odr-num">{{ $d ? number_format($d['list']) : '' }}</td>
+                <td class="odr-num">{{ $d ? number_format($d['sold']) : '' }}</td>
+                <td class="odr-num" style="color:var(--red)">{{ $d ? (($d['discount'] > 0 ? '−' : '') . number_format(abs($d['discount']))) : '' }}</td>
+                <td class="odr-num" style="color:var(--text-dim)">{{ $d ? number_format($d['pct'], 1) . '%' : '' }}</td>
+                @if($odrCost)
+                <td class="odr-num">{{ $d ? number_format($d['profit_at_list']) : '' }}</td>
+                <td class="odr-num" style="color:{{ ($d['profit_sold'] ?? 0) >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? number_format($d['profit_sold']) : '' }}</td>
+                @endif
+                @endif
+                <td class="odr-num">@if($d){{ number_format($d['discount']) }}@elseif($c['amount'] !== null){{ (($c['code'] === 'cash_variance' && $c['amount'] > 0) ? '+' : '') . number_format($c['amount']) }}@endif</td>
             </tr>
             @endforeach
         </tbody>

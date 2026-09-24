@@ -99,6 +99,7 @@ td, th { padding:1.5mm 2.4mm; vertical-align:middle; }
 .r { text-align:right; }
 .nw { white-space:nowrap; }
 .fixed { table-layout:fixed; }
+.cktbl td, .cktbl th { padding:1.2mm 1.4mm; font-size:6.4pt; }
 .fixed td, .fixed th { padding:1.3mm 1.5mm; font-size:6.8pt; }
 .dim { color:var(--text-dim); }
 .sub { color:var(--text-sub); }
@@ -394,34 +395,35 @@ tr { page-break-inside:avoid; }
     @if(empty($checks))
         <div class="sec-note" style="font-size:7.5pt;">All checks passed.</div>
     @else
-    <table class="data" style="margin-top:2mm;">
-        <thead><tr><th style="width:11%;">Severity</th><th>Message</th>@if($isAll)<th style="width:14%;">Shop</th>@endif<th style="width:12%;">Date</th><th class="r" style="width:11%;">Amount</th></tr></thead>
+    @php
+        $ckRows = [];
+        foreach (collect($checks)->sortBy(fn ($c) => $sevOrder[$c['severity']] ?? 3) as $c) {
+            if (! empty($c['details'])) { foreach ($c['details'] as $d) { $ckRows[] = [$c, $d]; } } else { $ckRows[] = [$c, null]; }
+        }
+        $ckDetail = collect($ckRows)->contains(fn ($r) => $r[1] !== null);
+        $ckCost   = false; // the PDF never shows cost/profit, even for the owner
+    @endphp
+    <table class="data cktbl" style="margin-top:2mm;">
+        <thead><tr>
+            <th>Severity</th><th>Message</th>@if($isAll)<th>Shop</th>@endif<th>Date</th>
+            @if($ckDetail)<th>Sale</th><th>Product</th><th>Qty</th><th class="r">List</th><th class="r">Sold</th><th class="r">Disc.</th><th class="r">%</th>@if($ckCost)<th class="r">Profit list</th><th class="r">Profit sold</th>@endif @endif
+            <th class="r">Amount</th>
+        </tr></thead>
         <tbody>
-        @foreach(collect($checks)->sortBy(fn ($c) => $sevOrder[$c['severity']] ?? 3) as $c)
+        @foreach($ckRows as [$c, $d])
         <tr>
             <td class="pill" style="color:{{ $sevCol[$c['severity']] ?? 'var(--text-dim)' }};">{{ $sevWord[$c['severity']] ?? ucfirst($c['severity']) }}</td>
-            <td>{{ $c['message'] }}
-                @if(!empty($c['details']))
-                @php $withCost = isset($c['details'][0]['cost']); @endphp
-                <table class="data" style="margin-top:1.5mm;">
-                    <thead><tr><th>Sale</th><th>Product</th><th>Qty</th><th class="r">List</th><th class="r">Sold</th><th class="r">Discount</th><th class="r">% off</th>@if($withCost)<th class="r">Profit list</th><th class="r">Profit sold</th>@endif</tr></thead>
-                    <tbody>
-                    @foreach($c['details'] as $d)
-                    <tr>
-                        <td class="nw">{{ $d['sale_number'] }}</td><td>{{ $d['product'] }}</td><td class="nw">{{ $d['qty'] }}</td>
-                        <td class="r">{{ $n($d['list']) }}</td><td class="r">{{ $n($d['sold']) }}</td>
-                        <td class="r" style="color:var(--red);">{{ $d['discount'] > 0 ? '−' : '' }}{{ number_format(abs($d['discount'])) }}</td>
-                        <td class="r dim">{{ number_format($d['pct'], 1) }}%</td>
-                        @if($withCost)<td class="r">{{ $n($d['profit_at_list']) }}</td><td class="r">{{ $n($d['profit_sold']) }}</td>@endif
-                    </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-                @endif
-            </td>
+            <td>{{ $d ? 'Price override' : $c['message'] }}</td>
             @if($isAll)<td class="dim">{{ $c['shop_name'] ?? '' }}</td>@endif
-            <td class="dim">{{ !empty($c['date']) ? \Carbon\Carbon::parse($c['date'])->format('d M Y') : '' }}</td>
-            <td class="r">{{ $c['amount'] !== null ? ($c['code'] === 'cash_variance' ? $sg($c['amount']) : $n($c['amount'])) : '' }}</td>
+            <td class="dim nw">{{ !empty($c['date']) ? \Carbon\Carbon::parse($c['date'])->format('d M y') : '' }}</td>
+            @if($ckDetail)
+            <td class="nw">{{ $d['sale_number'] ?? '' }}</td><td>{{ $d['product'] ?? '' }}</td><td class="nw">{{ $d['qty'] ?? '' }}</td>
+            <td class="r">{{ $d ? $n($d['list']) : '' }}</td><td class="r">{{ $d ? $n($d['sold']) : '' }}</td>
+            <td class="r" style="color:var(--red);">{{ $d ? (($d['discount'] > 0 ? '−' : '') . number_format(abs($d['discount']))) : '' }}</td>
+            <td class="r dim">{{ $d ? number_format($d['pct'], 1) . '%' : '' }}</td>
+            @if($ckCost)<td class="r">{{ $d ? $n($d['profit_at_list']) : '' }}</td><td class="r">{{ $d ? $n($d['profit_sold']) : '' }}</td>@endif
+            @endif
+            <td class="r">{{ $d ? $n($d['discount']) : ($c['amount'] !== null ? ($c['code'] === 'cash_variance' ? $sg($c['amount']) : $n($c['amount'])) : '') }}</td>
         </tr>
         @endforeach
         </tbody>
