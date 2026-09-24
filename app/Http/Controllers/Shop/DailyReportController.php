@@ -4,12 +4,22 @@ namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
+use App\Services\AuditLogger;
 use App\Services\DayClose\DailySessionService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class DailyReportController extends Controller
 {
     public function print(Request $request)
+    {
+        return view('shop.reports.daily-print', $this->buildReportData($request));
+    }
+
+    private function buildReportData(Request $request): array
     {
         $user = auth()->user();
 
@@ -35,6 +45,9 @@ class DailyReportController extends Controller
             $validated['date_to']
         );
 
+        // Shop managers never see profit/cost figures — strip them at the source.
+        unset($summary['total_cogs'], $summary['gross_profit'], $summary['net_for_period']);
+
         $cashRegister = $service->getCashRegisterByDay(
             $shopId,
             $validated['date_from'],
@@ -43,7 +56,7 @@ class DailyReportController extends Controller
 
         $position = $service->getCurrentCashPosition($shopId);
 
-        return view('shop.reports.daily-print', [
+        return [
             'summary'      => $summary,
             'cashRegister' => $cashRegister,
             'position'     => $position,
@@ -51,6 +64,61 @@ class DailyReportController extends Controller
             'dateFrom'     => $validated['date_from'],
             'dateTo'       => $validated['date_to'],
             'viewMode'     => $viewMode,
+            'reconciliation' => $service->getCashReconciliation($shopId, $validated['date_from'], $validated['date_to']),
+            'comparison'     => $service->computeComparisonTotals($shopId, $validated['date_from'], $validated['date_to']),
+            'checks'         => $service->getReportChecks($shopId, $validated['date_from'], $validated['date_to']),
+            'generatedBy'    => $user->name,
+        ];
+    }
+
+    public function pdf(Request $request)
+    {
+        $data = $this->buildReportData($request);
+
+        $days = Carbon::parse($data['dateFrom'])->diffInDays(Carbon::parse($data['dateTo'])) + 1;
+        if ($data['viewMode'] === 'transactions' && $days > 31) {
+            throw ValidationException::withMessages([
+                'view' => 'Transactions PDF is limited to 31 days; choose Summary or a shorter period.',
+            ]);
+        }
+
+        $shopSlug = Str::slug($data['shop']->name ?? '') ?: 'shop';
+        $period   = $data['dateFrom'] === $data['dateTo']
+            ? $data['dateFrom']
+            : $data['dateFrom'] . '_to_' . $data['dateTo'];
+        $filename = "daily-report-{$shopSlug}-{$period}.pdf";
+
+        $pdf = Pdf::loadView('pdf.daily-report', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOption('enable_font_subsetting', true);
+        $pdf->render();
+        $this->addPageNumbers($pdf);
+
+        AuditLogger::log([
+            'action'            => 'report_pdf_downloaded',
+            'module'            => 'reports',
+            'entity_type'       => 'DailyReport',
+            'entity_identifier' => $period,
+            'details'           => [
+                'date_from'   => $data['dateFrom'],
+                'date_to'     => $data['dateTo'],
+                'shop_id'     => $data['shop']->id ?? null,
+                'view'        => $data['viewMode'],
+                'provisional' => collect($data['checks'])->contains('code', 'session_open'),
+            ],
         ]);
+
+        return $pdf->download($filename);
+    }
+
+    /** "Page X of Y" bottom-right on every page (canvas text; dompdf cannot do this in CSS). */
+    private function addPageNumbers($pdf): void
+    {
+        $dompdf = $pdf->getDomPDF();
+        $canvas = $dompdf->getCanvas();
+        $font   = $dompdf->getFontMetrics()->getFont('DejaVu Sans');
+
+        // RGB floats of the --text-dim token (canvas API takes numbers, not CSS).
+        $canvas->page_text($canvas->get_width() - 39.7 - 60, $canvas->get_height() - 30, 'Page {PAGE_NUM} of {PAGE_COUNT}', $font, 7.5, [0.478, 0.506, 0.627]);
     }
 }

@@ -17,6 +17,9 @@ class DailyReport extends Component
     /** 'summary' = totals & breakdowns; 'transactions' = line-by-line sales/expenses. */
     public string $viewMode = 'summary';
 
+    /** Profit figures (COGS, gross/net profit) are hidden until an owner/admin switches them on. */
+    public bool $showProfit = false;
+
     public bool $settingAllowCard         = false;
     public bool $settingAllowBankTransfer = false;
 
@@ -27,6 +30,14 @@ class DailyReport extends Component
         'viewMode'       => ['except' => 'summary'],
     ];
 
+    public function toggleProfit(): void
+    {
+        $user = auth()->user();
+        abort_unless($user->isOwner() || $user->isAdmin(), 403);
+
+        $this->showProfit = ! $this->showProfit;
+    }
+
     public function setViewMode(string $mode): void
     {
         $this->viewMode = in_array($mode, ['summary', 'transactions'], true) ? $mode : 'summary';
@@ -35,7 +46,7 @@ class DailyReport extends Component
     public function mount(): void
     {
         $user = auth()->user();
-        if (! $user->isOwner()) {
+        if (! $user->isOwner() && ! $user->isAdmin()) {
             abort(403);
         }
 
@@ -148,12 +159,41 @@ class DailyReport extends Component
         return $svc->getCurrentCashPosition($this->resolveShopId());
     }
 
+    /** Per-product cost/profit — only computed when an owner/admin has switched profit on. */
+    public function getProfitByProductProperty(): \Illuminate\Support\Collection
+    {
+        if (! $this->showProfit) {
+            return collect();
+        }
+
+        return app(DailySessionService::class)->getProfitByProduct($this->resolveShopId(), $this->dateFrom, $this->dateTo);
+    }
+
+    public function getReconciliationProperty(): \Illuminate\Support\Collection
+    {
+        return app(DailySessionService::class)->getCashReconciliation($this->resolveShopId(), $this->dateFrom, $this->dateTo);
+    }
+
+    public function getComparisonProperty(): array
+    {
+        return app(DailySessionService::class)->computeComparisonTotals($this->resolveShopId(), $this->dateFrom, $this->dateTo);
+    }
+
+    public function getChecksProperty(): array
+    {
+        return app(DailySessionService::class)->getReportChecks($this->resolveShopId(), $this->dateFrom, $this->dateTo);
+    }
+
     public function render()
     {
         return view('livewire.owner.reports.daily-report', [
             'summary'      => $this->summary,
             'cashRegister' => $this->cashRegister,
             'position'     => $this->position,
+            'reconciliation' => $this->reconciliation,
+            'comparison'     => $this->comparison,
+            'checks'         => $this->checks,
+            'profitByProduct' => $this->profitByProduct,
         ]);
     }
 }

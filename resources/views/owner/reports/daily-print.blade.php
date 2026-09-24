@@ -122,7 +122,7 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
         ['label' => 'Mobile Money', 'amount' => $summary['total_sales_momo']],
         ['label' => 'Card',          'amount' => $summary['total_sales_card']],
         ['label' => 'Bank Transfer', 'amount' => $summary['total_sales_bank_transfer']],
-        ['label' => 'Credit',        'amount' => $summary['total_sales_credit']],
+        ['label' => 'Credit (not yet collected)', 'amount' => $summary['total_sales_credit'], 'uncollected' => true],
         ['label' => 'Other',         'amount' => $summary['total_sales_other']],
     ];
 
@@ -179,52 +179,9 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
 
     {{-- Headline metrics — always shown so the report's core message comes
          across regardless of which detail view was printed. --}}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin-bottom:8px">As of Right Now — Not Affected by the Period Below</div>
     <div class="cell" style="margin-bottom:22px">
-        <div class="cell-head"><span class="dot c-accent"></span><span class="cell-title">Summary</span></div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Metric</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Boxes Sold</td>
-                    <td style="font-weight:800">{{ number_format($summary['total_boxes_sold']) }}</td>
-                </tr>
-                <tr>
-                    <td>Total Sales</td>
-                    <td style="font-weight:800;color:var(--green)">{{ number_format($summary['total_sales']) }} RWF</td>
-                </tr>
-                <tr>
-                    <td>Total Credits</td>
-                    <td style="font-weight:800;color:var(--amber)">{{ number_format($summary['total_sales_credit']) }} RWF</td>
-                </tr>
-                <tr>
-                    <td>Total Expenses</td>
-                    <td style="font-weight:800;color:var(--red)">{{ number_format($summary['total_expenses']) }} RWF</td>
-                </tr>
-                <tr>
-                    <td>Net for Period</td>
-                    <td style="font-weight:800;color:{{ $summary['net_for_period'] >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $summary['net_for_period'] < 0 ? '−' : '' }}{{ number_format(abs($summary['net_for_period'])) }} RWF</td>
-                </tr>
-                <tr>
-                    <td>
-                        Credit Repayments Received
-                        <div style="font-size:10px;font-weight:400;color:var(--dim);margin-top:2px">Cash collected on prior credit — not new revenue, not part of Net for Period above</div>
-                    </td>
-                    <td style="font-weight:800;color:var(--green)">{{ number_format($summary['total_repayments']) }} RWF</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    {{-- Business Position (Cash on Hand / Outstanding Receivables) — hidden
-         per request; the section and its data are still computed above,
-         just not rendered. Re-enable by uncommenting this block.
-    <div class="cell" style="margin-bottom:22px">
-        <div class="cell-head"><span class="dot c-green"></span><span class="cell-title">Business Position — As of Today</span></div>
+        <div class="cell-head"><span class="dot c-green"></span><span class="cell-title">Business Position</span></div>
         <table>
             <thead>
                 <tr>
@@ -243,15 +200,104 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                 </tr>
             </tbody>
         </table>
+        @if($position['stale'])
+        <p class="callout">
+            <strong>⚠ Includes an unreconciled session.</strong>
+            @if(isset($position['stale_shops']))
+                {{ $position['stale_shops']->map(fn ($s) => $s['shop_name'] . ' (open since ' . $s['as_of']->format('d M Y') . ', ' . (int) floor($s['as_of']->diffInDays(business_today())) . ' days)')->join(', ') }}
+            @else
+                Open since {{ $position['as_of']->format('d M Y') }} ({{ (int) floor($position['as_of']->diffInDays(business_today())) }} days) — nobody has closed/counted this drawer since.
+            @endif
+            Cash on Hand above includes this session's live, uncounted figure.
+        </p>
+        @endif
     </div>
-    --}}
+
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin-bottom:8px">{{ $period }} — {{ $shopName }}</div>
+    <div class="cell" style="margin-bottom:22px">
+        <div class="cell-head"><span class="dot c-accent"></span><span class="cell-title">Summary</span></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Boxes Sold</td>
+                    <td style="font-weight:800">{{ number_format($summary['total_boxes_sold']) }}</td>
+                </tr>
+                <tr><td colspan="2" style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);border-top:1px solid var(--line);padding:8px 14px 4px">Revenue</td></tr>
+                <tr>
+                    <td>Total Sales</td>
+                    <td style="font-weight:800;color:var(--green)">{{ number_format($summary['total_sales']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>— of which Total Credits</td>
+                    <td style="font-weight:800;color:var(--amber)">{{ number_format($summary['total_sales_credit']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Credit Repayments Received</td>
+                    <td style="font-weight:800;color:var(--green)">{{ number_format($summary['total_repayments']) }} RWF</td>
+                </tr>
+                <tr><td colspan="2" style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);border-top:1px solid var(--line);padding:8px 14px 4px">Expenses</td></tr>
+                <tr>
+                    <td>Total Expenses</td>
+                    <td style="font-weight:800;color:var(--red)">−{{ number_format($summary['total_expenses']) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Owner Withdrawals</td>
+                    <td style="font-weight:800;color:var(--red)">−{{ number_format($summary['total_withdrawals']) }} RWF</td>
+                </tr>
+                @php $balance = (int) $summary['total_sales'] - (int) $summary['total_sales_credit'] + (int) $summary['total_repayments'] - (int) $summary['total_expenses'] - (int) $summary['total_withdrawals']; @endphp
+                <tr>
+                    <td>Balance</td>
+                    <td style="font-weight:800;color:{{ $balance >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $balance < 0 ? '−' : '' }}{{ number_format(abs($balance)) }} RWF</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
     <div class="grid">
 
     @if($viewMode === 'summary')
     <div class="cell">
         <div class="cell-head"><span class="dot c-accent"></span><span class="cell-title">Boxes Sold by Product</span></div>
-        @if(count($summary['boxes_by_product']) > 0)
+        @if($showProfit && $profitByProduct->isNotEmpty())
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Boxes</th>
+                    <th>Amount (RWF)</th>
+                    <th>Cost (RWF)</th>
+                    <th>Profit (RWF)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($profitByProduct as $row)
+                <tr>
+                    <td>{{ $row->product_name }}</td>
+                    <td style="text-align:right">{{ number_format($row->boxes) }}</td>
+                    <td style="text-align:right">{{ number_format($row->revenue) }}</td>
+                    <td style="text-align:right">{{ number_format($row->cost) }}</td>
+                    <td style="text-align:right">{{ $row->profit < 0 ? '−' : '' }}{{ number_format(abs($row->profit)) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                @php $pTotal = (int) $profitByProduct->sum('profit'); @endphp
+                <tr>
+                    <td>Total</td>
+                    <td style="text-align:right">{{ number_format($profitByProduct->sum('boxes')) }}</td>
+                    <td style="text-align:right">{{ number_format($profitByProduct->sum('revenue')) }}</td>
+                    <td style="text-align:right">{{ number_format($profitByProduct->sum('cost')) }}</td>
+                    <td style="text-align:right">{{ $pTotal < 0 ? '−' : '' }}{{ number_format(abs($pTotal)) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        @elseif(!$showProfit && count($summary['boxes_by_product']) > 0)
         <table>
             <thead>
                 <tr>
@@ -337,6 +383,8 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                     <th>Opening</th>
                     <th>Closing</th>
                     <th>Variance</th>
+                    <th>MoMo Movement</th>
+                    <th>Bank Movement</th>
                 </tr>
             </thead>
             <tbody>
@@ -346,6 +394,8 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                     <td style="text-align:right">{{ number_format($row->opening) }}</td>
                     <td style="text-align:right">{{ number_format($row->closing) }}{{ $row->is_open ? ' *' : '' }}</td>
                     <td style="text-align:right;color:{{ $row->is_open ? 'var(--dim)' : $varianceColor($row->variance) }}">{{ $row->is_open ? '—' : (($row->variance > 0 ? '+' : '') . number_format($row->variance)) }}</td>
+                    <td style="text-align:right">{{ number_format($row->momo) }}</td>
+                    <td style="text-align:right">{{ number_format($row->bank) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -353,11 +403,13 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                 <tr>
                     <td colspan="3">Total Variance</td>
                     <td style="text-align:right">{{ number_format($cashRegister->sum('variance')) }}</td>
+                    <td style="text-align:right">{{ number_format($cashRegister->sum('momo')) }}</td>
+                    <td style="text-align:right">{{ number_format($cashRegister->sum('bank')) }}</td>
                 </tr>
             </tfoot>
         </table>
         @if($cashRegister->contains('is_open', true))
-        <p class="callout">* still open — closing shown is a live figure, not a final count. Opening is that shop's first session in range; closing is its last.</p>
+        <p class="callout">* still open — closing shown is a live figure, not a final count. Opening is that shop's first session in range; closing is its last. MoMo/Bank Movement is net inflow minus outflow summed across the range — not an account balance.</p>
         @endif
         @elseif($isSingleDay)
         @php $day = $cashRegister->first(); @endphp
@@ -383,6 +435,14 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                     <td style="text-align:right;color:{{ $varianceColor($day->variance) }}">{{ $day->variance > 0 ? '+' : '' }}{{ number_format($day->variance) }} RWF</td>
                 </tr>
                 @endunless
+                <tr>
+                    <td>MoMo Movement</td>
+                    <td style="text-align:right">{{ number_format($day->momo) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Bank Movement</td>
+                    <td style="text-align:right">{{ number_format($day->bank) }} RWF</td>
+                </tr>
             </tbody>
         </table>
         @else
@@ -393,6 +453,8 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                     <th>Opening</th>
                     <th>Closing</th>
                     <th>Variance</th>
+                    <th>MoMo Movement</th>
+                    <th>Bank Movement</th>
                 </tr>
             </thead>
             <tbody>
@@ -402,6 +464,8 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                     <td style="text-align:right">{{ number_format($day->opening) }}</td>
                     <td style="text-align:right">{{ number_format($day->closing) }}{{ $day->is_open ? ' *' : '' }}</td>
                     <td style="text-align:right;color:{{ $day->is_open ? 'var(--dim)' : $varianceColor($day->variance) }}">@if($day->is_open) — @else {{ $day->variance > 0 ? '+' : '' }}{{ number_format($day->variance) }} @endif</td>
+                    <td style="text-align:right">{{ number_format($day->momo) }}</td>
+                    <td style="text-align:right">{{ number_format($day->bank) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -409,6 +473,8 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                 <tr>
                     <td colspan="3">Total Variance</td>
                     <td style="text-align:right">{{ number_format($cashRegister->whereNotNull('variance')->sum('variance')) }}</td>
+                    <td style="text-align:right">{{ number_format($cashRegister->sum('momo')) }}</td>
+                    <td style="text-align:right">{{ number_format($cashRegister->sum('bank')) }}</td>
                 </tr>
             </tfoot>
         </table>
@@ -431,7 +497,7 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
             <tbody>
                 @foreach($channels as $channel)
                     @if($channel['amount'] > 0)
-                    <tr>
+                    <tr style="{{ !empty($channel['uncollected']) ? 'font-style:italic;color:var(--dim)' : '' }}">
                         <td>{{ $channel['label'] }}</td>
                         <td style="text-align:right">{{ number_format($channel['amount']) }}</td>
                         <td style="text-align:right">{{ number_format($summary['total_sales'] > 0 ? ($channel['amount'] / $summary['total_sales']) * 100 : 0, 1) }}%</td>
@@ -447,6 +513,9 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                 </tr>
             </tfoot>
         </table>
+        @if($summary['total_sales_credit'] > 0)
+        <p class="callout">Credit is counted here as revenue because the sale happened, but that money hasn't actually been received — see Outstanding Receivables in Business Position above.</p>
+        @endif
     </div>
     @endif
 
@@ -546,6 +615,45 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
     </div>
     @endif
 
+    @if(count($summary['deposits_detailed']) > 0)
+    <div class="cell span-2">
+        <div class="cell-head"><span class="dot c-accent"></span><span class="cell-title">Bank Deposits</span></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    @if($isAllShops)<th>Shop</th>@endif
+                    <th>Source</th>
+                    <th>Reference</th>
+                    <th>Notes</th>
+                    <th>Amount (RWF)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $printDepositSourceLabels = ['cash' => 'Cash', 'mobile_money' => 'MoMo'];
+                @endphp
+                @foreach($summary['deposits_detailed'] as $row)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($row->session_date)->format('d M Y') }}</td>
+                    @if($isAllShops)<td>{{ $row->shop_name }}</td>@endif
+                    <td>{{ $printDepositSourceLabels[$row->source] ?? ucfirst($row->source) }}</td>
+                    <td>{{ $row->bank_reference ?: '—' }}</td>
+                    <td>{{ $row->notes ?: '—' }}</td>
+                    <td style="text-align:right">{{ number_format($row->amount) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="{{ $isAllShops ? 4 : 3 }}">Total</td>
+                    <td style="text-align:right">{{ number_format($summary['total_deposits']) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
+
     <div class="cell span-2">
         <div class="cell-head"><span class="dot c-red"></span><span class="cell-title">Detailed Expenses</span></div>
         @if(count($summary['expenses_detailed']) > 0)
@@ -556,23 +664,28 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                     @if($isAllShops)<th>Shop</th>@endif
                     <th>Category</th>
                     <th>Description</th>
+                    <th>Payment Method</th>
                     <th>Amount (RWF)</th>
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $printPayMethodLabels = ['cash' => 'Cash', 'mobile_money' => 'MoMo', 'bank_transfer' => 'Bank', 'other' => 'Other'];
+                @endphp
                 @foreach($summary['expenses_detailed'] as $row)
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($row->session_date)->format('d M Y') }}</td>
                     @if($isAllShops)<td>{{ $row->shop_name }}</td>@endif
                     <td>{{ $row->category }}</td>
                     <td>{{ $row->description ?: '—' }}</td>
+                    <td>{{ $printPayMethodLabels[$row->payment_method] ?? ucfirst($row->payment_method) }}</td>
                     <td style="text-align:right">{{ number_format($row->amount) }}</td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="{{ $isAllShops ? 4 : 3 }}">Total</td>
+                    <td colspan="{{ $isAllShops ? 5 : 4 }}">Total</td>
                     <td style="text-align:right">{{ number_format($summary['total_expenses']) }}</td>
                 </tr>
             </tfoot>

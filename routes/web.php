@@ -174,6 +174,7 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/customer-credit', function () { return view('owner.reports.customer-credit'); })->name('customer-credit');
         Route::get('/daily', function () { return view('owner.reports.daily'); })->name('daily');
         Route::get('/daily/print', [OwnerDailyReportController::class, 'print'])->name('daily.print');
+        Route::get('/daily/pdf', [OwnerDailyReportController::class, 'pdf'])->name('daily.pdf');
 
         // Custom report builder
         Route::get('/custom',            [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'library'])->name('custom.library');
@@ -305,6 +306,7 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/daily', function () { return view('shop.reports.daily'); })->name('daily');
             Route::get('/daily/print', [DailyReportController::class, 'print'])->name('daily.print');
+            Route::get('/daily/pdf', [DailyReportController::class, 'pdf'])->name('daily.pdf');
         });
 
         // Warehouse Sale (sell directly from warehouse stock)

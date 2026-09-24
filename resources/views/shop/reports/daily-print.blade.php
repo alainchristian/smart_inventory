@@ -93,7 +93,7 @@ tfoot td:last-child { text-align:right; }
         ['label' => 'Mobile Money', 'amount' => $summary['total_sales_momo']],
         ['label' => 'Card',          'amount' => $summary['total_sales_card']],
         ['label' => 'Bank Transfer', 'amount' => $summary['total_sales_bank_transfer']],
-        ['label' => 'Credit',        'amount' => $summary['total_sales_credit']],
+        ['label' => 'Credit (not yet collected)', 'amount' => $summary['total_sales_credit'], 'uncollected' => true],
         ['label' => 'Other',         'amount' => $summary['total_sales_other']],
     ];
 
@@ -142,13 +142,10 @@ tfoot td:last-child { text-align:right; }
     </div>
 
     @php $isSingleDay = $dateFrom === $dateTo; @endphp
-    <div class="grid">
 
-    {{-- Business Position (Cash on Hand / Outstanding Receivables) — hidden
-         per request; $position is still computed and passed to this view,
-         just not rendered. Re-enable by uncommenting this block.
-    <div class="cell span-2">
-        <div class="section-heading">Business Position — As of Today</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#000;margin-bottom:8px">As of Right Now — Not Affected by the Period Below</div>
+    <div class="cell" style="margin-bottom:20px">
+        <div class="section-heading">Business Position</div>
         <table>
             <thead>
                 <tr>
@@ -167,8 +164,16 @@ tfoot td:last-child { text-align:right; }
                 </tr>
             </tbody>
         </table>
+        @if($position['stale'])
+        <p style="font-size:11px;margin-top:6px;color:#8a5a12;background:#fdf1e2;padding:6px 10px;border-radius:6px;border-left:3px solid #d97706">
+            <strong>⚠ Unreconciled session.</strong>
+            Open since {{ $position['as_of']->format('d M Y') }} ({{ (int) floor($position['as_of']->diffInDays(business_today())) }} days) — nobody has closed/counted this drawer since. Cash on Hand above includes this session's live, uncounted figure.
+        </p>
+        @endif
     </div>
-    --}}
+
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#000;margin-bottom:8px">{{ $period }}</div>
+    <div class="grid">
 
     @if($viewMode === 'summary')
     <div class="cell">
@@ -185,28 +190,32 @@ tfoot td:last-child { text-align:right; }
                     <td>Boxes Sold</td>
                     <td style="text-align:right">{{ number_format($summary['total_boxes_sold']) }}</td>
                 </tr>
+                <tr><td colspan="2" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;border-top:1px solid #000;padding-top:6px">Revenue</td></tr>
                 <tr>
                     <td>Total Sales</td>
                     <td style="text-align:right">{{ number_format($summary['total_sales']) }} RWF</td>
                 </tr>
                 <tr>
-                    <td>Total Credits</td>
+                    <td>— of which Total Credits</td>
                     <td style="text-align:right">{{ number_format($summary['total_sales_credit']) }} RWF</td>
                 </tr>
                 <tr>
-                    <td>Total Expenses</td>
-                    <td style="text-align:right">{{ number_format($summary['total_expenses']) }} RWF</td>
+                    <td>Credit Repayments Received</td>
+                    <td style="text-align:right">{{ number_format($summary['total_repayments']) }} RWF</td>
                 </tr>
-                <tr style="font-weight:700">
-                    <td>Net for Period</td>
-                    <td style="text-align:right">{{ $summary['net_for_period'] < 0 ? '−' : '' }}{{ number_format(abs($summary['net_for_period'])) }} RWF</td>
+                <tr><td colspan="2" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;border-top:1px solid #000;padding-top:6px">Expenses</td></tr>
+                <tr>
+                    <td>Total Expenses</td>
+                    <td style="text-align:right">−{{ number_format($summary['total_expenses']) }} RWF</td>
                 </tr>
                 <tr>
-                    <td>
-                        Credit Repayments Received
-                        <div style="font-size:10px;font-weight:400;margin-top:2px">Cash collected on prior credit — not new revenue, not part of Net for Period above</div>
-                    </td>
-                    <td style="text-align:right">{{ number_format($summary['total_repayments']) }} RWF</td>
+                    <td>Owner Withdrawals</td>
+                    <td style="text-align:right">−{{ number_format($summary['total_withdrawals']) }} RWF</td>
+                </tr>
+                @php $balance = (int) $summary['total_sales'] - (int) $summary['total_sales_credit'] + (int) $summary['total_repayments'] - (int) $summary['total_expenses'] - (int) $summary['total_withdrawals']; @endphp
+                <tr style="font-weight:700">
+                    <td>Balance</td>
+                    <td style="text-align:right">{{ $balance < 0 ? '−' : '' }}{{ number_format(abs($balance)) }} RWF</td>
                 </tr>
             </tbody>
         </table>
@@ -281,6 +290,14 @@ tfoot td:last-child { text-align:right; }
                     <td style="text-align:right">{{ $day->variance > 0 ? '+' : '' }}{{ number_format($day->variance) }} RWF</td>
                 </tr>
                 @endunless
+                <tr>
+                    <td>MoMo Movement</td>
+                    <td style="text-align:right">{{ number_format($day->momo) }} RWF</td>
+                </tr>
+                <tr>
+                    <td>Bank Movement</td>
+                    <td style="text-align:right">{{ number_format($day->bank) }} RWF</td>
+                </tr>
             </tbody>
         </table>
         @else
@@ -291,6 +308,8 @@ tfoot td:last-child { text-align:right; }
                     <th>Opening</th>
                     <th>Closing</th>
                     <th>Variance</th>
+                    <th>MoMo Movement</th>
+                    <th>Bank Movement</th>
                 </tr>
             </thead>
             <tbody>
@@ -300,6 +319,8 @@ tfoot td:last-child { text-align:right; }
                     <td style="text-align:right">{{ number_format($day->opening) }}</td>
                     <td style="text-align:right">{{ number_format($day->closing) }}{{ $day->is_open ? ' *' : '' }}</td>
                     <td style="text-align:right">@if($day->is_open) — @else {{ $day->variance > 0 ? '+' : '' }}{{ number_format($day->variance) }} @endif</td>
+                    <td style="text-align:right">{{ number_format($day->momo) }}</td>
+                    <td style="text-align:right">{{ number_format($day->bank) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -307,6 +328,8 @@ tfoot td:last-child { text-align:right; }
                 <tr>
                     <td colspan="3">Total Variance</td>
                     <td style="text-align:right">{{ number_format($cashRegister->whereNotNull('variance')->sum('variance')) }}</td>
+                    <td style="text-align:right">{{ number_format($cashRegister->sum('momo')) }}</td>
+                    <td style="text-align:right">{{ number_format($cashRegister->sum('bank')) }}</td>
                 </tr>
             </tfoot>
         </table>
@@ -362,7 +385,7 @@ tfoot td:last-child { text-align:right; }
             <tbody>
                 @foreach($channels as $channel)
                     @if($channel['amount'] > 0)
-                    <tr>
+                    <tr style="{{ !empty($channel['uncollected']) ? 'font-style:italic;color:#555' : '' }}">
                         <td>{{ $channel['label'] }}</td>
                         <td style="text-align:right">{{ number_format($channel['amount']) }}</td>
                         <td style="text-align:right">{{ number_format($summary['total_sales'] > 0 ? ($channel['amount'] / $summary['total_sales']) * 100 : 0, 1) }}%</td>
@@ -378,6 +401,9 @@ tfoot td:last-child { text-align:right; }
                 </tr>
             </tfoot>
         </table>
+        @if($summary['total_sales_credit'] > 0)
+        <p style="font-size:11px;margin-top:6px;color:#555">Credit is counted here as revenue because the sale happened, but that money hasn't actually been received — see Outstanding Receivables in Business Position above.</p>
+        @endif
     </div>
     @endif
 
@@ -477,6 +503,43 @@ tfoot td:last-child { text-align:right; }
     </div>
     @endif
 
+    @if(count($summary['deposits_detailed']) > 0)
+    <div class="cell span-2">
+        <div class="section-heading">Bank Deposits</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Source</th>
+                    <th>Reference</th>
+                    <th>Notes</th>
+                    <th>Amount (RWF)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $printDepositSourceLabels = ['cash' => 'Cash', 'mobile_money' => 'MoMo'];
+                @endphp
+                @foreach($summary['deposits_detailed'] as $row)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($row->session_date)->format('d M Y') }}</td>
+                    <td>{{ $printDepositSourceLabels[$row->source] ?? ucfirst($row->source) }}</td>
+                    <td>{{ $row->bank_reference ?: '—' }}</td>
+                    <td>{{ $row->notes ?: '—' }}</td>
+                    <td style="text-align:right">{{ number_format($row->amount) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">Total</td>
+                    <td style="text-align:right">{{ number_format($summary['total_deposits']) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
+
     <div class="cell span-2">
         <div class="section-heading">Detailed Expenses</div>
         @if(count($summary['expenses_detailed']) > 0)
@@ -486,22 +549,27 @@ tfoot td:last-child { text-align:right; }
                     <th>Date</th>
                     <th>Category</th>
                     <th>Description</th>
+                    <th>Payment Method</th>
                     <th>Amount (RWF)</th>
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $printPayMethodLabels = ['cash' => 'Cash', 'mobile_money' => 'MoMo', 'bank_transfer' => 'Bank', 'other' => 'Other'];
+                @endphp
                 @foreach($summary['expenses_detailed'] as $row)
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($row->session_date)->format('d M Y') }}</td>
                     <td>{{ $row->category }}</td>
                     <td>{{ $row->description ?: '—' }}</td>
+                    <td>{{ $printPayMethodLabels[$row->payment_method] ?? ucfirst($row->payment_method) }}</td>
                     <td style="text-align:right">{{ number_format($row->amount) }}</td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3">Total</td>
+                    <td colspan="4">Total</td>
                     <td style="text-align:right">{{ number_format($summary['total_expenses']) }}</td>
                 </tr>
             </tfoot>

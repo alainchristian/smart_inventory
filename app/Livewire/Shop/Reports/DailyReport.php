@@ -94,7 +94,12 @@ class DailyReport extends Component
     {
         $shopId = auth()->user()->location_id;
 
-        return app(DailySessionService::class)->computeRangeSummary($shopId, $this->dateFrom, $this->dateTo);
+        $summary = app(DailySessionService::class)->computeRangeSummary($shopId, $this->dateFrom, $this->dateTo);
+
+        // Shop managers never see profit/cost figures — strip them at the source.
+        unset($summary['total_cogs'], $summary['gross_profit'], $summary['net_for_period']);
+
+        return $summary;
     }
 
     public function getCashRegisterProperty(): \Illuminate\Support\Collection
@@ -113,12 +118,30 @@ class DailyReport extends Component
         return app(DailySessionService::class)->getCurrentCashPosition($shopId);
     }
 
+    public function getReconciliationProperty(): \Illuminate\Support\Collection
+    {
+        return app(DailySessionService::class)->getCashReconciliation(auth()->user()->location_id, $this->dateFrom, $this->dateTo);
+    }
+
+    public function getComparisonProperty(): array
+    {
+        return app(DailySessionService::class)->computeComparisonTotals(auth()->user()->location_id, $this->dateFrom, $this->dateTo);
+    }
+
+    public function getChecksProperty(): array
+    {
+        return app(DailySessionService::class)->getReportChecks(auth()->user()->location_id, $this->dateFrom, $this->dateTo);
+    }
+
     public function render()
     {
         return view('livewire.shop.reports.daily-report', [
             'summary'      => $this->summary,
             'cashRegister' => $this->cashRegister,
             'position'     => $this->position,
+            'reconciliation' => $this->reconciliation,
+            'comparison'     => $this->comparison,
+            'checks'         => $this->checks,
         ]);
     }
 }
