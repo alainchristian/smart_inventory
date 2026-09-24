@@ -536,6 +536,9 @@ class DailySessionService
             'bank_by_customer'         => $bankByCustomer,
             'outstanding_receivables'  => $outstandingReceivables,
             'customers_owing_count'    => $customersOwingCount,
+            // Credit owed by customers not tied to any shop (customers.shop_id NULL). A single-shop
+            // 'outstanding_receivables' excludes these, the all-shops figure includes them.
+            'unassigned_receivables'   => (int) Customer::whereNull('shop_id')->sum('outstanding_balance'),
             // total_cogs/gross_profit: what the sold stock cost, and revenue
             // minus that cost — see the estimate caveat on $totalCogs above.
             'total_cogs'               => $totalCogs,

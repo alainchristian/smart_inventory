@@ -447,6 +447,6 @@ class DailyReportDataTest extends TestCase
         $count = count(DB::getQueryLog());
         DB::disableQueryLog();
 
-        $this->assertSame(18, $count, 'query count after EXT_01 extension (was 16 before)');
+        $this->assertSame(19, $count, 'query count: 16 originally, +2 for EXT_01, +1 for unassigned_receivables');
     }
 }

@@ -224,6 +224,12 @@
                 <td>Outstanding Receivables</td>
                 <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:var(--amber)">{{ number_format($summary['outstanding_receivables']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
             </tr>
+            @if(true && ($summary['unassigned_receivables'] ?? 0) > 0)
+            <tr>
+                <td style="color:var(--text-dim)">Customers not tied to a shop <span style="font-size:11px">(not included above)</span></td>
+                <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:var(--text-dim)">{{ number_format($summary['unassigned_receivables']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
+            </tr>
+            @endif
         </tbody>
     </table>
     </div>
