@@ -214,28 +214,46 @@ class ReceiveBoxes extends Component
         $this->selectedProductId = null;
         $this->selectedProductName = null;
         $this->productSearch = '';
-        $this->searchResults = [];
+        $this->performProductSearch();
         $this->showReceiveModal = true;
     }
 
     /**
-     * Search products by name/SKU for unknown barcodes
+     * Search products by name/SKU — with an empty term this returns a
+     * default browse list instead of nothing, so the result panel is
+     * populated as soon as it opens, not only once the user starts typing.
      */
-    public function performProductSearch()
+    public function performProductSearch(): void
     {
-        if (strlen($this->productSearch) < 2) {
-            $this->searchResults = [];
-            return;
-        }
+        $term = trim($this->productSearch);
 
-        $this->searchResults = Product::where('is_active', true)
-            ->where(function ($query) {
-                $query->where('name', 'like', "%{$this->productSearch}%")
-                    ->orWhere('sku', 'like', "%{$this->productSearch}%");
-            })
-            ->limit(10)
-            ->get()
-            ->toArray();
+        $products = Product::with('category')
+            ->where('is_active', true)
+            ->when($term !== '', fn ($q) => $q->where(function ($qq) use ($term) {
+                $qq->where('name', 'ILIKE', "%{$term}%")
+                   ->orWhere('sku', 'ILIKE', "%{$term}%");
+            }))
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+
+        $boxCounts = \Illuminate\Support\Facades\DB::table('boxes')
+            ->whereIn('product_id', $products->pluck('id'))
+            ->whereIn('status', ['full', 'partial'])
+            ->where('items_remaining', '>', 0)
+            ->groupBy('product_id')
+            ->selectRaw('product_id, COUNT(*) as total_boxes')
+            ->pluck('total_boxes', 'product_id');
+
+        $this->searchResults = $products->map(fn ($p) => [
+            'id'            => $p->id,
+            'name'          => $p->name,
+            'sku'           => $p->sku,
+            'items_per_box' => $p->items_per_box,
+            'selling_price' => $p->selling_price,
+            'category_name' => $p->category->name ?? null,
+            'total_boxes'   => (int) ($boxCounts[$p->id] ?? 0),
+        ])->toArray();
     }
 
     /**
@@ -270,7 +288,7 @@ class ReceiveBoxes extends Component
         $this->barcodeIsKnown = false;
         $this->showProductSearch = false;
         $this->productSearch = '';
-        $this->searchResults = [];
+        $this->performProductSearch();
         $this->selectedProductId = null;
         $this->productBarcode = null;
     }
@@ -360,7 +378,7 @@ class ReceiveBoxes extends Component
         // Defense in depth — route middleware already restricts this page to
         // warehouse_manager/owner, but this component method could in principle
         // be invoked directly if a request ever reaches a mounted instance.
-        if (! auth()->user()->isOwner() && ! auth()->user()->isWarehouseManager()) {
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin() && ! auth()->user()->isWarehouseManager()) {
             session()->flash('error', 'You are not authorized to receive stock.');
             return;
         }
@@ -418,7 +436,9 @@ class ReceiveBoxes extends Component
                 }
 
                 // Step 2: Save barcode association if "remember" is checked and barcode is unknown
-                if ($this->rememberBarcode && !$this->barcodeIsKnown && !$this->isNewProduct) {
+                // (only relevant when a barcode was actually scanned/typed — the "Browse & Select
+                // Product" path never sets one, and $rememberBarcode defaults to true regardless)
+                if ($this->rememberBarcode && !$this->barcodeIsKnown && !$this->isNewProduct && !empty($this->productBarcode)) {
                     // Check if association doesn't already exist
                     $exists = ProductBarcode::where('barcode', $this->productBarcode)
                         ->where('product_id', $this->productId)
@@ -776,7 +796,7 @@ class ReceiveBoxes extends Component
     public function confirmExcelImport()
     {
         // Defense in depth — see createBoxes() for rationale.
-        if (! auth()->user()->isOwner() && ! auth()->user()->isWarehouseManager()) {
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin() && ! auth()->user()->isWarehouseManager()) {
             session()->flash('error', 'You are not authorized to receive stock.');
             return;
         }
@@ -1062,7 +1082,7 @@ class ReceiveBoxes extends Component
     public function render()
     {
         return view('livewire.warehouse.inventory.receive-boxes', [
-            'warehouses' => auth()->user()->isOwner()
+            'warehouses' => (auth()->user()->isOwner() || auth()->user()->isAdmin())
                 ? Warehouse::orderBy('name')->get()
                 : Warehouse::where('id', $this->warehouseId)->get(),
             'product' => $this->productId ? Product::find($this->productId) : null,

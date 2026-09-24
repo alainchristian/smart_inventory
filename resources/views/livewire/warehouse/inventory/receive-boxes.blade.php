@@ -890,37 +890,55 @@
                 </div>
             </div>
 
-            <div class="rb-field">
-                <label class="rb-label">Search Product</label>
-                <input type="text"
-                       wire:model.live.debounce.300ms="productSearch"
-                       placeholder="Type product name or SKU…"
-                       class="rb-input">
-                <p class="rb-hint">Start typing to see matching products</p>
-            </div>
+            <div x-data="{ suggestOpen: false }" @click.outside="suggestOpen = false">
+                <div class="rb-field">
+                    <label class="rb-label">Search Product</label>
+                    <input type="text"
+                           wire:model.live.debounce.300ms="productSearch"
+                           placeholder="Type product name or SKU…"
+                           class="rb-input"
+                           autocomplete="off"
+                           @focus="suggestOpen = true"
+                           @keydown.escape="suggestOpen = false">
+                    <p class="rb-hint">Click to browse, or type to filter…</p>
+                </div>
 
-            @if(!empty($searchResults))
-            <div class="rb-results" style="margin-bottom:14px">
-                @foreach($searchResults as $result)
-                <div wire:click="selectProduct({{ $result['id'] }})"
-                     class="rb-result {{ $selectedProductId == $result['id'] ? 'sel' : '' }}">
-                    <div>
-                        <div class="rb-result-name">{{ $result['name'] }}</div>
-                        <div class="rb-result-meta">SKU: {{ $result['sku'] }} · {{ $result['items_per_box'] }} items/box</div>
+                <div x-show="suggestOpen" x-cloak>
+                    @if(!empty($searchResults))
+                    <div class="rb-results" style="margin-bottom:14px">
+                        @foreach($searchResults as $result)
+                        <div wire:click="selectProduct({{ $result['id'] }})"
+                             @click="suggestOpen = false"
+                             class="rb-result {{ $selectedProductId == $result['id'] ? 'sel' : '' }}"
+                             wire:key="lbp-result-{{ $result['id'] }}">
+                            <div style="min-width:0">
+                                <div class="rb-result-name">{{ $result['name'] }}</div>
+                                <div class="rb-result-meta">
+                                    @if($result['category_name'])
+                                    <span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;
+                                                 background:var(--accent-dim);color:var(--accent);margin-right:5px">{{ $result['category_name'] }}</span>
+                                    @endif
+                                    SKU: {{ $result['sku'] }} · {{ $result['items_per_box'] }} items/box
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                                <span style="font-size:11px;font-weight:600;color:var(--text-dim);white-space:nowrap">{{ number_format($result['total_boxes']) }} {{ Str::plural('box', $result['total_boxes']) }}</span>
+                                @if($selectedProductId == $result['id'])
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
+                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                @endif
+                            </div>
+                        </div>
+                        @endforeach
                     </div>
-                    @if($selectedProductId == $result['id'])
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
-                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
+                    @elseif($productSearch !== '')
+                    <div style="text-align:center;padding:20px 0 14px;color:var(--text-dim);font-size:13px">
+                        No products found for "{{ $productSearch }}"
+                    </div>
                     @endif
                 </div>
-                @endforeach
             </div>
-            @elseif(strlen($productSearch) >= 2)
-            <div style="text-align:center;padding:20px 0 14px;color:var(--text-dim);font-size:13px">
-                No products found for "{{ $productSearch }}"
-            </div>
-            @endif
 
             @if($selectedProductId)
             <div class="rb-chk-row" style="margin-bottom:14px">
@@ -956,63 +974,82 @@
                 <div class="rb-alert-body">Browse existing products or create a new one if it doesn't exist yet</div>
             </div>
 
-            <div class="rb-field">
-                <label class="rb-label">Search Product</label>
-                <input type="text"
-                       wire:model.live.debounce.300ms="productSearch"
-                       placeholder="Type product name or SKU…"
-                       class="rb-input"
-                       autofocus>
-                <p class="rb-hint">Start typing to see matching products</p>
-            </div>
+            <div x-data="{ suggestOpen: false }" @click.outside="suggestOpen = false">
+                <div class="rb-field">
+                    <label class="rb-label">Search Product</label>
+                    <input type="text"
+                           wire:model.live.debounce.300ms="productSearch"
+                           placeholder="Type product name or SKU…"
+                           class="rb-input"
+                           autocomplete="off"
+                           @focus="suggestOpen = true"
+                           @keydown.escape="suggestOpen = false">
+                    <p class="rb-hint">Click to browse, or type to filter…</p>
+                </div>
 
-            @if(!empty($searchResults))
-            <div class="rb-results" style="margin-bottom:14px">
-                @foreach($searchResults as $result)
-                <div wire:click="selectProductFromDropdown({{ $result['id'] }})"
-                     class="rb-result {{ $selectedProductId == $result['id'] ? 'sel' : '' }}">
-                    <div>
-                        <div class="rb-result-name">{{ $result['name'] }}</div>
-                        <div class="rb-result-meta">
-                            SKU: {{ $result['sku'] }} · {{ $result['items_per_box'] }} items/box · {{ number_format($result['selling_price']) }} RWF
+                @if(!empty($searchResults) || $productSearch !== '')
+                <div x-show="suggestOpen" x-cloak>
+                    @if(!empty($searchResults))
+                    <div class="rb-results" style="margin-bottom:14px">
+                        @foreach($searchResults as $result)
+                        <div wire:click="selectProductFromDropdown({{ $result['id'] }})"
+                             @click="suggestOpen = false"
+                             class="rb-result {{ $selectedProductId == $result['id'] ? 'sel' : '' }}"
+                             wire:key="browse-result-{{ $result['id'] }}">
+                            <div style="min-width:0">
+                                <div class="rb-result-name">{{ $result['name'] }}</div>
+                                <div class="rb-result-meta">
+                                    @if($result['category_name'])
+                                    <span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;
+                                                 background:var(--accent-dim);color:var(--accent);margin-right:5px">{{ $result['category_name'] }}</span>
+                                    @endif
+                                    SKU: {{ $result['sku'] }} · {{ $result['items_per_box'] }} items/box · {{ number_format($result['selling_price']) }} RWF
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                                <span style="font-size:11px;font-weight:600;color:var(--text-dim);white-space:nowrap">{{ number_format($result['total_boxes']) }} {{ Str::plural('box', $result['total_boxes']) }}</span>
+                                @if($selectedProductId == $result['id'])
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
+                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                @endif
+                            </div>
                         </div>
+                        @endforeach
                     </div>
-                    @if($selectedProductId == $result['id'])
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
-                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
+                    @else
+                    <div style="text-align:center;padding:16px 0 14px">
+                        <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">
+                            No products found for "{{ $productSearch }}"
+                        </p>
+                        <button wire:click="createNewProduct" type="button"
+                                style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+                                       background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);
+                                       font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Create New Product
+                        </button>
+                    </div>
                     @endif
                 </div>
-                @endforeach
+                @else
+                {{-- No search term and no active products at all in the
+                     catalog — an always-visible nudge, not a suggestion --}}
+                <div style="text-align:center;padding:12px 0 14px">
+                    <button wire:click="createNewProduct" type="button"
+                            style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+                                   background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);
+                                   font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Create New Product
+                    </button>
+                </div>
+                @endif
             </div>
-            @elseif(strlen($productSearch) >= 2)
-            <div style="text-align:center;padding:16px 0 14px">
-                <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">
-                    No products found for "{{ $productSearch }}"
-                </p>
-                <button wire:click="createNewProduct" type="button"
-                        style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
-                               background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);
-                               font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    Create New Product
-                </button>
-            </div>
-            @else
-            <div style="text-align:center;padding:12px 0 14px">
-                <button wire:click="createNewProduct" type="button"
-                        style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
-                               background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);
-                               font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    Create New Product
-                </button>
-            </div>
-            @endif
 
             @elseif($isNewProduct)
             {{-- ── SCENARIO 4: New product form ── --}}

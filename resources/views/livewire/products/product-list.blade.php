@@ -15,6 +15,23 @@
   .pl-hide-mob { display:none !important; }
   .pl-table { min-width:360px !important; }
 }
+
+/* Search suggestions dropdown */
+.pl-suggest-panel {
+  position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;
+  background:var(--surface);border-radius:var(--rsm);box-shadow:var(--shadow-card-hover);
+  max-height:320px;overflow-y:auto;
+}
+.pl-suggest-item {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background var(--tr);
+}
+.pl-suggest-item:last-child { border-bottom:none; }
+.pl-suggest-item:hover { background:var(--surface2); }
+.pl-suggest-main { font-size:13px;font-weight:700;color:var(--text); }
+.pl-suggest-sub { display:flex;align-items:center;gap:6px;margin-top:3px; }
+.pl-suggest-stat { font-size:11px;font-weight:600;color:var(--text-dim);white-space:nowrap;flex-shrink:0; }
+.pl-suggest-empty { padding:14px;text-align:center;font-size:12px;color:var(--text-dim); }
 </style>
 
   {{-- Flash messages --}}
@@ -44,8 +61,9 @@
               padding:12px 14px;margin-bottom:12px">
     <div class="pl-filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
 
-      {{-- Search --}}
-      <div style="flex:1;min-width:180px">
+      {{-- Search — with a suggestions dropdown on focus, still fully
+           typeable (the dropdown just narrows live alongside the filter) --}}
+      <div style="flex:1;min-width:180px" x-data="{ suggestOpen: false }" @click.outside="suggestOpen = false">
         <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
                     color:var(--text-sub);margin-bottom:4px">Search</div>
         <div style="position:relative">
@@ -55,12 +73,39 @@
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           <input wire:model.live.debounce.300ms="search"
-                 type="text" placeholder="Name, SKU, barcode..."
+                 type="text" placeholder="Name, SKU, barcode..." autocomplete="off"
                  style="width:100%;padding:6px 8px 6px 28px;border:1px solid var(--border);
                         border-radius:var(--rx);font-size:12px;background:var(--surface);
                         color:var(--text);outline:none;box-sizing:border-box"
                  onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+                 onblur="this.style.borderColor='var(--border)'"
+                 @focus="suggestOpen = true"
+                 @keydown.escape="suggestOpen = false">
+
+          <div class="pl-suggest-panel" x-show="suggestOpen" x-cloak style="display:none">
+            @forelse($suggestions as $sug)
+            <div class="pl-suggest-item"
+                 wire:click="selectProductSuggestion({{ $sug->id }})"
+                 @click="suggestOpen = false"
+                 wire:key="pl-sugg-{{ $sug->id }}">
+              <div style="min-width:0">
+                <div class="pl-suggest-main">{{ $sug->name }}</div>
+                <div class="pl-suggest-sub">
+                  @if($sug->category_name)
+                  <span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;
+                               background:var(--accent-dim);color:var(--accent)">{{ $sug->category_name }}</span>
+                  @endif
+                  @if($sug->sku)
+                  <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">{{ $sug->sku }}</span>
+                  @endif
+                </div>
+              </div>
+              <span class="pl-suggest-stat">{{ number_format($sug->total_boxes) }} {{ Str::plural('box', $sug->total_boxes) }}</span>
+            </div>
+            @empty
+            <div class="pl-suggest-empty">No products match{{ $search ? " \"{$search}\"" : '' }}</div>
+            @endforelse
+          </div>
         </div>
       </div>
 
@@ -213,11 +258,23 @@
             $stock       = $stockData[$product->id] ?? null;
             $sales       = $salesStats[$product->id] ?? null;
             $totalItems  = $stock ? (int)$stock->total_items : 0;
+            $totalBoxes  = $stock ? (int)$stock->total_boxes : 0;
             $isLowStock  = $totalItems <= $product->low_stock_threshold;
             $isZeroStock = $totalItems === 0;
             $revenue     = $sales ? (int)$sales->revenue    : 0;
             $units       = $sales ? (int)$sales->units_sold : 0;
             $hasOverride = $sales && $sales->has_override;
+            // Units shown as a box count only when this category is
+            // full-box-only (every sale there is a whole box, so the
+            // conversion is exact) — otherwise items, since individual
+            // sales don't divide cleanly into boxes. Same rule as the
+            // Boxes page's Sold column.
+            $boxOnlySales = $product->category_id
+              ? !$settings->categoryAllowsIndividualSales($product->category_id)
+              : false;
+            $unitsBoxes  = ($boxOnlySales && $product->items_per_box > 0)
+              ? intdiv($units, $product->items_per_box)
+              : 0;
             $marginPct   = ($product->selling_price > 0 && $product->purchase_price > 0)
               ? round(($product->selling_price - $product->purchase_price) / $product->selling_price * 100, 1)
               : null;
@@ -248,13 +305,14 @@
             <td style="padding:10px 12px;text-align:right">
               <div style="font-size:13px;font-weight:700;font-family:var(--mono);
                            color:{{ $isZeroStock ? 'var(--red)' : ($isLowStock ? 'var(--amber)' : 'var(--text)') }}">
-                {{ number_format($totalItems) }}
+                {{ number_format($totalBoxes) }} <span style="font-size:10px;font-weight:600">{{ Str::plural('box', $totalBoxes) }}</span>
               </div>
-              @if($isOwner && $stock)
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px;white-space:nowrap">
-                  {{ number_format($stock->warehouse_items) }}wh &middot; {{ number_format($stock->shop_items) }}sh
-                </div>
-              @endif
+              <div style="font-size:10px;color:var(--text-dim);margin-top:1px;white-space:nowrap">
+                {{ number_format($totalItems) }} items
+                @if($isOwner && $stock)
+                  &middot; {{ number_format($stock->warehouse_items) }}wh &middot; {{ number_format($stock->shop_items) }}sh
+                @endif
+              </div>
               @if($isZeroStock)
                 <div style="font-size:9px;font-weight:700;color:var(--red);white-space:nowrap">OUT</div>
               @elseif($isLowStock)
@@ -268,7 +326,7 @@
               <div style="font-size:12px;font-weight:700;font-family:var(--mono);
                            color:{{ $revenue > 0 ? 'var(--text)' : 'var(--text-dim)' }}">
                 @if($revenue > 0)
-                  {{ $revenue >= 1000000 ? number_format($revenue/1000000,1).'M' : number_format($revenue/1000,0).'K' }}
+                  {{ number_format($revenue) }}
                 @else
                   --
                 @endif
@@ -279,7 +337,13 @@
             <td class="pl-hide-tab" style="padding:10px 12px;text-align:right">
               <div style="font-size:12px;font-family:var(--mono);
                            color:{{ $units > 0 ? 'var(--text-sub)' : 'var(--text-dim)' }}">
-                {{ $units > 0 ? number_format($units) : '--' }}
+                @if($units === 0)
+                  --
+                @elseif($boxOnlySales)
+                  {{ number_format($unitsBoxes) }} <span style="font-size:10px">{{ Str::plural('box', $unitsBoxes) }}</span>
+                @else
+                  {{ number_format($units) }}
+                @endif
               </div>
             </td>
 

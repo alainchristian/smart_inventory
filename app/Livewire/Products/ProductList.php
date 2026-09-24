@@ -4,6 +4,7 @@ namespace App\Livewire\Products;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -66,6 +67,15 @@ class ProductList extends Component
         $this->resetPage();
     }
 
+    public function selectProductSuggestion(int $productId): void
+    {
+        $product = Product::find($productId);
+        if ($product) {
+            $this->search = $product->name;
+        }
+        $this->resetPage();
+    }
+
     public function sortBy(string $field): void
     {
         if ($this->sortBy === $field) {
@@ -85,8 +95,8 @@ class ProductList extends Component
     {
         $product = Product::findOrFail($productId);
 
-        if (! auth()->user()->isOwner()) {
-            session()->flash('error', 'Only owners can delete products.');
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
+            session()->flash('error', 'Only owners and admins can delete products.');
             return;
         }
 
@@ -103,9 +113,9 @@ class ProductList extends Component
     {
         $product = Product::findOrFail($productId);
 
-        // Only owners can toggle — check role directly as a safeguard
-        if (! auth()->user()->isOwner()) {
-            session()->flash('error', 'Only owners can change product status.');
+        // Only owners and admins can toggle — check role directly as a safeguard
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
+            session()->flash('error', 'Only owners and admins can change product status.');
             return;
         }
 
@@ -118,20 +128,27 @@ class ProductList extends Component
 
     private function periodRange(): array
     {
-        return match ($this->period) {
-            'today'   => [today(),                      now()->endOfDay()],
-            'week'    => [now()->startOfWeek(),          now()->endOfDay()],
-            'quarter' => [now()->startOfQuarter(),       now()->endOfDay()],
-            'year'    => [now()->startOfYear(),          now()->endOfDay()],
-            'custom'  => [$this->from ?? today(),        $this->to ?? now()->endOfDay()],
-            default   => [now()->startOfMonth(),         now()->endOfDay()],
-        };
+        // TimeFilter.php already resolves the correct [from, to] for every
+        // preset it supports (today/yesterday/week/month/last_month/last_30)
+        // and sends both via the 'time-filter-changed' event — trust those
+        // directly instead of re-deriving from $this->period, whose preset
+        // names here (today/week/quarter/year/custom) didn't actually match
+        // what TimeFilter dispatches, so every preset except Today/This Week
+        // silently fell through to a hardcoded "this month" range.
+        if ($this->from && $this->to) {
+            return [$this->from, \Carbon\Carbon::parse($this->to)->endOfDay()];
+        }
+
+        // Before TimeFilter has dispatched anything yet — matches its own
+        // default selected preset ('today').
+        return [today(), now()->endOfDay()];
     }
 
     public function render()
     {
-        $user    = auth()->user();
-        $isOwner = $user->isOwner();
+        $user     = auth()->user();
+        $isOwner  = $user->isOwner() || $user->isAdmin();
+        $settings = app(SettingsService::class);
         [$start, $end] = $this->periodRange();
 
         // Base product query
@@ -238,6 +255,17 @@ class ProductList extends Component
             );
         }
 
+        // Search suggestions dropdown — reuses the already-filtered page of
+        // $products (so it respects category/active/low-stock too) instead
+        // of a separate query; capped for a compact dropdown.
+        $suggestions = collect($products->items())->take(8)->map(fn ($p) => (object) [
+            'id'            => $p->id,
+            'name'          => $p->name,
+            'sku'           => $p->sku,
+            'category_name' => $p->category->name ?? null,
+            'total_boxes'   => $stockData[$p->id]->total_boxes ?? 0,
+        ]);
+
         return view('livewire.products.product-list', [
             'products'    => $products,
             'categories'  => Category::active()->orderBy('name')->get(),
@@ -245,6 +273,8 @@ class ProductList extends Component
             'stockData'   => $stockData,
             'isOwner'     => $isOwner,
             'periodLabel' => ucfirst($this->period),
+            'suggestions' => $suggestions,
+            'settings'    => $settings,
         ]);
     }
 }

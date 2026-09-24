@@ -26,14 +26,13 @@ class ProductKpiRow extends Component
 
     private function periodRange(): array
     {
-        return match ($this->period) {
-            'today'   => [today(),                      now()->endOfDay()],
-            'week'    => [now()->startOfWeek(),          now()->endOfDay()],
-            'quarter' => [now()->startOfQuarter(),       now()->endOfDay()],
-            'year'    => [now()->startOfYear(),          now()->endOfDay()],
-            'custom'  => [$this->from ?? today(),        $this->to ?? now()->endOfDay()],
-            default   => [now()->startOfMonth(),         now()->endOfDay()],
-        };
+        // See ProductList::periodRange() for why this trusts TimeFilter's
+        // resolved from/to directly instead of re-matching on preset name.
+        if ($this->from && $this->to) {
+            return [$this->from, \Carbon\Carbon::parse($this->to)->endOfDay()];
+        }
+
+        return [today(), now()->endOfDay()];
     }
 
     public function render()
