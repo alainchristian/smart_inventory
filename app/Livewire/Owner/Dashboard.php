@@ -22,8 +22,8 @@ class Dashboard extends Component
 
     public function mount()
     {
-        // Ensure only owners can access
-        if (!auth()->user()->isOwner()) {
+        // Owner and Admin both have full dashboard access
+        if (!auth()->user()->isOwner() && !auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized access.');
         }
     }

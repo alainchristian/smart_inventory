@@ -9,7 +9,7 @@ class BankDepositPolicy
 {
     public function void(User $user, BankDeposit $deposit): bool
     {
-        if ($user->isOwner()) {
+        if ($user->isOwner() || $user->isAdmin()) {
             return true;
         }
 

@@ -9,41 +9,41 @@ class ProductPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isOwner() || $user->isWarehouseManager() || $user->isShopManager();
+        return $user->isOwner() || $user->isAdmin() || $user->isWarehouseManager() || $user->isShopManager();
     }
 
     public function view(User $user, Product $product): bool
     {
-        return $user->isOwner() || $user->isWarehouseManager() || $user->isShopManager();
+        return $user->isOwner() || $user->isAdmin() || $user->isWarehouseManager() || $user->isShopManager();
     }
 
     public function create(User $user): bool
     {
-        return $user->isOwner();
+        return $user->isOwner() || $user->isAdmin();
     }
 
     public function update(User $user, Product $product): bool
     {
-        return $user->isOwner();
+        return $user->isOwner() || $user->isAdmin();
     }
 
     public function delete(User $user, Product $product): bool
     {
-        return $user->isOwner();
+        return $user->isOwner() || $user->isAdmin();
     }
 
     public function restore(User $user, Product $product): bool
     {
-        return $user->isOwner();
+        return $user->isOwner() || $user->isAdmin();
     }
 
     public function forceDelete(User $user, Product $product): bool
     {
-        return $user->isOwner();
+        return $user->isOwner() || $user->isAdmin();
     }
 
     public function viewPurchasePrice(User $user): bool
     {
-        return $user->isOwner();
+        return $user->isOwner() || $user->isAdmin();
     }
 }

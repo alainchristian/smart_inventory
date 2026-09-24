@@ -93,8 +93,8 @@ class CreateProduct extends Component
 
     public function save(): void
     {
-        if (! auth()->user()->isOwner()) {
-            session()->flash('error', 'Only owners can create products.');
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
+            session()->flash('error', 'Only owners and admins can create products.');
             return;
         }
 

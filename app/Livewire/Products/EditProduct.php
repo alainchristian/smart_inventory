@@ -94,8 +94,8 @@ class EditProduct extends Component
 
     public function update(): void
     {
-        if (! auth()->user()->isOwner()) {
-            session()->flash('error', 'Only owners can edit products.');
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
+            session()->flash('error', 'Only owners and admins can edit products.');
             return;
         }
 

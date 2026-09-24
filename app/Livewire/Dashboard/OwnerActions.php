@@ -336,7 +336,7 @@ class OwnerActions extends Component
     public function forceCloseSession(int $sessionId): void
     {
         $user = auth()->user();
-        if (! $user->isOwner()) return;
+        if (! $user->isOwner() && ! $user->isAdmin()) return;
 
         $session = DailySession::with('shop')->find($sessionId);
         if (! $session || $session->status !== 'open') return;

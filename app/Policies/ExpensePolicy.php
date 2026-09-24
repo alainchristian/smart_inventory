@@ -9,7 +9,7 @@ class ExpensePolicy
 {
     public function void(User $user, Expense $expense): bool
     {
-        if ($user->isOwner()) {
+        if ($user->isOwner() || $user->isAdmin()) {
             return true;
         }
 

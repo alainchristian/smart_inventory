@@ -15,7 +15,7 @@ class SalePolicy
 
     public function view(User $user, Sale $sale): bool
     {
-        if ($user->isOwner()) {
+        if ($user->isOwner() || $user->isAdmin()) {
             return true;
         }
 
@@ -27,8 +27,8 @@ class SalePolicy
 
     public function create(User $user): bool
     {
-        // Only shop managers and owners can create sales
-        return $user->isShopManager() || $user->isOwner();
+        // Shop managers, owners, and admins can create sales
+        return $user->isShopManager() || $user->isOwner() || $user->isAdmin();
     }
 
     public function void(User $user, Sale $sale): bool
@@ -38,8 +38,8 @@ class SalePolicy
             return false;
         }
 
-        // Owner can void any sale
-        if ($user->isOwner()) {
+        // Owner or admin can void any sale
+        if ($user->isOwner() || $user->isAdmin()) {
             return true;
         }
 
@@ -53,13 +53,13 @@ class SalePolicy
     public function modifyPrice(User $user, Sale $sale): bool
     {
         // Shop managers can modify (requires approval)
-        // Owners can modify without approval
-        return $user->isShopManager() || $user->isOwner();
+        // Owners and admins can modify without approval
+        return $user->isShopManager() || $user->isOwner() || $user->isAdmin();
     }
 
     public function approvePriceOverride(User $user, Sale $sale): bool
     {
-        // Only owners can approve price overrides
-        return $user->isOwner() && $sale->has_price_override;
+        // Owners and admins can approve price overrides
+        return ($user->isOwner() || $user->isAdmin()) && $sale->has_price_override;
     }
 }

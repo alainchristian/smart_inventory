@@ -58,19 +58,19 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         Gate::define('viewOwnerDashboard', fn (User $user) =>
-            $user->isOwner()
+            $user->isOwner() || $user->isAdmin()
         );
 
         Gate::define('viewPurchasePrice', fn (User $user) =>
-            $user->isOwner()
+            $user->isOwner() || $user->isAdmin()
         );
 
         Gate::define('open-daily-session', fn (User $user) =>
-            $user->isShopManager() || $user->isOwner()
+            $user->isShopManager() || $user->isOwner() || $user->isAdmin()
         );
 
         Gate::define('close-daily-session', fn (User $user) =>
-            $user->isShopManager() || $user->isOwner()
+            $user->isShopManager() || $user->isOwner() || $user->isAdmin()
         );
 
         Gate::define('create-expense-request', fn (User $user) =>
@@ -78,15 +78,15 @@ class AuthServiceProvider extends ServiceProvider
         );
 
         Gate::define('view-finance-reports', fn (User $user) =>
-            $user->isOwner()
+            $user->isOwner() || $user->isAdmin()
         );
 
         Gate::define('manage-daily-session', fn (User $user) =>
-            $user->isShopManager() || $user->isOwner()
+            $user->isShopManager() || $user->isOwner() || $user->isAdmin()
         );
 
         Gate::define('lock-daily-session', fn (User $user) =>
-            $user->isOwner()
+            $user->isOwner() || $user->isAdmin()
         );
 
         // Defensive coverage for the Policy classes registered above and any

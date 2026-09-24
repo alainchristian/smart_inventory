@@ -128,7 +128,7 @@ class ActivityLog extends Model
     {
         if ($this->entity_type === 'Transfer' && $this->entity_id) {
             try {
-                if ($viewer->isOwner()) {
+                if ($viewer->isOwner() || $viewer->isAdmin()) {
                     return route('owner.transfers.show', $this->entity_id);
                 }
                 if ($viewer->isWarehouseManager()) {
@@ -151,7 +151,7 @@ class ActivityLog extends Model
 
         if ($this->entity_type === 'Sale' && $this->entity_id) {
             try {
-                if ($viewer->isOwner()) {
+                if ($viewer->isOwner() || $viewer->isAdmin()) {
                     return route('owner.sales.show', $this->entity_id);
                 }
                 return route('shop.sales.index');
@@ -160,7 +160,7 @@ class ActivityLog extends Model
 
         if (in_array($this->entity_type, ['DailySession', 'daily_session'])) {
             try {
-                if ($viewer->isOwner()) return route('owner.finance.daily');
+                if ($viewer->isOwner() || $viewer->isAdmin()) return route('owner.finance.daily');
                 return route('shop.session.history');
             } catch (\Exception) {}
         }

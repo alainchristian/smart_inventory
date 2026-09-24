@@ -9,6 +9,6 @@ class DailySessionPolicy
 {
     public function lock(User $user, DailySession $session): bool
     {
-        return $user->isOwner();
+        return $user->isOwner() || $user->isAdmin();
     }
 }

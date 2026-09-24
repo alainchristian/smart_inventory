@@ -17,9 +17,9 @@ class TransfersList extends Component
     {
         $user = auth()->user();
 
-        // Verify user is owner
-        if (!$user->isOwner()) {
-            abort(403, 'Only owners can access this page.');
+        // Verify user is owner or admin
+        if (!$user->isOwner() && !$user->isAdmin()) {
+            abort(403, 'Only owners and admins can access this page.');
         }
 
         // Check if status filter is passed via query string

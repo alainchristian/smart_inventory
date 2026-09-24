@@ -40,7 +40,7 @@ class ExpenseCategoryManager extends Component
 
     public function mount(): void
     {
-        if (!auth()->user()->isOwner()) abort(403);
+        if (!auth()->user()->isOwner() && !auth()->user()->isAdmin()) abort(403);
     }
 
     public function updatingSearch(): void    { $this->resetPage(); }

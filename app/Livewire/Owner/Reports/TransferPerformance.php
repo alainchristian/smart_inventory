@@ -18,7 +18,7 @@ class TransferPerformance extends Component
 
     public function mount(): void
     {
-        if (!auth()->user()->isOwner()) {
+        if (!auth()->user()->isOwner() && !auth()->user()->isAdmin()) {
             abort(403);
         }
         if (!$this->dateFrom) {

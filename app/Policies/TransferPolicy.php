@@ -18,8 +18,8 @@ class TransferPolicy
 
     public function view(User $user, Transfer $transfer): bool
     {
-        // Owner can view all
-        if ($user->isOwner()) {
+        // Owner and Admin can view all
+        if ($user->isOwner() || $user->isAdmin()) {
             return true;
         }
 
@@ -44,14 +44,14 @@ class TransferPolicy
 
     public function create(User $user): bool
     {
-        // Only shop managers and owners can create transfer requests
-        return $user->isShopManager() || $user->isOwner();
+        // Shop managers, owners, and admins can create transfer requests
+        return $user->isShopManager() || $user->isOwner() || $user->isAdmin();
     }
 
     public function approve(User $user, Transfer $transfer): bool
     {
-        // Only warehouse manager or owner can approve
-        if (!($user->isWarehouseManager() || $user->isOwner())) {
+        // Only warehouse manager, owner, or admin can approve
+        if (!($user->isWarehouseManager() || $user->isOwner() || $user->isAdmin())) {
             return false;
         }
 
@@ -78,8 +78,8 @@ class TransferPolicy
             return false;
         }
 
-        // Only warehouse personnel or owners
-        return $user->isWarehouseManager() || $user->isOwner();
+        // Only warehouse personnel, owners, or admins
+        return $user->isWarehouseManager() || $user->isOwner() || $user->isAdmin();
     }
 
     public function receive(User $user, Transfer $transfer): bool
@@ -89,8 +89,8 @@ class TransferPolicy
             return false;
         }
 
-        // Shop manager or owner
-        if ($user->isOwner()) {
+        // Shop manager, owner, or admin
+        if ($user->isOwner() || $user->isAdmin()) {
             return true;
         }
 
@@ -102,8 +102,8 @@ class TransferPolicy
 
     public function cancel(User $user, Transfer $transfer): bool
     {
-        // Only owner can cancel
-        if (!$user->isOwner()) {
+        // Only owner or admin can cancel
+        if (!$user->isOwner() && !$user->isAdmin()) {
             return false;
         }
 

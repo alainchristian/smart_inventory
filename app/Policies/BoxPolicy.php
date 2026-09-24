@@ -26,7 +26,7 @@ class BoxPolicy
 
     public function create(User $user): bool
     {
-        return $user->isOwner() || $user->isWarehouseManager();
+        return $user->isOwner() || $user->isAdmin() || $user->isWarehouseManager();
     }
 
     /**

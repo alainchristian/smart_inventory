@@ -54,7 +54,7 @@ class LocationList extends Component
 
     public function mount(string $tab = 'warehouses'): void
     {
-        if (!auth()->user()->isOwner()) abort(403);
+        if (!auth()->user()->isOwner() && !auth()->user()->isAdmin()) abort(403);
         $this->activeTab = $tab;
     }
 
