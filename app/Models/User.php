@@ -86,9 +86,37 @@ class User extends Authenticatable
     }
 
     // Authorization helpers
-    public function isOwner(): bool
+
+    /** Session key holding the owner's temporary "act as admin" flag. */
+    public const ACTING_AS_ADMIN_SESSION_KEY = 'acting_as_admin';
+
+    /** The stored role, ignoring any temporary session switch. */
+    public function isRealOwner(): bool
     {
         return $this->role === UserRole::OWNER;
+    }
+
+    /**
+     * Whether this user is a real owner currently acting as admin.
+     * Only ever true for the logged-in user themselves, so checks against
+     * other User records (e.g. canManageUser($target)) are never affected.
+     */
+    public function isActingAsAdmin(): bool
+    {
+        return $this->isRealOwner()
+            && auth()->id() === $this->id
+            && (bool) session(self::ACTING_AS_ADMIN_SESSION_KEY, false);
+    }
+
+    /** The role used for authorization: ADMIN while an owner is acting as admin, else the stored role. */
+    public function effectiveRole(): UserRole
+    {
+        return $this->isActingAsAdmin() ? UserRole::ADMIN : $this->role;
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->effectiveRole() === UserRole::OWNER;
     }
 
     public function isWarehouseManager(): bool
@@ -98,7 +126,7 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === UserRole::ADMIN;
+        return $this->effectiveRole() === UserRole::ADMIN;
     }
 
     public function isShopManager(): bool
@@ -150,7 +178,7 @@ class User extends Authenticatable
 
     public function hasPermission(string $permission): bool
     {
-        return in_array($permission, $this->role->permissions());
+        return in_array($permission, $this->effectiveRole()->permissions());
     }
 
     public function canManageLocation(LocationType $locationType, int $locationId): bool

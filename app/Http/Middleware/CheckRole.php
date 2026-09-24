@@ -36,9 +36,11 @@ class CheckRole
             }
         }
 
-        // Check exact role match
+        // Check exact role match (effective role — an owner acting as admin matches 'admin', not 'owner')
+        $effectiveRole = $user->effectiveRole()->value;
+
         foreach ($roles as $role) {
-            if ($user->role->value === $role) {
+            if ($effectiveRole === $role) {
                 return $next($request);
             }
         }
@@ -49,7 +51,7 @@ class CheckRole
             'module'            => 'auth',
             'entity_type'       => 'Route',
             'entity_identifier' => $request->path(),
-            'details'           => ['required_roles' => $roles, 'user_role' => $user->role->value],
+            'details'           => ['required_roles' => $roles, 'user_role' => $effectiveRole],
             'status'            => 'failed',
             'severity'          => 'warning',
         ]);

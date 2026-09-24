@@ -22,6 +22,18 @@
                         <span>{{ $currentDate }}</span>
                     </div>
                 </div>
+
+                @if(auth()->user()->isActingAsAdmin())
+                <!-- Acting-as-admin indicator (owner only) -->
+                <button type="button" wire:click="toggleAdminMode" wire:loading.attr="disabled" wire:target="toggleAdminMode"
+                        title="{{ __('Click to return to Owner view') }}"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all"
+                        style="background: var(--red-dim); color: var(--red); border: 1px solid var(--red); cursor: pointer;">
+                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--red);"></span>
+                    <span class="hidden sm:inline">{{ __('Viewing as Admin') }}</span>
+                    <span class="sm:hidden">{{ __('Admin') }}</span>
+                </button>
+                @endif
             </div>
 
             <!-- Center: Global Search (Hidden on Mobile) -->
@@ -93,7 +105,7 @@
                                     </span>
                                 @endif
                             </button>
-                            @if(Auth::check() && Auth::user()->isOwner())
+                            @if(Auth::check() && (Auth::user()->isOwner() || Auth::user()->isAdmin()))
                             <button @click="tab = 'actions'"
                                     class="flex-1 flex items-center justify-center gap-1.5 py-3 text-[12px] border-b-2 transition-all"
                                     :style="tab === 'actions'
@@ -185,8 +197,8 @@
                             @endforelse
                         </div>
 
-                        <!-- ── Actions tab (owner only) ── -->
-                        @if(Auth::check() && Auth::user()->isOwner())
+                        <!-- ── Actions tab (owner/admin) ── -->
+                        @if(Auth::check() && (Auth::user()->isOwner() || Auth::user()->isAdmin()))
                         <div x-show="tab === 'actions'" class="max-h-[420px] overflow-y-auto">
                             @forelse($this->pendingActions as $action)
                                 @if($action['count'] > 0)
@@ -297,6 +309,8 @@
                             <div class="mt-2.5">
                                 @if(auth()->user()->isOwner())
                                     <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--accent-glow); color: var(--accent);">{{ __('OWNER') }}</span>
+                                @elseif(auth()->user()->isAdmin())
+                                    <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--red-dim); color: var(--red);">{{ __('ADMIN') }}</span>
                                 @elseif(auth()->user()->isWarehouseManager())
                                     <span class="inline-flex px-2 py-1 text-[10px] font-bold rounded-full" style="background: var(--green-glow); color: var(--green);">{{ __('WAREHOUSE MANAGER') }}</span>
                                 @elseif(auth()->user()->isShopManager())
@@ -343,8 +357,24 @@
                                 <span class="text-[14px] font-medium">{{ __('Profile Settings') }}</span>
                             </a>
 
-                            @if(auth()->user()->isOwner())
-                            <!-- Business Settings (Owner only) -->
+                            @if(auth()->user()->isRealOwner())
+                            <!-- Switch between Owner and Admin view (real owners only) -->
+                            <button type="button" wire:click="toggleAdminMode" wire:loading.attr="disabled" wire:target="toggleAdminMode"
+                                    class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all text-left"
+                                    style="color: var(--text-sub);"
+                                    onmouseover="this.style.background='var(--surface2)'; this.style.color='var(--text)';"
+                                    onmouseout="this.style.background='transparent'; this.style.color='var(--text-sub)';">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4-4m-4 4l4 4"/>
+                                </svg>
+                                <span class="text-[14px] font-medium">
+                                    {{ auth()->user()->isActingAsAdmin() ? __('Back to Owner view') : __('Switch to Admin view') }}
+                                </span>
+                            </button>
+                            @endif
+
+                            @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+                            <!-- Business Settings (Owner / Admin) -->
                             <a href="{{ route('owner.settings') }}" wire:navigate
                                class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all"
                                style="color: var(--text-sub);"
@@ -361,8 +391,8 @@
                             </a>
                             @endif
 
-                            @if(auth()->user()->isOwner())
-                            <!-- System Settings (Owner only) -->
+                            @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+                            <!-- System Settings (Owner / Admin) -->
                             <a href="{{ route('owner.users.index') }}" wire:navigate
                                class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all"
                                style="color: var(--text-sub);"

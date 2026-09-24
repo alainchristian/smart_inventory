@@ -6,6 +6,8 @@ use App\Models\ActivityLog;
 use App\Models\Alert;
 use App\Models\HeldSale;
 use App\Models\Transfer;
+use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -17,6 +19,40 @@ class Topbar extends Component
     public function mount($pageTitle = 'Dashboard')
     {
         $this->pageTitle = $pageTitle;
+    }
+
+    // ── Owner "act as admin" toggle ──────────────────────────────────────────
+
+    /**
+     * Flip the session between owner and admin permissions. Only a real owner
+     * may call this — the stored role never changes, only the session flag.
+     */
+    public function toggleAdminMode()
+    {
+        $user = Auth::user();
+
+        abort_unless($user && $user->isRealOwner(), 403);
+
+        $enable = !$user->isActingAsAdmin();
+
+        if ($enable) {
+            session([User::ACTING_AS_ADMIN_SESSION_KEY => true]);
+        } else {
+            session()->forget(User::ACTING_AS_ADMIN_SESSION_KEY);
+        }
+
+        AuditLogger::log([
+            'actor'               => $user,
+            'actor_role_snapshot' => 'owner',
+            'action'              => $enable ? 'role_switched_to_admin' : 'role_switched_to_owner',
+            'module'              => 'auth',
+            'entity_type'         => 'User',
+            'entity_id'           => $user->id,
+            'entity_identifier'   => $user->name,
+            'details'             => ['from' => $enable ? 'owner' : 'admin', 'to' => $enable ? 'admin' : 'owner'],
+        ]);
+
+        return $this->redirect(route('owner.dashboard'), navigate: false);
     }
 
     // ── Notification feed ────────────────────────────────────────────────────
@@ -48,7 +84,7 @@ class Topbar extends Component
             ->orderByDesc('created_at')
             ->limit(25);
 
-        if ($user->isOwner()) {
+        if ($user->isOwner() || $user->isAdmin()) {
             $query->whereHas('user', fn($q) => $q->whereIn('role', ['shop_manager', 'warehouse_manager']));
         } elseif ($user->isWarehouseManager()) {
             $shopIds = Transfer::where('from_warehouse_id', $user->location_id)->pluck('to_shop_id')->unique();
@@ -128,7 +164,7 @@ class Topbar extends Component
      */
     public function getPendingActionsProperty(): array
     {
-        if (!Auth::check() || !Auth::user()->isOwner()) {
+        if (!Auth::check() || (!Auth::user()->isOwner() && !Auth::user()->isAdmin())) {
             return [];
         }
 

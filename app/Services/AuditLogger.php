@@ -29,7 +29,7 @@ class AuditLogger
             'user_id'             => $data['actor_id'] ?? $user?->id,
             'user_name'           => $data['actor_name'] ?? $user?->name ?? 'System',
             'actor_type'          => $data['actor_type'] ?? ($user ? 'user' : 'system'),
-            'actor_role_snapshot' => $data['actor_role_snapshot'] ?? $user?->role?->value,
+            'actor_role_snapshot' => $data['actor_role_snapshot'] ?? $user?->effectiveRole()?->value,
             'action'              => $data['action'],
             'module'              => $data['module'] ?? null,
             'entity_type'         => $data['entity_type'] ?? ($entity ? class_basename($entity) : null),
