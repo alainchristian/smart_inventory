@@ -791,3 +791,59 @@ only at Remera, and the cash landed in the wrong register.
 
 Tests: `tests/Feature/Credit/PerShopCreditTest.php` (incl. re-running the
 backfill migration against legacy-shaped history).
+
+---
+
+## Warehouse Fulfillment redesign (2026-09-25)
+
+Same principles as the day-close redesign, applied to
+`warehouse.sales.fulfillment` (`FulfillmentQueue`, prefix `fq-`).
+
+- **Header in the component** (back button, title, warehouse), pill tabs
+  Pending (count) / History. Wrapper view is now just the Livewire tag.
+- **3 KPI cards** (`FulfillmentQueue::getStatsProperty()`, always over ALL
+  pending orders, never the filtered list): awaiting dispatch (+ boxes,
+  balance due), oldest waiting (+ >30 min / >2 h counts), dispatched today
+  (+ boxes, transporter vs pickup). On phones (≤640px) the cards move
+  *below* the list via flex `order` — the work comes first.
+- **Pending orders are compact list rows** (`partials/pending-row.blade.php`)
+  inside one card with search + period presets in the card head. Actions:
+  icon button for the picking slip + small primary "Dispatch".
+- **Dispatch confirmation is a modal** (was an inline strip in the card):
+  box list, recipient name, 140px signature pad (canvas 880×280 for crisp
+  strokes), balance-due warning. `render()` loads `$confirmingSale`.
+- **Scan mode**: one scan card; non-pending lookups (dispatched /
+  cancelled / not found) render as left-border notices
+  (`partials/lookup-result.blade.php`) instead of solid green/red fills.
+- **History**: fixed-layout table (who it was handed to, confirmed by);
+  row click opens a **detail drawer** (`$historySale`) with the signature,
+  instead of an expanded table row. History only queries when its tab is open.
+- Signature-pad / code-format JS stays in the root view's `@script`
+  (moving `@script` into an included partial breaks Livewire responses —
+  see the comment in the view).
+
+### Bugs fixed
+- **Credit counted as paid**: the paid check summed ALL `sale_payments`,
+  including `credit`, so credit sales showed "Fully paid" and never got the
+  balance flag. `FulfillmentQueue::isPaidInFull()` excludes credit.
+- Authorization errors used `session()->flash()`, which this page never
+  rendered — now toasts. Dispatch success also toasts.
+- `fulfillment_confirmed` ActivityLog rows now include `user_name`.
+
+Tests: `tests/Feature/Warehouse/FulfillmentQueueTest.php`.
+
+### Live Transactions launcher moved into the topbar (2026-09-25)
+The owner's Live Transactions button (`transactions/live-feed`) used to be
+a fixed 54px FAB at bottom-right, covering the right edge of page content
+(e.g. the last Dispatch button on Fulfillment). It is now a 36px button
+next to the notification bell: live-feed renders it with
+`@teleport('#lf-launcher')` into a placeholder in `layout/topbar.blade.php`.
+The placeholder has `wire:ignore` — without it the topbar's 15s poll
+re-render would wipe the teleported button. Verified: one button after
+re-rendering both components; clicking still opens the drawer.
+
+**Blade trap (caused a ~2 min app-wide outage while doing this):** Blade
+compiles `@directive` text even inside HTML `<!-- -->` comments. An HTML
+comment containing the word `@teleport-ed` compiled to a broken
+`@teleport` call and 500'd the topbar — i.e. every page. Use `{{-- --}}`
+comments in Blade, and never write `@word` in an HTML comment.

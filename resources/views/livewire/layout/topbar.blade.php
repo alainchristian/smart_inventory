@@ -58,6 +58,12 @@
             <!-- Right: Action Buttons -->
             <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
 
+                {{-- Live Transactions launcher: the button lives in
+                     transactions/live-feed (owner only) and is teleported in
+                     here. wire:ignore stops this component's re-renders (15s
+                     poll) from wiping the teleported button. --}}
+                <div id="lf-launcher" wire:ignore style="display:contents"></div>
+
                 <!-- Notifications Bell -->
                 <div x-data="{ open: false, tab: 'activity' }"
                      x-init="$watch('open', v => { if (v) { tab = {{ $this->unreadActivityCount > 0 ? "'activity'" : ($this->totalPendingActions > 0 ? "'actions'" : "'activity'") }}; $wire.markActivityRead(); } })"

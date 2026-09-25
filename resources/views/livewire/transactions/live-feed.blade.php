@@ -5,38 +5,19 @@
 @if ($isOwner)
 
 {{-- ══════════════════════════════════════════════════════════════════════
-     FAB
+     Launcher — docked in the topbar next to the notification bell
+     (#lf-launcher, wire:ignore) instead of floating over page content.
 ══════════════════════════════════════════════════════════════════════ --}}
-<button wire:click="open"
-        title="Live Transactions"
-        class="lf-fab"
-        style="border-radius:50%;background:var(--accent);border:none;cursor:pointer;
-               display:flex;align-items:center;justify-content:center;
-               box-shadow:0 4px 24px rgba(0,0,0,0.22);
-               transition:transform 0.15s,box-shadow 0.15s;"
-        onmouseenter="this.style.transform='scale(1.08)';this.style.boxShadow='0 6px 32px rgba(0,0,0,0.30)'"
-        onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 24px rgba(0,0,0,0.22)'"
-        onpointerdown="this.style.transform='scale(0.95)'"
-        onpointerup="this.style.transform='scale(1)'"
-        ontouchstart=""
-        >
-
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+@teleport('#lf-launcher')
+<button wire:click="open" type="button" class="lf-launch" title="Live transactions" aria-label="Live transactions">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
     </svg>
-
     @if ($unread > 0)
-        <span style="position:absolute;top:-5px;right:-5px;
-                     min-width:20px;height:20px;border-radius:10px;
-                     background:var(--red);color:#fff;
-                     font-size:10px;font-weight:800;
-                     display:flex;align-items:center;justify-content:center;
-                     padding:0 4px;border:2px solid #fff;
-                     animation:lf-badge-pulse 2s ease-in-out infinite;">
-            {{ $unread > 99 ? '99+' : $unread }}
-        </span>
+        <span class="lf-launch-badge">{{ $unread > 99 ? '99+' : $unread }}</span>
     @endif
 </button>
+@endteleport
 
 {{-- ══════════════════════════════════════════════════════════════════════
      Overlay + Drawer
@@ -781,15 +762,40 @@
     /* ── Scrollbar ──────────────────────────────────────────────────── */
     .lf-no-scroll::-webkit-scrollbar { display:none; }
 
-    /* ── FAB ────────────────────────────────────────────────────────── */
-    .lf-fab {
-        position: fixed;
-        bottom: 28px;
-        right: 28px;
-        z-index: 180;
-        width: 54px;
-        height: 54px;
+    /* ── Topbar launcher (matches the notification bell button) ──── */
+    .lf-launch {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--accent);
+        cursor: pointer;
         pointer-events: auto;
+        transition: background var(--tr), color var(--tr);
+        flex-shrink: 0;
+    }
+    .lf-launch:hover { background: var(--surface3); }
+    .lf-launch-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 9px;
+        background: var(--red);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--surface);
     }
 
     /* ── Drawer — desktop (right panel, full height) ───────────────── */
@@ -815,12 +821,6 @@
 
     /* ── Mobile & small tablet: bottom sheet ────────────────────────── */
     @media (max-width: 768px) {
-        .lf-fab {
-            bottom: 20px;
-            right: 16px;
-            width: 48px;
-            height: 48px;
-        }
 
         .lf-drawer {
             top: auto;
