@@ -498,19 +498,20 @@
     @if($allowIndividualItemSales)
     <div class="st-row full-width" style="padding-bottom:4px">
         <div>
-            <div class="st-label">Restrict individual sales to specific categories</div>
+            <div class="st-label">Categories that can be sold by item</div>
             <div class="st-hint">
-                Leave all unselected to allow individual sales for every category.
-                Select specific ones to restrict only to those.
+                Tick the categories sellers may sell as loose items. Every other category is sold by
+                <strong>full box only</strong> — including when a shop has only opened boxes left.
+                Ticking a parent category also covers its subcategories.
             </div>
         </div>
     </div>
     <div class="st-chips-wrap">
         <div class="st-chips-label">
             @if(empty($individualSaleCategoryIds))
-                All categories allowed
+                None ticked — every category is sold by full box
             @else
-                {{ count($individualSaleCategoryIds) }} categor{{ count($individualSaleCategoryIds) === 1 ? 'y' : 'ies' }} selected
+                {{ count($individualSaleCategoryIds) }} categor{{ count($individualSaleCategoryIds) === 1 ? 'y' : 'ies' }} sold by item · the rest by full box
             @endif
         </div>
         @foreach($categories as $cat)

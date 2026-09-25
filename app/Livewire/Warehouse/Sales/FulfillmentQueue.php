@@ -233,21 +233,80 @@ class FulfillmentQueue extends Component
 
         return [
             'pending'          => $pending->count(),
-            'pending_boxes'    => $pending->sum(fn ($s) => self::warehouseBoxes($s)->count()),
+            'pending_boxes'    => $pending->sum(fn ($s) => self::packTotals($s)[0]),
+            'pending_items'    => $pending->sum(fn ($s) => self::packTotals($s)[1]),
             'oldest_minutes'   => $oldest ? (int) $oldest->diffInMinutes($now) : null,
             'over_2h'          => $pending->filter(fn ($s) => $s->sale_date->diffInMinutes($now) >= 120)->count(),
             'over_30m'         => $pending->filter(fn ($s) => $s->sale_date->diffInMinutes($now) >= 30)->count(),
             'pending_transport'=> $pending->where('fulfillment_method', 'transporter')->count(),
             'today'            => $today->count(),
-            'today_boxes'      => $today->sum(fn ($s) => self::warehouseBoxes($s)->count()),
+            'today_boxes'      => $today->sum(fn ($s) => self::packTotals($s)[0]),
+            'today_items'      => $today->sum(fn ($s) => self::packTotals($s)[1]),
             'today_transport'  => $today->where('fulfillment_method', 'transporter')->count(),
         ];
     }
 
-    /** Sale lines that physically leave this warehouse (one line = one box). */
+    /**
+     * Sale lines that physically leave this warehouse. A full-box line is one
+     * sealed box; a loose-item line (is_full_box = false) is N items picked
+     * from an opened box — ticked categories only, see IndividualItemSales.
+     */
     public static function warehouseBoxes(Sale $sale): \Illuminate\Support\Collection
     {
         return $sale->items->filter(fn ($i) => $i->box?->location_type?->value === 'warehouse');
+    }
+
+    /** What to pick, per product: ['name','sku','boxes','items'] (items = loose). */
+    public static function packList(Sale $sale): \Illuminate\Support\Collection
+    {
+        return self::warehouseBoxes($sale)
+            ->groupBy(fn ($i) => $i->product_id)
+            ->map(fn ($g) => [
+                'name'  => $g->first()->product?->name ?? '—',
+                'sku'   => $g->first()->product?->sku,
+                'boxes' => $g->where('is_full_box', true)->count(),
+                'items' => (int) $g->where('is_full_box', false)->sum('quantity_sold'),
+            ])
+            ->values();
+    }
+
+    /** [sealed boxes, loose items] leaving the warehouse for this sale. */
+    public static function packTotals(Sale $sale): array
+    {
+        $lines = self::warehouseBoxes($sale);
+
+        return [
+            $lines->where('is_full_box', true)->count(),
+            (int) $lines->where('is_full_box', false)->sum('quantity_sold'),
+        ];
+    }
+
+    /** "2 boxes", "5 items", or "2 boxes + 5 items". */
+    public static function packLabel(int $boxes, int $items): string
+    {
+        $parts = [];
+        if ($boxes > 0) {
+            $parts[] = $boxes . ' ' . ($boxes === 1 ? 'box' : 'boxes');
+        }
+        if ($items > 0) {
+            $parts[] = $items . ' ' . ($items === 1 ? 'item' : 'items');
+        }
+
+        return $parts ? implode(' + ', $parts) : '0 boxes';
+    }
+
+    /** Per-product pick text, e.g. "×2" (boxes), "5 items", "×2 + 5 items". */
+    public static function packQty(array $row): string
+    {
+        $parts = [];
+        if ($row['boxes'] > 0) {
+            $parts[] = '×' . $row['boxes'];
+        }
+        if ($row['items'] > 0) {
+            $parts[] = $row['items'] . ' ' . ($row['items'] === 1 ? 'item' : 'items');
+        }
+
+        return implode(' + ', $parts);
     }
 
 

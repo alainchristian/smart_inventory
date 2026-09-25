@@ -262,7 +262,11 @@
 
 /* ── Receipt modal ───────────────────────────────────────────────────────── */
 .upos-rc-card { max-width:480px }
-.upos-rc-banner { background:var(--green); padding:20px 24px 16px; display:flex; align-items:center; gap:12px }
+.upos-rc-banner { background:var(--green); padding:20px 24px 16px; display:flex; align-items:center; gap:12px; position:relative }
+.upos-rc-close { position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:8px; border:none; cursor:pointer;
+                 background:rgba(255,255,255,.18); color:#fff; display:flex; align-items:center; justify-content:center; transition:background var(--tr) }
+.upos-rc-close:hover { background:rgba(255,255,255,.3) }
+.upos-rc-item-sub { font-size:12px; color:var(--text-dim); margin-top:2px; font-family:var(--mono) }
 .upos-rc-banner-icon { width:40px; height:40px; background:rgba(255,255,255,.2); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0 }
 .upos-rc-banner-title { font-size:18px; font-weight:800; color:#fff; margin:0 0 3px }
 .upos-rc-banner-sub { font-size:12px; color:rgba(255,255,255,.8); margin:0 }
@@ -459,9 +463,11 @@
         @foreach($displayedStock as $product)
         @php
             $isShop = $product['source'] === 'shop';
-            $stockCount = $isShop
-                ? trans_choice(':count box|:count boxes', $product['stock']['full_boxes'] ?? 0, ['count' => $product['stock']['full_boxes'] ?? 0])
-                : trans_choice(':count box|:count boxes', $product['stock']['total_boxes'] ?? 0, ['count' => $product['stock']['total_boxes'] ?? 0]);
+            $tileFull  = $product['stock']['full_boxes'] ?? 0;
+            $tileItems = $product['stock']['total_items'] ?? 0;
+            $stockCount = $tileFull > 0
+                ? trans_choice(':count box|:count boxes', $tileFull, ['count' => $tileFull])
+                : trans_choice(':count item|:count items', $tileItems, ['count' => $tileItems]);
             $maxStock = $isShop ? max(1, $product['stock']['total_items'] ?? 1) : max(1, ($product['stock']['total_items'] ?? 1));
             $barWidth = $isShop
                 ? min(100, round((($product['stock']['total_items'] ?? 0) / $maxStock) * 100))
@@ -573,7 +579,7 @@
             qty: @entangle('stagingQty'),
             price: @entangle('stagingPrice'),
             origPrice: {{ $stagingMode === 'box' ? $stagingProduct['box_price'] : $stagingProduct['selling_price'] }},
-            maxQty: {{ ($stagingProduct['source'] === 'warehouse') ? ($stagingProduct['box_count'] ?? ($stagingStock['total_boxes'] ?? 9999)) : ($stagingMode === 'box' ? ($stagingStock['full_boxes'] ?? 9999) : ($stagingStock['total_items'] ?? 9999)) }},
+            maxQty: {{ $stagingMode === 'box' ? ($stagingStock['full_boxes'] ?? 0) : ($stagingStock['total_items'] ?? 0) }},
             get isModified() { return parseInt(this.price) !== parseInt(this.origPrice); },
             get isOverStock() { return parseInt(this.qty) > this.maxQty; },
             i18n: {
@@ -584,18 +590,13 @@
 
             {{-- Stock info --}}
             <div class="upos-sm-info">
-                @if($stagingProduct['source'] === 'shop')
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Available items') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ number_format($stagingStock['total_items'] ?? 0) }}</span></div>
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Full boxes') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['has_full_box'] ? ($stagingStock['full_boxes'] ?? '—') : 'None' }}</span></div>
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Items/box') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['items_per_box'] }}</span></div>
-                @else
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Available boxes') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['box_count'] ?? ($stagingStock['total_boxes'] ?? 0) }}</span></div>
-                    <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Items/box') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['items_per_box'] }}</span></div>
-                @endif
+                <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Available items') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ number_format($stagingStock['total_items'] ?? 0) }}</span></div>
+                <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Full boxes') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ ($stagingProduct['has_full_box'] ?? false) ? ($stagingStock['full_boxes'] ?? '—') : __('None') }}</span></div>
+                <div class="upos-sm-info-row"><span style="color:var(--text-dim)">{{ __('Items/box') }}</span><span style="font-weight:700;font-family:var(--mono)">{{ $stagingProduct['items_per_box'] }}</span></div>
             </div>
 
-            {{-- Mode toggle (shop only) --}}
-            @if($stagingProduct['source'] === 'shop' && ($stagingProduct['individual_sale_allowed'] ?? false))
+            {{-- Mode toggle — shop or warehouse stock, when the category may be sold by item --}}
+            @if($stagingProduct['individual_sale_allowed'] ?? false)
             <div class="upos-field">
                 <label class="upos-label">{{ __('Sell as') }}</label>
                 <div class="upos-mode-toggle">
@@ -603,8 +604,8 @@
                     <button type="button" class="upos-mode-btn {{ $stagingMode === 'item' ? 'active' : '' }}" wire:click="$set('stagingMode','item')">{{ __('Individual Items') }}</button>
                 </div>
             </div>
-            @elseif($stagingProduct['source'] === 'warehouse')
-            <div style="font-size:12px;color:var(--text-dim);padding:4px 0">{{ __('Warehouse sales are full boxes only.') }}</div>
+            @else
+            <div style="font-size:12px;color:var(--text-dim);padding:4px 0">{{ __(':category is sold by full box only.', ['category' => $stagingProduct['category'] ?: __('This category')]) }}</div>
             @endif
 
             {{-- Quantity --}}
@@ -944,10 +945,13 @@
 
 {{-- ── Receipt Modal ───────────────────────────────────────────────────────── --}}
 @if($showReceiptModal && $completedSale)
-<div class="upos-overlay">
-    <div class="upos-modal-card upos-rc-card" @click.stop>
+<div class="upos-overlay" x-data @keydown.escape.window="$wire.closeReceipt()">
+    <div class="upos-modal-card upos-rc-card" @click.stop role="dialog" aria-modal="true" aria-label="{{ __('Sale Complete') }}">
         {{-- Green banner --}}
         <div class="upos-rc-banner">
+            <button type="button" class="upos-rc-close" wire:click="closeReceipt" aria-label="{{ __('Close') }}" title="{{ __('Close') }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
             <div class="upos-rc-banner-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
@@ -971,27 +975,40 @@
                 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:6px">{{ __('Items') }}</div>
                 <div class="upos-rc-items">
                     @php
-                        $groupedItems = collect($completedSale->items)
-                            ->groupBy(fn($i) => $i->product_id ?? 'unknown')
-                            ->map(fn($g) => (object)[
-                                'name'       => $g->first()->product?->name ?? '—',
-                                'box_count'  => $g->count(),
-                                'line_total' => $g->sum('line_total'),
-                                'has_wh'     => $g->contains(fn($i) => $i->box && $i->box->location_type?->value === 'warehouse'),
-                            ]);
+                        // One row per cart line: product + stock source + box/item + unit price
+                        // (a single cart line can be stored as several rows, one per box it drew from)
+                        $receiptLines = collect($completedSale->items)
+                            ->groupBy(fn ($i) => implode('|', [
+                                $i->product_id,
+                                $i->box?->location_type?->value ?? 'shop',
+                                $i->is_full_box ? 'box' : 'item',
+                                $i->actual_unit_price,
+                            ]))
+                            ->map(function ($g) {
+                                $first   = $g->first();
+                                $isBox   = (bool) $first->is_full_box;
+                                $units   = (int) $g->sum('quantity_sold');
+                                $qty     = $isBox && $first->product ? $first->product->itemsToDisplayQty($units, true) : $units;
+                                return (object) [
+                                    'name'       => $first->product?->name ?? '—',
+                                    'is_box'     => $isBox,
+                                    'qty'        => $qty,
+                                    'unit_price' => (int) $first->actual_unit_price,
+                                    'line_total' => (int) $g->sum('line_total'),
+                                    'wh'         => ($first->box?->location_type?->value ?? 'shop') === 'warehouse',
+                                ];
+                            });
                     @endphp
-                    @foreach($groupedItems as $grp)
+                    @foreach($receiptLines as $line)
                     <div class="upos-rc-item">
-                        <div class="upos-rc-item-name">
-                            {{ $grp->name }}
-                            @if($grp->box_count > 1)
-                                <span style="color:var(--text-dim);font-size:11px;font-weight:600;margin-left:3px">×{{ $grp->box_count }}</span>
-                            @endif
-                            @if($grp->has_wh)
-                                <span class="upos-badge warehouse" style="margin-left:4px;vertical-align:middle">WH</span>
-                            @endif
+                        <div style="min-width:0">
+                            <div class="upos-rc-item-name">
+                                {{ $line->name }}
+                                <span class="upos-badge {{ $line->wh ? 'warehouse' : 'shop' }}" style="margin-left:4px;vertical-align:middle">{{ $line->wh ? 'WH' : __('Shop') }}</span>
+                            </div>
+                            <div class="upos-rc-item-sub">{{ $line->is_box ? trans_choice(':count box|:count boxes', $line->qty, ['count' => $line->qty]) : trans_choice(':count item|:count items', $line->qty, ['count' => $line->qty]) }} × {{ number_format($line->unit_price) }}</div>
                         </div>
-                        <span class="upos-rc-item-total">{{ number_format($grp->line_total) }}</span>
+                        <span class="upos-rc-item-total">{{ number_format($line->line_total) }}</span>
                     </div>
                     @endforeach
                 </div>

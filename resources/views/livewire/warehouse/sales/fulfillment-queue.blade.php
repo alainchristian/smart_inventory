@@ -237,7 +237,7 @@
         <div class="fq-kpi-val" style="color:var(--text)">{{ $stats['pending'] }}<span class="fq-kpi-unit">{{ $stats['pending'] === 1 ? 'order' : 'orders' }}</span></div>
         <div class="fq-kpi-divider"></div>
         <div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Boxes to pack</span><span class="fq-kpi-stat-v">{{ $stats['pending_boxes'] }}</span></div>
+            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">To pick</span><span class="fq-kpi-stat-v">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($stats['pending_boxes'], $stats['pending_items']) }}</span></div>
             <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Via transporter · pickup</span><span class="fq-kpi-stat-v">{{ $stats['pending_transport'] }} · {{ $stats['pending'] - $stats['pending_transport'] }}</span></div>
         </div>
     </div>
@@ -263,7 +263,7 @@
         <div class="fq-kpi-val" style="color:var(--{{ $stats['today'] ? 'green' : 'text-dim' }})">{{ $stats['today'] }}<span class="fq-kpi-unit">{{ $stats['today'] === 1 ? 'order' : 'orders' }}</span></div>
         <div class="fq-kpi-divider"></div>
         <div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Boxes out</span><span class="fq-kpi-stat-v">{{ $stats['today_boxes'] }}</span></div>
+            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Handed over</span><span class="fq-kpi-stat-v">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($stats['today_boxes'], $stats['today_items']) }}</span></div>
             <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Via transporter · pickup</span><span class="fq-kpi-stat-v">{{ $stats['today_transport'] }} · {{ $stats['today'] - $stats['today_transport'] }}</span></div>
         </div>
     </div>
@@ -406,8 +406,8 @@
                     <tbody>
                         @foreach($fulfilledHistory as $sale)
                             @php
-                                $hBoxes = \App\Livewire\Warehouse\Sales\FulfillmentQueue::warehouseBoxes($sale);
-                                $hProds = $hBoxes->groupBy(fn ($i) => $i->product_id)->map(fn ($g) => ($g->first()->product?->name ?? '—') . ($g->count() > 1 ? ' ×' . $g->count() : ''));
+                                [$hB, $hI] = \App\Livewire\Warehouse\Sales\FulfillmentQueue::packTotals($sale);
+                                $hProds = \App\Livewire\Warehouse\Sales\FulfillmentQueue::packList($sale)->map(fn ($p) => $p['name'] . ' ' . \App\Livewire\Warehouse\Sales\FulfillmentQueue::packQty($p));
                             @endphp
                             <tr wire:key="h-{{ $sale->id }}" class="{{ $expandedHistoryId === $sale->id ? 'active' : '' }}" wire:click="toggleHistory({{ $sale->id }})">
                                 <td>
@@ -420,7 +420,7 @@
                                 <td><div class="fq-ellip">{{ $sale->shop?->name ?? '—' }}</div></td>
                                 <td>
                                     <div class="fq-ellip" style="color:var(--text)" title="{{ $hProds->implode(', ') }}">{{ $hProds->implode(', ') }}</div>
-                                    <div class="fq-sub">{{ $hBoxes->count() }} {{ $hBoxes->count() === 1 ? 'box' : 'boxes' }}</div>
+                                    <div class="fq-sub">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($hB, $hI) }}</div>
                                 </td>
                                 <td>
                                     <div class="fq-ellip" style="color:var(--text)">{{ $sale->fulfillment_recipient_name ?? '—' }}</div>
@@ -439,8 +439,8 @@
 {{-- ── History detail drawer ── --}}
 @if($historySale)
     @php
-        $dBoxes = \App\Livewire\Warehouse\Sales\FulfillmentQueue::warehouseBoxes($historySale);
-        $dProds = $dBoxes->groupBy(fn ($i) => $i->product_id)->map(fn ($g) => ['name' => $g->first()->product?->name ?? '—', 'sku' => $g->first()->product?->sku, 'boxes' => $g->count()]);
+        $dProds = \App\Livewire\Warehouse\Sales\FulfillmentQueue::packList($historySale);
+        [$dB, $dI] = \App\Livewire\Warehouse\Sales\FulfillmentQueue::packTotals($historySale);
     @endphp
     <div x-data @keydown.escape.window="$wire.closeHistory()" wire:key="fq-drawer-{{ $historySale->id }}">
         <div class="fq-d-overlay" wire:click="closeHistory"></div>
@@ -477,11 +477,11 @@
                     <div class="fq-drow"><span class="fq-drow-l">Note</span><span class="fq-drow-v" style="font-weight:500;font-style:italic">{{ $historySale->fulfillment_notes }}</span></div>
                 @endif
 
-                <div class="fq-sec">Boxes out of {{ $warehouseName }} · {{ $dBoxes->count() }}</div>
+                <div class="fq-sec">Out of {{ $warehouseName }} · {{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($dB, $dI) }}</div>
                 @foreach($dProds as $p)
                     <div class="fq-drow">
                         <span class="fq-drow-l" style="color:var(--text-sub)">{{ $p['name'] }}@if($p['sku']) <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">{{ $p['sku'] }}</span>@endif</span>
-                        <span class="fq-drow-v" style="font-family:var(--mono)">×{{ $p['boxes'] }}</span>
+                        <span class="fq-drow-v" style="font-family:var(--mono)">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packQty($p) }}</span>
                     </div>
                 @endforeach
             </div>
@@ -496,8 +496,8 @@
 {{-- ── Dispatch confirmation modal ── --}}
 @if($confirmingSale)
     @php
-        $cBoxes = \App\Livewire\Warehouse\Sales\FulfillmentQueue::warehouseBoxes($confirmingSale);
-        $cProds = $cBoxes->groupBy(fn ($i) => $i->product_id)->map(fn ($g) => ['name' => $g->first()->product?->name ?? '—', 'boxes' => $g->count()]);
+        $cProds = \App\Livewire\Warehouse\Sales\FulfillmentQueue::packList($confirmingSale);
+        [$cB, $cI] = \App\Livewire\Warehouse\Sales\FulfillmentQueue::packTotals($confirmingSale);
         $isTransport = $confirmingSale->fulfillment_method === 'transporter';
     @endphp
     <div class="fq-overlay" wire:key="fq-confirm-{{ $confirmingSale->id }}" x-data @keydown.escape.window="$wire.cancelFulfillment()" @click.self="$wire.cancelFulfillment()">
@@ -505,7 +505,7 @@
             <div class="fq-modal-head">
                 <h2 class="fq-modal-title" id="fq-c-title">Dispatch {{ $confirmingSale->sale_number }}</h2>
                 <p class="fq-modal-sub">
-                    Hand over {{ $cBoxes->count() }} {{ $cBoxes->count() === 1 ? 'box' : 'boxes' }} to
+                    Hand over {{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($cB, $cI) }} to
                     {{ $isTransport ? ($confirmingSale->fulfillmentTransporter?->name ?? 'the transporter') : ($confirmingSale->customer_name ?: 'the customer') }}.
                     This can’t be undone.
                 </p>
@@ -513,7 +513,7 @@
             <form class="fq-modal-body" wire:submit="markFulfilled({{ $confirmingSale->id }})" id="fq-confirm-form">
                 <div class="fq-pack">
                     @foreach($cProds as $p)
-                        <div class="fq-pack-row"><span style="color:var(--text)">{{ $p['name'] }}</span><span style="font-family:var(--mono);font-weight:700;color:var(--text)">×{{ $p['boxes'] }}</span></div>
+                        <div class="fq-pack-row"><span style="color:var(--text)">{{ $p['name'] }}</span><span style="font-family:var(--mono);font-weight:700;color:var(--text)">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packQty($p) }}</span></div>
                     @endforeach
                 </div>
 

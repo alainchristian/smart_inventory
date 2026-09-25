@@ -863,3 +863,77 @@ compiles `@directive` text even inside HTML `<!-- -->` comments. An HTML
 comment containing the word `@teleport-ed` compiled to a broken
 `@teleport` call and 500'd the topbar — i.e. every page. Use `{{-- --}}`
 comments in Blade, and never write `@word` in an HTML comment.
+
+---
+
+## Individual-item sales per category (2026-09-25)
+
+**Rule (opt-in):** owner Settings → Sales: master switch
+`allow_individual_item_sales` + ticked `individual_sale_category_ids`.
+Only ticked categories can be sold by loose item; every other category is
+sold by **full box only**. Nothing ticked = everything by box (this used to
+mean "all categories" — migration `2026_09_25_000002` ticked every existing
+category for shops in that state, so behaviour didn't change on upgrade).
+Ticking a parent category covers its subcategories.
+
+**One implementation:** `SettingsService::categoryAllowsIndividualSales()`
+— used by `UnifiedPos` (open product, edit cart line, add to cart) and by
+`SaleService::assertLooseItemsAllowed()` (server-side guard at the start of
+`createSale()` / `createMixedSale()`, throws `DomainException`, shown to the
+seller as a toast). Don't re-implement the check inline.
+
+**Fixed along the way:**
+- Editing a cart line hard-coded `individual_sale_allowed = true`, so a
+  box-only product could be switched to items via the pencil icon.
+- When a shop had only opened (partial) boxes, item sales were forced ON
+  regardless of category. Now a box-only category with only opened boxes
+  left is **blocked** in the POS ("Only opened boxes of X are left, and Y is
+  sold by full box only") — the owner decides what to do with that stock.
+- `confirmAddToCart()` re-reads the product's category from the DB instead
+  of trusting the client-mutable `stagingProduct` flag.
+- `PointOfSale` (orphaned) still has its own old inline logic — untouched.
+
+Tests: `tests/Feature/Sales/IndividualItemSalesTest.php`.
+
+### Loose items from WAREHOUSE stock (2026-09-25, user chose this)
+Ticked categories can now be sold by item from warehouse stock too (the
+POS used to force warehouse lines to full boxes).
+- **POS**: warehouse products get the same Full Box / Individual Items
+  switch (same `categoryAllowsIndividualSales()` rule). Warehouse stock
+  now counts `full_boxes` = SEALED boxes only (it used to count opened
+  ones too); tiles show "N items" when no sealed box is left. A box-only
+  category with only opened warehouse boxes is blocked, like the shop.
+- **Sale** (`SaleService::sellWarehouseLooseItems()` inside
+  `createMixedSale()`): takes items from already-OPENED boxes first, then
+  the oldest sealed box; sale_items `is_full_box = false`; logged as
+  `direct_sale` BoxMovements; stock leaves at sale time like box lines.
+- **Latent bug fixed**: full-box warehouse sales (both `createWarehouseSale()`
+  and `createMixedSale()`) selected `status IN (full, partial)` and would
+  sell an opened box at the full box price. Now `status = 'full'` only.
+- **Fulfillment**: one sale line is no longer always one box. Use
+  `FulfillmentQueue::packList()` / `packTotals()` / `packLabel()` /
+  `packQty()` — rows, KPIs ("To pick", "Handed over"), modal and drawer
+  show e.g. "2 boxes + 5 items". Picking slip already rendered item lines
+  as "pc" via `Sale::groupedItems()`.
+- Transfers already move opened boxes as-is (items_remaining preserved).
+- `WarehouseSale` page (`createWarehouseSale`) is still full-box only.
+
+Tests: `tests/Feature/Sales/WarehouseItemSalesTest.php`.
+
+### Cart: boxes AND loose items of one product (2026-09-25)
+`UnifiedPos` used to key cart lines by product + source only, and a tile
+tap on a product already in the cart opened that line for editing — so
+switching to "Individual Items" REPLACED the boxes. Now:
+- A tile tap always stages a NEW entry; `confirmAddToCart()` merges it into
+  an existing line with the same product + source + mode + unit price
+  (`findCartLine()`), adding quantities. Price is in the key so merging
+  never re-prices quantities already confirmed at another price.
+- The pencil (`openEditItem`) edits that line; switching it into a mode
+  that already has a same-price line folds the two together.
+- Stock is checked across ALL lines of the product+source
+  (`cartStockError()`): box lines ≤ sealed boxes, and
+  boxes × items_per_box + loose items ≤ items in stock.
+- `SaleService` processes lines in cart order; the whole-cart check
+  guarantees an item line opening a sealed box still leaves enough sealed
+  boxes for the box line (tested with the item line first).
+Tests: `tests/Feature/Sales/MixedModeCartTest.php`.

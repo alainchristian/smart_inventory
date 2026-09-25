@@ -4,11 +4,8 @@
      Dispatch confirmation happens in the component's modal, not inline. --}}
 @php
     $source    = $source ?? 'scan';
-    $whItems   = \App\Livewire\Warehouse\Sales\FulfillmentQueue::warehouseBoxes($sale);
-    $byProduct = $whItems->groupBy(fn ($i) => $i->product_id)->map(fn ($g) => [
-        'name'  => $g->first()->product?->name ?? '—',
-        'boxes' => $g->count(),
-    ]);
+    $byProduct = \App\Livewire\Warehouse\Sales\FulfillmentQueue::packList($sale);
+    [$packBoxes, $packItems] = \App\Livewire\Warehouse\Sales\FulfillmentQueue::packTotals($sale);
     $ageMin    = (int) $sale->sale_date->diffInMinutes(now());
     $ageTone   = $ageMin >= 120 ? 'red' : ($ageMin >= 30 ? 'amber' : 'dim');
     $ageLabel  = $ageMin < 60 ? "{$ageMin}m" : floor($ageMin / 60) . 'h ' . str_pad($ageMin % 60, 2, '0', STR_PAD_LEFT) . 'm';
@@ -34,11 +31,11 @@
     </div>
 
     <div class="fq-c-items">
-        <div class="fq-main fq-ellip" title="{{ $byProduct->map(fn ($p) => $p['name'] . ' ×' . $p['boxes'])->implode(', ') }}">
-            @foreach($byProduct as $prod){{ $prod['name'] }}@if($prod['boxes'] > 1) <span class="fq-x">×{{ $prod['boxes'] }}</span>@endif{{ $loop->last ? '' : ', ' }}@endforeach
+        <div class="fq-main fq-ellip" title="{{ $byProduct->map(fn ($p) => $p['name'] . ' ' . \App\Livewire\Warehouse\Sales\FulfillmentQueue::packQty($p))->implode(', ') }}">
+            @foreach($byProduct as $prod){{ $prod['name'] }}@if($prod['boxes'] > 1 || $prod['items'] > 0) <span class="fq-x">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packQty($prod) }}</span>@endif{{ $loop->last ? '' : ', ' }}@endforeach
         </div>
         <div class="fq-sub">
-            {{ $whItems->count() }} {{ $whItems->count() === 1 ? 'box' : 'boxes' }}
+            {{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($packBoxes, $packItems) }}
             @if($sale->fulfillment_notes) · <span class="fq-note" title="{{ $sale->fulfillment_notes }}">{{ $sale->fulfillment_notes }}</span>@endif
         </div>
     </div>

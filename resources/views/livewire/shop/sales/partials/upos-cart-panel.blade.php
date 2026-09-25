@@ -17,7 +17,7 @@
     {{-- Items --}}
     <div class="upos-cart-items">
         @forelse($cart as $index => $item)
-        <div class="upos-cart-item">
+        <div class="upos-cart-item" wire:key="cart-{{ $index }}-{{ $item['product_id'] }}-{{ $item['source'] ?? 'shop' }}-{{ $item['mode'] }}">
             <div class="upos-cart-item-top">
                 <div style="flex:1;min-width:0">
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">

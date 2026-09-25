@@ -68,11 +68,33 @@ class SettingsService
         return (array) $this->get('individual_sale_category_ids', []);
     }
 
-    public function categoryAllowsIndividualSales(int $categoryId): bool
+    /**
+     * THE rule for selling loose items (POS add/edit + SaleService all use it).
+     * Opt-in: only the ticked categories may be sold by item — everything
+     * else is sold by full box. Nothing ticked = everything by box. Ticking
+     * a parent category covers its subcategories.
+     */
+    public function categoryAllowsIndividualSales(?int $categoryId): bool
     {
-        if (!$this->allowIndividualItemSales()) return false;
-        $allowed = $this->individualSaleCategoryIds();
-        return empty($allowed) || in_array($categoryId, $allowed);
+        if (! $categoryId || ! $this->allowIndividualItemSales()) {
+            return false;
+        }
+
+        $allowed = array_map('intval', $this->individualSaleCategoryIds());
+        if ($allowed === []) {
+            return false;
+        }
+
+        // Walk up the category tree (guarding against cycles)
+        $seen = [];
+        for ($id = $categoryId; $id && ! isset($seen[$id]); $id = (int) \App\Models\Category::whereKey($id)->value('parent_id')) {
+            if (in_array($id, $allowed, true)) {
+                return true;
+            }
+            $seen[$id] = true;
+        }
+
+        return false;
     }
 
     public function allowSellerReturns(): bool

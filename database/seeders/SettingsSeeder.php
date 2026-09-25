@@ -25,7 +25,7 @@ class SettingsSeeder extends Seeder
                 'type'        => 'json',
                 'group'       => 'sales',
                 'label'       => 'Categories allowed for individual item sales',
-                'description' => 'Leave empty to allow all categories. Select specific categories to restrict individual sales to those only.',
+                'description' => 'Only the selected categories can be sold by individual item. All other categories are sold by full box only.',
             ],
 
             // ── Returns Policy ──────────────────────────────────────────────

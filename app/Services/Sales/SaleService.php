@@ -62,6 +62,9 @@ class SaleService
      */
     public function createSale(array $data): Sale
     {
+        // createSale lines mark loose items with is_full_box = false
+        $this->assertLooseItemsAllowed($data['items'] ?? [], fn ($i) => ! ($i['is_full_box'] ?? false));
+
         return DB::transaction(function () use ($data) {
 
             // ── Resolve payment channels ──────────────────────────────────────────
@@ -371,7 +374,7 @@ class SaleService
                 $boxes = Box::where('product_id', $product->id)
                     ->where('location_type', 'warehouse')
                     ->where('location_id', $warehouseId)
-                    ->whereIn('status', ['full', 'partial'])
+                    ->where('status', 'full')   // sealed boxes only — opened ones sell by item
                     ->where('items_remaining', '>', 0)
                     ->orderBy('received_at', 'asc')
                     ->orderBy('id', 'asc')
@@ -527,6 +530,12 @@ class SaleService
      */
     public function createMixedSale(array $data): Sale
     {
+        // Loose items (shop or warehouse stock) only for categories the owner ticked
+        $this->assertLooseItemsAllowed(
+            $data['items'] ?? [],
+            fn ($i) => ($i['mode'] ?? 'box') === 'item'
+        );
+
         return DB::transaction(function () use ($data) {
 
             // ── Resolve payment channels ──────────────────────────────────────────
@@ -663,6 +672,11 @@ class SaleService
 
             // ── Warehouse items (direct_sale BoxMovement path) ────────────────────
             foreach ($warehouseItems as $itemData) {
+                if (($itemData['mode'] ?? 'box') === 'item') {
+                    $subtotal += $this->sellWarehouseLooseItems($sale, $itemData, $warehouseId, $hasPriceOverride);
+                    continue;
+                }
+
                 $product     = Product::findOrFail($itemData['product_id']);
                 $boxesNeeded = (int) $itemData['qty'];
                 $boxPrice    = (int) $itemData['price'];
@@ -670,7 +684,7 @@ class SaleService
                 $boxes = Box::where('product_id', $product->id)
                     ->where('location_type', 'warehouse')
                     ->where('location_id', $warehouseId)
-                    ->whereIn('status', ['full', 'partial'])
+                    ->where('status', 'full')   // sealed boxes only — opened ones sell by item
                     ->where('items_remaining', '>', 0)
                     ->orderBy('received_at', 'asc')
                     ->orderBy('id', 'asc')
@@ -680,7 +694,7 @@ class SaleService
                 if ($boxes->count() < $boxesNeeded) {
                     throw new \Exception(
                         "Insufficient warehouse stock for {$product->name}. " .
-                        "Needed {$boxesNeeded} boxes, only {$boxes->count()} available."
+                        "Needed {$boxesNeeded} full boxes, only {$boxes->count()} available."
                     );
                 }
 
@@ -810,6 +824,112 @@ class SaleService
             Cache::flush();
             return $sale;
         });
+    }
+
+    /**
+     * Loose items from warehouse stock (ticked categories only — guarded
+     * above). Takes from already-opened boxes first, then the oldest sealed
+     * box, so the warehouse opens as few boxes as possible. Logged as
+     * direct_sale movements like warehouse box sales. Returns the line total.
+     */
+    private function sellWarehouseLooseItems(Sale $sale, array $itemData, int $warehouseId, bool &$hasPriceOverride): int
+    {
+        $product       = Product::findOrFail($itemData['product_id']);
+        $itemsToSell   = (int) $itemData['qty'];
+        $finalPrice    = (int) $itemData['price'];
+        $originalPrice = (int) $product->selling_price;
+        if ($finalPrice !== $originalPrice) {
+            $hasPriceOverride = true;
+        }
+
+        $boxes = Box::where('product_id', $product->id)
+            ->where('location_type', 'warehouse')
+            ->where('location_id', $warehouseId)
+            ->whereIn('status', ['full', 'partial'])
+            ->where('items_remaining', '>', 0)
+            ->orderByRaw("CASE WHEN status = 'partial' THEN 0 ELSE 1 END")
+            ->orderBy('received_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->lockForUpdate()
+            ->get();
+
+        $remaining = $itemsToSell;
+        $lineSum   = 0;
+
+        foreach ($boxes as $box) {
+            if ($remaining <= 0) {
+                break;
+            }
+            $take      = min($remaining, $box->items_remaining);
+            $lineTotal = $take * $finalPrice;
+
+            $sale->items()->create([
+                'product_id'                => $product->id,
+                'box_id'                    => $box->id,
+                'quantity_sold'             => $take,
+                'is_full_box'               => false,
+                'original_unit_price'       => $originalPrice,
+                'actual_unit_price'         => $finalPrice,
+                'line_total'                => $lineTotal,
+                'price_was_modified'        => $finalPrice !== $originalPrice,
+                'price_modification_reason' => $itemData['price_modification_reason'] ?? null,
+            ]);
+
+            $left = $box->items_remaining - $take;
+            \App\Models\BoxMovement::create([
+                'box_id'             => $box->id,
+                'from_location_type' => 'warehouse',
+                'from_location_id'   => $warehouseId,
+                'to_location_type'   => null,
+                'to_location_id'     => null,
+                'movement_type'      => 'direct_sale',
+                'moved_by'           => auth()->id(),
+                'moved_at'           => now(),
+                'reference_type'     => 'sale',
+                'reference_id'       => $sale->id,
+                'reason'             => "Mixed sale (loose items): {$sale->sale_number}",
+                'items_moved'        => $take,
+            ]);
+            $box->update([
+                'items_remaining' => $left,
+                'status'          => $left === 0 ? BoxStatus::EMPTY : BoxStatus::PARTIAL,
+            ]);
+
+            $lineSum   += $lineTotal;
+            $remaining -= $take;
+        }
+
+        if ($remaining > 0) {
+            throw new \Exception(
+                "Insufficient warehouse stock for {$product->name}. " .
+                "Needed {$itemsToSell} items, only " . ($itemsToSell - $remaining) . ' available.'
+            );
+        }
+
+        return $lineSum;
+    }
+
+    /**
+     * Server-side guard for the owner's per-category rule: a loose-item line
+     * for a category that is sold by full box only is rejected, whatever the
+     * POS sent (the POS checks too, but its state is client-mutable).
+     */
+    private function assertLooseItemsAllowed(array $items, callable $isLooseItem): void
+    {
+        $settings = app(\App\Services\SettingsService::class);
+
+        foreach ($items as $item) {
+            if (! $isLooseItem($item)) {
+                continue;
+            }
+            $product = Product::with('category:id,name')->find($item['product_id'] ?? null);
+            if ($product && ! $settings->categoryAllowsIndividualSales($product->category_id)) {
+                throw new \DomainException(
+                    "{$product->name} can only be sold by full box — "
+                    . ($product->category?->name ?? 'its category') . ' is not sold by item.'
+                );
+            }
+        }
     }
 
     public function voidSale(Sale $sale, string $reason): Sale
