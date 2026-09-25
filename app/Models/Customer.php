@@ -42,6 +42,12 @@ class Customer extends Model
         return $this->hasMany(Sale::class);
     }
 
+    /** Credit owed per shop — see CustomerCreditLedger. */
+    public function shopBalances(): HasMany
+    {
+        return $this->hasMany(CustomerShopBalance::class);
+    }
+
     public function creditRepayments(): HasMany
     {
         return $this->hasMany(CreditRepayment::class);

@@ -135,6 +135,7 @@
                         <tr>
                             <th style="text-align:left;">Customer</th>
                             <th style="text-align:left;">Phone</th>
+                            <th style="text-align:left;">Owed to</th>
                             <th>Outstanding</th>
                             <th>Last Repayment</th>
                             <th>Action</th>
@@ -142,9 +143,11 @@
                     </thead>
                     <tbody>
                         @foreach($this->customers as $customer)
-                            <tr class="cw-row {{ $writeoffCustomerId === $customer->id ? 'active' : '' }}">
+                            @php $isOpenRow = $writeoffCustomerId === $customer->id && $writeoffShopId === (int) $customer->balance_shop_id; @endphp
+                            <tr class="cw-row {{ $isOpenRow ? 'active' : '' }}" wire:key="wo-{{ $customer->id }}-{{ $customer->balance_shop_id }}">
                                 <td class="cw-td" style="font-weight:600;color:var(--text);">{{ $customer->name }}</td>
                                 <td class="cw-td" style="font-family:var(--mono);color:var(--text-dim);font-size:13px;">{{ $customer->phone }}</td>
+                                <td class="cw-td" style="font-size:13px;color:var(--text-sub);">{{ $customer->balance_shop_name }}</td>
                                 <td class="cw-td" style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--red);font-size:15px;">
                                     {{ number_format($customer->outstanding_balance) }} RWF
                                 </td>
@@ -152,24 +155,24 @@
                                     {{ $customer->last_repayment_at ? $customer->last_repayment_at->diffForHumans() : 'Never' }}
                                 </td>
                                 <td class="cw-td" style="text-align:center;">
-                                    @if($writeoffCustomerId === $customer->id)
+                                    @if($isOpenRow)
                                         <button wire:click="cancelWriteoff" class="cw-btn cw-btn-ghost cw-btn-sm">Cancel</button>
                                     @else
-                                        <button wire:click="startWriteoff({{ $customer->id }})" class="cw-btn cw-btn-red-outline cw-btn-sm">Write Off</button>
+                                        <button wire:click="startWriteoff({{ $customer->id }}, {{ (int) $customer->balance_shop_id }})" class="cw-btn cw-btn-red-outline cw-btn-sm">Write Off</button>
                                     @endif
                                 </td>
                             </tr>
 
                             {{-- Inline write-off form --}}
-                            @if($writeoffCustomerId === $customer->id && $this->selectedCustomer)
-                                <tr class="cw-form-row">
-                                    <td colspan="5">
+                            @if($isOpenRow && $this->selectedCustomer)
+                                <tr class="cw-form-row" wire:key="wo-form-{{ $customer->id }}-{{ $customer->balance_shop_id }}">
+                                    <td colspan="6">
                                         <div class="cw-form-inner">
 
                                             @if(! $confirmStep)
                                                 {{-- Step 1: amount + reason --}}
                                                 <div class="cw-form-title">
-                                                    Write-off for {{ $this->selectedCustomer->name }}
+                                                    Write-off for {{ $this->selectedCustomer->name }} · {{ $this->selectedCustomer->balance_shop_name }}
                                                     <span style="font-weight:400;color:var(--text-dim);margin-left:8px;">
                                                         Balance: {{ number_format($this->selectedCustomer->outstanding_balance) }} RWF
                                                     </span>
@@ -214,7 +217,7 @@
 
                                                 <div class="cw-warn-banner" style="display:flex;align-items:flex-start;gap:8px">
                                                     <x-icon name="alert-triangle" size="15" />
-                                                    <span>You are about to permanently write off {{ number_format($writeoffAmount) }} RWF from {{ $this->selectedCustomer->name }}'s balance. This cannot be undone.</span>
+                                                    <span>You are about to permanently write off {{ number_format($writeoffAmount) }} RWF from what {{ $this->selectedCustomer->name }} owes {{ $this->selectedCustomer->balance_shop_name }}. This cannot be undone.</span>
                                                 </div>
 
                                                 <div class="cw-summary-card">

@@ -458,11 +458,11 @@ class WarehouseSale extends Component
             return;
         }
 
-        $customer = \App\Models\Customer::find($this->customerId);
-        if ($customer && $customer->outstanding_balance > 0) {
+        // Credit is per shop — name each shop the customer owes (warn, but allow)
+        $owed = app(\App\Services\Sales\CustomerCreditLedger::class)->describeOwed((int) $this->customerId, $this->shopId ? (int) $this->shopId : null);
+        if ($owed !== '') {
             $this->creditWarningVisible = true;
-            $this->creditWarningMessage = 'Customer has outstanding credit balance of '
-                . number_format($customer->outstanding_balance) . ' RWF';
+            $this->creditWarningMessage = $owed;
         } else {
             $this->creditWarningVisible = false;
             $this->creditWarningMessage = '';

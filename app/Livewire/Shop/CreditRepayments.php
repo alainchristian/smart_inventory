@@ -7,7 +7,9 @@ use App\Livewire\Concerns\RequiresOpenSession;
 use App\Models\CreditRepayment;
 use App\Models\CreditWriteoff;
 use App\Models\Customer;
+use App\Services\Sales\CustomerCreditLedger;
 use App\Services\SettingsService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -70,6 +72,11 @@ class CreditRepayments extends Component
 
     public function selectCustomer(int $customerId)
     {
+        // Credit is repaid at the shop that gave it — the owner has no register
+        if (! auth()->user()->isShopManager()) {
+            return;
+        }
+
         $this->selectedCustomerId = $customerId;
         $this->showRepaymentForm = true;
         $this->resetRepaymentForm();
@@ -86,7 +93,14 @@ class CreditRepayments extends Component
     {
         $this->validate();
 
+        if (! auth()->user()->isShopManager()) {
+            $this->addError('total', __('Repayments are recorded at the shop that gave the credit.'));
+            return;
+        }
+
+        $shopId   = (int) auth()->user()->location_id;
         $customer = Customer::findOrFail($this->selectedCustomerId);
+        $owedHere = app(CustomerCreditLedger::class)->balanceAt($customer, $shopId);
 
         // Channel breakdown — mirrors the checkout's payment-channel pattern,
         // except there's no fixed target to allocate: the repayment total is
@@ -105,13 +119,13 @@ class CreditRepayments extends Component
             return;
         }
 
-        // Validate amount doesn't exceed outstanding balance
-        if ($totalAllocated > $customer->outstanding_balance) {
-            $this->addError('total', __('Repayment amount cannot exceed outstanding balance of :amount RWF', ['amount' => number_format($customer->outstanding_balance, 0)]));
+        // Only what is owed to THIS shop can be collected here
+        if ($totalAllocated > $owedHere) {
+            $this->addError('total', __('Repayment amount cannot exceed the :amount RWF this customer owes this shop', ['amount' => number_format($owedHere, 0)]));
             return;
         }
 
-        DB::transaction(function () use ($customer, $breakdown, $totalAllocated) {
+        DB::transaction(function () use ($customer, $breakdown, $totalAllocated, $shopId, $owedHere) {
             // 1. Create one repayment row per channel used — all sharing the
             // same timestamp so SessionActivityFeed can group them back into
             // a single feed entry (customer_id + repayment_date).
@@ -123,7 +137,7 @@ class CreditRepayments extends Component
 
                 CreditRepayment::create([
                     'customer_id'      => $customer->id,
-                    'shop_id'          => auth()->user()->location_id,
+                    'shop_id'          => $shopId,
                     'daily_session_id' => $this->activeSession?->id,
                     'amount'           => $data['amount'],
                     'payment_method'   => $method,
@@ -134,13 +148,9 @@ class CreditRepayments extends Component
                 ]);
             }
 
-            // 2. Update customer balances
-            $newBalance = max(0, $customer->outstanding_balance - $totalAllocated);
-            $customer->update([
-                'total_repaid'        => $customer->total_repaid + $totalAllocated,
-                'outstanding_balance' => $newBalance,
-                'last_repayment_at'   => $repaymentDate,
-            ]);
+            // 2. Reduce this shop's balance (customer totals re-derived by the ledger)
+            $row        = app(CustomerCreditLedger::class)->repay($customer, $shopId, $totalAllocated, $repaymentDate);
+            $newBalance = $row->outstanding_balance;
 
             // 3. Write activity log
             \App\Models\ActivityLog::create([
@@ -154,16 +164,17 @@ class CreditRepayments extends Component
                     'amount'           => $totalAllocated,
                     'breakdown'        => collect($breakdown)->filter(fn ($d) => $d['amount'] > 0)->map(fn ($d) => $d['amount'])->toArray(),
                     'new_balance'      => $newBalance,
-                    'previous_balance' => $customer->outstanding_balance,
+                    'previous_balance' => $owedHere,
                     'fully_paid'       => $newBalance === 0,
-                    'shop_id'          => auth()->user()->location_id,
+                    'customer_total_outstanding' => (int) $customer->outstanding_balance,
+                    'shop_id'          => $shopId,
                 ],
                 'ip_address'        => request()->ip(),
                 'user_agent'        => request()->header('User-Agent'),
             ]);
 
-            // 4. Resolve open credit alerts for this customer if fully paid
-            if ($newBalance === 0) {
+            // 4. Resolve open credit alerts once the customer owes nothing anywhere
+            if ((int) $customer->outstanding_balance === 0) {
                 \App\Models\Alert::where('entity_type', 'Customer')
                     ->where('entity_id', $customer->id)
                     ->whereNull('resolved_at')
@@ -208,26 +219,17 @@ class CreditRepayments extends Component
         $isShopManager = auth()->user()->isShopManager();
         $shopId        = auth()->user()->location_id;
 
-        $scopeToShop = function ($query) use ($isShopManager, $shopId) {
-            if ($isShopManager) {
-                $query->where(function ($q) use ($shopId) {
-                    $q->where('shop_id', $shopId)->orWhereNull('shop_id');
-                });
-            }
-            return $query;
-        };
+        $outstandingBase = $this->scopedCustomers()->where($this->balanceColumn('outstanding_balance'), '>', 0);
 
-        $outstandingBase = $scopeToShop(Customer::query()->where('outstanding_balance', '>', 0));
-
-        $totalOutstanding = (clone $outstandingBase)->sum('outstanding_balance');
+        $totalOutstanding = (int) (clone $outstandingBase)->sum($this->balanceColumn('outstanding_balance'));
         $customerCount    = (clone $outstandingBase)->count();
-        $highestBalance   = (clone $outstandingBase)->max('outstanding_balance') ?? 0;
+        $highestBalance   = (int) ((clone $outstandingBase)->max($this->balanceColumn('outstanding_balance')) ?? 0);
         $avgBalance       = $customerCount > 0 ? intdiv($totalOutstanding, $customerCount) : 0;
 
         // All-time totals across every customer in scope (not just those still owing)
-        $allBase        = $scopeToShop(Customer::query());
-        $allCreditGiven = (clone $allBase)->sum('total_credit_given');
-        $allRepaid      = (clone $allBase)->sum('total_repaid');
+        $allBase        = $this->scopedCustomers();
+        $allCreditGiven = (int) (clone $allBase)->sum($this->balanceColumn('total_credit_given'));
+        $allRepaid      = (int) (clone $allBase)->sum($this->balanceColumn('total_repaid'));
         $repaymentRate  = $allCreditGiven > 0 ? round(($allRepaid / $allCreditGiven) * 100, 1) : 0;
 
         $writtenOffQuery = CreditWriteoff::query();
@@ -249,11 +251,13 @@ class CreditRepayments extends Component
         // Same overdue definition as GenerateSystemAlerts::generateOverdueCreditAlerts()
         $overdueDays = app(SettingsService::class)->overdueCreditDays();
         $cutoff      = now()->subDays($overdueDays);
+        $lastRepay  = $this->balanceColumn('last_repayment_at');
+        $lastCredit = $this->balanceColumn('last_credit_at');
         $overdueCount = (clone $outstandingBase)
-            ->where(function ($q) use ($cutoff) {
-                $q->where(function ($qq) use ($cutoff) {
-                    $qq->whereNull('last_repayment_at')->where('last_credit_at', '<', $cutoff);
-                })->orWhere('last_repayment_at', '<', $cutoff);
+            ->where(function ($q) use ($cutoff, $lastRepay, $lastCredit) {
+                $q->where(function ($qq) use ($cutoff, $lastRepay, $lastCredit) {
+                    $qq->whereNull($lastRepay)->where($lastCredit, '<', $cutoff);
+                })->orWhere($lastRepay, '<', $cutoff);
             })
             ->count();
 
@@ -277,30 +281,21 @@ class CreditRepayments extends Component
 
     public function getCustomersProperty()
     {
-        $query = Customer::query()
-            ->where('outstanding_balance', '>', 0);
+        $query = $this->scopedCustomers()
+            ->where($this->balanceColumn('outstanding_balance'), '>', 0);
 
-        // Filter by shop if user is shop manager — but never hide a
-        // customer with no shop assigned (shop_id nullable; some existing
-        // customers were registered without one via the owner's Customers
-        // page). An unassigned customer should still be repayable from any
-        // shop rather than becoming invisible everywhere.
-        if (auth()->user()->isShopManager()) {
-            $shopId = auth()->user()->location_id;
-            $query->where(function ($q) use ($shopId) {
-                $q->where('shop_id', $shopId)->orWhereNull('shop_id');
-            });
+        if (! auth()->user()->isShopManager()) {
+            $query->with(['shopBalances' => fn ($q) => $q->where('outstanding_balance', '>', 0)->with('shop:id,name')->orderByDesc('outstanding_balance')]);
         }
 
-        // Search filter
         if ($this->searchQuery) {
             $query->where(function ($q) {
-                $q->where('name', 'ilike', '%' . $this->searchQuery . '%')
-                    ->orWhere('phone', 'like', '%' . $this->searchQuery . '%');
+                $q->where('customers.name', 'ilike', '%' . $this->searchQuery . '%')
+                    ->orWhere('customers.phone', 'like', '%' . $this->searchQuery . '%');
             });
         }
 
-        return $query->orderBy('outstanding_balance', 'desc')
+        return $query->orderBy($this->balanceColumn('outstanding_balance'), 'desc')
             ->paginate(20);
     }
 
@@ -309,7 +304,41 @@ class CreditRepayments extends Component
         if (!$this->selectedCustomerId) {
             return null;
         }
-        return Customer::with('shop')->find($this->selectedCustomerId);
+        return $this->scopedCustomers()->with('shop')->find($this->selectedCustomerId);
+    }
+
+    /**
+     * Customers as seen by the current user. A shop manager sees only credit
+     * owed to THEIR shop: the shop's ledger figures are aliased over the
+     * customer's company-wide ones, so the view reads the same attributes
+     * either way. The owner sees company-wide figures.
+     */
+    private function scopedCustomers(): Builder
+    {
+        $query = Customer::query()->whereNull('customers.deleted_at');
+
+        if (auth()->user()->isShopManager()) {
+            $query->join('customer_shop_balances as csb', function ($j) {
+                $j->on('csb.customer_id', '=', 'customers.id')
+                  ->where('csb.shop_id', auth()->user()->location_id);
+            })->select(
+                'customers.*',
+                'csb.outstanding_balance as outstanding_balance',
+                'csb.total_credit_given as total_credit_given',
+                'csb.total_repaid as total_repaid',
+                'csb.last_credit_at as last_credit_at',
+                'csb.last_repayment_at as last_repayment_at',
+            );
+        } else {
+            $query->select('customers.*');
+        }
+
+        return $query;
+    }
+
+    private function balanceColumn(string $column): string
+    {
+        return (auth()->user()->isShopManager() ? 'csb.' : 'customers.') . $column;
     }
 
     /**

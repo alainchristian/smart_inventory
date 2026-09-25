@@ -67,11 +67,15 @@ class CustomerCreditReport extends Component
     // ─── Credit Summary Stats ─────────────────────────────────────────────────
     public function getCreditSummaryProperty(): array
     {
-        $query = Customer::query();
-
+        // A shop filter means "credit this shop gave" (customer_shop_balances),
+        // not "customers registered at this shop".
         if ($this->locationFilter !== 'all') {
             $shopId = (int) str_replace('shop:', '', $this->locationFilter);
-            $query->where('shop_id', $shopId);
+            $query  = \App\Models\CustomerShopBalance::query()
+                ->where('shop_id', $shopId)
+                ->whereHas('customer');
+        } else {
+            $query = Customer::query();
         }
 
         return [
@@ -91,31 +95,44 @@ class CustomerCreditReport extends Component
         // Search filter
         if ($this->search) {
             $query->where(function ($q) {
-                $q->where('name', 'ilike', '%' . $this->search . '%')
-                    ->orWhere('phone', 'like', '%' . $this->search . '%');
+                $q->where('customers.name', 'ilike', '%' . $this->search . '%')
+                    ->orWhere('customers.phone', 'like', '%' . $this->search . '%');
             });
         }
 
-        // Location filter
+        // Location filter — credit this shop gave. Its ledger figures are
+        // aliased over the customer's company-wide ones so the view reads the
+        // same attributes either way.
+        $col = 'customers.';
         if ($this->locationFilter !== 'all') {
             $shopId = (int) str_replace('shop:', '', $this->locationFilter);
-            $query->where('shop_id', $shopId);
+            $query->join('customer_shop_balances as csb', function ($j) use ($shopId) {
+                $j->on('csb.customer_id', '=', 'customers.id')->where('csb.shop_id', $shopId);
+            })->select(
+                'customers.*',
+                'csb.outstanding_balance as outstanding_balance',
+                'csb.total_credit_given as total_credit_given',
+                'csb.total_repaid as total_repaid',
+                'csb.last_credit_at as last_credit_at',
+                'csb.last_repayment_at as last_repayment_at',
+            );
+            $col = 'csb.';
         }
 
         // Balance filter
         if ($this->balanceFilter === 'with_balance') {
-            $query->where('outstanding_balance', '>', 0);
+            $query->where($col . 'outstanding_balance', '>', 0);
         } elseif ($this->balanceFilter === 'no_balance') {
-            $query->where('outstanding_balance', '=', 0);
+            $query->where($col . 'outstanding_balance', '=', 0);
         }
 
         // Sorting
         match ($this->sortBy) {
-            'balance_desc' => $query->orderBy('outstanding_balance', 'desc'),
-            'balance_asc' => $query->orderBy('outstanding_balance', 'asc'),
-            'name' => $query->orderBy('name', 'asc'),
-            'recent' => $query->orderBy('last_credit_at', 'desc'),
-            default => $query->orderBy('outstanding_balance', 'desc'),
+            'balance_desc' => $query->orderBy($col . 'outstanding_balance', 'desc'),
+            'balance_asc' => $query->orderBy($col . 'outstanding_balance', 'asc'),
+            'name' => $query->orderBy('customers.name', 'asc'),
+            'recent' => $query->orderBy($col . 'last_credit_at', 'desc'),
+            default => $query->orderBy($col . 'outstanding_balance', 'desc'),
         };
 
         return $query->paginate(50);

@@ -58,6 +58,11 @@ class DailyReportDataTest extends TestCase
             'name' => 'Alice', 'phone' => '0788000' . random_int(100, 999), 'registered_by' => $this->userId,
             'shop_id' => $this->shopId, 'outstanding_balance' => 30000,
         ]);
+        // Credit belongs to the shop that gave it (customer_shop_balances)
+        $this->insert('customer_shop_balances', [
+            'customer_id' => $this->customerId, 'shop_id' => $this->shopId,
+            'total_credit_given' => 30000, 'outstanding_balance' => 30000,
+        ]);
         $this->categoryId = $this->insert('categories', ['name' => "Cat $u", 'code' => 'C' . substr($u, -8)]);
         $this->productId = $this->insert('products', [
             'sku' => "SKU$u", 'name' => "Prod $u", 'items_per_box' => 24, 'category_id' => $this->categoryId,

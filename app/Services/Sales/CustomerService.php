@@ -33,16 +33,16 @@ class CustomerService
      * Mark a sale as made to this customer and optionally extend credit.
      * Called inside the sale transaction.
      */
-    public function recordSalePurchase(Customer $customer, int $creditAmount = 0): void
+    public function recordSalePurchase(Customer $customer, int $creditAmount = 0, ?int $shopId = null): void
     {
-        $updates = ['last_purchase_at' => now()];
+        $customer->update(['last_purchase_at' => now()]);
 
         if ($creditAmount > 0) {
-            $updates['total_credit_given']  = $customer->total_credit_given + $creditAmount;
-            $updates['outstanding_balance'] = $customer->outstanding_balance + $creditAmount;
-            $updates['last_credit_at']      = now();
+            if (! $shopId) {
+                throw new \InvalidArgumentException('Credit must be attached to the shop that gave it.');
+            }
+            // Credit belongs to the shop that gave it (customer_shop_balances)
+            app(CustomerCreditLedger::class)->extend($customer, $shopId, $creditAmount);
         }
-
-        $customer->update($updates);
     }
 }

@@ -11,7 +11,12 @@ use Illuminate\Support\Facades\DB;
 
 class CreditWriteoffService
 {
-    public function writeoff(Customer $customer, int $amount, string $reason, User $user): CreditWriteoff
+    /**
+     * Write off part or all of what a customer owes ONE shop. Credit belongs
+     * to the shop that gave it, so the write-off reduces that shop's
+     * receivable only (customer totals are re-derived by the ledger).
+     */
+    public function writeoff(Customer $customer, int $shopId, int $amount, string $reason, User $user): CreditWriteoff
     {
         if (! $user->isOwner()) {
             abort(403, 'Only the owner can perform credit write-offs.');
@@ -21,24 +26,17 @@ class CreditWriteoffService
             throw new \Exception('Write-off amount must be greater than zero.');
         }
 
-        if ($amount > $customer->outstanding_balance) {
-            throw new \Exception(
-                'Write-off amount (' . number_format($amount) . ' RWF) exceeds ' .
-                'outstanding balance (' . number_format($customer->outstanding_balance) . ' RWF).'
-            );
-        }
-
         if (strlen(trim($reason)) === 0) {
             throw new \Exception('A reason is required for credit write-offs.');
         }
 
-        return DB::transaction(function () use ($customer, $amount, $reason, $user) {
-            $balanceBefore = $customer->outstanding_balance;
-            $balanceAfter  = $balanceBefore - $amount;
+        return DB::transaction(function () use ($customer, $shopId, $amount, $reason, $user) {
+            // Throws if $amount exceeds what is owed to this shop
+            [$balanceBefore, $balanceAfter] = app(CustomerCreditLedger::class)->writeOff($customer, $shopId, $amount);
 
             $writeoff = CreditWriteoff::create([
                 'customer_id'    => $customer->id,
-                'shop_id'        => $customer->shop_id,
+                'shop_id'        => $shopId,
                 'amount'         => $amount,
                 'balance_before' => $balanceBefore,
                 'balance_after'  => $balanceAfter,
@@ -46,9 +44,6 @@ class CreditWriteoffService
                 'written_off_by' => $user->id,
                 'written_off_at' => now(),
             ]);
-
-            $customer->outstanding_balance = $balanceAfter;
-            $customer->save();
 
             // Resolve open overdue/credit-limit alerts for this customer
             Alert::where('entity_type', 'Customer')
@@ -65,9 +60,11 @@ class CreditWriteoffService
                 'entity_id'         => $customer->id,
                 'entity_identifier' => $customer->name . ' (' . $customer->phone . ')',
                 'details'           => [
+                    'shop_id'        => $shopId,
                     'amount'         => $amount,
                     'balance_before' => $balanceBefore,
                     'balance_after'  => $balanceAfter,
+                    'customer_total_outstanding' => (int) $customer->outstanding_balance,
                     'reason'         => $reason,
                     'full_writeoff'  => $balanceAfter === 0,
                 ],

@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Alert;
 use App\Models\CreditRepayment;
 use App\Models\Customer;
+use App\Models\CustomerShopBalance;
 use App\Models\DailySession;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
@@ -480,14 +481,17 @@ class DailySessionService
 
         // Outstanding customer credit — what customers currently owe, i.e.
         // what the business can assume it will eventually collect. This is a
-        // running balance (Customer::outstanding_balance), not scoped to the
-        // selected date range like the rest of this method — it reflects the
-        // present moment regardless of which period is being viewed.
-        $outstandingReceivables = (int) Customer::when($shopId !== null, fn ($q) => $q->where('shop_id', $shopId))
-            ->sum('outstanding_balance');
-        $customersOwingCount = (int) Customer::when($shopId !== null, fn ($q) => $q->where('shop_id', $shopId))
-            ->where('outstanding_balance', '>', 0)
-            ->count();
+        // running balance, not scoped to the selected date range like the
+        // rest of this method — it reflects the present moment regardless of
+        // which period is being viewed. For one shop it is the credit THAT
+        // shop gave (customer_shop_balances), whoever the customer registered with.
+        if ($shopId !== null) {
+            $outstandingReceivables = (int) CustomerShopBalance::where('shop_id', $shopId)->sum('outstanding_balance');
+            $customersOwingCount    = (int) CustomerShopBalance::where('shop_id', $shopId)->where('outstanding_balance', '>', 0)->count();
+        } else {
+            $outstandingReceivables = (int) Customer::sum('outstanding_balance');
+            $customersOwingCount    = (int) Customer::where('outstanding_balance', '>', 0)->count();
+        }
 
         // Cost of Goods Sold — what the sold stock cost the business, so the
         // report can show real gross/net profit instead of just top-line
@@ -536,9 +540,14 @@ class DailySessionService
             'bank_by_customer'         => $bankByCustomer,
             'outstanding_receivables'  => $outstandingReceivables,
             'customers_owing_count'    => $customersOwingCount,
-            // Credit owed by customers not tied to any shop (customers.shop_id NULL). A single-shop
-            // 'outstanding_receivables' excludes these, the all-shops figure includes them.
-            'unassigned_receivables'   => (int) Customer::whereNull('shop_id')->sum('outstanding_balance'),
+            // Legacy credit that couldn't be attributed to any shop when the
+            // per-shop ledger was introduced (customer total minus the sum of
+            // shop balances). Normally 0. Single-shop figures exclude it, the
+            // all-shops figure includes it.
+            'unassigned_receivables'   => max(0, (int) DB::selectOne(
+                'select (select coalesce(sum(outstanding_balance),0) from customers where deleted_at is null)
+                      - (select coalesce(sum(outstanding_balance),0) from customer_shop_balances) as v'
+            )->v),
             // total_cogs/gross_profit: what the sold stock cost, and revenue
             // minus that cost — see the estimate caveat on $totalCogs above.
             'total_cogs'               => $totalCogs,

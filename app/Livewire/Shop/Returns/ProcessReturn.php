@@ -56,7 +56,7 @@ class ProcessReturn extends Component
         'customerName' => 'nullable|string|max:255',
         'customerPhone' => 'nullable|string|max:20',
         'isExchange' => 'boolean',
-        'refundMethod' => 'required_if:isExchange,false|in:cash,card,mobile_money,store_credit',
+        'refundMethod' => 'required_if:isExchange,false|in:cash,card,mobile_money,store_credit,credit_balance',
         'notes' => 'nullable|string',
         'items' => 'required|array|min:1',
         'items.*.product_id' => 'required|exists:products,id',
@@ -100,6 +100,24 @@ class ProcessReturn extends Component
             ->where('shop_id', $this->shopId)
             ->with('items.product')
             ->first();
+    }
+
+    /**
+     * How much of a refund can go against the customer's debt instead of
+     * being paid out: only when the linked sale was (partly) on credit and
+     * the customer still owes THIS shop. 0 = "Reduce credit balance" is not offered.
+     */
+    public function getCreditRefundAvailableProperty(): int
+    {
+        $sale = $this->getLinkedSale();
+        if (! $sale || ! $sale->customer_id) {
+            return 0;
+        }
+        if (! $sale->payments()->where('payment_method', 'credit')->exists()) {
+            return 0;
+        }
+
+        return app(\App\Services\Sales\CustomerCreditLedger::class)->balanceAt($sale->customer_id, (int) $this->shopId);
     }
 
     // --- Step 1: Search and Select Sale ---
@@ -457,6 +475,21 @@ class ProcessReturn extends Component
     public function submitReturn()
     {
         $this->validate();
+
+        if (! $this->isExchange && $this->refundMethod === 'credit_balance') {
+            $owed = $this->creditRefundAvailable;
+            if ($owed <= 0) {
+                $this->addError('refundMethod', 'This sale has no outstanding credit at this shop to reduce.');
+                $this->showConfirmation = false;
+                return;
+            }
+            if ($this->getEstimatedRefund() > $owed) {
+                $this->addError('refundMethod', 'The refund (' . number_format($this->getEstimatedRefund()) . ' RWF) is more than the '
+                    . number_format($owed) . ' RWF the customer owes this shop. Choose another refund method.');
+                $this->showConfirmation = false;
+                return;
+            }
+        }
 
         try {
             // Check if requires approval (large refunds)

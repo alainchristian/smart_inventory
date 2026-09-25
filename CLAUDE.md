@@ -734,3 +734,60 @@ inside `DB::beginTransaction()`/`rollBack()`, rendering the page to HTML
 (sample rows inserted, then rolled back). Screenshots only — follow-up
 Livewire requests run as whoever the browser session is. Always delete
 the route afterwards and check `git diff routes/web.php` is empty.
+
+---
+
+## Per-shop customer credit (2026-09-24)
+
+**Rule: credit belongs to the shop that gave it.** Before this, a customer
+had one global balance and a shop manager could only see/collect credit
+from customers *registered* at their shop (`customers.shop_id`) — so a
+customer registered at Remera who took credit at Nyamirambo was collectable
+only at Remera, and the cash landed in the wrong register.
+
+### Data model
+- `customer_shop_balances` (one row per customer × shop): `total_credit_given`,
+  `total_repaid`, `total_written_off`, `outstanding_balance`,
+  `last_credit_at`, `last_repayment_at`. Model `CustomerShopBalance`,
+  `Customer::shopBalances()`.
+- `customers.total_credit_given / total_repaid / outstanding_balance` are
+  kept as the **sum across shops** — company-wide views (dashboards,
+  OwnerActions, GenerateSystemAlerts overdue alerts, owner Customers list,
+  POS credit-limit check) read them unchanged. `customers.shop_id` now only
+  means "registered at", never "owes".
+- **Only write path: `App\Services\Sales\CustomerCreditLedger`**
+  (`extend` / `repay` / `writeOff` / `reverse`), which locks the row and
+  re-derives the customer totals. Never update balances directly.
+- Migration `2026_09_24_000001` backfilled from history (credit sale
+  payments by `sales.shop_id`, repayments/write-offs by their `shop_id`),
+  reconciled so each customer's rows sum to their prior
+  `outstanding_balance`. Anything unattributable shows as
+  `unassigned_receivables` in the Daily Report (normally 0).
+- `CreditService` / `CustomerCreditAccount` are dead legacy code (never
+  called; reference a non-existent `credit_account_id`) — left in place.
+
+### Behaviour (decided with the user)
+- **Repay only at the lending shop.** `CreditRepayments` for a shop manager
+  lists/limits by that shop's ledger row (ledger figures aliased over the
+  customer's so the blade is unchanged). The owner sees company-wide
+  balances with an "Owes Remera X · Kimironko Y" breakdown and cannot
+  record repayments (no register) — "Collected at shop".
+- **POS warns, doesn't block**: `UnifiedPos` / `WarehouseSale` credit
+  warning comes from `CustomerCreditLedger::describeOwed()`
+  ("Owes this shop … · Owes Kimironko …"). `PointOfSale` is orphaned — untouched.
+- **Write-offs are per shop**: `CreditWriteoffs` lists one row per
+  customer × shop; `CreditWriteoffService::writeoff($customer, $shopId, …)`.
+- **Reports**: Customer Credit report's shop filter and the Daily Report's
+  `outstanding_receivables` / `customers_owing_count` use the ledger
+  (credit that shop gave), not `customers.shop_id`.
+- **Voids/returns reduce debt**: `SaleService::voidSale()` reverses the
+  sale's credit portion (note: `voidSale` currently has no UI caller).
+  Returns get a **"Reduce debt"** refund method (`refund_method =
+  'credit_balance'`), offered only when the linked sale was on credit and
+  the customer still owes that shop; applied in `ReturnService::approveReturn()`
+  (so large returns only reduce debt once the owner approves). It never
+  touches the cash drawer (Daily Report counts only `refund_method = 'cash'`).
+  The older `store_credit` option is unimplemented elsewhere — left as is.
+
+Tests: `tests/Feature/Credit/PerShopCreditTest.php` (incl. re-running the
+backfill migration against legacy-shaped history).

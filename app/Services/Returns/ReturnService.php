@@ -219,6 +219,17 @@ class ReturnService
                 'approved_at' => now(),
             ]);
 
+            // "Reduce credit balance" refunds are taken off what the customer
+            // owes the shop that sold on credit, instead of being paid out.
+            $creditReduced = 0;
+            if (! $return->is_exchange && $return->refund_method === 'credit_balance' && $return->sale_id) {
+                $sale = \App\Models\Sale::with('customer')->find($return->sale_id);
+                if ($sale?->customer && $sale->shop_id) {
+                    $creditReduced = app(\App\Services\Sales\CustomerCreditLedger::class)
+                        ->reverse($sale->customer, $sale->shop_id, (int) $return->refund_amount);
+                }
+            }
+
             // Log activity
             ActivityLog::create([
                 'user_id' => $approvedBy->id,
@@ -236,8 +247,9 @@ class ReturnService
                     'approved_by' => $approvedBy->id,
                 ],
                 'details' => [
-                    'refund_amount' => $return->refund_amount,
-                    'is_exchange' => $return->is_exchange,
+                    'refund_amount'  => $return->refund_amount,
+                    'is_exchange'    => $return->is_exchange,
+                    'credit_reduced' => $creditReduced,
                 ],
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->header('User-Agent'),

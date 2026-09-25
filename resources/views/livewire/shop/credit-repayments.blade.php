@@ -332,6 +332,15 @@
                                     @endif
                                 </div>
                                 <div class="cr-cust-sub">{{ $customer->phone }}</div>
+                                @if(! auth()->user()->isShopManager() && $customer->relationLoaded('shopBalances') && $customer->shopBalances->isNotEmpty())
+                                    <div class="cr-cust-sub" style="margin-top:3px">
+                                        {{ __('Owes') }}
+                                        @foreach($customer->shopBalances as $bal)
+                                            <span style="color:var(--text-sub);font-weight:600">{{ \Illuminate\Support\Str::afterLast($bal->shop?->name ?? '', '— ') ?: $bal->shop?->name }}</span>
+                                            <span style="font-family:var(--mono)">{{ number_format($bal->outstanding_balance) }}</span>@if(! $loop->last) · @endif
+                                        @endforeach
+                                    </div>
+                                @endif
                             </td>
                             <td style="text-align:right;white-space:nowrap">
                                 <span style="font-family:var(--mono);font-weight:700;color:var(--red);font-size:14px">{{ number_format($customer->outstanding_balance) }}</span>
@@ -346,9 +355,13 @@
                                 {{ $customer->last_repayment_at?->diffForHumans() ?? __('Never') }}
                             </td>
                             <td style="text-align:center">
-                                <button wire:click="selectCustomer({{ $customer->id }})" class="cr-action">
-                                    {{ __('Record Payment') }}
-                                </button>
+                                @if(auth()->user()->isShopManager())
+                                    <button wire:click="selectCustomer({{ $customer->id }})" class="cr-action">
+                                        {{ __('Record Payment') }}
+                                    </button>
+                                @else
+                                    <span style="font-size:12px;color:var(--text-dim)" title="{{ __('Repayments are recorded at the shop that gave the credit.') }}">{{ __('Collected at shop') }}</span>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

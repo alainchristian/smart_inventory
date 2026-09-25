@@ -630,7 +630,21 @@
                                     {{ $lbl }}
                                 </button>
                             @endforeach
+                            @if($this->creditRefundAvailable > 0)
+                                <button type="button"
+                                        wire:click="$set('refundMethod', 'credit_balance')"
+                                        class="pr-mth-btn {{ $refundMethod === 'credit_balance' ? 'on' : '' }}"
+                                        title="Take the refund off what the customer owes this shop instead of paying it out">
+                                    Reduce debt
+                                </button>
+                            @endif
                         </div>
+                        @if($this->creditRefundAvailable > 0)
+                            <div style="font-size:12px;color:var(--text-dim);margin-top:6px">
+                                This sale was on credit — the customer owes this shop {{ number_format($this->creditRefundAvailable) }} RWF.
+                            </div>
+                        @endif
+                        @error('refundMethod') <div style="font-size:12px;color:var(--red);margin-top:6px">{{ $message }}</div> @enderror
                     @endif
                 </div>
             </div>
@@ -696,7 +710,7 @@
                         @if(!$isExchange)
                             <div class="pr-d-row">
                                 <span class="pr-d-lbl">Method</span>
-                                <span class="pr-d-val">{{ ucwords(str_replace('_', ' ', $refundMethod)) }}</span>
+                                <span class="pr-d-val">{{ $refundMethod === 'credit_balance' ? 'Reduce customer debt' : ucwords(str_replace('_', ' ', $refundMethod)) }}</span>
                             </div>
                         @endif
 

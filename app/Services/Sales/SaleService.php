@@ -229,7 +229,7 @@ class SaleService
                 $customer = \App\Models\Customer::find($data['customer_id']);
                 if ($customer) {
                     $customerService = new CustomerService();
-                    $customerService->recordSalePurchase($customer, $creditAmount);
+                    $customerService->recordSalePurchase($customer, $creditAmount, $sale->shop_id);
                 }
             } elseif (!empty($data['customer_id'])) {
                 $customer = \App\Models\Customer::find($data['customer_id']);
@@ -472,7 +472,7 @@ class SaleService
             if ($hasCredit && !empty($data['customer_id'])) {
                 $customer = \App\Models\Customer::find($data['customer_id']);
                 if ($customer) {
-                    (new CustomerService())->recordSalePurchase($customer, $creditAmount);
+                    (new CustomerService())->recordSalePurchase($customer, $creditAmount, $sale->shop_id);
                 }
             } elseif (!empty($data['customer_id'])) {
                 $customer = \App\Models\Customer::find($data['customer_id']);
@@ -766,7 +766,7 @@ class SaleService
             if ($hasCredit && !empty($data['customer_id'])) {
                 $customer = \App\Models\Customer::find($data['customer_id']);
                 if ($customer) {
-                    (new CustomerService())->recordSalePurchase($customer, $creditAmount);
+                    (new CustomerService())->recordSalePurchase($customer, $creditAmount, $sale->shop_id);
                 }
             } elseif (!empty($data['customer_id'])) {
                 $customer = \App\Models\Customer::find($data['customer_id']);
@@ -848,6 +848,13 @@ class SaleService
                 }
             }
 
+            // Reverse any credit this sale put on the customer's tab at this shop
+            $creditReversed = 0;
+            $creditAmount   = (int) $sale->payments()->where('payment_method', 'credit')->sum('amount');
+            if ($creditAmount > 0 && $sale->customer_id && $sale->shop_id && ($customer = $sale->customer)) {
+                $creditReversed = app(CustomerCreditLedger::class)->reverse($customer, $sale->shop_id, $creditAmount);
+            }
+
             $shop = Shop::find($sale->shop_id);
 
             ActivityLog::create([
@@ -858,9 +865,10 @@ class SaleService
                 'entity_id'         => $sale->id,
                 'entity_identifier' => $sale->sale_number,
                 'details' => [
-                    'reason'    => $reason,
-                    'total'     => $sale->total,
-                    'shop_name' => $shop?->name,
+                    'reason'          => $reason,
+                    'total'           => $sale->total,
+                    'shop_name'       => $shop?->name,
+                    'credit_reversed' => $creditReversed,
                 ],
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->header('User-Agent'),
