@@ -202,13 +202,73 @@ class FulfillmentQueue extends Component
         $this->expandedHistoryId = $this->expandedHistoryId === $saleId ? null : $saleId;
     }
 
+    public function closeHistory(): void
+    {
+        $this->expandedHistoryId = null;
+    }
+
+    /**
+     * Header KPIs — always over ALL pending orders for this warehouse
+     * (never the filtered list), plus today's dispatches.
+     */
+    public function getStatsProperty(): array
+    {
+        $pending = Sale::warehouseDirect()
+            ->pendingFulfillment()
+            ->where('source_warehouse_id', $this->warehouseId)
+            ->with(['items.box', 'payments'])
+            ->get(['id', 'sale_date', 'total']);
+
+        $now     = now();
+        $oldest  = $pending->min('sale_date');
+        $today   = Sale::warehouseDirect()
+            ->where('source_warehouse_id', $this->warehouseId)
+            ->where('fulfillment_status', 'fulfilled')
+            ->whereBetween('fulfillment_confirmed_at', [business_now()->startOfDay()->utc(), business_now()->endOfDay()->utc()])
+            ->with('items.box')
+            ->get(['id', 'fulfillment_method']);
+
+        return [
+            'pending'          => $pending->count(),
+            'pending_boxes'    => $pending->sum(fn ($s) => self::warehouseBoxes($s)->count()),
+            'oldest_minutes'   => $oldest ? (int) $oldest->diffInMinutes($now) : null,
+            'over_2h'          => $pending->filter(fn ($s) => $s->sale_date->diffInMinutes($now) >= 120)->count(),
+            'over_30m'         => $pending->filter(fn ($s) => $s->sale_date->diffInMinutes($now) >= 30)->count(),
+            'unpaid'           => $pending->filter(fn ($s) => ! self::isPaidInFull($s))->count(),
+            'today'            => $today->count(),
+            'today_boxes'      => $today->sum(fn ($s) => self::warehouseBoxes($s)->count()),
+            'today_transport'  => $today->where('fulfillment_method', 'transporter')->count(),
+        ];
+    }
+
+    /** Sale lines that physically leave this warehouse (one line = one box). */
+    public static function warehouseBoxes(Sale $sale): \Illuminate\Support\Collection
+    {
+        return $sale->items->filter(fn ($i) => $i->box?->location_type?->value === 'warehouse');
+    }
+
+    /**
+     * Paid in full = real money received covers the total. Credit is a
+     * promise to pay, not payment — it must NOT count (it used to, so a
+     * credit sale showed as "Fully paid").
+     */
+    public static function isPaidInFull(Sale $sale): bool
+    {
+        $received = $sale->payments
+            ->reject(fn ($p) => ($p->payment_method?->value ?? $p->payment_method) === 'credit')
+            ->sum('amount');
+
+        return $sale->total > 0 && $received >= $sale->total;
+    }
+
     public function requestFulfillment(int $saleId, string $source = 'scan'): void
     {
         if (! auth()->user()->isOwner() && ! auth()->user()->isWarehouseManager()) {
-            session()->flash('error', 'You are not authorized to confirm fulfillment.');
+            $this->dispatch('notification', ['type' => 'error', 'message' => 'You are not authorized to confirm fulfillment.']);
             return;
         }
 
+        $this->resetErrorBag();
         $this->confirmingFulfillmentId = $saleId;
         $this->fulfillmentSource = in_array($source, ['queue', 'scan'], true) ? $source : 'scan';
         $this->recipientName = '';
@@ -226,7 +286,7 @@ class FulfillmentQueue extends Component
     public function markFulfilled(int $saleId): void
     {
         if (! auth()->user()->isOwner() && ! auth()->user()->isWarehouseManager()) {
-            session()->flash('error', 'You are not authorized to confirm fulfillment.');
+            $this->dispatch('notification', ['type' => 'error', 'message' => 'You are not authorized to confirm fulfillment.']);
             return;
         }
 
@@ -257,6 +317,7 @@ class FulfillmentQueue extends Component
 
         ActivityLog::create([
             'user_id'           => auth()->id(),
+            'user_name'         => auth()->user()?->name,
             'action'            => 'fulfillment_confirmed',
             'entity_type'       => 'Sale',
             'entity_id'         => $sale->id,
@@ -270,12 +331,33 @@ class FulfillmentQueue extends Component
         $this->fulfillmentSource = 'scan';
         $this->recipientName = '';
         $this->signatureData = null;
+
+        $this->dispatch('notification', ['type' => 'success', 'message' => "{$sale->sale_number} dispatched — handed to {$recipientName}."]);
     }
 
     public function render()
     {
+        $confirmingSale = $this->confirmingFulfillmentId
+            ? Sale::warehouseDirect()
+                ->pendingFulfillment()
+                ->where('source_warehouse_id', $this->warehouseId)
+                ->with(['items.box', 'items.product', 'shop', 'fulfillmentTransporter', 'payments'])
+                ->find($this->confirmingFulfillmentId)
+            : null;
+
+        $historySale = $this->expandedHistoryId
+            ? Sale::warehouseDirect()
+                ->where('source_warehouse_id', $this->warehouseId)
+                ->where('fulfillment_status', 'fulfilled')
+                ->with(['items.box', 'items.product', 'shop', 'fulfillmentTransporter', 'fulfillmentConfirmedBy', 'payments', 'soldBy'])
+                ->find($this->expandedHistoryId)
+            : null;
+
         return view('livewire.warehouse.sales.fulfillment-queue', [
-            'fulfilledHistory'      => $this->fulfilledHistory,
+            'stats'                 => $this->stats,
+            'confirmingSale'        => $confirmingSale,
+            'historySale'           => $historySale,
+            'fulfilledHistory'      => $this->activeTab === 'history' ? $this->fulfilledHistory : collect(),
             'scannedSale'           => $this->scannedSale,
             'customerSearchResults' => $this->customerSearchResults,
             'pendingSales'          => $this->dispatchMethod === 'queue' ? $this->pendingSales : null,

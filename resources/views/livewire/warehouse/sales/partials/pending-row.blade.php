@@ -1,129 +1,73 @@
-{{-- Pending warehouse-direct sale card + confirm strip. Expects: $sale.
+{{-- One pending warehouse-direct order as a list row. Expects: $sale.
      Optional: $source ('queue'|'scan') — tags how this row was reached, carried
-     through to the ActivityLog entry on confirm. Defaults to 'scan'. --}}
+     through to the ActivityLog entry on confirm. Defaults to 'scan'.
+     Dispatch confirmation happens in the component's modal, not inline. --}}
 @php
-    $source     = $source ?? 'scan';
-    $whItems    = $sale->items->filter(fn($i) => $i->box?->location_type?->value === 'warehouse');
-    $byProduct  = $whItems->groupBy(fn($i) => $i->product_id)->map(fn($g) => [
+    $source    = $source ?? 'scan';
+    $whItems   = \App\Livewire\Warehouse\Sales\FulfillmentQueue::warehouseBoxes($sale);
+    $byProduct = $whItems->groupBy(fn ($i) => $i->product_id)->map(fn ($g) => [
         'name'  => $g->first()->product?->name ?? '—',
         'boxes' => $g->count(),
     ]);
-    $paidFull   = $sale->total > 0 && $sale->payments->sum('amount') >= $sale->total;
-    $ageMin     = (int) $sale->sale_date->diffInMinutes(now());
-    $urgency    = $ageMin >= 120 ? 'red' : ($ageMin >= 30 ? 'amber' : '');
-    $ageBadge   = $ageMin >= 120 ? 'fq-age-red' : ($ageMin >= 30 ? 'fq-age-amber' : 'fq-age-ok');
-    $ageLabel   = $ageMin < 60
-        ? "{$ageMin}m ago"
-        : floor($ageMin / 60).'h '.str_pad($ageMin % 60, 2, '0').'m';
-    $confirming = $confirmingFulfillmentId === $sale->id;
+    $paidFull  = \App\Livewire\Warehouse\Sales\FulfillmentQueue::isPaidInFull($sale);
+    $ageMin    = (int) $sale->sale_date->diffInMinutes(now());
+    $ageTone   = $ageMin >= 120 ? 'red' : ($ageMin >= 30 ? 'amber' : 'dim');
+    $ageLabel  = $ageMin < 60 ? "{$ageMin}m" : floor($ageMin / 60) . 'h ' . str_pad($ageMin % 60, 2, '0', STR_PAD_LEFT) . 'm';
 @endphp
 
-<div class="fq-card" wire:key="card-{{ $sale->id }}">
-    <div class="fq-urgency {{ $urgency }}"></div>
+<div class="fq-row" wire:key="row-{{ $sale->id }}">
+    <div class="fq-c-ref">
+        <div class="fq-ref">
+            <span class="fq-dot" style="background:var(--{{ $ageTone === 'dim' ? 'border-hi' : $ageTone }})"></span>
+            {{ $sale->sale_number }}
+        </div>
+        <div class="fq-sub">
+            {{ local_time($sale->sale_date)->format('d M, H:i') }} ·
+            <span style="color:var(--{{ $ageTone === 'dim' ? 'text-dim' : $ageTone }});font-weight:{{ $ageTone === 'dim' ? 500 : 700 }}">{{ $ageLabel }} waiting</span>
+        </div>
+    </div>
 
-    {{-- Main body (always visible) --}}
-    <div class="fq-body">
-        <div class="fq-row-top">
-            <span class="fq-ref">{{ $sale->sale_number }}</span>
-            <span class="fq-shop">
-                {{ $sale->shop?->name ?? '—' }}
-                @if($sale->customer_name)
-                    &middot; {{ $sale->customer_name }}
-                @endif
-                @if($sale->customer_phone)
-                    &middot; {{ $sale->customer_phone }}
-                @endif
-                &middot; {{ local_time($sale->sale_date)->format('d M, H:i') }}
+    <div class="fq-c-cust">
+        <div class="fq-main fq-ellip">{{ $sale->customer_name ?: 'Walk-in customer' }}</div>
+        <div class="fq-sub fq-ellip">
+            {{ $sale->shop?->name ?? '—' }}@if($sale->customer_phone) · <span style="font-family:var(--mono)">{{ $sale->customer_phone }}</span>@endif
+        </div>
+    </div>
+
+    <div class="fq-c-items">
+        <div class="fq-main fq-ellip" title="{{ $byProduct->map(fn ($p) => $p['name'] . ' ×' . $p['boxes'])->implode(', ') }}">
+            @foreach($byProduct as $prod){{ $prod['name'] }}@if($prod['boxes'] > 1) <span class="fq-x">×{{ $prod['boxes'] }}</span>@endif{{ $loop->last ? '' : ', ' }}@endforeach
+        </div>
+        <div class="fq-sub">
+            {{ $whItems->count() }} {{ $whItems->count() === 1 ? 'box' : 'boxes' }}
+            @if($sale->fulfillment_notes) · <span class="fq-note" title="{{ $sale->fulfillment_notes }}">{{ $sale->fulfillment_notes }}</span>@endif
+        </div>
+    </div>
+
+    <div class="fq-c-via">
+        @if($sale->fulfillment_method === 'transporter')
+            <span class="fq-badge" style="background:var(--violet-dim);color:var(--violet)">
+                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                {{ $sale->fulfillmentTransporter?->name ?? 'Transporter' }}
             </span>
-            <span class="fq-age {{ $ageBadge }}">{{ $ageLabel }}</span>
-        </div>
-
-        <div class="fq-prods">
-            @foreach($byProduct as $prod)
-                <div class="fq-prod-item">
-                    <span style="font-weight:600">{{ $prod['name'] }}</span>@if($prod['boxes'] > 1)<span class="fq-prod-qty"> &times;{{ $prod['boxes'] }}</span>@endif
-                </div>
-            @endforeach
-        </div>
-
-        @if($sale->fulfillment_notes)
-        <div class="fq-notes">{{ $sale->fulfillment_notes }}</div>
+        @else
+            <span class="fq-badge" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Customer pickup
+            </span>
         @endif
-
-        @if(!$confirming)
-        <div class="fq-act">
-            <div class="fq-via">
-                @if($sale->fulfillment_method === 'transporter')
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                    Via&nbsp;<b>{{ $sale->fulfillmentTransporter?->name ?? 'Transporter' }}</b>
-                @else
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <b>Customer Pickup</b>
-                @endif
-                @if(!$paidFull)
-                    <span class="fq-outstanding" style="margin-left:6px">Balance outstanding</span>
-                @endif
-            </div>
-            <a class="fq-btn-print" href="{{ route('warehouse.sales.fulfillment.picking-slip', $sale->id) }}" target="_blank" rel="noopener">
-                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print Picking Slip
-            </a>
-            <button class="fq-btn-dispatch" wire:click="requestFulfillment({{ $sale->id }}, '{{ $source }}')">
-                Confirm Dispatch
-                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-        </div>
-        @endif
+        @unless($paidFull)
+            <span class="fq-badge" style="background:var(--amber-dim);color:var(--amber)" title="Money received doesn't cover the total — includes credit sales">Balance due</span>
+        @endunless
     </div>
 
-    {{-- Confirm strip — header (what/warning) → 2-col field grid → footer actions --}}
-    @if($confirming)
-    <div class="fq-confirm">
-        <div class="fq-confirm-head">
-            <div class="fq-confirm-msg">
-                Hand over <strong>{{ $whItems->count() }} {{ $whItems->count() === 1 ? 'box' : 'boxes' }}</strong>
-                to {{ $sale->fulfillment_method === 'transporter'
-                    ? ($sale->fulfillmentTransporter?->name ?? 'transporter')
-                    : 'customer' }}?
-            </div>
-            <div class="fq-confirm-sub">This action is permanent and cannot be undone.</div>
-        </div>
-
-        <div class="fq-confirm-grid">
-            <div class="fq-confirm-field">
-                <label class="fq-confirm-label">
-                    {{ $sale->fulfillment_method === 'transporter' ? 'Transporter rep. name' : 'Who is picking this up?' }}
-                </label>
-                <div class="fq-confirm-input-box">
-                    <input type="text" class="fq-confirm-input" wire:model="recipientName"
-                           placeholder="{{ $sale->fulfillment_method === 'transporter' ? 'Name of driver/agent collecting' : 'Name of person collecting' }}"
-                           wire:key="recipient-{{ $sale->id }}">
-                </div>
-                @error('recipientName') <span class="fq-confirm-error">{{ $message }}</span> @enderror
-            </div>
-            <div class="fq-confirm-field">
-                <label class="fq-confirm-label">Signature</label>
-                <div class="fq-sig-wrap" wire:ignore wire:key="sig-wrap-{{ $sale->id }}">
-                    <canvas id="sig-{{ $sale->id }}" class="fq-sig-canvas"
-                            data-sig-canvas width="400" height="140"></canvas>
-                    <button type="button" class="fq-sig-clear" data-sig-clear="sig-{{ $sale->id }}" title="Clear signature">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                </div>
-                {{-- Outside the wire:ignore subtree — a validation error must still
-                     render even though the canvas above is frozen from re-renders. --}}
-                @error('signatureData') <span class="fq-confirm-error">{{ $message }}</span> @enderror
-            </div>
-        </div>
-
-        <div class="fq-confirm-foot">
-            <button class="fq-btn-cancel" wire:click="cancelFulfillment">Cancel</button>
-            <button class="fq-btn-yes" wire:click="markFulfilled({{ $sale->id }})">
-                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                Yes, Dispatched
-            </button>
-        </div>
+    <div class="fq-c-act">
+        <a class="fq-icon-btn" href="{{ route('warehouse.sales.fulfillment.picking-slip', $sale->id) }}" target="_blank" rel="noopener"
+           title="Print picking slip" aria-label="Print picking slip for {{ $sale->sale_number }}">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        </a>
+        <button type="button" class="fq-btn fq-btn-primary fq-btn-sm" wire:click="requestFulfillment({{ $sale->id }}, '{{ $source }}')">
+            Dispatch
+        </button>
     </div>
-    @endif
-
 </div>
