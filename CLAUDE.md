@@ -822,10 +822,26 @@ Same principles as the day-close redesign, applied to
   (moving `@script` into an included partial breaks Livewire responses —
   see the comment in the view).
 
+### Payment status is never shown to warehouse staff (2026-09-25, user request)
+The redesign first added "Balance due" badges/KPI/modal warning/drawer
+row (and fixed a bug where credit counted as paid). The user then asked
+that fulfillment NOT mention outstanding balances at all — all of it was
+removed along with `isPaidInFull()`; the KPI line now shows transporter vs
+pickup split instead. The picking/dispatch slip (`receipt/print.blade.php`
+with `$hideAmounts`) no longer shows the "Prices are not shown on this
+slip…" note — prices/payments are withheld silently. Don't re-add payment
+or credit info to warehouse screens or the slip.
+
+### Signature on pickup is a business setting
+`fulfillment_require_signature` (boolean, default **true**, group
+fulfillment; migration `2026_09_25_000001`, `SettingsService::fulfillmentRequireSignature()`),
+toggle in owner Settings → Fulfillment. Off → the modal hides the
+signature pad and `markFulfilled()` accepts no signature
+(`fulfillment_signature` stays null); the recipient NAME is always
+required. `markFulfilled()` re-reads the setting server-side so a stale
+page can't skip a signature that has since become required.
+
 ### Bugs fixed
-- **Credit counted as paid**: the paid check summed ALL `sale_payments`,
-  including `credit`, so credit sales showed "Fully paid" and never got the
-  balance flag. `FulfillmentQueue::isPaidInFull()` excludes credit.
 - Authorization errors used `session()->flash()`, which this page never
   rendered — now toasts. Dispatch success also toasts.
 - `fulfillment_confirmed` ActivityLog rows now include `user_name`.

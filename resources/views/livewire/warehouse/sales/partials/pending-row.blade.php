@@ -9,7 +9,6 @@
         'name'  => $g->first()->product?->name ?? '—',
         'boxes' => $g->count(),
     ]);
-    $paidFull  = \App\Livewire\Warehouse\Sales\FulfillmentQueue::isPaidInFull($sale);
     $ageMin    = (int) $sale->sale_date->diffInMinutes(now());
     $ageTone   = $ageMin >= 120 ? 'red' : ($ageMin >= 30 ? 'amber' : 'dim');
     $ageLabel  = $ageMin < 60 ? "{$ageMin}m" : floor($ageMin / 60) . 'h ' . str_pad($ageMin % 60, 2, '0', STR_PAD_LEFT) . 'm';
@@ -56,9 +55,6 @@
                 Customer pickup
             </span>
         @endif
-        @unless($paidFull)
-            <span class="fq-badge" style="background:var(--amber-dim);color:var(--amber)" title="Money received doesn't cover the total — includes credit sales">Balance due</span>
-        @endunless
     </div>
 
     <div class="fq-c-act">

@@ -145,6 +145,12 @@ class SettingsService
         return (string) $this->get('fulfillment_dispatch_method', 'queue');
     }
 
+    /** Whether the person collecting a warehouse-direct order must sign on screen. */
+    public function fulfillmentRequireSignature(): bool
+    {
+        return (bool) $this->get('fulfillment_require_signature', true);
+    }
+
     public function defaultLocale(): string
     {
         return (string) $this->get('default_locale', 'en');

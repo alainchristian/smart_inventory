@@ -40,7 +40,7 @@ class FulfillmentQueueTest extends TestCase
 
         $this->manager = User::forceCreate([
             'name' => 'WH Manager', 'email' => "wm$u@example.test", 'password' => bcrypt('x'),
-            'role' => 'warehouse_manager', 'location_type' => 'warehouse', 'location_id' => $this->warehouseId,
+            'role' => 'warehouse_manager', 'location_type' => 'warehouse', 'location_id' => $this->warehouseId, 'must_change_password' => false, 'is_active' => true,
         ]);
     }
 
@@ -84,21 +84,13 @@ class FulfillmentQueueTest extends TestCase
             ->set('dispatchMethod', 'queue')
             ->assertSee('Fulfillment')
             ->assertSee('Awaiting dispatch')
-            ->assertViewHas('stats', fn ($s) => $s['pending'] === 2 && $s['pending_boxes'] === 3 && $s['over_2h'] === 1 && $s['unpaid'] === 1)
-            ->assertSee('Balance due')
+            ->assertViewHas('stats', fn ($s) => $s['pending'] === 2 && $s['pending_boxes'] === 3 && $s['over_2h'] === 1 && $s['pending_transport'] === 0)
+            // Warehouse staff never see payment status (credit, balances)
+            ->assertDontSee('Balance due')
+            ->assertDontSee('balance due')
             ->assertSee('Dispatch');
     }
 
-    public function test_credit_payment_does_not_count_as_paid(): void
-    {
-        $credit = $this->pendingSale(1, ['credit' => 30000]);
-        $cash   = $this->pendingSale(1, ['cash' => 30000]);
-        $mixed  = $this->pendingSale(1, ['cash' => 10000, 'credit' => 20000]);
-
-        $this->assertFalse(FulfillmentQueue::isPaidInFull($credit->load('payments')));
-        $this->assertTrue(FulfillmentQueue::isPaidInFull($cash->load('payments')));
-        $this->assertFalse(FulfillmentQueue::isPaidInFull($mixed->load('payments')));
-    }
 
     public function test_dispatch_via_modal_requires_name_and_signature(): void
     {
@@ -136,6 +128,55 @@ class FulfillmentQueueTest extends TestCase
             ->assertSee('Jean Bosco')
             ->call('closeHistory')
             ->assertSet('expandedHistoryId', null);
+    }
+
+    public function test_signature_is_optional_when_the_setting_is_off(): void
+    {
+        app(\App\Services\SettingsService::class)->set('fulfillment_require_signature', false);
+        $sale = $this->pendingSale(1, ['credit' => 30000]);
+
+        $c = Livewire::actingAs($this->manager)
+            ->test(FulfillmentQueue::class)
+            ->set('dispatchMethod', 'queue')
+            ->assertSet('requireSignature', false)
+            ->call('requestFulfillment', $sale->id, 'queue')
+            ->assertDontSee('data-sig-canvas', false)
+            ->assertDontSee('balance due');
+
+        $c->call('markFulfilled', $sale->id)->assertHasErrors('recipientName')->assertHasNoErrors('signatureData');
+        $c->set('recipientName', 'Claudine Umutoni')->call('markFulfilled', $sale->id)->assertHasNoErrors();
+
+        $sale->refresh();
+        $this->assertSame('fulfilled', $sale->fulfillment_status);
+        $this->assertNull($sale->fulfillment_signature);
+    }
+
+    public function test_signature_required_by_default(): void
+    {
+        $this->assertTrue(app(\App\Services\SettingsService::class)->fulfillmentRequireSignature());
+        $sale = $this->pendingSale(1, ['cash' => 30000]);
+
+        Livewire::actingAs($this->manager)
+            ->test(FulfillmentQueue::class)
+            ->call('requestFulfillment', $sale->id)
+            ->assertSee('data-sig-canvas', false)
+            ->set('recipientName', 'Jean Bosco')
+            ->call('markFulfilled', $sale->id)
+            ->assertHasErrors('signatureData');
+    }
+
+    public function test_picking_slip_has_no_price_note_or_payment_info(): void
+    {
+        $sale = $this->pendingSale(1, ['credit' => 30000]);
+
+        $this->actingAs($this->manager)
+            ->get(route('warehouse.sales.fulfillment.picking-slip', $sale->id))
+            ->assertOk()
+            ->assertDontSee('Prices are not shown')
+            ->assertDontSee('customer receipt if needed')
+            ->assertDontSee('Credit recorded')
+            ->assertDontSee('30,000')
+            ->assertSee($sale->sale_number);
     }
 
     public function test_shop_manager_cannot_dispatch(): void

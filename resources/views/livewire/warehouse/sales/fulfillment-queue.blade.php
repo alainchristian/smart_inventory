@@ -238,7 +238,7 @@
         <div class="fq-kpi-divider"></div>
         <div>
             <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Boxes to pack</span><span class="fq-kpi-stat-v">{{ $stats['pending_boxes'] }}</span></div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">With balance due</span><span class="fq-kpi-stat-v" style="{{ $stats['unpaid'] ? 'color:var(--amber)' : '' }}">{{ $stats['unpaid'] }}</span></div>
+            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Via transporter · pickup</span><span class="fq-kpi-stat-v">{{ $stats['pending_transport'] }} · {{ $stats['pending'] - $stats['pending_transport'] }}</span></div>
         </div>
     </div>
 
@@ -377,7 +377,7 @@
         <div class="fq-card-head">
             <div>
                 <div class="fq-card-title">Dispatch history</div>
-                <div class="fq-card-sub">{{ $fulfilledHistory->count() }}{{ $fulfilledHistory->count() >= 100 ? '+' : '' }} {{ $fulfilledHistory->count() === 1 ? 'dispatch' : 'dispatches' }} · click a row for the signed record</div>
+                <div class="fq-card-sub">{{ $fulfilledHistory->count() }}{{ $fulfilledHistory->count() >= 100 ? '+' : '' }} {{ $fulfilledHistory->count() === 1 ? 'dispatch' : 'dispatches' }} · click a row for details</div>
             </div>
             <div class="fq-search-wrap">
                 <svg class="fq-search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -441,7 +441,6 @@
     @php
         $dBoxes = \App\Livewire\Warehouse\Sales\FulfillmentQueue::warehouseBoxes($historySale);
         $dProds = $dBoxes->groupBy(fn ($i) => $i->product_id)->map(fn ($g) => ['name' => $g->first()->product?->name ?? '—', 'sku' => $g->first()->product?->sku, 'boxes' => $g->count()]);
-        $dPaid  = \App\Livewire\Warehouse\Sales\FulfillmentQueue::isPaidInFull($historySale);
     @endphp
     <div x-data @keydown.escape.window="$wire.closeHistory()" wire:key="fq-drawer-{{ $historySale->id }}">
         <div class="fq-d-overlay" wire:click="closeHistory"></div>
@@ -474,7 +473,6 @@
                 <div class="fq-drow"><span class="fq-drow-l">Customer</span><span class="fq-drow-v">{{ $historySale->customer_name ?: 'Walk-in customer' }}@if($historySale->customer_phone) <span style="font-family:var(--mono);color:var(--text-dim);font-weight:500">· {{ $historySale->customer_phone }}</span>@endif</span></div>
                 <div class="fq-drow"><span class="fq-drow-l">Sold at</span><span class="fq-drow-v">{{ $historySale->shop?->name ?? '—' }}</span></div>
                 <div class="fq-drow"><span class="fq-drow-l">Sold by</span><span class="fq-drow-v">{{ $historySale->soldBy?->name ?? '—' }} · {{ local_time($historySale->sale_date)->format('d M, H:i') }}</span></div>
-                <div class="fq-drow"><span class="fq-drow-l">Payment</span><span class="fq-drow-v" style="color:{{ $dPaid ? 'var(--green)' : 'var(--amber)' }}">{{ $dPaid ? 'Paid in full' : 'Balance due (incl. credit)' }}</span></div>
                 @if($historySale->fulfillment_notes)
                     <div class="fq-drow"><span class="fq-drow-l">Note</span><span class="fq-drow-v" style="font-weight:500;font-style:italic">{{ $historySale->fulfillment_notes }}</span></div>
                 @endif
@@ -501,7 +499,6 @@
         $cBoxes = \App\Livewire\Warehouse\Sales\FulfillmentQueue::warehouseBoxes($confirmingSale);
         $cProds = $cBoxes->groupBy(fn ($i) => $i->product_id)->map(fn ($g) => ['name' => $g->first()->product?->name ?? '—', 'boxes' => $g->count()]);
         $isTransport = $confirmingSale->fulfillment_method === 'transporter';
-        $cPaid = \App\Livewire\Warehouse\Sales\FulfillmentQueue::isPaidInFull($confirmingSale);
     @endphp
     <div class="fq-overlay" wire:key="fq-confirm-{{ $confirmingSale->id }}" x-data @keydown.escape.window="$wire.cancelFulfillment()" @click.self="$wire.cancelFulfillment()">
         <div class="fq-modal" role="dialog" aria-modal="true" aria-labelledby="fq-c-title">
@@ -519,11 +516,6 @@
                         <div class="fq-pack-row"><span style="color:var(--text)">{{ $p['name'] }}</span><span style="font-family:var(--mono);font-weight:700;color:var(--text)">×{{ $p['boxes'] }}</span></div>
                     @endforeach
                 </div>
-                @unless($cPaid)
-                    <div class="fq-notice" style="border-left-color:var(--amber);box-shadow:none;border:1px solid var(--border);border-left:3px solid var(--amber);padding:10px 12px">
-                        <div class="fq-notice-main"><div class="fq-notice-s" style="margin:0">This order has a balance due (unpaid or on credit). Check with the shop if unsure.</div></div>
-                    </div>
-                @endunless
 
                 <div class="fq-field">
                     <label class="fq-label" for="fq-recipient">{{ $isTransport ? 'Driver / agent collecting' : 'Person collecting' }} <span>*</span></label>
@@ -533,6 +525,7 @@
                     @error('recipientName') <div class="fq-error">{{ $message }}</div> @enderror
                 </div>
 
+                @if($requireSignature)
                 <div class="fq-field" style="margin-bottom:0">
                     <label class="fq-label">Signature <span>*</span></label>
                     <div class="fq-sig-wrap" wire:ignore wire:key="sig-wrap-{{ $confirmingSale->id }}">
@@ -543,6 +536,7 @@
                     {{-- Outside wire:ignore so the error still renders --}}
                     @error('signatureData') <div class="fq-error">{{ $message }}</div> @enderror
                 </div>
+                @endif
             </form>
             <div class="fq-modal-foot">
                 <button type="button" class="fq-btn fq-btn-ghost" wire:click="cancelFulfillment">Cancel</button>

@@ -13,6 +13,8 @@ class FulfillmentQueue extends Component
     public int $warehouseId;
     public string $warehouseName = '';
     public string $dispatchMethod = 'queue';
+    // Business setting — signature pad shown/required only when on
+    public bool $requireSignature = true;
     // Which section tab is showing — 'pending' (scan/queue UI) or 'history'.
     // Unrelated to $dispatchMethod (the business setting for HOW pending
     // orders are found); this is purely which of the two tabs is visible.
@@ -60,6 +62,7 @@ class FulfillmentQueue extends Component
         $this->warehouseId   = $warehouse->id;
         $this->warehouseName = $warehouse->name;
         $this->dispatchMethod = app(SettingsService::class)->fulfillmentDispatchMethod();
+        $this->requireSignature = app(SettingsService::class)->fulfillmentRequireSignature();
     }
 
     /**
@@ -216,8 +219,8 @@ class FulfillmentQueue extends Component
         $pending = Sale::warehouseDirect()
             ->pendingFulfillment()
             ->where('source_warehouse_id', $this->warehouseId)
-            ->with(['items.box', 'payments'])
-            ->get(['id', 'sale_date', 'total']);
+            ->with('items.box')
+            ->get(['id', 'sale_date', 'fulfillment_method']);
 
         $now     = now();
         $oldest  = $pending->min('sale_date');
@@ -234,7 +237,7 @@ class FulfillmentQueue extends Component
             'oldest_minutes'   => $oldest ? (int) $oldest->diffInMinutes($now) : null,
             'over_2h'          => $pending->filter(fn ($s) => $s->sale_date->diffInMinutes($now) >= 120)->count(),
             'over_30m'         => $pending->filter(fn ($s) => $s->sale_date->diffInMinutes($now) >= 30)->count(),
-            'unpaid'           => $pending->filter(fn ($s) => ! self::isPaidInFull($s))->count(),
+            'pending_transport'=> $pending->where('fulfillment_method', 'transporter')->count(),
             'today'            => $today->count(),
             'today_boxes'      => $today->sum(fn ($s) => self::warehouseBoxes($s)->count()),
             'today_transport'  => $today->where('fulfillment_method', 'transporter')->count(),
@@ -247,19 +250,6 @@ class FulfillmentQueue extends Component
         return $sale->items->filter(fn ($i) => $i->box?->location_type?->value === 'warehouse');
     }
 
-    /**
-     * Paid in full = real money received covers the total. Credit is a
-     * promise to pay, not payment — it must NOT count (it used to, so a
-     * credit sale showed as "Fully paid").
-     */
-    public static function isPaidInFull(Sale $sale): bool
-    {
-        $received = $sale->payments
-            ->reject(fn ($p) => ($p->payment_method?->value ?? $p->payment_method) === 'credit')
-            ->sum('amount');
-
-        return $sale->total > 0 && $received >= $sale->total;
-    }
 
     public function requestFulfillment(int $saleId, string $source = 'scan'): void
     {
@@ -295,15 +285,18 @@ class FulfillmentQueue extends Component
             ->where('source_warehouse_id', $this->warehouseId)
             ->findOrFail($saleId);
 
+        // Re-read the setting server-side so a stale page can't skip a now-required signature
+        $requireSignature = app(SettingsService::class)->fulfillmentRequireSignature();
+
         $this->validate([
             'recipientName' => 'required|string|max:255',
-            'signatureData' => 'required|string',
+            'signatureData' => $requireSignature ? 'required|string' : 'nullable|string',
         ], [
             'recipientName.required' => 'Enter who is picking this up before confirming.',
             'signatureData.required' => 'Please capture a signature before confirming.',
         ]);
         $recipientName = trim($this->recipientName);
-        $signature     = $this->signatureData;
+        $signature     = $this->signatureData ?: null;
 
         $sale->update([
             'fulfillment_status'         => 'fulfilled',

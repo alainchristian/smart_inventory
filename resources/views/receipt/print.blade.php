@@ -61,10 +61,6 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 .barcode-label { font-size:9px; font-weight:bold; text-transform:uppercase; letter-spacing:.5px; color:#000; margin-bottom:3px; }
 .barcode-wrap img { max-width:100%; height:auto; }
 .barcode-code  { font-size:11px; font-weight:bold; letter-spacing:1.5px; text-align:center; margin-top:3px; }
-
-/* Dispatch-slip notice (amounts withheld) */
-.slip-notice { border:1px dashed #000; border-radius:4px; padding:5px 7px; margin:6px 0; text-align:center; }
-.slip-notice-txt { font-size:9px; color:#000; }
 </style>
 </head>
 <body>
@@ -123,13 +119,9 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
 
 <hr class="solid">
 
-@if($hideAmounts)
-{{-- Dispatch/picking slip: amount intentionally withheld — only the
-     customer's own receipt (or an explicit full reprint) shows pricing. --}}
-<div class="slip-notice">
-    <div class="slip-notice-txt">Prices are not shown on this slip.<br>Ask the shop for the customer receipt if needed.</div>
-</div>
-@else
+{{-- Dispatch/picking slip ($hideAmounts): prices and payments are
+     withheld, silently — only the customer's own receipt shows them. --}}
+@unless($hideAmounts)
 {{-- Total --}}
 <div class="total-row">
     <span class="total-label">TOTAL</span>
@@ -167,7 +159,7 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
     </div>
 </div>
 @endif
-@endif
+@endunless
 
 {{-- Notes --}}
 @if($sale->notes)
