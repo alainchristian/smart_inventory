@@ -292,6 +292,14 @@ class RequestTransfer extends Component
         // Get all products and filter based on search
         $productsQuery = Product::active()->with('category')->orderBy('name');
 
+        // Only what the destination shop sells (Shop::sellableCategoryIds();
+        // null = general store). Owners see the list narrow once a shop is picked.
+        $destShop       = $this->toShopId ? Shop::find($this->toShopId) : null;
+        $sellableCatIds = $destShop?->sellableCategoryIds();
+        if ($sellableCatIds !== null) {
+            $productsQuery->whereIn('category_id', $sellableCatIds ?: [0]);
+        }
+
         // Apply search filter if search term exists
         if (strlen(trim($this->search)) > 0) {
             $searchTerm = trim($this->search);
@@ -335,6 +343,8 @@ class RequestTransfer extends Component
         return view('livewire.inventory.transfers.request-transfer', [
             'products'    => $products,
             'stockLevels' => $stockLevels,
+            'sellsLabel'  => $destShop?->sellsLabel(),
+            'isSpecialised' => $sellableCatIds !== null,
         ]);
     }
 }

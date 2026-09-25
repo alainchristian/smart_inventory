@@ -139,6 +139,7 @@
         'partial' => ['bg'=>'var(--amber-dim,rgba(217,119,6,.12))', 'color'=>'var(--amber)'],
         'empty'   => ['bg'=>'var(--surface2)',                       'color'=>'var(--text-dim)'],
         'damaged' => ['bg'=>'var(--red-dim,rgba(220,38,38,.12))',    'color'=>'var(--red)'],
+        'in_transit' => ['bg'=>'var(--violet-dim)', 'color'=>'var(--violet)'],
         default   => ['bg'=>'var(--surface2)',                       'color'=>'var(--text-dim)'],
     };
     $fillPct   = $box->items_total > 0

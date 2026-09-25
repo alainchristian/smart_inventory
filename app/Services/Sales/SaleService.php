@@ -64,6 +64,7 @@ class SaleService
     {
         // createSale lines mark loose items with is_full_box = false
         $this->assertLooseItemsAllowed($data['items'] ?? [], fn ($i) => ! ($i['is_full_box'] ?? false));
+        $this->assertShopSellsProducts((int) ($data['shop_id'] ?? 0), $data['items'] ?? []);
 
         return DB::transaction(function () use ($data) {
 
@@ -298,6 +299,8 @@ class SaleService
      */
     public function createWarehouseSale(array $data): Sale
     {
+        $this->assertShopSellsProducts((int) ($data['shop_id'] ?? 0), $data['items'] ?? []);
+
         return DB::transaction(function () use ($data) {
 
             // ── Resolve payment channels (same as createSale) ─────────────────────
@@ -535,6 +538,7 @@ class SaleService
             $data['items'] ?? [],
             fn ($i) => ($i['mode'] ?? 'box') === 'item'
         );
+        $this->assertShopSellsProducts((int) ($data['shop_id'] ?? 0), $data['items'] ?? []);
 
         return DB::transaction(function () use ($data) {
 
@@ -907,6 +911,29 @@ class SaleService
         }
 
         return $lineSum;
+    }
+
+    /**
+     * A specialised shop can only sell its categories — from its own stock or
+     * the warehouse, including stock it already holds from before it was
+     * specialised (that is sent back via Return to warehouse instead).
+     */
+    private function assertShopSellsProducts(int $shopId, array $items): void
+    {
+        $shop = Shop::find($shopId);
+        if (! $shop || $shop->sellableCategoryIds() === null) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            $product = Product::with('category:id,name')->find($item['product_id'] ?? null);
+            if ($product && ! $shop->sellsProduct($product)) {
+                throw new \DomainException(
+                    "{$shop->name} doesn't sell " . ($product->category?->name ?? 'uncategorised products')
+                    . " — {$product->name} can't be sold here."
+                );
+            }
+        }
     }
 
     /**

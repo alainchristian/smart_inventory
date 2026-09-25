@@ -347,6 +347,12 @@
       </div>
       <div class="rf-card-body">
 
+        @if($isSpecialised)
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">
+            Showing only what this shop sells: <strong style="color:var(--text-sub)">{{ $sellsLabel }}</strong>
+          </div>
+        @endif
+
         <div class="rf-search-wrap">
           <svg class="rf-search-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>

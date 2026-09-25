@@ -8,6 +8,8 @@ enum BoxStatus: string
     case PARTIAL = 'partial';
     case DAMAGED = 'damaged';
     case EMPTY = 'empty';
+    // On its way back to the warehouse (Return to warehouse) — not sellable anywhere
+    case IN_TRANSIT = 'in_transit';
 
     public function label(): string
     {
@@ -16,6 +18,7 @@ enum BoxStatus: string
             self::PARTIAL => 'Partial',
             self::DAMAGED => 'Damaged',
             self::EMPTY => 'Empty',
+            self::IN_TRANSIT => 'In transit',
         };
     }
 
@@ -26,6 +29,7 @@ enum BoxStatus: string
             self::PARTIAL => 'yellow',
             self::DAMAGED => 'red',
             self::EMPTY => 'gray',
+            self::IN_TRANSIT => 'blue',
         };
     }
 }

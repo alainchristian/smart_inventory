@@ -113,12 +113,17 @@ class WarehouseSale extends Component
 
     public function getWarehouseStockProperty(): \Illuminate\Support\Collection
     {
+        // Only the categories this shop sells (null = general store)
+        $sellable = \App\Models\Shop::find($this->shopId)?->sellableCategoryIds();
+
         return DB::table('boxes')
             ->join('products', 'products.id', '=', 'boxes.product_id')
             ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
+            ->when($sellable !== null, fn ($q) => $q->whereIn('products.category_id', $sellable ?: [0]))
             ->where('boxes.location_type', 'warehouse')
             ->where('boxes.location_id', $this->warehouseId)
-            ->whereIn('boxes.status', ['full', 'partial'])
+            // This page sells full boxes only — and only sealed boxes can be sold as a box
+            ->where('boxes.status', 'full')
             ->where('boxes.items_remaining', '>', 0)
             ->where('products.is_active', true)
             ->groupBy(

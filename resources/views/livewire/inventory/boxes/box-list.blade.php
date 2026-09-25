@@ -875,6 +875,7 @@
                                         'full'    => ['bg'=>'var(--green-dim,rgba(22,163,74,.12))',  'color'=>'var(--green)'],
                                         'partial' => ['bg'=>'var(--amber-dim,rgba(217,119,6,.12))', 'color'=>'var(--amber)'],
                                         'damaged' => ['bg'=>'var(--red-dim,rgba(220,38,38,.12))',    'color'=>'var(--red)'],
+                                        'in_transit' => ['bg'=>'var(--violet-dim)', 'color'=>'var(--violet)'],
                                         default   => ['bg'=>'var(--surface2)',                       'color'=>'var(--text-dim)'],
                                     };
                                     $bFillPct  = $box->items_total > 0 ? round(($box->items_remaining / $box->items_total) * 100) : 0;

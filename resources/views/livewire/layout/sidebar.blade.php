@@ -181,6 +181,11 @@
                                   {{ request()->routeIs('owner.reports.transfers') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                             {{ __('Transfers') }}
                         </a>
+                        <a href="{{ route('warehouse.stock-returns') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('warehouse.stock-returns') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            {{ __('Stock Returns') }}
+                        </a>
                         <a href="{{ route('owner.reports.custom.library') }}" wire:navigate
                            class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
                                   {{ request()->routeIs('owner.reports.custom.*') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
@@ -530,6 +535,18 @@
                         <span class="text-[14px] font-medium">{{ __('Transfers') }}</span>
                     </a>
 
+                    <a href="{{ route('warehouse.stock-returns') }}" wire:navigate
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('warehouse.stock-returns') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('warehouse.stock-returns'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">{{ __('Returns from Shops') }}</span>
+                    </a>
+
                     <a href="{{ route('warehouse.sales.fulfillment') }}" wire:navigate
                        class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                               {{ request()->routeIs('warehouse.sales.*') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
@@ -639,6 +656,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                         </svg>
                         <span class="text-[14px] font-medium">{{ __('Request Transfer') }}</span>
+                    </a>
+
+                    <a href="{{ route('shop.transfers.returns') }}" wire:navigate
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                              {{ request()->routeIs('shop.transfers.returns') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                        @if(request()->routeIs('shop.transfers.returns'))
+                            <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                        @endif
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                        </svg>
+                        <span class="text-[14px] font-medium">{{ __('Return to Warehouse') }}</span>
                     </a>
                 </div>
             </div>

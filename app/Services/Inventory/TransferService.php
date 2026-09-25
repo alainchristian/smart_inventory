@@ -29,6 +29,19 @@ class TransferService
 
     public function createTransferRequest(array $data): Transfer
     {
+        // A specialised shop may only request the categories it sells —
+        // the same rule for shop managers and the owner (no override).
+        $shop = \App\Models\Shop::findOrFail($data['to_shop_id']);
+        foreach ($data['items'] as $item) {
+            $product = Product::with('category:id,name')->find($item['product_id']);
+            if ($product && ! $shop->sellsProduct($product)) {
+                throw new \DomainException(
+                    "{$shop->name} doesn't sell " . ($product->category?->name ?? 'uncategorised products')
+                    . " — {$product->name} can't be requested for this shop."
+                );
+            }
+        }
+
         return DB::transaction(function () use ($data) {
             $transfer = Transfer::create([
                 'transfer_number' => $this->generateTransferNumber(),

@@ -253,6 +253,11 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckL
             Route::get('/fulfillment/{sale}/picking-slip', [ReceiptController::class, 'print'])
                 ->name('fulfillment.picking-slip');
         });
+
+        // Returns from shops (Return to warehouse — receiving side)
+        Route::get('/stock-returns', function () {
+            return view('warehouse.stock-returns');
+        })->name('stock-returns');
     });
 
 // Shop Manager routes - Allow shop managers and owners
@@ -282,6 +287,8 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
         Route::prefix('transfers')->name('transfers.')->group(function () {
             Route::get('/', function () { return view('shop.transfers.index'); })->name('index');
             Route::get('/request', function () { return view('shop.transfers.request'); })->name('request');
+            // Return to warehouse (reverse transfer) — sending side
+            Route::get('/returns', function () { return view('shop.stock-returns'); })->name('returns');
             Route::get('/{transfer}', function (\App\Models\Transfer $transfer) { return view('shop.transfers.show', compact('transfer')); })->name('show');
             Route::get('/{transfer}/receive', function (\App\Models\Transfer $transfer) { return view('shop.transfers.receive', compact('transfer')); })->name('receive');
         });

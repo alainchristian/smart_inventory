@@ -255,9 +255,20 @@ class UnifiedPos extends Component
         $this->loadWarehouseStock();
     }
 
+    /** Categories this shop sells (Shop::sellableCategoryIds; null = everything). */
+    private function shopSellableCategoryIds(): ?array
+    {
+        return \App\Models\Shop::find($this->shopId)?->sellableCategoryIds();
+    }
+
     private function loadShopStock(): void
     {
+        // Specialised shop: stock outside its categories can't be sold here
+        // (it's shown on the shop's stock page to send back to the warehouse)
+        $sellable = $this->shopSellableCategoryIds();
+
         $this->shopStock = Product::where('is_active', true)
+            ->when($sellable !== null, fn ($q) => $q->whereIn('category_id', $sellable ?: [0]))
             ->whereHas('boxes', function ($q) {
                 $q->where('location_type', 'shop')
                   ->where('location_id', $this->shopId)
@@ -295,9 +306,12 @@ class UnifiedPos extends Component
             return;
         }
 
+        $sellable = $this->shopSellableCategoryIds();
+
         $this->warehouseStock = DB::table('boxes')
             ->join('products', 'products.id', '=', 'boxes.product_id')
             ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
+            ->when($sellable !== null, fn ($q) => $q->whereIn('products.category_id', $sellable ?: [0]))
             ->where('boxes.location_type', 'warehouse')
             ->where('boxes.location_id', $this->warehouseId)
             ->whereIn('boxes.status', ['full', 'partial'])
@@ -457,6 +471,12 @@ class UnifiedPos extends Component
 
     private function openProductModal(int $productId, string $source): void
     {
+        $shop = \App\Models\Shop::find($this->shopId);
+        if ($shop && ! $shop->sellsProduct($productId)) {
+            $this->dispatch('notification', ['type' => 'error', 'message' => __(':shop doesn\'t sell this product\'s category.', ['shop' => $shop->name])]);
+            return;
+        }
+
         if ($source === 'shop') {
             $product = Product::with('category')->findOrFail($productId);
             $stock   = $product->getCurrentStock('shop', $this->shopId);

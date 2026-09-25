@@ -108,6 +108,15 @@
                   box-sizing:border-box;font-family:var(--font);transition:border-color var(--tr) }
 .cm-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
 .cm-error       { font-size:11px;color:var(--red);margin-top:4px }
+.cm-hint        { font-size:11px;color:var(--text-dim);margin-top:4px;line-height:1.5 }
+
+/* Tree rows */
+.cm-name        { display:flex;align-items:flex-start;gap:8px;min-width:0 }
+.cm-branch      { width:12px;height:12px;flex-shrink:0;margin-top:3px;border-left:1.5px solid var(--border-hi);
+                  border-bottom:1.5px solid var(--border-hi);border-bottom-left-radius:4px }
+.cm-parent-of   { font-size:11.5px;color:var(--text-dim);margin-top:2px }
+.cm-subs        { display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:1px 8px;
+                  border-radius:20px;background:var(--accent-dim);color:var(--accent);margin-left:6px;white-space:nowrap }
 
 /* Toggle */
 .cm-toggle-row    { display:flex;align-items:center;justify-content:space-between;
@@ -219,7 +228,7 @@
                                         @endif
                                     </div>
                                     @if($confirmDeleteId)
-                                        <div class="cm-confirm-warn">This action cannot be undone.</div>
+                                        <div class="cm-confirm-warn">{{ $row->children_count ? "It has {$row->children_count} sub-categor" . ($row->children_count === 1 ? 'y' : 'ies') . ' — move or delete those first.' : 'This action cannot be undone.' }}</div>
                                     @else
                                         @if($row->is_active && $row->products_count > 0)
                                             <div class="cm-confirm-warn">{{ $row->products_count }} product(s) are in this category. Deactivating will hide them from the active category filters.</div>
@@ -241,10 +250,18 @@
                 @else
                     <tr class="{{ $row->is_active ? '' : 'inactive' }}">
                         <td>
-                            <div style="font-weight:600;color:var(--text)">{{ $row->name }}</div>
-                            @if($row->description)
-                                <div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $row->description }}</div>
-                            @endif
+                            <div class="cm-name" style="padding-left:{{ max(0, $row->level - 1) * 20 }}px">
+                                @if($row->level > 0)<span class="cm-branch" aria-hidden="true"></span>@endif
+                                <div style="min-width:0">
+                                    <div style="font-weight:600;color:var(--text)">{{ $row->name }}@if($row->children_count)<span class="cm-subs">{{ $row->children_count }} {{ $row->children_count === 1 ? 'sub-category' : 'sub-categories' }}</span>@endif</div>
+                                    @if($row->parent && $row->level === 0)
+                                        <div class="cm-parent-of">Sub-category of {{ $row->parent->name }}</div>
+                                    @endif
+                                    @if($row->description)
+                                        <div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $row->description }}</div>
+                                    @endif
+                                </div>
+                            </div>
                         </td>
                         <td class="cm-hide-mob">
                             @if($row->code)
@@ -321,9 +338,22 @@
             </div>
 
             <div class="cm-field">
+                <label class="cm-label" for="cm-parent">Parent Category</label>
+                <select id="cm-parent" wire:model="form_parent_id" class="cm-input">
+                    <option value="">None — top-level category</option>
+                    @foreach($this->parentOptions as $opt)
+                        <option value="{{ $opt->id }}">{{ str_repeat('— ', $opt->level) }}{{ $opt->name }}{{ $opt->is_active ? '' : ' (inactive)' }}</option>
+                    @endforeach
+                </select>
+                @error('form_parent_id') <div class="cm-error">{{ $message }}</div> @enderror
+                <div class="cm-hint">A sub-category is included wherever its parent is chosen — e.g. a shop that sells Footwear also sells Sandals.</div>
+            </div>
+
+            <div class="cm-field">
                 <label class="cm-label">Short Code</label>
                 <input type="text" wire:model="form_code" class="cm-input" placeholder="e.g. ELEC">
                 @error('form_code') <div class="cm-error">{{ $message }}</div> @enderror
+                <div class="cm-hint">Leave blank to create one from the name.</div>
             </div>
 
             <div class="cm-field">

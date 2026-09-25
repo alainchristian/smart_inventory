@@ -38,6 +38,9 @@ class LocationList extends Component
 
     // ── Shop-only field ───────────────────────────────────────────────────────
     public ?int   $form_default_warehouse_id = null;
+    // What the shop sells — general store, or only these categories (+ subcategories)
+    public bool   $form_sells_all    = true;
+    public array  $form_category_ids = [];
 
     // ── Toggle confirmation ───────────────────────────────────────────────────
     public ?int   $confirmToggleId     = null;
@@ -101,6 +104,8 @@ class LocationList extends Component
 
         if ($this->activeTab === 'shops') {
             $this->form_default_warehouse_id = $loc->default_warehouse_id;
+            $this->form_sells_all            = (bool) ($loc->sells_all_categories ?? true);
+            $this->form_category_ids         = $loc->categories()->pluck('categories.id')->map(fn ($i) => (int) $i)->all();
         }
 
         $this->showDrawer = true;
@@ -131,6 +136,10 @@ class LocationList extends Component
 
         if ($this->activeTab === 'shops') {
             $rules['form_default_warehouse_id'] = 'required|exists:warehouses,id';
+            if (! $this->form_sells_all) {
+                $rules['form_category_ids']   = 'required|array|min:1';
+                $rules['form_category_ids.*'] = 'integer|exists:categories,id';
+            }
         }
 
         $this->validate($rules, [
@@ -138,6 +147,8 @@ class LocationList extends Component
             'form_code.required'                  => 'A short code is required.',
             'form_code.unique'                    => 'This code is already taken.',
             'form_default_warehouse_id.required'  => 'Please select a default warehouse.',
+            'form_category_ids.required'          => 'Pick at least one category, or choose "All categories".',
+            'form_category_ids.min'               => 'Pick at least one category, or choose "All categories".',
         ]);
 
         $data = [
@@ -151,6 +162,7 @@ class LocationList extends Component
 
         if ($this->activeTab === 'shops') {
             $data['default_warehouse_id'] = $this->form_default_warehouse_id;
+            $data['sells_all_categories'] = $this->form_sells_all;
         }
 
         if ($this->activeTab === 'warehouses') {
@@ -181,6 +193,10 @@ class LocationList extends Component
                 $msg    = 'Shop created successfully.';
             }
             $entityType = 'Shop';
+
+            $loc->categories()->sync($this->form_sells_all ? [] : array_map('intval', $this->form_category_ids));
+            $loc = $loc->fresh();
+            $strandedWarning = $this->strandedStockWarning($loc);
         }
 
         ActivityLog::create([
@@ -196,7 +212,42 @@ class LocationList extends Component
         ]);
 
         $this->dispatch('notification', ['type' => 'success', 'message' => $msg]);
+        if (! empty($strandedWarning)) {
+            $this->dispatch('notification', ['type' => 'warning', 'message' => $strandedWarning]);
+        }
         $this->closeDrawer();
+    }
+
+    public function toggleShopCategory(int $categoryId): void
+    {
+        $this->form_category_ids = in_array($categoryId, $this->form_category_ids, true)
+            ? array_values(array_diff($this->form_category_ids, [$categoryId]))
+            : [...$this->form_category_ids, $categoryId];
+    }
+
+    /**
+     * Stock left at a shop that it no longer sells can't be sold there —
+     * tell the owner so it gets sent back (Return to warehouse).
+     */
+    private function strandedStockWarning(Shop $shop): ?string
+    {
+        $sellable = $shop->sellableCategoryIds();
+        if ($sellable === null) {
+            return null;
+        }
+
+        $boxes = DB::table('boxes')
+            ->join('products', 'products.id', '=', 'boxes.product_id')
+            ->where('boxes.location_type', 'shop')
+            ->where('boxes.location_id', $shop->id)
+            ->whereIn('boxes.status', ['full', 'partial'])
+            ->where('boxes.items_remaining', '>', 0)
+            ->where(fn ($q) => $q->whereNotIn('products.category_id', $sellable ?: [0])->orWhereNull('products.category_id'))
+            ->count();
+
+        return $boxes > 0
+            ? "{$shop->name} still holds {$boxes} box(es) outside its categories. They can't be sold there — send them back from Return to warehouse."
+            : null;
     }
 
     // ── Toggle active ─────────────────────────────────────────────────────────
@@ -299,10 +350,17 @@ class LocationList extends Component
         $this->form_phone                = '';
         $this->form_is_active            = true;
         $this->form_default_warehouse_id = null;
+        $this->form_sells_all            = true;
+        $this->form_category_ids         = [];
         $this->resetValidation();
     }
 
     // ── Computed ──────────────────────────────────────────────────────────────
+
+    public function getShopCategoryOptionsProperty()
+    {
+        return \App\Models\Category::with('parent:id,name')->orderByRaw('parent_id NULLS FIRST')->orderBy('name')->get(['id', 'name', 'parent_id']);
+    }
 
     public function getActiveWarehousesProperty()
     {
@@ -348,7 +406,7 @@ class LocationList extends Component
                 ->paginate(20);
         } else {
             $rows = Shop::query()
-                ->with('defaultWarehouse')
+                ->with(['defaultWarehouse', 'categories:id,name'])
                 ->withCount([
                     'users as manager_count' => fn($q) => $q->where('is_active', true),
                 ])

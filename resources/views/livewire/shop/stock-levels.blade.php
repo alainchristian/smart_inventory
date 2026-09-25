@@ -188,6 +188,25 @@
     </div>
 </div>
 
+{{-- ── Stock this shop doesn't sell (specialised shops) ─────────────── --}}
+@if($notSold)
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 18px;margin-bottom:16px;background:var(--surface);
+            border-radius:var(--r);box-shadow:var(--shadow-card);border-left:3px solid var(--amber)">
+    <div style="flex:1;min-width:220px">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">Not sold at this shop</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px">
+            {{ $notSold->products }} {{ Str::plural('product', $notSold->products) }} ·
+            {{ $notSold->boxes }} {{ Str::plural('box', $notSold->boxes) }} · {{ number_format($notSold->items) }} items
+            are outside this shop's categories. They can't be sold here — send them back so another shop can.
+        </div>
+    </div>
+    <a href="{{ route('shop.transfers.returns') }}" wire:navigate
+       style="padding:8px 14px;border-radius:var(--rsm);background:var(--accent);color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap">
+        Return to warehouse
+    </a>
+</div>
+@endif
+
 {{-- ── KPI bar ──────────────────────────────────────────────────────── --}}
 <div class="ss-kpis">
     <div class="ss-kpi">

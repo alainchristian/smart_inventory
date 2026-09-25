@@ -132,6 +132,18 @@
 .lm-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
 .lm-error       { font-size:11px;color:var(--red);margin-top:4px }
 .lm-hint        { font-size:11px;color:var(--text-dim);margin-top:4px;line-height:1.5 }
+.lm-seg         { display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;border-radius:10px;border:1.5px solid var(--border);margin-bottom:10px }
+.lm-seg button  { padding:7px 6px;border:none;border-radius:7px;background:transparent;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;font-family:var(--font);transition:all var(--tr) }
+.lm-seg button:hover { color:var(--text);background:var(--surface2) }
+.lm-seg button.on    { background:var(--accent);color:#fff }
+.lm-chips       { display:flex;flex-wrap:wrap;gap:6px }
+.lm-chip        { display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);
+                  color:var(--text-sub);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all var(--tr) }
+.lm-chip:hover  { border-color:var(--accent);color:var(--accent) }
+.lm-chip.on     { border-color:var(--accent);background:var(--accent-dim);color:var(--accent) }
+.lm-chip small  { font-weight:500;color:var(--text-dim) }
+.lm-sells       { font-size:11px;color:var(--text-dim);margin-top:2px }
+@media(max-width:640px) { .lm-seg button, .lm-chip { min-height:32px !important;min-width:0 !important;padding:5px 10px !important } }
 
 /* Toggle */
 .lm-toggle-row    { display:flex;align-items:center;justify-content:space-between;
@@ -529,6 +541,7 @@
                     <div style="font-size:11px;font-family:var(--mono);color:var(--text-dim);margin-top:1px">
                         {{ $row->code }}
                     </div>
+                    <div class="lm-sells">Sells: {{ ($row->sells_all_categories ?? true) ? 'All categories' : ($row->categories->pluck('name')->sort()->implode(', ') ?: 'Nothing selected') }}</div>
                 </td>
                 <td class="lm-hide-mob" style="color:var(--text-sub)">{{ $row->city ?? '—' }}</td>
                 <td class="lm-hide-mob" style="font-size:13px;color:var(--text-sub)">
@@ -673,6 +686,30 @@
                 <div class="lm-error">{{ $message }}</div>
             @enderror
             <div class="lm-hint">Transfer requests from this shop will default to this warehouse.</div>
+        </div>
+
+        <div class="lm-field">
+            <label class="lm-label">Sells <span>*</span></label>
+            <div class="lm-seg" role="radiogroup" aria-label="What this shop sells">
+                <button type="button" class="{{ $form_sells_all ? 'on' : '' }}" wire:click="$set('form_sells_all', true)">All categories</button>
+                <button type="button" class="{{ ! $form_sells_all ? 'on' : '' }}" wire:click="$set('form_sells_all', false)">Only these categories</button>
+            </div>
+            @if(! $form_sells_all)
+                <div class="lm-chips">
+                    @foreach($this->shopCategoryOptions as $cat)
+                        @php $on = in_array($cat->id, $form_category_ids, true); @endphp
+                        <button type="button" class="lm-chip {{ $on ? 'on' : '' }}" wire:click="toggleShopCategory({{ $cat->id }})" aria-pressed="{{ $on ? 'true' : 'false' }}">
+                            {{ $cat->name }}@if($cat->parent)<small>in {{ $cat->parent->name }}</small>@endif
+                        </button>
+                    @endforeach
+                </div>
+                @error('form_category_ids') <div class="lm-error">{{ $message }}</div> @enderror
+            @endif
+            <div class="lm-hint">
+                {{ $form_sells_all
+                    ? 'General store: it can request and sell every category, including ones added later.'
+                    : 'It can only request, and sell (from its own stock or the warehouse), products in these categories. A parent category includes its subcategories.' }}
+            </div>
         </div>
         @endif
 

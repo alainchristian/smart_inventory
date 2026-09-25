@@ -38,12 +38,18 @@ class StockLevels extends Component
     {
         $shopThreshold = app(SettingsService::class)->lowStockBoxesShop();
 
+        // Specialised shop: the main list/KPIs cover only what it sells; stock
+        // outside its categories is summarised separately (send it back).
+        $sellable   = \App\Models\Shop::find($this->shopId)?->sellableCategoryIds();
+        $onlySold   = fn ($q) => $q->when($sellable !== null, fn ($q2) => $q2->whereIn('products.category_id', $sellable ?: [0]));
+
         // ── 1. Products with boxes currently at this shop ─────────────────
         $currentStockQuery = DB::table('boxes')
             ->join('products', 'boxes.product_id', '=', 'products.id')
             ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
             ->where('boxes.location_type', LocationType::SHOP->value)
             ->where('boxes.location_id', $this->shopId)
+            ->tap($onlySold)
             ->whereIn('boxes.status', $this->statusFilter === 'low' ? ['full', 'partial', 'empty'] : ['full', 'partial'])
             ->when($this->statusFilter !== 'low', fn($q) => $q->where('boxes.items_remaining', '>', 0))
             ->whereNull('products.deleted_at')
@@ -87,6 +93,7 @@ class StockLevels extends Component
         // ── 2. Summary KPIs (always across full shop, ignoring search) ────
         $kpis = DB::table('boxes')
             ->join('products', 'boxes.product_id', '=', 'products.id')
+            ->tap($onlySold)
             ->where('boxes.location_type', LocationType::SHOP->value)
             ->where('boxes.location_id', $this->shopId)
             ->whereIn('boxes.status', ['full', 'partial'])
@@ -102,6 +109,7 @@ class StockLevels extends Component
         // Low stock count: products with ≤ threshold non-empty boxes (separate query)
         $lowStockCount = DB::table('boxes')
             ->join('products', 'boxes.product_id', '=', 'products.id')
+            ->tap($onlySold)
             ->where('boxes.location_type', LocationType::SHOP->value)
             ->where('boxes.location_id', $this->shopId)
             ->whereRaw("boxes.status::text != 'empty'")
@@ -164,7 +172,21 @@ class StockLevels extends Component
             ->orderByRaw('SUM(boxes.items_remaining) ASC')
             ->paginate(24);
 
+        $notSold = null;
+        if ($sellable !== null) {
+            $notSold = DB::table('boxes')
+                ->join('products', 'boxes.product_id', '=', 'products.id')
+                ->where('boxes.location_type', LocationType::SHOP->value)
+                ->where('boxes.location_id', $this->shopId)
+                ->whereIn('boxes.status', ['full', 'partial'])
+                ->where('boxes.items_remaining', '>', 0)
+                ->where(fn ($q) => $q->whereNotIn('products.category_id', $sellable ?: [0])->orWhereNull('products.category_id'))
+                ->selectRaw('COUNT(DISTINCT boxes.product_id) as products, COUNT(*) as boxes, COALESCE(SUM(boxes.items_remaining),0) as items')
+                ->first();
+        }
+
         return view('livewire.shop.stock-levels', [
+            'notSold'           => ($notSold && $notSold->boxes > 0) ? $notSold : null,
             'stockData'         => $stockData,
             'kpis'              => $kpis,
             'lowStockCount'     => $lowStockCount,

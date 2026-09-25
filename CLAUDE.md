@@ -937,3 +937,84 @@ switching to "Individual Items" REPLACED the boxes. Now:
   guarantees an item line opening a sealed box still leaves enough sealed
   boxes for the box line (tested with the item line first).
 Tests: `tests/Feature/Sales/MixedModeCartTest.php`.
+
+---
+
+## Shop specialisation & Return to warehouse (2026-09-25)
+
+### Rule
+Each shop either sells **All categories** (`shops.sells_all_categories`, default
+true — every existing shop migrated as a general store) or **only ticked
+categories** (`shop_categories` pivot). A ticked category covers all its
+sub-categories. Owner decisions: the same rule applies to everyone (no owner
+override), and stock already at a shop outside its categories is **blocked
+from sale too**, not just from requests.
+
+- `Shop::sellableCategoryIds()` (null = general store; otherwise ticked and
+  descendant ids, memoised per instance), `sellsCategory()`, `sellsProduct()`,
+  `sellsLabel()`. Products with no category are never sellable at a
+  specialised shop.
+- Enforced server-side in `TransferService::createTransferRequest()` and
+  `SaleService::assertShopSellsProducts()`, which is called from `createSale`,
+  `createMixedSale` and `createWarehouseSale`. Both throw `DomainException`.
+- Lists are filtered in RequestTransfer (products for the destination shop),
+  UnifiedPos (`loadShopStock`/`loadWarehouseStock`, and `openProductModal`
+  refuses), WarehouseSale, and StockLevels (main, KPI and low-stock queries
+  exclude it; a separate "Not sold at this shop" card links to returns).
+- Owner → Locations → shop drawer: "Sells" segmented field with category
+  chips. Saving warns via toast if the shop still holds out-of-category boxes.
+
+### Return to warehouse (the way out for stranded stock)
+Transfers only go warehouse→shop, so blocking stranded stock needed a
+reverse flow. `StockReturnService`:
+- `send()` is used by the shop manager (own shop) or the owner. It goes to
+  the shop's default warehouse, opened boxes first, and sets boxes to the
+  new `box_status` value **`in_transit`**. That takes them off sale
+  everywhere with no query changes, since every stock query filters
+  full/partial. Numbers are `RTW-000001`.
+- `receive()` is used by that warehouse's manager or the owner. Per box:
+  received (moves to the warehouse, `previous_status` restored), damaged
+  (moves, DAMAGED), or missing (DAMAGED, stays recorded at the shop). Any
+  non-received box sets `has_discrepancy`, and notes are required.
+- `cancel()` is used by the shop while the return is in transit and restores
+  `previous_status`.
+- BoxMovements are `return_sent`, `return_to_warehouse`, `return_missing` and
+  `return_cancelled`. Activity actions are `stock_return_sent`, `_received`
+  and `_cancelled`.
+- Pages:
+  - `shop.transfers.returns` (`/shop/transfers/returns`, prefix `sr-`; the
+    owner picks the shop via `?shop=`)
+  - `warehouse.stock-returns` (`/warehouse/stock-returns`, prefix `wr-`)
+  - sidebar links for shop, warehouse and owner
+- Migration 000004 uses `$withinTransaction = false`, because Postgres
+  `ALTER TYPE … ADD VALUE` can't run inside a transaction.
+
+### Tests
+`tests/Feature/Inventory/ShopSpecialisationTest.php` (10 tests). Livewire's
+`assertDispatched('notification', fn…)` closure only inspects the *first*
+event of that name. To assert on a second toast, check
+`$component->effects['dispatches']` directly.
+
+### Known gap (pre-existing, not fixed)
+Boxes packed onto a warehouse→shop transfer stay sellable at the warehouse
+until the shop receives them. `in_transit` could close this too, but
+TransferService wasn't changed in this pass.
+
+### Sub-categories in Owner → Product Categories (2026-09-25)
+`CategoryManager` gained a "Parent Category" select (`form_parent_id`).
+Before this, `categories.parent_id` existed but nothing in the UI could set it.
+- It blocks loops: a category can't go under itself or its own
+  sub-categories, and those aren't offered as parents.
+- A category that has sub-categories can't be deleted.
+- The list is in tree order (paginated in PHP) with indented children and
+  an "N sub-categories" pill. The unused nested-set columns
+  `left`/`right`/`depth` are still not maintained.
+- Bug fixed: `categories.code` is NOT NULL + unique, but the form treated
+  Short Code as optional and saved null, so a blank code made category
+  creation fail. A blank code is now derived from the name
+  (`codeFromName()`, e.g. `BAGS-ACCESSORIES`, `-2` suffix on clash), and a
+  typed code is validated as unique.
+- `ShopSpecialisationSeeder` (demo data: Remera → Footwear, Nyamirambo →
+  Bags & Accessories + Household, Kimironko → all, plus stranded boxes) is
+  idempotent.
+Tests: `tests/Feature/Inventory/CategoryParentTest.php`.
