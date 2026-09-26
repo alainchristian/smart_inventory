@@ -13,6 +13,7 @@ class TransferBox extends Model
     protected $fillable = [
         'transfer_id',
         'box_id',
+        'box_status_before',
         'scanned_out_by',
         'scanned_out_at',
         'scanned_in_by',

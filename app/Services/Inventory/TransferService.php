@@ -197,13 +197,14 @@ class TransferService
 
             // Assign boxes
             foreach ($boxAssignments as $assignment) {
+                $box = Box::find($assignment['box_id']);
                 TransferBox::create([
-                    'transfer_id' => $transfer->id,
-                    'box_id' => $assignment['box_id'],
+                    'transfer_id'       => $transfer->id,
+                    'box_id'            => $box->id,
+                    'box_status_before' => $this->holdBox($box),
                 ]);
 
                 // Update transfer item quantities
-                $box = Box::find($assignment['box_id']);
                 $transferItem = $transfer->items()
                     ->where('product_id', $box->product_id)
                     ->first();
@@ -336,6 +337,7 @@ class TransferService
                         $transfer->id,
                         'transfer'
                     );
+                    $this->releaseBox($transferBox, $box);
                 }
 
                 // Update transfer item received quantity
@@ -355,6 +357,15 @@ class TransferService
             if ($receivedBoxCount < $expectedBoxCount) {
                 $hasDiscrepancy = true;
             }
+
+            // Boxes that never arrived go back on sale at the warehouse, as
+            // they were before packing put them on hold (the transfer keeps
+            // the discrepancy flag so the owner can follow up).
+            TransferBox::where('transfer_id', $transfer->id)
+                ->where('is_received', false)
+                ->with('box')
+                ->get()
+                ->each(function (TransferBox $tb) { if ($tb->box) { $this->releaseBox($tb, $tb->box); } });
 
             // Calculate discrepancies per item
             foreach ($transfer->items as $item) {
@@ -480,7 +491,9 @@ class TransferService
                 ->whereIn('status', [BoxStatus::FULL, BoxStatus::PARTIAL])
                 ->where('items_remaining', '>', 0)
                 ->whereNotIn('id', $alreadyAssignedBoxIds)
+                ->orderBy('id')
                 ->limit($quantity)
+                ->lockForUpdate()
                 ->get();
 
             if ($boxes->count() < $quantity) {
@@ -492,10 +505,11 @@ class TransferService
             $createdTransferBoxes = [];
             foreach ($boxes as $box) {
                 $tb = TransferBox::create([
-                    'transfer_id' => $transfer->id,
-                    'box_id'      => $box->id,
-                    'scanned_out_by' => auth()->id(),
-                    'scanned_out_at' => now(),
+                    'transfer_id'       => $transfer->id,
+                    'box_id'            => $box->id,
+                    'box_status_before' => $this->holdBox($box),
+                    'scanned_out_by'    => auth()->id(),
+                    'scanned_out_at'    => now(),
                 ]);
                 $createdTransferBoxes[] = $tb;
 
@@ -590,10 +604,11 @@ class TransferService
 
             // Create the transfer box record
             $tb = TransferBox::create([
-                'transfer_id' => $transfer->id,
-                'box_id' => $box->id,
-                'scanned_out_by' => auth()->id(),
-                'scanned_out_at' => now(),
+                'transfer_id'       => $transfer->id,
+                'box_id'            => $box->id,
+                'box_status_before' => $this->holdBox($box),
+                'scanned_out_by'    => auth()->id(),
+                'scanned_out_at'    => now(),
             ]);
 
             // Increment quantity_shipped on the TransferItem
@@ -682,6 +697,7 @@ class TransferService
                     $transfer->id,
                     'transfer'
                 );
+                $this->releaseBox($tb, $box);
 
                 // Increment quantity_received on TransferItem
                 $transferItem = $transfer->items()->where('product_id', $product->id)->first();
@@ -708,12 +724,40 @@ class TransferService
                 'notes' => ($transfer->notes ? $transfer->notes . "\n\n" : '') . "Cancelled: {$reason}",
             ]);
 
-            // If boxes were assigned, unassign them
-            if ($transfer->status === TransferStatus::IN_TRANSIT || $transfer->packed_at) {
-                TransferBox::where('transfer_id', $transfer->id)->delete();
-            }
+            // Unassign packed boxes, putting any that hadn't reached the shop
+            // back on sale. (This used to test $transfer->status right after
+            // setting it to CANCELLED.)
+            $packed = TransferBox::where('transfer_id', $transfer->id)->with('box')->get();
+            $packed->where('is_received', false)
+                ->each(function (TransferBox $tb) { if ($tb->box) { $this->releaseBox($tb, $tb->box); } });
+            TransferBox::whereIn('id', $packed->pluck('id'))->delete();
 
             return $transfer;
         });
+    }
+
+    /**
+     * Packing takes a box off sale at the warehouse (and out of reach of
+     * other transfers) until it reaches the shop or the transfer is
+     * cancelled. Returns the status it had, to store on the TransferBox.
+     */
+    private function holdBox(Box $box): string
+    {
+        $before = $box->status instanceof BoxStatus ? $box->status->value : (string) $box->status;
+        $box->update(['status' => BoxStatus::IN_TRANSIT]);
+
+        return $before;
+    }
+
+    /** Undo holdBox(); only touches a box that is still on hold. */
+    private function releaseBox(TransferBox $tb, Box $box): void
+    {
+        if ($box->status !== BoxStatus::IN_TRANSIT) {
+            return;
+        }
+
+        $restore = $tb->box_status_before
+            ?? ($box->items_remaining < $box->items_total ? BoxStatus::PARTIAL->value : BoxStatus::FULL->value);
+        $box->update(['status' => $restore]);
     }
 }

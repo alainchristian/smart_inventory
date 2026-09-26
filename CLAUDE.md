@@ -1018,3 +1018,33 @@ Before this, `categories.parent_id` existed but nothing in the UI could set it.
   Bags & Accessories + Household, Kimironko → all, plus stranded boxes) is
   idempotent.
 Tests: `tests/Feature/Inventory/CategoryParentTest.php`.
+
+### Packed transfer boxes are held (2026-09-26)
+This closes the gap noted above. Boxes packed onto a warehouse→shop
+transfer used to stay `full`/`partial` at the warehouse until the shop
+received them. That meant they could be sold there, or packed onto a
+*second* transfer, since `packBoxesByProductBarcode()` only excluded boxes
+already on the same transfer.
+- **Packing:** `TransferService::holdBox()` sets packed boxes to
+  `in_transit`. It stores the old status in the new
+  `transfer_boxes.box_status_before` column. All pack paths do this:
+  `packBoxesByProductBarcode` (the live pack page), `packBoxByBoxCode` and
+  `assignBoxesToTransfer`.
+- **Receipt:** received boxes move to the shop, and `releaseBox()` restores
+  their old status. Damaged boxes become `damaged` (unchanged). Boxes that
+  never arrived go back on sale at the warehouse, as before; the transfer
+  keeps `has_discrepancy`. Note this differs from stock returns, where a
+  missing box is marked damaged.
+- **Cancel:** `cancelTransfer()` releases un-received boxes before
+  deleting the TransferBox rows. Before this, the unassign condition
+  checked `$transfer->status` right after setting it to CANCELLED.
+- **Migration `2026_09_26_000001`:** backfills boxes on transfers that are
+  approved, in transit or delivered and not yet received. Tested by
+  re-running `up()` inside the test transaction.
+- **Gotcha:** `Collection::each()` stops at the first callback that
+  returns `false`. `fn ($x) => $cond && $this->voidMethod()` returns false,
+  so it silently processed only one item. Use a block closure.
+- **Reporting side effect:** stock valuation (`Box::available()`) counts
+  only full/partial boxes, so boxes on the road (transfers and returns)
+  are not in anyone's stock value until they arrive.
+Tests: `tests/Feature/Inventory/TransferHoldTest.php`.
