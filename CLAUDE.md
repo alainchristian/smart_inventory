@@ -1048,3 +1048,66 @@ already on the same transfer.
   only full/partial boxes, so boxes on the road (transfers and returns)
   are not in anyone's stock value until they arrive.
 Tests: `tests/Feature/Inventory/TransferHoldTest.php`.
+
+---
+
+## Selling loose in packs — sell units (2026-09-26)
+
+**Rule (decided with the user):** counted packs only (pair, half-dozen,
+dozen, gross, pack of N). No weight or volume. Each pack has its own price,
+pre-filled as size × piece price, and the owner can change it. A per-product
+switch, "Sell single pieces", decides whether one piece at a time is also
+allowed. The category rule (Settings → Sales, `categoryAllowsIndividualSales`)
+still gates all loose selling.
+
+**Stock stays in pieces.**
+- `product_sell_units` holds product, name, size (≥2 and < items_per_box,
+  unique per product) and price.
+- `products.sell_single_pieces` defaults to true.
+- A pack line takes `qty × size` pieces from boxes, like any loose line.
+
+**`sale_items` convention for pack lines.** It matches full-box lines,
+where prices are per box.
+- `quantity_sold` is still in PIECES.
+- `actual_unit_price` / `original_unit_price` are per PACK.
+- `sell_unit_name` / `sell_unit_size` record the pack.
+- A pack spanning boxes splits `line_total` by pieces with cumulative
+  rounding, so the rows add up exactly.
+- Use `SaleItem::isPackLine()` and `pricePerPiece()` (line_total ÷ pieces).
+  Never read `actual_unit_price` as a piece price on a pack line.
+- Consumers updated:
+  - `Sale::groupedItems()` adds `unit_name`, `unit_size` and `qty_label`
+    ("3 Dozen"); the owner sale detail now uses it instead of its own copy
+  - receipt / picking slip, which also prints the piece count
+  - POS receipt modal, Sales History
+  - `ProcessReturn`, which refunds per piece from the line
+  - Price Audit discount SQL, which divides by `sell_unit_size`, plus a
+    "3 Dozen (36 items)" display
+
+**Server side.** `SaleService::resolveLooseUnit()` looks up the unit by
+product + size from the DB. It throws `DomainException` if single pieces
+are off or the pack doesn't exist. Only `createMixedSale()` (UnifiedPos)
+needs it: `createSale()` is only called from the orphaned PointOfSale
+pages, and `createWarehouseSale()` sells full boxes only.
+
+**POS (`UnifiedPos`).**
+- `stagingUnitSize` (1 = single piece) with a unit picker. The "Loose"
+  toggle is labelled with the pack name when it's the only option.
+- Cart lines carry `unit_size` / `unit_name`.
+- `findCartLine()` keys on unit too, so boxes + dozens + pieces of one
+  product are separate lines.
+- `cartStockError()` counts pack lines in pieces.
+- `confirmAddToCart()` re-reads the units from the DB.
+- The price-override threshold compares against the pack's own price.
+- Held carts from before this change have no `unit_size` and are treated
+  as single pieces.
+
+**Product form.** Trait `App\Livewire\Products\Concerns\ManagesSellUnits`
+(Create/EditProduct) drives the "Selling Loose" card. `saveSellUnits()`
+rewrites the rows wholesale; unit ids are never referenced.
+
+**Not done (from the plan):**
+- showing stock as "3 boxes + 5 dozen + 4 pcs"
+- entering a box size as "12 dozen" when receiving stock
+
+Tests: `tests/Feature/Sales/SellUnitsTest.php`.

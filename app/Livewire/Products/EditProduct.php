@@ -4,10 +4,13 @@ namespace App\Livewire\Products;
 
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class EditProduct extends Component
 {
+    use Concerns\ManagesSellUnits;
+
     public Product $product;
 
     // Identity
@@ -45,7 +48,7 @@ class EditProduct extends Component
             'unitOfMeasure'    => 'required|string|max:50',
             'supplier'         => 'nullable|string|max:255',
             'isActive'         => 'boolean',
-        ];
+        ] + $this->sellUnitRules();
     }
 
     protected $messages = [
@@ -82,6 +85,7 @@ class EditProduct extends Component
         $this->unitOfMeasure     = $product->unit_of_measure ?? 'piece';
         $this->supplier          = $product->supplier ?? '';
         $this->isActive          = $product->is_active;
+        $this->loadSellUnits($product);
     }
 
     public function getMarginProperty(): ?float
@@ -99,24 +103,27 @@ class EditProduct extends Component
             return;
         }
 
-        $this->validate();
+        $this->validate(null, $this->messages + $this->sellUnitMessages());
 
-        $this->product->update([
-            'category_id'        => $this->categoryId,
-            'name'               => $this->name,
-            'sku'                => strtoupper(trim($this->sku)),
-            'barcode'            => $this->barcode ?: null,
-            'description'        => $this->description ?: null,
-            'items_per_box'      => $this->itemsPerBox,
-            'purchase_price'     => (int) round((float) $this->boxPurchasePrice / $this->itemsPerBox),
-            'selling_price'      => (int) round((float) $this->boxSellingPrice / $this->itemsPerBox),
-            'box_selling_price'  => (int) $this->boxSellingPrice,
-            'low_stock_threshold'=> $this->lowStockThreshold,
-            'reorder_point'      => $this->reorderPoint,
-            'unit_of_measure'    => $this->unitOfMeasure,
-            'supplier'           => $this->supplier ?: null,
-            'is_active'          => $this->isActive,
-        ]);
+        DB::transaction(function () {
+            $this->product->update([
+                'category_id'        => $this->categoryId,
+                'name'               => $this->name,
+                'sku'                => strtoupper(trim($this->sku)),
+                'barcode'            => $this->barcode ?: null,
+                'description'        => $this->description ?: null,
+                'items_per_box'      => $this->itemsPerBox,
+                'purchase_price'     => (int) round((float) $this->boxPurchasePrice / $this->itemsPerBox),
+                'selling_price'      => (int) round((float) $this->boxSellingPrice / $this->itemsPerBox),
+                'box_selling_price'  => (int) $this->boxSellingPrice,
+                'low_stock_threshold'=> $this->lowStockThreshold,
+                'reorder_point'      => $this->reorderPoint,
+                'unit_of_measure'    => $this->unitOfMeasure,
+                'supplier'           => $this->supplier ?: null,
+                'is_active'          => $this->isActive,
+            ]);
+            $this->saveSellUnits($this->product);
+        });
 
         session()->flash('success', "Product \"{$this->product->name}\" updated successfully.");
         $this->redirect(route('owner.products.index'), navigate: true);

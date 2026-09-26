@@ -3,29 +3,8 @@
     $isVoided  = (bool) $sale->voided_at;
     $isDeleted = (bool) $sale->deleted_at;
 
-    // Group items by product + unit price + sale type so repeat box/item
-    // lines for the same product show as one aggregated row (matches the
-    // grouping used on the printed receipt — see ReceiptController::print).
-    $groupedItems = $sale->items
-        ->groupBy(fn ($i) => $i->product_id . '_' . $i->actual_unit_price . '_' . ($i->is_full_box ? 'b' : 'i'))
-        ->map(function ($grp) {
-            $first      = $grp->first();
-            $isBox      = $first->is_full_box;
-            $product    = $first->product;
-            $totalItems = $grp->sum('quantity_sold');
-
-            return [
-                'product_name'   => $product->name ?? '—',
-                'quantity'       => $product ? $product->itemsToDisplayQty($totalItems, $isBox) : $totalItems,
-                // Already at line_total's scale (box-total for full-box lines) —
-                // do not route through displayUnitPrice(), see Sale::groupedItems().
-                'unit_price'     => $first->actual_unit_price,
-                'line_total'     => $grp->sum('line_total'),
-                'is_full_box'    => $isBox,
-                'price_modified' => $grp->contains('price_was_modified', true),
-            ];
-        })
-        ->values();
+    // Same grouping as the printed receipt (box / piece / pack lines per price)
+    $groupedItems = $sale->groupedItems();
 @endphp
 <x-app-layout>
 <style>
@@ -229,8 +208,8 @@
                                          border-radius:5px;font-size:10px;font-weight:700;background:var(--amber-dim);color:var(--amber)">Modified</span>
                             @endif
                         </td>
-                        <td>{{ $line['quantity'] }} {{ $line['is_full_box'] ? 'box' . ($line['quantity'] === 1 ? '' : 'es') : 'item' . ($line['quantity'] === 1 ? '' : 's') }}</td>
-                        <td><span class="oss-val">{{ number_format($line['unit_price']) }}</span> <span style="font-size:11px;color:var(--text-dim)">RWF{{ $line['is_full_box'] ? '/box' : '' }}</span></td>
+                        <td>{{ $line['qty_label'] }}@if($line['unit_size']) <span style="font-size:11px;color:var(--text-dim)">({{ $line['quantity'] * $line['unit_size'] }} pcs)</span>@endif</td>
+                        <td><span class="oss-val">{{ number_format($line['unit_price']) }}</span> <span style="font-size:11px;color:var(--text-dim)">RWF{{ $line['is_full_box'] ? '/box' : ($line['unit_name'] ? '/' . strtolower($line['unit_name']) : '') }}</span></td>
                         <td style="text-align:right"><span class="oss-val">{{ number_format($line['line_total']) }}</span> <span style="font-size:11px;color:var(--text-dim)">RWF</span></td>
                     </tr>
                     @endforeach

@@ -4,10 +4,13 @@ namespace App\Livewire\Products;
 
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class CreateProduct extends Component
 {
+    use Concerns\ManagesSellUnits;
+
     // Identity
     public string  $name        = '';
     public string  $sku         = '';
@@ -43,7 +46,7 @@ class CreateProduct extends Component
             'unitOfMeasure'    => 'required|string|max:50',
             'supplier'         => 'nullable|string|max:255',
             'isActive'         => 'boolean',
-        ];
+        ] + $this->sellUnitRules();
     }
 
     protected $messages = [
@@ -98,24 +101,29 @@ class CreateProduct extends Component
             return;
         }
 
-        $this->validate();
+        $this->validate(null, $this->messages + $this->sellUnitMessages());
 
-        $product = Product::create([
-            'category_id'        => $this->categoryId,
-            'name'               => $this->name,
-            'sku'                => strtoupper(trim($this->sku)),
-            'barcode'            => $this->barcode ?: null,
-            'description'        => $this->description ?: null,
-            'items_per_box'      => $this->itemsPerBox,
-            'purchase_price'     => (int) round((float) $this->boxPurchasePrice / $this->itemsPerBox),
-            'selling_price'      => (int) round((float) $this->boxSellingPrice / $this->itemsPerBox),
-            'box_selling_price'  => (int) $this->boxSellingPrice,
-            'low_stock_threshold'=> $this->lowStockThreshold,
-            'reorder_point'      => $this->reorderPoint,
-            'unit_of_measure'    => $this->unitOfMeasure,
-            'supplier'           => $this->supplier ?: null,
-            'is_active'          => $this->isActive,
-        ]);
+        $product = DB::transaction(function () {
+            $product = Product::create([
+                'category_id'        => $this->categoryId,
+                'name'               => $this->name,
+                'sku'                => strtoupper(trim($this->sku)),
+                'barcode'            => $this->barcode ?: null,
+                'description'        => $this->description ?: null,
+                'items_per_box'      => $this->itemsPerBox,
+                'purchase_price'     => (int) round((float) $this->boxPurchasePrice / $this->itemsPerBox),
+                'selling_price'      => (int) round((float) $this->boxSellingPrice / $this->itemsPerBox),
+                'box_selling_price'  => (int) $this->boxSellingPrice,
+                'low_stock_threshold'=> $this->lowStockThreshold,
+                'reorder_point'      => $this->reorderPoint,
+                'unit_of_measure'    => $this->unitOfMeasure,
+                'supplier'           => $this->supplier ?: null,
+                'is_active'          => $this->isActive,
+            ]);
+            $this->saveSellUnits($product);
+
+            return $product;
+        });
 
         session()->flash('success', "Product \"{$product->name}\" created. <a href=\"" . route('owner.inventory.receive', ['product_id' => $product->id]) . "\" style=\"text-decoration:underline\">Add stock →</a>");
         $this->redirect(route('owner.products.index'), navigate: true);

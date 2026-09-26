@@ -304,7 +304,7 @@
                                         @foreach($expandedGroupedItems as $item)
                                         <tr>
                                             <td>{{ $item['product_name'] }}</td>
-                                            <td class="r mono">{{ number_format($item['quantity']) }}</td>
+                                            <td class="r mono">{{ $item['qty_label'] }}</td>
                                             <td class="r mono">{{ number_format($item['unit_price']) }} RWF</td>
                                             <td class="r mono bold">{{ number_format($item['line_total']) }} RWF</td>
                                         </tr>

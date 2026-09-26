@@ -51,7 +51,7 @@
       {{-- Category --}}
       <div style="margin-bottom:14px">
         <label class="pf-label">Category <span style="color:var(--red)">*</span></label>
-        <select wire:model="categoryId" class="pf-input pf-select">
+        <select wire:model.live="categoryId" class="pf-input pf-select">
           <option value="">Select a category...</option>
           @foreach($categories as $cat)
             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
@@ -202,6 +202,91 @@
       </div>
     </div>
 
+    {{-- Card: Selling in packs (loose sales by pair / dozen / pack) --}}
+    <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:22px 24px">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+                  color:var(--text-sub);margin-bottom:6px;padding-bottom:12px;
+                  border-bottom:1px solid var(--border)">
+        Selling Loose
+      </div>
+      <div class="pf-hint" style="margin:10px 0 14px">
+        Besides full boxes, this product can be sold by the piece or in packs (pair, dozen, pack of 10…).
+        Stock is still counted in pieces.
+      </div>
+
+      @if($categoryId && ! $this->categorySellsLoose)
+        <div class="pf-su-note">
+          This category is sold by full box only, so nothing below is offered in the POS until the owner
+          ticks it in Settings → Sales.
+        </div>
+      @endif
+
+      <label class="pf-su-switch">
+        <input type="checkbox" wire:model.live="sellSinglePieces">
+        <span class="pf-su-track"><span class="pf-su-knob"></span></span>
+        <span>
+          <span style="display:block;font-size:13px;font-weight:600;color:var(--text)">Sell single pieces</span>
+          <span style="display:block;font-size:11px;color:var(--text-dim)">
+            @if($sellSinglePieces)
+              One piece at a time, at {{ number_format($this->piecePrice) }} RWF
+            @else
+              Off — loose sales only in the packs below
+            @endif
+          </span>
+        </span>
+      </label>
+
+      @if(count($sellUnits))
+        <div class="pf-su-head" aria-hidden="true">
+          <span>Pack name</span><span>Pieces</span><span>Price (RWF)</span><span></span>
+        </div>
+      @endif
+      @foreach($sellUnits as $i => $unit)
+        @php
+          $size  = max(1, (int) ($unit['size'] ?? 0));
+          $each  = $size > 0 && (int) ($unit['price'] ?? 0) > 0 ? $unit['price'] / $size : 0;
+          $vsOne = $this->piecePrice > 0 && $each > 0 ? round((1 - $each / $this->piecePrice) * 100) : null;
+        @endphp
+        <div wire:key="su-{{ $i }}">
+          <div class="pf-su-row">
+            <input type="text" wire:model.blur="sellUnits.{{ $i }}.name" class="pf-input" placeholder="e.g. Dozen" aria-label="Pack name">
+            <input type="number" min="2" wire:model.live.debounce.400ms="sellUnits.{{ $i }}.size" class="pf-input pf-mono" aria-label="Pieces in the pack">
+            <div class="pf-price-wrap">
+              <span class="pf-price-prefix">RWF</span>
+              <input type="number" min="1" step="50" wire:model.live.debounce.400ms="sellUnits.{{ $i }}.price" class="pf-input pf-mono pf-price" aria-label="Pack price">
+            </div>
+            <button type="button" class="pf-su-remove" wire:click="removeSellUnit({{ $i }})" title="Remove this pack" aria-label="Remove {{ $unit['name'] ?: 'pack' }}">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          @if($each > 0)
+            <div class="pf-hint" style="margin:-4px 0 10px">
+              = {{ number_format($each, $each == floor($each) ? 0 : 1) }} RWF a piece
+              @if($vsOne !== null && $vsOne > 0) · {{ $vsOne }}% less than single pieces
+              @elseif($vsOne !== null && $vsOne < 0) · {{ abs($vsOne) }}% more than single pieces @endif
+            </div>
+          @endif
+          @foreach(['name', 'size', 'price'] as $f)
+            @error("sellUnits.$i.$f") <div class="pf-error" style="margin:-6px 0 10px">{{ $message }}</div> @enderror
+          @endforeach
+        </div>
+      @endforeach
+
+      <div class="pf-su-presets">
+        @foreach($this->sellUnitPresets as $key => $preset)
+          @php [$pName, $pSize] = $preset; @endphp
+          <button type="button" class="pf-su-chip" wire:click="addSellUnit('{{ $key }}')">+ {{ $pName }} <span>{{ $pSize }}</span></button>
+        @endforeach
+        @if(count($sellUnits) < 8 && $itemsPerBox > 2)
+          <button type="button" class="pf-su-chip" wire:click="addSellUnit('custom')">+ Other pack</button>
+        @endif
+      </div>
+      @error('sellUnits') <div class="pf-error">{{ $message }}</div> @enderror
+      @if(! $sellSinglePieces && ! count($sellUnits))
+        <div class="pf-hint" style="color:var(--amber)">Single pieces are off and there are no packs, so this product is sold by full box only.</div>
+      @endif
+    </div>
+
   </div>{{-- /left --}}
 
   {{-- ═══ RIGHT: Summary sidebar ═══ --}}
@@ -323,6 +408,35 @@
 .pf-price-prefix { position:absolute;left:10px;top:50%;transform:translateY(-50%);
                    font-size:11px;color:var(--text-dim);font-weight:600;pointer-events:none }
 .pf-price        { padding-left:40px !important }
+
+/* ── Selling loose (packs) ───────────────────────── */
+.pf-su-note   { font-size:12px;color:var(--text-sub);border-left:3px solid var(--amber);padding:8px 12px;margin-bottom:14px;line-height:1.5 }
+.pf-su-switch { display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:16px }
+.pf-su-switch input { position:absolute;opacity:0;width:0;height:0 }
+.pf-su-track  { position:relative;width:40px;height:22px;flex-shrink:0;border-radius:11px;background:var(--border-hi);transition:background var(--tr) }
+.pf-su-knob   { position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform var(--tr) }
+.pf-su-switch input:checked + .pf-su-track { background:var(--green) }
+.pf-su-switch input:checked + .pf-su-track .pf-su-knob { transform:translateX(18px) }
+.pf-su-switch input:focus-visible + .pf-su-track { box-shadow:0 0 0 3px var(--accent-dim) }
+.pf-su-head   { display:grid;grid-template-columns:minmax(0,1.3fr) 90px minmax(0,1fr) 34px;gap:8px;margin-bottom:6px;
+                font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim) }
+.pf-su-row    { display:grid;grid-template-columns:minmax(0,1.3fr) 90px minmax(0,1fr) 34px;gap:8px;align-items:center;margin-bottom:8px }
+.pf-su-remove { width:34px;height:38px;border:1.5px solid var(--border);border-radius:var(--rsm);background:var(--surface);
+                color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--tr) }
+.pf-su-remove:hover { border-color:var(--red);color:var(--red) }
+.pf-su-presets { display:flex;flex-wrap:wrap;gap:6px;margin-top:6px }
+.pf-su-chip   { padding:6px 12px;border:1.5px dashed var(--border-hi);border-radius:20px;background:var(--surface);
+                font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;font-family:var(--font);transition:all var(--tr) }
+.pf-su-chip span { font-family:var(--mono);color:var(--text-dim);margin-left:2px }
+.pf-su-chip:hover { border-color:var(--accent);border-style:solid;color:var(--accent) }
+@media (max-width: 640px) {
+  .pf-su-remove, .pf-su-chip { min-height:0 !important;min-width:0 !important }
+  .pf-su-chip { padding:6px 12px !important }
+  .pf-su-remove { padding:0 !important;width:34px !important;height:38px !important }
+  .pf-su-head { display:none }
+  .pf-su-row { grid-template-columns:minmax(0,1fr) 70px 34px }
+  .pf-su-row .pf-price-wrap { grid-column:1 / 3;grid-row:2 }
+}
 
 /* ── Buttons ─────────────────────────────────────── */
 .pf-btn-save { padding:11px 20px;background:var(--accent);color:#fff;border:none;

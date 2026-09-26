@@ -108,16 +108,24 @@ class Sale extends Model
     public function groupedItems(): \Illuminate\Support\Collection
     {
         return $this->items
-            ->groupBy(fn ($i) => $i->product_id . '_' . $i->actual_unit_price . '_' . ($i->is_full_box ? 'b' : 'i'))
+            ->groupBy(fn ($i) => $i->product_id . '_' . $i->actual_unit_price . '_' . ($i->is_full_box ? 'b' : 'i') . '_' . (int) $i->sell_unit_size)
             ->map(function ($grp) {
                 $first      = $grp->first();
                 $isBox      = $first->is_full_box;
                 $product    = $first->product;
                 $totalItems = $grp->sum('quantity_sold');
+                // Pack lines (Dozen…): quantity is in packs, prices are per pack
+                $packSize   = $first->isPackLine() ? (int) $first->sell_unit_size : null;
+                $quantity   = $packSize
+                    ? intdiv($totalItems, $packSize)
+                    : ($product ? $product->itemsToDisplayQty($totalItems, $isBox) : $totalItems);
 
                 return [
                     'product_name'    => $product->name ?? '—',
-                    'quantity'        => $product ? $product->itemsToDisplayQty($totalItems, $isBox) : $totalItems,
+                    'quantity'        => $quantity,
+                    'unit_name'       => $packSize ? $first->sell_unit_name : null,
+                    'unit_size'       => $packSize,
+                    'qty_label'       => \App\Models\ProductSellUnit::quantityLabel($quantity, $isBox, $packSize ? $first->sell_unit_name : null),
                     // original_unit_price/actual_unit_price are already stored
                     // at the same scale as line_total (box-total for full-box
                     // lines, per-item for individual lines) — no conversion

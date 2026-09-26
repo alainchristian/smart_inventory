@@ -213,7 +213,7 @@ class SalesAnalyticsService
                     COUNT(*) as items_count,
                     SUM(CASE
                         WHEN sale_items.is_full_box = true THEN sale_items.original_unit_price - sale_items.actual_unit_price
-                        ELSE (sale_items.original_unit_price - sale_items.actual_unit_price) * sale_items.quantity_sold
+                        ELSE (sale_items.original_unit_price - sale_items.actual_unit_price) * sale_items.quantity_sold::numeric / COALESCE(NULLIF(sale_items.sell_unit_size, 0), 1)  -- pack lines: prices are per pack
                     END) as total_discount_given
                 ');
             if ($locationFilter !== 'all') $discountQ = $this->applyLocationFilterToJoin($discountQ, $locationFilter);
@@ -791,8 +791,11 @@ class SalesAnalyticsService
                     SUM(sale_items.line_total) as line_total,
                     SUM(CASE
                         WHEN sale_items.is_full_box = true THEN sale_items.original_unit_price - sale_items.actual_unit_price
-                        ELSE (sale_items.original_unit_price - sale_items.actual_unit_price) * sale_items.quantity_sold
+                        ELSE (sale_items.original_unit_price - sale_items.actual_unit_price) * sale_items.quantity_sold::numeric / COALESCE(NULLIF(sale_items.sell_unit_size, 0), 1)  -- pack lines: prices are per pack
                     END) as total_discount,
+                    MAX(sale_items.sell_unit_name) as unit_name,
+                    MAX(sale_items.sell_unit_size) as unit_size,
+                    COUNT(DISTINCT COALESCE(sale_items.sell_unit_size, 1)) as unit_kinds,
                     MAX(sale_items.price_modification_reason) as price_modification_reason,
                     MAX(sale_items.price_modification_reference) as price_modification_reference,
                     approver.name as approved_by_name,
@@ -824,6 +827,10 @@ class SalesAnalyticsService
                 if ($hasFullBox && !$hasItemSale) {
                     // All full box sales
                     $quantityDisplay = $boxCount . ' box' . ($boxCount > 1 ? 'es' : '') . ' (' . $totalItems . ' items)';
+                } elseif (!$hasFullBox && $hasItemSale && (int) $item->unit_kinds === 1 && (int) $item->unit_size > 1) {
+                    // All sold in one pack size (e.g. Dozen)
+                    $packs = intdiv($totalItems, (int) $item->unit_size);
+                    $quantityDisplay = \App\Models\ProductSellUnit::quantityLabel($packs, false, $item->unit_name) . ' (' . $totalItems . ' items)';
                 } elseif (!$hasFullBox && $hasItemSale) {
                     // All item sales
                     $quantityDisplay = $totalItems . ' item' . ($totalItems > 1 ? 's' : '');

@@ -20,6 +20,7 @@ class Product extends Model
         'barcode',
         'description',
         'items_per_box',
+        'sell_single_pieces',
         'purchase_price',
         'selling_price',
         'box_selling_price',
@@ -40,6 +41,7 @@ class Product extends Model
         'reorder_point' => 'integer',
         'weight_per_item' => 'decimal:3',
         'is_active' => 'boolean',
+        'sell_single_pieces' => 'boolean',
     ];
 
     protected $appends = [
@@ -66,6 +68,12 @@ class Product extends Model
     public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    /** Packs this product can be sold in loose (Dozen, Pair…), smallest first. */
+    public function sellUnits(): HasMany
+    {
+        return $this->hasMany(ProductSellUnit::class)->orderBy('size');
     }
 
     public function barcodes(): HasMany

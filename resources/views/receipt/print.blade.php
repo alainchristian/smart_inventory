@@ -92,21 +92,21 @@ hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
             <span class="wh-tag"> †</span>
         @endif
     </td>
-    <td class="qty">{{ $item['quantity'] }}{{ $item['is_full_box'] ? 'bx' : 'pc' }}</td>
+    <td class="qty">{{ $item['quantity'] }}{{ $item['is_full_box'] ? 'bx' : (!empty($item['unit_name']) ? ' ' . $item['unit_name'] : 'pc') }}</td>
     @if(!$hideAmounts)
     <td class="amt">{{ number_format($item['line_total']) }}</td>
     @endif
 </tr>
-@if(!$hideAmounts)
+@if(!$hideAmounts || !empty($item['unit_size']))
 <tr>
     <td class="sub" colspan="3">
-        @if($item['is_full_box'])
-            {{ $item['quantity'] }} {{ $item['quantity'] === 1 ? 'box' : 'boxes' }} × {{ number_format($item['unit_price']) }}
-        @else
-            {{ $item['quantity'] }} items × {{ number_format($item['unit_price']) }}
-        @endif
-        @if($item['price_modified'])
-            <span class="mod"> (orig {{ number_format($item['original_price']) }})</span>
+        {{-- Pack lines also show the piece count, so the picker hands over the right amount --}}
+        {{ $item['qty_label'] ?? $item['quantity'] }}@if(!empty($item['unit_size'])) ({{ $item['quantity'] * $item['unit_size'] }} pcs)@endif
+        @if(!$hideAmounts)
+            × {{ number_format($item['unit_price']) }}
+            @if($item['price_modified'])
+                <span class="mod"> (orig {{ number_format($item['original_price']) }})</span>
+            @endif
         @endif
     </td>
 </tr>

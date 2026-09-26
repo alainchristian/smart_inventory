@@ -17,7 +17,7 @@
     {{-- Items --}}
     <div class="upos-cart-items">
         @forelse($cart as $index => $item)
-        <div class="upos-cart-item" wire:key="cart-{{ $index }}-{{ $item['product_id'] }}-{{ $item['source'] ?? 'shop' }}-{{ $item['mode'] }}">
+        <div class="upos-cart-item" wire:key="cart-{{ $index }}-{{ $item['product_id'] }}-{{ $item['source'] ?? 'shop' }}-{{ $item['mode'] }}-{{ $item['unit_size'] ?? 1 }}">
             <div class="upos-cart-item-top">
                 <div style="flex:1;min-width:0">
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
@@ -30,7 +30,7 @@
                                 {{ __('Warehouse') }}
                             @endif
                         </span>
-                        <span class="upos-cart-item-mode">{{ $item['mode'] === 'box' ? __('Box') : __('Item') }}</span>
+                        <span class="upos-cart-item-mode">{{ $item['mode'] === 'box' ? __('Box') : ($item['unit_name'] ?? __('Item')) }}</span>
                     </div>
                     <div class="upos-cart-item-name">{{ $item['product_name'] }}</div>
                     @if(!empty($item['price_modified']))
@@ -48,7 +48,7 @@
             </div>
             <div class="upos-cart-item-row">
                 <span class="upos-cart-item-qty">
-                    {{ $item['mode'] === 'box' ? trans_choice(':count box|:count boxes', $item['qty'], ['count' => $item['qty']]) : trans_choice(':count item|:count items', $item['qty'], ['count' => $item['qty']]) }}
+                    {{ \App\Models\ProductSellUnit::quantityLabel((int) $item['qty'], $item['mode'] === 'box', $item['unit_name'] ?? null) }}
                     × {{ number_format($item['price']) }}
                 </span>
                 <span class="upos-cart-item-total">{{ number_format($item['line_total']) }}</span>

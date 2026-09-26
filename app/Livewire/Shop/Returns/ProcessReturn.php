@@ -295,12 +295,16 @@ class ProcessReturn extends Component
                 // quantity_sold is always in ITEMS.
                 // For full-box sales: actual_unit_price = box price, not per-item.
                 // For individual sales: actual_unit_price = per-item price.
+                // For pack sales (Dozen…): actual_unit_price = pack price, so the
+                // piece price comes from the line itself (line_total / pieces).
                 if ($saleItem->is_full_box) {
                     $boxesSold = max(1, (int) round($itemsSold / $ipb));
                     $boxPrice  = $saleItem->actual_unit_price ?? 0;
                     $itemPrice = $ipb > 0 ? (int) round($boxPrice / $ipb) : $boxPrice;
                 } else {
-                    $itemPrice = $saleItem->actual_unit_price ?? 0;
+                    $itemPrice = $saleItem->isPackLine()
+                        ? (int) round($saleItem->pricePerPiece())
+                        : ($saleItem->actual_unit_price ?? 0);
                     $boxesSold = max(1, (int) round($itemsSold / $ipb));
                     $boxPrice  = $itemPrice * $ipb;
                 }

@@ -17,6 +17,8 @@ class SaleItem extends Model
         'box_id',
         'quantity_sold',
         'is_full_box',
+        'sell_unit_name',
+        'sell_unit_size',
         'original_unit_price',
         'actual_unit_price',
         'line_total',
@@ -28,6 +30,7 @@ class SaleItem extends Model
     protected $casts = [
         'quantity_sold' => 'integer',
         'is_full_box' => 'boolean',
+        'sell_unit_size' => 'integer',
         'original_unit_price' => 'integer',
         'actual_unit_price' => 'integer',
         'line_total' => 'integer',
@@ -56,6 +59,19 @@ class SaleItem extends Model
     }
 
     // Helper methods
+
+    /** True for a line sold by the pack (dozen, pair…): prices are per pack. */
+    public function isPackLine(): bool
+    {
+        return ! $this->is_full_box && (int) $this->sell_unit_size > 1;
+    }
+
+    /** Price of one piece on this line, whatever unit it was sold in. */
+    public function pricePerPiece(): float
+    {
+        return $this->quantity_sold > 0 ? $this->line_total / $this->quantity_sold : 0.0;
+    }
+
     public function getPriceDiscountAmount(): int
     {
         return $this->original_unit_price - $this->actual_unit_price;

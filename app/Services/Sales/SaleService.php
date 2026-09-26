@@ -621,13 +621,18 @@ class SaleService
             foreach ($shopItems as $itemData) {
                 $product    = Product::findOrFail($itemData['product_id']);
                 $isFullBox  = ($itemData['mode'] ?? 'box') === 'box';
+                // Loose lines: a single piece, or a pack (Dozen = 12 pieces) at the pack's price
+                $unit = $isFullBox ? null : $this->resolveLooseUnit($product, $itemData);
                 $itemsToSell = $isFullBox
                     ? (int) $itemData['qty'] * (int) $product->items_per_box
-                    : (int) $itemData['qty'];
-                $finalPrice    = (int) $itemData['price'];
+                    : (int) $itemData['qty'] * $unit['size'];
+                $finalPrice    = (int) $itemData['price'];            // per box / piece / pack
                 $originalPrice = $isFullBox
                     ? $product->calculateBoxPrice()
-                    : $product->selling_price;
+                    : $unit['price'];
+                $looseTotal    = $isFullBox ? 0 : (int) $itemData['qty'] * $finalPrice;
+                $piecesTaken   = 0;
+                $allocated     = 0;
 
                 if ($finalPrice !== $originalPrice) {
                     $hasPriceOverride = true;
@@ -647,13 +652,23 @@ class SaleService
                 foreach ($boxes as $box) {
                     if ($remaining <= 0) break;
                     $consume   = min($remaining, $box->items_remaining);
-                    $lineTotal = $isFullBox ? $finalPrice : ($consume * $finalPrice);
+                    if ($isFullBox) {
+                        $lineTotal = $finalPrice;
+                    } else {
+                        // A loose line can span boxes (5 pieces of a dozen from one, 7 from
+                        // the next): split its total by pieces, rounding so rows add up exactly.
+                        $piecesTaken += $consume;
+                        $lineTotal    = (int) round($looseTotal * $piecesTaken / $itemsToSell) - $allocated;
+                        $allocated   += $lineTotal;
+                    }
 
                     $sale->items()->create([
                         'product_id'                => $product->id,
                         'box_id'                    => $box->id,
                         'quantity_sold'             => $consume,
                         'is_full_box'               => $isFullBox && $consume === $box->items_remaining,
+                        'sell_unit_name'            => $unit['name'] ?? null,
+                        'sell_unit_size'            => isset($unit['name']) ? $unit['size'] : null,
                         'original_unit_price'       => $originalPrice,
                         'actual_unit_price'         => $finalPrice,
                         'line_total'                => $lineTotal,
@@ -839,9 +854,11 @@ class SaleService
     private function sellWarehouseLooseItems(Sale $sale, array $itemData, int $warehouseId, bool &$hasPriceOverride): int
     {
         $product       = Product::findOrFail($itemData['product_id']);
-        $itemsToSell   = (int) $itemData['qty'];
-        $finalPrice    = (int) $itemData['price'];
-        $originalPrice = (int) $product->selling_price;
+        $unit          = $this->resolveLooseUnit($product, $itemData);
+        $itemsToSell   = (int) $itemData['qty'] * $unit['size'];
+        $finalPrice    = (int) $itemData['price'];               // per piece or per pack
+        $originalPrice = $unit['price'];
+        $looseTotal    = (int) $itemData['qty'] * $finalPrice;
         if ($finalPrice !== $originalPrice) {
             $hasPriceOverride = true;
         }
@@ -859,19 +876,24 @@ class SaleService
 
         $remaining = $itemsToSell;
         $lineSum   = 0;
+        $taken     = 0;
 
         foreach ($boxes as $box) {
             if ($remaining <= 0) {
                 break;
             }
             $take      = min($remaining, $box->items_remaining);
-            $lineTotal = $take * $finalPrice;
+            $taken    += $take;
+            // Split the line total by pieces across boxes; rows add up exactly
+            $lineTotal = (int) round($looseTotal * $taken / $itemsToSell) - $lineSum;
 
             $sale->items()->create([
                 'product_id'                => $product->id,
                 'box_id'                    => $box->id,
                 'quantity_sold'             => $take,
                 'is_full_box'               => false,
+                'sell_unit_name'            => $unit['name'],
+                'sell_unit_size'            => $unit['name'] ? $unit['size'] : null,
                 'original_unit_price'       => $originalPrice,
                 'actual_unit_price'         => $finalPrice,
                 'line_total'                => $lineTotal,
@@ -911,6 +933,31 @@ class SaleService
         }
 
         return $lineSum;
+    }
+
+    /**
+     * The unit a loose line is sold in, from the DB (never the client):
+     * size 1 = a single piece (only if the product allows it), otherwise one
+     * of the product's packs, looked up by size. Returns name (null for a
+     * piece), size in pieces and catalog price per unit.
+     */
+    private function resolveLooseUnit(Product $product, array $itemData): array
+    {
+        $size = max(1, (int) ($itemData['unit_size'] ?? 1));
+
+        if ($size === 1) {
+            if (! $product->sell_single_pieces) {
+                throw new \DomainException("{$product->name} isn't sold by the single piece — choose one of its packs.");
+            }
+            return ['name' => null, 'size' => 1, 'price' => (int) $product->selling_price];
+        }
+
+        $unit = $product->sellUnits()->where('size', $size)->first();
+        if (! $unit) {
+            throw new \DomainException("{$product->name} has no pack of {$size} pieces.");
+        }
+
+        return ['name' => $unit->name, 'size' => (int) $unit->size, 'price' => (int) $unit->price];
     }
 
     /**

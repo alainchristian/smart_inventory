@@ -47,7 +47,8 @@ class UnifiedPos extends Component
     public bool $showAddModal          = false;
     public ?array $stagingProduct      = null;
     public array $stagingStock         = [];
-    public string $stagingMode         = 'box';   // 'box' | 'item' (warehouse: always 'box')
+    public string $stagingMode         = 'box';   // 'box' | 'item'
+    public int $stagingUnitSize        = 1;       // item mode: 1 = single piece, else a pack's size (Dozen = 12)
     public int $stagingQty             = 1;
     public int $stagingPrice           = 0;
     public bool $stagingPriceModified  = false;
@@ -487,7 +488,10 @@ class UnifiedPos extends Component
             }
 
             // Opt-in per category (owner Settings) — see SettingsService::categoryAllowsIndividualSales()
-            $individualAllowed = app(\App\Services\SettingsService::class)->categoryAllowsIndividualSales($product->category_id);
+            // — then the product's own options: single pieces and/or packs.
+            $loose        = $this->looseOptions($product->id);
+            $looseAllowed = app(\App\Services\SettingsService::class)->categoryAllowsIndividualSales($product->category_id)
+                && ($loose['single'] || $loose['units']);
 
             $hasFullBox = Box::where('product_id', $product->id)
                 ->where('location_type', 'shop')
@@ -495,9 +499,9 @@ class UnifiedPos extends Component
                 ->where('status', 'full')
                 ->exists();
 
-            // Box-only category with only opened boxes left: it can't be sold
-            // by item, and there's no full box to sell — block, the owner decides.
-            if (!$hasFullBox && !$individualAllowed) {
+            // Box-only product with only opened boxes left: it can't be sold
+            // loose, and there's no full box to sell — block, the owner decides.
+            if (!$hasFullBox && !$looseAllowed) {
                 $this->dispatch('notification', ['type' => 'error', 'message' => __(
                     'Only opened boxes of :product are left, and :category is sold by full box only.',
                     ['product' => $product->name, 'category' => $product->category?->name ?? __('this category')]
@@ -517,19 +521,22 @@ class UnifiedPos extends Component
                 'source'                 => 'shop',
                 'source_id'              => $this->shopId,
                 'source_name'            => $this->shopName,
-                'individual_sale_allowed' => $individualAllowed,
+                'individual_sale_allowed' => $looseAllowed,
                 'has_full_box'           => $hasFullBox,
+                'sell_single_pieces'     => $loose['single'],
+                'units'                  => $loose['units'],
             ];
             $this->stagingStock = $stock;
 
             // A tile tap always stages a NEW entry — confirmAddToCart() merges it
-            // into an existing line of the same product + source + mode, so a
-            // cart can hold e.g. 2 full boxes AND 10 loose items of one product.
+            // into an existing line of the same product + source + mode + unit, so
+            // a cart can hold e.g. 2 full boxes AND 3 dozen AND 5 pieces of one product.
             // Existing lines are changed with the pencil (openEditItem).
             $this->stagingCartIndex     = null;
             $this->stagingMode          = $hasFullBox ? 'box' : 'item';
+            $this->stagingUnitSize      = $this->defaultLooseUnitSize();
             $this->stagingQty           = 1;
-            $this->stagingPrice         = $hasFullBox ? $product->effective_box_selling_price : $product->selling_price;
+            $this->stagingPrice         = $this->stagingCatalogPrice();
             $this->stagingPriceModified = false;
             $this->stagingPriceReason   = '';
 
@@ -541,11 +548,13 @@ class UnifiedPos extends Component
                 return;
             }
 
-            // Same per-category rule as shop stock (owner Settings)
-            $individualAllowed = app(\App\Services\SettingsService::class)->categoryAllowsIndividualSales($whProduct['category_id']);
-            $hasFullBox        = ($whProduct['stock']['full_boxes'] ?? 0) > 0;
+            // Same rules as shop stock (owner Settings + the product's own options)
+            $loose        = $this->looseOptions($productId);
+            $looseAllowed = app(\App\Services\SettingsService::class)->categoryAllowsIndividualSales($whProduct['category_id'])
+                && ($loose['single'] || $loose['units']);
+            $hasFullBox   = ($whProduct['stock']['full_boxes'] ?? 0) > 0;
 
-            if (!$hasFullBox && !$individualAllowed) {
+            if (!$hasFullBox && !$looseAllowed) {
                 $this->dispatch('notification', ['type' => 'error', 'message' => __(
                     'Only opened boxes of :product are left, and :category is sold by full box only.',
                     ['product' => $whProduct['name'], 'category' => $whProduct['category'] ?: __('this category')]
@@ -565,17 +574,20 @@ class UnifiedPos extends Component
                 'source'                  => 'warehouse',
                 'source_id'               => $this->warehouseId,
                 'source_name'             => $this->warehouseName,
-                'individual_sale_allowed' => $individualAllowed,
+                'individual_sale_allowed' => $looseAllowed,
                 'has_full_box'            => $hasFullBox,
                 'box_count'               => $whProduct['stock']['full_boxes'],
+                'sell_single_pieces'      => $loose['single'],
+                'units'                   => $loose['units'],
             ];
             $this->stagingStock = $whProduct['stock'];
 
             // New entry — merged on confirm (see the shop branch above)
             $this->stagingCartIndex     = null;
             $this->stagingMode          = $hasFullBox ? 'box' : 'item';
+            $this->stagingUnitSize      = $this->defaultLooseUnitSize();
             $this->stagingQty           = 1;
-            $this->stagingPrice         = $hasFullBox ? $whProduct['box_price'] : $whProduct['selling_price'];
+            $this->stagingPrice         = $this->stagingCatalogPrice();
             $this->stagingPriceModified = false;
             $this->stagingPriceReason   = '';
         }
@@ -584,17 +596,80 @@ class UnifiedPos extends Component
     }
 
     /**
-     * The cart line for this product + source + mode (box/item) + unit price,
-     * if any. Price is part of the key so merging never silently re-prices
-     * quantities the seller already confirmed at a different price.
+     * Loose-sale options of a product: single pieces (owner switch on the
+     * product) and its packs (Dozen = 12…), read fresh from the DB.
      */
-    private function findCartLine(int $productId, string $source, string $mode, int $price, ?int $exceptIndex = null): int|false
+    private function looseOptions(int $productId): array
+    {
+        $product = Product::with('sellUnits')->find($productId);
+
+        return [
+            'single' => (bool) ($product?->sell_single_pieces ?? true),
+            'units'  => $product
+                ? $product->sellUnits->map(fn ($u) => ['name' => $u->name, 'size' => (int) $u->size, 'price' => (int) $u->price])->values()->all()
+                : [],
+        ];
+    }
+
+    /** Unit a loose entry starts on: single pieces if allowed, else the smallest pack. */
+    private function defaultLooseUnitSize(): int
+    {
+        if ($this->stagingProduct['sell_single_pieces'] ?? true) {
+            return 1;
+        }
+        return (int) ($this->stagingProduct['units'][0]['size'] ?? 1);
+    }
+
+    /** The staged pack (name/size/price), or null for a box or a single piece. */
+    private function stagingUnit(): ?array
+    {
+        if ($this->stagingMode !== 'item' || $this->stagingUnitSize <= 1) {
+            return null;
+        }
+        return collect($this->stagingProduct['units'] ?? [])->firstWhere('size', $this->stagingUnitSize);
+    }
+
+    /** For the view: catalog price of the staged box / piece / pack. */
+    public function getStagingOriginalPriceProperty(): int
+    {
+        return $this->stagingProduct ? $this->stagingCatalogPrice() : 0;
+    }
+
+    /** For the view: the loose units the seller can pick (single piece first, then packs). */
+    public function getStagingLooseUnitsProperty(): array
+    {
+        if (!$this->stagingProduct) {
+            return [];
+        }
+        $units = ($this->stagingProduct['sell_single_pieces'] ?? true)
+            ? [['name' => null, 'size' => 1, 'price' => (int) $this->stagingProduct['selling_price']]]
+            : [];
+
+        return array_merge($units, $this->stagingProduct['units'] ?? []);
+    }
+
+    /** Catalog price of what's staged: a box, a single piece, or one pack. */
+    private function stagingCatalogPrice(): int
+    {
+        if ($this->stagingMode === 'box') {
+            return (int) $this->stagingProduct['box_price'];
+        }
+        return (int) ($this->stagingUnit()['price'] ?? $this->stagingProduct['selling_price']);
+    }
+
+    /**
+     * The cart line for this product + source + mode (box/item) + unit +
+     * price, if any. Price is part of the key so merging never silently
+     * re-prices quantities the seller already confirmed at a different price.
+     */
+    private function findCartLine(int $productId, string $source, string $mode, int $price, ?int $exceptIndex = null, int $unitSize = 1): int|false
     {
         foreach ($this->cart as $index => $item) {
             if ($index !== $exceptIndex
                 && (int) $item['product_id'] === $productId
                 && ($item['source'] ?? 'shop') === $source
                 && ($item['mode'] ?? 'box') === $mode
+                && max(1, (int) ($item['unit_size'] ?? 1)) === $unitSize
                 && (int) $item['price'] === $price) {
                 return $index;
             }
@@ -620,7 +695,7 @@ class UnifiedPos extends Component
             if (($item['mode'] ?? 'box') === 'box') {
                 $boxes += (int) $item['qty'];
             } else {
-                $items += (int) $item['qty'];
+                $items += (int) $item['qty'] * max(1, (int) ($item['unit_size'] ?? 1));   // packs count in pieces
             }
         }
 
@@ -650,6 +725,7 @@ class UnifiedPos extends Component
         if ($source === 'shop') {
             $product = Product::with('category')->findOrFail($item['product_id']);
             $stock   = $product->getCurrentStock('shop', $this->shopId);
+            $loose   = $this->looseOptions($product->id);
 
             $this->stagingProduct = [
                 'id'                     => $product->id,
@@ -664,10 +740,13 @@ class UnifiedPos extends Component
                 'source_id'              => $this->shopId,
                 'source_name'            => $this->shopName,
                 // Same rule as when the line was added — editing must not unlock item mode
-                'individual_sale_allowed' => app(\App\Services\SettingsService::class)->categoryAllowsIndividualSales($product->category_id),
+                'individual_sale_allowed' => app(\App\Services\SettingsService::class)->categoryAllowsIndividualSales($product->category_id)
+                    && ($loose['single'] || $loose['units']),
                 'has_full_box'           => Box::where('product_id', $product->id)
                     ->where('location_type', 'shop')->where('location_id', $this->shopId)
                     ->where('status', BoxStatus::FULL)->exists(),
+                'sell_single_pieces'     => $loose['single'],
+                'units'                  => $loose['units'],
             ];
             $this->stagingStock = $stock;
         } else {
@@ -686,6 +765,7 @@ class UnifiedPos extends Component
                 $trueBoxPrice     = $product?->effective_box_selling_price ?? $item['price'];
             }
             $whCategoryId = $whProduct['category_id'] ?? Product::whereKey($item['product_id'])->value('category_id');
+            $loose        = $this->looseOptions((int) $item['product_id']);
 
             $this->stagingProduct = [
                 'id'                      => $item['product_id'],
@@ -699,15 +779,19 @@ class UnifiedPos extends Component
                 'source'                  => 'warehouse',
                 'source_id'               => $this->warehouseId,
                 'source_name'             => $this->warehouseName,
-                'individual_sale_allowed' => app(\App\Services\SettingsService::class)->categoryAllowsIndividualSales($whCategoryId),
+                'individual_sale_allowed' => app(\App\Services\SettingsService::class)->categoryAllowsIndividualSales($whCategoryId)
+                    && ($loose['single'] || $loose['units']),
                 'has_full_box'            => ($whProduct['stock']['full_boxes'] ?? 0) > 0,
                 'box_count'               => $whProduct['stock']['full_boxes'] ?? 0,
+                'sell_single_pieces'      => $loose['single'],
+                'units'                   => $loose['units'],
             ];
             $this->stagingStock = $whProduct['stock'] ?? ['total_items' => 0, 'full_boxes' => 0];
         }
 
         $this->stagingCartIndex     = $index;
         $this->stagingMode          = $item['mode'];
+        $this->stagingUnitSize      = max(1, (int) ($item['unit_size'] ?? 1));
         $this->stagingQty           = $item['qty'];
         $this->stagingPrice         = $item['price'];
         $this->stagingPriceModified = $item['price_modified'] ?? false;
@@ -720,30 +804,43 @@ class UnifiedPos extends Component
     public function updatedStagingMode(): void
     {
         if (!$this->stagingProduct) return;
-        $this->stagingPrice = $this->stagingMode === 'box'
-            ? $this->stagingProduct['box_price']
-            : $this->stagingProduct['selling_price'];
+        $this->stagingPrice         = $this->stagingCatalogPrice();
         $this->stagingPriceModified = false;
         $this->stagingPriceReason   = '';
+    }
+
+    public function updatedStagingUnitSize(): void
+    {
+        if (!$this->stagingProduct) return;
+        $valid = ($this->stagingUnitSize === 1 && ($this->stagingProduct['sell_single_pieces'] ?? true))
+            || collect($this->stagingProduct['units'] ?? [])->contains('size', $this->stagingUnitSize);
+        if (!$valid) {
+            $this->stagingUnitSize = $this->defaultLooseUnitSize();
+        }
+        $this->stagingPrice         = $this->stagingCatalogPrice();
+        $this->stagingPriceModified = false;
+        $this->stagingPriceReason   = '';
+        $this->updatedStagingQty();
     }
 
     public function updatedStagingPrice(): void
     {
         if (!$this->stagingProduct) return;
-        $original = $this->stagingMode === 'box'
-            ? $this->stagingProduct['box_price']
-            : $this->stagingProduct['selling_price'];
-        $this->stagingPriceModified = ((int) $this->stagingPrice !== (int) $original);
+        $this->stagingPriceModified = ((int) $this->stagingPrice !== $this->stagingCatalogPrice());
         if (!$this->stagingPriceModified) $this->stagingPriceReason = '';
     }
 
     public function updatedStagingQty(): void
     {
         if ($this->stagingMode === 'item' && $this->stagingStock) {
-            $max = $this->stagingStock['total_items'];
+            $size = max(1, $this->stagingUnitSize);
+            $max  = intdiv((int) $this->stagingStock['total_items'], $size);
             if ($this->stagingQty > $max) {
-                $this->stagingQty = $max;
-                $this->dispatch('notification', ['type' => 'warning', 'message' => __('Only :max items available', ['max' => $max])]);
+                $this->stagingQty = max(1, $max);
+                $this->dispatch('notification', ['type' => 'warning', 'message' => $size === 1
+                    ? __('Only :max items available', ['max' => $max])
+                    : __('Only :max × :unit available', ['max' => $max, 'unit' => $this->stagingUnit()['name'] ?? '']),
+                ]);
             }
         }
     }
@@ -779,7 +876,21 @@ class UnifiedPos extends Component
                 $this->dispatch('notification', ['type' => 'error', 'message' => __('This category is sold by full box only')]);
                 return;
             }
+            // The unit must still exist on the product (DB, not the staging copy)
+            $loose = $this->looseOptions((int) $this->stagingProduct['id']);
+            $this->stagingProduct['sell_single_pieces'] = $loose['single'];
+            $this->stagingProduct['units']              = $loose['units'];
+            if ($this->stagingUnitSize <= 1 && ! $loose['single']) {
+                $this->dispatch('notification', ['type' => 'error', 'message' => __(':product isn\'t sold by the single piece — choose a pack', ['product' => $this->stagingProduct['name']])]);
+                return;
+            }
+            if ($this->stagingUnitSize > 1 && ! $this->stagingUnit()) {
+                $this->dispatch('notification', ['type' => 'error', 'message' => __('That pack is no longer offered for :product', ['product' => $this->stagingProduct['name']])]);
+                return;
+            }
         }
+        $unitSize = $this->stagingMode === 'item' ? max(1, $this->stagingUnitSize) : 1;
+        $unit     = $this->stagingUnit();
 
         if (!$this->settingAllowPriceOverride && $this->stagingPriceModified) {
             $this->dispatch('notification', ['type' => 'error', 'message' => __('Price modifications are not allowed')]);
@@ -794,7 +905,7 @@ class UnifiedPos extends Component
         // Where does this entry land? Editing keeps its line; a new entry (or
         // an edit that switched mode) joins an existing same-mode line.
         $productId  = (int) $this->stagingProduct['id'];
-        $mergeIndex = $this->findCartLine($productId, $source, $this->stagingMode, (int) $this->stagingPrice, $this->stagingCartIndex);
+        $mergeIndex = $this->findCartLine($productId, $source, $this->stagingMode, (int) $this->stagingPrice, $this->stagingCartIndex, $unitSize);
 
         $stagedQty = (int) $this->stagingQty;
         if ($mergeIndex !== false && $this->stagingCartIndex === null) {
@@ -819,7 +930,7 @@ class UnifiedPos extends Component
         $error = $this->cartStockError(
             $productId, $source,
             $this->stagingMode === 'box' ? $stagedQty : 0,
-            $this->stagingMode === 'item' ? $stagedQty : 0,
+            $this->stagingMode === 'item' ? $stagedQty * $unitSize : 0,
             $skip,
             $fullBoxes,
             (int) ($this->stagingStock['total_items'] ?? 0),
@@ -832,9 +943,7 @@ class UnifiedPos extends Component
 
         $isFullBox     = $this->stagingMode === 'box';
         $lineTotal     = $this->stagingPrice * $stagedQty;
-        $originalPrice = $isFullBox
-            ? $this->stagingProduct['box_price']
-            : $this->stagingProduct['selling_price'];
+        $originalPrice = $this->stagingCatalogPrice();   // per box, per piece, or per pack
 
         $requiresApproval = false;
         if ($this->stagingPriceModified && $originalPrice > 0) {
@@ -851,6 +960,8 @@ class UnifiedPos extends Component
             'source_id'                 => $this->stagingProduct['source_id'],
             'source_name'               => $this->stagingProduct['source_name'],
             'mode'                      => $this->stagingMode,
+            'unit_size'                 => $unitSize,            // item mode: pieces per unit (1 = single piece)
+            'unit_name'                 => $unit['name'] ?? null,
             'items_per_box'             => $this->stagingProduct['items_per_box'],
             'qty'                       => $stagedQty,
             'price'                     => $this->stagingPrice,
@@ -873,7 +984,7 @@ class UnifiedPos extends Component
             }
             $message = __('Cart updated — :qty :unit', [
                 'qty'  => $stagedQty,
-                'unit' => $isFullBox ? trans_choice('box|boxes', $stagedQty) : trans_choice('item|items', $stagedQty),
+                'unit' => $isFullBox ? trans_choice('box|boxes', $stagedQty) : ($unit['name'] ?? trans_choice('item|items', $stagedQty)),
             ]);
         } elseif ($this->stagingCartIndex !== null && isset($this->cart[$this->stagingCartIndex])) {
             $this->cart[$this->stagingCartIndex] = $cartItem;
@@ -894,6 +1005,7 @@ class UnifiedPos extends Component
         $this->stagingProduct       = null;
         $this->stagingStock         = [];
         $this->stagingMode          = 'box';
+        $this->stagingUnitSize      = 1;
         $this->stagingQty           = 1;
         $this->stagingPrice         = 0;
         $this->stagingPriceModified = false;
@@ -1269,6 +1381,7 @@ class UnifiedPos extends Component
                     'source'                    => $item['source'] ?? 'shop',
                     'source_id'                 => $item['source_id'],
                     'mode'                      => $item['mode'],
+                    'unit_size'                 => max(1, (int) ($item['unit_size'] ?? 1)),
                     'qty'                       => $item['qty'],
                     'items_per_box'             => $item['items_per_box'],
                     'price'                     => (int) $item['price'],

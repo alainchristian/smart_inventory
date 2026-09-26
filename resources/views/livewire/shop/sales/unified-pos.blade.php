@@ -179,6 +179,12 @@
 .upos-sm-info-row { display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px }
 .upos-mode-toggle { display:flex; border-radius:var(--rsm); overflow:hidden; border:1.5px solid var(--border) }
 .upos-mode-btn { flex:1; padding:8px; border:none; background:transparent; color:var(--text-dim); font-size:13px; font-weight:600; font-family:var(--font); cursor:pointer; transition:all var(--tr) }
+.upos-unit-pills { display:flex;flex-wrap:wrap;gap:6px }
+.upos-unit-pill  { padding:6px 12px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;font-family:var(--font);transition:all var(--tr) }
+.upos-unit-pill span { font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-left:3px }
+.upos-unit-pill:hover { border-color:var(--accent);color:var(--accent) }
+.upos-unit-pill.active { background:var(--accent);border-color:var(--accent);color:#fff }
+.upos-unit-pill.active span { color:rgba(255,255,255,.8) }
 .upos-mode-btn.active { background:var(--accent); color:#fff }
 .upos-stepper { display:flex; align-items:center; gap:0; border:1.5px solid var(--border); border-radius:var(--rsm); overflow:hidden }
 .upos-stepper-btn { width:40px; height:40px; border:none; background:transparent; color:var(--text-sub); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background var(--tr); flex-shrink:0 }
@@ -310,6 +316,7 @@
     .upos-cart-drawer-overlay { display:block }
 }
 @media(max-width:640px) {
+    .upos-unit-pill { min-height:0 !important;min-width:0 !important;padding:6px 12px !important }
     .upos-filter-strip { flex-wrap:nowrap; overflow-x:auto; padding-bottom:2px; -ms-overflow-style:none; scrollbar-width:none }
     .upos-filter-strip::-webkit-scrollbar { display:none }
     .upos-stock-grid { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) }
@@ -575,16 +582,22 @@
         </div>
 
         {{-- Body --}}
-        <div class="upos-sm-body" x-data="{
+        @php
+            $unitSize  = $stagingMode === 'item' ? max(1, $stagingUnitSize) : 1;
+            $unitName  = $unitSize > 1 ? (collect($stagingProduct['units'] ?? [])->firstWhere('size', $unitSize)['name'] ?? null) : null;
+            $looseOpts = $this->stagingLooseUnits;
+        @endphp
+        {{-- keyed on mode + unit so Alpine re-reads origPrice / maxQty after a switch --}}
+        <div class="upos-sm-body" wire:key="upos-sm-body-{{ $stagingMode }}-{{ $unitSize }}" x-data="{
             qty: @entangle('stagingQty'),
             price: @entangle('stagingPrice'),
-            origPrice: {{ $stagingMode === 'box' ? $stagingProduct['box_price'] : $stagingProduct['selling_price'] }},
-            maxQty: {{ $stagingMode === 'box' ? ($stagingStock['full_boxes'] ?? 0) : ($stagingStock['total_items'] ?? 0) }},
+            origPrice: {{ $this->stagingOriginalPrice }},
+            maxQty: {{ $stagingMode === 'box' ? ($stagingStock['full_boxes'] ?? 0) : intdiv((int) ($stagingStock['total_items'] ?? 0), $unitSize) }},
             get isModified() { return parseInt(this.price) !== parseInt(this.origPrice); },
             get isOverStock() { return parseInt(this.qty) > this.maxQty; },
             i18n: {
                 warningBoxes: @js(__('Warning: Only :qty boxes available in stock.')),
-                warningItems: @js(__('Warning: Only :qty items available in stock.')),
+                warningItems: @js($unitName ? __('Warning: Only :qty × :unit available in stock.', ['unit' => $unitName]) : __('Warning: Only :qty items available in stock.')),
             },
         }">
 
@@ -601,16 +614,34 @@
                 <label class="upos-label">{{ __('Sell as') }}</label>
                 <div class="upos-mode-toggle">
                     <button type="button" class="upos-mode-btn {{ $stagingMode === 'box' ? 'active' : '' }}" wire:click="$set('stagingMode','box')">{{ __('Full Box') }}</button>
-                    <button type="button" class="upos-mode-btn {{ $stagingMode === 'item' ? 'active' : '' }}" wire:click="$set('stagingMode','item')">{{ __('Individual Items') }}</button>
+                    <button type="button" class="upos-mode-btn {{ $stagingMode === 'item' ? 'active' : '' }}" wire:click="$set('stagingMode','item')">{{ count($looseOpts) > 1 ? __('Loose') : (($looseOpts[0]['size'] ?? 1) > 1 ? $looseOpts[0]['name'] : __('Individual Items')) }}</button>
                 </div>
             </div>
+            {{-- Loose unit: single piece and/or the product's packs (Dozen = 12…) --}}
+            @if($stagingMode === 'item' && count($looseOpts) > 1)
+            <div class="upos-field">
+                <label class="upos-label">{{ __('Unit') }}</label>
+                <div class="upos-unit-pills" role="radiogroup" aria-label="{{ __('Unit') }}">
+                    @foreach($looseOpts as $opt)
+                        <button type="button" role="radio" aria-checked="{{ $unitSize === $opt['size'] ? 'true' : 'false' }}"
+                                class="upos-unit-pill {{ $unitSize === $opt['size'] ? 'active' : '' }}"
+                                wire:click="$set('stagingUnitSize', {{ $opt['size'] }})">
+                            {{ $opt['name'] ?? __('Single piece') }}
+                            @if($opt['size'] > 1)<span>{{ $opt['size'] }} pcs</span>@endif
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+            @elseif($stagingMode === 'item' && $unitName)
+            <div style="font-size:12px;color:var(--text-dim);margin-top:-6px">{{ __('Sold by the :unit — :size pieces each.', ['unit' => $unitName, 'size' => $unitSize]) }}</div>
+            @endif
             @else
             <div style="font-size:12px;color:var(--text-dim);padding:4px 0">{{ __(':category is sold by full box only.', ['category' => $stagingProduct['category'] ?: __('This category')]) }}</div>
             @endif
 
             {{-- Quantity --}}
             <div class="upos-field">
-                <label class="upos-label">{{ $stagingMode === 'box' ? __('Number of Boxes') : __('Number of Items') }}</label>
+                <label class="upos-label">{{ $stagingMode === 'box' ? __('Number of Boxes') : ($unitName ? __('How many :unit', ['unit' => $unitName]) : __('Number of Items')) }}</label>
                 <div class="upos-stepper">
                     <button type="button" class="upos-stepper-btn" @click="if(qty > 1) qty--">−</button>
                     <input class="upos-stepper-val" type="number" x-model.number="qty" min="1" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
@@ -623,7 +654,7 @@
 
             {{-- Price --}}
             <div class="upos-field">
-                <label class="upos-label">{{ $stagingMode === 'box' ? 'Box Price (RWF)' : 'Item Price (RWF)' }}</label>
+                <label class="upos-label">{{ $stagingMode === 'box' ? __('Box Price (RWF)') : ($unitName ? __('Price per :unit (RWF)', ['unit' => $unitName]) : __('Item Price (RWF)')) }}</label>
                 @if($settingAllowPriceOverride)
                 <div class="upos-price-row">
                     <input class="upos-input" type="number" x-model.number="price" min="0">
@@ -637,6 +668,10 @@
                 <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);padding:9px 0" x-text="new Intl.NumberFormat().format(price) + ' RWF'"></div>
                 @endif
             </div>
+
+            @if($unitName)
+            <div style="font-size:12px;color:var(--text-dim);margin:-4px 0 8px" x-text="(qty * {{ $unitSize }}) + ' ' + @js(__('pieces from stock'))"></div>
+            @endif
 
             {{-- Line total --}}
             <div class="upos-sm-total">
@@ -698,7 +733,7 @@
                                     {{ $item['product_name'] }}
                                     <span class="upos-badge {{ $item['source'] ?? 'shop' }}" style="margin-left:4px;vertical-align:middle">{{ ($item['source'] ?? 'shop') === 'shop' ? 'S' : 'WH' }}</span>
                                 </div>
-                                <div style="font-size:11px;color:var(--text-dim)">{{ $item['qty'] }} × {{ number_format($item['price']) }} ({{ $item['mode'] === 'box' ? __('box') : __('item') }})</div>
+                                <div style="font-size:11px;color:var(--text-dim)">{{ $item['qty'] }} × {{ number_format($item['price']) }} ({{ $item['mode'] === 'box' ? __('box') : ($item['unit_name'] ?? __('item')) }})</div>
                             </div>
                             <div class="upos-order-item-total">{{ number_format($item['line_total']) }}</div>
                         </div>
@@ -982,17 +1017,21 @@
                                 $i->product_id,
                                 $i->box?->location_type?->value ?? 'shop',
                                 $i->is_full_box ? 'box' : 'item',
+                                (int) $i->sell_unit_size,
                                 $i->actual_unit_price,
                             ]))
                             ->map(function ($g) {
                                 $first   = $g->first();
                                 $isBox   = (bool) $first->is_full_box;
                                 $units   = (int) $g->sum('quantity_sold');
-                                $qty     = $isBox && $first->product ? $first->product->itemsToDisplayQty($units, true) : $units;
+                                $pack    = $first->isPackLine() ? (int) $first->sell_unit_size : null;
+                                $qty     = $pack ? intdiv($units, $pack)
+                                    : ($isBox && $first->product ? $first->product->itemsToDisplayQty($units, true) : $units);
                                 return (object) [
                                     'name'       => $first->product?->name ?? '—',
                                     'is_box'     => $isBox,
                                     'qty'        => $qty,
+                                    'label'      => \App\Models\ProductSellUnit::quantityLabel($qty, $isBox, $pack ? $first->sell_unit_name : null),
                                     'unit_price' => (int) $first->actual_unit_price,
                                     'line_total' => (int) $g->sum('line_total'),
                                     'wh'         => ($first->box?->location_type?->value ?? 'shop') === 'warehouse',
@@ -1006,7 +1045,7 @@
                                 {{ $line->name }}
                                 <span class="upos-badge {{ $line->wh ? 'warehouse' : 'shop' }}" style="margin-left:4px;vertical-align:middle">{{ $line->wh ? 'WH' : __('Shop') }}</span>
                             </div>
-                            <div class="upos-rc-item-sub">{{ $line->is_box ? trans_choice(':count box|:count boxes', $line->qty, ['count' => $line->qty]) : trans_choice(':count item|:count items', $line->qty, ['count' => $line->qty]) }} × {{ number_format($line->unit_price) }}</div>
+                            <div class="upos-rc-item-sub">{{ $line->label }} × {{ number_format($line->unit_price) }}</div>
                         </div>
                         <span class="upos-rc-item-total">{{ number_format($line->line_total) }}</span>
                     </div>
