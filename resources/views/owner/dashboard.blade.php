@@ -1,13 +1,4 @@
 <x-app-layout>
-    @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const el = document.querySelector('[data-page-title]');
-            if (el) el.textContent = 'Dashboard';
-        });
-    </script>
-    @endpush
-
     {{-- Global period filter — full-width surface card, matching shop/warehouse dashboards --}}
     <livewire:dashboard.time-filter />
 

@@ -1176,7 +1176,17 @@ afterwards.
 - Test: `tests/Feature/Owner/OwnerReturnsDamagedPagesTest.php`.
 
 **Still open:**
-- the topbar title reads "Dashboard" on most pages, because
-  `$pageTitle` is rarely set
 - unscoped global `table{display:block}` rules at ≤600px in the shop and
   warehouse transfers wrappers
+
+### Topbar page titles (2026-09-27)
+The layout renders `<livewire:layout.topbar />` without a title, so every
+page used to read "Dashboard". Three pages patched it with a
+DOMContentLoaded script, which doesn't fire on wire:navigate.
+- `Topbar::TITLES` maps route name → title, and `mount()` resolves it (an
+  explicit `pageTitle` still wins; unknown routes fall back to
+  "Dashboard"). The JS patches were removed.
+- **When you add a page, add its route to `Topbar::TITLES`.**
+  `tests/Feature/Layout/TopbarTitleTest.php` fails for any owner / shop /
+  warehouse GET route missing from it. Print, PDF, receipt, delivery-note
+  and picking-slip pages are excluded, since they don't render the topbar.
