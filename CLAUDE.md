@@ -82,6 +82,19 @@ Ran through a 7-point hardening checklist:
    `league/commonmark`, `guzzlehttp/guzzle`/`psr7`, and a CRLF-injection
    advisory in `laravel/framework`. Reported only, per instructions — no
    upgrades bundled into this pass; treat as a separate deliberate task.
+   **Update 2026-09-27:** `phpoffice/phpspreadsheet` 1.30.2 → 1.30.7, a
+   patch release inside maatwebsite/excel's `^1.30.0`; only composer.lock
+   changed. This clears all 9 of its advisories: the two criticals, 5 high
+   (DoS / SSRF via crafted files) and 2 medium (XSS in the HTML writer,
+   which isn't used here). Exposure was lower than the CVE titles suggest,
+   because ReceiveBoxes reads the upload from its server temp path, not a
+   user-given filename. The crafted-file DoS issues did apply to uploads,
+   though only owners and warehouse managers can upload. Covered by
+   `tests/Feature/Inventory/ExcelImportTest.php`, which writes real
+   xlsx/xls/csv files, uploads them through ReceiveBoxes and checks the
+   preview. `composer audit` still reports 50 advisories in 17 other
+   packages (laravel/framework, guzzle, league/commonmark, …); those are
+   still open.
 
 ---
 
