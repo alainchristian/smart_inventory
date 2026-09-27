@@ -79,26 +79,21 @@
 /* Header actions — segmented view switch + one primary action */
 .odr-view-tabs { display:inline-flex;gap:2px;padding:3px;border-radius:10px;
                  background:var(--bg);border:1px solid var(--border);flex-shrink:0; }
-.odr-view-tab  { padding:6px 16px;border-radius:7px;border:none;background:transparent;cursor:pointer;
+.odr-view-tab  { display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:7px;
+                 border:none;background:transparent;cursor:pointer;
                  font-size:13px;font-weight:600;font-family:var(--font);color:var(--text-dim);
                  transition:all var(--tr);white-space:nowrap; }
 .odr-view-tab:hover  { color:var(--text); }
 .odr-view-tab.active { background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(26,31,54,.12), 0 0 0 1px var(--border); }
-.odr-btn-primary, .odr-btn-secondary { height:36px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:600;
+.odr-view-tab svg { flex-shrink:0; }
+.odr-btn-secondary { height:36px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:600;
                  cursor:pointer;font-family:var(--font);transition:all var(--tr);box-sizing:border-box;
-                 display:inline-flex;align-items:center;gap:7px;white-space:nowrap;text-decoration:none; }
-.odr-btn-primary   { background:var(--accent);color:#fff;border:1px solid var(--accent); }
-.odr-btn-primary:hover { opacity:.9; }
-.odr-btn-secondary { background:var(--surface);color:var(--text-sub);border:1px solid var(--border); }
+                 display:inline-flex;align-items:center;gap:7px;white-space:nowrap;text-decoration:none;
+                 background:var(--surface);color:var(--text-sub);border:1px solid var(--border); }
 .odr-btn-secondary:hover { background:var(--surface2);color:var(--text);border-color:var(--border-hi); }
 .odr-actions { display:flex;gap:10px;align-items:center;flex-wrap:wrap; }
 .odr-actions-sep { width:1px;height:22px;background:var(--border); }
 /* EXT_02 additions — checks, deltas, reconciliation, per-method columns */
-.odr-banner { border-radius:var(--r);padding:14px 18px;margin-bottom:20px;min-width:0;
-             border-left:4px solid var(--amber);background:var(--amber-dim); }
-.odr-banner.odr-banner-red { border-left-color:var(--red);background:var(--red-dim); }
-.odr-banner-title { font-size:13px;font-weight:700;color:var(--amber); }
-.odr-banner-red .odr-banner-title { color:var(--red); }
 .odr-banner-note  { font-size:12px;color:var(--text-sub);margin-top:2px; }
 .odr-banner-list  { margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--text-sub);
                    line-height:1.6;overflow-wrap:anywhere; }
@@ -111,7 +106,39 @@
 .odr-panel-sub  { font-size:12px;color:var(--text-dim);margin-top:2px; }
 .odr-delta      { font-size:11px;font-family:var(--mono);margin-top:2px;white-space:nowrap; }
 .odr-num        { text-align:right;font-family:var(--mono);white-space:nowrap; }
-.odr-rc-block + .odr-rc-block { border-top:2px solid var(--border); }
+/* Single-day Cash Reconciliation: one card per shop, side by side instead of
+   stacked full-width (which left huge dead white space next to a short
+   table on a Today/Yesterday filter). */
+.odr-rc-grid    { display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;padding:16px 20px; }
+.odr-rc-block   { border:1px solid var(--border);border-radius:var(--r);overflow:hidden; }
+
+/* Icon-only button that reveals a footnote/caveat/warning in a popover on
+   click, instead of printing it permanently on the page. No label text and
+   no emoji on the button itself — an outline SVG icon plus aria-label. */
+.odr-info      { position:relative;display:inline-flex;flex-shrink:0; }
+.odr-info-btn  { width:22px;height:22px;border-radius:50%;border:1px solid var(--border);
+                background:var(--surface2);color:var(--text-dim);display:inline-flex;
+                align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0; }
+.odr-info-btn:hover, .odr-info-btn[aria-expanded="true"] { background:var(--accent-dim);border-color:var(--accent);color:var(--accent); }
+.odr-info-pop  { position:absolute;z-index:30;top:calc(100% + 8px);right:0;
+                width:min(340px, 80vw);padding:10px 12px;border-radius:var(--r);
+                background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-card);
+                color:var(--text-dim);font-size:11.5px;line-height:1.5;text-align:left; }
+
+/* Icon-only warning button (amber, red for critical) that reveals its full
+   detail — count, list, caveats — in a popover on click. */
+.odr-warn-wrap  { position:relative;display:inline-flex;margin:0 20px 14px; }
+.odr-warn-badge { width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;
+                justify-content:center;border:1px solid var(--amber);background:var(--amber-dim);
+                color:var(--amber);cursor:pointer;padding:0;flex-shrink:0; }
+.odr-warn-badge.odr-warn-red { border-color:var(--red);background:var(--red-dim);color:var(--red); }
+.odr-warn-badge:hover { opacity:.85; }
+.odr-warn-pop   { position:absolute;z-index:30;top:calc(100% + 8px);left:0;
+                width:min(420px, 90vw);padding:12px 14px;border-radius:var(--r);
+                background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-card);
+                color:var(--text-sub);font-size:12px;line-height:1.6;text-align:left; }
+.odr-warn-pop strong { color:var(--amber); }
+.odr-warn-pop .odr-warn-red-text strong { color:var(--red); }
 .odr-rc-head    { display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 20px;
                  border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text); }
 .odr-rc-live    { font-size:12px;font-weight:500;color:var(--text-dim); }
@@ -128,6 +155,13 @@
     .odr-filter-seg:last-child { border-bottom:none; }
     .odr-date-input  { flex:1;width:auto;min-width:0; }
     .odr-loc-select  { flex:1;min-width:0; }
+    /* Summary/Detail switch and Print Report: icon only, no label text.
+       !important beats the global ≤640px touch-target rule's own padding
+       override (app.css). */
+    .odr-view-tab       { padding:8px !important;gap:0; }
+    .odr-view-tab-label { display:none; }
+    .odr-btn-secondary  { padding:0 !important;width:36px;justify-content:center;gap:0; }
+    .odr-btn-label      { display:none; }
 }
 </style>
 
@@ -168,17 +202,19 @@
     </div>
     <div class="odr-actions">
         <div class="odr-view-tabs">
-            <button class="odr-view-tab {{ $viewMode === 'summary' ? 'active' : '' }}" wire:click="setViewMode('summary')">Summary</button>
-            <button class="odr-view-tab {{ $viewMode === 'transactions' ? 'active' : '' }}" wire:click="setViewMode('transactions')">Transactions</button>
+            <button class="odr-view-tab {{ $viewMode === 'summary' ? 'active' : '' }}" wire:click="setViewMode('summary')" title="Summary" aria-label="Summary">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                <span class="odr-view-tab-label">Summary</span>
+            </button>
+            <button class="odr-view-tab {{ $viewMode === 'transactions' ? 'active' : '' }}" wire:click="setViewMode('transactions')" title="Detail" aria-label="Detail">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <span class="odr-view-tab-label">Detail</span>
+            </button>
         </div>
         <span class="odr-actions-sep"></span>
-        <a class="odr-btn-secondary" href="{{ route('owner.reports.daily.print', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'shop' => $locationFilter, 'view' => $viewMode, 'profit' => $showProfit ? 1 : 0]) }}" target="_blank" rel="noopener">
+        <a class="odr-btn-secondary" href="{{ route('owner.reports.daily.print', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'shop' => $locationFilter, 'view' => $viewMode, 'profit' => $showProfit ? 1 : 0]) }}" target="_blank" rel="noopener" title="Print Report" aria-label="Print Report">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            Print Report
-        </a>
-        <a class="odr-btn-primary" href="{{ route('owner.reports.daily.pdf', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'shop' => $locationFilter, 'view' => $viewMode]) }}">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download PDF
+            <span class="odr-btn-label">Print Report</span>
         </a>
     </div>
 </div>
@@ -220,15 +256,21 @@
     $odrProvisional = $odrAttn->contains('code', 'session_open');
 @endphp
 @if($odrAttn->isNotEmpty())
-<div class="odr-banner {{ $odrAnyCritical ? 'odr-banner-red' : '' }}">
-    <div class="odr-banner-title">{{ $odrAttn->count() }} {{ Str::plural('item', $odrAttn->count()) }} {{ $odrAttn->count() === 1 ? 'needs' : 'need' }} attention</div>
-    @if($odrProvisional)<div class="odr-banner-note">Figures are provisional until all sessions are closed</div>@endif
-    <ul class="odr-banner-list">
-        @foreach($odrAttn->take(5) as $c)
-        <li>{{ $c['message'] }}@if(!empty($c['shop_name'])) — {{ $c['shop_name'] }}@endif@if(!empty($c['date'])) ({{ \Carbon\Carbon::parse($c['date'])->format('d M Y') }})@endif</li>
-        @endforeach
-    </ul>
-    @if($odrAttn->count() > 5)<div class="odr-banner-note">+ {{ $odrAttn->count() - 5 }} more — see Checks at the bottom.</div>@endif
+@php $odrAttnLabel = $odrAttn->count() . ' ' . Str::plural('item', $odrAttn->count()) . ' ' . ($odrAttn->count() === 1 ? 'needs' : 'need') . ' attention'; @endphp
+<div class="odr-warn-wrap" x-data="{ open: false }" @click.outside="open = false">
+    <button type="button" class="odr-warn-badge {{ $odrAnyCritical ? 'odr-warn-red' : '' }}" @click="open = !open" :aria-expanded="open.toString()" title="{{ $odrAttnLabel }}" aria-label="{{ $odrAttnLabel }}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+    </button>
+    <div class="odr-warn-pop" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+        <div class="{{ $odrAnyCritical ? 'odr-warn-red-text' : '' }}"><strong>{{ $odrAttnLabel }}</strong></div>
+        @if($odrProvisional)<div class="odr-banner-note">Figures are provisional until all sessions are closed</div>@endif
+        <ul class="odr-banner-list">
+            @foreach($odrAttn->take(5) as $c)
+            <li>{{ $c['message'] }}@if(!empty($c['shop_name'])) — {{ $c['shop_name'] }}@endif@if(!empty($c['date'])) ({{ \Carbon\Carbon::parse($c['date'])->format('d M Y') }})@endif</li>
+            @endforeach
+        </ul>
+        @if($odrAttn->count() > 5)<div class="odr-banner-note">+ {{ $odrAttn->count() - 5 }} more — see Checks at the bottom.</div>@endif
+    </div>
 </div>
 @endif
 
@@ -270,14 +312,19 @@
     </table>
     </div>
     @if($position['stale'])
-    <div style="margin:0 20px 14px;padding:10px 14px;border-radius:8px;border-left:3px solid var(--amber);background:var(--amber-dim);color:var(--amber);font-size:11.5px">
-        <strong>⚠ Includes an unreconciled session.</strong>
-        @if(isset($position['stale_shops']))
-            {{ $position['stale_shops']->map(fn ($s) => $s['shop_name'] . ' (open since ' . $s['as_of']->format('d M Y') . ', ' . (int) floor($s['as_of']->diffInDays(business_today())) . ' days)')->join(', ') }}
-        @else
-            Open since {{ $position['as_of']->format('d M Y') }} ({{ (int) floor($position['as_of']->diffInDays(business_today())) }} days) — nobody has closed/counted this drawer since.
-        @endif
-        Cash on Hand above includes this session's live, uncounted figure.
+    <div class="odr-warn-wrap" x-data="{ open: false }" @click.outside="open = false">
+        <button type="button" class="odr-warn-badge" @click="open = !open" :aria-expanded="open.toString()" title="Includes an unreconciled session" aria-label="Includes an unreconciled session">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+        </button>
+        <div class="odr-warn-pop" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+            <strong>Includes an unreconciled session.</strong>
+            @if(isset($position['stale_shops']))
+                {{ $position['stale_shops']->map(fn ($s) => $s['shop_name'] . ' (open since ' . $s['as_of']->format('d M Y') . ', ' . (int) floor($s['as_of']->diffInDays(business_today())) . ' days)')->join(', ') }}
+            @else
+                Open since {{ $position['as_of']->format('d M Y') }} ({{ (int) floor($position['as_of']->diffInDays(business_today())) }} days) — nobody has closed/counted this drawer since.
+            @endif
+            Cash on Hand above includes this session's live, uncounted figure.
+        </div>
     </div>
     @endif
 </div>
@@ -304,6 +351,10 @@
             <tr>
                 <td>Boxes Sold</td>
                 <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700">{{ number_format($summary['total_boxes_sold']) }}</span></td>
+            </tr>
+            <tr>
+                <td>Items Sold <span style="font-size:11px;color:var(--text-dim)">(individual / pack)</span></td>
+                <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700">{{ number_format($summary['total_items_sold'] ?? 0) }}</span></td>
             </tr>
             <tr><td colspan="2" class="odr-section-hd">Revenue</td></tr>
             <tr>
@@ -337,10 +388,14 @@
     </div>
 </div>
 
-{{-- Boxes Sold by Product (owner/admin: small eye toggle adds cost + profit per product) --}}
+{{-- Sold by Product — boxes AND loose items/packs combined per product, so
+     the Total here always reconciles with Total Sales above (previously
+     this only ever counted full-box lines, so any day with individual-item
+     or pack sales looked like those never happened). Owner/admin: small eye
+     toggle adds cost + profit per product. --}}
 <div class="odr-table-wrap">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">{{ $showProfit ? 'Sold by Product' : 'Boxes Sold by Product' }}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">Sold by Product</div>
         <button type="button" class="odr-icon-toggle {{ $showProfit ? 'active' : '' }}" wire:click="toggleProfit" title="{{ $showProfit ? 'Hide profit' : 'Show profit' }}" aria-label="{{ $showProfit ? 'Hide profit' : 'Show profit' }}" aria-pressed="{{ $showProfit ? 'true' : 'false' }}">
             @if($showProfit)
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -356,6 +411,7 @@
             <tr>
                 <th>Product</th>
                 <th style="text-align:right">Boxes</th>
+                <th style="text-align:right">Items</th>
                 <th style="text-align:right">Amount</th>
                 <th style="text-align:right">Cost</th>
                 <th style="text-align:right">Profit</th>
@@ -366,6 +422,7 @@
             <tr>
                 <td>{{ $row->product_name }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($row->boxes) }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ number_format($row->items) }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($row->revenue) }}</td>
                 <td style="text-align:right;font-family:var(--mono);color:var(--text-dim)">{{ number_format($row->cost) }}</td>
                 <td style="text-align:right;font-family:var(--mono);font-weight:700;color:{{ $row->profit >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $row->profit < 0 ? '−' : '' }}{{ number_format(abs($row->profit)) }}</td>
@@ -375,6 +432,7 @@
             <tr class="odr-total-row">
                 <td>Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($profitByProduct->sum('boxes')) }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ number_format($profitByProduct->sum('items')) }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($profitByProduct->sum('revenue')) }}</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($profitByProduct->sum('cost')) }}</td>
                 <td style="text-align:right;font-family:var(--mono);color:{{ $odrPTotal >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $odrPTotal < 0 ? '−' : '' }}{{ number_format(abs($odrPTotal)) }}</td>
@@ -382,21 +440,23 @@
         </tbody>
     </table>
     </div>
-    @elseif(!$showProfit && count($summary['boxes_by_product']) > 0)
+    @elseif(!$showProfit && count($summary['sold_by_product'] ?? []) > 0)
     <div class="odr-table-scroll">
     <table class="odr-table">
         <thead>
             <tr>
                 <th>Product</th>
-                <th style="text-align:right">Boxes Sold</th>
+                <th style="text-align:right">Boxes</th>
+                <th style="text-align:right">Items</th>
                 <th style="text-align:right">Amount</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($summary['boxes_by_product'] as $row)
+            @foreach($summary['sold_by_product'] as $row)
             <tr>
                 <td>{{ $row->product_name }}</td>
-                <td style="text-align:right;font-family:var(--mono)">{{ number_format($row->boxes) }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ $row->boxes > 0 ? number_format($row->boxes) : '' }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ $row->items > 0 ? number_format($row->items) : '' }}</td>
                 <td style="text-align:right;white-space:nowrap">
                     <span style="font-family:var(--mono)">{{ number_format($row->amount) }} <span style="font-size:10px;color:var(--text-dim)">RWF</span></span>
                 </td>
@@ -405,14 +465,15 @@
             <tr class="odr-total-row">
                 <td>Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_boxes_sold']) }}</td>
-                <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['boxes_by_product'])->sum('amount')) }} RWF</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_items_sold'] ?? 0) }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['sold_by_product'])->sum('amount')) }} RWF</td>
             </tr>
         </tbody>
     </table>
     </div>
     @else
     <div class="odr-empty">
-        <div class="odr-empty-title">No boxes sold in this period</div>
+        <div class="odr-empty-title">Nothing sold in this period</div>
         <div class="odr-empty-sub">Try a different date range.</div>
     </div>
     @endif
@@ -537,7 +598,16 @@
     </table>
     </div>
     @if($cashRegister->contains('is_open', true))
-    <div style="padding:8px 20px 14px;font-size:11px;color:var(--text-dim)">* still open — closing shown is a live figure, not a final count. Opening is that shop's first session in range; closing is its last. MoMo/Bank Movement is net inflow minus outflow summed across the range — not an account balance (this system doesn't track those separately from cash).</div>
+    <div style="padding:8px 20px 14px" x-data="{ open: false }" @click.outside="open = false">
+        <div class="odr-info">
+            <button type="button" class="odr-info-btn" @click="open = !open" :aria-expanded="open.toString()" title="About the figures marked with an asterisk" aria-label="About the figures marked with an asterisk">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
+            <div class="odr-info-pop" style="left:0;right:auto" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+                still open — closing shown is a live figure, not a final count. Opening is that shop's first session in range; closing is its last. MoMo/Bank Movement is net inflow minus outflow summed across the range — not an account balance (this system doesn't track those separately from cash).
+            </div>
+        </div>
+    </div>
     @endif
     @elseif($isSingleDay)
     @php $day = $cashRegister->first(); @endphp
@@ -615,7 +685,16 @@
     </table>
     </div>
     @if($cashRegister->contains('is_open', true))
-    <div style="padding:8px 20px 14px;font-size:11px;color:var(--text-dim)">* still open — closing shown is a live figure, not a final count</div>
+    <div style="padding:8px 20px 14px" x-data="{ open: false }" @click.outside="open = false">
+        <div class="odr-info">
+            <button type="button" class="odr-info-btn" @click="open = !open" :aria-expanded="open.toString()" title="About the figures marked with an asterisk" aria-label="About the figures marked with an asterisk">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
+            <div class="odr-info-pop" style="left:0;right:auto" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+                still open — closing shown is a live figure, not a final count.
+            </div>
+        </div>
+    </div>
     @endif
     @endif
 </div>
@@ -627,6 +706,7 @@
         <div style="font-size:13px;font-weight:700;color:var(--text)">Cash Reconciliation</div>
     </div>
     @if($isSingleDay)
+    <div class="odr-rc-grid">
     @foreach($reconciliation as $rc)
     @php
         $odrRcOpen = $rc->status === 'open';
@@ -638,8 +718,7 @@
             <span class="odr-pill odr-pill-{{ $odrRcOpen ? 'amber' : 'green' }}">{{ ucfirst($rc->status) }}</span>
             <span class="odr-rc-live">{{ $odrRcOpen ? 'live' : 'closed' }}</span>
         </div>
-        <div class="odr-table-scroll">
-        <table class="odr-table odr-table-wide">
+        <table class="odr-table">
             <tbody>
                 <tr><td>Opening cash</td><td class="odr-num">{{ number_format($rc->opening) }}</td></tr>
                 <tr><td>+ Cash sales</td><td class="odr-num">{{ number_format($rc->cash_sales) }}</td></tr>
@@ -654,9 +733,9 @@
                 <tr><td style="font-weight:700">Difference</td><td class="odr-num" style="font-weight:700;color:{{ $odrRcCol }}">{{ $rc->variance === null ? '—' : ($rc->variance > 0 ? '+' : '') . number_format($rc->variance) }}</td></tr>
             </tbody>
         </table>
-        </div>
     </div>
     @endforeach
+    </div>
     @else
     <div class="odr-table-scroll">
     <table class="odr-table">
@@ -1202,7 +1281,7 @@
                 @if($odrHasDetail)
                 <th>Sale</th><th>Product</th><th>Qty</th>
                 <th style="text-align:right">List price</th><th style="text-align:right">Sold at</th>
-                <th style="text-align:right">Discount</th><th style="text-align:right">% off</th>
+                <th style="text-align:right">Discount/Markup</th><th style="text-align:right">% off</th>
                 @if($odrCost)<th style="text-align:right">Profit at list</th><th style="text-align:right">Profit sold</th>@endif
                 @endif
                 <th style="text-align:right">Amount</th>
@@ -1221,14 +1300,14 @@
                 <td>{{ $d['qty'] ?? '' }}</td>
                 <td class="odr-num">{{ $d ? number_format($d['list']) : '' }}</td>
                 <td class="odr-num">{{ $d ? number_format($d['sold']) : '' }}</td>
-                <td class="odr-num" style="color:var(--red)">{{ $d ? (($d['discount'] > 0 ? '−' : '') . number_format(abs($d['discount']))) : '' }}</td>
+                <td class="odr-num" style="color:{{ ($d['discount'] ?? 0) < 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? (($d['discount'] > 0 ? '−' : ($d['discount'] < 0 ? '+' : '')) . number_format(abs($d['discount']))) : '' }}</td>
                 <td class="odr-num" style="color:var(--text-dim)">{{ $d ? number_format($d['pct'], 1) . '%' : '' }}</td>
                 @if($odrCost)
                 <td class="odr-num">{{ $d ? number_format($d['profit_at_list']) : '' }}</td>
                 <td class="odr-num" style="color:{{ ($d['profit_sold'] ?? 0) >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? number_format($d['profit_sold']) : '' }}</td>
                 @endif
                 @endif
-                <td class="odr-num">@if($d){{ number_format($d['discount']) }}@elseif($c['amount'] !== null){{ (($c['code'] === 'cash_variance' && $c['amount'] > 0) ? '+' : '') . number_format($c['amount']) }}@endif</td>
+                <td class="odr-num" style="{{ $d ? 'color:' . (($d['discount'] ?? 0) < 0 ? 'var(--green)' : 'var(--red)') : '' }}">@if($d){{ ($d['discount'] > 0 ? '−' : ($d['discount'] < 0 ? '+' : '')) . number_format(abs($d['discount'])) }}@elseif($c['amount'] !== null){{ (($c['code'] === 'cash_variance' && $c['amount'] > 0) ? '+' : '') . number_format($c['amount']) }}@endif</td>
             </tr>
             @endforeach
         </tbody>

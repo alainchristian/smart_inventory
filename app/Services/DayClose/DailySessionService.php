@@ -256,6 +256,55 @@ class DailySessionService
             )
             ->get();
 
+        // Individual/pack ("loose") item sales, itemized per product — the
+        // counterpart to $boxesByProduct above for everything that ISN'T a
+        // full-box line. quantity_sold is always in PIECES on these rows
+        // (true for plain single-piece lines and for pack lines alike — see
+        // the sell_units convention), so SUM(quantity_sold) is a uniform
+        // piece count regardless of how the line was sold. This was
+        // previously missing entirely from the report: "Boxes Sold" /
+        // "Boxes Sold by Product" only ever counted is_full_box=true rows,
+        // so a day with only loose-item sales looked like zero activity.
+        $itemsByProduct = DB::table('sale_items')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
+            ->when($shopId !== null, fn ($q) => $q->where('sales.shop_id', $shopId))
+            ->whereNull('sales.voided_at')
+            ->whereNull('sales.deleted_at')
+            ->whereBetween('sales.sale_date', [$start, $end])
+            ->where('sale_items.is_full_box', false)
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc(DB::raw('SUM(sale_items.line_total)'))
+            ->select(
+                'products.name as product_name',
+                DB::raw('SUM(sale_items.quantity_sold) as items'),
+                DB::raw('SUM(sale_items.line_total) as amount')
+            )
+            ->get();
+        $totalItemsSold = (int) $itemsByProduct->sum('items');
+
+        // Combined per-product view — what the report screen actually shows,
+        // so "Total" on that table reconciles with Total Sales instead of
+        // silently being box-only. Built in PHP from the two collections
+        // above (no extra query): a product sold BOTH by the box and loose
+        // (e.g. some boxes opened and sold as individual items/dozens) gets
+        // one row with both counts and its combined revenue.
+        $soldByProduct = $boxesByProduct->map(fn ($r) => (object) [
+                'product_name' => $r->product_name, 'boxes' => (int) $r->boxes, 'items' => 0, 'amount' => (int) $r->amount,
+            ])
+            ->concat($itemsByProduct->map(fn ($r) => (object) [
+                'product_name' => $r->product_name, 'boxes' => 0, 'items' => (int) $r->items, 'amount' => (int) $r->amount,
+            ]))
+            ->groupBy('product_name')
+            ->map(fn ($rows, $name) => (object) [
+                'product_name' => $name,
+                'boxes'        => (int) $rows->sum('boxes'),
+                'items'        => (int) $rows->sum('items'),
+                'amount'       => (int) $rows->sum('amount'),
+            ])
+            ->sortByDesc('amount')
+            ->values();
+
         // Every individual sale in range, with its own box count (full-box
         // line items on that sale) and its own total — drives the "All Sales"
         // detail table, with a grand total row. shop_name is always included
@@ -526,6 +575,15 @@ class DailySessionService
             'transaction_count'        => (int) ($saleTotals->transaction_count ?? 0),
             'total_boxes_sold'         => $totalBoxesSold,
             'boxes_by_product'         => $boxesByProduct,
+            // Loose (individual/pack) item sales — see $itemsByProduct above.
+            'total_items_sold'         => $totalItemsSold,
+            'items_by_product'         => $itemsByProduct,
+            // Combined boxes + items per product — this is what the report
+            // screen renders as "Sold by Product"; its Total reconciles with
+            // total_sales. boxes_by_product / items_by_product stay as-is
+            // (unmerged) for anything that specifically needs box-only or
+            // item-only figures.
+            'sold_by_product'          => $soldByProduct,
             'all_sales'                => $allSales,
             'total_expenses'           => $totalExpenses,
             'expenses_detailed'        => $expensesDetailed,
@@ -768,11 +826,13 @@ class DailySessionService
             ->orderByDesc(DB::raw('SUM(sale_items.line_total)'))
             ->selectRaw('products.name as product_name,
                 SUM(CASE WHEN sale_items.is_full_box THEN 1 ELSE 0 END) as boxes,
+                SUM(CASE WHEN sale_items.is_full_box THEN 0 ELSE sale_items.quantity_sold END) as items,
                 SUM(sale_items.line_total) as revenue,
                 SUM(products.purchase_price * sale_items.quantity_sold) as cost')
             ->get()
             ->map(function ($r) {
                 $r->boxes   = (int) $r->boxes;
+                $r->items   = (int) $r->items;
                 $r->revenue = (int) $r->revenue;
                 $r->cost    = (int) $r->cost;
                 $r->profit  = $r->revenue - $r->cost;

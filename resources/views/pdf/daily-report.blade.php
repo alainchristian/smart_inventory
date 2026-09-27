@@ -43,9 +43,6 @@
         return [($d > 0 ? '+' : '') . $n($d) . ' vs ' . $cmpLabel, $d === 0 ? 'var(--text-dim)' : ($good ? 'var(--green)' : 'var(--red)')];
     };
 
-    $attn        = collect($checks)->filter(fn ($c) => in_array($c['severity'], ['critical', 'warning'], true));
-    $provisional = collect($checks)->contains('code', 'session_open');
-
     $payLabels = ['cash' => 'Cash', 'mobile_money' => 'MoMo', 'bank_transfer' => 'Bank', 'other' => 'Other'];
 
     $cashDiff = $reconciliation->whereNotNull('variance');
@@ -55,7 +52,7 @@
     $bankNote  = ((int) $summary['total_sales_card'] + (int) $summary['total_sales_other']) > 0 ? 'incl. card / other' : null;
 
     $cells = [
-        ['Sales', (int) $summary['total_sales'], $summary['transaction_count'] . ' ' . \Illuminate\Support\Str::plural('transaction', $summary['transaction_count']) . ' · ' . $summary['total_boxes_sold'] . ' ' . \Illuminate\Support\Str::plural('box', $summary['total_boxes_sold'], ), 'total_sales', false, 'var(--text)'],
+        ['Sales', (int) $summary['total_sales'], $summary['transaction_count'] . ' ' . \Illuminate\Support\Str::plural('transaction', $summary['transaction_count']) . ' · ' . $summary['total_boxes_sold'] . ' ' . \Illuminate\Support\Str::plural('box', $summary['total_boxes_sold'], ) . ' · ' . ($summary['total_items_sold'] ?? 0) . ' ' . \Illuminate\Support\Str::plural('item', $summary['total_items_sold'] ?? 0), 'total_sales', false, 'var(--text)'],
         ['Cash', (int) $summary['total_sales_cash'], null, 'total_sales_cash', false, 'var(--text)'],
         ['Mobile Money', (int) $summary['total_sales_momo'], null, 'total_sales_momo', false, 'var(--text)'],
         ['Bank', $bankSales, $bankNote, null, false, 'var(--text)'],
@@ -76,9 +73,6 @@
     $saleCols = ['sale' => 31, 'shop' => $isAll ? 22 : 0, 'date' => 16, 'cust' => 24, 'cash' => 17, 'momo' => 16,
                  'card' => $saleCard ? 16 : 0, 'bank' => $saleBank ? 16 : 0, 'credit' => 16, 'boxes' => 8, 'amount' => 19];
     $saleW = array_map(fn ($w) => round($w / array_sum($saleCols) * 100, 2), $saleCols);
-    $sevWord  = ['critical' => 'Critical', 'warning' => 'Warning', 'info' => 'Info'];
-    $sevCol   = ['critical' => 'var(--red)', 'warning' => 'var(--amber)', 'info' => 'var(--text-dim)'];
-    $sevOrder = ['critical' => 0, 'warning' => 1, 'info' => 2];
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -99,7 +93,6 @@ td, th { padding:1.5mm 2.4mm; vertical-align:middle; }
 .r { text-align:right; }
 .nw { white-space:nowrap; }
 .fixed { table-layout:fixed; }
-.cktbl td, .cktbl th { padding:1.2mm 1.4mm; font-size:6.4pt; }
 .fixed td, .fixed th { padding:1.3mm 1.5mm; font-size:6.8pt; }
 .dim { color:var(--text-dim); }
 .sub { color:var(--text-sub); }
@@ -124,8 +117,6 @@ tr { page-break-inside:avoid; }
 .meta { font-size:7pt; color:var(--text-dim); padding-top:1mm; }
 .rule { border-top:2px solid var(--border); margin:3.5mm 0 0 0; }
 
-.prov { margin-top:4mm; border:1px solid var(--amber); border-left:3px solid var(--amber); color:var(--amber); font-weight:bold; padding:2mm 3mm; font-size:7.5pt; }
-
 .kf td { border:1px solid var(--border); padding:2.4mm 3mm; width:33.33%; vertical-align:top; }
 .kf-l { font-size:6.5pt; text-transform:uppercase; color:var(--text-dim); font-weight:bold; }
 .kf-v { font-size:12pt; font-weight:bold; padding-top:0.8mm; }
@@ -134,7 +125,6 @@ tr { page-break-inside:avoid; }
 
 .bar { width:100%; border-collapse:collapse; table-layout:fixed; }
 .bar td { padding:0; height:2.2mm; border:none; }
-.pill { font-weight:bold; }
 .blk { margin-top:2mm; page-break-inside:avoid; }
 .blk-h td { padding:1.4mm 2.4mm; font-weight:bold; border-bottom:1.5px solid var(--border); }
 .half { width:49%; vertical-align:top; padding:0; }
@@ -165,10 +155,6 @@ tr { page-break-inside:avoid; }
     </tr>
 </table>
 <div class="rule"></div>
-
-@if($provisional)
-<div class="prov">Provisional: some sessions are still open. Figures can change.</div>
-@endif
 
 {{-- 1. Key figures --}}
 <div class="sec">
@@ -389,47 +375,11 @@ tr { page-break-inside:avoid; }
 </div>
 @endif
 
-{{-- 7. Checks --}}
-<div class="sec">
-    <div class="sec-title">Checks</div>
-    @if(empty($checks))
-        <div class="sec-note" style="font-size:7.5pt;">All checks passed.</div>
-    @else
-    @php
-        $ckRows = [];
-        foreach (collect($checks)->sortBy(fn ($c) => $sevOrder[$c['severity']] ?? 3) as $c) {
-            if (! empty($c['details'])) { foreach ($c['details'] as $d) { $ckRows[] = [$c, $d]; } } else { $ckRows[] = [$c, null]; }
-        }
-        $ckDetail = collect($ckRows)->contains(fn ($r) => $r[1] !== null);
-        $ckCost   = false; // the PDF never shows cost/profit, even for the owner
-    @endphp
-    <table class="data cktbl" style="margin-top:2mm;">
-        <thead><tr>
-            <th>Severity</th><th>Message</th>@if($isAll)<th>Shop</th>@endif<th>Date</th>
-            @if($ckDetail)<th>Sale</th><th>Product</th><th>Qty</th><th class="r">List</th><th class="r">Sold</th><th class="r">Disc.</th><th class="r">%</th>@if($ckCost)<th class="r">Profit list</th><th class="r">Profit sold</th>@endif @endif
-            <th class="r">Amount</th>
-        </tr></thead>
-        <tbody>
-        @foreach($ckRows as [$c, $d])
-        <tr>
-            <td class="pill" style="color:{{ $sevCol[$c['severity']] ?? 'var(--text-dim)' }};">{{ $sevWord[$c['severity']] ?? ucfirst($c['severity']) }}</td>
-            <td>{{ $d ? 'Price override' : $c['message'] }}</td>
-            @if($isAll)<td class="dim">{{ $c['shop_name'] ?? '' }}</td>@endif
-            <td class="dim nw">{{ !empty($c['date']) ? \Carbon\Carbon::parse($c['date'])->format('d M y') : '' }}</td>
-            @if($ckDetail)
-            <td class="nw">{{ $d['sale_number'] ?? '' }}</td><td>{{ $d['product'] ?? '' }}</td><td class="nw">{{ $d['qty'] ?? '' }}</td>
-            <td class="r">{{ $d ? $n($d['list']) : '' }}</td><td class="r">{{ $d ? $n($d['sold']) : '' }}</td>
-            <td class="r" style="color:var(--red);">{{ $d ? (($d['discount'] > 0 ? '−' : '') . number_format(abs($d['discount']))) : '' }}</td>
-            <td class="r dim">{{ $d ? number_format($d['pct'], 1) . '%' : '' }}</td>
-            @if($ckCost)<td class="r">{{ $d ? $n($d['profit_at_list']) : '' }}</td><td class="r">{{ $d ? $n($d['profit_sold']) : '' }}</td>@endif
-            @endif
-            <td class="r">{{ $d ? $n($d['discount']) : ($c['amount'] !== null ? ($c['code'] === 'cash_variance' ? $sg($c['amount']) : $n($c['amount'])) : '') }}</td>
-        </tr>
-        @endforeach
-        </tbody>
-    </table>
-    @endif
-</div>
+{{-- Note: data-quality checks/warnings (session-open, price overrides, cash
+     variance, etc.) are deliberately NOT shown in this PDF — this is a
+     static, shareable/printable document, not the live dashboard, and those
+     items belong where they can be acted on (the report screen's Checks
+     tab), not baked into a downloaded file. --}}
 
 {{-- Appendix — Transactions view only, new page --}}
 @if($viewMode === 'transactions')

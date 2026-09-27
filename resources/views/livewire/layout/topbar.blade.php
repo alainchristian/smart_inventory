@@ -33,17 +33,6 @@
                     </div>
                 </div>
 
-                @if(auth()->user()->isActingAsAdmin())
-                <!-- Acting-as-admin indicator (owner only) -->
-                <button type="button" wire:click="toggleAdminMode" wire:loading.attr="disabled" wire:target="toggleAdminMode"
-                        title="{{ __('Click to return to Owner view') }}"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all"
-                        style="background: var(--red-dim); color: var(--red); border: 1px solid var(--red); cursor: pointer;">
-                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--red);"></span>
-                    <span class="hidden sm:inline">{{ __('Viewing as Admin') }}</span>
-                    <span class="sm:hidden">{{ __('Admin') }}</span>
-                </button>
-                @endif
             </div>
 
             <!-- Center: Global Search (Hidden on Mobile) -->

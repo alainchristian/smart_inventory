@@ -70,26 +70,21 @@
 /* Header actions — segmented view switch + one primary action */
 .dr-view-tabs { display:inline-flex;gap:2px;padding:3px;border-radius:10px;
                  background:var(--bg);border:1px solid var(--border);flex-shrink:0; }
-.dr-view-tab  { padding:6px 16px;border-radius:7px;border:none;background:transparent;cursor:pointer;
+.dr-view-tab  { display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:7px;
+                 border:none;background:transparent;cursor:pointer;
                  font-size:13px;font-weight:600;font-family:var(--font);color:var(--text-dim);
                  transition:all var(--tr);white-space:nowrap; }
 .dr-view-tab:hover  { color:var(--text); }
 .dr-view-tab.active { background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(26,31,54,.12), 0 0 0 1px var(--border); }
-.dr-btn-primary, .dr-btn-secondary { height:36px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:600;
+.dr-view-tab svg { flex-shrink:0; }
+.dr-btn-secondary { height:36px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:600;
                  cursor:pointer;font-family:var(--font);transition:all var(--tr);box-sizing:border-box;
-                 display:inline-flex;align-items:center;gap:7px;white-space:nowrap;text-decoration:none; }
-.dr-btn-primary   { background:var(--accent);color:#fff;border:1px solid var(--accent); }
-.dr-btn-primary:hover { opacity:.9; }
-.dr-btn-secondary { background:var(--surface);color:var(--text-sub);border:1px solid var(--border); }
+                 display:inline-flex;align-items:center;gap:7px;white-space:nowrap;text-decoration:none;
+                 background:var(--surface);color:var(--text-sub);border:1px solid var(--border); }
 .dr-btn-secondary:hover { background:var(--surface2);color:var(--text);border-color:var(--border-hi); }
 .dr-actions { display:flex;gap:10px;align-items:center;flex-wrap:wrap; }
 .dr-actions-sep { width:1px;height:22px;background:var(--border); }
 /* EXT_02 additions — checks, deltas, reconciliation, per-method columns */
-.dr-banner { border-radius:var(--r);padding:14px 18px;margin-bottom:20px;min-width:0;
-             border-left:4px solid var(--amber);background:var(--amber-dim); }
-.dr-banner.dr-banner-red { border-left-color:var(--red);background:var(--red-dim); }
-.dr-banner-title { font-size:13px;font-weight:700;color:var(--amber); }
-.dr-banner-red .dr-banner-title { color:var(--red); }
 .dr-banner-note  { font-size:12px;color:var(--text-sub);margin-top:2px; }
 .dr-banner-list  { margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--text-sub);
                    line-height:1.6;overflow-wrap:anywhere; }
@@ -108,6 +103,34 @@
 .dr-rc-live    { font-size:12px;font-weight:500;color:var(--text-dim); }
 .dr-msg        { white-space:normal;min-width:260px; }
 
+/* Icon-only button that reveals a footnote/caveat/warning in a popover on
+   click, instead of printing it permanently on the page. No label text and
+   no emoji on the button itself — an outline SVG icon plus aria-label. */
+.dr-info      { position:relative;display:inline-flex;flex-shrink:0; }
+.dr-info-btn  { width:22px;height:22px;border-radius:50%;border:1px solid var(--border);
+                background:var(--surface2);color:var(--text-dim);display:inline-flex;
+                align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0; }
+.dr-info-btn:hover, .dr-info-btn[aria-expanded="true"] { background:var(--accent-dim);border-color:var(--accent);color:var(--accent); }
+.dr-info-pop  { position:absolute;z-index:30;top:calc(100% + 8px);right:0;
+                width:min(340px, 80vw);padding:10px 12px;border-radius:var(--r);
+                background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-card);
+                color:var(--text-dim);font-size:11.5px;line-height:1.5;text-align:left; }
+
+/* Icon-only warning button (amber, red for critical) that reveals its full
+   detail — count, list, caveats — in a popover on click. */
+.dr-warn-wrap  { position:relative;display:inline-flex;margin:0 20px 14px; }
+.dr-warn-badge { width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;
+                justify-content:center;border:1px solid var(--amber);background:var(--amber-dim);
+                color:var(--amber);cursor:pointer;padding:0;flex-shrink:0; }
+.dr-warn-badge.dr-warn-red { border-color:var(--red);background:var(--red-dim);color:var(--red); }
+.dr-warn-badge:hover { opacity:.85; }
+.dr-warn-pop   { position:absolute;z-index:30;top:calc(100% + 8px);left:0;
+                width:min(420px, 90vw);padding:12px 14px;border-radius:var(--r);
+                background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-card);
+                color:var(--text-sub);font-size:12px;line-height:1.6;text-align:left; }
+.dr-warn-pop strong { color:var(--amber); }
+.dr-warn-pop .dr-warn-red-text strong { color:var(--red); }
+
 /* Phones: undo the global ≤640px touch-target inflation on compact controls and
    give the header actions a tidy full-width layout instead of a ragged wrap. */
 @media(max-width:640px) {
@@ -115,9 +138,13 @@
     .dr-header > div:first-child { flex:1 1 100%; }
     .dr-actions { width:100%;gap:8px; }
     .dr-actions-sep { display:none; }
-    .dr-view-tabs { display:flex;flex:1 1 100%; }
-    .dr-view-tab { flex:1;min-height:34px !important;min-width:0 !important;padding:6px 12px !important; }
-    .dr-btn-primary, .dr-btn-secondary { flex:1;justify-content:center;min-height:38px !important;height:38px;min-width:0 !important;padding:0 12px !important; }
+    /* Summary/Detail switch and Print Report: icon only, no label text.
+       !important beats the global ≤640px touch-target rule's own padding
+       override (app.css). */
+    .dr-view-tab       { padding:8px !important;gap:0;min-height:34px !important;min-width:0 !important; }
+    .dr-view-tab-label { display:none; }
+    .dr-btn-secondary  { padding:0 !important;width:36px;justify-content:center;gap:0;min-height:34px !important;min-width:0 !important; }
+    .dr-btn-label      { display:none; }
     .dr-preset-btn { min-height:32px !important;min-width:0 !important;padding:5px 11px !important; }
 }
 </style>
@@ -156,17 +183,19 @@
     </div>
     <div class="dr-actions">
         <div class="dr-view-tabs">
-            <button class="dr-view-tab {{ $viewMode === 'summary' ? 'active' : '' }}" wire:click="setViewMode('summary')">Summary</button>
-            <button class="dr-view-tab {{ $viewMode === 'transactions' ? 'active' : '' }}" wire:click="setViewMode('transactions')">Transactions</button>
+            <button class="dr-view-tab {{ $viewMode === 'summary' ? 'active' : '' }}" wire:click="setViewMode('summary')" title="Summary" aria-label="Summary">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                <span class="dr-view-tab-label">Summary</span>
+            </button>
+            <button class="dr-view-tab {{ $viewMode === 'transactions' ? 'active' : '' }}" wire:click="setViewMode('transactions')" title="Detail" aria-label="Detail">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <span class="dr-view-tab-label">Detail</span>
+            </button>
         </div>
         <span class="dr-actions-sep"></span>
-        <a class="dr-btn-secondary" href="{{ route('shop.reports.daily.print', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'view' => $viewMode]) }}" target="_blank" rel="noopener">
+        <a class="dr-btn-secondary" href="{{ route('shop.reports.daily.print', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'view' => $viewMode]) }}" target="_blank" rel="noopener" title="Print Report" aria-label="Print Report">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            Print Report
-        </a>
-        <a class="dr-btn-primary" href="{{ route('shop.reports.daily.pdf', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'view' => $viewMode]) }}">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download PDF
+            <span class="dr-btn-label">Print Report</span>
         </a>
     </div>
 </div>
@@ -197,15 +226,21 @@
     $drProvisional = $drAttn->contains('code', 'session_open');
 @endphp
 @if($drAttn->isNotEmpty())
-<div class="dr-banner {{ $drAnyCritical ? 'dr-banner-red' : '' }}">
-    <div class="dr-banner-title">{{ $drAttn->count() }} {{ Str::plural('item', $drAttn->count()) }} {{ $drAttn->count() === 1 ? 'needs' : 'need' }} attention</div>
-    @if($drProvisional)<div class="dr-banner-note">Figures are provisional until all sessions are closed</div>@endif
-    <ul class="dr-banner-list">
-        @foreach($drAttn->take(5) as $c)
-        <li>{{ $c['message'] }}@if(!empty($c['date'])) ({{ \Carbon\Carbon::parse($c['date'])->format('d M Y') }})@endif</li>
-        @endforeach
-    </ul>
-    @if($drAttn->count() > 5)<div class="dr-banner-note">+ {{ $drAttn->count() - 5 }} more — see Checks at the bottom.</div>@endif
+@php $drAttnLabel = $drAttn->count() . ' ' . Str::plural('item', $drAttn->count()) . ' ' . ($drAttn->count() === 1 ? 'needs' : 'need') . ' attention'; @endphp
+<div class="dr-warn-wrap" x-data="{ open: false }" @click.outside="open = false">
+    <button type="button" class="dr-warn-badge {{ $drAnyCritical ? 'dr-warn-red' : '' }}" @click="open = !open" :aria-expanded="open.toString()" title="{{ $drAttnLabel }}" aria-label="{{ $drAttnLabel }}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+    </button>
+    <div class="dr-warn-pop" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+        <div class="{{ $drAnyCritical ? 'dr-warn-red-text' : '' }}"><strong>{{ $drAttnLabel }}</strong></div>
+        @if($drProvisional)<div class="dr-banner-note">Figures are provisional until all sessions are closed</div>@endif
+        <ul class="dr-banner-list">
+            @foreach($drAttn->take(5) as $c)
+            <li>{{ $c['message'] }}@if(!empty($c['date'])) ({{ \Carbon\Carbon::parse($c['date'])->format('d M Y') }})@endif</li>
+            @endforeach
+        </ul>
+        @if($drAttn->count() > 5)<div class="dr-banner-note">+ {{ $drAttn->count() - 5 }} more — see Checks at the bottom.</div>@endif
+    </div>
 </div>
 @endif
 
@@ -247,9 +282,14 @@
     </table>
     </div>
     @if($position['stale'])
-    <div style="margin:0 20px 14px;padding:10px 14px;border-radius:8px;border-left:3px solid var(--amber);background:var(--amber-dim);color:var(--amber);font-size:11.5px">
-        <strong>⚠ Unreconciled session.</strong>
-        Open since {{ $position['as_of']->format('d M Y') }} ({{ (int) floor($position['as_of']->diffInDays(business_today())) }} days) — nobody has closed/counted this drawer since. Cash on Hand above includes this session's live, uncounted figure.
+    <div class="dr-warn-wrap" x-data="{ open: false }" @click.outside="open = false">
+        <button type="button" class="dr-warn-badge" @click="open = !open" :aria-expanded="open.toString()" title="Unreconciled session" aria-label="Unreconciled session">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+        </button>
+        <div class="dr-warn-pop" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+            <strong>Unreconciled session.</strong>
+            Open since {{ $position['as_of']->format('d M Y') }} ({{ (int) floor($position['as_of']->diffInDays(business_today())) }} days) — nobody has closed/counted this drawer since. Cash on Hand above includes this session's live, uncounted figure.
+        </div>
     </div>
     @endif
 </div>
@@ -276,6 +316,10 @@
             <tr>
                 <td>Boxes Sold</td>
                 <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700">{{ number_format($summary['total_boxes_sold']) }}</span></td>
+            </tr>
+            <tr>
+                <td>Items Sold <span style="font-size:11px;color:var(--text-dim)">(individual / pack)</span></td>
+                <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700">{{ number_format($summary['total_items_sold'] ?? 0) }}</span></td>
             </tr>
             <tr><td colspan="2" class="dr-section-hd">Revenue</td></tr>
             <tr>
@@ -309,26 +353,31 @@
     </div>
 </div>
 
-{{-- Boxes Sold by Product --}}
+{{-- Sold by Product — boxes AND loose items/packs combined per product, so
+     the Total here always reconciles with Total Sales above (previously
+     this only ever counted full-box lines, so any day with individual-item
+     or pack sales looked like those never happened). --}}
 <div class="dr-table-wrap">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">Boxes Sold by Product</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">Sold by Product</div>
     </div>
-    @if(count($summary['boxes_by_product']) > 0)
+    @if(count($summary['sold_by_product'] ?? []) > 0)
     <div class="dr-table-scroll">
     <table class="dr-table">
         <thead>
             <tr>
                 <th>Product</th>
-                <th style="text-align:right">Boxes Sold</th>
+                <th style="text-align:right">Boxes</th>
+                <th style="text-align:right">Items</th>
                 <th style="text-align:right">Amount</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($summary['boxes_by_product'] as $row)
+            @foreach($summary['sold_by_product'] as $row)
             <tr>
                 <td>{{ $row->product_name }}</td>
-                <td style="text-align:right;font-family:var(--mono)">{{ number_format($row->boxes) }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ $row->boxes > 0 ? number_format($row->boxes) : '' }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ $row->items > 0 ? number_format($row->items) : '' }}</td>
                 <td style="text-align:right;white-space:nowrap">
                     <span style="font-family:var(--mono)">{{ number_format($row->amount) }} <span style="font-size:10px;color:var(--text-dim)">RWF</span></span>
                 </td>
@@ -337,14 +386,15 @@
             <tr class="dr-total-row">
                 <td>Total</td>
                 <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_boxes_sold']) }}</td>
-                <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['boxes_by_product'])->sum('amount')) }} RWF</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ number_format($summary['total_items_sold'] ?? 0) }}</td>
+                <td style="text-align:right;font-family:var(--mono)">{{ number_format(collect($summary['sold_by_product'])->sum('amount')) }} RWF</td>
             </tr>
         </tbody>
     </table>
     </div>
     @else
     <div class="dr-empty">
-        <div class="dr-empty-title">No boxes sold in this period</div>
+        <div class="dr-empty-title">Nothing sold in this period</div>
         <div class="dr-empty-sub">Try a different date range.</div>
     </div>
     @endif
@@ -505,7 +555,16 @@
     </table>
     </div>
     @if($cashRegister->contains('is_open', true))
-    <div style="padding:8px 20px 14px;font-size:11px;color:var(--text-dim)">* still open — closing shown is a live figure, not a final count</div>
+    <div style="padding:8px 20px 14px" x-data="{ open: false }" @click.outside="open = false">
+        <div class="dr-info">
+            <button type="button" class="dr-info-btn" @click="open = !open" :aria-expanded="open.toString()" title="About the figures marked with an asterisk" aria-label="About the figures marked with an asterisk">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
+            <div class="dr-info-pop" style="left:0;right:auto" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+                still open — closing shown is a live figure, not a final count.
+            </div>
+        </div>
+    </div>
     @endif
     @endif
 </div>
@@ -1088,7 +1147,7 @@
                 @if($drHasDetail)
                 <th>Sale</th><th>Product</th><th>Qty</th>
                 <th style="text-align:right">List price</th><th style="text-align:right">Sold at</th>
-                <th style="text-align:right">Discount</th><th style="text-align:right">% off</th>
+                <th style="text-align:right">Discount/Markup</th><th style="text-align:right">% off</th>
                 @if($drCost)<th style="text-align:right">Profit at list</th><th style="text-align:right">Profit sold</th>@endif
                 @endif
                 <th style="text-align:right">Amount</th>
@@ -1107,14 +1166,14 @@
                 <td>{{ $d['qty'] ?? '' }}</td>
                 <td class="dr-num">{{ $d ? number_format($d['list']) : '' }}</td>
                 <td class="dr-num">{{ $d ? number_format($d['sold']) : '' }}</td>
-                <td class="dr-num" style="color:var(--red)">{{ $d ? (($d['discount'] > 0 ? '−' : '') . number_format(abs($d['discount']))) : '' }}</td>
+                <td class="dr-num" style="color:{{ ($d['discount'] ?? 0) < 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? (($d['discount'] > 0 ? '−' : ($d['discount'] < 0 ? '+' : '')) . number_format(abs($d['discount']))) : '' }}</td>
                 <td class="dr-num" style="color:var(--text-dim)">{{ $d ? number_format($d['pct'], 1) . '%' : '' }}</td>
                 @if($drCost)
                 <td class="dr-num">{{ $d ? number_format($d['profit_at_list']) : '' }}</td>
                 <td class="dr-num" style="color:{{ ($d['profit_sold'] ?? 0) >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? number_format($d['profit_sold']) : '' }}</td>
                 @endif
                 @endif
-                <td class="dr-num">@if($d){{ number_format($d['discount']) }}@elseif($c['amount'] !== null){{ (($c['code'] === 'cash_variance' && $c['amount'] > 0) ? '+' : '') . number_format($c['amount']) }}@endif</td>
+                <td class="dr-num" style="{{ $d ? 'color:' . (($d['discount'] ?? 0) < 0 ? 'var(--green)' : 'var(--red)') : '' }}">@if($d){{ ($d['discount'] > 0 ? '−' : ($d['discount'] < 0 ? '+' : '')) . number_format(abs($d['discount'])) }}@elseif($c['amount'] !== null){{ (($c['code'] === 'cash_variance' && $c['amount'] > 0) ? '+' : '') . number_format($c['amount']) }}@endif</td>
             </tr>
             @endforeach
         </tbody>
