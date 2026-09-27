@@ -60,14 +60,16 @@
 .sr-row:last-child { border-bottom:none; }
 
 @media (max-width:640px) {
-    .sr-table thead { display:none; }
-    .sr-table, .sr-table tbody { display:block; }
-    .sr-table tbody tr { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 14px;align-items:center; }
-    .sr-table td { padding:0 !important; }
-    .sr-hide-mob { display:none !important; }
     .sr-link, .sr-btn-sm { min-height:32px !important;min-width:0 !important;padding:5px 11px !important; }
     .sr-modal-foot { flex-direction:column-reverse; }
     .sr-modal-foot .sr-btn { width:100%;justify-content:center; }
+}
+
+/* Phones: keep every column — the table scrolls sideways inside its card */
+.sr-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%; }
+@media (max-width:640px) {
+    .sr-table { width:max-content;min-width:100%; }
+    .sr-table th, .sr-table td { white-space:nowrap; }
 }
 </style>
 
@@ -149,7 +151,7 @@
     @if($returns->isEmpty())
         <div class="sr-empty">No returns yet.</div>
     @else
-        <table class="sr-table">
+        <div class="sr-scroll"><table class="sr-table">
             <thead><tr><th>Return</th><th class="sr-hide-mob">Sent</th><th class="num">Boxes</th><th>Status</th><th></th></tr></thead>
             <tbody>
                 @foreach($returns as $r)
@@ -180,7 +182,7 @@
                     </tr>
                 @endforeach
             </tbody>
-        </table>
+        </table></div>
     @endif
 </div>
 

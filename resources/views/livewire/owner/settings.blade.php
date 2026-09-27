@@ -386,8 +386,11 @@
     .settings-kpi-strip { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .section-card-header { padding: 13px 16px; }
     .st-row { padding: 13px 16px; gap: 12px; }
-    .st-input { width: 100%; }
-    .st-input-wrap { flex-direction: column; align-items: flex-end; }
+    /* Number rows: label + hint full width, input underneath (was squeezed into a narrow left column) */
+    .st-row:has(.st-input-wrap) { grid-template-columns: 1fr; gap: 10px; }
+    .st-row:has(.st-input-wrap) .st-hint { max-width: none; }
+    .st-input { flex: 1; min-width: 0; width: auto; max-width: 220px; }
+    .st-input-error { text-align: left; }
     .st-chips-wrap { padding: 11px 16px 14px; }
     .settings-save-bar { padding: 12px 16px; flex-direction: column; align-items: stretch; }
     .settings-save-btn { width: 100%; justify-content: center; }

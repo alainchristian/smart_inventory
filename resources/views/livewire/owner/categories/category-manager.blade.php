@@ -133,8 +133,6 @@
                     transition:transform var(--tr);pointer-events:none }
 .cm-toggle input:checked ~ .cm-toggle-track .cm-toggle-knob { transform:translateX(19px) }
 
-.cm-hide-mob { display:none !important }
-.cm-hide-sm  { display:none !important }
 
 @media(max-width:768px) {
     .cm-kpis { grid-template-columns:1fr 1fr;gap:8px }
@@ -142,17 +140,20 @@
     .cm-kpi-val { font-size:20px }
     .cm-bar { flex-direction:column;align-items:stretch }
     .cm-btn-new, .cm-select { width:100%;justify-content:center }
-    .cm-drawer { width:100vw }
+    .cm-drawer { left:0;width:auto;max-width:none }
     .cm-drawer-body { padding:16px }
     .cm-drawer-foot { flex-direction:column }
     .cm-table td, .cm-table th { padding:10px 10px }
-    .cm-hide-mob { display:none !important }
 }
 
 @media(max-width:480px) {
     .cm-kpis { grid-template-columns:1fr }
-    .cm-hide-sm { display:none !important }
     .cm-action { padding:4px 8px;font-size:11px }
+}
+@media(max-width:640px) {
+    /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
+    .cm-table td { white-space:nowrap }
+    .cm-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 </style>
 

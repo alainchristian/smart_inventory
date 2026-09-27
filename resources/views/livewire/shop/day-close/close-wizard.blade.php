@@ -137,6 +137,10 @@
     .cw-mbar-l { font-size:11px;color:var(--text-dim); }
     .cw-mbar-v { font-size:14px;font-weight:800;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 }
+/* 1024–1100px: the sidebar is visible — start the bottom bar after it, not underneath it */
+@media (min-width:1024px) and (max-width:1100px) {
+    .cw-mbar { left:var(--sidebar-width); }
+}
 @media (max-width:768px) {
     .cw-count-grid { grid-template-columns:1fr !important; }
     .cw-title { font-size:19px; }
@@ -146,19 +150,21 @@
     .cw-btn-sm { min-height:32px !important;padding:5px 11px !important; }
     .cw-tab { min-height:36px !important;padding:7px 12px !important; }
     .cw-back { min-height:0 !important;min-width:0 !important;padding:0 !important; }
-    .cw-table td { padding:0 !important; }
 }
 @media (max-width:600px) {
     .cw-steps { padding:12px 14px;gap:6px; }
     .cw-step:not(.current) .cw-step-l { display:none; }
     .cw-card-head, .cw-card-body, .cw-row, .cw-total, .cw-section-hd { padding-left:14px;padding-right:14px; }
     .cw-nav .cw-btn { flex:1; }
-    .cw-table thead { display:none; }
-    .cw-table, .cw-table tbody { display:block; }
-    .cw-table tbody tr { display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border); }
-    .cw-table td { padding:0;border:none; }
-    .cw-table td.cw-nc-name { grid-column:1 / -1;display:flex;justify-content:space-between; }
+    .cw-nav > div { display:contents; } /* step 1 has no Back button — don't leave a gap for its empty slot */
     .cw-den-grid { grid-template-columns:60px 12px minmax(0,1fr) 90px;padding:0 16px; }
+}
+
+/* Phones: keep every column — the table scrolls sideways inside its card */
+.cw-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%; }
+@media (max-width:640px) {
+    .cw-table { width:max-content;min-width:100%; }
+    .cw-table th, .cw-table td { white-space:nowrap; }
 }
 </style>
 
@@ -464,7 +470,7 @@
                 <div><div class="cw-card-title">Non-cash settlement</div><div class="cw-card-sub">Confirm what each channel actually passed on to the owner</div></div>
             </div>
             @if (count($ncChannels))
-                <table class="cw-table">
+                <div class="cw-scroll"><table class="cw-table">
                     <thead>
                         <tr><th>Channel</th><th style="text-align:right">Collected</th><th style="width:150px">Settled</th><th style="width:170px">Reference</th></tr>
                     </thead>
@@ -481,7 +487,7 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             @endif
             @if ($creditSales > 0)
                 <div class="cw-row" style="border-top:1px solid var(--border)">

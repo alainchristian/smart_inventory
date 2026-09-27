@@ -150,8 +150,9 @@
 
 @media(max-width:640px) {
     .rl-filter-bar  { flex-direction:column;align-items:stretch }
-    .rl-filter-left { flex-direction:column }
-    .rl-search      { width:100% }
+    .rl-filter-left { flex-direction:column;align-items:stretch }
+    .rl-search      { width:100%;font-size:14px }
+    .rl-filter-tab, .rl-sort-btn { flex:1;min-height:36px !important;padding:6px 10px !important }
     .rl-sort-bar    { overflow-x:auto;scrollbar-width:none }
     .rl-sort-bar::-webkit-scrollbar { display:none }
 }

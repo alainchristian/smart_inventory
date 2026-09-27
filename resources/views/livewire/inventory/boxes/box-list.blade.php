@@ -96,6 +96,8 @@
     display:inline-flex;align-items:center;gap:5px
 }
 .bx-pill:hover { color:var(--text);background:var(--surface2) }
+/* Keeps From → To together so the To date never wraps onto its own line */
+.bx-date-pair { display:flex;align-items:center;gap:8px;min-width:0 }
 .bx-pill.active { background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.12) }
 
 .bx-select {
@@ -121,6 +123,7 @@
     .bx-filter-rows.is-open { display:flex;animation:bx-slide-down .18s ease }
     .bx-filter-row  { flex-direction:column;align-items:stretch;gap:6px }
     .bx-select,.bx-locked-pill { width:100%;box-sizing:border-box }
+    .bx-date-pair .bx-select { flex:1;min-width:0;width:auto }
     .bx-select { font-size:14px;padding:10px 12px }
     .bx-btn-clear { width:100%;padding:11px 16px }
 }
@@ -192,16 +195,20 @@
 .bx-empty-btn   { padding:8px 20px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-weight:600;color:var(--text-sub);cursor:pointer;background:transparent;font-family:var(--font) }
 
 /* Responsive */
-@media(max-width:1100px) { .bx-hide-lg { display:none !important } }
-@media(max-width:800px)  { .bx-hide-md { display:none !important } }
 @media(max-width:768px) {
     .bx-kpis { grid-template-columns:1fr 1fr;gap:8px }
     .bx-table td,.bx-table th { padding:9px 10px }
 }
 @media(max-width:480px) {
     .bx-kpis { grid-template-columns:1fr }
-    .bx-hide-sm { display:none !important }
     .bx-view-btn { padding:4px 8px;font-size:11px }
+}
+/* Phones: the table stays a table and scrolls sideways inside its card
+   (the wrapper div already has overflow-x:auto) instead of squashing columns */
+@media(max-width:640px) {
+    .bx-table { min-width:640px }
+    .bx-table td.td-2l { min-width:170px }
+    .bx-view-btn { min-height:0 !important;min-width:0 !important;padding:4px 8px !important }
 }
 </style>
 
@@ -552,9 +559,11 @@
                         wire:click="setPeriodPreset('{{ $key }}')" @click="open = false">{{ $label }}</button>
                 @endforeach
             </div>
-            <input type="date" wire:model.live="dateFrom" class="bx-select" style="padding:6px 10px">
-            <span style="color:var(--text-dim);font-size:12px">→</span>
-            <input type="date" wire:model.live="dateTo" class="bx-select" style="padding:6px 10px">
+            <div class="bx-date-pair">
+                <input type="date" wire:model.live="dateFrom" class="bx-select" style="padding:6px 10px">
+                <span style="color:var(--text-dim);font-size:12px">→</span>
+                <input type="date" wire:model.live="dateTo" class="bx-select" style="padding:6px 10px">
+            </div>
         </div>
 
         {{-- Status — not shown for a historical period: box status history
@@ -625,7 +634,7 @@
 
 {{-- ── Table ──────────────────────────────────────────────────── --}}
 <div class="bx-table-wrap">
-    <div style="overflow-x:auto">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%">
     <table class="bx-table">
         <thead>
             <tr>

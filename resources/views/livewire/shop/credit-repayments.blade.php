@@ -54,19 +54,28 @@
 .cr-badge-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0 }
 
 .cr-action { padding:6px 14px;border-radius:7px;border:none;background:var(--accent);color:#fff;
-             font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:opacity var(--tr) }
+             font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:opacity var(--tr);white-space:nowrap }
 .cr-action:hover { opacity:.88 }
 
 .cr-empty       { padding:60px 20px;text-align:center }
 .cr-empty-title { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px }
 .cr-empty-sub   { font-size:13px;color:var(--text-dim) }
 
+/* 4-up only when there is room: at 1024 (sidebar shown) the footer numbers
+   overlapped and the 4th card ran off the page */
+@media(max-width:1200px) { .cr-kpis { grid-template-columns:1fr 1fr } }
 @media(max-width:900px) {
     .cr-kpis { grid-template-columns:1fr 1fr;gap:8px }
     .cr-kpi  { padding:14px;gap:10px }
     .cr-kpi-val { font-size:20px }
 }
 @media(max-width:480px) { .cr-kpis { grid-template-columns:1fr } }
+/* Tablet: let the 6 columns share the card width so "Record Payment" isn't
+   pushed off the right edge (phones get the card layout below) */
+@media(min-width:641px) and (max-width:1100px) {
+    .cr-table { min-width:0 !important;table-layout:auto !important }
+    .cr-table thead th, .cr-table td { padding-left:10px;padding-right:10px }
+}
 
 /* Repayment modal */
 .cr-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;
@@ -298,10 +307,10 @@
 <div class="cr-table-wrap">
     @if($this->customers->count() > 0)
         <div class="cr-scroll">
-            <table class="cr-table" style="min-width:900px;table-layout:fixed">
+            <table class="cr-table" style="min-width:920px;table-layout:fixed">
                 <colgroup>
-                    <col style="width:260px"><col style="width:150px"><col style="width:150px">
-                    <col style="width:150px"><col style="width:140px"><col style="width:150px">
+                    <col style="width:240px"><col style="width:140px"><col style="width:140px">
+                    <col style="width:130px"><col style="width:120px"><col style="width:150px">
                 </colgroup>
                 <thead>
                     <tr>

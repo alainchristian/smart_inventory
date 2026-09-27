@@ -125,8 +125,6 @@
                     transition:transform var(--tr);pointer-events:none }
 .tm-toggle input:checked ~ .tm-toggle-track .tm-toggle-knob { transform:translateX(19px) }
 
-.tm-hide-mob { display:none !important }
-.tm-hide-sm  { display:none !important }
 
 @media(max-width:768px) {
     .tm-kpis { grid-template-columns:1fr 1fr;gap:8px }
@@ -134,18 +132,21 @@
     .tm-kpi-val { font-size:20px }
     .tm-bar { flex-direction:column;align-items:stretch }
     .tm-btn-new, .tm-select { width:100%;justify-content:center }
-    .tm-drawer { width:100vw }
+    .tm-drawer { left:0;width:auto;max-width:none }
     .tm-drawer-body { padding:16px }
     .tm-drawer-foot { flex-direction:column }
     .tm-table td, .tm-table th { padding:10px 10px }
     .tm-field-row { grid-template-columns:1fr }
-    .tm-hide-mob { display:none !important }
 }
 
 @media(max-width:480px) {
     .tm-kpis { grid-template-columns:1fr }
-    .tm-hide-sm { display:none !important }
     .tm-action { padding:4px 8px;font-size:11px }
+}
+@media(max-width:640px) {
+    /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
+    .tm-table td { white-space:nowrap }
+    .tm-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 </style>
 

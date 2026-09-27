@@ -32,7 +32,7 @@
 .sa-ctrl-grow { flex:1;min-width:0 }
 .sa-date-in  { background:transparent;border:none;outline:none;font-size:14px;
                font-weight:600;font-family:var(--mono);color:var(--text);
-               width:110px;cursor:pointer;min-width:0 }
+               width:132px;cursor:pointer;min-width:0 }
 .sa-shop-sel { background:transparent;border:none;outline:none;font-size:14px;
                font-weight:600;font-family:var(--font);color:var(--text);cursor:pointer;
                max-width:160px }
@@ -218,8 +218,11 @@
     .sa-ctrl-seg:last-child { border-bottom:none }
     .sa-ctrl-grow { flex:1 1 auto }
     .sa-date-in  { flex:1;width:auto;min-width:80px;max-width:none }
-    .sa-shop-sel { max-width:none;width:100% }
-    .sa-hours-grid,.sa-hours-labels { grid-template-columns:repeat(12,1fr) }
+    .sa-ctrl-seg:not(.sa-ctrl-grow) { flex-wrap:nowrap }
+    .sa-shop-sel { max-width:none;width:auto;flex:1;min-width:0 }
+    /* keep all 24 hours on one row (labels line up) — scroll sideways instead of wrapping */
+    .sa-hours-wrap { overflow-x:auto;-webkit-overflow-scrolling:touch }
+    .sa-hours-grid,.sa-hours-labels { min-width:600px }
     .sa-recon-results { grid-template-columns:1fr }
     .sa-recon-result:first-child { border-right:none;border-bottom:1px solid var(--border) }
     .sa-pay-name { width:80px }
@@ -244,9 +247,13 @@
     .sa-kpi-icon { width:30px;height:30px }
     .sa-kpi-val  { font-size:20px }
     .sa-kpi-footer { grid-template-columns:repeat(3,1fr) }
-    .sa-hours-grid,.sa-hours-labels { grid-template-columns:repeat(6,1fr) }
     .sa-strip-item { min-width:calc(50% - 1px);border-right:none;border-bottom:1px solid var(--border) }
-    .sa-pay-amt  { display:none }
+    /* phone: name + amount + share on one line, bar full-width underneath (amounts stay visible) */
+    .sa-pay-row  { flex-wrap:wrap;gap:6px 10px;padding:12px 16px }
+    .sa-pay-name { width:auto;flex:1;min-width:0 }
+    .sa-pay-amt  { width:auto }
+    .sa-pay-pct  { display:inline;width:auto }
+    .sa-pay-bar-wrap { order:5;flex:0 0 100%;height:6px }
     .sa-alert-strip { flex-direction:column;align-items:flex-start }
     .sa-mix-item { min-width:100% }
 }
@@ -333,7 +340,8 @@
         'credit'   => ['label' => 'Credit',       'icon' => 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z'],
     ];
 @endphp
-<div class="sa-tabs">
+<div class="sa-tabs" x-data
+     x-init="$nextTick(() => { const a = $el.querySelector('.sa-tab.active'); if (a && $el.scrollWidth > $el.clientWidth) $el.scrollLeft = a.offsetLeft - ($el.clientWidth - a.offsetWidth) / 2 })">
     @foreach($tabs as $key => $tab)
     <button type="button" wire:click="setTab('{{ $key }}')"
             class="sa-tab {{ $activeTab === $key ? 'active' : '' }}">
@@ -647,6 +655,10 @@
     </div>
     <div class="sa-tbl-scroll">
         <table class="sa-tbl" style="min-width:920px;table-layout:fixed">
+            <colgroup>
+                <col style="width:150px"><col style="width:110px"><col style="width:70px"><col style="width:70px">
+                <col style="width:110px"><col style="width:80px"><col style="width:100px"><col style="width:120px"><col style="width:110px">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Date</th>
@@ -665,7 +677,7 @@
                 <tr style="{{ $day['is_today'] ? 'background:var(--accent-dim)' : '' }}">
                     <td>
                         <div style="display:flex;align-items:center;gap:8px">
-                            <span style="font-weight:600;color:{{ $day['is_today'] ? 'var(--accent)' : 'var(--text)' }}">{{ $day['day_label'] }}</span>
+                            <span style="font-weight:600;white-space:nowrap;color:{{ $day['is_today'] ? 'var(--accent)' : 'var(--text)' }}">{{ $day['day_label'] }}</span>
                             @if($day['is_today'])<span style="font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-dim);padding:1px 6px;border-radius:10px">TODAY</span>@endif
                         </div>
                     </td>
@@ -722,7 +734,11 @@
         <span class="sa-card-badge">{{ count($recentTxns) }} shown</span>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl" style="min-width:760px;table-layout:fixed">
+        <table class="sa-tbl" style="min-width:920px;table-layout:fixed">
+            <colgroup>
+                <col style="width:190px"><col style="width:120px"><col style="width:190px">
+                <col style="width:140px"><col style="width:170px"><col style="width:110px">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Sale #</th>
@@ -738,7 +754,7 @@
                 <tr>
                     <td>
                         <a href="{{ route('owner.sales.show', $txn['id']) }}"
-                           style="font-family:var(--mono);font-weight:700;color:var(--accent);text-decoration:none">
+                           style="font-family:var(--mono);font-weight:700;color:var(--accent);text-decoration:none;white-space:nowrap">
                             {{ $txn['sale_number'] }}
                         </a>
                     </td>
@@ -1040,7 +1056,7 @@
         <table class="sa-tbl sa-ledger-tbl" style="min-width:1150px;table-layout:fixed">
             <colgroup>
                 <col style="width:44px">
-                <col style="width:220px"><col style="width:70px"><col style="width:70px">
+                <col style="width:220px"><col style="width:100px"><col style="width:70px">
                 <col style="width:110px"><col style="width:130px">
                 <col style="width:90px"><col style="width:130px">
                 <col style="width:90px"><col style="width:110px">

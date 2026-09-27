@@ -279,6 +279,18 @@
     .rf-layout { grid-template-columns:1fr; }
     .rf-summary { position:static; }
 }
+/* Product rows on phones — final word over the duplicated blocks above,
+   which capped names at 140px ("Adidas Ultraboo…") and stretched the
+   add button into a thin full-width bar. Name gets its own line; stock
+   pills sit left and the add button right on the line below. */
+/* (.rf-prod-row-scoped selectors so they also beat the copy of the old
+   rules in the shop/transfers wrapper views, which load after this block) */
+@media(max-width:600px) {
+    .rf-prod-row .rf-prod-info { width:100%; flex-basis:100%; }
+    .rf-prod-row .rf-prod-name { max-width:none; }
+    .rf-prod-row .rf-stock     { flex-direction:row; align-items:center; gap:8px; }
+    .rf-prod-row .rf-add-btn   { width:auto; margin-left:auto; }
+}
 
 </style>
 

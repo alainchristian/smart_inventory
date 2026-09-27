@@ -1111,3 +1111,68 @@ rewrites the rows wholesale; unit ids are never referenced.
 - entering a box size as "12 dozen" when receiving stock
 
 Tests: `tests/Feature/Sales/SellUnitsTest.php`.
+
+---
+
+## Responsiveness pass (2026-09-26)
+
+47 views were fixed for phone and tablet across the owner, shop and
+warehouse pages and the app shell, using CSS in each view's own style block.
+
+**User rule: tables stay tables.** On phones a table keeps every column and
+scrolls sideways inside its card (`overflow-x:auto`, a sensible
+`min-width` or `table-layout:fixed` + colgroup). Never collapse a table
+into stacked cards or hide columns at any width. Every `*-hide-*` column
+rule was then removed on 2026-09-27:
+- box list, box show, shop stock, categories, expense categories,
+  transporters, reprint search, return to warehouse, session activity
+  feed, income statement
+- the older phone card layouts (day-close deposit/expense/withdrawal
+  lists, close-wizard step 4, activity feed, reprint search, return to
+  warehouse) became scrolling tables
+- pattern on phones: an `.xx-scroll { overflow-x:auto }` wrapper plus
+  `table { width:max-content; min-width:100% }` and
+  `th, td { white-space:nowrap }`
+
+Categories, expense categories and transporters used to hide some columns
+even on desktop (Code, Products, Company, Contact, Transfers); they now
+show them.
+
+**Shared fixes (app.css, needs `npm run build`):**
+- dashboard `.card-header` stays a wrapping row
+- `.card-btn` / `.snap-panel-link` are exempt from the ≤640px 44px
+  touch-target inflation
+- `.db-period-controls` wraps an extra control (shop / status select)
+  onto its own row instead of overlapping the dates
+
+**Shell:**
+- topbar title truncates on phones
+- bell dropdown is viewport-fixed at ≤640px
+- mobile sidebar uses `100dvh`
+
+**Screenshot method, no passwords:** headless Chrome on Windows won't lay
+out below ~500px, so `--window-size=390,…` silently renders a wider page
+and crops it. Render the page in a 390px `<iframe>` inside a wrapper HTML
+file instead, with a separate `--user-data-dir` per run so parallel runs
+don't collide. Auth came from a temporary local-only `?__as=<userId>`
+middleware (`Auth::onceUsingId`, loopback `REMOTE_ADDR` only). It was
+deleted after the pass; re-create it only for a review and remove it
+afterwards.
+
+**Routes whose views don't exist (500), found during the pass:**
+- **Linked from the UI:** `owner.returns.index` and
+  `owner.damaged-goods.index` are the targets of the owner dashboard's
+  OwnerActions widget (`app/Livewire/Dashboard/OwnerActions.php` ~l.92/150),
+  shown when returns or damaged goods are pending.
+- **Not linked anywhere:**
+  - `owner.users.create` / `owner.users.edit` (users use the drawer)
+  - `owner.returns.show`, `owner.damaged-goods.show`
+  - `shop.sales.show`
+  - `products.index` / `products.show`
+  - `warehouse.reports.inventory` / `warehouse.reports.transfers`
+
+**Still open:**
+- the topbar title reads "Dashboard" on most pages, because
+  `$pageTitle` is rarely set
+- unscoped global `table{display:block}` rules at ≤600px in the shop and
+  warehouse transfers wrappers

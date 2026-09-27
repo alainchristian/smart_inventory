@@ -95,12 +95,26 @@
 .wsl-pagination { padding:12px 16px;border-top:1px solid var(--border); }
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
-@media(max-width:900px) { .wsl-kpis { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:900px) {
+    .wsl-kpis { grid-template-columns:repeat(2,1fr); }
+}
+/* Tablet / small laptop (content area < 960px next to the sidebar): let the
+   7 columns share the width instead of scrolling Items/Status off-screen */
+@media(max-width:1400px) {
+    .wsl-table { min-width:0;table-layout:auto; }
+}
+@media(max-width:900px) {
+    .wsl-table thead th, .wsl-table td { padding-left:10px;padding-right:10px; }
+}
 @media(max-width:480px) { .wsl-kpis { grid-template-columns:1fr; } }
 @media(max-width:640px) {
     .wsl-bar { flex-direction:column;align-items:stretch; }
     .wsl-search-wrap { min-width:0; }
     .wsl-select { width:100%; }
+
+    /* Phones: the table stays a table and scrolls sideways inside its card */
+    .wsl-scroll { max-width:100%; }
+    .wsl-table  { min-width:960px;table-layout:fixed; }
 }
 </style>
 

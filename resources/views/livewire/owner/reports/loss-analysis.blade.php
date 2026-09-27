@@ -124,6 +124,14 @@
     .la-tab     { flex-shrink:0;min-width:100px;padding:11px 14px }
     .la-tab svg { display:none }
 }
+/* Period controls: dates get their own full-width row, shop below (was overlapping) */
+@media(max-width:640px) {
+    .la-filters .db-period-controls { flex-wrap:wrap }
+    .la-filters .db-period-ctrl-grow { flex:1 1 100%;border-right:none;border-bottom:1px solid var(--border) }
+    .la-filters .db-date-input { flex:1;width:auto;min-width:0 }
+    .la-filters .la-loc-wrap { flex:1 1 100% }
+    .la-filters .la-loc-select { flex:1;min-width:0;font-size:14px }
+}
 @media(max-width:480px) {
     .la-hide-mob   { display:none !important }
     .la-kpis       { grid-template-columns:1fr }

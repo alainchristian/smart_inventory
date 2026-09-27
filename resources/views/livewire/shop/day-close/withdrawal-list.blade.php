@@ -25,23 +25,20 @@
 .wl-empty { padding:40px 20px;text-align:center;font-size:13px;color:var(--text-dim); }
 @media (max-width:640px) {
     .wl-action { min-height:30px !important;min-width:0 !important;padding:4px 10px !important; }
-    .wl-table td { padding:0 !important; }
-    .wl-table tfoot td { padding:10px 14px !important; }
-    .wl-table thead { display:none; }
-    .wl-table tbody, .wl-table tfoot { display:block; }
-    .wl-table tbody tr { display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 10px;padding:10px 14px;align-items:center; }
-    .wl-table tfoot tr { display:flex;justify-content:space-between; }
-    .wl-table td { padding:0; }
-    .wl-table tfoot td { padding:10px 14px; }
-    .wl-hide-mob { display:none !important; }
-    .wl-desc { max-width:none; }
+}
+
+/* Phones: keep every column — the table scrolls sideways inside its card */
+.wl-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%; }
+@media (max-width:640px) {
+    .wl-table { width:max-content;min-width:100%; }
+    .wl-table th, .wl-table td { white-space:nowrap; }
 }
 </style>
 
 @if ($withdrawals->isEmpty())
     <div class="wl-empty">No owner withdrawals recorded for this session.</div>
 @else
-    <table class="wl-table">
+    <div class="wl-scroll"><table class="wl-table">
         <thead>
             <tr>
                 <th style="width:70px">Time</th>
@@ -109,6 +106,6 @@
                 <td></td>
             </tr>
         </tfoot>
-    </table>
+    </table></div>
 @endif
 </div>

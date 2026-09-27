@@ -143,6 +143,14 @@
     .tp-tab     { flex-shrink:0;min-width:100px;padding:11px 14px }
     .tp-tab svg { display:none }
 }
+/* Period controls: dates get their own full-width row, status below (was overlapping) */
+@media(max-width:640px) {
+    .tp-filters .db-period-controls { flex-wrap:wrap }
+    .tp-filters .db-period-ctrl-grow { flex:1 1 100%;border-right:none;border-bottom:1px solid var(--border) }
+    .tp-filters .db-date-input { flex:1;width:auto;min-width:0 }
+    .tp-filters .tp-ctrl-wrap { flex:1 1 100% }
+    .tp-filters .tp-ctrl-select { flex:1;min-width:0 }
+}
 @media(max-width:480px) {
     .tp-hide-mob   { display:none !important }
     .tp-kpis       { grid-template-columns:1fr }

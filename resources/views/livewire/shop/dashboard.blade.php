@@ -178,6 +178,11 @@ main { background-color: var(--surface) !important; }
 .db-card-head     { flex-shrink:0; }
 .db-card-scroll-body { flex:1; overflow-y:auto; min-height:0; }
 .db-inhand        { flex-shrink:0; }
+/* Single column: the donut stacks above its legend, which no longer fits the
+   fixed 380px — the deductions grid was clipped. Let the Cash Flow card grow. */
+@media(max-width:768px) {
+    .db-row-cf-side > .db-card:first-child { height:auto; max-height:none; min-height:0; }
+}
 
 /* ── Recent Transactions ── */
 .db-txn-search {

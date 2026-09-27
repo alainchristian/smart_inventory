@@ -42,22 +42,18 @@
 .af-empty-sub   { font-size:13px;color:var(--text-dim); }
 .af-error { margin:12px 20px 0;padding:8px 12px;border-radius:var(--rsm);border-left:3px solid var(--red);font-size:12px;color:var(--red);background:var(--red-dim); }
 
-@media (max-width:768px) { .af-hide-mob { display:none !important; } }
 @media (max-width:640px) {
     .af-action { min-height:30px !important;min-width:0 !important;padding:4px 10px !important; }
     .af-pill { min-height:30px !important;min-width:0 !important;padding:5px 10px !important; }
-    .af-table td { padding:0 !important; }
     .af-head { padding:12px 14px; }
-    .af-table thead { display:none; }
-    .af-table tbody { display:block; }
-    .af-table tbody tr { display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 10px;padding:10px 14px;align-items:center; }
-    .af-table tbody td:nth-child(1) { grid-row:2;grid-column:1;font-size:11px; }
-    .af-table tbody td:nth-child(3) { grid-row:1;grid-column:1; }
-    .af-table tbody td:nth-child(4) { grid-row:1;grid-column:2; }
-    .af-table tbody td:nth-child(5) { grid-row:1 / span 2;grid-column:3;width:auto; }
-    .af-table td { padding:0;height:auto;min-width:0; }
-    .af-desc { max-width:none;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;word-break:break-word; }
     .af-foot > div { padding:10px 14px; }
+}
+
+/* Phones: keep every column — the table scrolls sideways inside its card */
+.af-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%; }
+@media (max-width:640px) {
+    .af-table { width:max-content;min-width:100%; }
+    .af-table th, .af-table td { white-space:nowrap; }
 }
 </style>
 
@@ -111,7 +107,7 @@
         <div class="af-empty-sub">Sales, expenses and cash movements will appear here as they're recorded.</div>
     </div>
 @else
-    <div>
+    <div class="af-scroll">
         <table class="af-table">
             <thead>
                 <tr>

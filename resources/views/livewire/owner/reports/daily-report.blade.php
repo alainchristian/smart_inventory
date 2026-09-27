@@ -116,6 +116,19 @@
                  border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text); }
 .odr-rc-live    { font-size:12px;font-weight:500;color:var(--text-dim); }
 .odr-msg        { white-space:normal;min-width:260px; }  
+/* Wide (5+ column) tables: keep every column readable and scroll sideways inside the card */
+@media(max-width:900px) {
+    .odr-table-wide { min-width:720px; }
+    .odr-table-wide td { white-space:nowrap; }
+    .odr-table-wide td.odr-msg { white-space:normal; }
+}
+@media(max-width:640px) {
+    .odr-actions-sep { display:none; }
+    .odr-filter-seg  { flex:1 1 100%;border-right:none;border-bottom:1px solid var(--border); }
+    .odr-filter-seg:last-child { border-bottom:none; }
+    .odr-date-input  { flex:1;width:auto;min-width:0; }
+    .odr-loc-select  { flex:1;min-width:0; }
+}
 </style>
 
 @php
@@ -338,7 +351,7 @@
     </div>
     @if($showProfit && $profitByProduct->isNotEmpty())
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Product</th>
@@ -418,7 +431,7 @@
         $odrSaleBank = $settingAllowBankTransfer || collect($summary['all_sales'])->sum('bank_transfer') > 0;
     @endphp
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Sale #</th>
@@ -488,7 +501,7 @@
     @elseif($isAllShops)
     {{-- One row per shop: opening = its first session in range, closing = its last --}}
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Shop</th>
@@ -566,7 +579,7 @@
     </div>
     @else
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Date</th>
@@ -626,7 +639,7 @@
             <span class="odr-rc-live">{{ $odrRcOpen ? 'live' : 'closed' }}</span>
         </div>
         <div class="odr-table-scroll">
-        <table class="odr-table">
+        <table class="odr-table odr-table-wide">
             <tbody>
                 <tr><td>Opening cash</td><td class="odr-num">{{ number_format($rc->opening) }}</td></tr>
                 <tr><td>+ Cash sales</td><td class="odr-num">{{ number_format($rc->cash_sales) }}</td></tr>
@@ -757,7 +770,7 @@
         <div style="font-size:13px;font-weight:700;color:var(--text)">Expenses by category</div>
     </div>
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Category</th>
@@ -939,7 +952,7 @@
         <div style="font-size:13px;font-weight:700;color:var(--text)">Credit Repayments — by Customer</div>
     </div>
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Customer</th>
@@ -986,7 +999,7 @@
         <div style="font-size:13px;font-weight:700;color:var(--text)">Bank Deposits</div>
     </div>
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Date</th>
@@ -1033,7 +1046,7 @@
     </div>
     @if(count($summary['expenses_detailed']) > 0)
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Date</th>
@@ -1081,7 +1094,7 @@
         <div style="font-size:13px;font-weight:700;color:var(--text)">Owner Withdrawals</div>
     </div>
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Date</th>
@@ -1122,7 +1135,7 @@
         <div style="font-size:13px;font-weight:700;color:var(--text)">Refunds</div>
     </div>
     <div class="odr-table-scroll">
-    <table class="odr-table">
+    <table class="odr-table odr-table-wide">
         <thead>
             <tr>
                 <th>Date</th>
@@ -1179,7 +1192,7 @@
         $odrCost      = collect($odrRows)->contains(fn ($r) => $r[1] !== null && isset($r[1]['cost']));
     @endphp
     <div class="odr-table-scroll">
-    <table class="odr-table" style="white-space:nowrap">
+    <table class="odr-table odr-table-wide" style="white-space:nowrap">
         <thead>
             <tr>
                 <th>Severity</th>

@@ -157,6 +157,21 @@
 /* ── Responsive ── */
 @media(max-width:900px) { .pr-grid { grid-template-columns:1fr } .pr-sidebar { position:static } }
 @media(max-width:640px) { .pr-2col { grid-template-columns:1fr } .pr-cond-row { gap:5px } }
+/* Step bar: three labels + hints overlapped each other on phones */
+@media(max-width:640px) {
+    .pr-steps     { padding:12px 14px }
+    .pr-step      { gap:7px;flex-shrink:1;min-width:0 }
+    .pr-step-hint { display:none }
+    .pr-step-lbl  { white-space:nowrap }
+    .pr-step-line { margin:0 8px;min-width:10px }
+    /* period pills scroll sideways instead of wrapping to a second row */
+    .pr-period-pills { flex-wrap:nowrap !important;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch }
+    .pr-period-pills::-webkit-scrollbar { display:none }
+    .pr-period-pills > button { flex-shrink:0;white-space:nowrap }
+}
+@media(max-width:480px) {
+    .pr-step:not(.is-current) .pr-step-lbl { display:none }
+}
 </style>
 
     @if($sessionBlocked)
@@ -195,7 +210,7 @@
             <div class="pr-steps">
                 @foreach([[1,'Find Sale','Search by sale or customer'],[2,'Select Items','Choose what to return'],[3,'Return Details','Reason and notes']] as [$sn,$sl,$sh])
                     <div style="display:flex;align-items:center;{{ !$loop->last ? 'flex:1' : '' }}">
-                        <div class="pr-step">
+                        <div class="pr-step {{ $currentStep === $sn ? 'is-current' : '' }}">
                             <div class="pr-step-n {{ $currentStep > $sn ? 'done' : ($currentStep === $sn ? 'active' : 'pending') }}">
                                 @if($currentStep > $sn)
                                     <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -225,7 +240,7 @@
                     <div class="pr-card-body">
 
                         {{-- Period filter pills --}}
-                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+                        <div class="pr-period-pills" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
                             @foreach(['today' => 'Today', 'yesterday' => 'Yesterday', 'this_week' => 'This Week', 'this_month' => 'This Month'] as $key => $label)
                                 <button type="button"
                                         wire:click="loadSalesByPeriod('{{ $key }}')"

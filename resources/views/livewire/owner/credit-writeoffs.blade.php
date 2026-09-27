@@ -91,10 +91,21 @@
 .cw-empty-title  { font-size:15px;font-weight:600;color:var(--text-sub);margin-bottom:4px; }
 
 /* ── Responsive ── */
+@media(max-width:900px) {
+    /* keep every column: the table scrolls sideways inside the card */
+    .cw-table-wrap { -webkit-overflow-scrolling:touch; }
+    .cw-table      { min-width:760px; }
+    .cw-td         { white-space:nowrap; }
+    .cw-form-row td { white-space:normal; }
+    /* inline write-off form stays pinned to the visible part of the scrolled table */
+    .cw-form-inner { position:sticky;left:0;box-sizing:border-box;
+                     width:calc(100vw - 40px);max-width:760px; }
+}
 @media(max-width:700px) {
     .cw-form-grid { grid-template-columns:1fr; }
-    .cw-table th:nth-child(2),
-    .cw-table td:nth-child(2) { display:none; }
+}
+@media(max-width:640px) {
+    .cw-form-inner { width:calc(100vw - 16px);padding:16px; }
 }
 </style>
 

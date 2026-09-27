@@ -2431,6 +2431,8 @@ main,
   font-weight: 600;
   color: var(--accent);
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
   padding: 2px 8px;
   border-radius: 6px;
   background: var(--accent-dim);
@@ -2755,3 +2757,32 @@ main,
                padding:1px 6px;border-radius:20px;margin-top:3px;white-space:nowrap }
 
 
+
+/* ── Dashboard card headers on small screens ──────────────────────────────
+   The ≤768px/≤500px rules above stack .card-header into a column, and the
+   global ≤640px touch-target rule inflates every <a> to a 44px padded block,
+   so each widget's "View all" link ended up as a big button on its own row.
+   Keep title + link on one row (wrapping only when needed, e.g. period tabs)
+   and keep the small links small. */
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .card-btn,
+  .snap-panel-link {
+    min-height: 0 !important;
+    min-width: 0 !important;
+  }
+  .card-btn        { padding: 5px 12px !important; }
+  .snap-panel-link { padding: 2px 8px !important; }
+}
+
+/* Shared period bar on phones: when an extra control (shop / status select)
+   doesn't fit beside the date range, wrap it onto its own row instead of
+   letting it overlap the date inputs. Bars that fit stay on one row. */
+@media (max-width: 640px) {
+  .db-period-controls { flex-wrap: wrap; }
+  .db-period-ctrl-grow { min-width: max-content; }
+}

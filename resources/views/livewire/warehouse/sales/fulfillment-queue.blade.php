@@ -172,7 +172,8 @@
     .fq-c-act { grid-column:4;grid-row:1 / span 2; }
 }
 @media (max-width:768px) {
-    .fq-kpis { grid-template-columns:1fr 1fr; }
+    .fq-kpis { grid-template-columns:repeat(3,minmax(0,1fr));gap:8px; }
+    .fq-kpi-stat { flex-wrap:wrap;column-gap:6px; }
     .fq-kpi { padding:14px;gap:10px; }
     .fq-kpi-val { font-size:20px; }
     .fq-title { font-size:19px; }
@@ -187,7 +188,7 @@
 @media (max-width:640px) {
     /* The work comes first on a phone — summary cards move below the list */
     .fq-page { display:flex;flex-direction:column; }
-    .fq-kpis { order:10;margin:4px 0 0; }
+    .fq-kpis { order:10;margin:4px 0 0;grid-template-columns:1fr; }
     .fq-tab, .fq-preset, .fq-link, .fq-sig-clear { min-height:32px !important;min-width:0 !important;padding:5px 11px !important; }
     .fq-back, .fq-d-close, .fq-icon-btn { min-height:0 !important;min-width:0 !important;padding:0 !important; }
     .fq-btn-sm { min-height:32px !important;padding:6px 14px !important; }

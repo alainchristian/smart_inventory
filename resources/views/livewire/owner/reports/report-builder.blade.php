@@ -262,7 +262,7 @@
 
 /* Responsive */
 @media(max-width:900px) {
-    .rb-workspace   { flex-direction:column }
+    .rb-workspace   { flex-direction:column;align-items:stretch }
     .rb-palette     { width:100%;position:static;max-height:none }
     .rb-pal-body    { max-height:300px }
     .rb-tmpl-grid   { grid-template-columns:1fr 1fr }
@@ -277,6 +277,12 @@
     .rb-footer      { flex-direction:column;align-items:stretch }
     .rb-footer-left { justify-content:space-between }
     .rb-save-btn    { width:100%;justify-content:center }
+    .rb-save-btn > span:first-child { display:inline-flex;align-items:center;gap:6px }
+    /* block header: title gets its own row, compact controls underneath (global 44px tap-target rule was squeezing the title to 3 letters) */
+    .rb-block-hdr   { flex-wrap:wrap;row-gap:6px }
+    .rb-block-title { flex:1 1 calc(100% - 40px) }
+    .rb-block-ctls  { flex:1 1 100%;justify-content:flex-end;gap:6px }
+    .rb-block-ctls button { min-width:32px !important;min-height:32px !important;padding:4px 8px !important }
 }
 </style>
 

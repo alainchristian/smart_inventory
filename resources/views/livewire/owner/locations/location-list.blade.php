@@ -179,10 +179,9 @@
     .lm-kpis     { grid-template-columns:1fr 1fr;gap:8px }
     .lm-kpi      { padding:12px 14px }
     .lm-kpi-val  { font-size:20px }
-    .lm-hide-mob { display:none !important }
     .lm-bar      { flex-direction:column;align-items:stretch }
     .lm-select,.lm-btn-new { width:100%;justify-content:center }
-    .lm-drawer   { width:100vw }
+    .lm-drawer   { left:0;width:auto;max-width:none }
     .lm-drawer-body { padding:16px }
     .lm-drawer-foot { flex-direction:column }
     .lm-save-btn,.lm-cancel-btn { width:100%;text-align:center }
@@ -195,10 +194,16 @@
 .lm-page-sub    { font-size:13px;color:var(--text-dim);margin-top:3px }
 
 @media(max-width:480px) {
-    .lm-hide-sm    { display:none !important }
+
     .lm-action     { padding:4px 8px;font-size:11px }
     .lm-kpis       { grid-template-columns:1fr }
     .lm-page-title { font-size:21px }
+}
+@media(max-width:640px) {
+    /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
+    .lm-table { min-width:900px }
+    .lm-table td { white-space:nowrap }
+    .lm-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 </style>
 

@@ -78,6 +78,8 @@
         -webkit-mask-image:none; mask-image:none;
     }
     .sli-kpi { min-width:0; }
+    /* 5 cards in 2 columns: let the lone last card span the row */
+    .sli-kpi:last-child:nth-child(odd) { grid-column:1 / -1; }
 }
 
 .sli-kpi {
@@ -277,7 +279,7 @@
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
     overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.03);
 }
-.sli-table-wrap { overflow-x:auto; }
+.sli-table-wrap { overflow-x:auto; container-type:inline-size; }
 .sli-table { width:100%; border-collapse:collapse; min-width:700px; }
 
 .sli-th {
@@ -464,6 +466,14 @@
 @media(max-width:660px) {
     .sli-summary-bar { flex-wrap:wrap; gap:10px 16px; padding:10px 16px; }
     .sli-summary-divider { display:none; }
+    /* The table scrolls sideways (min-width 700px). Full-width rows (empty
+       state, expanded sale detail) are pinned to the visible part of the
+       scroller instead of being centred/laid out across 700px. */
+    .sli-empty-inner,
+    .sli-detail-body { position:sticky; left:0; width:100cqw; box-sizing:border-box; }
+    .sli-detail-body { padding:16px 14px; }
+    .sli-table td.sli-empty-state,
+    .sli-table td.sli-detail-td { padding-left:0 !important; padding-right:0 !important; }
 }
 </style>
 @endpush

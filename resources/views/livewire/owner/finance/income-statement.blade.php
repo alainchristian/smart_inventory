@@ -46,6 +46,7 @@
 .is-card-head-sub   { font-size:12px;color:var(--text-dim); }
 
 /* ── Table ── */
+.is-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
 .is-table       { width:100%;border-collapse:collapse; }
 .is-table td    { padding:9px 20px;vertical-align:middle; }
 .is-section-hd  { padding:10px 20px 6px;font-size:10px;font-weight:700;text-transform:uppercase;
@@ -89,6 +90,7 @@
     .is-card  { border:none !important;border-radius:0 !important;box-shadow:none !important; }
     .is-print-only { display:block !important; }
     .is-table { page-break-inside:auto; }
+    .is-table-scroll { overflow:visible !important; }
     .is-table tr { page-break-inside:avoid;page-break-after:auto; }
     .is-section-hd { page-break-after:avoid; }
     * { font-family:'Georgia',serif !important; }
@@ -98,14 +100,14 @@
 /* ── Responsive ── */
 @media(max-width:640px) {
     .is-header     { margin-bottom:14px; }
-    .is-col-bar    { display:none; }
     .is-col-prev   { display:table-cell;min-width:90px; }
-    .is-col-prev .is-delta { display:none; }
     .is-card-head  { padding:10px 14px;flex-wrap:wrap;gap:8px; }
     .is-table td   { padding:8px 12px; }
     .is-section-hd { padding:6px 12px 3px; }
     .is-row-indent { padding-left:22px !important; }
     .is-col-num    { width:120px; }
+    /* line-item labels keep a readable width; the statement scrolls sideways if needed */
+    .is-table      { min-width:470px; }
     .is-filter-row { flex-wrap:wrap; }
     .is-filter-seg { border-right:none;border-bottom:1px solid var(--border);width:100%; }
     .is-filter-seg:last-child { border-bottom:none; }
@@ -257,6 +259,7 @@
             </div>
         @else
 
+        <div class="is-table-scroll">
         <table class="is-table">
 
             {{-- Column headers --}}
@@ -452,6 +455,7 @@
 
             </tbody>
         </table>
+        </div>
         @endif
 
         {{-- Footer note --}}

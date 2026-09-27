@@ -67,6 +67,22 @@
 .alp-empty svg { width:48px;height:48px;margin:0 auto 12px;opacity:.2 }
 .alp-empty p { margin:0;font-size:13px }
 .alp-empty p + p { margin-top:4px;font-size:12px }
+
+@media(max-width:640px) {
+    /* Tabs: full width, scroll sideways instead of running off the edge */
+    .alp-tabs { width:auto;max-width:100%;overflow-x:auto;scrollbar-width:none }
+    .alp-tabs::-webkit-scrollbar { display:none }
+    .alp-tab  { flex-shrink:0;min-height:34px !important;min-width:0 !important;padding:7px 11px !important }
+    .alp-meta a { min-height:0 !important;min-width:0 !important;padding:0 !important }
+    .alp-search-wrap { min-width:0;flex-basis:100% }
+    .alp-select { flex:1 }
+    .alp-resolve-all, .alp-clear-btn { min-height:38px !important }
+    /* Card: actions move under the text as a row, so the message gets the full width */
+    .alp-card { flex-wrap:wrap;padding:12px 14px }
+    .alp-body { flex:1 1 calc(100% - 46px) }
+    .alp-actions { flex-direction:row;flex-basis:100%;padding-left:46px }
+    .alp-btn-resolve, .alp-btn-dismiss { min-height:32px !important;min-width:0 !important;padding:5px 14px !important }
+}
 </style>
 
 {{-- Status tabs --}}

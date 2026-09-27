@@ -18,22 +18,20 @@
 .dl-empty { padding:40px 20px;text-align:center;font-size:13px;color:var(--text-dim); }
 @media (max-width:640px) {
     .dl-action { min-height:30px !important;min-width:0 !important;padding:4px 10px !important; }
-    .dl-table td { padding:0 !important; }
-    .dl-table tfoot td { padding:10px 14px !important; }
-    .dl-table thead { display:none; }
-    .dl-table tbody, .dl-table tfoot { display:block; }
-    .dl-table tbody tr { display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;padding:10px 14px;align-items:center; }
-    .dl-table tfoot tr { display:flex;justify-content:space-between; }
-    .dl-table td { padding:0;min-width:0; }
-    .dl-table tfoot td { padding:10px 14px; }
-    .dl-hide-mob { display:none !important; }
+}
+
+/* Phones: keep every column — the table scrolls sideways inside its card */
+.dl-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%; }
+@media (max-width:640px) {
+    .dl-table { width:max-content;min-width:100%; }
+    .dl-table th, .dl-table td { white-space:nowrap; }
 }
 </style>
 
 @if ($deposits->isEmpty())
     <div class="dl-empty">No bank deposits recorded for this session.</div>
 @else
-    <table class="dl-table">
+    <div class="dl-scroll"><table class="dl-table">
         <thead>
             <tr>
                 <th style="width:70px">Time</th>
@@ -75,6 +73,6 @@
                 <td></td>
             </tr>
         </tfoot>
-    </table>
+    </table></div>
 @endif
 </div>

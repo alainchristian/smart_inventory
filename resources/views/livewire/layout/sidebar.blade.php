@@ -4,7 +4,7 @@
      class="fixed left-0 top-0 h-screen bg-[var(--surface)] flex flex-col transition-transform duration-300 ease-in-out z-50
             -translate-x-full lg:translate-x-0"
      :class="{ 'translate-x-0': open }"
-     style="width: var(--sidebar-width);">
+     style="width: var(--sidebar-width); height: 100dvh;">
     <!-- Logo & Branding -->
     <div class="px-5 border-b flex flex-col justify-center" style="height: var(--topbar-height); border-color: var(--border);">
         <div class="flex items-center gap-3">

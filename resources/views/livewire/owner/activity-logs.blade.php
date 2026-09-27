@@ -140,8 +140,18 @@
 @media (max-width:860px) {
     .al-controls { gap:7px }
     .al-select,.al-date { font-size:12px;padding:7px 9px }
-    .al-table .al-col-ip,.al-table .al-col-entity,.al-table .al-col-module { display:none }
-    .al-drawer { width:100vw }
+    .al-drawer { left:0;width:auto;max-width:none }
+}
+@media (max-width:640px) {
+    /* Filters: 2-column grid instead of a ragged wrap of mixed-width controls */
+    .al-controls { display:grid;grid-template-columns:1fr 1fr;gap:8px }
+    .al-search-wrap { grid-column:1 / -1;min-width:0 }
+    .al-search { font-size:14px }
+    .al-select, .al-date { width:100%;min-width:0;box-sizing:border-box }
+    .al-export-btn, .al-clear-btn { justify-content:center;min-height:38px !important;padding:8px 14px !important }
+    .al-preset-btn { min-height:32px !important;min-width:0 !important;padding:6px 14px !important }
+    .al-table { min-width:1100px }
+    .al-table td { white-space:nowrap }
 }
 </style>
 

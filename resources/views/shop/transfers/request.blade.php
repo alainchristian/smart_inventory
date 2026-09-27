@@ -9,7 +9,7 @@
         </a>
         <div>
             <h1 class="text-2xl sm:text-3xl font-bold" style="color:var(--text);">New Stock Request</h1>
-            <p class="text-2xl mt-0.5" style="color:var(--text-dim);">Request boxes from warehouse</p>
+            <p class="text-sm mt-0.5" style="color:var(--text-dim);">Request boxes from warehouse</p>
         </div>
     </div>
 

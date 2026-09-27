@@ -45,6 +45,7 @@
 .cu-table-wrap { background:var(--surface);border:none;border-radius:var(--r);
                  box-shadow:var(--shadow-card); }
 .cu-table { width:100%;border-collapse:collapse; }
+.cu-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
 .cu-table thead tr { border-bottom:2px solid var(--border); }
 .cu-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
                      letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);
@@ -69,7 +70,6 @@
 .cu-empty-sub   { font-size:13px;color:var(--text-dim); }
 
 @media(max-width:768px) {
-    .cu-hide-mob { display:none !important }
     .cu-kpis { grid-template-columns:1fr 1fr; max-width:100%; }
 }
 
@@ -121,9 +121,22 @@
 .cu-credit-val    { font-family:var(--mono);font-weight:700;color:var(--text) }
 
 @media(max-width:768px) {
-    .cu-drawer { width:100vw }
+    .cu-drawer { left:0;width:auto;max-width:none }
     .cu-drawer-body { padding:16px }
     .cu-drawer-foot { flex-direction:column }
+}
+@media(max-width:640px) {
+    .cu-header-title { font-size:22px }
+    .cu-kpi     { padding:14px;gap:10px;min-width:0 }
+    .cu-kpi-row { gap:10px }
+    .cu-kpi-val { font-size:20px }
+    .cu-search-wrap { min-width:0;flex-basis:100% }
+    .cu-table { min-width:860px }
+    .cu-table td { white-space:nowrap }
+    .cu-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
+}
+@media(max-width:420px) {
+    .cu-kpis { grid-template-columns:1fr }
 }
 @keyframes cu-spin { to { transform:rotate(360deg) } }
 </style>
@@ -185,7 +198,7 @@
 
     <div class="cu-table-wrap">
         @if($customers->count() > 0)
-            <div style="overflow-x:auto">
+            <div class="cu-scroll">
                 <table class="cu-table">
                     <thead>
                         <tr>

@@ -162,6 +162,11 @@
     .wtl-action { flex:1; justify-content:center; }
     .wtl-foot-time { width:100%; text-align:center; }
 }
+@media(max-width:640px) {
+    /* Undo the global ≤640px touch-target inflation on the compact tab pills */
+    .wtl-tabs .wtl-tab { min-height:36px !important;min-width:0 !important;
+                         padding:6px 12px !important;font-size:14px; }
+}
 @media(max-width:520px) {
     .wtl-stat-v { font-size:22px; }
     .wtl-route-node { max-width:110px; }

@@ -15,7 +15,8 @@
 
 /* ── Mobile responsive ───────────────────────────── */
 @media(max-width:640px) {
-    .cc-header-controls { flex-direction:column !important; align-items:stretch !important; gap:10px !important; }
+    .cc-header-controls { flex-direction:column !important; align-items:stretch !important; gap:10px !important; width:100%; }
+    .cc-section { padding:16px !important; }
     .cc-page-title { font-size:24px !important; }
     .cc-page-subtitle { font-size:13px !important; }
 }
@@ -182,7 +183,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      FILTERS & SEARCH
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px">
+<div class="cc-section" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end">
         {{-- Search --}}
         <div>
@@ -225,7 +226,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      CUSTOMERS LIST
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px">
+<div class="cc-section" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px">
     <h2 class="cc-section-title" style="font-size:18px;font-weight:700;color:var(--text);margin:0 0 16px">
         Customer Credit List
     </h2>

@@ -45,7 +45,6 @@
 @media(max-width:700px) {
     .bs-grid { grid-template-columns:1fr }
     .bs-field { grid-template-columns:120px 1fr }
-    .bs-hide-sm { display:none !important }
 }
 </style>
 

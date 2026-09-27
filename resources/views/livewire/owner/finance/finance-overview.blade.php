@@ -277,6 +277,8 @@
 /* ── Responsive ── */
 @media(max-width:900px) {
     .fo-charts { grid-template-columns:1fr; }
+    /* table scrolls sideways; keep shop names on one line instead of 3-line rows */
+    .fo-table td { white-space:nowrap; }
     .fo-kpis   { grid-template-columns:repeat(2,1fr); }
 }
 @media(max-width:640px) {

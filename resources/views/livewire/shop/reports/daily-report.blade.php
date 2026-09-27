@@ -106,7 +106,20 @@
 .dr-rc-head    { display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 20px;
                  border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text); }
 .dr-rc-live    { font-size:12px;font-weight:500;color:var(--text-dim); }
-.dr-msg        { white-space:normal;min-width:260px; }  
+.dr-msg        { white-space:normal;min-width:260px; }
+
+/* Phones: undo the global ≤640px touch-target inflation on compact controls and
+   give the header actions a tidy full-width layout instead of a ragged wrap. */
+@media(max-width:640px) {
+    .dr-header { gap:12px;margin-bottom:16px; }
+    .dr-header > div:first-child { flex:1 1 100%; }
+    .dr-actions { width:100%;gap:8px; }
+    .dr-actions-sep { display:none; }
+    .dr-view-tabs { display:flex;flex:1 1 100%; }
+    .dr-view-tab { flex:1;min-height:34px !important;min-width:0 !important;padding:6px 12px !important; }
+    .dr-btn-primary, .dr-btn-secondary { flex:1;justify-content:center;min-height:38px !important;height:38px;min-width:0 !important;padding:0 12px !important; }
+    .dr-preset-btn { min-height:32px !important;min-width:0 !important;padding:5px 11px !important; }
+}
 </style>
 
 @php

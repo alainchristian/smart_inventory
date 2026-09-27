@@ -136,6 +136,7 @@
 }
 @media (max-width:640px) {
     .dc-menu-item { min-height:0 !important;padding:9px 10px !important; }
+    .dc-notice a { min-height:0 !important;min-width:0 !important;padding:4px 0 !important; }
 }
 @media (max-width:480px) {
     .dc-kpis { grid-template-columns:1fr; }

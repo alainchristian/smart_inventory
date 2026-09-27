@@ -83,7 +83,7 @@
 
 /* ── Table ──────────────────────────────────────────────────────────── */
 .rl-tbl-wrap { background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card) }
-.rl-tbl-scrl { overflow-x:auto;-webkit-overflow-scrolling:touch }
+.rl-tbl-scrl { overflow-x:auto;-webkit-overflow-scrolling:touch;container-type:inline-size }
 .rl-tbl-scrl::-webkit-scrollbar { height:6px }
 .rl-tbl-scrl::-webkit-scrollbar-track { background:transparent }
 .rl-tbl-scrl::-webkit-scrollbar-thumb { background:var(--border);border-radius:3px }
@@ -147,6 +147,12 @@
     .rl-exp-grid { grid-template-columns:1fr }
     .rl-flt-seg { border-right:none;border-bottom:1px solid var(--border) }
     .rl-flt-seg:last-child { border-bottom:none }
+    /* the table scrolls sideways (min-width 800px): pin full-width rows
+       (empty state, expanded detail) to the visible part of the scroller */
+    .rl-empty, .rl-exp-wrap { position:sticky;left:0;width:100cqw;box-sizing:border-box }
+    .rl-exp-wrap { padding:0 10px 12px }
+    .rl-exp-panel { padding:14px }
+    .rl-tbl td.rl-td-full { padding-left:0 !important;padding-right:0 !important }
 }
 </style>
 
@@ -533,7 +539,7 @@
 
                     {{-- Expand detail --}}
                     <tr x-show="expandedRow === {{ $return->id }}" x-cloak style="border-bottom:1px solid var(--border)">
-                        <td colspan="{{ $isOwner ? '8' : '7' }}" style="padding:0">
+                        <td colspan="{{ $isOwner ? '8' : '7' }}" class="rl-td-full" style="padding:0">
                             <div class="rl-exp-wrap">
                                 <div class="rl-exp-panel">
                                     <div class="rl-exp-grid">
@@ -635,7 +641,7 @@
 
                 @empty
                     <tr>
-                        <td colspan="{{ $isOwner ? '8' : '7' }}">
+                        <td colspan="{{ $isOwner ? '8' : '7' }}" class="rl-td-full">
                             <div class="rl-empty">
                                 <div style="width:48px;height:48px;border-radius:12px;background:var(--accent-dim);
                                             display:flex;align-items:center;justify-content:center;margin:0 auto 16px">

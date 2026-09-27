@@ -42,7 +42,7 @@
 .dg-tbl-head   { padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between }
 .dg-tbl-ttl    { font-size:14px;font-weight:700 }
 .dg-tbl-count  { font-size:12px;color:var(--text-dim) }
-.dg-scroll     { overflow-x:auto }
+.dg-scroll     { overflow-x:auto;container-type:inline-size }
 .dg-tbl        { width:100%;border-collapse:collapse;table-layout:fixed }
 .dg-tbl th     { padding:10px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface) }
 .dg-tbl td     { padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle }
@@ -120,6 +120,10 @@
 
 /* Empty state */
 .dg-empty { text-align:center;padding:56px 20px }
+/* the 8-column table (1020px) scrolls below desktop width: pin the empty
+   state to the visible part of the scroller instead of centring it on 1020px */
+.dg-empty { position:sticky;left:0;width:100cqw;box-sizing:border-box }
+.dg-tbl td.dg-td-full { padding-left:0 !important;padding-right:0 !important }
 .dg-empty-ico { width:48px;height:48px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 14px }
 
 /* Pagination */
@@ -142,6 +146,11 @@
 @media(max-width:600px) {
     .dg-kpi-grid { grid-template-columns:1fr 1fr }
     .dg-filter-row { flex-direction:column;align-items:stretch }
+    /* status pills scroll sideways instead of stacking 3 rows deep */
+    .dg-pills { flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+                margin:0 -20px;padding:0 20px 2px }
+    .dg-pills::-webkit-scrollbar { display:none }
+    .dg-pill { flex-shrink:0 }
 }
 [x-cloak] { display:none !important }
 </style>
@@ -457,7 +466,7 @@
 
                 @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="8" class="dg-td-full">
                             <div class="dg-empty">
                                 <div class="dg-empty-ico">
                                     <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--text-dim)"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

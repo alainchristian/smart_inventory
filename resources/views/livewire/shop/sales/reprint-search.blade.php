@@ -45,15 +45,10 @@
 .rs-empty-title   { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px }
 .rs-empty-sub     { font-size:13px;color:var(--text-dim) }
 
-/* Mobile — Strategy B: hide columns + card transform */
-@media(max-width:768px) { .rs-hide-mob { display:none !important } }
+/* Phones: keep every column — the table scrolls sideways (wrapper has overflow-x:auto) */
 @media(max-width:640px) {
-    .rs-cards-mob thead  { display:none }
-    .rs-cards-mob tbody  { display:block }
-    .rs-cards-mob tr     { display:block;padding:11px 14px;border-bottom:1px solid var(--border) }
-    .rs-cards-mob tr:last-child { border-bottom:none }
-    .rs-cards-mob td     { display:flex;justify-content:space-between;align-items:center;padding:3px 0;border:none }
-    .rs-cards-mob td[data-label]::before { content:attr(data-label);font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;margin-right:8px }
+    .rs-table { width:max-content;min-width:100% }
+    .rs-table th, .rs-table td { white-space:nowrap }
 }
 
 /* Receipt view modal */

@@ -1,19 +1,21 @@
 <div>
 <style>
-/* Product list — responsive column hiding */
+/* Product list — tables stay tables: every column is kept and the table
+   scrolls sideways inside its card on narrow screens (min-width on .pl-table) */
 @media(max-width:768px) {
-  /* Hide owner-only analytics columns on tablet — Product/Stock/Status/Actions remain */
-  .pl-hide-tab { display:none !important; }
   /* Tighten cell padding */
   .pl-table td, .pl-table th { padding:8px 10px !important; }
   /* Filter bar: stack search full-width */
   .pl-filters { flex-direction:column; align-items:stretch !important; }
   .pl-filters > div { min-width:0 !important; }
 }
-@media(max-width:480px) {
-  /* Also hide Category on very small screens */
-  .pl-hide-mob { display:none !important; }
-  .pl-table { min-width:360px !important; }
+@media(max-width:640px) {
+  /* Keep row buttons compact (global mobile CSS inflates every a/button to 44px) */
+  .pl-td-act a, .pl-td-act button { min-height:28px !important; min-width:0 !important; padding:4px 10px !important; }
+  .pl-table thead th button { min-height:0 !important; min-width:0 !important; padding:0 !important; }
+  /* Don't let the product name column squash to a sliver (SKU was breaking per letter) */
+  .pl-table tbody td:first-child { min-width:170px; }
+  .pl-table tbody td:first-child > div:last-child { white-space:nowrap; }
 }
 
 /* Search suggestions dropdown */
@@ -374,7 +376,7 @@
             @endif
 
             {{-- Status --}}
-            <td style="padding:10px 12px;text-align:center">
+            <td class="pl-td-status" style="padding:10px 12px;text-align:center">
               <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;
                            background:{{ $product->is_active ? 'var(--green-dim)' : 'var(--surface2)' }};
                            color:{{ $product->is_active ? 'var(--green)' : 'var(--text-dim)' }}">
@@ -383,7 +385,7 @@
             </td>
 
             {{-- Actions --}}
-            <td style="padding:10px 12px;text-align:right" wire:click.stop>
+            <td class="pl-td-act" style="padding:10px 12px;text-align:right" wire:click.stop>
               <div style="display:flex;justify-content:flex-end;align-items:center;gap:5px;flex-wrap:nowrap">
                 @if($isOwner)
                   {{-- Edit button - navigates to edit page --}}

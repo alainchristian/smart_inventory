@@ -14,10 +14,14 @@
 .pm-section-subtitle { font-size:13px !important; }
 .pm-table thead th { font-size:12px !important; white-space:nowrap }
 .pm-table tbody td { font-size:14px !important; white-space:nowrap }
+/* keep split-payment chips on one line; the table scrolls sideways instead of growing tall rows */
+.pm-table td > div { flex-wrap:nowrap !important; }
 
 /* ── Mobile responsive ───────────────────────────── */
 @media(max-width:640px) {
-    .pm-header-controls { flex-direction:column !important; align-items:stretch !important; gap:10px !important; }
+    .pm-header-controls { flex-direction:column !important; align-items:stretch !important; gap:10px !important; width:100%; }
+    .pm-header-controls > div { flex-wrap:nowrap !important; }
+    .pm-section { padding:16px !important; margin-bottom:20px !important; }
     .pm-header-controls > div { flex-wrap:wrap; }
     .pm-header-controls input[type=date] { flex:1; min-width:0; }
     .pm-header-controls select { width:100%; }
@@ -215,7 +219,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      PAYMENT METHOD BREAKDOWN
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:32px">
+<div class="pm-section" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:32px">
     <h2 class="pm-section-title" style="font-size:18px;font-weight:700;color:var(--text);margin:0 0 20px">
         Revenue by Payment Method
     </h2>
@@ -256,7 +260,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      RECENT TRANSACTIONS
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px">
+<div class="pm-section" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px">
     <h2 class="pm-section-title" style="font-size:18px;font-weight:700;color:var(--text);margin:0 0 16px">
         Recent Transactions
     </h2>

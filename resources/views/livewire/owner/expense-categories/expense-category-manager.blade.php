@@ -130,8 +130,6 @@
 .em-segment      { flex:1;text-align:center;padding:8px;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-radius:7px;transition:all .15s;user-select:none }
 .em-segment.active { background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08) }
 
-.em-hide-mob { display:none !important }
-.em-hide-sm  { display:none !important }
 
 @media(max-width:768px) {
     .em-kpis { grid-template-columns:1fr 1fr;gap:8px }
@@ -139,17 +137,20 @@
     .em-kpi-val { font-size:20px }
     .em-bar { flex-direction:column;align-items:stretch }
     .em-btn-new, .em-select { width:100%;justify-content:center }
-    .em-drawer { width:100vw }
+    .em-drawer { left:0;width:auto;max-width:none }
     .em-drawer-body { padding:16px }
     .em-drawer-foot { flex-direction:column }
     .em-table td, .em-table th { padding:10px 10px }
-    .em-hide-mob { display:none !important }
 }
 
 @media(max-width:480px) {
     .em-kpis { grid-template-columns:1fr }
-    .em-hide-sm { display:none !important }
     .em-action { padding:4px 8px;font-size:11px }
+}
+@media(max-width:640px) {
+    /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
+    .em-table td { white-space:nowrap }
+    .em-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 </style>
 

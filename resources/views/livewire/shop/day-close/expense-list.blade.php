@@ -26,23 +26,20 @@
 .el-empty { padding:40px 20px;text-align:center;font-size:13px;color:var(--text-dim); }
 @media (max-width:640px) {
     .el-action { min-height:30px !important;min-width:0 !important;padding:4px 10px !important; }
-    .el-table td { padding:0 !important; }
-    .el-table tfoot td { padding:10px 14px !important; }
-    .el-table thead { display:none; }
-    .el-table tbody, .el-table tfoot { display:block; }
-    .el-table tbody tr { display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 10px;padding:10px 14px;align-items:center; }
-    .el-table tfoot tr { display:flex;justify-content:space-between; }
-    .el-table td { padding:0; }
-    .el-table tfoot td { padding:10px 14px; }
-    .el-hide-mob { display:none !important; }
-    .el-desc { max-width:none; }
+}
+
+/* Phones: keep every column — the table scrolls sideways inside its card */
+.el-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%; }
+@media (max-width:640px) {
+    .el-table { width:max-content;min-width:100%; }
+    .el-table th, .el-table td { white-space:nowrap; }
 }
 </style>
 
 @if ($expenses->isEmpty())
     <div class="el-empty">No expenses recorded for this session.</div>
 @else
-    <table class="el-table">
+    <div class="el-scroll"><table class="el-table">
         <thead>
             <tr>
                 <th style="width:70px">Time</th>
@@ -115,6 +112,6 @@
                 <td></td>
             </tr>
         </tfoot>
-    </table>
+    </table></div>
 @endif
 </div>

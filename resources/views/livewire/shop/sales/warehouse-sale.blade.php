@@ -377,6 +377,9 @@
 .whs-back-btn:hover { border-color:var(--accent);color:var(--accent) }
 
 /* Responsive */
+/* Grid items default to min-width:auto, so the stock table's min-width
+   pushed the whole 1-column grid past the screen edge on phones. */
+.whs-main-grid > *, .whs-checkout-grid > * { min-width:0 }
 @media (max-width: 860px) {
     .whs-main-grid     { grid-template-columns:1fr !important; }
     .whs-checkout-grid { grid-template-columns:1fr !important; }
@@ -384,7 +387,14 @@
 @media (max-width: 640px) {
     .whs-tabs { overflow-x:auto;scrollbar-width:none;display:flex }
     .whs-tabs::-webkit-scrollbar { display:none }
-    .whs-tab-btn { flex-shrink:0;min-width:110px }
+    .whs-tab-btn { flex:1 0 110px }
+    .whs-stock-table { min-width:0 }
+    .whs-stock-table th.whs-stock-th,
+    .whs-stock-table td.whs-stock-td { padding-left:8px !important;padding-right:8px !important }
+    .whs-stock-table th.whs-stock-th:first-child,
+    .whs-stock-table td.whs-stock-td:first-child { padding-left:14px !important }
+    .whs-stock-table th.whs-stock-th:last-child,
+    .whs-stock-table td.whs-stock-td:last-child { padding-right:14px !important }
 }
 @media (max-width: 480px) {
     .whs-complete-btn    { font-size:13px }

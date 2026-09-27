@@ -27,6 +27,7 @@
 /* ── Table ───────────────────────────────────────── */
 .um-table-wrap { background:var(--surface);border:none;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-card) }
 .um-table { width:100%;border-collapse:collapse;font-size:13px }
+.um-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch }
 .um-table thead tr { background:var(--bg);border-bottom:1px solid var(--border) }
 .um-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
 .um-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
@@ -154,16 +155,20 @@
 .um-pw-wrap { position:relative }
 .um-pw-toggle { position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-dim);padding:4px }
 
+/* Tablet: 5 KPI cards don't fit in one row */
+@media(max-width:1100px) {
+    .um-kpis { grid-template-columns:repeat(3,1fr) }
+    .um-kpi  { min-width:0 }
+}
 /* Mobile */
 @media(max-width:640px) {
     .um-kpis { grid-template-columns:repeat(2,1fr);gap:8px }
     .um-kpi  { padding:14px 14px;gap:10px }
     .um-kpi-val { font-size:20px }
-    .um-hide-mob { display:none !important }
     .um-bar  { flex-direction:column;align-items:stretch }
     .um-select { width:100% }
     .um-table td,.um-table th { padding:10px 12px }
-    .um-drawer { width:100vw;max-width:100vw }
+    .um-drawer { left:0;width:auto;max-width:none }
     .um-drawer-body { padding:16px }
     .um-drawer-foot { padding:12px 16px;flex-direction:column }
     .um-save-btn   { width:100%;padding:13px }
@@ -171,7 +176,10 @@
     .um-role-card  { padding:10px 12px }
     .um-confirm-box { flex-direction:column;align-items:flex-start;gap:8px }
     .um-btn-new { width:100%;justify-content:center }
-    .um-show-mob { display:block !important }
+    .um-kpi:last-child { grid-column:1 / -1 }
+    .um-table { min-width:1000px }
+    .um-table td { white-space:nowrap }
+    .um-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 
 @keyframes um-spin { to { transform:rotate(360deg) } }
@@ -291,7 +299,7 @@
 
 {{-- ── Table ────────────────────────────────────────────────────────── --}}
 <div class="um-table-wrap">
-    <div style="overflow-x:auto">
+    <div class="um-scroll">
     <table class="um-table">
         <thead>
             <tr>

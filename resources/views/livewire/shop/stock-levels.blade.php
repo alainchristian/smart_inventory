@@ -165,7 +165,6 @@
     .ss-tabs { overflow-x:auto }
 
     /* On mobile: hide less critical columns */
-    .ss-hide-mob { display:none !important }
 
     /* Compact table */
     .ss-table td,

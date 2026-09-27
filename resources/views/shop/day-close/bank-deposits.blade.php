@@ -2,7 +2,7 @@
     <div>
             <div class="mb-4 sm:mb-6 flex items-center gap-3">
                 <a href="{{ route('shop.session.open') }}"
-                   class="p-2 rounded-lg transition-colors"
+                   class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg transition-colors"
                    style="background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>

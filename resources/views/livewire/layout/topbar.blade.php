@@ -1,8 +1,18 @@
 <div class="fixed top-0 lg:left-[var(--sidebar-width)] left-0 right-0 border-b" style="background: var(--surface); border-color: var(--border); z-index: 60; height: var(--topbar-height);">
+    <style>
+    /* Phones/tablets: let the title shrink + truncate so the right-hand icons always fit */
+    @media (max-width: 767px) {
+        .tb-left { flex-shrink: 1; min-width: 0; }
+    }
+    /* Phones: the 320px bell dropdown anchored to the bell ran off the left edge — pin it to the viewport instead */
+    @media (max-width: 640px) {
+        .tb-notif-dd { position: fixed; left: 12px; right: 12px; width: auto; top: calc(var(--topbar-height) - 4px); margin-top: 0; }
+    }
+    </style>
     <div class="px-3 sm:px-4 lg:px-6 h-full flex items-center w-full">
         <div class="flex items-center justify-between gap-3 sm:gap-4 lg:gap-6 w-full">
             <!-- Left: Mobile Menu + Page Title -->
-            <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="tb-left flex items-center gap-3 flex-shrink-0">
                 <!-- Hamburger Menu (Mobile Only) -->
                 <button @click="$dispatch('toggle-mobile-menu')"
                         class="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-all"
@@ -13,8 +23,8 @@
                 </button>
 
                 <!-- Page Title -->
-                <div>
-                    <h1 class="text-[15px] sm:text-[17px] font-bold" style="color: var(--text);" data-page-title>{{ $pageTitle }}</h1>
+                <div class="min-w-0">
+                    <h1 class="truncate text-[15px] sm:text-[17px] font-bold" style="color: var(--text);" data-page-title>{{ $pageTitle }}</h1>
                     <div class="hidden sm:flex items-center gap-1.5 text-[12px] mt-0.5" style="color: var(--text-dim); font-family: var(--mono);">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -92,7 +102,7 @@
                          x-transition:leave="transition ease-in duration-75"
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95"
-                         class="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl shadow-xl border overflow-hidden"
+                         class="tb-notif-dd absolute right-0 mt-2 w-80 sm:w-96 rounded-xl shadow-xl border overflow-hidden"
                          style="background: var(--surface); border-color: var(--border); z-index: 100;"
                          x-cloak>
 
