@@ -178,6 +178,22 @@ class DailyReportDataTest extends TestCase
         $this->assertSame(1, (int) $s['boxes_by_product'][0]->boxes);
         $this->assertSame(50000, (int) $s['boxes_by_product'][0]->amount);
 
+        // Loose/pack items (sale C's item line: qty 2, line_total 4000) — the
+        // counterpart to boxes_by_product, previously missing entirely.
+        $this->assertSame(2, $s['total_items_sold']);
+        $this->assertCount(1, $s['items_by_product']);
+        $this->assertSame(2, (int) $s['items_by_product'][0]->items);
+        $this->assertSame(4000, (int) $s['items_by_product'][0]->amount);
+
+        // Combined per-product view (boxes_by_product + items_by_product
+        // merged, since both lines are the same product here): one row,
+        // 1 box + 2 items, amount = 50000 + 4000 = 54000. Its total must
+        // reconcile with total_sales-derived revenue, not just box revenue.
+        $this->assertCount(1, $s['sold_by_product']);
+        $this->assertSame(1, (int) $s['sold_by_product'][0]->boxes);
+        $this->assertSame(2, (int) $s['sold_by_product'][0]->items);
+        $this->assertSame(54000, (int) $s['sold_by_product'][0]->amount);
+
         // all_sales
         $this->assertCount(3, $s['all_sales']);
         $this->assertSame([50000, 30000, 60000], $s['all_sales']->map(fn ($r) => (int) $r->total)->all());
@@ -439,8 +455,9 @@ class DailyReportDataTest extends TestCase
 
     /**
      * Query count for computeRangeSummary(), single shop, single day.
-     * Before EXT_01: 16. After: +2 (owner_withdrawals, returns); the per-method
-     * splits, category totals and the extra user-name joins add no queries.
+     * Before EXT_01: 16. After: +2 (owner_withdrawals, returns), +1 for
+     * unassigned_receivables, +1 for items_by_product (loose/pack item
+     * sales — the counterpart to boxes_by_product).
      */
     public function test_query_count_single_shop_single_day(): void
     {
@@ -452,6 +469,6 @@ class DailyReportDataTest extends TestCase
         $count = count(DB::getQueryLog());
         DB::disableQueryLog();
 
-        $this->assertSame(19, $count, 'query count: 16 originally, +2 for EXT_01, +1 for unassigned_receivables');
+        $this->assertSame(20, $count, 'query count: 16 originally, +2 for EXT_01, +1 for unassigned_receivables, +1 for items_by_product');
     }
 }

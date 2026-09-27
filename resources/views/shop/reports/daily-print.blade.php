@@ -78,7 +78,17 @@ tfoot td:last-child { text-align:right; }
 @media(max-width:640px) {
     .grid { grid-template-columns:1fr; }
     .span-2 { grid-column:span 1; }
-    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    /* Scroll sideways, never shrink narrower than the card. Forcing
+       `table { display:block }` here (the previous approach) makes the
+       browser generate an anonymous table box for the rows that ignores
+       the table's own width:100% rule, so a narrow (e.g. 2-column) table
+       shrinks to its content width and leaves the rest of the card blank —
+       table stays display:table and .cell (its real block-level ancestor,
+       already wrapping every table) becomes the scroll container. */
+    .cell { overflow-x:auto; -webkit-overflow-scrolling:touch;
+             scrollbar-width:none; -ms-overflow-style:none; }
+    .cell::-webkit-scrollbar { display:none; height:0; }
+    table { width:max-content; min-width:100%; }
 }
 </style>
 </head>
@@ -164,12 +174,6 @@ tfoot td:last-child { text-align:right; }
                 </tr>
             </tbody>
         </table>
-        @if($position['stale'])
-        <p style="font-size:11px;margin-top:6px;color:#8a5a12;background:#fdf1e2;padding:6px 10px;border-radius:6px;border-left:3px solid #d97706">
-            <strong>⚠ Unreconciled session.</strong>
-            Open since {{ $position['as_of']->format('d M Y') }} ({{ (int) floor($position['as_of']->diffInDays(business_today())) }} days) — nobody has closed/counted this drawer since. Cash on Hand above includes this session's live, uncounted figure.
-        </p>
-        @endif
     </div>
 
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#000;margin-bottom:8px">{{ $period }}</div>
@@ -189,6 +193,10 @@ tfoot td:last-child { text-align:right; }
                 <tr>
                     <td>Boxes Sold</td>
                     <td style="text-align:right">{{ number_format($summary['total_boxes_sold']) }}</td>
+                </tr>
+                <tr>
+                    <td>Items Sold (individual / pack)</td>
+                    <td style="text-align:right">{{ number_format($summary['total_items_sold'] ?? 0) }}</td>
                 </tr>
                 <tr><td colspan="2" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;border-top:1px solid #000;padding-top:6px">Revenue</td></tr>
                 <tr>
@@ -317,7 +325,7 @@ tfoot td:last-child { text-align:right; }
                 <tr>
                     <td>{{ $day->date->format('d M Y') }}</td>
                     <td style="text-align:right">{{ number_format($day->opening) }}</td>
-                    <td style="text-align:right">{{ number_format($day->closing) }}{{ $day->is_open ? ' *' : '' }}</td>
+                    <td style="text-align:right">{{ number_format($day->closing) }}</td>
                     <td style="text-align:right">@if($day->is_open) — @else {{ $day->variance > 0 ? '+' : '' }}{{ number_format($day->variance) }} @endif</td>
                     <td style="text-align:right">{{ number_format($day->momo) }}</td>
                     <td style="text-align:right">{{ number_format($day->bank) }}</td>
@@ -333,28 +341,27 @@ tfoot td:last-child { text-align:right; }
                 </tr>
             </tfoot>
         </table>
-        @if($cashRegister->contains('is_open', true))
-        <p style="font-size:11px;margin-top:6px">* still open — closing shown is a live figure, not a final count</p>
-        @endif
         @endif
     </div>
 
     <div class="cell">
-        <div class="section-heading">Boxes Sold by Product</div>
-        @if(count($summary['boxes_by_product']) > 0)
+        <div class="section-heading">Sold by Product</div>
+        @if(count($summary['sold_by_product'] ?? []) > 0)
         <table>
             <thead>
                 <tr>
                     <th>Product</th>
-                    <th>Boxes Sold</th>
+                    <th>Boxes</th>
+                    <th>Items</th>
                     <th>Amount (RWF)</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($summary['boxes_by_product'] as $row)
+                @foreach($summary['sold_by_product'] as $row)
                 <tr>
                     <td>{{ $row->product_name }}</td>
-                    <td style="text-align:right">{{ number_format($row->boxes) }}</td>
+                    <td style="text-align:right">{{ $row->boxes > 0 ? number_format($row->boxes) : '' }}</td>
+                    <td style="text-align:right">{{ $row->items > 0 ? number_format($row->items) : '' }}</td>
                     <td style="text-align:right">{{ number_format($row->amount) }}</td>
                 </tr>
                 @endforeach
@@ -363,12 +370,13 @@ tfoot td:last-child { text-align:right; }
                 <tr>
                     <td>Total</td>
                     <td style="text-align:right">{{ number_format($summary['total_boxes_sold']) }}</td>
-                    <td style="text-align:right">{{ number_format(collect($summary['boxes_by_product'])->sum('amount')) }}</td>
+                    <td style="text-align:right">{{ number_format($summary['total_items_sold'] ?? 0) }}</td>
+                    <td style="text-align:right">{{ number_format(collect($summary['sold_by_product'])->sum('amount')) }}</td>
                 </tr>
             </tfoot>
         </table>
         @else
-        <p>No boxes sold in this period.</p>
+        <p>Nothing sold in this period.</p>
         @endif
     </div>
 
@@ -401,9 +409,6 @@ tfoot td:last-child { text-align:right; }
                 </tr>
             </tfoot>
         </table>
-        @if($summary['total_sales_credit'] > 0)
-        <p style="font-size:11px;margin-top:6px;color:#555">Credit is counted here as revenue because the sale happened, but that money hasn't actually been received — see Outstanding Receivables in Business Position above.</p>
-        @endif
     </div>
     @endif
 
