@@ -1159,17 +1159,21 @@ middleware (`Auth::onceUsingId`, loopback `REMOTE_ADDR` only). It was
 deleted after the pass; re-create it only for a review and remove it
 afterwards.
 
-**Routes whose views don't exist (500), found during the pass:**
-- **Linked from the UI:** `owner.returns.index` and
-  `owner.damaged-goods.index` are the targets of the owner dashboard's
-  OwnerActions widget (`app/Livewire/Dashboard/OwnerActions.php` ~l.92/150),
-  shown when returns or damaged goods are pending.
-- **Not linked anywhere:**
-  - `owner.users.create` / `owner.users.edit` (users use the drawer)
-  - `owner.returns.show`, `owner.damaged-goods.show`
-  - `shop.sales.show`
-  - `products.index` / `products.show`
-  - `warehouse.reports.inventory` / `warehouse.reports.transfers`
+**Routes whose views didn't exist (500) — resolved 2026-09-27:**
+- `owner.returns.index` and `owner.damaged-goods.index` are linked from
+  the owner dashboard's OwnerActions widget. They now have wrapper views
+  (`resources/views/owner/{returns,damaged-goods}/index.blade.php`)
+  embedding the shop components, which already had an owner mode: all
+  shops, approve returns, decide the disposition. Owners bypass the
+  open-register gate.
+- Removed, because nothing linked to them: `owner.users.create` /
+  `owner.users.edit` (users use the drawer), `owner.returns.show`,
+  `owner.damaged-goods.show`, `shop.sales.show`, `products.index` /
+  `products.show`, `warehouse.reports.inventory` /
+  `warehouse.reports.transfers`. The orphaned
+  `Owner\Products\CreateProduct` still calls `route('products.index')`;
+  it is unreachable and left as is.
+- Test: `tests/Feature/Owner/OwnerReturnsDamagedPagesTest.php`.
 
 **Still open:**
 - the topbar title reads "Dashboard" on most pages, because

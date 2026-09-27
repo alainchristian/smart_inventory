@@ -69,8 +69,6 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     // User management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', function () { return view('owner.users.index'); })->name('index');
-        Route::get('/create', function () { return view('owner.users.create'); })->name('create');
-        Route::get('/{user}/edit', function ($user) { return view('owner.users.edit', compact('user')); })->name('edit');
     });
 
     // Location management
@@ -140,13 +138,11 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     // Returns
     Route::prefix('returns')->name('returns.')->group(function () {
         Route::get('/', function () { return view('owner.returns.index'); })->name('index');
-        Route::get('/{return}', function ($return) { return view('owner.returns.show', compact('return')); })->name('show');
     });
 
     // Damaged Goods
     Route::prefix('damaged-goods')->name('damaged-goods.')->group(function () {
         Route::get('/', function () { return view('owner.damaged-goods.index'); })->name('index');
-        Route::get('/{damagedGood}', function ($damagedGood) { return view('owner.damaged-goods.show', compact('damagedGood')); })->name('show');
     });
 
     // Transporters
@@ -230,12 +226,6 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckL
             })->name('delivery-note');
         });
 
-        // Reports
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/inventory', function () { return view('warehouse.reports.inventory'); })->name('inventory');
-            Route::get('/transfers', function () { return view('warehouse.reports.transfers'); })->name('transfers');
-        });
-
         // Expense Requests
         Route::prefix('expense-requests')->name('expense-requests.')->group(function () {
             Route::get('/', function () { return view('warehouse.expense-requests.index'); })->name('index');
@@ -279,7 +269,6 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
         // Sales
         Route::prefix('sales')->name('sales.')->group(function () {
             Route::get('/', function () { return view('shop.sales.index'); })->name('index');
-            Route::get('/{sale}', function ($sale) { return view('shop.sales.show', compact('sale')); })->name('show');
             Route::get('/{sale}/receipt', [ReceiptController::class, 'print'])->name('receipt');
         });
 
@@ -369,12 +358,6 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
 
 // Shared routes (accessible by all authenticated users with proper permissions)
 Route::middleware(['auth'])->group(function () {
-    // Products (view only for non-owners)
-    Route::prefix('products')->name('products.')->group(function () {
-        Route::get('/', function () { return view('products.index'); })->name('index');
-        Route::get('/{product}', function ($product) { return view('products.show', compact('product')); })->name('show');
-    });
-
     // Profile
     Route::get('/profile', function () { return view('profile'); })->name('profile');
 });
