@@ -153,8 +153,8 @@
 
       <div class="pf-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
 
-        {{-- Items per Box confirmation --}}
-        <div>
+        {{-- Items per Box confirmation (hidden on phones: same field is in Pricing) --}}
+        <div class="pf-dup-ipb">
           <label class="pf-label">Items per Box <span style="color:var(--text-dim);font-size:10px">(confirmation)</span></label>
           <input wire:model.live="itemsPerBox" type="number" min="1"
                  class="pf-input pf-mono pf-readonly">
@@ -318,8 +318,8 @@
       </label>
     </div>
 
-    {{-- Live preview card --}}
-    <div style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:20px 22px">
+    {{-- Live preview card (hidden on phones: repeats the Pricing card) --}}
+    <div class="pf-preview" style="background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:20px 22px">
       <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
                   color:var(--text-sub);margin-bottom:14px">Preview</div>
 
@@ -355,13 +355,13 @@
       @endif
     </div>
 
-    {{-- Action buttons --}}
-    <div style="display:flex;flex-direction:column;gap:8px">
+    {{-- Action buttons (a fixed Cancel + Save bar on phones / narrow screens) --}}
+    <div class="pf-actions" style="display:flex;flex-direction:column;gap:8px">
       <button
         @if($mode === 'create') wire:click="save" @else wire:click="update" @endif
-        wire:loading.attr="disabled"
+        wire:loading.attr="disabled" wire:target="save,update"
         class="pf-btn-save">
-        <span wire:loading.remove>
+        <span wire:loading.remove wire:target="save,update">
           @if($mode === 'create')
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="display:inline">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -375,7 +375,7 @@
             Save Changes
           @endif
         </span>
-        <span wire:loading style="display:none;font-size:13px">Saving...</span>
+        <span wire:loading wire:target="save,update" style="display:none;font-size:13px">Saving...</span>
       </button>
 
       <a href="{{ route('owner.products.index') }}" class="pf-btn-cancel">Cancel</a>
@@ -446,7 +446,7 @@
                box-shadow:0 3px 10px rgba(59,111,212,.25) }
 .pf-btn-save:hover    { opacity:.88 }
 .pf-btn-save:disabled { opacity:.5;cursor:not-allowed }
-.pf-btn-cancel { padding:10px 20px;background:var(--surface2);color:var(--text-sub);
+.pf-btn-cancel { padding:10px 20px;background:var(--surface);color:var(--text-sub);
                  border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;
                  font-weight:600;text-decoration:none;text-align:center;display:block;
                  transition:all var(--tr) }
@@ -454,14 +454,26 @@
 
 /* ── Layout breakpoints ──────────────────────────── */
 @media (max-width: 900px) {
-  .product-form-grid { grid-template-columns: 1fr !important; }
+  .product-form-grid { grid-template-columns: 1fr !important; padding-bottom:76px; }
   .pf-sidebar { position:static !important; top:auto !important; }
+  /* Save used to sit at the very end of a ~2,300px form: pin Cancel + Save to
+     the bottom of the screen (fixed, not sticky — the buttons live in the last
+     column, so a sticky bar would only appear once you'd scrolled past everything) */
+  .pf-actions { position:fixed;left:0;right:0;bottom:0;z-index:30;flex-direction:row-reverse !important;
+                padding:12px 16px calc(12px + var(--m-safe-bottom));background:var(--surface);
+                border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(26,31,54,.08) }
+  .pf-actions .pf-btn-save { flex:1;width:auto }
+  .pf-actions .pf-btn-cancel { display:flex;align-items:center;justify-content:center;padding:10px 18px }
 }
 @media (max-width: 768px) {
   .pf-grid-3 { grid-template-columns: 1fr 1fr !important; }
 }
+@media (max-width: 640px) {
+  .pf-dup-ipb, .pf-preview { display:none !important; }
+}
 @media (max-width: 540px) {
-  .pf-grid-2, .pf-grid-3 { grid-template-columns: 1fr !important; }
+  /* SKU + Barcode and the two box prices still fit two-up; 3-col rows stack */
+  .pf-grid-3 { grid-template-columns: 1fr 1fr !important; }
   .pf-input { font-size:16px !important; } /* prevent iOS zoom */
 }
 </style>

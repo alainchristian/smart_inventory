@@ -74,6 +74,23 @@
 }
 .settings-kpi-dot.on  { background: var(--green); }
 .settings-kpi-dot.off { background: var(--red);   }
+.settings-kpi-val.neutral { color: var(--text-sub); }
+.settings-kpi-dot.neutral { background: var(--text-dim); }
+
+/* ── Section chips (sticky) ─────────────── */
+.st-nav {
+    position: sticky; top: var(--topbar-height); z-index: 15;
+    display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+    padding: 10px 0; margin: 0 0 4px; background: var(--surface);
+}
+.st-nav::-webkit-scrollbar { display: none; }
+.st-nav-chip {
+    flex-shrink: 0; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-sub); font-size: 12px; font-weight: 600;
+    text-decoration: none; white-space: nowrap; transition: all var(--tr, .18s);
+}
+.st-nav-chip:hover { border-color: var(--accent); color: var(--accent); }
+.page-section-label[id] { scroll-margin-top: calc(var(--topbar-height) + 60px); }
 
 /* ── Section label (from design system) ─── */
 .page-section-label {
@@ -392,9 +409,10 @@
     .st-input { flex: 1; min-width: 0; width: auto; max-width: 220px; }
     .st-input-error { text-align: left; }
     .st-chips-wrap { padding: 11px 16px 14px; }
-    .settings-save-bar { padding: 12px 16px; flex-direction: column; align-items: stretch; }
-    .settings-save-btn { width: 100%; justify-content: center; }
-    .settings-save-hint { font-size: 0.75rem; }
+    .settings-save-bar { padding: 10px 12px; margin-top: 12px; }
+    .settings-save-hint { display: none; } /* the page subtitle already says it */
+    .settings-save-actions { flex: 1; flex-wrap: nowrap; }
+    .settings-save-btn { flex: 1; justify-content: center; }
 }
 @media (max-width: 480px) {
     .settings-kpi-strip { grid-template-columns: repeat(2, 1fr); }
@@ -404,7 +422,7 @@
 {{-- ── Page header ──────────────────────────────────────────── --}}
 <div class="settings-header">
     <div>
-        <h1 class="settings-title">Business Settings</h1>
+        <h1 class="settings-title m-dup-title">Business Settings</h1>
         <p class="settings-subtitle">Operational rules &middot; changes take effect immediately after saving</p>
     </div>
 </div>
@@ -455,17 +473,29 @@
     </div>
     <div class="settings-kpi">
         <div class="settings-kpi-label">Languages</div>
-        <div class="settings-kpi-val {{ $multilingualEnabled ? 'on' : 'off' }}">
-            <span class="settings-kpi-dot {{ $multilingualEnabled ? 'on' : 'off' }}"></span>
+        <div class="settings-kpi-val {{ $multilingualEnabled ? 'on' : 'neutral' }}">
+            <span class="settings-kpi-dot {{ $multilingualEnabled ? 'on' : 'neutral' }}"></span>
             {{ $multilingualEnabled ? 'Multi' : strtoupper($defaultLocale) }}
         </div>
     </div>
 </div>
 
+{{-- ── Section chips: jump between the 8 sections (sticky under the topbar) ── --}}
+<nav class="st-nav" aria-label="Settings sections">
+    <a href="#st-sales" class="st-nav-chip">Sales</a>
+    <a href="#st-returns" class="st-nav-chip">Returns</a>
+    <a href="#st-credit" class="st-nav-chip">Credit</a>
+    <a href="#st-pricing" class="st-nav-chip">Pricing</a>
+    <a href="#st-inventory" class="st-nav-chip">Inventory</a>
+    <a href="#st-payments" class="st-nav-chip">Payments</a>
+    <a href="#st-fulfillment" class="st-nav-chip">Fulfillment</a>
+    <a href="#st-localization" class="st-nav-chip">Localization</a>
+</nav>
+
 {{-- ══════════════════════════════════════════
      SECTION 1: Sales Rules
 ══════════════════════════════════════════ --}}
-<div class="page-section-label">Sales</div>
+<div class="page-section-label" id="st-sales">Sales</div>
 <div class="section-card">
     <div class="section-card-header">
         <div class="section-card-icon" style="background:var(--accent-dim)">
@@ -541,7 +571,7 @@
 {{-- ══════════════════════════════════════════
      SECTION 2: Returns Policy
 ══════════════════════════════════════════ --}}
-<div class="page-section-label">Returns</div>
+<div class="page-section-label" id="st-returns">Returns</div>
 <div class="section-card">
     <div class="section-card-header">
         <div class="section-card-icon" style="background:var(--violet-dim)">
@@ -615,7 +645,7 @@
 {{-- ══════════════════════════════════════════
      SECTION 3: Credit Policy
 ══════════════════════════════════════════ --}}
-<div class="page-section-label">Credit</div>
+<div class="page-section-label" id="st-credit">Credit</div>
 <div class="section-card">
     <div class="section-card-header">
         <div class="section-card-icon" style="background:var(--amber-dim)">
@@ -708,7 +738,7 @@
 {{-- ══════════════════════════════════════════
      SECTION 4: Price Override
 ══════════════════════════════════════════ --}}
-<div class="page-section-label">Pricing</div>
+<div class="page-section-label" id="st-pricing">Pricing</div>
 <div class="section-card">
     <div class="section-card-header">
         <div class="section-card-icon" style="background:var(--green-dim)">
@@ -764,7 +794,7 @@
 {{-- ══════════════════════════════════════════
      SECTION 5: Inventory Policy
 ══════════════════════════════════════════ --}}
-<div class="page-section-label">Inventory</div>
+<div class="page-section-label" id="st-inventory">Inventory</div>
 <div class="section-card">
     <div class="section-card-header">
         <div class="section-card-icon" style="background:var(--green-dim)">
@@ -823,7 +853,7 @@
 {{-- ══════════════════════════════════════════
      SECTION 6: Payment Methods
 ══════════════════════════════════════════ --}}
-<div class="page-section-label">Payments</div>
+<div class="page-section-label" id="st-payments">Payments</div>
 <div class="section-card">
     <div class="section-card-header">
         <div class="section-card-icon" style="background:var(--violet-dim)">
@@ -886,7 +916,7 @@
 {{-- ══════════════════════════════════════════
      SECTION 7: Fulfillment
 ══════════════════════════════════════════ --}}
-<div class="page-section-label">Fulfillment</div>
+<div class="page-section-label" id="st-fulfillment">Fulfillment</div>
 <div class="section-card">
     <div class="section-card-header">
         <div class="section-card-icon" style="background:var(--accent-dim)">
@@ -940,7 +970,7 @@
 {{-- ══════════════════════════════════════════
      SECTION 8: Localization
 ══════════════════════════════════════════ --}}
-<div class="page-section-label">Localization</div>
+<div class="page-section-label" id="st-localization">Localization</div>
 <div class="section-card">
     <div class="section-card-header">
         <div class="section-card-icon" style="background:var(--accent-dim)">

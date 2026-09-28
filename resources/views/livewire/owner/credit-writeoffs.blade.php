@@ -104,7 +104,17 @@
     .cw-form-grid { grid-template-columns:1fr; }
 }
 @media(max-width:640px) {
-    .cw-form-inner { width:calc(100vw - 16px);padding:16px; }
+    /* The write-off form opens as a bottom sheet instead of a row inside the
+       sideways-scrolling table (its fields and "Full balance" were cut off) */
+    .cw-form-inner { position:fixed !important;left:0;right:0;bottom:0;top:auto;z-index:451;
+                     width:auto !important;max-width:none !important;max-height:88vh;overflow-y:auto;
+                     background:var(--surface);border-left:none;border-radius:16px 16px 0 0;
+                     box-shadow:0 -8px 32px rgba(26,31,54,.18);
+                     padding:4px 16px calc(16px + var(--m-safe-bottom)); }
+    .cw-form-actions { position:sticky;bottom:calc(-16px - var(--m-safe-bottom));background:var(--surface);
+                       margin:16px -16px 0;padding:12px 16px;border-top:1px solid var(--border); }
+    .cw-form-actions .cw-btn { flex:1;justify-content:center; }
+    .cw-form-input { font-size:16px !important; } /* below 16px iOS zooms on focus */
 }
 </style>
 
@@ -177,7 +187,9 @@
                             @if($isOpenRow && $this->selectedCustomer)
                                 <tr class="cw-form-row" wire:key="wo-form-{{ $customer->id }}-{{ $customer->balance_shop_id }}">
                                     <td colspan="6">
+                                        <div class="m-sheet-overlay m-only" wire:click="cancelWriteoff"></div>
                                         <div class="cw-form-inner">
+                                        <div class="m-sheet-handle m-only"></div>
 
                                             @if(! $confirmStep)
                                                 {{-- Step 1: amount + reason --}}
