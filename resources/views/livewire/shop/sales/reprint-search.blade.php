@@ -4,6 +4,9 @@
 .rs-header        { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap }
 .rs-header-title  { font-size:22px;font-weight:800;color:var(--text);margin:0 0 4px }
 .rs-header-sub    { font-size:13px;color:var(--text-dim);margin:0 }
+.rs-back          { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rsm);border:1.5px solid var(--border);background:var(--surface);
+                    color:var(--text-dim);font-size:13px;font-weight:600;text-decoration:none;transition:all var(--tr);white-space:nowrap }
+.rs-back:hover    { border-color:var(--accent);color:var(--accent) }
 
 /* Filter card */
 .rs-filters       { background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);margin-bottom:20px;min-width:0;max-width:100% }
@@ -18,8 +21,8 @@
 .rs-filter-grow   { flex:1;min-width:200px }
 .rs-search-wrap   { position:relative;width:100% }
 .rs-search-icon   { position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none }
-.rs-search        { width:100%;padding:9px 12px 9px 36px;border:1.5px solid var(--border);border-radius:var(--rsm);background:var(--bg);color:var(--text);font-size:13px;font-family:var(--font);outline:none;box-sizing:border-box;transition:border-color var(--tr) }
-.rs-search:focus  { border-color:var(--accent) }
+.rs-search        { width:100%;padding:9px 12px 9px 36px;border:1.5px solid var(--border);border-radius:var(--rsm);background:var(--surface);color:var(--text);font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box;transition:border-color var(--tr) }
+.rs-search:focus  { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
 .rs-search::placeholder { color:var(--text-dim) }
 .rs-date-input    { padding:0;border:none;background:transparent;color:var(--text);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;width:110px;outline:none }
 .rs-date-input:focus { color:var(--accent) }
@@ -33,6 +36,7 @@
 .rs-table tbody tr{ border-bottom:1px solid var(--border);transition:background var(--tr) }
 .rs-table tbody tr:last-child { border-bottom:none }
 .rs-table tbody tr:hover { background:var(--surface2) }
+.rs-table tbody tr.rs-row { cursor:pointer }
 .rs-table td      { padding:12px 16px;font-size:13px;vertical-align:middle;white-space:nowrap }
 .rs-table td[colspan] { white-space:normal }
 
@@ -55,6 +59,7 @@
 .rs-modal-banner  { background:var(--green);padding:20px 22px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0;border-radius:var(--r) var(--r) 0 0 }
 .rs-modal-close   { width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.18);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background var(--tr) }
 .rs-modal-close:hover { background:rgba(255,255,255,.32) }
+.rs-modal-num     { font-size:19px;font-weight:800;font-family:var(--mono);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
 .rs-modal-body    { flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:14px }
 .rs-modal-section { }
 .rs-modal-sec-lbl { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:8px }
@@ -63,6 +68,34 @@
 .rs-pay-row       { display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text-dim) }
 .rs-pay-total     { border-top:1.5px solid var(--border);margin-top:6px;padding-top:8px;font-size:14px;font-weight:800;color:var(--text) }
 .rs-modal-foot    { padding:14px 22px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:10px;flex-shrink:0 }
+.rs-foot-btn      { display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--rsm);border:1.5px solid var(--border);background:transparent;
+                    color:var(--text-sub);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;transition:all var(--tr);font-family:var(--font);white-space:nowrap }
+.rs-foot-btn:hover { border-color:var(--accent);color:var(--accent) }
+.rs-foot-btn.primary { background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(59,111,212,.25) }
+.rs-foot-btn.primary:hover { opacity:.88;color:#fff }
+
+/* Phones */
+@media (max-width:640px) {
+    .rs-header        { margin-bottom:16px;align-items:center }
+    .rs-header-title  { font-size:20px }
+    .rs-filter-seg    { border-right:none;flex:1 1 100%;padding:8px 14px }
+    .rs-filter-seg:first-child { border-bottom:1px solid var(--border);justify-content:center }
+    .rs-date-input    { width:auto;flex:1;min-width:0 }
+    .rs-filter-grow   { min-width:0 }
+    .rs-search        { font-size:16px } /* below 16px iOS zooms the page on focus */
+    .rs-table thead th { padding:10px 12px }
+    .rs-table td      { padding:11px 12px }
+    .rs-modal-body    { padding:16px }
+    .rs-modal-foot    { padding:12px 16px }
+    /* undo the global 44px touch-target inflation on these compact controls */
+    .rs-preset-btn    { min-height:32px !important;min-width:0 !important;padding:5px 11px !important }
+    .rs-action        { min-height:34px !important;min-width:0 !important;padding:6px 11px !important }
+    .rs-back          { min-height:38px !important;padding:7px 12px !important }
+    .rs-foot-btn      { min-height:42px !important;padding:10px !important }
+    .rs-modal-close   { width:32px !important;height:32px !important;min-width:0 !important;min-height:0 !important;padding:0 !important }
+    .rs-modal-banner  { padding:16px 16px 14px }
+    .rs-modal-num     { font-size:17px }
+}
 </style>
 
 {{-- ── Page header ─────────────────────────────────────────────────────────── --}}
@@ -71,10 +104,7 @@
         <h1 class="rs-header-title">Receipt History</h1>
         <p class="rs-header-sub">Find and reprint sales receipts</p>
     </div>
-    <a href="{{ route('shop.pos') }}"
-       style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rsm);border:1.5px solid var(--border);background:var(--surface);color:var(--text-dim);font-size:13px;font-weight:600;text-decoration:none;transition:all var(--tr);white-space:nowrap"
-       onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
+    <a href="{{ route('shop.pos') }}" class="rs-back">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
         Back to POS
     </a>
@@ -83,7 +113,8 @@
 {{-- ── Filters ──────────────────────────────────────────────────────────────── --}}
 <div class="rs-filters">
     {{-- Preset pills --}}
-    <div class="rs-presets-row" @if($search) style="opacity:.45;pointer-events:none" @endif>
+    <div class="rs-presets-row" @if($search) style="opacity:.45;pointer-events:none" @endif
+         x-data x-init="$nextTick(() => { const a = $el.querySelector('.active'); if (a) $el.scrollLeft = a.offsetLeft - 14 })">
         @foreach(['today'=>'Today','yesterday'=>'Yesterday','this_week'=>'This Week','this_month'=>'This Month','last_month'=>'Last Month','last_30'=>'Last 30 Days'] as $key => $label)
             <button class="rs-preset-btn {{ $preset === $key ? 'active' : '' }}" wire:click="setPreset('{{ $key }}')">{{ $label }}</button>
         @endforeach
@@ -99,7 +130,7 @@
         <div class="rs-filter-seg rs-filter-grow">
             <div class="rs-search-wrap">
                 <svg class="rs-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input class="rs-search" type="text" wire:model.live.debounce.300ms="search" placeholder="Sale #, customer name, phone, product…">
+                <input class="rs-search" type="text" wire:model.live.debounce.300ms="search" placeholder="Receipt #, customer, phone, product…">
             </div>
         </div>
     </div>
@@ -113,14 +144,14 @@
 {{-- ── Results table ────────────────────────────────────────────────────────── --}}
 <div class="rs-table-wrap">
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-        <table class="rs-table rs-cards-mob">
+        <table class="rs-table">
             <thead>
                 <tr>
                     <th>Receipt #</th>
-                    <th>Customer</th>
-                    <th class="rs-hide-mob">Items</th>
                     <th style="text-align:right">Total</th>
-                    <th class="rs-hide-mob">Date &amp; Time</th>
+                    <th>Customer</th>
+                    <th>Date &amp; Time</th>
+                    <th>Items</th>
                     <th></th>
                 </tr>
             </thead>
@@ -132,14 +163,18 @@
                     $extra   = $grouped->count() - 2;
                     $itemStr = $names->implode(', ') . ($extra > 0 ? ' +' . $extra . ' more' : '');
                 @endphp
-                <tr wire:key="sale-{{ $sale->id }}">
-                    <td data-label="Receipt #">
+                <tr wire:key="sale-{{ $sale->id }}" class="rs-row" wire:click="viewSale({{ $sale->id }})">
+                    <td>
                         <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text)">{{ $sale->sale_number }}</div>
                         @if($sale->shop)
                             <div style="font-size:11px;color:var(--text-dim)">{{ $sale->shop->name }}</div>
                         @endif
                     </td>
-                    <td data-label="Customer">
+                    <td style="text-align:right">
+                        <span style="font-family:var(--mono);font-weight:700;color:var(--accent)">{{ number_format($sale->total) }}</span>
+                        <span style="font-size:10px;color:var(--text-dim);margin-left:2px">RWF</span>
+                    </td>
+                    <td>
                         @if($sale->customer_name)
                             <div style="font-size:13px;color:var(--text)">{{ $sale->customer_name }}</div>
                             @if($sale->customer_phone)
@@ -149,18 +184,14 @@
                             <span style="font-size:12px;color:var(--text-dim)">Walk-in</span>
                         @endif
                     </td>
-                    <td class="rs-hide-mob" data-label="Items" style="font-size:12px;color:var(--text-dim)" title="{{ $itemStr }}">
-                        <div style="max-width:240px;overflow:hidden;text-overflow:ellipsis">{{ $itemStr }}</div>
-                    </td>
-                    <td data-label="Total" style="text-align:right;white-space:nowrap">
-                        <span style="font-family:var(--mono);font-weight:700;color:var(--accent)">{{ number_format($sale->total) }}</span>
-                        <span style="font-size:10px;color:var(--text-dim);margin-left:2px">RWF</span>
-                    </td>
-                    <td class="rs-hide-mob" data-label="Date" style="white-space:nowrap">
+                    <td>
                         <div style="font-size:13px;color:var(--text-sub)">{{ local_time($sale->sale_date ?? $sale->created_at)->format('d M Y') }}</div>
                         <div style="font-size:11px;color:var(--text-dim)">{{ local_time($sale->sale_date ?? $sale->created_at)->format('H:i') }}</div>
                     </td>
-                    <td data-label="Actions">
+                    <td style="font-size:12px;color:var(--text-dim)" title="{{ $itemStr }}">
+                        <div style="max-width:240px;overflow:hidden;text-overflow:ellipsis">{{ $itemStr }}</div>
+                    </td>
+                    <td wire:click.stop>
                         <div style="display:flex;gap:6px;justify-content:flex-end">
                             <button wire:click="viewSale({{ $sale->id }})" class="rs-action">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -211,24 +242,21 @@
 
 {{-- ── Receipt view modal ───────────────────────────────────────────────────── --}}
 @if($showReceiptModal && $selectedSale)
-<div class="rs-overlay" wire:click.self="closeReceiptModal">
+<div class="rs-overlay" wire:click.self="closeReceiptModal" x-data @keydown.escape.window="$wire.closeReceiptModal()">
     <div class="rs-modal">
 
         {{-- Banner --}}
         <div class="rs-modal-banner">
-            <div>
+            <div style="min-width:0">
                 <div style="font-size:11px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Receipt</div>
-                <div style="font-size:19px;font-weight:800;font-family:var(--mono);color:#fff">{{ $selectedSale->sale_number }}</div>
-                @if($selectedSale->shop)
-                    <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:3px">{{ $selectedSale->shop->name }}</div>
-                @endif
+                <div class="rs-modal-num">{{ $selectedSale->sale_number }}</div>
+                <div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:3px">
+                    @if($selectedSale->shop){{ $selectedSale->shop->name }} · @endif{{ local_time($selectedSale->sale_date ?? $selectedSale->created_at)->format('d M Y, H:i') }}
+                </div>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-                <button class="rs-modal-close" wire:click="closeReceiptModal">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-                <div style="font-size:11px;color:rgba(255,255,255,.75)">{{ local_time($selectedSale->sale_date ?? $selectedSale->created_at)->format('d M Y, H:i') }}</div>
-            </div>
+            <button class="rs-modal-close" wire:click="closeReceiptModal" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
 
         {{-- Body --}}
@@ -256,19 +284,11 @@
             <div class="rs-modal-section">
                 <div class="rs-modal-sec-lbl">Items</div>
                 <div style="background:var(--bg);border-radius:var(--rsm);padding:8px 10px">
-                    @foreach($selectedSale->items->groupBy(fn($i) => $i->product_id.'_'.($i->is_full_box?'b':'i')) as $lines)
-                    @php
-                        $line      = $lines->first();
-                        $isBox     = $line->is_full_box;
-                        $ipb       = max(1, $line->product?->items_per_box ?? 1);
-                        $totalQty  = $isBox ? (int) round($lines->sum('quantity_sold') / $ipb) : $lines->sum('quantity_sold');
-                        $unitLabel = $isBox ? ($totalQty === 1 ? 'box' : 'boxes') : 'pcs';
-                        $lineTotal = $lines->sum('line_total');
-                    @endphp
+                    @foreach($selectedSale->groupedItems() as $line)
                     <div class="rs-item-row">
-                        <span style="color:var(--text);flex:1">{{ $line->product?->name ?? '?' }}</span>
-                        <span style="color:var(--text-dim);font-size:11px;white-space:nowrap">{{ $totalQty }} {{ $unitLabel }}</span>
-                        <span style="font-weight:700;font-family:var(--mono);color:var(--text);white-space:nowrap">{{ number_format($lineTotal) }}</span>
+                        <span style="color:var(--text);flex:1">{{ $line['product_name'] }}</span>
+                        <span style="color:var(--text-dim);font-size:11px;white-space:nowrap">{{ $line['qty_label'] }}</span>
+                        <span style="font-weight:700;font-family:var(--mono);color:var(--text);white-space:nowrap">{{ number_format($line['line_total']) }}</span>
                     </div>
                     @endforeach
                 </div>
@@ -317,20 +337,11 @@
 
         {{-- Footer --}}
         <div class="rs-modal-foot">
-            <a href="{{ route('shop.receipt.print', ['sale' => $selectedSale->id, 'full' => 1]) }}" target="_blank"
-               style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--rsm);border:1.5px solid var(--border);background:transparent;color:var(--text-sub);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;transition:all var(--tr);font-family:var(--font)"
-               onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-sub)'">
+            <button type="button" class="rs-foot-btn" wire:click="closeReceiptModal">Close</button>
+            <a href="{{ route('shop.receipt.print', ['sale' => $selectedSale->id, 'full' => 1]) }}" target="_blank" class="rs-foot-btn primary">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print Receipt
+                Print receipt
             </a>
-            <button wire:click="closeReceiptModal"
-                    style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:var(--rsm);border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--tr);font-family:var(--font)"
-                    onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'"
-                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                Close
-            </button>
         </div>
 
     </div>

@@ -39,6 +39,10 @@ class ProductSellUnit extends Model
         if (! $unitName) {
             return $qty . ' ' . ($qty === 1 ? 'item' : 'items');
         }
+        // "Pack of 3" can't take a plural "s" ("3 Pack of 3s") — use "3 × Pack of 3"
+        if (preg_match('/\d|\bof\b/i', $unitName)) {
+            return $qty . ' × ' . $unitName;
+        }
         $invariant = in_array(strtolower($unitName), ['dozen', 'gross', 'half-dozen'], true) || str_ends_with(strtolower($unitName), 's');
 
         return $qty . ' ' . ($qty === 1 || $invariant ? $unitName : $unitName . 's');

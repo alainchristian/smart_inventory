@@ -39,7 +39,7 @@ class ReprintSearch extends Component
 
     public function resolveDates(): void
     {
-        $today = today();
+        $today = business_today();
 
         match ($this->preset) {
             'today'      => [$this->dateFrom, $this->dateTo] = [$today->toDateString(), $today->toDateString()],
@@ -79,7 +79,18 @@ class ReprintSearch extends Component
 
     public function viewSale(int $id): void
     {
-        $this->selectedSale     = Sale::with(['shop', 'soldBy', 'payments', 'items.product'])->find($id);
+        $user = auth()->user();
+
+        // Managers only see their own shop's receipts (same rule as the list and the print route)
+        $sale = Sale::with(['shop', 'soldBy', 'payments', 'items.product', 'items.box'])
+            ->when(! $user->isOwner(), fn ($q) => $q->where('shop_id', $user->location_id))
+            ->find($id);
+
+        if (! $sale) {
+            return;
+        }
+
+        $this->selectedSale     = $sale;
         $this->selectedSaleId   = $id;
         $this->showReceiptModal = true;
     }
@@ -102,8 +113,11 @@ class ReprintSearch extends Component
         $query = Sale::with(['shop', 'soldBy', 'payments', 'items.product'])
             ->whereNull('voided_at')
             ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
-            ->when($this->search === '' && $this->dateFrom, fn ($q) => $q->whereDate('sale_date', '>=', $this->dateFrom))
-            ->when($this->search === '' && $this->dateTo,   fn ($q) => $q->whereDate('sale_date', '<=', $this->dateTo))
+            // sale_date is UTC; the dates are business-timezone calendar days
+            ->when($this->search === '' && $this->dateFrom, fn ($q) => $q->where('sale_date', '>=',
+                Carbon::parse($this->dateFrom, config('tenant.timezone'))->startOfDay()->utc()))
+            ->when($this->search === '' && $this->dateTo, fn ($q) => $q->where('sale_date', '<=',
+                Carbon::parse($this->dateTo, config('tenant.timezone'))->endOfDay()->utc()))
             ->when($this->search, function ($q) {
                 $term = '%' . $this->search . '%';
                 $q->where(function ($inner) use ($term) {
