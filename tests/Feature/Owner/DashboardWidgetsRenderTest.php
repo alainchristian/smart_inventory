@@ -124,6 +124,11 @@ class DashboardWidgetsRenderTest extends TestCase
         $this->assertLessThanOrEqual(14, count($spark));
         $this->assertEquals(7000, end($spark));
 
+        // Expenses Breakdown legend shows category names (it read a key the service doesn't send)
+        $eb = Livewire::actingAs($owner)->test(ExpensesBreakdown::class);
+        $day($eb, '2021-06-09', '2021-06-10');
+        $this->assertSame("Days cat $u", $eb->get('categories')[0]['name']);
+
         // Trend, daily: the sale lands on Jun 10, not Jun 9
         $chart = Livewire::actingAs($owner)->test(SalesPerformance::class);
         $day($chart, '2021-06-09', '2021-06-10');

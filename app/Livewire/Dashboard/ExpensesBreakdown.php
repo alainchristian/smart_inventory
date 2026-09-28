@@ -43,7 +43,7 @@ class ExpensesBreakdown extends Component
         $this->categories = [];
         foreach ($cats as $i => $cat) {
             $this->categories[] = [
-                'name'  => $cat['name'] ?? '',
+                'name'  => $cat['category'] ?? $cat['name'] ?? '', // the service calls it 'category'
                 'total' => (int) ($cat['total'] ?? 0),
                 'pct'   => (float) ($cat['pct_of_total'] ?? 0),
                 'color' => $palette[$i] ?? '#6b7494',

@@ -3,9 +3,9 @@
 .fn-ov-head { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap; }
 @media(max-width:640px) { .fn-ov-head { margin-bottom:12px; } }
 </style>
-<div class="fn-ov-head">
+<div class="fn-ov-head m-page-head">
     <div>
-        <h1 style="font-size:22px;font-weight:800;color:var(--text);margin:0 0 2px;letter-spacing:-0.3px;">Finance Overview</h1>
+        <h1 class="m-dup-title" style="font-size:22px;font-weight:800;color:var(--text);margin:0 0 2px;letter-spacing:-0.3px;">Finance Overview</h1>
         <p style="font-size:13px;color:var(--text-dim);margin:0;">Multi-day revenue, expenses and cash summary</p>
     </div>
     <a href="{{ route('owner.finance.daily') }}"

@@ -173,7 +173,7 @@
 .fo-table td.fo-num {
     text-align:right;font-family:var(--mono);font-weight:700;white-space:nowrap;font-size:13px;
 }
-.fo-table tfoot tr { background:var(--surface2);border-top:1px solid var(--border); }
+.fo-table tfoot tr { border-top:2px solid var(--border); }
 .fo-table tfoot td {
     padding:10px 14px;font-size:12px;font-weight:700;font-family:var(--mono);
 }
@@ -282,20 +282,19 @@
     .fo-kpis   { grid-template-columns:repeat(2,1fr); }
 }
 @media(max-width:640px) {
-    .fo-kpis { grid-template-columns:1fr 1fr;gap:8px; }
-    .fo-kpi  { padding:14px;gap:10px; }
-    .fo-kpi-val { font-size:20px; }
+    .fo-page-sub { display:none; } /* the date inputs right below show the same range */
+    .fo-shop-select { font-size:16px; } /* below 16px iOS zooms on focus */
 }
 @media(max-width:480px) {
-    .fo-kpis { grid-template-columns:1fr; }
     .fo-rank-bar-wrap { display:none; }
     /* Modal 3-col → single column stack on mobile */
     .fo-expanded-detail { grid-template-columns:1fr; }
     .fo-exp-col { border-right:none !important;padding:14px 16px; }
     .fo-exp-col:not(:last-child) { border-right:none;border-bottom:1px solid var(--border); }
     .fo-controls-row { flex-wrap:wrap; }
-    .fo-ctrl-seg { border-right:none;border-bottom:1px solid var(--border);width:100%; }
-    .fo-ctrl-seg:last-child { border-bottom:none; }
+    .fo-ctrl-seg { border-right:none; }
+    .fo-ctrl-seg:first-child { width:100%;border-bottom:1px solid var(--border); }
+    .fo-ctrl-seg-grow { flex:1;min-width:0; }
     .fo-date-input { width:auto; }
     .fo-preset-btn { font-size:11px;padding:4px 9px; }
     .fo-page-title { font-size:18px; }
@@ -320,7 +319,7 @@
 <div class="fo-filters">
 
     {{-- Row 1: Period presets — horizontally scrollable --}}
-    <div class="fo-presets-row">
+    <div class="fo-presets-row" x-data x-init="$nextTick(() => { const a = $el.querySelector('.fo-active'); if (a) $el.scrollLeft = a.offsetLeft - 14 })">
         @foreach([
             'today'      => 'Today',
             'yesterday'  => 'Yesterday',
@@ -422,7 +421,7 @@
 @endphp
 
 {{-- ── KPI cards (4) ── --}}
-<div class="fo-kpis">
+<div class="fo-kpis m-kpis">
 
     {{-- Revenue --}}
     <div class="fo-kpi">
@@ -740,12 +739,11 @@
 
 {{-- ── Sessions table ── --}}
 <div class="fo-table-wrap">
-    <div class="fo-table-scroll">
-        <table class="fo-table">
+    <div class="fo-table-scroll m-scroll">
+        <table class="fo-table m-sticky-first">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Shop</th>
+                    <th>Date · Shop</th>
                     <th class="fo-num" style="color:var(--accent);">Revenue</th>
                     <th class="fo-num" style="color:var(--amber);">Refunds</th>
                     <th class="fo-num" style="color:var(--red);">Expenses</th>
@@ -770,9 +768,8 @@
                 <tr wire:click="toggleRow('{{ $row['session_date'] }}', {{ $row['shop_id'] }})">
                     <td style="white-space:nowrap;">
                         <div style="font-size:13px;font-weight:700;color:var(--text);">{{ \Carbon\Carbon::parse($row['session_date'])->format('d M Y') }}</div>
-                        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">{{ \Carbon\Carbon::parse($row['session_date'])->format('D') }}</div>
+                        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">{{ \Carbon\Carbon::parse($row['session_date'])->format('D') }} · {{ $row['shop_name'] }}</div>
                     </td>
-                    <td style="font-size:12px;font-weight:500;color:var(--text);">{{ $row['shop_name'] }}</td>
                     <td class="fo-num" style="color:{{ (int)$row['revenue'] > 0 ? 'var(--accent)' : 'var(--text-dim)' }};">{{ number_format($row['revenue']) }}</td>
                     <td class="fo-num" style="color:{{ (int)$row['refunds'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }};">{{ number_format($row['refunds']) }}</td>
                     <td class="fo-num" style="color:{{ (int)$row['expenses'] > 0 ? 'var(--red)' : 'var(--text-dim)' }};">{{ number_format($row['expenses']) }}</td>
@@ -798,7 +795,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="2" style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--text-dim);">
+                    <td style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--text-dim);">
                         Totals · {{ $days }} day{{ $days !== 1 ? 's' : '' }}
                     </td>
                     <td class="fo-num" style="color:var(--accent);">{{ number_format($totalRevenue) }}</td>

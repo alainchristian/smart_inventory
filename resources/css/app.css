@@ -2388,8 +2388,23 @@ main,
   .kpi5-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 480px) {
-  .kpi5-grid { grid-template-columns: 1fr; gap: 10px; }
+/* Phones: compact 2-up cards (owner dashboard). They used to go one per
+   row at ≤480px — five 170px cards filled the first screen and a half. */
+@media (max-width: 640px) {
+  .kpi5-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--m-s1); margin-bottom: var(--m-s3); }
+  .kpi5-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .kpi5-card { padding: var(--m-s2); min-width: 0; }
+  .kpi5-card:hover { transform: none; }
+  .kpi5-card > div:first-child { margin-bottom: 6px !important; gap: 8px !important; }  /* icon + label row */
+  .kpi5-card > div:nth-child(2) { margin-bottom: 8px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi5-icon { width: 26px; height: 26px; border-radius: 7px; }
+  .kpi5-icon svg { width: 14px; height: 14px; }
+  .kpi5-label { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .kpi5-value { font-size: var(--m-fs-value); letter-spacing: -.5px; }
+  .kpi5-unit { font-size: 10px; }
+  .kpi5-change { font-size: 12px; }
+  .kpi5-period { font-size: 10px; white-space: nowrap; }
+  .kpi5-card svg[viewBox="0 0 80 32"] { width: 56px; height: 24px; }
 }
 
 /* ═══════════════════════════════════════
@@ -2998,4 +3013,15 @@ main,
     top: auto; right: 16px; left: 16px; bottom: calc(16px + var(--m-safe-bottom));
     align-items: center; flex-direction: column-reverse;
   }
+}
+
+/* ── Dashboard donut widgets (Expenses Breakdown, Revenue by Category) ──
+   Sized by the CARD's width, not the screen's: on wide screens the bottom
+   row has 4 narrow columns, and a 140px donut left the legend no room. The
+   % share moved into each legend row's tooltip. */
+.dnut-card { container-type: inline-size; }
+@container (max-width: 440px) {
+  .dnut-wrap { gap: 12px !important; }
+  .dnut, .dnut canvas { width: 110px !important; height: 110px !important; }
+  .dnut > div > div:first-child { font-size: 10.5px !important; letter-spacing: -.3px; }
 }

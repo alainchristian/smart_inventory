@@ -211,15 +211,11 @@
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media(max-width:768px) {
-    .sa-kpis { grid-template-columns:1fr 1fr;gap:10px }
-    .sa-kpi  { padding:14px }
-    .sa-kpi-val { font-size:22px }
-    .sa-kpi-footer { grid-template-columns:repeat(3,1fr);gap:0 }
     .sa-two-col { grid-template-columns:1fr !important }
-    .sa-controls { flex-direction:column;align-items:stretch }
-    .sa-ctrl-seg { border-right:none;border-bottom:1px solid var(--border);flex-wrap:wrap }
-    .sa-ctrl-seg:last-child { border-bottom:none }
-    .sa-ctrl-grow { flex:1 1 auto }
+    .sa-controls { flex-wrap:wrap }
+    .sa-ctrl-seg { border-right:none }
+    .sa-ctrl-grow { flex:1 1 100%;border-bottom:1px solid var(--border) }
+    .sa-ctrl-seg:nth-child(2) { flex:1;min-width:0 }
     .sa-date-in  { flex:1;width:auto;min-width:80px;max-width:none }
     .sa-ctrl-seg:not(.sa-ctrl-grow) { flex-wrap:nowrap }
     .sa-shop-sel { max-width:none;width:auto;flex:1;min-width:0 }
@@ -238,6 +234,10 @@
     .sa-mix-item { min-width:calc(50% - 6px) }
 }
 @media(max-width:640px) {
+    .sa-shop-sel { font-size:16px } /* below 16px iOS zooms on focus */
+    .sa-presets { overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap }
+    .sa-presets::-webkit-scrollbar { display:none }
+    .sa-preset { flex-shrink:0 }
     .sa-tabs { display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
                scrollbar-width:none;border-radius:var(--r);flex-wrap:nowrap }
     .sa-tabs::-webkit-scrollbar { display:none }
@@ -245,11 +245,6 @@
     .sa-tab svg { display:none }
 }
 @media(max-width:480px) {
-    .sa-kpis { grid-template-columns:1fr;gap:8px }
-    .sa-kpi  { padding:14px 14px;gap:12px }
-    .sa-kpi-icon { width:30px;height:30px }
-    .sa-kpi-val  { font-size:20px }
-    .sa-kpi-footer { grid-template-columns:repeat(3,1fr) }
     .sa-strip-item { min-width:calc(50% - 1px);border-right:none;border-bottom:1px solid var(--border) }
     /* phone: name + amount + share on one line, bar full-width underneath (amounts stay visible) */
     .sa-pay-row  { flex-wrap:wrap;gap:6px 10px;padding:12px 16px }
@@ -291,7 +286,7 @@
 
 <div class="sa-filters">
     {{-- Preset pills --}}
-    <div class="sa-presets">
+    <div class="sa-presets" x-data x-init="$nextTick(() => { const a = $el.querySelector('.sa-preset.active'); if (a && $el.scrollWidth > $el.clientWidth) $el.scrollLeft = a.offsetLeft - 12 })">
         @foreach($periods as $key => $label)
         <button type="button" wire:key="preset-{{ $key }}" wire:click="setDateRange('{{ $key }}')"
                 class="sa-preset {{ $currentPeriod === $key ? 'active' : '' }}">
@@ -371,7 +366,7 @@
 @endphp
 
 {{-- ── 4 KPI Cards ─────────────────────────────────────────────────────── --}}
-<div class="sa-kpis">
+<div class="sa-kpis m-kpis">
 
     {{-- Revenue --}}
     <div class="sa-kpi">
@@ -656,7 +651,7 @@
             <div class="sa-card-sub">Day-by-day breakdown · revenue, profit, returns</div>
         </div>
     </div>
-    <div class="sa-tbl-scroll">
+    <div class="sa-tbl-scroll m-scroll">
         <table class="sa-tbl" style="min-width:960px;table-layout:fixed">
             <colgroup>
                 <col style="width:150px"><col style="width:110px"><col style="width:70px"><col style="width:70px">
@@ -736,20 +731,20 @@
         </div>
         <span class="sa-card-badge">{{ count($recentTxns) }} shown</span>
     </div>
-    <div class="sa-tbl-scroll">
+    <div class="sa-tbl-scroll m-scroll">
         <table class="sa-tbl" style="min-width:980px;table-layout:fixed">
             <colgroup>
-                <col style="width:190px"><col style="width:120px"><col style="width:190px">
-                <col style="width:150px"><col style="width:220px"><col style="width:110px">
+                <col style="width:190px"><col style="width:110px"><col style="width:120px"><col style="width:190px">
+                <col style="width:150px"><col style="width:220px">
             </colgroup>
             <thead>
                 <tr>
                     <th>Sale #</th>
+                    <th style="text-align:right">Total</th>
                     <th>Date</th>
                     <th>Shop</th>
                     <th>Sold By</th>
                     <th>Customer</th>
-                    <th style="text-align:right">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -761,6 +756,7 @@
                             {{ $txn['sale_number'] }}
                         </a>
                     </td>
+                    <td style="text-align:right;font-family:var(--mono);font-weight:600;color:var(--text)">{{ number_format($txn['total']) }}</td>
                     <td style="color:var(--text-sub);font-size:12px">{{ local_time($txn['sale_date'])->format('d M · H:i') }}</td>
                     <td style="color:var(--text-sub);font-size:12px">{{ $txn['shop_name'] }}</td>
                     <td style="color:var(--text-sub);font-size:12px">{{ $txn['seller_name'] }}</td>
@@ -770,7 +766,6 @@
                         <span class="sa-margin-pill" style="background:var(--amber-dim);color:var(--amber);margin-left:4px">Credit</span>
                         @endif
                     </td>
-                    <td style="text-align:right;font-family:var(--mono);font-weight:600;color:var(--text)">{{ number_format($txn['total']) }}</td>
                 </tr>
                 @empty
                 <tr><td colspan="6"><div class="sa-empty"><div class="sa-empty-title">No sales in this period</div></div></td></tr>
@@ -947,7 +942,7 @@
     $gapIsMaterial     = $profitGap > 0 && $gp['gross_profit'] > 0 && ($profitGap / $gp['gross_profit']) > 0.05;
 @endphp
 
-<div class="sa-kpis">
+<div class="sa-kpis m-kpis">
     <div class="sa-kpi">
         <div class="sa-kpi-row">
             <div class="sa-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
@@ -1055,7 +1050,7 @@
             <span class="sa-card-badge">{{ count($topP) }} products</span>
         </div>
     </div>
-    <div class="sa-tbl-scroll">
+    <div class="sa-tbl-scroll m-scroll">
         <table class="sa-tbl sa-ledger-tbl" style="min-width:1220px;table-layout:fixed">
             <colgroup>
                 <col style="width:44px">
@@ -1237,7 +1232,7 @@
     $avgMarkup   = $overStat['markup_items_count'] > 0 ? round($overStat['total_markup_given'] / $overStat['markup_items_count']) : 0;
     $netVsList   = $overStat['total_markup_given'] - $overStat['total_discount_given'];
 @endphp
-<div class="sa-kpis">
+<div class="sa-kpis m-kpis">
     <div class="sa-kpi">
         <div class="sa-kpi-row">
             <div class="sa-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
@@ -1324,7 +1319,7 @@
             {{ count($auditLog) }} modifications
         </span>
     </div>
-    <div class="sa-tbl-scroll">
+    <div class="sa-tbl-scroll m-scroll">
         <table class="sa-tbl sa-audit-tbl" style="min-width:1690px;table-layout:fixed">
             <colgroup>
                 <col style="width:130px"><col style="width:230px"><col style="width:190px">
@@ -1511,7 +1506,7 @@
             <span class="sa-card-badge">{{ count($sellers) }} sellers · {{ count($sellersByShop) }} shops</span>
         </div>
     </div>
-    <div class="sa-tbl-scroll">
+    <div class="sa-tbl-scroll m-scroll">
         <table class="sa-tbl" style="min-width:1180px;table-layout:fixed">
             <colgroup>
                 <col style="width:36px"><col style="width:220px"><col style="width:60px">
@@ -1729,7 +1724,7 @@
 @endphp
 
 {{-- 4 headline KPIs --}}
-<div class="sa-kpis" style="margin-bottom:20px">
+<div class="sa-kpis m-kpis" style="margin-bottom:20px">
     @php $cashPct = $totalRevenue > 0 ? round(($paymentMethods['cash']['total'] / $totalRevenue) * 100, 1) : 0; @endphp
     <div class="sa-kpi">
         <div class="sa-kpi-row">
@@ -1887,7 +1882,7 @@
     $avgDebt              = $customersWithCredit > 0 ? round($totalOutstanding / $customersWithCredit) : 0;
 @endphp
 
-<div class="sa-kpis" style="margin-bottom:20px">
+<div class="sa-kpis m-kpis" style="margin-bottom:20px">
 
     <div class="sa-kpi">
         <div class="sa-kpi-row">
@@ -1980,7 +1975,7 @@
         <span class="sa-card-badge">Top {{ $topCustomers->count() }}</span>
     </div>
     @if($topCustomers->count() > 0)
-    <div class="sa-tbl-scroll">
+    <div class="sa-tbl-scroll m-scroll">
         <table class="sa-tbl" style="width:100%;min-width:600px">
             <thead>
                 <tr>
