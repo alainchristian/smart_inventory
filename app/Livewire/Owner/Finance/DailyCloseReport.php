@@ -237,10 +237,22 @@ class DailyCloseReport extends Component
         $peakHourFmt  = $peakHour !== null ? str_pad($peakHour, 2, '0', STR_PAD_LEFT) . ':00' : '—';
         $pTotal       = $dayRevenue ?: 1;
 
-        // Balance statement
+        // Balance statement — every source on the left must land somewhere on the right.
+        // These used to be missing from "where it went", so any day with bank/card
+        // sales, a MoMo transfer to the owner or a counting variance showed "Off by":
+        //   card + bank-transfer sales and bank repayments → the bank / card account
+        //   cash sent to the owner at close               → not in cash_retained
+        //   counted vs expected cash (variance)            → cash_retained uses the count
+        $bankRepay   = (int) ($this->sessions->sum('total_repayments')
+                     - $this->sessions->sum('total_repayments_cash')
+                     - $this->sessions->sum('total_repayments_momo'));
+        $bankCardIn  = $pCard + $pBank + $bankRepay;
+        $cashToOwner = (int) $this->sessions->sum('cash_to_owner_momo');
+        $cashShort   = -(int) $this->sessions->filter(fn ($s) => ! $s->isOpen())->sum('cash_variance'); // + short, − over
+
         $totalIn  = $dayOpening + $pCash + $pMomo + $pCard + $pBank + $pCredit + $dayRepayments;
         $totalOut = $dayRefunds + $dayExpenses + $dayWithdrawals + $dayBanked
-                  + $cashRetained + $momoAvailable + $pCredit;
+                  + $cashRetained + $cashToOwner + $cashShort + $momoAvailable + $bankCardIn + $pCredit;
         $balanceDiff = $totalIn - $totalOut;
         $isBalanced  = abs($balanceDiff) <= 1;
 
@@ -271,6 +283,17 @@ class DailyCloseReport extends Component
             ['MoMo on hand',       $momoAvailable, 'var(--accent)', 'Mobile money wallet balance'],
             ['Credit outstanding', $pCredit,       'var(--amber)',  'Sold on credit — awaiting collection'],
         ];
+        if ($bankCardIn > 0 || $showBank || $showCard) {
+            $outRows[] = ['Bank / card received', $bankCardIn, 'var(--accent)', 'Card and bank-transfer payments, straight to the account'];
+        }
+        if ($cashToOwner > 0) {
+            $outRows[] = ['Sent to owner (MoMo)', $cashToOwner, 'var(--accent)', 'Cash transferred to the owner at close'];
+        }
+        if ($cashShort !== 0) {
+            $outRows[] = $cashShort > 0
+                ? ['Cash short',  $cashShort, 'var(--red)',   'Counted less than expected at close']
+                : ['Cash over',   $cashShort, 'var(--amber)', 'Counted more than expected at close'];
+        }
 
         // Transaction feed
         $expCount  = $this->sessions->sum(fn ($s) => $s->expenses->count());
