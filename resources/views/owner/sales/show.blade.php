@@ -195,9 +195,9 @@
                 <thead>
                     <tr>
                         <th>Product</th>
+                        <th style="text-align:right">Line Total</th>
                         <th>Qty</th>
                         <th>Unit Price</th>
-                        <th style="text-align:right">Line Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -210,9 +210,9 @@
                                          border-radius:5px;font-size:10px;font-weight:700;background:var(--amber-dim);color:var(--amber)">Modified</span>
                             @endif
                         </td>
+                        <td style="text-align:right"><span class="oss-val">{{ number_format($line['line_total']) }}</span> <span style="font-size:11px;color:var(--text-dim)">RWF</span></td>
                         <td>{{ $line['qty_label'] }}@if($line['unit_size']) <span style="font-size:11px;color:var(--text-dim)">({{ $line['quantity'] * $line['unit_size'] }} pcs)</span>@endif</td>
                         <td><span class="oss-val">{{ number_format($line['unit_price']) }}</span> <span style="font-size:11px;color:var(--text-dim)">RWF{{ $line['is_full_box'] ? '/box' : ($line['unit_name'] ? '/' . strtolower($line['unit_name']) : '') }}</span></td>
-                        <td style="text-align:right"><span class="oss-val">{{ number_format($line['line_total']) }}</span> <span style="font-size:11px;color:var(--text-dim)">RWF</span></td>
                     </tr>
                     @endforeach
                 </tbody>

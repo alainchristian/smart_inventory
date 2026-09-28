@@ -187,6 +187,7 @@
 }
 
 @keyframes um-spin { to { transform:rotate(360deg) } }
+.um-row-tap { cursor:pointer } /* tap a row to edit — Edit sits off-screen on phones */
 </style>
 
 {{-- ── Page header ─────────────────────────────────────────────────── --}}
@@ -341,7 +342,8 @@
 
             {{-- Normal row --}}
             @if($confirmToggleId !== $user->id)
-            <tr class="{{ !$user->is_active ? 'inactive' : '' }}"
+            <tr class="{{ !$user->is_active ? 'inactive' : '' }} {{ $isRestricted ? '' : 'um-row-tap' }}"
+                @unless($isRestricted) wire:click="openEdit({{ $user->id }})" @endunless
                 style="{{ $isRestricted ? 'opacity:.4' : '' }}">
                 <td style="padding-left:16px">
                     <div class="um-avatar" style="background:{{ $avatarBg }}">
@@ -397,7 +399,7 @@
                          style="background:{{ $user->is_active ? 'var(--green)' : 'var(--text-dim)' }}">
                     </div>
                 </td>
-                <td style="text-align:right">
+                <td style="text-align:right" wire:click.stop>
                     <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
                         @if($isMe || $canManage)
                         <button wire:click="openEdit({{ $user->id }})"

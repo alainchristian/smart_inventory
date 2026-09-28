@@ -156,6 +156,7 @@
     /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
     .cm-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
+.cm-row-tap { cursor:pointer } /* tap a row to edit — Edit sits off-screen on phones */
 </style>
 
 {{-- KPIs --}}
@@ -250,7 +251,7 @@
                         </td>
                     </tr>
                 @else
-                    <tr class="{{ $row->is_active ? '' : 'inactive' }}">
+                    <tr class="{{ $row->is_active ? '' : 'inactive' }} cm-row-tap" wire:click="openEdit({{ $row->id }})">
                         <td>
                             <div class="cm-name" style="padding-left:{{ max(0, $row->level - 1) * 20 }}px">
                                 @if($row->level > 0)<span class="cm-branch" aria-hidden="true"></span>@endif
@@ -288,7 +289,7 @@
                                 </div>
                             @endif
                         </td>
-                        <td style="text-align:right">
+                        <td style="text-align:right" wire:click.stop>
                             <div style="display:flex;gap:6px;justify-content:flex-end">
                                 <button class="cm-action" wire:click="openEdit({{ $row->id }})">Edit</button>
                                 @if($row->is_active)

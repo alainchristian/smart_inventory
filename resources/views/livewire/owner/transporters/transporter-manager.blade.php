@@ -149,6 +149,7 @@
     /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
     .tm-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
+.tm-row-tap { cursor:pointer } /* tap a row to edit — Edit sits off-screen on phones */
 </style>
 
 {{-- KPIs --}}
@@ -244,7 +245,7 @@
                         </td>
                     </tr>
                 @else
-                    <tr class="{{ $row->is_active ? '' : 'inactive' }}">
+                    <tr class="{{ $row->is_active ? '' : 'inactive' }} tm-row-tap" wire:click="openEdit({{ $row->id }})">
                         <td>
                             <div style="font-weight:600;color:var(--text)">{{ $row->name }}</div>
                             @if($row->notes)
@@ -291,7 +292,7 @@
                                 </div>
                             @endif
                         </td>
-                        <td style="text-align:right">
+                        <td style="text-align:right" wire:click.stop>
                             <div style="display:flex;gap:6px;justify-content:flex-end">
                                 <button class="tm-action" wire:click="openEdit({{ $row->id }})">Edit</button>
                                 @if($row->is_active)

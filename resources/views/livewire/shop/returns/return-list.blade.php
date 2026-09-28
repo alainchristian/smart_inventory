@@ -441,10 +441,11 @@
             <thead>
                 <tr>
                     <th>Return #</th>
+                        <th>Refund</th>
                     @if($isOwner) <th>Shop</th> @endif
                     <th>Customer</th>
                     <th>Type</th>
-                    <th>Refund</th>
+                    
                     <th>Items</th>
                     <th>Date</th>
                     <th>Status</th>
@@ -457,6 +458,17 @@
 
                         <td>
                             <span class="rl-mono" style="font-size:12px;color:var(--text)">{{ $return->return_number }}</span>
+                        </td>
+
+                        <td style="white-space:nowrap">
+                            @if($return->is_exchange)
+                                <span style="font-size:13px;color:var(--text-dim)">—</span>
+                            @else
+                                <span style="font-family:var(--mono);font-weight:700;color:var(--red)">
+                                    {{ number_format($return->refund_amount) }}
+                                    <span style="font-size:10px;color:var(--text-dim);font-weight:400;font-family:var(--font)">RWF</span>
+                                </span>
+                            @endif
                         </td>
 
                         @if($isOwner)
@@ -480,17 +492,6 @@
                             </span>
                         </td>
 
-                        <td style="white-space:nowrap">
-                            @if($return->is_exchange)
-                                <span style="font-size:13px;color:var(--text-dim)">—</span>
-                            @else
-                                <span style="font-family:var(--mono);font-weight:700;color:var(--red)">
-                                    {{ number_format($return->refund_amount) }}
-                                    <span style="font-size:10px;color:var(--text-dim);font-weight:400;font-family:var(--font)">RWF</span>
-                                </span>
-                            @endif
-                        </td>
-
                         <td>
                             <span class="rl-pill" style="background:var(--accent-dim);color:var(--accent)">
                                 {{ $return->items->count() }}
@@ -499,8 +500,8 @@
 
                         <td>
                             <div class="td-2l">
-                                <div class="td-2l-main">{{ $return->processed_at->format('d M Y') }}</div>
-                                <div class="td-2l-sub">{{ $return->processed_at->format('H:i') }}</div>
+                                <div class="td-2l-main">{{ local_time($return->processed_at)->format('d M Y') }}</div>
+                                <div class="td-2l-sub">{{ local_time($return->processed_at)->format('H:i') }}</div>
                             </div>
                         </td>
 

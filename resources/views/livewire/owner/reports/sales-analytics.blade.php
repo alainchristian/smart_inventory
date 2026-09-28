@@ -236,6 +236,13 @@
 @media(max-width:640px) {
     .sa-shop-sel { font-size:16px } /* below 16px iOS zooms on focus */
     .sa-top-scroll { max-height:none !important } /* no scroll box inside the scrolling page */
+    /* Ledger / Price Audit: the product column stays put while the figures scroll
+       under it (the # / date column before it scrolls away) */
+    .sa-ledger-tbl col:nth-child(2) { width:160px !important }
+    .sa-audit-tbl col:nth-child(2)  { width:170px !important }
+    .sa-ledger-tbl thead tr:not(.sa-colgrp) th:nth-child(2), .sa-ledger-tbl tbody td:nth-child(2),
+    .sa-audit-tbl thead th:nth-child(2), .sa-audit-tbl tbody td:nth-child(2) {
+        position:sticky; left:0; z-index:2; background:var(--surface); box-shadow:1px 0 0 var(--border) }
     .sa-presets { overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap }
     .sa-presets::-webkit-scrollbar { display:none }
     .sa-preset { flex-shrink:0 }
