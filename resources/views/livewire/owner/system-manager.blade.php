@@ -12,7 +12,7 @@
 .sm-table-wrap      { overflow-x:auto;-webkit-overflow-scrolling:touch }
 
 .sm-table           { width:100%;border-collapse:collapse;font-size:13px;min-width:420px }
-.sm-table thead tr  { border-bottom:1px solid var(--border);background:var(--bg) }
+.sm-table thead tr  { border-bottom:2px solid var(--border) }
 .sm-table thead th  { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
 .sm-table tbody tr  { border-bottom:1px solid var(--border);transition:background .12s }
 .sm-table tbody tr:last-child { border-bottom:none }
@@ -65,7 +65,7 @@
     .sm-form-grid.cols2, .sm-form-grid.cols3 { grid-template-columns:1fr }
     .sm-wipe-grid { grid-template-columns:1fr 1fr }
     .sm-confirm-bar { flex-direction:column;align-items:stretch }
-    .sm-tabs { flex-direction:column }
+    .sm-tab { padding:8px 10px;font-size:12px } /* stays one segmented row (was two stacked full-width blocks) */
     .sm-section-head { flex-wrap:wrap;gap:8px }
     .sm-section-title { font-size:12px }
 }

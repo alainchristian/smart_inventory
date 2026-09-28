@@ -330,9 +330,26 @@
     .dcr-detail-grid > div:not(:last-child) { border-right:none !important;border-bottom:1px solid var(--border); }
     .dcr-modal-footer { flex-wrap:wrap; }
 }
+
+/* ── Phones: the sessions (what you review and lock) come first; the long
+   day-level panels follow, folded to their header + key figure ── */
+@media (max-width:640px) {
+    .dcr-page { display:flex; flex-direction:column; }
+    .dcr-later { order:2; }
+    .dcr-session-label, .dcr-session { order:1; }
+    .dcr-fold > :first-child { cursor:pointer; position:relative; padding-right:34px !important; }
+    .dcr-fold > :first-child::after {
+        content:''; position:absolute; right:14px; top:50%; width:7px; height:7px; margin-top:-5px;
+        border-right:2px solid var(--text-dim); border-bottom:2px solid var(--text-dim);
+        transform:rotate(45deg); transition:transform var(--tr);
+    }
+    .dcr-fold.dcr-open > :first-child::after { transform:rotate(-135deg); margin-top:-1px; }
+    .dcr-fold:not(.dcr-open) > :not(:first-child) { display:none !important; }
+    .dcr-lower { gap:12px !important; }
+}
 </style>
 
-<div>
+<div class="dcr-page">
 
     {{-- ════════════════════════════════════════
          DATE NAVIGATION BAR
@@ -454,8 +471,8 @@
     {{-- ════════════════════════════════════════
          DAILY BALANCE STATEMENT
          ════════════════════════════════════════ --}}
-    <div class="dcr-balance">
-        <div class="dcr-balance-head">
+    <div class="dcr-balance dcr-later dcr-fold" x-data="{ o: false }" :class="{ 'dcr-open': o }">
+        <div class="dcr-balance-head" @click="o = !o">
             <div class="dcr-balance-title">Daily Balance Statement</div>
             <span class="dcr-badge {{ $isBalanced ? 'dcr-badge-ok' : 'dcr-badge-err' }}">
                 @if($isBalanced)
@@ -520,11 +537,11 @@
     {{-- ════════════════════════════════════════
          LOWER GRID — EXPENSE BREAKDOWN + TX FEED
          ════════════════════════════════════════ --}}
-    <div class="dcr-lower">
+    <div class="dcr-lower dcr-later">
 
         {{-- Expense category bars --}}
-        <div class="dcr-panel">
-            <div class="dcr-panel-head">
+        <div class="dcr-panel dcr-fold" x-data="{ o: false }" :class="{ 'dcr-open': o }">
+            <div class="dcr-panel-head" @click="o = !o">
                 <span class="dcr-panel-lbl">Expenses by Category</span>
                 <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red);">
                     {{ number_format($dayExpenses) }} RWF
@@ -551,8 +568,8 @@
         </div>
 
         {{-- Transaction feed — $txFeed, $expCount, $drawCount passed from render() --}}
-        <div class="dcr-panel">
-            <div class="dcr-panel-head">
+        <div class="dcr-panel dcr-fold" x-data="{ o: false }" :class="{ 'dcr-open': o }">
+            <div class="dcr-panel-head" @click="o = !o">
                 <span class="dcr-panel-lbl">All Transactions</span>
                 <span style="font-size:10px;color:var(--text-dim);">
                     {{ $saleCount }}s · {{ $expCount }}e · {{ $drawCount }}w
@@ -591,10 +608,10 @@
          SALES SNAPSHOT
          ════════════════════════════════════════ --}}
     @if($todaySales->isNotEmpty())
-    <div style="background:var(--surface);border:none;
+    <div class="dcr-later dcr-fold" x-data="{ o: false }" :class="{ 'dcr-open': o }" style="background:var(--surface);border:none;
                 border-radius:14px;overflow:hidden;margin-bottom:20px;
                 box-shadow:var(--shadow-card);">
-        <div class="dcr-panel-head">
+        <div class="dcr-panel-head" @click="o = !o">
             <span class="dcr-panel-lbl">Sales Snapshot</span>
             <span style="font-size:10px;color:var(--text-dim);">
                 {{ \Carbon\Carbon::parse($reportDate)->format('d M Y') }}
@@ -646,10 +663,10 @@
          CREDIT OUTSTANDING
          ════════════════════════════════════════ --}}
     @if($overdueCustomers->isNotEmpty())
-    <div style="background:var(--surface);border:none;
+    <div class="dcr-later dcr-fold" x-data="{ o: false }" :class="{ 'dcr-open': o }" style="background:var(--surface);border:none;
                 border-radius:14px;overflow:hidden;margin-bottom:20px;
                 box-shadow:var(--shadow-card);">
-        <div class="dcr-panel-head" style="background:var(--amber-dim);">
+        <div class="dcr-panel-head" style="background:var(--amber-dim);" @click="o = !o">
             <span class="dcr-panel-lbl" style="color:var(--amber);">Outstanding Credit</span>
             <span style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--amber);">
                 {{ number_format($creditOutstanding) }} RWF

@@ -235,6 +235,7 @@
 }
 @media(max-width:640px) {
     .sa-shop-sel { font-size:16px } /* below 16px iOS zooms on focus */
+    .sa-top-scroll { max-height:none !important } /* no scroll box inside the scrolling page */
     .sa-presets { overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap }
     .sa-presets::-webkit-scrollbar { display:none }
     .sa-preset { flex-shrink:0 }
@@ -787,9 +788,9 @@
                 <div class="sa-card-sub">By revenue · with margin</div>
             </div>
         </div>
-        <div style="overflow:auto;max-height:360px">
+        <div class="sa-top-scroll" style="overflow:auto;max-height:360px">
             <table class="sa-tbl" style="width:100%">
-                <thead style="position:sticky;top:0">
+                <thead style="position:sticky;top:0;background:var(--surface);z-index:1">
                     <tr>
                         <th>Product</th>
                         <th style="text-align:right">Revenue</th>
@@ -1622,9 +1623,9 @@
             </div>
             <span class="sa-card-badge">{{ $customers['total_customers'] }} known · {{ $customers['repeat_rate'] }}% repeat</span>
         </div>
-        <div style="overflow:auto;max-height:360px">
+        <div class="sa-top-scroll" style="overflow:auto;max-height:360px">
             <table class="sa-tbl" style="width:100%">
-                <thead style="position:sticky;top:0">
+                <thead style="position:sticky;top:0;background:var(--surface);z-index:1">
                     <tr>
                         <th>Customer</th>
                         <th style="text-align:right">Visits</th>
@@ -2127,7 +2128,10 @@
             series: series,
             xaxis: {
                 categories: dates,
-                labels: { style: { colors: 'var(--text-sub)', fontSize: '11px' }, rotate: -30, rotateAlways: false },
+                labels: { style: { colors: 'var(--text-sub)', fontSize: '11px' }, rotate: 0, hideOverlappingLabels: true,
+                          // '2026-09-01' → '1 Sep' (was the raw ISO date, rotated)
+                          formatter: v => { const d = new Date(v + 'T00:00:00'); return isNaN(d) ? v : d.getDate() + ' ' + d.toLocaleString('en', { month: 'short' }); } },
+                tickAmount: Math.min(dates.length, 7),
                 axisBorder: { show: false },
                 axisTicks:  { show: false },
             },

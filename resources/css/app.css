@@ -3039,3 +3039,9 @@ main,
 /* Sidebar sign-out: outlined, turns red on hover (was a solid accent CTA) */
 .sb-logout { background: var(--surface); color: var(--text-sub); border: 1px solid var(--border); }
 .sb-logout:hover { color: var(--red); border-color: var(--red); background: var(--red-dim); }
+
+/* Dashboard Recent Transactions: 5 rows on phones — "View all" has the rest
+   (the card is auto-height there, so 10 rows made a very long card) */
+@media (max-width: 640px) {
+  .rtx-list > :nth-child(n+6) { display: none; }
+}

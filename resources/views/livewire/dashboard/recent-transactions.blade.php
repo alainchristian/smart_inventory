@@ -7,7 +7,7 @@
         <a href="{{ route('owner.reports.sales') }}" class="card-btn">View all</a>
     </div>
 
-    <div style="flex:1;overflow-y:auto;min-height:0;padding-bottom:4px">
+    <div class="rtx-list" style="flex:1;overflow-y:auto;min-height:0;padding-bottom:4px">
         @forelse($transactions as $tx)
         @php
             $ts = local_time($tx['ts']);

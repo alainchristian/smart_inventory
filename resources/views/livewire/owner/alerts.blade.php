@@ -57,6 +57,8 @@
 .alp-btn-resolve:hover { background:var(--green,#16a34a);color:#fff }
 .alp-btn-dismiss { padding:5px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;background:transparent;color:var(--text-sub);cursor:pointer;font-family:var(--font);transition:all var(--tr);white-space:nowrap }
 .alp-btn-dismiss:hover { border-color:var(--text-dim);color:var(--text) }
+.alp-act-ico { display:none }
+@media(max-width:640px) { .alp-act-ico { display:block } }
 
 /* ── Status pills (resolved/dismissed) ───────────────*/
 .alp-resolved-pill { display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(34,197,94,.10);color:var(--green,#16a34a);border-radius:20px;font-size:11px;font-weight:600 }
@@ -77,11 +79,18 @@
     .alp-search-wrap { min-width:0;flex-basis:100% }
     .alp-select { flex:1 }
     .alp-resolve-all, .alp-clear-btn { min-height:38px !important }
-    /* Card: actions move under the text as a row, so the message gets the full width */
-    .alp-card { flex-wrap:wrap;padding:12px 14px }
-    .alp-body { flex:1 1 calc(100% - 46px) }
-    .alp-actions { flex-direction:row;flex-basis:100%;padding-left:46px }
-    .alp-btn-resolve, .alp-btn-dismiss { min-height:32px !important;min-width:0 !important;padding:5px 14px !important }
+    /* Compact rows: icon · title / 2-line message / time · link, with icon-only
+       Resolve (✓) and Dismiss (✕) on the right — was ~190px per alert */
+    .alp-card { padding:10px 12px;gap:10px }
+    .alp-icon { width:28px;height:28px;border-radius:8px }
+    .alp-icon svg { width:14px;height:14px }
+    .alp-title { font-size:13px;margin-bottom:2px }
+    .alp-msg { font-size:12px;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden }
+    .alp-meta { gap:8px }
+    .alp-sev, .alp-entity { display:none }  /* the icon + left border already show severity */
+    .alp-actions { flex-direction:row;gap:6px }
+    .alp-btn-resolve, .alp-btn-dismiss { width:32px;height:32px;padding:0 !important;display:inline-flex;align-items:center;justify-content:center;border-radius:8px }
+    .alp-act-lbl { display:none }
 }
 </style>
 
@@ -188,8 +197,14 @@
             {{-- Actions --}}
             @if (!$alert->is_resolved && !$alert->is_dismissed)
                 <div class="alp-actions">
-                    <button wire:click="resolve({{ $alert->id }})" class="alp-btn-resolve">Resolve</button>
-                    <button wire:click="dismiss({{ $alert->id }})" class="alp-btn-dismiss">Dismiss</button>
+                    <button wire:click="resolve({{ $alert->id }})" class="alp-btn-resolve m-tap" title="Resolve" aria-label="Resolve">
+                        <svg class="alp-act-ico" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <span class="alp-act-lbl">Resolve</span>
+                    </button>
+                    <button wire:click="dismiss({{ $alert->id }})" class="alp-btn-dismiss m-tap" title="Dismiss" aria-label="Dismiss">
+                        <svg class="alp-act-ico" width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <span class="alp-act-lbl">Dismiss</span>
+                    </button>
                 </div>
             @endif
         </div>
