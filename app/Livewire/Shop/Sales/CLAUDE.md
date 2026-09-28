@@ -22,3 +22,9 @@
 - `$summaryCash` query uses `sales.has_credit = true` condition when filter is `credit` (not `sales.payment_method`)
 - `applyPaymentFilter()` is called on BOTH the main query and the summary base query so KPI cards always match table results
 - Filter resets `$perPage = 20` in `updatingSearch`, `updatingDateFilter`, `updatingPaymentFilter`, `sort()`
+- **Boxes vs pieces (2026-09-28):** one full-box `sale_items` row = one box; loose rows
+  (pieces / packs) are counted in pieces. `summaryBoxes` counts `is_full_box` rows only and
+  `summaryPieces` sums loose `quantity_sold` — counting every row as a box overstated boxes.
+  The table's Qty cell shows e.g. "2 boxes + 11 pcs".
+- Columns: Sale # → Amount → Customer → Date → Qty → Payment → Status (amount first so it's
+  visible on phones); tapping a row expands it. The expanded sale is scoped to `$shopId`.

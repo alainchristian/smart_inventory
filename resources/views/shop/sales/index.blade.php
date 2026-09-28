@@ -298,7 +298,7 @@
 .sli-sort.desc::after { content:'↓'; color:#3b6bd4; }
 
 /* Rows */
-.sli-row { border-bottom:0.5px solid var(--border); transition:background .1s; }
+.sli-row { border-bottom:0.5px solid var(--border); transition:background .1s; cursor:pointer; }
 .sli-row:last-child { border-bottom:none; }
 .sli-row:hover { background:rgba(59,107,212,.025); }
 .sli-row--voided { opacity:.5; }
@@ -309,7 +309,7 @@
 .sli-td--center { text-align:center; }
 .sli-td--right  { text-align:right; }
 .sli-td--mono   { font-family:var(--mono, 'SF Mono', monospace); }
-.sli-td--num    { font-size:12px; color:var(--text-dim); font-weight:600; }
+.sli-td--num    { font-size:12px; color:var(--text); font-weight:700; }
 .sli-td--amount { font-weight:800; font-size:14px; }
 
 .sli-date-d { display:block; font-weight:500; }
@@ -320,8 +320,8 @@
 .sli-walkin     { color:var(--text-dim); font-style:italic; font-size:12px; }
 
 .sli-qty-chip {
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:26px; height:26px; padding:0 6px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;
+    min-width:26px; height:26px; padding:0 8px; border-radius:8px;
     background:var(--surface2); border:1px solid var(--border);
     font-size:12px; font-weight:700; color:var(--text);
 }
@@ -467,6 +467,34 @@
 .sli-summary-divider { width:1px; height:20px; background:var(--border); flex-shrink:0; }
 
 @media(max-width:660px) {
+    /* KPI cards: compact 2-up grid — the period is already shown in the filter chip */
+    .sli-kpi-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; overflow:visible;
+                   -webkit-mask-image:none; mask-image:none; padding-bottom:0; }
+    .sli-kpi { min-width:0; padding:12px 14px 0; gap:8px; }
+    .sli-kpi:last-child:nth-child(odd) { grid-column:1 / -1; }
+    .sli-kpi-period { display:none; }
+    .sli-kpi-icon { width:28px; height:28px; border-radius:8px; }
+    .sli-kpi-icon svg { width:15px; height:15px; }
+    .sli-kpi-label { font-size:10px; }
+    .sli-kpi-value { font-size:17px; }
+
+    .sli-page-sub { display:none; }
+    .sli-filter-panel { padding:12px 14px; }
+    .sli-search-input { font-size:16px; } /* below 16px iOS zooms on focus */
+
+    /* Filter rows: label above its pills so the pills get the full width */
+    .sli-filter-row { flex-direction:column; gap:6px; }
+    .sli-filter-label { width:auto; }
+    .sli-pills--scroll, .sli-pills--wrap { width:100%; }
+
+    /* undo the global 44px touch-target inflation on compact controls */
+    .sli-pill--date, .sli-pill--pay { min-height:32px !important; min-width:0 !important; padding:5px 11px !important; }
+    .sli-filter-toggle { min-height:34px !important; padding:6px 12px !important; }
+    .sli-expand-btn { min-height:0 !important; min-width:0 !important; width:30px !important; height:30px !important; padding:0 !important; }
+    .sli-print-btn { min-height:38px !important; }
+    .sli-btn-ghost, .sli-btn-primary { min-height:40px !important; }
+    .sli-th, .sli-td { padding-left:12px !important; padding-right:12px !important; }
+
     .sli-summary-bar { flex-wrap:wrap; gap:10px 16px; padding:10px 16px; }
     .sli-summary-divider { display:none; }
     /* The table scrolls sideways (min-width 700px). Full-width rows (empty

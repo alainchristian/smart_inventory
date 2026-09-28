@@ -155,13 +155,20 @@ class SalesIndex extends Component
 
         $summaryCredit = (int) (clone $sumBase)->where('has_credit', true)->sum('credit_amount');
 
-        $summaryBoxes = (int) (clone $sumBase)
+        // One full-box sale line = one box; loose lines (pieces / packs) are
+        // counted in pieces — counting every line as a box overstated boxes.
+        $itemTotals = (clone $sumBase)
             ->join('sale_items', 'sale_items.sale_id', '=', 'sales.id')
-            ->count('sale_items.id');
+            ->selectRaw('count(*) filter (where sale_items.is_full_box) as boxes,
+                         coalesce(sum(sale_items.quantity_sold) filter (where not sale_items.is_full_box), 0) as pieces')
+            ->toBase()->first();
+        $summaryBoxes  = (int) ($itemTotals->boxes ?? 0);
+        $summaryPieces = (int) ($itemTotals->pieces ?? 0);
 
         // ── Expanded detail ─────────────────────────────────────────
         $expandedSale = $this->expandedId
-            ? Sale::with(['items.product', 'items.box', 'payments', 'soldBy', 'customer'])->find($this->expandedId)
+            ? Sale::with(['items.product', 'items.box', 'payments', 'soldBy', 'customer'])
+                ->where('shop_id', $this->shopId)->find($this->expandedId)
             : null;
         $expandedGroupedItems = $expandedSale?->groupedItems();
 
@@ -176,7 +183,7 @@ class SalesIndex extends Component
 
         return view('livewire.shop.sales.sales-index', compact(
             'sales', 'totalFiltered',
-            'summaryTotal', 'summaryCount', 'summaryAvg', 'summaryCash', 'summaryCredit', 'summaryBoxes',
+            'summaryTotal', 'summaryCount', 'summaryAvg', 'summaryCash', 'summaryCredit', 'summaryBoxes', 'summaryPieces',
             'expandedSale', 'expandedGroupedItems', 'activePeriodLabel'
         ));
     }

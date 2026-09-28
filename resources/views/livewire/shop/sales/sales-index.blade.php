@@ -97,7 +97,7 @@
             <svg class="sli-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" stroke-linecap="round"/></svg>
             <input wire:model.live.debounce.300ms="search"
                    type="text"
-                   placeholder="Search sale #, customer name or phone…"
+                   placeholder="Sale #, customer name or phone…"
                    class="sli-search-input">
             @if($search)
             <button wire:click="$set('search','')" class="sli-search-clear" title="Clear">
@@ -148,7 +148,7 @@
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-linecap="round"/></svg>
                 Period
             </span>
-            <div class="sli-pills sli-pills--scroll">
+            <div class="sli-pills sli-pills--scroll" x-data x-init="$watch('open', v => v && $nextTick(() => { const a = $el.querySelector('.active'); if (a) $el.scrollLeft = a.offsetLeft - $el.offsetLeft - 8 }))">
                 @foreach(['today'=>'Today','yesterday'=>'Yesterday','this_week'=>'This Week','this_month'=>'This Month','last_30'=>'Last 30 Days','all'=>'All Time'] as $key=>$lbl)
                 <button wire:click="$set('dateFilter','{{ $key }}')"
                         class="sli-pill sli-pill--date {{ $dateFilter===$key ? 'active' : '' }}">
@@ -164,7 +164,7 @@
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22" stroke-linecap="round"/></svg>
                 Payment
             </span>
-            <div class="sli-pills sli-pills--wrap">
+            <div class="sli-pills sli-pills--wrap" x-data x-init="$watch('open', v => v && $nextTick(() => { const a = $el.querySelector('.active'); if (a) $el.scrollLeft = a.offsetLeft - $el.offsetLeft - 8 }))">
                 @foreach([
                     'all'           => ['All',   ''],
                     'cash'          => ['Cash',  '#0f6e56'],
@@ -198,33 +198,40 @@
                         <span>Sale #</span>
                         <span class="sli-sort {{ $sortBy==='sale_number' ? ($sortDir==='asc' ? 'asc' : 'desc') : '' }}"></span>
                     </th>
-                    <th wire:click="sort('sale_date')" class="sli-th sli-th--sortable">
-                        <span>Date &amp; Time</span>
-                        <span class="sli-sort {{ $sortBy==='sale_date' ? ($sortDir==='asc' ? 'asc' : 'desc') : '' }}"></span>
-                    </th>
-                    <th class="sli-th">Customer</th>
-                    <th class="sli-th sli-th--center">Boxes</th>
-                    <th class="sli-th">Payment</th>
                     <th wire:click="sort('total')" class="sli-th sli-th--sortable sli-th--right">
                         <span>Amount</span>
                         <span class="sli-sort {{ $sortBy==='total' ? ($sortDir==='asc' ? 'asc' : 'desc') : '' }}"></span>
                     </th>
+                    <th class="sli-th">Customer</th>
+                    <th wire:click="sort('sale_date')" class="sli-th sli-th--sortable">
+                        <span>Date &amp; Time</span>
+                        <span class="sli-sort {{ $sortBy==='sale_date' ? ($sortDir==='asc' ? 'asc' : 'desc') : '' }}"></span>
+                    </th>
+                    <th class="sli-th">Qty</th>
+                    <th class="sli-th">Payment</th>
                     <th class="sli-th sli-th--center">Status</th>
                     <th class="sli-th sli-th--center" style="width:50px;"></th>
                 </tr>
             </thead>
             <tbody>
             @forelse($sales as $sale)
+                @php
+                    $slBoxes  = $sale->items->where('is_full_box', true)->count();
+                    $slPieces = (int) $sale->items->where('is_full_box', false)->sum('quantity_sold');
+                    $slQty    = collect([
+                        $slBoxes  ? $slBoxes . ' ' . ($slBoxes === 1 ? 'box' : 'boxes') : null,
+                        $slPieces ? $slPieces . ' pcs' : null,
+                    ])->filter()->implode(' + ');
+                @endphp
                 <tr class="sli-row {{ $sale->voided_at ? 'sli-row--voided' : '' }} {{ $expandedId===$sale->id ? 'sli-row--open' : '' }}"
-                    wire:key="sale-{{ $sale->id }}">
+                    wire:key="sale-{{ $sale->id }}" wire:click="toggleExpand({{ $sale->id }})">
 
                     <td class="sli-td sli-td--mono sli-td--num">
                         {{ $sale->sale_number }}
                     </td>
 
-                    <td class="sli-td">
-                        <span class="sli-date-d">{{ local_time($sale->sale_date)->format('M j, Y') }}</span>
-                        <span class="sli-date-t">{{ local_time($sale->sale_date)->format('g:i A') }}</span>
+                    <td class="sli-td sli-td--right sli-td--mono sli-td--amount">
+                        {{ number_format($sale->total) }}<span class="sli-rwf">RWF</span>
                     </td>
 
                     <td class="sli-td">
@@ -236,8 +243,13 @@
                         @endif
                     </td>
 
-                    <td class="sli-td sli-td--center">
-                        <span class="sli-qty-chip">{{ $sale->items->count() }}</span>
+                    <td class="sli-td">
+                        <span class="sli-date-d">{{ local_time($sale->sale_date)->format('M j, Y') }}</span>
+                        <span class="sli-date-t">{{ local_time($sale->sale_date)->format('g:i A') }}</span>
+                    </td>
+
+                    <td class="sli-td">
+                        <span class="sli-qty-chip">{{ $slQty ?: '—' }}</span>
                     </td>
 
                     <td class="sli-td">
@@ -257,10 +269,6 @@
                         <span class="sli-pm-chip" style="color:{{ $pmColor }};background:{{ $pmBg }};">{{ $pmLabel }}</span>
                     </td>
 
-                    <td class="sli-td sli-td--right sli-td--mono sli-td--amount">
-                        {{ number_format($sale->total) }}<span class="sli-rwf">RWF</span>
-                    </td>
-
                     <td class="sli-td sli-td--center">
                         @if($sale->voided_at)
                             <span class="sli-status sli-status--voided">Voided</span>
@@ -269,7 +277,7 @@
                         @endif
                     </td>
 
-                    <td class="sli-td sli-td--center">
+                    <td class="sli-td sli-td--center" wire:click.stop>
                         <button wire:click="toggleExpand({{ $sale->id }})"
                                 class="sli-expand-btn {{ $expandedId===$sale->id ? 'open' : '' }}"
                                 title="{{ $expandedId===$sale->id ? 'Collapse' : 'View details' }}">
@@ -305,7 +313,7 @@
                                         @foreach($expandedGroupedItems as $item)
                                         <tr>
                                             <td>{{ $item['product_name'] }}</td>
-                                            <td class="r mono">{{ $item['qty_label'] }}</td>
+                                            <td class="r">{{ $item['qty_label'] }}</td>
                                             <td class="r mono">{{ number_format($item['unit_price']) }} RWF</td>
                                             <td class="r mono bold">{{ number_format($item['line_total']) }} RWF</td>
                                         </tr>
@@ -457,6 +465,13 @@
         <span class="sli-summary-label">Boxes Sold</span>
         <span class="sli-summary-value">{{ number_format($summaryBoxes) }}</span>
     </div>
+    @if($summaryPieces > 0)
+    <div class="sli-summary-divider"></div>
+    <div class="sli-summary-stat">
+        <span class="sli-summary-label">Loose</span>
+        <span class="sli-summary-value">{{ number_format($summaryPieces) }}<span class="sli-summary-unit">pcs</span></span>
+    </div>
+    @endif
     <div class="sli-summary-divider"></div>
     <div class="sli-summary-stat">
         <span class="sli-summary-label">Total Amount</span>
