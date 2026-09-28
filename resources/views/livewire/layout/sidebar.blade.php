@@ -759,7 +759,7 @@
     </nav>
 
     <!-- User Info & Logout -->
-    <div class="border-t border-r border-[var(--border)] p-4" style="border-color: var(--border); background: var(--surface2);">
+    <div class="border-t border-r border-[var(--border)] p-4" style="border-color: var(--border); background: var(--surface);">
         <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-white" style="background: linear-gradient(135deg, var(--accent), #6b8dff);">
                 {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
@@ -776,9 +776,8 @@
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit"
-                    class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
-                    style="background: var(--accent); color: white;">
+            {{-- Quiet on purpose: signing out isn't the menu's main action (it's also in the user menu) --}}
+            <button type="submit" class="sb-logout w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                 </svg>

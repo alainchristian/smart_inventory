@@ -3035,3 +3035,7 @@ main,
   .dnut, .dnut canvas { width: 110px !important; height: 110px !important; }
   .dnut > div > div:first-child { font-size: 10.5px !important; letter-spacing: -.3px; }
 }
+
+/* Sidebar sign-out: outlined, turns red on hover (was a solid accent CTA) */
+.sb-logout { background: var(--surface); color: var(--text-sub); border: 1px solid var(--border); }
+.sb-logout:hover { color: var(--red); border-color: var(--red); background: var(--red-dim); }
