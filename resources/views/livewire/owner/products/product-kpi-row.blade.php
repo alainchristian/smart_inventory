@@ -98,7 +98,7 @@
         </div>
       @else
         <div style="font-size:13px;color:var(--green);font-weight:600">
-          &#10003; No unauthorised price changes this {{ $periodLabel }}
+          &#10003; No unauthorised price changes · {{ $periodLabel }}
         </div>
       @endif
     </div>

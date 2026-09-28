@@ -51,8 +51,7 @@
             }
           }"
          @notification.window="toast($event.detail)"
-         style="position:fixed;top:calc(var(--topbar-height) + 12px);right:16px;z-index:9000;
-                display:flex;flex-direction:column;gap:7px;pointer-events:none;max-width:calc(100vw - 32px)">
+         class="app-toasts">
         <template x-for="t in toasts" :key="t.id">
             <div x-show="true"
                  x-transition:enter="transition ease-out duration-200"

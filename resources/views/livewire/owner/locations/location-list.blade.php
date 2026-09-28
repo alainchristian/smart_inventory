@@ -110,6 +110,7 @@
                   transform:translateX(100%);
                   transition:transform .22s cubic-bezier(.4,0,.2,1) }
 .lm-drawer.open { transform:translateX(0) }
+.lm-drawer:not(.open) { box-shadow:none } /* closed drawer sits off-screen; its shadow bled onto the page edge */
 .lm-drawer-head { display:flex;align-items:center;justify-content:space-between;
                   padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0 }
 .lm-drawer-title { font-size:16px;font-weight:800;color:var(--text) }

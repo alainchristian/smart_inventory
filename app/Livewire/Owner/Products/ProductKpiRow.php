@@ -10,7 +10,7 @@ use Livewire\Component;
 
 class ProductKpiRow extends Component
 {
-    public string  $period = 'month';
+    public string  $period = 'today'; // matches TimeFilter's default preset
     public ?string $from   = null;
     public ?string $to     = null;
 
@@ -29,10 +29,11 @@ class ProductKpiRow extends Component
         // See ProductList::periodRange() for why this trusts TimeFilter's
         // resolved from/to directly instead of re-matching on preset name.
         if ($this->from && $this->to) {
-            return [$this->from, \Carbon\Carbon::parse($this->to)->endOfDay()];
+            $tz = config('tenant.timezone'); // business-timezone days → UTC bounds (sale_date is UTC)
+            return [\Carbon\Carbon::parse($this->from, $tz)->startOfDay()->utc(), \Carbon\Carbon::parse($this->to, $tz)->endOfDay()->utc()];
         }
 
-        return [today(), now()->endOfDay()];
+        return [business_now()->startOfDay()->utc(), business_now()->endOfDay()->utc()];
     }
 
     public function render()
@@ -90,7 +91,10 @@ class ProductKpiRow extends Component
             'priceOverrideCount' => $priceOverrideCount,
             'bestMarginPct'      => $bestMarginPct,
             'bestMarginName'     => $bestMarginName,
-            'periodLabel'        => ucfirst($this->period),
+            'periodLabel' => [
+                'today' => 'Today', 'yesterday' => 'Yesterday', 'week' => 'This Week', 'month' => 'This Month',
+                'last_month' => 'Last Month', 'last_30' => 'Last 30 Days',
+            ][$this->period] ?? 'Custom Range',
         ]);
     }
 }

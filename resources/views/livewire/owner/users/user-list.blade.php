@@ -84,6 +84,7 @@
     transition:transform .22s cubic-bezier(.4,0,.2,1);
 }
 .um-drawer.open { transform:translateX(0) }
+.um-drawer:not(.open) { box-shadow:none } /* closed drawer sits off-screen; its shadow bled onto the page edge */
 
 .um-drawer-head {
     display:flex;align-items:center;justify-content:space-between;

@@ -229,7 +229,7 @@
 .rb-btn-cancel:hover { border-color:var(--border-hi);color:var(--text) }
 
 /* File upload zone */
-.rb-upload-zone { border:2px dashed var(--border);border-radius:var(--r);
+.rb-upload-zone { display:block;box-sizing:border-box;width:100%;border:2px dashed var(--border);border-radius:var(--r);
                   padding:32px 20px;text-align:center;transition:border-color var(--tr);cursor:pointer }
 .rb-upload-zone:hover { border-color:var(--accent) }
 .rb-upload-choose { display:inline-flex;align-items:center;gap:8px;padding:9px 20px;
@@ -404,7 +404,7 @@
 
         <label class="rb-upload-zone">
             <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
-                 style="color:var(--text-dim);margin-bottom:12px">
+                 style="display:block;margin:0 auto 12px;color:var(--text-dim)">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>

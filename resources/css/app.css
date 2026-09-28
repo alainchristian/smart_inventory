@@ -447,17 +447,12 @@ aside nav p.text-gray-400 {
     padding-right: 0.75rem !important;
   }
 
-  /* Improve touch targets */
-  button,
-  a {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  button:not(.w-9):not(.h-9):not(.w-10):not(.h-10),
-  a:not(.w-9):not(.h-9):not(.w-10):not(.h-10) {
-    padding: 0.625rem 1rem;
-  }
+  /* Touch targets: there used to be a blanket rule here forcing every
+     button and link to min 44x44px with 10px/16px padding. It turned text
+     links, pills, back links and icon buttons into grey slabs and every page
+     fought it with !important overrides. Controls now size themselves;
+     small icon-only buttons add .m-tap for a 44px invisible hit area
+     (see "Mobile building blocks" at the end of this file). */
 }
 
 /* Extra small screens */
@@ -1107,7 +1102,9 @@ aside nav p.text-gray-400 {
 @media (max-width: 640px) {
     .row-ops-activity > *,
     .row-trace-alerts > *,
-    .row-sales-shops > * {
+    .row-sales-shops > *,
+    .row-trend-shops > *,
+    .row-bottom-four > * {
         height: auto;
         min-height: 0;
         max-height: none;
@@ -2785,4 +2782,220 @@ main,
 @media (max-width: 640px) {
   .db-period-controls { flex-wrap: wrap; }
   .db-period-ctrl-grow { min-width: max-content; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   MOBILE BUILDING BLOCKS  (prefix m-)  — owner mobile redesign, 2026-09-28
+   Shared on purpose: every page used to re-implement these in its own
+   <style> block, slightly differently. Pages add these classes to their
+   existing markup; see .claude/skills/ui-design.md §22 for usage.
+   Everything below either only changes phones (≤640px) or is opt-in.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Phone type scale */
+  --m-fs-title: 20px;   /* page title            */
+  --m-fs-card:  15px;   /* card title            */
+  --m-fs-body:  13px;   /* body / row text       */
+  --m-fs-meta:  11px;   /* labels, captions      */
+  --m-fs-value: 19px;   /* KPI value (mono)      */
+  /* Phone spacing scale — use only these */
+  --m-s1: 8px;
+  --m-s2: 12px;
+  --m-s3: 16px;
+  --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Hit area: 44px to the finger, whatever the visual size ─────────────── */
+.m-tap { position: relative; }
+.m-tap::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: max(100%, 44px); height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
+/* ── Visibility helpers ─────────────────────────────────────────────────
+   Only ever HIDE — never force a display value on phones, or it would beat
+   Alpine's x-show (inline display:none) and flatten flex/grid elements. */
+@media (min-width: 641px) { .m-only { display: none !important; } }
+@media (max-width: 640px) { .m-hide { display: none !important; } }
+
+/* ── KPI grid: 2-up compact cards on phones ─────────────────────────────
+   Add .m-kpis to a page's KPI grid (the element whose children are the
+   cards). Works with the standard anatomy (xx-kpi-row / -icon / -label /
+   -sub / -val / -bar / -divider / -footer / -stat) whatever the prefix. */
+@media (max-width: 640px) {
+  .m-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: var(--m-s1) !important;
+    overflow: visible !important;
+    -webkit-mask-image: none !important; mask-image: none !important;
+  }
+  .m-kpis > * {
+    min-width: 0 !important;
+    padding: var(--m-s2) !important;
+    gap: var(--m-s1) !important;
+  }
+  .m-kpis > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .m-kpis [class*="-kpi-icon"] { width: 28px !important; height: 28px !important; border-radius: 8px !important; }
+  .m-kpis [class*="-kpi-icon"] svg { width: 14px; height: 14px; }
+  .m-kpis [class*="-kpi-row"] { gap: var(--m-s1) !important; }
+  .m-kpis [class*="-kpi-label"] { font-size: 10px !important; letter-spacing: .4px !important; }
+  .m-kpis [class*="-kpi-sub"],
+  .m-kpis [class*="-kpi-bar"],
+  .m-kpis [class*="-kpi-period"] { display: none !important; }
+  .m-kpis [class*="-kpi-val"] {
+    font-size: var(--m-fs-value) !important; letter-spacing: -.5px !important;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-kpis [class*="-kpi-val"] span { font-size: 10px !important; }
+  .m-kpis [class*="-kpi-stat"] { padding: 3px 0 !important; }
+  .m-kpis [class*="-kpi-stat-v"] { font-size: 11px !important; }
+  .m-kpis [class*="-kpi-stat-l"] { font-size: 10px !important; }
+
+  /* .m-kpis-strip: count-only cards become a row of compact chips */
+  .m-kpis.m-kpis-strip {
+    display: flex !important; overflow-x: auto !important; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .m-kpis.m-kpis-strip::-webkit-scrollbar { display: none; }
+  .m-kpis.m-kpis-strip > * {
+    flex: 0 0 auto; flex-direction: row !important; align-items: center !important;
+    padding: 8px 12px !important; gap: 8px !important;
+  }
+  .m-kpis.m-kpis-strip [class*="-kpi-icon"],
+  .m-kpis.m-kpis-strip [class*="-kpi-divider"],
+  .m-kpis.m-kpis-strip [class*="-kpi-footer"] { display: none !important; }
+  .m-kpis.m-kpis-strip [class*="-kpi-val"] { font-size: 16px !important; order: -1; }
+}
+
+/* ── Segmented control (tabs, toggles, period presets) ──────────────────── */
+.m-seg {
+  display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--bg);
+  border: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; max-width: 100%;
+}
+.m-seg::-webkit-scrollbar { display: none; }
+.m-seg-btn {
+  flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 32px; padding: 6px 12px; border: none; border-radius: 8px; background: transparent;
+  color: var(--text-dim); font: 600 13px var(--font); white-space: nowrap; cursor: pointer;
+  transition: background var(--tr), color var(--tr), box-shadow var(--tr); text-decoration: none;
+}
+.m-seg-btn:hover { color: var(--text); }
+.m-seg-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(26,31,54,.12); }
+@media (max-width: 640px) { .m-seg { display: flex; } } /* full width on phones, content width on desktop */
+
+/* ── Filter bar + filter sheet ──────────────────────────────────────────
+   Desktop: the page's filter controls render inline as before.
+   Phone:   one row (search + .m-filter-toggle); the controls wrapped in
+   .m-filter-panel become a bottom sheet toggled by Alpine — markup in
+   ui-design.md §22. */
+.m-filter-bar { display: flex; align-items: center; gap: var(--m-s1); min-width: 0; }
+.m-filter-bar > input, .m-filter-bar > .m-grow { flex: 1; min-width: 0; }
+.m-filter-toggle {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px;
+  border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-sub);
+  font: 600 13px var(--font); cursor: pointer; white-space: nowrap;
+}
+.m-filter-toggle .m-count {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: #fff;
+  font: 700 11px var(--mono); display: inline-flex; align-items: center; justify-content: center;
+}
+@media (max-width: 640px) {
+  .m-filter-bar input { font-size: 16px !important; } /* below 16px iOS zooms on focus */
+  .m-filter-panel {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 451;
+    max-height: 85vh; overflow-y: auto; background: var(--surface);
+    border-radius: 16px 16px 0 0; box-shadow: 0 -8px 32px rgba(26,31,54,.18);
+    padding: 8px var(--m-s3) calc(var(--m-s3) + var(--m-safe-bottom));
+    display: flex; flex-direction: column; gap: var(--m-s2);
+    transform: translateY(105%); transition: transform .24s cubic-bezier(.4,0,.2,1);
+  }
+  .m-filter-panel.open { transform: translateY(0); }
+  .m-filter-panel:not(.open) { box-shadow: none; }
+  .m-filter-panel select, .m-filter-panel input { font-size: 16px !important; width: 100%; }
+}
+
+/* ── Bottom sheet (pickers, details, confirmations) ─────────────────────── */
+.m-sheet-overlay {
+  position: fixed; inset: 0; z-index: 450; background: rgba(26,31,54,.45); backdrop-filter: blur(2px);
+}
+.m-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 451; max-height: 92vh;
+  display: flex; flex-direction: column; background: var(--surface);
+  border-radius: 16px 16px 0 0; box-shadow: 0 -8px 32px rgba(26,31,54,.18);
+}
+@media (min-width: 641px) {
+  .m-sheet {
+    left: 50%; right: auto; bottom: auto; top: 50%; width: min(520px, calc(100vw - 32px));
+    transform: translate(-50%, -50%); border-radius: var(--r); max-height: 88vh;
+  }
+}
+.m-sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border-hi); margin: 8px auto 4px; flex-shrink: 0; }
+.m-sheet-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--m-s2);
+  padding: 8px var(--m-s3) var(--m-s2); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.m-sheet-title { font-size: 16px; font-weight: 800; color: var(--text); margin: 0; }
+.m-sheet-body { flex: 1; overflow-y: auto; padding: var(--m-s3); }
+.m-sheet-foot, .m-actions {
+  display: flex; gap: var(--m-s1); flex-shrink: 0;
+  padding: var(--m-s2) var(--m-s3) calc(var(--m-s2) + var(--m-safe-bottom));
+  border-top: 1px solid var(--border); background: var(--surface);
+}
+.m-sheet-foot > *, .m-actions > * { flex: 1; justify-content: center; }
+
+/* ── Sticky action bar for long forms (Cancel + Save side by side) ─────── */
+@media (max-width: 640px) {
+  .m-actions {
+    position: sticky; bottom: 0; z-index: 20;
+    margin: var(--m-s3) calc(-1 * var(--m-s3)) 0;
+    box-shadow: 0 -4px 16px rgba(26,31,54,.08);
+  }
+}
+
+/* ── Horizontal scroller with edge shadows (tables, pill strips) ────────
+   Shadows appear only on the side that has more content to scroll to. */
+.m-scroll {
+  overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(to left,  var(--surface) 30%, transparent) right center / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%,   rgba(26,31,54,.14), transparent) left center / 10px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(26,31,54,.14), transparent) right center / 10px 100% no-repeat scroll;
+}
+/* Freeze a table's first column while the rest scrolls (phones) */
+@media (max-width: 640px) {
+  .m-sticky-first th:first-child,
+  .m-sticky-first td:first-child {
+    position: sticky; left: 0; z-index: 2; background: var(--surface);
+    box-shadow: 1px 0 0 var(--border);
+  }
+  .m-sticky-first tbody tr:hover td:first-child { background: var(--surface2); }
+}
+
+/* ── One-line empty state ───────────────────────────────────────────────── */
+.m-empty {
+  display: flex; align-items: center; justify-content: center; gap: var(--m-s1);
+  padding: 20px var(--m-s3); font-size: var(--m-fs-body); color: var(--text-dim); text-align: center;
+}
+
+/* ── Page header on phones: the topbar already shows the page title ────── */
+@media (max-width: 640px) {
+  .m-page-head { margin-bottom: var(--m-s3) !important; gap: var(--m-s1) !important; align-items: center !important; }
+  .m-page-head h1 { font-size: var(--m-fs-title) !important; }
+  .m-page-head .m-dup-title { display: none !important; }
+}
+
+/* ── Global toasts: bottom-centre on phones, clear of the page header ──── */
+.app-toasts {
+  position: fixed; top: calc(var(--topbar-height) + 12px); right: 16px; z-index: 9000;
+  display: flex; flex-direction: column; gap: 7px; pointer-events: none; max-width: calc(100vw - 32px);
+}
+@media (max-width: 640px) {
+  .app-toasts {
+    top: auto; right: 16px; left: 16px; bottom: calc(16px + var(--m-safe-bottom));
+    align-items: center; flex-direction: column-reverse;
+  }
 }

@@ -7,7 +7,7 @@
 
     {{-- ── Row 2: Revenue Trend · Sales by Shop · Revenue by Category ──── --}}
     <div class="row-trend-shops">
-        <livewire:dashboard.sales-performance wire:init="loadChart" />
+        <livewire:dashboard.sales-performance />
         <livewire:dashboard.top-shops />
         <livewire:dashboard.revenue-by-category />
     </div>

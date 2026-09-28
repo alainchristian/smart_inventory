@@ -359,7 +359,7 @@
                                 {{ $sale->sale_number }}
                             </div>
                             <div style="font-size:11px;color:var(--text-sub);margin-top:2px">
-                                {{ $sale->sale_date->format('M d, Y h:i A') }}
+                                {{ local_time($sale->sale_date)->format('M d, Y h:i A') }}
                                 @if($sale->shop)
                                     · {{ $sale->shop->name }}
                                 @endif

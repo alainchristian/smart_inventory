@@ -546,7 +546,8 @@ class SalesAnalyticsService
             [$from, $to] = $this->parseDateRange($dateFrom, $dateTo);
             $q = $this->applyLocationFilter(
                 Sale::notVoided()->whereBetween('sale_date', [$from, $to])
-                    ->selectRaw('EXTRACT(HOUR FROM sale_date) as hour, COUNT(*) as count, SUM(total) as revenue')
+                    // sale_date is UTC — bucket by the business-timezone hour
+                    ->selectRaw("EXTRACT(HOUR FROM sale_date AT TIME ZONE 'UTC' AT TIME ZONE '" . config('tenant.timezone') . "') as hour, COUNT(*) as count, SUM(total) as revenue")
                     ->groupBy('hour')->orderBy('hour'),
                 $locationFilter
             );

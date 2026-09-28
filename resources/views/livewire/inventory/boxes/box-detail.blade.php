@@ -20,6 +20,7 @@
     transition:transform .25s cubic-bezier(.2,.8,.2,1);
 }
 .bd-drawer.open { transform:translateX(0) }
+.bd-drawer:not(.open) { box-shadow:none } /* closed drawer sits off-screen; its shadow bled onto the page edge */
 
 /* Header */
 .bd-header {

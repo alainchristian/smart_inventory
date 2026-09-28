@@ -145,7 +145,7 @@
                 <div class="pm-kpi-sub">{{ number_format($this->totalTransactions) }} transactions</div>
             </div>
         </div>
-        <div class="pm-kpi-val" style="color:var(--text)">{{ number_format($this->totalRevenue / 100) }}</div>
+        <div class="pm-kpi-val" style="color:var(--text)">{{ number_format($this->totalRevenue) }}</div>
         <div class="pm-kpi-divider"></div>
         <div class="pm-kpi-footer">
             <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['split'] }}</span><span class="pm-kpi-stat-l">Split</span></div>
@@ -170,7 +170,7 @@
         <div class="pm-kpi-footer">
             <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['single'] }}</span><span class="pm-kpi-stat-l">Single</span></div>
             <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['split'] }}</span><span class="pm-kpi-stat-l">Split</span></div>
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalRevenue / 100) }}</span><span class="pm-kpi-stat-l">Revenue</span></div>
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalRevenue) }}</span><span class="pm-kpi-stat-l">Revenue</span></div>
         </div>
     </div>
 
@@ -206,12 +206,12 @@
                 <div class="pm-kpi-sub">{{ $this->creditSalesStats['count'] }} credit sales</div>
             </div>
         </div>
-        <div class="pm-kpi-val" style="color:var(--red)">{{ number_format($this->creditSalesStats['total_credit_given'] / 100) }}</div>
+        <div class="pm-kpi-val" style="color:var(--red)">{{ number_format($this->creditSalesStats['total_credit_given']) }}</div>
         <div class="pm-kpi-divider"></div>
         <div class="pm-kpi-footer">
             <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->creditSalesStats['count'] }}</span><span class="pm-kpi-stat-l">Sales</span></div>
             <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ number_format($this->totalTransactions) }}</span><span class="pm-kpi-stat-l">Total Txns</span></div>
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalRevenue / 100) }}</span><span class="pm-kpi-stat-l">Revenue</span></div>
+            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalRevenue) }}</span><span class="pm-kpi-stat-l">Revenue</span></div>
         </div>
     </div>
 </div>
@@ -247,7 +247,7 @@
                     </div>
                 </div>
                 <div style="font-size:22px;font-weight:800;color:{{ $color['bg'] }};font-family:var(--mono);margin-bottom:4px">
-                    {{ number_format($data['total'] / 100, 0) }} RWF
+                    {{ number_format($data['total']) }} RWF
                 </div>
                 <div style="font-size:11px;color:var(--text-sub);font-weight:500">
                     {{ number_format($data['count']) }} transaction{{ $data['count'] != 1 ? 's' : '' }}
@@ -281,7 +281,7 @@
                 @forelse($this->recentTransactions as $sale)
                     <tr style="border-bottom:1px solid var(--border)">
                         <td data-label="Sale #" style="padding:12px 16px;font-family:var(--mono);font-weight:600;color:var(--text)">{{ $sale->sale_number }}</td>
-                        <td data-label="Date" style="padding:12px 16px;color:var(--text-sub);font-size:12px">{{ $sale->sale_date->format('M d, Y h:i A') }}</td>
+                        <td data-label="Date" style="padding:12px 16px;color:var(--text-sub);font-size:12px">{{ local_time($sale->sale_date)->format('M d, Y h:i A') }}</td>
                         <td data-label="Shop" style="padding:12px 16px;color:var(--text)">{{ $sale->shop->name }}</td>
                         <td data-label="Customer" style="padding:12px 16px;color:var(--text)">
                             @if($sale->customer)
@@ -297,7 +297,7 @@
                                 <div style="display:flex;gap:4px;flex-wrap:wrap">
                                     @foreach($sale->payments as $payment)
                                         <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text-sub);text-transform:uppercase">
-                                            {{ $payment->payment_method->label() }}: {{ number_format($payment->amount / 100, 0) }}
+                                            {{ $payment->payment_method->label() }}: {{ number_format($payment->amount) }}
                                         </span>
                                     @endforeach
                                 </div>
@@ -308,9 +308,9 @@
                             @endif
                         </td>
                         <td data-label="Total" style="text-align:right;padding:12px 16px;font-family:var(--mono);font-weight:700;color:var(--text)">
-                            {{ number_format($sale->total / 100, 0) }} RWF
+                            {{ number_format($sale->total) }} RWF
                             @if($sale->has_credit)
-                                <span style="font-size:10px;color:var(--red);margin-left:4px">({{ number_format($sale->credit_amount / 100, 0) }} credit)</span>
+                                <span style="font-size:10px;color:var(--red);margin-left:4px">({{ number_format($sale->credit_amount) }} credit)</span>
                             @endif
                         </td>
                     </tr>

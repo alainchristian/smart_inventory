@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Livewire\Dashboard\Concerns\ResolvesBusinessPeriod;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class RevenueByCategory extends Component
 {
+    use ResolvesBusinessPeriod;
+
     public string  $period     = 'today';
     public ?string $from       = null;
     public ?string $to         = null;
@@ -61,19 +64,7 @@ class RevenueByCategory extends Component
 
     private function periodRange(): array
     {
-        return match ($this->period) {
-            'today'      => [today()->startOfDay(), now()->endOfDay()],
-            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
-            'week'       => [now()->startOfWeek(), now()->endOfDay()],
-            'month'      => [now()->startOfMonth(), now()->endOfDay()],
-            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
-            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
-            'custom'     => [
-                Carbon::parse($this->from ?? today())->startOfDay(),
-                Carbon::parse($this->to   ?? today())->endOfDay(),
-            ],
-            default      => [today()->startOfDay(), now()->endOfDay()],
-        };
+        return $this->businessPeriodRange();
     }
 
     public function render() { return view('livewire.dashboard.revenue-by-category'); }

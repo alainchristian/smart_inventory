@@ -27,46 +27,64 @@ class PaymentMethodsReport extends Component
     public function mount(): void
     {
         if (!$this->dateFrom) {
-            $this->dateFrom = now()->startOfMonth()->toDateString();
+            $this->dateFrom = business_today()->startOfMonth()->toDateString();
         }
         if (!$this->dateTo) {
-            $this->dateTo = now()->toDateString();
+            $this->dateTo = business_today()->toDateString();
         }
+    }
+
+    /**
+     * UTC bounds for the selected business-timezone days. sale_date is a UTC
+     * timestamp, so comparing it to plain date strings dropped the whole
+     * last day (it ended at 00:00 UTC) and shifted every day by the offset.
+     */
+    private function bounds(): array
+    {
+        $tz = config('tenant.timezone');
+
+        return [
+            Carbon::parse($this->dateFrom, $tz)->startOfDay()->utc(),
+            Carbon::parse($this->dateTo, $tz)->endOfDay()->utc(),
+        ];
     }
 
     // ─── Actions ──────────────────────────────────────────────────────────────
     public function setDateRange(string $range): void
     {
-        $this->dateTo = now()->toDateString();
+        $today = business_today();
+        $this->dateTo = $today->toDateString();
         $this->dateFrom = match ($range) {
-            'today' => now()->startOfDay()->toDateString(),
-            'week' => now()->startOfWeek()->toDateString(),
-            'month' => now()->startOfMonth()->toDateString(),
-            'quarter' => now()->startOfQuarter()->toDateString(),
-            'year' => now()->startOfYear()->toDateString(),
-            default => now()->startOfMonth()->toDateString(),
+            'today' => $today->toDateString(),
+            'week' => $today->copy()->startOfWeek()->toDateString(),
+            'month' => $today->copy()->startOfMonth()->toDateString(),
+            'quarter' => $today->copy()->startOfQuarter()->toDateString(),
+            'year' => $today->copy()->startOfYear()->toDateString(),
+            default => $today->copy()->startOfMonth()->toDateString(),
         };
     }
 
     // ─── Computed Properties ──────────────────────────────────────────────────
     public function getActiveDateRangeLabelProperty(): string
     {
-        $from = Carbon::parse($this->dateFrom);
-        $to = Carbon::parse($this->dateTo);
+        $from  = Carbon::parse($this->dateFrom);
+        $to    = Carbon::parse($this->dateTo);
+        $today = business_today();
+        $toToday = $to->isSameDay($today);
 
-        if ($from->isToday() && $to->isToday()) {
+        if ($from->isSameDay($today) && $toToday) {
             return 'Today';
         }
-        if ($from->isSameDay(now()->startOfWeek()) && $to->isToday()) {
+        if ($from->isSameDay($today->copy()->startOfWeek()) && $toToday) {
             return 'This Week';
         }
-        if ($from->isSameDay(now()->startOfMonth()) && $to->isToday()) {
+        if ($from->isSameDay($today->copy()->startOfMonth()) && $toToday) {
             return 'This Month';
         }
-        if ($from->isSameDay(now()->startOfQuarter()) && $to->isToday()) {
+        if ($from->isSameDay($today->copy()->startOfQuarter()) && $toToday) {
             return 'This Quarter';
         }
-        if ($from->isSameDay(now()->startOfYear()) && $to->isToday()) {
+        if ($from->isSameDay($today->copy()->startOfYear()) && $toToday) {
             return 'This Year';
         }
 
@@ -94,7 +112,7 @@ class PaymentMethodsReport extends Component
         $query = SalePayment::query()
             ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [$this->dateFrom, $this->dateTo]);
+            ->whereBetween('sales.sale_date', $this->bounds());
 
         if ($this->locationFilter !== 'all') {
             $shopId = (int) str_replace('shop:', '', $this->locationFilter);
@@ -128,7 +146,7 @@ class PaymentMethodsReport extends Component
     {
         $query = Sale::query()
             ->whereNull('voided_at')
-            ->whereBetween('sale_date', [$this->dateFrom, $this->dateTo]);
+            ->whereBetween('sale_date', $this->bounds());
 
         if ($this->locationFilter !== 'all') {
             $shopId = (int) str_replace('shop:', '', $this->locationFilter);
@@ -142,7 +160,7 @@ class PaymentMethodsReport extends Component
     {
         $query = Sale::query()
             ->whereNull('voided_at')
-            ->whereBetween('sale_date', [$this->dateFrom, $this->dateTo]);
+            ->whereBetween('sale_date', $this->bounds());
 
         if ($this->locationFilter !== 'all') {
             $shopId = (int) str_replace('shop:', '', $this->locationFilter);
@@ -165,7 +183,7 @@ class PaymentMethodsReport extends Component
     {
         $query = Sale::query()
             ->whereNull('voided_at')
-            ->whereBetween('sale_date', [$this->dateFrom, $this->dateTo]);
+            ->whereBetween('sale_date', $this->bounds());
 
         if ($this->locationFilter !== 'all') {
             $shopId = (int) str_replace('shop:', '', $this->locationFilter);
@@ -185,7 +203,7 @@ class PaymentMethodsReport extends Component
         $query = Sale::query()
             ->with(['shop', 'customer', 'payments'])
             ->whereNull('voided_at')
-            ->whereBetween('sale_date', [$this->dateFrom, $this->dateTo]);
+            ->whereBetween('sale_date', $this->bounds());
 
         if ($this->locationFilter !== 'all') {
             $shopId = (int) str_replace('shop:', '', $this->locationFilter);

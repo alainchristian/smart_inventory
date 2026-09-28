@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Livewire\Dashboard\Concerns\ResolvesBusinessPeriod;
 use App\Models\Box;
 use App\Models\Customer;
 use App\Models\Sale;
@@ -12,6 +13,8 @@ use Livewire\Component;
 
 class BusinessInsights extends Component
 {
+    use ResolvesBusinessPeriod;
+
     public string  $period   = 'today';
     public ?string $from     = null;
     public ?string $to       = null;
@@ -100,19 +103,7 @@ class BusinessInsights extends Component
 
     private function periodRange(): array
     {
-        return match ($this->period) {
-            'today'      => [today()->startOfDay(), now()->endOfDay()],
-            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
-            'week'       => [now()->startOfWeek(), now()->endOfDay()],
-            'month'      => [now()->startOfMonth(), now()->endOfDay()],
-            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
-            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
-            'custom'     => [
-                Carbon::parse($this->from ?? today())->startOfDay(),
-                Carbon::parse($this->to   ?? today())->endOfDay(),
-            ],
-            default      => [today()->startOfDay(), now()->endOfDay()],
-        };
+        return $this->businessPeriodRange();
     }
 
     private function previousRange(Carbon $start, Carbon $end): array

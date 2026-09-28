@@ -263,7 +263,7 @@
                                                         <div class="cw-wo-item">
                                                             <div>
                                                                 <div style="font-size:14px;font-weight:700;color:var(--red);font-family:var(--mono);">{{ number_format($wo->amount) }} RWF</div>
-                                                                <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">{{ $wo->written_off_at->format('d M Y') }} · by {{ $wo->writtenOffBy?->name ?? '—' }}</div>
+                                                                <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">{{ local_time($wo->written_off_at)->format('d M Y') }} · by {{ $wo->writtenOffBy?->name ?? '—' }}</div>
                                                                 <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">{{ $wo->reason }}</div>
                                                             </div>
                                                             <div style="text-align:right;font-size:11px;font-family:var(--mono);color:var(--text-dim);white-space:nowrap;padding-left:12px;">

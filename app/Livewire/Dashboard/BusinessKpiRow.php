@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Livewire\Dashboard\Concerns\ResolvesBusinessPeriod;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Box;
@@ -17,6 +18,8 @@ use Livewire\Attributes\On;
 
 class BusinessKpiRow extends Component
 {
+    use ResolvesBusinessPeriod;
+
     public string  $period = 'today';
     public ?string $from   = null;
     public ?string $to     = null;
@@ -57,9 +60,15 @@ class BusinessKpiRow extends Component
         $previous = Sale::notVoided()->whereBetween('sale_date', [$prevStart, $prevEnd])->sum('total');
 
         // Always-visible sub-row reference points (not period-dependent)
-        $todayRev = Sale::notVoided()->whereDate('sale_date', today())->sum('total');
-        $weekRev  = Sale::notVoided()->whereBetween('sale_date', [now()->startOfWeek(), now()])->sum('total');
-        $monthRev = Sale::notVoided()->whereBetween('sale_date', [now()->startOfMonth(), now()])->sum('total');
+        // Business-timezone day/week/month starts, as UTC bounds (sale_date is UTC)
+        $bn         = business_now();
+        $nowUtc     = now();
+        $dayStart   = $bn->copy()->startOfDay()->utc();
+        $weekStart  = $bn->copy()->startOfWeek()->utc();
+        $monthStart = $bn->copy()->startOfMonth()->utc();
+        $todayRev = Sale::notVoided()->whereBetween('sale_date', [$dayStart, $nowUtc])->sum('total');
+        $weekRev  = Sale::notVoided()->whereBetween('sale_date', [$weekStart, $nowUtc])->sum('total');
+        $monthRev = Sale::notVoided()->whereBetween('sale_date', [$monthStart, $nowUtc])->sum('total');
 
         $this->sales = [
             'today'   => $todayRev,
@@ -82,21 +91,21 @@ class BusinessKpiRow extends Component
         $todayMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
-            ->whereDate('sales.sale_date', today())
+            ->whereBetween('sales.sale_date', [$dayStart, $nowUtc])
             ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
             ->value('margin') ?? 0);
 
         $weekMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [now()->startOfWeek(), now()])
+            ->whereBetween('sales.sale_date', [$weekStart, $nowUtc])
             ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
             ->value('margin') ?? 0);
 
         $monthMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [now()->startOfMonth(), now()])
+            ->whereBetween('sales.sale_date', [$monthStart, $nowUtc])
             ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
             ->value('margin') ?? 0);
 
@@ -172,10 +181,11 @@ class BusinessKpiRow extends Component
         ];
 
         // Expenses for selected period (daily_sessions.session_date is DATE)
-        $startDate = $start->toDateString();
-        $endDate   = $end->toDateString();
-        $prevStart_date = $prevStart->toDateString();
-        $prevEnd_date   = $prevEnd->toDateString();
+        // session_date is a local DATE — compare with local dates, never ->toDateString() on a UTC bound
+        $startDate = $this->localDate($start);
+        $endDate   = $this->localDate($end);
+        $prevStart_date = $this->localDate($prevStart);
+        $prevEnd_date   = $this->localDate($prevEnd);
 
         $expCurrent = (int) Expense::whereNull('expenses.deleted_at')
             ->where('expenses.is_system_generated', false)
@@ -211,6 +221,17 @@ class BusinessKpiRow extends Component
     // selected period, or the sparkline stops reflecting the period picker.
     private function sparkBuckets(Carbon $start, Carbon $end): array
     {
+        // Build the buckets on business-timezone days, then hand back UTC bounds
+        // (queries bind wall-clock time, so they must be UTC).
+        $tz    = config('tenant.timezone');
+        $start = $start->copy()->setTimezone($tz);
+        $end   = $end->copy()->setTimezone($tz);
+
+        return array_map(fn ($b) => [$b[0]->copy()->utc(), $b[1]->copy()->utc()], $this->localSparkBuckets($start, $end));
+    }
+
+    private function localSparkBuckets(Carbon $start, Carbon $end): array
+    {
         if ($start->isSameDay($end)) {
             // Single-day period: 7 fixed hourly slots covering that day's full 24h
             // (mirrors App\Livewire\Shop\Dashboard's single-day sparkline bucketing).
@@ -222,11 +243,12 @@ class BusinessKpiRow extends Component
             ], $hourSlots);
         }
 
-        $days = max((int) $start->diffInDays($end), 1) + 1;
+        $days = (int) $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) + 1;
 
-        if ($days <= 31)      $step = 1;
-        elseif ($days <= 91)  $step = 7;
-        else                  $step = (int) ceil($days / 12);
+        // At most 14 points spread over the WHOLE period. (It used to make one
+        // bucket per day for up to 31 days and then keep only the first 14, so
+        // "Last 30 days" plotted the oldest two weeks and dropped the recent ones.)
+        $step = max(1, (int) ceil($days / 14));
 
         $buckets = [];
         $cur = $start->copy()->startOfDay();
@@ -267,7 +289,7 @@ class BusinessKpiRow extends Component
             (float) Expense::whereNull('expenses.deleted_at')
                 ->where('expenses.is_system_generated', false)
                 ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
-                ->whereBetween('daily_sessions.session_date', [$b[0]->toDateString(), $b[1]->toDateString()])
+                ->whereBetween('daily_sessions.session_date', [$this->localDate($b[0]), $this->localDate($b[1])])
                 ->sum('expenses.amount'),
         $buckets);
     }
@@ -314,19 +336,7 @@ class BusinessKpiRow extends Component
 
     private function periodRange(): array
     {
-        return match ($this->period) {
-            'today'      => [today()->startOfDay(), now()->endOfDay()],
-            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
-            'week'       => [now()->startOfWeek(), now()->endOfDay()],
-            'month'      => [now()->startOfMonth(), now()->endOfDay()],
-            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
-            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
-            'custom'     => [
-                Carbon::parse($this->from ?? today())->startOfDay(),
-                Carbon::parse($this->to   ?? today())->endOfDay(),
-            ],
-            default      => [today()->startOfDay(), now()->endOfDay()],
-        };
+        return $this->businessPeriodRange();
     }
 
     private function previousRange(): array

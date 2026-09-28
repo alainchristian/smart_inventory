@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Livewire\Dashboard\Concerns\ResolvesBusinessPeriod;
 use App\Models\Alert;
 use App\Models\Box;
 use App\Models\Customer;
@@ -15,6 +16,8 @@ use Livewire\Component;
 
 class BusinessSnapshot extends Component
 {
+    use ResolvesBusinessPeriod;
+
     public string  $period   = 'today';
     public ?string $from     = null;
     public ?string $to       = null;
@@ -56,7 +59,7 @@ class BusinessSnapshot extends Component
 
         // Credit repayments also bring cash into the business — include them by payment method
         $repayByMethod = DB::table('credit_repayments')
-            ->whereBetween('repayment_date', [$start->toDateString(), $end->toDateString()])
+            ->whereBetween('repayment_date', [$start, $end])
             ->selectRaw("payment_method::text AS method, SUM(amount) AS total")
             ->groupByRaw("payment_method::text")
             ->pluck('total', 'method')->toArray();
@@ -121,25 +124,7 @@ class BusinessSnapshot extends Component
 
     private function periodRange(): array
     {
-        if ($this->period === 'custom') {
-            return [
-                Carbon::parse($this->from ?? today())->startOfDay(),
-                Carbon::parse($this->to   ?? today())->endOfDay(),
-            ];
-        }
-        return match ($this->period) {
-            'today'      => [today()->startOfDay(), now()->endOfDay()],
-            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
-            'week'       => [now()->startOfWeek(), now()->endOfDay()],
-            'month'      => [now()->startOfMonth(), now()->endOfDay()],
-            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
-            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
-            'custom'     => [
-                Carbon::parse($this->from ?? today())->startOfDay(),
-                Carbon::parse($this->to   ?? today())->endOfDay(),
-            ],
-            default      => [today()->startOfDay(), now()->endOfDay()],
-        };
+        return $this->businessPeriodRange();
     }
 
     public function render() { return view('livewire.dashboard.business-snapshot'); }

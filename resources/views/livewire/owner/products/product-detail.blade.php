@@ -17,6 +17,7 @@
       transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     .pd-drawer.open { transform: translateX(0); }
+.pd-drawer:not(.open) { box-shadow:none } /* closed drawer sits off-screen; its shadow bled onto the page edge */
 
     /* Typography & Hierarchy */
     .pd-header { 

@@ -159,7 +159,7 @@
                     {{ $transfer->status->label() }}
                 </span>
             </div>
-            <span style="font-size:13px;color:var(--text-dim)">{{ $transfer->requested_at?->format('d M Y · H:i') }}</span>
+            <span style="font-size:13px;color:var(--text-dim)">{{ local_time($transfer->requested_at)?->format('d M Y · H:i') }}</span>
         </div>
         <div class="ots-card-body" style="display:flex;flex-direction:column;gap:14px">
 
@@ -200,15 +200,15 @@
                 @if($transfer->shipped_at)
                 <div class="ots-meta-item">
                     <span class="ots-meta-label">Shipped</span>
-                    <span class="ots-meta-value">{{ $transfer->shipped_at->format('d M Y') }}</span>
-                    <span class="ots-meta-sub">{{ $transfer->shipped_at->format('H:i') }}</span>
+                    <span class="ots-meta-value">{{ local_time($transfer->shipped_at)->format('d M Y') }}</span>
+                    <span class="ots-meta-sub">{{ local_time($transfer->shipped_at)->format('H:i') }}</span>
                 </div>
                 @endif
                 @if($transfer->received_at)
                 <div class="ots-meta-item">
                     <span class="ots-meta-label">Received</span>
-                    <span class="ots-meta-value">{{ $transfer->received_at->format('d M Y') }}</span>
-                    <span class="ots-meta-sub">{{ $transfer->received_at->format('H:i') }}</span>
+                    <span class="ots-meta-value">{{ local_time($transfer->received_at)->format('d M Y') }}</span>
+                    <span class="ots-meta-sub">{{ local_time($transfer->received_at)->format('H:i') }}</span>
                 </div>
                 @endif
                 @if($transfer->notes)

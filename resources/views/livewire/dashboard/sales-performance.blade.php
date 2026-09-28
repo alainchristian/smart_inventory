@@ -1,6 +1,7 @@
 <div
     class="card"
     style="animation:fadeUp .4s ease .45s both"
+    wire:init="loadChart"{{-- here, not on the <livewire:> tag: attributes there never reach the component --}}
     x-data="salesPerfChart()"
     x-init="init()"
     x-destroy="teardown()"

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Livewire\Dashboard\Concerns\ResolvesBusinessPeriod;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class RecentTransactions extends Component
 {
+    use ResolvesBusinessPeriod;
+
     public string  $period       = 'today';
     public ?string $from         = null;
     public ?string $to           = null;
@@ -50,7 +53,7 @@ class RecentTransactions extends Component
 
         $repayments = DB::table('credit_repayments')
             ->join('customers', 'credit_repayments.customer_id', '=', 'customers.id')
-            ->whereBetween('credit_repayments.repayment_date', [$start->toDateString(), $end->toDateString()])
+            ->whereBetween('credit_repayments.repayment_date', [$start, $end])
             ->select('customers.name', 'credit_repayments.amount', 'credit_repayments.repayment_date as ts')
             ->orderByDesc('credit_repayments.repayment_date')
             ->limit(5)
@@ -96,18 +99,7 @@ class RecentTransactions extends Component
 
     private function periodRange(): array
     {
-        return match ($this->period) {
-            'today'   => [today()->startOfDay(),   now()->endOfDay()],
-            'week'    => [now()->startOfWeek(),     now()->endOfDay()],
-            'month'   => [now()->startOfMonth(),    now()->endOfDay()],
-            'quarter' => [now()->startOfQuarter(),  now()->endOfDay()],
-            'year'    => [now()->startOfYear(),     now()->endOfDay()],
-            'custom'  => [
-                Carbon::parse($this->from ?? today())->startOfDay(),
-                Carbon::parse($this->to   ?? today())->endOfDay(),
-            ],
-            default   => [today()->startOfDay(), now()->endOfDay()],
-        };
+        return $this->businessPeriodRange();
     }
 
     public function render() { return view('livewire.dashboard.recent-transactions'); }

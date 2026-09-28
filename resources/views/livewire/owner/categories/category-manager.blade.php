@@ -88,6 +88,7 @@
                   transform:translateX(100%);
                   transition:transform .22s cubic-bezier(.4,0,.2,1) }
 .cm-drawer.open { transform:translateX(0) }
+.cm-drawer:not(.open) { box-shadow:none } /* closed drawer sits off-screen; its shadow bled onto the page edge */
 .cm-drawer-head { display:flex;align-items:center;justify-content:space-between;
                   padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0 }
 .cm-drawer-title { font-size:16px;font-weight:800;color:var(--text) }

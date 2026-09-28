@@ -23,7 +23,7 @@ class ProductList extends Component
     public string  $sortBy        = 'name';
     public string  $sortDirection = 'asc';
 
-    public string  $period = 'month';
+    public string  $period = 'today'; // matches TimeFilter's default preset
     public ?string $from   = null;
     public ?string $to     = null;
 
@@ -136,12 +136,13 @@ class ProductList extends Component
         // what TimeFilter dispatches, so every preset except Today/This Week
         // silently fell through to a hardcoded "this month" range.
         if ($this->from && $this->to) {
-            return [$this->from, \Carbon\Carbon::parse($this->to)->endOfDay()];
+            $tz = config('tenant.timezone'); // business-timezone days → UTC bounds (sale_date is UTC)
+            return [\Carbon\Carbon::parse($this->from, $tz)->startOfDay()->utc(), \Carbon\Carbon::parse($this->to, $tz)->endOfDay()->utc()];
         }
 
         // Before TimeFilter has dispatched anything yet — matches its own
         // default selected preset ('today').
-        return [today(), now()->endOfDay()];
+        return [business_now()->startOfDay()->utc(), business_now()->endOfDay()->utc()];
     }
 
     public function render()
@@ -272,7 +273,10 @@ class ProductList extends Component
             'salesStats'  => $salesStats,
             'stockData'   => $stockData,
             'isOwner'     => $isOwner,
-            'periodLabel' => ucfirst($this->period),
+            'periodLabel' => [
+                'today' => 'Today', 'yesterday' => 'Yesterday', 'week' => 'This Week', 'month' => 'This Month',
+                'last_month' => 'Last Month', 'last_30' => 'Last 30 Days',
+            ][$this->period] ?? 'Custom Range',
             'suggestions' => $suggestions,
             'settings'    => $settings,
         ]);

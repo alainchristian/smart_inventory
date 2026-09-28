@@ -701,13 +701,11 @@ forms. All three pages were rebuilt on the ui-design.md system.
   total columns are only populated on close, so they read 0 while open.
 
 ### Gotchas found along the way
-- **Global mobile touch-target CSS** (`app.css`, `@media (max-width:640px)`):
-  `button, a { min-height/min-width:44px }` plus
-  `button:not(.w-9)…{ padding:.625rem 1rem }` (specificity 0,4,1) and
-  `table td { padding-left/right:.75rem !important }`. These silently
-  inflate compact controls and card-transformed table cells on phones.
-  Each component overrides them locally with scoped `!important` rules
-  inside its own ≤640px block — do the same for any new compact control.
+- **Global mobile touch-target CSS — removed 2026-09-28 (Phase 1 below).**
+  `app.css` used to force every `button`/`a` to 44×44px with 10×16px padding
+  at ≤640px, and many components still carry scoped `min-height:0 !important`
+  overrides against it. Those are now harmless leftovers; don't add new ones.
+  `table td { padding-left/right:.75rem !important }` at ≤640px still applies.
 - Fixed-position drawers must not use `width:100vw` on mobile (it
   includes the scrollbar → 10px off-screen); use `left:0;width:auto`.
 - `User::shop()` adds a `location_type` constraint the `shops` table
@@ -1234,3 +1232,74 @@ DOMContentLoaded script, which doesn't fire on wire:navigate.
   per-line discount to the threshold, like UnifiedPos; markups never need it.
 - **Tables never wrap cell text** app-wide (nowrap + horizontal scroll in the
   card); drawer/modal Save+Cancel pairs stay side by side on phones.
+
+---
+
+## Owner mobile redesign — Phase 0 bug fixes (2026-09-28)
+
+A mobile review of every owner page (plan agreed with the user: shared mobile
+styles go in `app.css`, the global ≤640px 44px touch-target rule gets replaced)
+turned up these bugs, fixed before any redesign work:
+
+- **Payment Methods report** divided every amount by 100 (8 places, cents
+  assumption) — RWF is stored in whole francs. It also filtered the UTC
+  `sale_date` with plain date strings, dropping the whole last day; now uses
+  business-timezone bounds (`PaymentMethodsReport::bounds()`).
+- **Dashboard widgets** (all 9 that listen to `time-filter-changed`) built
+  their ranges with `today()`/`now()` in UTC, so every "day" ran 02:00–01:59
+  Kigali time. They now use `Dashboard\Concerns\ResolvesBusinessPeriod`.
+  **New period-filtered widgets must use this trait.** It returns
+  `Illuminate\Support\Carbon` (a subclass), so widgets may type-hint either
+  Carbon class — returning base `Carbon\Carbon` 500'd the owner dashboard
+  (`SalesPerformance::loadByDay`). `tests/Feature/Owner/DashboardWidgetsRenderTest.php`
+  renders every widget for every preset.
+  **Date rules (a second bug from the same change):** `businessPeriodRange()`
+  gives UTC bounds for timestamp columns; `businessPeriodDates()` gives the
+  local days for DATE columns (`daily_sessions.session_date`) and chart
+  buckets; `localDate($utc)` converts. Never `->toDateString()` a UTC bound —
+  00:00 Kigali is 22:00 UTC the day before, which made "Yesterday" count the
+  previous register day's expenses (owner saw 150,000 spent on a day with no
+  expenses). Never pass a business-tz Carbon to a query — Laravel binds its
+  wall-clock time. `SalesPerformance` (trend chart) now groups sales by their
+  local date/week/month, shows a single day by hour, follows the filter's
+  default (Today), and loads on page open: `wire:init` is on the component's
+  root — on the `<livewire:>` tag it never reached the page, so the chart sat
+  as a skeleton until the period was changed. `TopShops` also
+  defaulted to 'month' while the filter showed Today. `BusinessKpiRow`'s
+  always-visible today/week/month figures use business bounds too.
+- **Products** (`Products\ProductList`, `Owner\Products\ProductKpiRow`): default
+  period label 'month' while data was Today; ranges now business-tz; labels
+  mapped ("Last 30 Days", not "Last_30"). `Owner\Products\ProductList` is orphaned.
+- **Sales Analytics peak hour** grouped by the UTC hour.
+- **UTC times shown raw** on owner sale detail, transfer detail, write-offs,
+  customer credit and payment methods lists — now `local_time()`.
+- Receive Stock upload zone (`display:block`), dashboard `.row-trend-shops` /
+  `.row-bottom-four` fixed heights reset at ≤640px (app.css), an unscoped
+  `table{display:block}` removed from the owner transfers list (the shop /
+  warehouse transfer views still have theirs — later phase), and closed
+  slide-in drawers no longer cast their shadow onto the page edge.
+Tests: `tests/Feature/Reports/MobilePhase0FixesTest.php`.
+
+## Owner mobile redesign — Phase 1: shared foundation (2026-09-28)
+
+- **44px rule removed** from `app.css`. Controls size themselves; small
+  icon-only buttons add `m-tap` (invisible 44px hit area). Verified with
+  before/after 390px screenshots of 11 pages across owner / shop / warehouse:
+  no layout breakage, compact controls simply stop being inflated.
+- **Shared mobile building blocks** (`m-` classes, end of `app.css`),
+  documented in `.claude/skills/ui-design.md` §22: `m-kpis` (2-up compact KPI
+  grid, `m-kpis-strip` for counts), `m-seg`, `m-filter-bar` /
+  `m-filter-toggle` / `m-filter-panel` (inline on desktop, bottom sheet on
+  phones), `m-sheet*`, `m-actions` (sticky Cancel+Save), `m-scroll` (edge
+  shadows), `m-sticky-first`, `m-empty`, `m-page-head` / `m-dup-title`,
+  `m-only` / `m-hide`, plus `--m-fs-*` / `--m-s1..3` scale variables.
+  Decision (user): mobile patterns are shared globals, not per-page copies.
+- **Gotcha found while building it:** a "show on phones" helper must never
+  set `display:… !important` — it beats Alpine's `x-show` inline
+  `display:none` and flattens flex/grid elements. `m-only` therefore only
+  hides on desktop; `m-hide` only hides on phones.
+- ui-design.md fixes: §4.2 no longer drops KPIs to one per row on phones,
+  §10.5 card-transform tables marked retired (tables stay tables), §14 drawer
+  footer stays a row on phones.
+- Global toasts moved into `.app-toasts` (app.css): bottom-centre on phones.
+- Pages don't use the `m-` classes yet — that's Phase 3 (rollout).

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Livewire\Dashboard\Concerns\ResolvesBusinessPeriod;
 use Livewire\Component;
 use App\Models\Sale;
 use Livewire\Attributes\On;
@@ -10,11 +11,13 @@ use Illuminate\Support\Facades\DB;
 
 class SalesPerformance extends Component
 {
+    use ResolvesBusinessPeriod;
+
     public string  $chartPeriod = 'daily'; // daily | weekly | monthly
     public array   $chartData   = [];
     public bool    $loaded      = false;
 
-    public string  $period = 'week';
+    public string  $period = 'today'; // follows TimeFilter's default
     public ?string $from   = null;
     public ?string $to     = null;
 
@@ -45,26 +48,12 @@ class SalesPerformance extends Component
         $this->loadChartData();
     }
 
-    private function periodRange(): array
-    {
-        return match ($this->period) {
-            'today'      => [today()->startOfDay(), now()->endOfDay()],
-            'yesterday'  => [today()->subDay()->startOfDay(), today()->subDay()->endOfDay()],
-            'week'       => [now()->startOfWeek(), now()->endOfDay()],
-            'month'      => [now()->startOfMonth(), now()->endOfDay()],
-            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
-            'last_30'    => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
-            'custom'     => [
-                Carbon::parse($this->from ?? today())->startOfDay(),
-                Carbon::parse($this->to   ?? today())->endOfDay(),
-            ],
-            default      => [today()->startOfDay(), now()->endOfDay()],
-        };
-    }
-
     private function loadChartData(): void
     {
-        [$start, $end] = $this->periodRange();
+        // Local (business-timezone) calendar days of the selected period. All
+        // bucketing and labels use these; queries on the UTC sale_date column
+        // get UTC bounds and group by the sale's LOCAL date/week/month.
+        [$from, $to] = $this->businessPeriodDates();
 
         $labels      = [];
         $revenueData = [];
@@ -72,9 +61,12 @@ class SalesPerformance extends Component
         $netData     = [];
 
         match ($this->chartPeriod) {
-            'weekly'  => $this->loadByWeek($start, $end, $labels, $revenueData, $profitData, $netData),
-            'monthly' => $this->loadByMonth($start, $end, $labels, $revenueData, $profitData, $netData),
-            default   => $this->loadByDay($start, $end, $labels, $revenueData, $profitData, $netData),
+            'weekly'  => $this->loadByWeek($from, $to, $labels, $revenueData, $profitData, $netData),
+            'monthly' => $this->loadByMonth($from, $to, $labels, $revenueData, $profitData, $netData),
+            default   => $from->isSameDay($to)
+                // A single day as one daily point is no trend — show it by hour
+                ? $this->loadByHour($from, $labels, $revenueData, $profitData, $netData)
+                : $this->loadByDay($from, $to, $labels, $revenueData, $profitData, $netData),
         };
 
         $this->chartData = [
@@ -85,142 +77,108 @@ class SalesPerformance extends Component
         ];
     }
 
-    private function loadByDay(Carbon $start, Carbon $end, array &$labels, array &$rev, array &$profit, array &$net): void
+    /** SQL: sale_date converted to its business-timezone wall time. */
+    private function localTs(string $column): string
     {
-        $days = (int) $start->diffInDays($end) + 1;
-        $days = min($days, 31);
-        $s    = $days < 31 ? $start : $end->copy()->subDays(30)->startOfDay();
+        return "({$column} AT TIME ZONE 'UTC' AT TIME ZONE '" . config('tenant.timezone') . "')";
+    }
 
-        $revRows = Sale::notVoided()
-            ->whereBetween('sale_date', [$s, $end])
-            ->select(DB::raw('DATE(sale_date) AS day'), DB::raw('SUM(total) AS revenue'))
-            ->groupBy('day')->orderBy('day')->get()->keyBy('day');
+    /**
+     * Revenue, gross profit and expenses per bucket between two local days.
+     * $bucketSql turns a local timestamp/date SQL expression into the bucket key.
+     */
+    private function series(Carbon $from, Carbon $to, callable $bucketSql): array
+    {
+        $utcFrom = $from->copy()->startOfDay()->utc();
+        $utcTo   = $to->copy()->endOfDay()->utc();
+        $saleKey = $bucketSql($this->localTs('sale_date'));
+        $itemKey = $bucketSql($this->localTs('sales.sale_date'));
 
-        $profRows = DB::table('sale_items')
+        $rev = Sale::notVoided()
+            ->whereBetween('sale_date', [$utcFrom, $utcTo])
+            ->selectRaw("{$saleKey} AS k, SUM(total) AS v")
+            ->groupBy('k')->pluck('v', 'k');
+
+        $profit = DB::table('sale_items')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [$s, $end])
-            ->select(
-                DB::raw('DATE(sales.sale_date) AS day'),
-                DB::raw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) AS profit')
-            )
-            ->groupBy('day')->orderBy('day')->get()->keyBy('day');
+            ->whereBetween('sales.sale_date', [$utcFrom, $utcTo])
+            ->selectRaw("{$itemKey} AS k, SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) AS v")
+            ->groupBy('k')->pluck('v', 'k');
 
-        $expRows = DB::table('expenses')
+        // session_date is already a local DATE
+        $exp = DB::table('expenses')
             ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
             ->whereNull('expenses.deleted_at')
             ->where('expenses.is_system_generated', false)
-            ->whereBetween('daily_sessions.session_date', [$s->toDateString(), $end->toDateString()])
-            ->select(DB::raw('daily_sessions.session_date AS day'), DB::raw('SUM(expenses.amount) AS expenses'))
-            ->groupBy('daily_sessions.session_date')->get()->keyBy('day');
+            ->whereBetween('daily_sessions.session_date', [$from->toDateString(), $to->toDateString()])
+            ->selectRaw($bucketSql('daily_sessions.session_date') . ' AS k, SUM(expenses.amount) AS v')
+            ->groupBy('k')->pluck('v', 'k');
 
-        for ($i = 0; $i < $days; $i++) {
-            $date     = $s->copy()->addDays($i);
-            $key      = $date->format('Y-m-d');
-            $r        = (float) ($revRows->get($key)?->revenue ?? 0);
-            $p        = (float) ($profRows->get($key)?->profit ?? 0);
-            $e        = (float) ($expRows->get($key)?->expenses ?? 0);
-            $labels[] = $date->format('M j');
-            $rev[]    = round($r);
-            $profit[] = round($p);
-            $net[]    = round($p - $e);
+        return [$rev, $profit, $exp];
+    }
+
+    private function push(string $key, string $label, array $series, array &$labels, array &$rev, array &$profit, array &$net): void
+    {
+        [$r, $p, $e] = [(float) ($series[0][$key] ?? 0), (float) ($series[1][$key] ?? 0), (float) ($series[2][$key] ?? 0)];
+        $labels[] = $label;
+        $rev[]    = round($r);
+        $profit[] = round($p);
+        $net[]    = round($p - $e);
+    }
+
+    private function loadByHour(Carbon $day, array &$labels, array &$rev, array &$profit, array &$net): void
+    {
+        $series = $this->series($day, $day, fn ($x) => "TO_CHAR(({$x})::timestamp, 'HH24')");
+        // Expenses belong to the day, not an hour: the hourly view plots sales and
+        // gross profit only (net equals gross); daily/weekly/monthly subtract expenses.
+        $series[2] = collect();
+
+        for ($h = 0; $h < 24; $h++) {
+            $key = sprintf('%02d', $h);
+            $this->push($key, $key . ':00', $series, $labels, $rev, $profit, $net);
         }
     }
 
-    private function loadByWeek(Carbon $start, Carbon $end, array &$labels, array &$rev, array &$profit, array &$net): void
+    private function loadByDay(Carbon $from, Carbon $to, array &$labels, array &$rev, array &$profit, array &$net): void
     {
-        $s = $end->copy()->subWeeks(11)->startOfWeek();
-        if ($s->lt($start)) {
-            $s = $start->copy()->startOfWeek();
-        }
+        // At most the last 31 days of the period
+        $from = $from->diffInDays($to) > 30 ? $to->copy()->subDays(30) : $from->copy();
+        $series = $this->series($from, $to, fn ($x) => "TO_CHAR(({$x})::date, 'YYYY-MM-DD')");
 
-        $revRows = Sale::notVoided()
-            ->whereBetween('sale_date', [$s, $end])
-            ->select(DB::raw("DATE_TRUNC('week', sale_date)::date AS week"), DB::raw('SUM(total) AS revenue'))
-            ->groupBy('week')->orderBy('week')->get()->keyBy('week');
-
-        $profRows = DB::table('sale_items')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [$s, $end])
-            ->select(
-                DB::raw("DATE_TRUNC('week', sales.sale_date)::date AS week"),
-                DB::raw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) AS profit')
-            )
-            ->groupBy('week')->orderBy('week')->get()->keyBy('week');
-
-        $expRows = DB::table('expenses')
-            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
-            ->whereNull('expenses.deleted_at')
-            ->where('expenses.is_system_generated', false)
-            ->whereBetween('daily_sessions.session_date', [$s->toDateString(), $end->toDateString()])
-            ->select(
-                DB::raw("DATE_TRUNC('week', daily_sessions.session_date)::date AS week"),
-                DB::raw('SUM(expenses.amount) AS expenses')
-            )
-            ->groupBy('week')->get()->keyBy('week');
-
-        $cur = $s->copy()->startOfWeek();
-        while ($cur->lte($end)) {
-            $key      = $cur->format('Y-m-d');
-            $r        = (float) ($revRows->get($key)?->revenue ?? 0);
-            $p        = (float) ($profRows->get($key)?->profit ?? 0);
-            $e        = (float) ($expRows->get($key)?->expenses ?? 0);
-            $labels[] = $cur->format('M j');
-            $rev[]    = round($r);
-            $profit[] = round($p);
-            $net[]    = round($p - $e);
-            $cur->addWeek();
+        for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
+            $this->push($d->format('Y-m-d'), $d->format('M j'), $series, $labels, $rev, $profit, $net);
         }
     }
 
-    private function loadByMonth(Carbon $start, Carbon $end, array &$labels, array &$rev, array &$profit, array &$net): void
+    private function loadByWeek(Carbon $from, Carbon $to, array &$labels, array &$rev, array &$profit, array &$net): void
     {
-        $s = $end->copy()->subMonths(11)->startOfMonth();
-        if ($s->lt($start)) {
-            $s = $start->copy()->startOfMonth();
+        // Weeks (Mon–Sun) touching the period, at most the last 12
+        $first = $from->copy()->startOfWeek();
+        $last  = $to->copy()->startOfWeek();
+        if ($first->diffInWeeks($last) > 11) {
+            $first = $last->copy()->subWeeks(11);
         }
+        $series = $this->series(max($first, $from), $to, fn ($x) => "TO_CHAR(DATE_TRUNC('week', ({$x})::timestamp), 'YYYY-MM-DD')");
 
-        $revRows = Sale::notVoided()
-            ->whereBetween('sale_date', [$s, $end])
-            ->select(DB::raw("TO_CHAR(sale_date, 'YYYY-MM') AS month"), DB::raw('SUM(total) AS revenue'))
-            ->groupBy('month')->orderBy('month')->get()->keyBy('month');
+        for ($w = $first->copy(); $w->lte($last); $w->addWeek()) {
+            $this->push($w->format('Y-m-d'), $w->format('M j'), $series, $labels, $rev, $profit, $net);
+        }
+    }
 
-        $profRows = DB::table('sale_items')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [$s, $end])
-            ->select(
-                DB::raw("TO_CHAR(sales.sale_date, 'YYYY-MM') AS month"),
-                DB::raw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) AS profit')
-            )
-            ->groupBy('month')->orderBy('month')->get()->keyBy('month');
+    private function loadByMonth(Carbon $from, Carbon $to, array &$labels, array &$rev, array &$profit, array &$net): void
+    {
+        // Months touching the period, at most the last 12
+        $first = $from->copy()->startOfMonth();
+        $last  = $to->copy()->startOfMonth();
+        if ($first->diffInMonths($last) > 11) {
+            $first = $last->copy()->subMonths(11);
+        }
+        $series = $this->series(max($first, $from), $to, fn ($x) => "TO_CHAR(({$x})::date, 'YYYY-MM')");
 
-        $expRows = DB::table('expenses')
-            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
-            ->whereNull('expenses.deleted_at')
-            ->where('expenses.is_system_generated', false)
-            ->whereBetween('daily_sessions.session_date', [$s->toDateString(), $end->toDateString()])
-            ->select(
-                DB::raw("TO_CHAR(daily_sessions.session_date, 'YYYY-MM') AS month"),
-                DB::raw('SUM(expenses.amount) AS expenses')
-            )
-            ->groupBy('month')->get()->keyBy('month');
-
-        $cur = $s->copy()->startOfMonth();
-        while ($cur->lte($end)) {
-            $key      = $cur->format('Y-m');
-            $r        = (float) ($revRows->get($key)?->revenue ?? 0);
-            $p        = (float) ($profRows->get($key)?->profit ?? 0);
-            $e        = (float) ($expRows->get($key)?->expenses ?? 0);
-            $labels[] = $cur->format('M Y');
-            $rev[]    = round($r);
-            $profit[] = round($p);
-            $net[]    = round($p - $e);
-            $cur->addMonth();
+        for ($m = $first->copy(); $m->lte($last); $m->addMonth()) {
+            $this->push($m->format('Y-m'), $m->format('M Y'), $series, $labels, $rev, $profit, $net);
         }
     }
 

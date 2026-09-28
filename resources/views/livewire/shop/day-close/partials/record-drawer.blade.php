@@ -20,6 +20,7 @@
               border-left:1px solid var(--border);box-shadow:-8px 0 40px rgba(26,31,54,.14);display:flex;flex-direction:column;
               transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);visibility:hidden; }
 .rd-drawer.open { transform:translateX(0);visibility:visible; }
+.rd-drawer:not(.open) { box-shadow:none } /* closed drawer sits off-screen; its shadow bled onto the page edge */
 .rd-head  { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0; }
 .rd-title { font-size:16px;font-weight:800;color:var(--text);margin:0; }
 .rd-sub   { font-size:12px;color:var(--text-dim);margin-top:3px;line-height:1.45; }
