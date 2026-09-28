@@ -461,13 +461,16 @@ class SalesAnalytics extends Component
             if (($e['seller_role'] ?? '') === 'owner') return false;
             if ($e['source'] === 'held' && $e['is_rejected']) return false;
             if ($e['is_approved']) return false;
-            if ($e['source'] === 'sale' && $e['discount_pct'] <= $threshold) return false;
+            // Same rule as UnifiedPos: a line needs approval only when its DISCOUNT
+            // off list exceeds the threshold. Markups (negative %) never do.
+            if ($e['source'] === 'sale' && ($e['max_discount_pct'] ?? $e['discount_pct']) <= $threshold) return false;
             return true;
         });
 
         return [
             'count'          => $pending->count(),
-            'total_discount' => (int) $pending->sum('total_discount'),
+            // Below-list money only — a markup line in the same row never offsets it.
+            'total_discount' => (int) $pending->sum(fn (array $e) => $e['discount_amount'] ?? max($e['total_discount'], 0)),
         ];
     }
 

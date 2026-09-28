@@ -1203,3 +1203,34 @@ DOMContentLoaded script, which doesn't fire on wire:navigate.
   `tests/Feature/Layout/TopbarTitleTest.php` fails for any owner / shop /
   warehouse GET route missing from it. Print, PDF, receipt, delivery-note
   and picking-slip pages are excluded, since they don't render the topbar.
+
+---
+
+## Close-flow feedback round (2026-09-28)
+
+- **Managers can reopen their own closed day** (`DailySessionService::reopenSession($session, $user, $reason)`,
+  UI `Shop\DayClose\ReopenSession` on the Register's closed state and the
+  Session History drawer). Rules: own shop only, reason required (≥5 chars),
+  not locked, and only the shop's **most recent** session — the next day's
+  opening cash comes from this day's retained cash, so once a later day exists
+  only the owner can reopen (owner: any unlocked day, reason optional).
+  Reopening soft-deletes the auto "Cash Shortage" expense (re-close books it
+  again if still short — previously a stale one survived and skewed the
+  re-close), resolves that session's open shortage/surplus alerts, logs the
+  previous close's figures in `details.previous_close`, and alerts the owner
+  when a manager did it. Tests: `tests/Feature/DayClose/ReopenSessionTest.php`.
+- **Non-cash settlement**: Close wizard step 4 shows a Difference column;
+  any channel where settled ≠ collected makes closing notes required
+  (`CloseWizard::hasSettlementDifference()`).
+- **Expense description** defaults to the category name (`AddExpense::updatedCategoryId`,
+  swaps only the prefix on category change).
+- **Shop dashboard** counts expenses/withdrawals by their session's
+  `session_date`, not `created_at`/`recorded_at` (owner FinanceAnalyticsService
+  withdrawals still use `recorded_at` — not changed).
+- **Price Audit**: `total_discount`/`discount_pct` stay positive-below-list,
+  negative-above-list (markup); new keys `price_change`, `change_pct`,
+  `discount_amount`, `markup_amount`, `direction`, `max_discount_pct`
+  (`SalesAnalyticsService::LINE_LIST_DIFF_SQL`). Approval compares the largest
+  per-line discount to the threshold, like UnifiedPos; markups never need it.
+- **Tables never wrap cell text** app-wide (nowrap + horizontal scroll in the
+  card); drawer/modal Save+Cancel pairs stay side by side on phones.

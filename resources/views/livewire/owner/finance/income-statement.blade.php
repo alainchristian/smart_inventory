@@ -48,7 +48,7 @@
 /* ── Table ── */
 .is-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
 .is-table       { width:100%;border-collapse:collapse; }
-.is-table td    { padding:9px 20px;vertical-align:middle; }
+.is-table td    { padding:9px 20px;vertical-align:middle;white-space:nowrap; }  /* one line; the statement scrolls in .is-table-scroll */
 .is-section-hd  { padding:10px 20px 6px;font-size:10px;font-weight:700;text-transform:uppercase;
                   letter-spacing:0.7px;color:var(--accent);
                   border-top:1px solid var(--border); }

@@ -117,7 +117,7 @@
 .fq-table tbody tr { border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--tr); }
 .fq-table tbody tr:last-child { border-bottom:none; }
 .fq-table tbody tr:hover, .fq-table tbody tr.active { background:var(--surface2); }
-.fq-table td { padding:12px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub); }
+.fq-table td { padding:12px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub);white-space:nowrap; }
 .fq-table td.num, .fq-table th.num { text-align:right; }
 
 /* Empty */
@@ -194,8 +194,8 @@
     .fq-btn-sm { min-height:32px !important;padding:6px 14px !important; }
     .fq-table td { padding-left:12px !important;padding-right:12px !important; }
     .fq-scan-row { flex-direction:column; }
-    .fq-modal-foot { flex-direction:column-reverse; }
-    .fq-modal-foot .fq-btn { width:100%; }
+    /* Footer button pairs stay side by side on phones */
+    .fq-modal-foot .fq-btn { flex:1 1 0;min-width:0 !important;justify-content:center; }
     .fq-notice { flex-wrap:wrap; }
 }
 @media (max-width:480px) { .fq-kpis { grid-template-columns:1fr; } }

@@ -35,6 +35,8 @@
 .um-table tbody tr:hover { background:var(--surface2) }
 .um-table tbody tr.inactive { opacity:.55 }
 .um-table td { padding:12px 16px;vertical-align:middle;font-size:14px }
+/* Cells stay on one line at every width; the table scrolls inside .um-scroll */
+.um-table th, .um-table td { white-space:nowrap }
 
 /* Avatar */
 .um-avatar { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0 }
@@ -170,15 +172,16 @@
     .um-table td,.um-table th { padding:10px 12px }
     .um-drawer { left:0;width:auto;max-width:none }
     .um-drawer-body { padding:16px }
-    .um-drawer-foot { padding:12px 16px;flex-direction:column }
-    .um-save-btn   { width:100%;padding:13px }
-    .um-cancel-btn { width:100%;padding:13px;text-align:center }
+    /* Cancel + Save stay side by side, sharing the width */
+    .um-drawer-foot { padding:12px 16px }
+    .um-save-btn   { flex:1;padding:13px }
+    .um-cancel-btn { flex:1;padding:13px;text-align:center }
     .um-role-card  { padding:10px 12px }
-    .um-confirm-box { flex-direction:column;align-items:flex-start;gap:8px }
+    /* Confirm message stays in view while the wide table scrolls; buttons side by side */
+    .um-confirm-box { gap:8px;white-space:normal;position:sticky;left:12px;max-width:calc(100vw - 72px) }
     .um-btn-new { width:100%;justify-content:center }
     .um-kpi:last-child { grid-column:1 / -1 }
     .um-table { min-width:1000px }
-    .um-table td { white-space:nowrap }
     .um-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 

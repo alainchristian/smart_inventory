@@ -457,6 +457,9 @@
                 <button type="button" class="sh-btn" x-show="c" x-cloak @click="c = false">Cancel</button>
                 <button type="button" class="sh-btn sh-btn-dark" x-show="c" x-cloak wire:click="lockSession({{ $sess->id }})" @click="c = false">Lock permanently</button>
             @else
+                @if (! $isOwner && $sess->status === 'closed')
+                    <livewire:shop.day-close.reopen-session :sessionId="$sess->id" :key="'sh-reopen-'.$sess->id" />
+                @endif
                 <button type="button" class="sh-btn" wire:click="closeDetail">Done</button>
             @endif
         </div>

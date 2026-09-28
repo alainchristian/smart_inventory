@@ -1299,12 +1299,29 @@ class DailySessionService
     }
 
     /**
-     * Reopen a closed session (owner only). Cannot reopen locked sessions.
+     * Reopen a closed session for corrections. Cannot reopen locked sessions.
+     *
+     * - Owner: any closed session, reason optional.
+     * - Shop manager: only their own shop's most recent session, with a reason.
+     *   A later day's opening cash comes from this day's retained cash, so an
+     *   older day stays closed once the next one exists — the owner can still
+     *   reopen it.
+     *
+     * The auto-generated cash-shortage expense from the previous close is
+     * removed (re-closing books it again if the drawer is still short), and
+     * that close's figures are kept in the activity log.
      */
-    public function reopenSession(DailySession $session, User $user): DailySession
+    public function reopenSession(DailySession $session, User $user, ?string $reason = null): DailySession
     {
+        $reason = trim((string) $reason);
+
         if (! $user->isOwner()) {
-            abort(403, 'Only the owner can reopen sessions.');
+            if (! $user->isShopManager() || $user->location_id !== $session->shop_id) {
+                abort(403, "You can only reopen your own shop's register.");
+            }
+            if (mb_strlen($reason) < 5) {
+                throw new \Exception('Give a reason for reopening (at least 5 characters).');
+            }
         }
 
         if ($session->isLocked()) {
@@ -1315,23 +1332,70 @@ class DailySessionService
             throw new \Exception('Session is already open.');
         }
 
-        $session->update([
-            'status'    => 'open',
-            'closed_by' => null,
-            'closed_at' => null,
-        ]);
+        if (! $user->isOwner() && DailySession::forShop($session->shop_id)
+                ->where('session_date', '>', $session->session_date->toDateString())->exists()) {
+            throw new \Exception('A later day has already been opened — ask the owner to reopen this one.');
+        }
 
-        ActivityLog::create([
-            'user_id'           => $user->id,
-            'user_name'         => $user->name,
-            'action'            => 'daily_session_reopened',
-            'entity_type'       => 'daily_session',
-            'entity_id'         => $session->id,
-            'entity_identifier' => $session->session_date->format('Y-m-d'),
-            'details'           => ['reason' => 'Owner override reopen'],
-        ]);
+        return DB::transaction(function () use ($session, $user, $reason) {
+            $previous = [
+                'actual_cash_counted' => $session->actual_cash_counted,
+                'cash_variance'       => $session->cash_variance,
+                'cash_to_owner_momo'  => $session->cash_to_owner_momo,
+                'cash_retained'       => $session->cash_retained,
+                'closed_by'           => $session->closed_by,
+                'closed_at'           => $session->closed_at?->toDateTimeString(),
+                'notes'               => $session->notes,
+            ];
 
-        return $session->fresh();
+            $removedShortage = (int) $session->expenses()->where('is_system_generated', true)->sum('amount');
+            $session->expenses()->where('is_system_generated', true)->get()->each->delete();
+
+            Alert::where('entity_type', 'daily_session')->where('entity_id', $session->id)
+                ->where('is_resolved', false)
+                ->update([
+                    'is_resolved'      => true,
+                    'resolved_at'      => now(),
+                    'resolved_by'      => $user->id,
+                    'resolution_notes' => 'Register reopened for corrections',
+                ]);
+
+            $session->update([
+                'status'    => 'open',
+                'closed_by' => null,
+                'closed_at' => null,
+            ]);
+
+            ActivityLog::create([
+                'user_id'           => $user->id,
+                'user_name'         => $user->name,
+                'action'            => 'daily_session_reopened',
+                'entity_type'       => 'daily_session',
+                'entity_id'         => $session->id,
+                'entity_identifier' => $session->session_date->format('Y-m-d'),
+                'details'           => [
+                    'reason'           => $reason !== '' ? $reason : 'Owner override reopen',
+                    'previous_close'   => $previous,
+                    'shortage_removed' => $removedShortage,
+                ],
+            ]);
+
+            if (! $user->isOwner()) {
+                $shopName = $session->shop->name ?? "Shop #{$session->shop_id}";
+                Alert::create([
+                    'title'        => 'Register reopened — ' . $shopName,
+                    'message'      => $user->name . ' reopened ' . $session->session_date->format('d M Y') . ': ' . $reason,
+                    'severity'     => AlertSeverity::WARNING,
+                    'entity_type'  => 'daily_session',
+                    'entity_id'    => $session->id,
+                    'user_id'      => User::where('role', 'owner')->value('id'),
+                    'action_url'   => route('owner.finance.daily'),
+                    'action_label' => 'View Session',
+                ]);
+            }
+
+            return $session->fresh();
+        });
     }
 
     /**

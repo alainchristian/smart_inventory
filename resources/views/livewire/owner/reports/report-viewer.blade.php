@@ -39,7 +39,7 @@
 .rv-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px;text-transform:capitalize }
 .rv-table { width:100%;border-collapse:collapse }
 .rv-table thead th { font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap }
-.rv-table tbody td { font-size:13px;color:var(--text);padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle }
+.rv-table tbody td { font-size:13px;color:var(--text);padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap }
 .rv-table tbody tr:last-child td { border-bottom:none }
 .rv-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch }
 .rv-error-card { background:var(--danger-glow);border:1px solid var(--red-dim);border-radius:var(--rsm);padding:14px;color:var(--red) }

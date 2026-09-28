@@ -46,7 +46,7 @@
 .cr-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
 .cr-table tbody tr:last-child { border-bottom:none }
 .cr-table tbody tr:hover { background:var(--surface2) }
-.cr-table td   { padding:13px 16px;font-size:13px;vertical-align:middle }
+.cr-table td   { padding:13px 16px;font-size:13px;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
 .cr-cust-main  { font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px }
 .cr-cust-sub   { font-size:12px;color:var(--text-dim);margin-top:2px;font-family:var(--mono) }
 
@@ -151,8 +151,9 @@
 .cr-history-pill  { padding:3px 9px;border-radius:6px;background:var(--surface2);font-size:10px;font-weight:700;
                      color:var(--text-dim);text-transform:uppercase;white-space:nowrap;flex-shrink:0 }
 
+/* Phones: Cancel + Record stay side by side (not stacked) */
 @media(max-width:640px) {
-    .cr-modal-foot { flex-direction:column }
+    .cr-modal-foot > button { flex:1 1 0;min-width:0 !important;padding:12px 10px !important }
 }
 
 @keyframes cr-spin { to { transform:rotate(360deg) } }

@@ -46,6 +46,8 @@
 .tm-table tbody tr:hover { background:var(--surface2) }
 .tm-table tbody tr.inactive { opacity:.5 }
 .tm-table td  { padding:13px 16px;font-size:13px;vertical-align:middle }
+/* Cells stay on one line at every width; the table scrolls inside .tm-table-wrap */
+.tm-table th, .tm-table td { white-space:nowrap }
 
 /* Status badge */
 .tm-badge     { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
@@ -134,7 +136,6 @@
     .tm-btn-new, .tm-select { width:100%;justify-content:center }
     .tm-drawer { left:0;width:auto;max-width:none }
     .tm-drawer-body { padding:16px }
-    .tm-drawer-foot { flex-direction:column }
     .tm-table td, .tm-table th { padding:10px 10px }
     .tm-field-row { grid-template-columns:1fr }
 }
@@ -145,7 +146,6 @@
 }
 @media(max-width:640px) {
     /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
-    .tm-table td { white-space:nowrap }
     .tm-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 </style>
@@ -247,7 +247,7 @@
                         <td>
                             <div style="font-weight:600;color:var(--text)">{{ $row->name }}</div>
                             @if($row->notes)
-                                <div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $row->notes }}</div>
+                                <div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ $row->notes }}">{{ $row->notes }}</div>
                             @endif
                         </td>
                         <td class="tm-hide-mob">

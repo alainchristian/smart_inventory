@@ -355,10 +355,15 @@ class Dashboard extends Component
         $cfTotal = $cfCash + $cfMomo + $cfBank + $cfCard;
 
         $cfReturns     = $periodReturns;
+        // Expenses and withdrawals belong to the business day of their register
+        // session (same rule as the Daily Report), not the moment they were typed
+        // in — so one recorded this morning while closing yesterday's register
+        // counts for yesterday.
         $cfWithdrawals = (float) DB::table('owner_withdrawals')
-            ->where('shop_id', $shopId)
-            ->whereBetween('recorded_at', [$from, $to])
-            ->whereNull('deleted_at')->sum('amount');
+            ->join('daily_sessions', 'owner_withdrawals.daily_session_id', '=', 'daily_sessions.id')
+            ->where('daily_sessions.shop_id', $shopId)
+            ->whereBetween('daily_sessions.session_date', [$this->dateFrom, $this->dateTo])
+            ->whereNull('owner_withdrawals.deleted_at')->sum('owner_withdrawals.amount');
         $cfCredit = (float) Sale::where('shop_id', $shopId)
             ->where('has_credit', true)->whereNull('voided_at')
             ->whereBetween('sale_date', [$from, $to])->sum('credit_amount');
@@ -366,7 +371,7 @@ class Dashboard extends Component
         $cfExpenses = (float) DB::table('expenses')
             ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
             ->where('daily_sessions.shop_id', $shopId)
-            ->whereBetween('expenses.created_at', [$from, $to])
+            ->whereBetween('daily_sessions.session_date', [$this->dateFrom, $this->dateTo])
             ->whereNull('expenses.deleted_at')
             ->sum('expenses.amount');
 

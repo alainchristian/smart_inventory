@@ -54,6 +54,8 @@
 .cu-table tbody tr:last-child { border-bottom:none; }
 .cu-table tbody tr:hover  { background:var(--surface2); }
 .cu-table td { padding:13px 16px;font-size:13px;vertical-align:middle; }
+/* Cells stay on one line at every width; the table scrolls inside .cu-scroll */
+.cu-table th, .cu-table td { white-space:nowrap; }
 
 .cu-action { padding:5px 11px;border-radius:7px;border:1.5px solid var(--border);
              background:transparent;font-size:12px;font-weight:600;cursor:pointer;
@@ -123,7 +125,8 @@
 @media(max-width:768px) {
     .cu-drawer { left:0;width:auto;max-width:none }
     .cu-drawer-body { padding:16px }
-    .cu-drawer-foot { flex-direction:column }
+    /* Cancel + Save stay side by side, sharing the width */
+    .cu-cancel-btn, .cu-save-btn { flex:1;text-align:center }
 }
 @media(max-width:640px) {
     .cu-header-title { font-size:22px }
@@ -132,7 +135,6 @@
     .cu-kpi-val { font-size:20px }
     .cu-search-wrap { min-width:0;flex-basis:100% }
     .cu-table { min-width:860px }
-    .cu-table td { white-space:nowrap }
     .cu-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 @media(max-width:420px) {

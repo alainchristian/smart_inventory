@@ -46,6 +46,8 @@
 .em-table tbody tr:hover { background:var(--surface2) }
 .em-table tbody tr.inactive { opacity:.5 }
 .em-table td  { padding:13px 16px;font-size:13px;vertical-align:middle }
+/* Cells stay on one line at every width; the table scrolls inside .em-table-wrap */
+.em-table th, .em-table td { white-space:nowrap }
 
 /* Status badge */
 .em-badge     { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
@@ -139,7 +141,6 @@
     .em-btn-new, .em-select { width:100%;justify-content:center }
     .em-drawer { left:0;width:auto;max-width:none }
     .em-drawer-body { padding:16px }
-    .em-drawer-foot { flex-direction:column }
     .em-table td, .em-table th { padding:10px 10px }
 }
 
@@ -149,7 +150,6 @@
 }
 @media(max-width:640px) {
     /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
-    .em-table td { white-space:nowrap }
     .em-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 </style>
@@ -255,7 +255,7 @@
                                 @endif
                             </div>
                             @if($row->description)
-                                <div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $row->description }}</div>
+                                <div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ $row->description }}">{{ $row->description }}</div>
                             @endif
                         </td>
                         <td class="em-hide-mob">

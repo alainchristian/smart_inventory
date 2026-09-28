@@ -115,7 +115,10 @@
 .sa-tbl tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
 .sa-tbl tbody tr:last-child { border-bottom:none }
 .sa-tbl tbody tr:hover { background:var(--surface2) }
-.sa-tbl td { padding:11px 14px;vertical-align:middle }
+.sa-tbl td { padding:11px 14px;vertical-align:middle;white-space:nowrap;
+             overflow:hidden;text-overflow:ellipsis }
+.sa-tbl td * { white-space:nowrap }
+.sa-ellip { overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
 .sa-tbl tfoot tr { border-top:2px solid var(--border) }
 .sa-tbl tfoot td { padding:10px 14px;font-weight:700 }
 
@@ -654,10 +657,10 @@
         </div>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl" style="min-width:920px;table-layout:fixed">
+        <table class="sa-tbl" style="min-width:960px;table-layout:fixed">
             <colgroup>
                 <col style="width:150px"><col style="width:110px"><col style="width:70px"><col style="width:70px">
-                <col style="width:110px"><col style="width:80px"><col style="width:100px"><col style="width:120px"><col style="width:110px">
+                <col style="width:130px"><col style="width:80px"><col style="width:100px"><col style="width:140px"><col style="width:110px">
             </colgroup>
             <thead>
                 <tr>
@@ -734,10 +737,10 @@
         <span class="sa-card-badge">{{ count($recentTxns) }} shown</span>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl" style="min-width:920px;table-layout:fixed">
+        <table class="sa-tbl" style="min-width:980px;table-layout:fixed">
             <colgroup>
                 <col style="width:190px"><col style="width:120px"><col style="width:190px">
-                <col style="width:140px"><col style="width:170px"><col style="width:110px">
+                <col style="width:150px"><col style="width:220px"><col style="width:110px">
             </colgroup>
             <thead>
                 <tr>
@@ -1053,13 +1056,13 @@
         </div>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl sa-ledger-tbl" style="min-width:1150px;table-layout:fixed">
+        <table class="sa-tbl sa-ledger-tbl" style="min-width:1220px;table-layout:fixed">
             <colgroup>
                 <col style="width:44px">
-                <col style="width:220px"><col style="width:100px"><col style="width:70px">
-                <col style="width:110px"><col style="width:130px">
-                <col style="width:90px"><col style="width:130px">
-                <col style="width:90px"><col style="width:110px">
+                <col style="width:220px"><col style="width:120px"><col style="width:70px">
+                <col style="width:130px"><col style="width:130px">
+                <col style="width:130px"><col style="width:130px">
+                <col style="width:90px"><col style="width:150px">
             </colgroup>
             <thead>
                 <tr class="sa-colgrp" style="background:var(--bg)">
@@ -1226,11 +1229,14 @@
 @php
     $auditLog  = $this->priceAuditLog;
     $overStat  = $this->priceOverrideStats;
-    $totalDisc = array_sum(array_column($auditLog, 'total_discount'));
     $overrideThreshold = $this->priceOverrideThreshold;
 @endphp
 
-@php $avgDiscount = $overStat['override_items_count'] > 0 ? round($overStat['total_discount_given'] / $overStat['override_items_count']) : 0 @endphp
+@php
+    $avgDiscount = $overStat['discount_items_count'] > 0 ? round($overStat['total_discount_given'] / $overStat['discount_items_count']) : 0;
+    $avgMarkup   = $overStat['markup_items_count'] > 0 ? round($overStat['total_markup_given'] / $overStat['markup_items_count']) : 0;
+    $netVsList   = $overStat['total_markup_given'] - $overStat['total_discount_given'];
+@endphp
 <div class="sa-kpis">
     <div class="sa-kpi">
         <div class="sa-kpi-row">
@@ -1245,47 +1251,46 @@
         <div class="sa-kpi-val" style="color:var(--text)">{{ $overStat['override_sales_count'] }}</div>
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_rate'] }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDiscount) }}</span><span class="sa-kpi-stat-l">Avg Disc</span></div>
-        </div>
-    </div>
-
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-            </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Overridden Items</div>
-                <div class="sa-kpi-sub">Line items modified</div>
-            </div>
-        </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ $overStat['override_items_count'] }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_sales_count'] }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_rate'] }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDiscount) }}</span><span class="sa-kpi-stat-l">Avg/Item</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items changed</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--red)">{{ $overStat['discount_items_count'] }}</span><span class="sa-kpi-stat-l">Below list</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ $overStat['markup_items_count'] }}</span><span class="sa-kpi-stat-l">Above list</span></div>
         </div>
     </div>
 
     <div class="sa-kpi">
         <div class="sa-kpi-row">
             <div class="sa-kpi-icon" style="background:var(--red-dim);color:var(--red)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
             </div>
             <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Discount Given</div>
-                <div class="sa-kpi-sub">Revenue given away</div>
+                <div class="sa-kpi-label">Discounts Given</div>
+                <div class="sa-kpi-sub">Sold below list price</div>
             </div>
         </div>
         <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($overStat['total_discount_given']) }}</div>
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['discount_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDiscount) }}</span><span class="sa-kpi-stat-l">Avg/Item</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_sales_count'] }}</span><span class="sa-kpi-stat-l">Sales</span></div>
+        </div>
+    </div>
+
+    <div class="sa-kpi">
+        <div class="sa-kpi-row">
+            <div class="sa-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <div class="sa-kpi-body">
+                <div class="sa-kpi-label">Markups</div>
+                <div class="sa-kpi-sub">Charged above list price</div>
+            </div>
+        </div>
+        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($overStat['total_markup_given']) }}</div>
+        <div class="sa-kpi-divider"></div>
+        <div class="sa-kpi-footer">
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['markup_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgMarkup) }}</span><span class="sa-kpi-stat-l">Avg/Item</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:{{ $netVsList > 0 ? 'var(--green)' : ($netVsList < 0 ? 'var(--red)' : 'var(--text-sub)') }}">{{ $netVsList > 0 ? '+' : ($netVsList < 0 ? '−' : '') }}{{ number_format(abs($netVsList)) }}</span><span class="sa-kpi-stat-l">Net vs list</span></div>
         </div>
     </div>
 
@@ -1304,8 +1309,7 @@
         <div class="sa-kpi-divider"></div>
         <div class="sa-kpi-footer">
             <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_sales_count'] }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--red)">{{ number_format($overStat['total_discount_given']) }}</span><span class="sa-kpi-stat-l">Discounted</span></div>
+            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['total_sales'] }}</span><span class="sa-kpi-stat-l">All sales</span></div>
         </div>
     </div>
 </div>
@@ -1314,32 +1318,40 @@
     <div class="sa-card-head">
         <div class="sa-head-accent">
             <div class="sa-card-title">Price Modification Audit Trail</div>
-            <div class="sa-card-sub">Every price change in the period · who, what, when, how much</div>
+            <div class="sa-card-sub">Every price change in the period, below or above list · who, what, when, how much</div>
         </div>
         <span class="sa-card-badge" style="{{ count($auditLog) > 0 ? 'color:var(--amber)' : '' }}">
             {{ count($auditLog) }} modifications
         </span>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl sa-audit-tbl" style="min-width:1420px;table-layout:fixed">
+        <table class="sa-tbl sa-audit-tbl" style="min-width:1690px;table-layout:fixed">
             <colgroup>
-                <col style="width:130px"><col style="width:210px"><col style="width:160px">
-                <col style="width:130px"><col style="width:90px"><col style="width:95px">
-                <col style="width:100px"><col style="width:80px"><col style="width:145px">
+                <col style="width:130px"><col style="width:230px"><col style="width:190px">
+                <col style="width:170px"><col style="width:110px"><col style="width:110px">
+                <col style="width:170px"><col style="width:80px"><col style="width:220px">
                 <col style="width:280px">
             </colgroup>
             <thead>
                 <tr>
                     <th>Date & Time</th><th>Sale # / Product</th><th>Shop / Seller</th>
                     <th style="text-align:right">Qty</th><th style="text-align:right">Original</th>
-                    <th style="text-align:right">Actual</th><th style="text-align:right;color:var(--red)">Discount</th>
+                    <th style="text-align:right">Actual</th><th style="text-align:right">Price change</th>
                     <th style="text-align:right;color:var(--green)">Margin</th>
                     <th>Reason</th><th>Approved</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($auditLog as $entry)
-                @php $isLargeDiscount = $entry['source'] === 'held' || ($entry['discount_pct'] ?? 0) > $overrideThreshold; @endphp
+                @php
+                    // Same rule as the POS: only a line DISCOUNTED by more than the
+                    // threshold needs approval. Markups (negative %) never do.
+                    $overThreshold   = ($entry['max_discount_pct'] ?? $entry['discount_pct'] ?? 0) > $overrideThreshold;
+                    $isLargeDiscount = $entry['source'] === 'held' || $overThreshold;
+                    $chg    = $entry['price_change'] ?? -$entry['total_discount'];
+                    $chgPct = abs($entry['change_pct'] ?? -$entry['discount_pct']);
+                    $chgColor = $chg > 0 ? 'var(--green)' : ($chg < 0 ? 'var(--red)' : 'var(--text-sub)');
+                @endphp
                 <tr style="{{ $isLargeDiscount ? 'background:var(--amber-dim);border-left:3px solid var(--amber)' : '' }}">
                     <td>
                         <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">{{ local_time($entry['sale_date'])->format('M d, Y') }}</div>
@@ -1352,7 +1364,7 @@
                             <span style="padding:1px 6px;background:var(--violet-dim);color:var(--violet);border-radius:8px;font-size:9px;font-weight:800;letter-spacing:.3px">HELD</span>
                             @endif
                         </div>
-                        <div style="font-size:12px;color:var(--text);word-break:break-word">
+                        <div class="sa-ellip" style="font-size:12px;color:var(--text)" title="{{ $entry['product_name'] }}">
                             {{ $entry['product_name'] }}
                             @if($entry['line_count'] > 1)
                             <span style="margin-left:4px;padding:1px 6px;background:var(--accent-dim);color:var(--accent);border-radius:10px;font-size:10px;font-weight:700;font-family:var(--mono)">×{{ $entry['line_count'] }}</span>
@@ -1360,8 +1372,8 @@
                         </div>
                     </td>
                     <td>
-                        <div style="font-size:11px;color:var(--text-sub);margin-bottom:2px">{{ $entry['shop_name'] }}</div>
-                        <div style="font-size:12px;font-weight:600;color:var(--text)">{{ $entry['seller_name'] }}</div>
+                        <div class="sa-ellip" style="font-size:11px;color:var(--text-sub);margin-bottom:2px">{{ $entry['shop_name'] }}</div>
+                        <div class="sa-ellip" style="font-size:12px;font-weight:600;color:var(--text)" title="{{ $entry['seller_name'] }}">{{ $entry['seller_name'] }}</div>
                     </td>
                     <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--text-sub)">{{ $entry['quantity_display'] }}</td>
                     <td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--text-sub)">{{ $entry['original_unit_price'] !== null ? number_format($entry['original_unit_price']) : '—' }}</td>
@@ -1372,10 +1384,19 @@
                         @endif
                     </td>
                     <td style="text-align:right">
-                        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red)">{{ number_format($entry['total_discount']) }}</div>
-                        @if($entry['source'] === 'sale')
-                        <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono)">{{ $entry['discount_pct'] }}% off</div>
-                        @endif
+                        {{-- Signed: − below list (discount, red) · + above list (markup, green) --}}
+                        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:{{ $chgColor }}">{{ $chg > 0 ? '+' : ($chg < 0 ? '−' : '') }}{{ number_format(abs($chg)) }}</div>
+                        <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono)">
+                            @if(($entry['direction'] ?? '') === 'mixed')
+                            −{{ number_format($entry['discount_amount']) }} / +{{ number_format($entry['markup_amount']) }} · mixed
+                            @elseif($chg < 0)
+                            {{ $chgPct }}% below list
+                            @elseif($chg > 0)
+                            {{ $chgPct }}% above list
+                            @else
+                            at list
+                            @endif
+                        </div>
                     </td>
                     <td style="text-align:right">
                         @if($entry['margin_at_sale'] === null)
@@ -1390,9 +1411,9 @@
                     </td>
                     <td style="font-size:11px;color:var(--text-sub)">
                         @if($entry['source'] === 'held' && $entry['is_rejected'])
-                        <div style="color:var(--red);word-break:break-word">{{ $entry['rejected_reason'] ?: '—' }}</div>
+                        <div class="sa-ellip" style="color:var(--red)" title="{{ $entry['rejected_reason'] }}">{{ $entry['rejected_reason'] ?: '—' }}</div>
                         @else
-                        <div style="word-break:break-word">{{ $entry['reason'] ?? '—' }}</div>
+                        <div class="sa-ellip" title="{{ $entry['reason'] }}">{{ $entry['reason'] ?? '—' }}</div>
                         @endif
                         @if($entry['reference'])
                         <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:2px">Ref: {{ $entry['reference'] }}</div>
@@ -1405,10 +1426,10 @@
                         <span class="sa-margin-pill" style="background:var(--red-dim);color:var(--red);display:inline-flex;align-items:center;gap:4px">Rejected by {{ $entry['rejected_by'] }}</span>
                         @elseif($entry['is_approved'])
                         <span class="sa-margin-pill" style="background:var(--green-dim);color:var(--green);display:inline-flex;align-items:center;gap:4px"><x-icon name="check" size="10" /> {{ $entry['approved_by'] }}</span>
-                        @elseif($entry['source'] === 'sale' && $entry['discount_pct'] <= $overrideThreshold)
-                        {{-- Below the business-setting threshold — informational only, per policy no owner action is required --}}
-                        <span class="sa-margin-pill" style="background:var(--surface2);color:var(--text-dim)" title="{{ $entry['discount_pct'] }}% is within the {{ $overrideThreshold }}% policy threshold">
-                            Override — No Action Needed
+                        @elseif($entry['source'] === 'sale' && !$overThreshold)
+                        {{-- Markup, or discount within the business-setting threshold — informational only, per policy no owner action is required --}}
+                        <span class="sa-margin-pill" style="background:var(--surface2);color:var(--text-dim)" title="{{ $chg > 0 ? 'Sold above list price — markups never need approval' : $chgPct.'% is within the '.$overrideThreshold.'% policy threshold' }}">
+                            {{ $chg > 0 ? 'Markup' : 'Override' }} — No Action Needed
                         </span>
                         @else
                         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
@@ -1447,8 +1468,15 @@
             @if(count($auditLog))
             <tfoot>
                 <tr>
-                    <td colspan="6" style="color:var(--text-sub);font-size:11px;letter-spacing:.5px">TOTAL DISCOUNT GIVEN</td>
-                    <td style="text-align:right;font-family:var(--mono);color:var(--red)">{{ number_format($totalDisc) }}</td>
+                    @php
+                        $auditBelow = array_sum(array_column($auditLog, 'discount_amount'));
+                        $auditAbove = array_sum(array_column($auditLog, 'markup_amount'));
+                    @endphp
+                    <td colspan="6" style="color:var(--text-sub);font-size:11px;letter-spacing:.5px">TOTAL BELOW / ABOVE LIST</td>
+                    <td style="text-align:right;font-family:var(--mono)">
+                        <div style="color:var(--red)">−{{ number_format($auditBelow) }}</div>
+                        <div style="color:var(--green);margin-top:2px">+{{ number_format($auditAbove) }}</div>
+                    </td>
                     <td colspan="3"></td>
                 </tr>
             </tfoot>
@@ -1484,12 +1512,12 @@
         </div>
     </div>
     <div class="sa-tbl-scroll">
-        <table class="sa-tbl" style="min-width:1056px;table-layout:fixed">
+        <table class="sa-tbl" style="min-width:1180px;table-layout:fixed">
             <colgroup>
-                <col style="width:36px"><col style="width:170px"><col style="width:60px">
-                <col style="width:110px"><col style="width:90px"><col style="width:90px">
+                <col style="width:36px"><col style="width:220px"><col style="width:60px">
+                <col style="width:110px"><col style="width:120px"><col style="width:100px">
                 <col style="width:70px"><col style="width:100px"><col style="width:80px">
-                <col style="width:90px"><col style="width:85px"><col style="width:75px">
+                <col style="width:100px"><col style="width:100px"><col style="width:84px">
             </colgroup>
             <thead>
                 <tr>
@@ -1535,8 +1563,8 @@
                                         color:{{ $isTop ? 'var(--green)' : 'var(--text-sub)' }}">
                                 {{ strtoupper(substr($s['seller_name'], 0, 1)) }}
                             </div>
-                            <div>
-                                <div style="font-weight:600;color:var(--text);font-size:12px">{{ $s['seller_name'] }}</div>
+                            <div style="min-width:0">
+                                <div class="sa-ellip" style="font-weight:600;color:var(--text);font-size:12px" title="{{ $s['seller_name'] }}">{{ $s['seller_name'] }}</div>
                                 @if($isTop)<div style="font-size:10px;color:var(--green);font-weight:600">Top in shop</div>@endif
                             </div>
                         </div>

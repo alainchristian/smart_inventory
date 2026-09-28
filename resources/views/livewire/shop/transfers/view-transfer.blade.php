@@ -98,7 +98,7 @@
 .td-card-body    { overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
 /* ── Items table ─────────────────────────────────────── */
-.td-table { width:100%; border-collapse:collapse; min-width:480px; }
+.td-table { width:max-content; border-collapse:collapse; min-width:max(100%, 480px); }
 .td-table thead th {
     padding:8px 12px; font-size:12px; font-weight:700; letter-spacing:.7px;
     text-transform:uppercase; color:var(--text-dim);
@@ -107,7 +107,7 @@
 .td-table tbody tr { border-bottom:1px solid var(--border); }
 .td-table tbody tr:last-child { border-bottom:none; }
 .td-table tbody tr:hover { background:var(--surface2); }
-.td-table tbody td { padding:10px 12px; font-size:14px; color:var(--text); vertical-align:middle; }
+.td-table tbody td { padding:10px 12px; font-size:14px; color:var(--text); vertical-align:middle; white-space:nowrap; }
 .td-table .col-product { font-weight:600; font-size:16px; }
 .td-table .col-sku     { font-size:12px; color:var(--text-dim); display:block; margin-top:1px; }
 .td-table .col-num     { font-weight:700; font-size:16px; font-family:var(--mono); }

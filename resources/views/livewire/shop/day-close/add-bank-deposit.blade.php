@@ -30,8 +30,7 @@
     .ad-seg button { min-height:34px !important;min-width:0 !important;padding:7px 4px !important; }
 }
 @media (max-width:480px) {
-    .ad-actions { flex-direction:column-reverse; }
-    .ad-btn { width:100%; }
+    .ad-actions .ad-btn { flex:1; }
 }
 </style>
 

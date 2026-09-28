@@ -75,7 +75,9 @@
 .wsl-table tbody tr:hover     { background:var(--surface2); }
 .wsl-table tbody tr.wsl-low   { background:rgba(217,119,6,.04); }
 .wsl-table tbody tr.wsl-low:hover { background:rgba(217,119,6,.09); }
-.wsl-table td   { padding:12px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub); }
+.wsl-table td   { padding:12px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub);
+                  white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.wsl-table td[colspan] { white-space:normal; }
 .wsl-table td.c { text-align:center; }
 .wsl-table td.r { text-align:right; }
 

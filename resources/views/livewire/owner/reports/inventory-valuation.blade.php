@@ -19,6 +19,7 @@
 .iv-table tfoot td.r { text-align:right }
 .iv-card { background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);padding:20px }
 .iv-two-col { display:grid;grid-template-columns:1fr 1fr;gap:20px }
+.iv-two-col > * { min-width:0 }  /* lets a wide table scroll instead of widening the column */
 .iv-stat-block { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px }
 .iv-abc-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
 .iv-badge { display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px }
@@ -1024,15 +1025,15 @@
             </div>
         @else
             <div class="iv-table-scroll">
-                <table class="iv-table" style="min-width:880px;table-layout:fixed">
+                <table class="iv-table" style="min-width:990px;table-layout:fixed">
                     <colgroup>
                         <col style="width:220px">
-                        <col style="width:110px">
-                        <col style="width:130px">
+                        <col style="width:140px">
+                        <col style="width:170px">
                         <col style="width:90px">
-                        <col style="width:120px">
+                        <col style="width:140px">
                         <col style="width:90px">
-                        <col style="width:120px">
+                        <col style="width:140px">
                     </colgroup>
                     <thead>
                         <tr>
@@ -1124,10 +1125,10 @@
             </div>
         </div>
         <div class="iv-table-scroll">
-            <table class="iv-table" style="min-width:610px;table-layout:fixed">
+            <table class="iv-table" style="min-width:620px;table-layout:fixed">
                 <colgroup>
                     <col style="width:220px">
-                    <col style="width:130px">
+                    <col style="width:140px">
                     <col style="width:160px">
                     <col style="width:100px">
                 </colgroup>

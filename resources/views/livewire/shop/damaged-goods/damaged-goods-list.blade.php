@@ -45,7 +45,8 @@
 .dg-scroll     { overflow-x:auto;container-type:inline-size }
 .dg-tbl        { width:100%;border-collapse:collapse;table-layout:fixed }
 .dg-tbl th     { padding:10px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface) }
-.dg-tbl td     { padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle }
+.dg-tbl td     { padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap }
+.dg-tbl td[colspan] { white-space:normal }
 .dg-tbl tr:last-child td { border-bottom:none }
 .dg-tbl tbody tr { cursor:pointer;transition:background var(--tr) }
 .dg-tbl tbody tr:hover { background:var(--surface2) }
@@ -120,8 +121,8 @@
 
 /* Empty state */
 .dg-empty { text-align:center;padding:56px 20px }
-/* the 8-column table (1020px) scrolls below desktop width: pin the empty
-   state to the visible part of the scroller instead of centring it on 1020px */
+/* the 8-column table (1060px) scrolls below desktop width: pin the empty
+   state to the visible part of the scroller instead of centring it on 1060px */
 .dg-empty { position:sticky;left:0;width:100cqw;box-sizing:border-box }
 .dg-tbl td.dg-td-full { padding-left:0 !important;padding-right:0 !important }
 .dg-empty-ico { width:48px;height:48px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 14px }
@@ -324,9 +325,9 @@
                 <col style="width:100px">
                 <col style="width:80px">
                 <col style="width:120px">
-                <col style="width:140px">
+                <col style="width:160px">
                 <col style="width:100px">
-                <col style="width:120px">
+                <col style="width:140px">
             </colgroup>
             <thead>
                 <tr>

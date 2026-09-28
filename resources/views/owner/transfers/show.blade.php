@@ -67,6 +67,8 @@
 .ots-table tbody tr:last-child { border-bottom:none; }
 .ots-table tbody tr:hover { background:var(--surface2); }
 .ots-table tbody td { padding:10px 12px; font-size:14px; color:var(--text); vertical-align:middle; }
+/* Cells stay on one line; the table scrolls inside its overflow-x wrapper */
+.ots-table th, .ots-table td { white-space:nowrap; }
 .ots-prod-name  { font-weight:600; }
 .ots-val        { font-family:var(--mono); font-weight:700; font-size:16px; }
 .ots-prog-wrap  { height:4px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-top:4px; min-width:60px; }
@@ -108,75 +110,6 @@
     .ots-meta-grid { grid-template-columns:1fr; }
 }
 
-/* Responsive 2C — General Rules */
-@media(max-width:600px) {
-    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
-    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
-    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
-}
-
-
-/* Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
-}
-@media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
-}
-@media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
-    .tl-step-sub  { display:none; }
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    .tl-route-dash-line { width:20px; }
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
 
 </style>
 

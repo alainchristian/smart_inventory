@@ -16,10 +16,11 @@
 .wr-meta  { font-size:12px;color:var(--text-dim);margin-top:2px; }
 .wr-ellip { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .wr-empty { padding:40px 20px;text-align:center;font-size:13px;color:var(--text-dim); }
-.wr-table { width:100%;border-collapse:collapse; }
+.wr-table { width:max-content;min-width:100%;border-collapse:collapse; }
 .wr-table thead tr { border-bottom:2px solid var(--border); }
-.wr-table th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim); }
-.wr-table td { padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text-sub);vertical-align:middle; }
+.wr-table th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap; }
+.wr-table td { padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text-sub);vertical-align:middle;white-space:nowrap; }
+.wr-table .wr-meta { max-width:340px;overflow:hidden;text-overflow:ellipsis; }
 .wr-table tbody tr:last-child td { border-bottom:none; }
 .wr-badge { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap; }
 .wr-btn   { padding:9px 16px;border-radius:var(--rsm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all var(--tr);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:1px solid var(--border);background:var(--surface);color:var(--text-sub); }
@@ -50,8 +51,8 @@
 @media (max-width:640px) {
     .wr-seg button, .wr-btn-sm { min-height:30px !important;min-width:0 !important;padding:4px 9px !important; }
     .wr-table td { padding-left:12px !important;padding-right:12px !important; }
-    .wr-modal-foot { flex-direction:column-reverse; }
-    .wr-modal-foot .wr-btn { width:100%;justify-content:center; }
+    /* Cancel + Confirm stay side by side on phones */
+    .wr-modal-foot .wr-btn { flex:1 1 0;justify-content:center;min-width:0 !important;padding:10px 12px !important; }
 }
 </style>
 
@@ -90,8 +91,8 @@
     @if($history->isEmpty())
         <div class="wr-empty">No completed returns yet.</div>
     @else
-        <div style="overflow-x:auto">
-            <table class="wr-table" style="min-width:620px">
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+            <table class="wr-table" style="min-width:max(100%, 620px)">
                 <thead><tr><th>Return</th><th>From</th><th style="text-align:right">Boxes</th><th>Outcome</th></tr></thead>
                 <tbody>
                     @foreach($history as $r)
@@ -124,6 +125,7 @@
                 <p class="wr-modal-sub">From {{ $receiving->shop?->name }} · {{ $receiving->boxes->count() }} {{ $receiving->boxes->count() === 1 ? 'box' : 'boxes' }}. Mark anything that arrived damaged or didn't arrive.</p>
             </div>
             <div class="wr-modal-body">
+                <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
                 <table class="wr-table">
                     <tbody>
                         @foreach($receiving->boxes as $line)
@@ -144,6 +146,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
                 <div style="padding:14px 22px 0">
                     <label class="wr-label" for="wr-notes">Notes @if(collect($outcomes)->contains(fn ($x) => $x !== 'received'))<span style="color:var(--red)">*</span>@else<span style="font-weight:500;color:var(--text-dim)">(optional)</span>@endif</label>
                     <input id="wr-notes" type="text" class="wr-input" wire:model="notes" placeholder="e.g. Box crushed in transport">

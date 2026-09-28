@@ -276,7 +276,8 @@
     .rb-settings-grid { grid-template-columns:1fr }
     .rb-footer      { flex-direction:column;align-items:stretch }
     .rb-footer-left { justify-content:space-between }
-    .rb-save-btn    { width:100%;justify-content:center }
+    /* Cancel + Save side by side, sharing the row */
+    .rb-footer-left + .rb-footer-left > * { flex:1;justify-content:center;text-align:center }
     .rb-save-btn > span:first-child { display:inline-flex;align-items:center;gap:6px }
     /* block header: title gets its own row, compact controls underneath (global 44px tap-target rule was squeezing the title to 3 letters) */
     .rb-block-hdr   { flex-wrap:wrap;row-gap:6px }

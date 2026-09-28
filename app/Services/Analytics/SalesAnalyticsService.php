@@ -16,6 +16,29 @@ use Illuminate\Support\Facades\Cache;
 
 class SalesAnalyticsService
 {
+
+    /**
+     * Per-line list-vs-actual difference of a price-overridden sale_item, in RWF:
+     * (original − actual) × units. POSITIVE = sold below list (discount),
+     * NEGATIVE = sold above list (markup). Full-box lines store box prices and
+     * count as one box; pack lines store per-pack prices while quantity_sold is
+     * in pieces (so ÷ sell_unit_size); single-piece lines are per piece.
+     */
+    private const LINE_LIST_DIFF_SQL = '(CASE
+        WHEN sale_items.is_full_box = true THEN sale_items.original_unit_price - sale_items.actual_unit_price
+        ELSE (sale_items.original_unit_price - sale_items.actual_unit_price) * sale_items.quantity_sold::numeric / COALESCE(NULLIF(sale_items.sell_unit_size, 0), 1)
+    END)';
+
+    /** 'discount' | 'markup' | 'mixed' (both in one row) | 'none'. */
+    private static function overrideDirection(int $discountAmt, int $markupAmt): string
+    {
+        return match (true) {
+            $discountAmt > 0 && $markupAmt > 0 => 'mixed',
+            $discountAmt > 0                   => 'discount',
+            $markupAmt > 0                     => 'markup',
+            default                            => 'none',
+        };
+    }
     // ─────────────────────────────────────────────────────────────────────────
     // Date / cache helpers
     // ─────────────────────────────────────────────────────────────────────────
@@ -209,12 +232,15 @@ class SalesAnalyticsService
                 ->whereNull('sales.voided_at')
                 ->where('sale_items.price_was_modified', true)
                 ->whereBetween('sales.sale_date', [$from, $to])
+                // Overrides go both ways: below list (discount) or above it
+                // (markup). They are summed separately so a markup never
+                // offsets or inflates the discount total.
                 ->selectRaw('
                     COUNT(*) as items_count,
-                    SUM(CASE
-                        WHEN sale_items.is_full_box = true THEN sale_items.original_unit_price - sale_items.actual_unit_price
-                        ELSE (sale_items.original_unit_price - sale_items.actual_unit_price) * sale_items.quantity_sold::numeric / COALESCE(NULLIF(sale_items.sell_unit_size, 0), 1)  -- pack lines: prices are per pack
-                    END) as total_discount_given
+                    SUM(CASE WHEN sale_items.actual_unit_price < sale_items.original_unit_price THEN 1 ELSE 0 END) as discount_items_count,
+                    SUM(CASE WHEN sale_items.actual_unit_price > sale_items.original_unit_price THEN 1 ELSE 0 END) as markup_items_count,
+                    SUM(GREATEST(' . self::LINE_LIST_DIFF_SQL . ', 0)) as total_discount_given,
+                    SUM(GREATEST(-(' . self::LINE_LIST_DIFF_SQL . '), 0)) as total_markup_given
                 ');
             if ($locationFilter !== 'all') $discountQ = $this->applyLocationFilterToJoin($discountQ, $locationFilter);
             $dr = $discountQ->first();
@@ -224,7 +250,12 @@ class SalesAnalyticsService
             return [
                 'override_sales_count' => $overrideSalesCount,
                 'override_items_count' => (int) ($dr->items_count ?? 0),
-                'total_discount_given' => (int) ($dr->total_discount_given ?? 0),
+                'discount_items_count' => (int) ($dr->discount_items_count ?? 0),
+                'markup_items_count'   => (int) ($dr->markup_items_count ?? 0),
+                // Given away below list only (markups excluded).
+                'total_discount_given' => (int) round((float) ($dr->total_discount_given ?? 0)),
+                // Charged above list.
+                'total_markup_given'   => (int) round((float) ($dr->total_markup_given ?? 0)),
                 'override_rate'        => $totalSales > 0 ? round(($overrideSalesCount / $totalSales) * 100, 1) : 0,
                 'total_sales'          => $totalSales,
             ];
@@ -789,10 +820,12 @@ class SalesAnalyticsService
                     AVG(sale_items.original_unit_price) as original_unit_price,
                     AVG(sale_items.actual_unit_price) as actual_unit_price,
                     SUM(sale_items.line_total) as line_total,
-                    SUM(CASE
-                        WHEN sale_items.is_full_box = true THEN sale_items.original_unit_price - sale_items.actual_unit_price
-                        ELSE (sale_items.original_unit_price - sale_items.actual_unit_price) * sale_items.quantity_sold::numeric / COALESCE(NULLIF(sale_items.sell_unit_size, 0), 1)  -- pack lines: prices are per pack
-                    END) as total_discount,
+                    SUM(' . self::LINE_LIST_DIFF_SQL . ') as total_discount,
+                    SUM(GREATEST(' . self::LINE_LIST_DIFF_SQL . ', 0)) as discount_amount,
+                    SUM(GREATEST(-(' . self::LINE_LIST_DIFF_SQL . '), 0)) as markup_amount,
+                    MAX(CASE WHEN sale_items.original_unit_price > 0
+                        THEN (sale_items.original_unit_price - sale_items.actual_unit_price) * 100.0 / sale_items.original_unit_price
+                        ELSE 0 END) as max_discount_pct,
                     MAX(sale_items.sell_unit_name) as unit_name,
                     MAX(sale_items.sell_unit_size) as unit_size,
                     COUNT(DISTINCT COALESCE(sale_items.sell_unit_size, 1)) as unit_kinds,
@@ -839,11 +872,16 @@ class SalesAnalyticsService
                     $quantityDisplay = 'Mixed (' . $totalItems . ' items)';
                 }
 
-                // Calculate discount percentage based on total line_total
+                // Sign convention (see LINE_LIST_DIFF_SQL): total_discount and
+                // discount_pct are POSITIVE below list, NEGATIVE above list.
+                // price_change / change_pct are the same figures as actual − list.
                 $originalTotal = $item->line_total + $item->total_discount;
                 $discountPct = $originalTotal > 0
                     ? round(($item->total_discount / $originalTotal) * 100, 1)
                     : 0;
+                $totalDiscount = (int) round((float) $item->total_discount);
+                $discountAmt   = (int) round((float) $item->discount_amount);
+                $markupAmt     = (int) round((float) $item->markup_amount);
 
                 $lineCost = $item->purchase_price * $item->quantity_sold;
                 $margin   = $item->line_total > 0
@@ -865,8 +903,16 @@ class SalesAnalyticsService
                     'is_full_box'         => $hasFullBox,
                     'original_unit_price' => (int) $item->original_unit_price,
                     'actual_unit_price'   => (int) $item->actual_unit_price,
-                    'total_discount'      => (int) $item->total_discount,
+                    'total_discount'      => $totalDiscount,
                     'discount_pct'        => $discountPct,
+                    'price_change'        => -$totalDiscount,
+                    'change_pct'          => -$discountPct,
+                    'discount_amount'     => $discountAmt,
+                    'markup_amount'       => $markupAmt,
+                    'direction'           => self::overrideDirection($discountAmt, $markupAmt),
+                    // Largest single-line discount % — the figure the POS compares to
+                    // price_override_threshold (per line; a markup is negative, never over).
+                    'max_discount_pct'    => round((float) $item->max_discount_pct, 1),
                     'margin_at_sale'      => $margin,
                     'line_total'          => (int) $item->line_total,
                     'reason'              => $item->price_modification_reason,
@@ -895,9 +941,18 @@ class SalesAnalyticsService
             $held = $heldQ->get()->map(function (HeldSale $h) {
                 $cart = collect($h->cart_data ?? []);
                 $modifiedLines = $cart->filter(fn ($l) => !empty($l['price_modified']));
-                $discount = (int) $modifiedLines->sum(
-                    fn ($l) => (((int) ($l['original_price'] ?? $l['price'])) - (int) $l['price']) * (int) ($l['qty'] ?? 1)
-                );
+                // Cart prices are per box / per pack / per piece and qty is in the
+                // same unit, so (list − price) × qty is the line's difference.
+                $lineDiff    = fn ($l) => (((int) ($l['original_price'] ?? $l['price'])) - (int) $l['price']) * (int) ($l['qty'] ?? 1);
+                $discount    = (int) $modifiedLines->sum($lineDiff);
+                $discountAmt = (int) $modifiedLines->sum(fn ($l) => max($lineDiff($l), 0));
+                $markupAmt   = (int) $modifiedLines->sum(fn ($l) => max(-$lineDiff($l), 0));
+                $listTotal   = (int) $modifiedLines->sum(fn ($l) => ((int) ($l['original_price'] ?? $l['price'])) * (int) ($l['qty'] ?? 1));
+                $heldPct     = $listTotal > 0 ? round($discount / $listTotal * 100, 1) : 0;
+                $maxPct      = (float) $modifiedLines->map(function ($l) {
+                    $orig = (int) ($l['original_price'] ?? $l['price']);
+                    return $orig > 0 ? ($orig - (int) $l['price']) * 100 / $orig : 0;
+                })->max();
                 $reason = $modifiedLines->pluck('price_modification_reason')->filter()->unique()->implode('; ');
 
                 return [
@@ -916,7 +971,13 @@ class SalesAnalyticsService
                     'original_unit_price' => null,
                     'actual_unit_price'   => $h->cart_total,
                     'total_discount'      => $discount,
-                    'discount_pct'        => 0,
+                    'discount_pct'        => $heldPct,
+                    'price_change'        => -$discount,
+                    'change_pct'          => -$heldPct,
+                    'discount_amount'     => $discountAmt,
+                    'markup_amount'       => $markupAmt,
+                    'direction'           => self::overrideDirection($discountAmt, $markupAmt),
+                    'max_discount_pct'    => round($maxPct, 1),
                     'margin_at_sale'      => null,
                     'line_total'          => $h->cart_total,
                     'reason'              => $reason ?: null,

@@ -346,7 +346,7 @@
 .whs-tab-btn.active { background:var(--accent-dim);color:var(--accent);border-bottom-color:var(--accent) }
 
 /* History — matches ui-design.md table rules */
-.whs-hist-table { width:100%;border-collapse:collapse }
+.whs-hist-table { width:max-content;min-width:100%;border-collapse:collapse }
 .whs-hist-thead-row { border-bottom:2px solid var(--border) }
 .whs-hist-th {
     padding:10px 14px;text-align:left;font-size:11px;font-weight:700;
@@ -355,11 +355,13 @@
 .whs-hist-td {
     padding:11px 14px;font-size:13px;color:var(--text-sub);
     border-bottom:1px solid var(--border);vertical-align:middle;transition:background var(--tr);
+    white-space:nowrap;
 }
+.whs-hist-td[colspan] { white-space:normal }
 .whs-hist-row:last-child .whs-hist-td { border-bottom:none }
 .whs-hist-row:hover .whs-hist-td { background:var(--surface2) }
 /* Stock table */
-.whs-stock-table { width:100%;border-collapse:collapse;min-width:480px }
+.whs-stock-table { width:max-content;border-collapse:collapse;min-width:max(100%, 480px) }
 .whs-stock-thead-row { border-bottom:2px solid var(--border) }
 .whs-stock-th {
     padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
@@ -369,7 +371,8 @@
 .whs-stock-th.right  { text-align:right }
 .whs-stock-row { border-top:1px solid var(--border);transition:background var(--tr) }
 .whs-stock-row:hover { background:var(--surface2) }
-.whs-stock-td { padding:12px 16px;vertical-align:middle }
+.whs-stock-td { padding:12px 16px;vertical-align:middle;white-space:nowrap }
+.whs-stock-td[colspan] { white-space:normal }
 .whs-stock-td.center { text-align:center }
 .whs-stock-td.right  { text-align:right }
 
@@ -388,7 +391,7 @@
     .whs-tabs { overflow-x:auto;scrollbar-width:none;display:flex }
     .whs-tabs::-webkit-scrollbar { display:none }
     .whs-tab-btn { flex:1 0 110px }
-    .whs-stock-table { min-width:0 }
+    .whs-stock-table { min-width:100% }
     .whs-stock-table th.whs-stock-th,
     .whs-stock-table td.whs-stock-td { padding-left:8px !important;padding-right:8px !important }
     .whs-stock-table th.whs-stock-th:first-child,
@@ -1216,7 +1219,7 @@
 @else
     <div class="whs-card">
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-        <table class="whs-hist-table" style="min-width:540px">
+        <table class="whs-hist-table" style="min-width:max(100%, 540px)">
             <thead>
                 <tr class="whs-hist-thead-row">
                     <th class="whs-hist-th">Sale #</th>

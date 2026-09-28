@@ -46,14 +46,16 @@
 .dr-table-wrap { background:var(--surface);border:none;border-radius:var(--r);
                  box-shadow:var(--shadow-card);min-width:0; }
 .dr-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
-.dr-table { width:100%;border-collapse:collapse; }
+/* Tables never wrap cell text: they keep every column and scroll sideways
+   inside .dr-table-scroll on narrow screens (user rule). */
+.dr-table { width:max-content;min-width:100%;border-collapse:collapse; }
 .dr-table thead tr { border-bottom:2px solid var(--border); }
 .dr-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
                      letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);
                      white-space:nowrap; }
 .dr-table tbody tr { border-bottom:1px solid var(--border); }
 .dr-table tbody tr:last-child { border-bottom:none; }
-.dr-table td { padding:13px 16px;font-size:13px;vertical-align:middle; }
+.dr-table td { padding:13px 16px;font-size:13px;vertical-align:middle;white-space:nowrap; }
 .dr-table tbody tr.dr-total-row td { font-weight:700;border-top:2px solid var(--border); }
 .dr-empty       { padding:40px 20px;text-align:center; }
 .dr-empty-title { font-size:14px;font-weight:700;color:var(--text-sub);margin-bottom:4px; }
@@ -1147,7 +1149,7 @@
                 @if($drHasDetail)
                 <th>Sale</th><th>Product</th><th>Qty</th>
                 <th style="text-align:right">List price</th><th style="text-align:right">Sold at</th>
-                <th style="text-align:right">Discount/Markup</th><th style="text-align:right">% off</th>
+                <th style="text-align:right">Discount/Markup</th><th style="text-align:right">Change %</th>
                 @if($drCost)<th style="text-align:right">Profit at list</th><th style="text-align:right">Profit sold</th>@endif
                 @endif
                 <th style="text-align:right">Amount</th>
@@ -1167,7 +1169,7 @@
                 <td class="dr-num">{{ $d ? number_format($d['list']) : '' }}</td>
                 <td class="dr-num">{{ $d ? number_format($d['sold']) : '' }}</td>
                 <td class="dr-num" style="color:{{ ($d['discount'] ?? 0) < 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? (($d['discount'] > 0 ? '−' : ($d['discount'] < 0 ? '+' : '')) . number_format(abs($d['discount']))) : '' }}</td>
-                <td class="dr-num" style="color:var(--text-dim)">{{ $d ? number_format($d['pct'], 1) . '%' : '' }}</td>
+                <td class="dr-num" style="color:{{ ($d['discount'] ?? 0) < 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? (($d['discount'] > 0 ? '−' : ($d['discount'] < 0 ? '+' : '')) . number_format(abs($d['pct']), 1) . '%') : '' }}</td>
                 @if($drCost)
                 <td class="dr-num">{{ $d ? number_format($d['profit_at_list']) : '' }}</td>
                 <td class="dr-num" style="color:{{ ($d['profit_sold'] ?? 0) >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? number_format($d['profit_sold']) : '' }}</td>

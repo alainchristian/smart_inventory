@@ -1,6 +1,6 @@
 {{-- Rows of shop stock with a "boxes to send" input. Expects: $rows (objects
      with product_id, name, sku, category_name, boxes, sealed, items). --}}
-<table class="sr-table">
+<div class="sr-scroll"><table class="sr-table">
     <thead>
         <tr><th>Product</th><th class="num sr-hide-mob">Boxes</th><th class="num sr-hide-mob">Items</th><th class="num">Send back</th></tr>
     </thead>
@@ -27,4 +27,4 @@
             </tr>
         @endforeach
     </tbody>
-</table>
+</table></div>

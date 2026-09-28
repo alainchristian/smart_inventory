@@ -2,6 +2,8 @@
 <style>
 /* Product list — tables stay tables: every column is kept and the table
    scrolls sideways inside its card on narrow screens (min-width on .pl-table) */
+.pl-table th, .pl-table td { white-space:nowrap; }
+.pl-table td[colspan] { white-space:normal; }
 @media(max-width:768px) {
   /* Tighten cell padding */
   .pl-table td, .pl-table th { padding:8px 10px !important; }
@@ -188,7 +190,7 @@
 
     {{-- Responsive wrapper --}}
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <table class="pl-table" style="width:100%;border-collapse:collapse;min-width:{{ $isOwner ? '860px' : '600px' }}">
+      <table class="pl-table" style="width:max-content;border-collapse:collapse;min-width:max(100%, {{ $isOwner ? '860px' : '600px' }})">
         <thead>
           <tr style="background:var(--bg)">
 

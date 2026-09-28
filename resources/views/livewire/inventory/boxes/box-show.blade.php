@@ -30,14 +30,15 @@
 /* Table */
 .bs-table-wrap { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden }
 .bs-section-title { font-size:15px;font-weight:800;color:var(--text);margin-bottom:14px }
-.bs-table { width:100%;border-collapse:collapse;font-size:13px }
+.bs-table { width:max-content;min-width:100%;border-collapse:collapse;font-size:13px }
 .bs-table thead tr { background:var(--bg);border-bottom:1px solid var(--border) }
 .bs-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
                      letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
 .bs-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
 .bs-table tbody tr:last-child { border-bottom:none }
 .bs-table tbody tr:hover { background:var(--surface2) }
-.bs-table td { padding:11px 16px;vertical-align:middle }
+.bs-table td { padding:11px 16px;vertical-align:middle;white-space:nowrap }
+.bs-table td[colspan] { white-space:normal }
 
 .bs-badge-sm { display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;
                font-size:11px;font-weight:700;white-space:nowrap }
@@ -165,7 +166,7 @@
 {{-- Movement history --}}
 <div class="bs-section-title">Movement History</div>
 <div class="bs-table-wrap">
-    <div style="overflow-x:auto">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
     <table class="bs-table">
         <thead>
             <tr>
@@ -226,8 +227,8 @@
                         —
                     @endif
                 </td>
-                <td class="bs-hide-sm" style="font-size:12px;color:var(--text-dim);max-width:200px">
-                    {{ $movement->notes ?? $movement->reason ?? '—' }}
+                <td class="bs-hide-sm" style="font-size:12px;color:var(--text-dim)">
+                    <div style="max-width:280px;overflow:hidden;text-overflow:ellipsis" title="{{ $movement->notes ?? $movement->reason ?? '' }}">{{ $movement->notes ?? $movement->reason ?? '—' }}</div>
                 </td>
             </tr>
             @empty

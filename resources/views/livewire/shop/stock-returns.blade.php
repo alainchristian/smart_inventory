@@ -14,16 +14,17 @@
 .sr-count     { font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;font-family:var(--mono); }
 .sr-warn      { border-left:3px solid var(--amber); }
 
-.sr-table { width:100%;border-collapse:collapse; }
+.sr-table { width:max-content;min-width:100%;border-collapse:collapse; }
 .sr-table thead tr { border-bottom:2px solid var(--border); }
 .sr-table th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap; }
 .sr-table th.num, .sr-table td.num { text-align:right; }
 .sr-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr); }
 .sr-table tbody tr:last-child { border-bottom:none; }
 .sr-table tbody tr:hover { background:var(--surface2); }
-.sr-table td { padding:11px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub); }
+.sr-table td { padding:11px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub);white-space:nowrap; }
 .sr-name  { font-weight:600;color:var(--text); }
 .sr-meta  { font-size:12px;color:var(--text-dim);margin-top:2px; }
+.sr-table .sr-meta { max-width:340px;overflow:hidden;text-overflow:ellipsis; }
 .sr-mono  { font-family:var(--mono);font-weight:600;color:var(--text);white-space:nowrap; }
 .sr-qty   { display:inline-flex;align-items:center;gap:6px;justify-content:flex-end; }
 .sr-num   { width:72px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--mono);text-align:right;background:var(--surface);color:var(--text);outline:none;-moz-appearance:textfield; }
@@ -61,16 +62,13 @@
 
 @media (max-width:640px) {
     .sr-link, .sr-btn-sm { min-height:32px !important;min-width:0 !important;padding:5px 11px !important; }
-    .sr-modal-foot { flex-direction:column-reverse; }
-    .sr-modal-foot .sr-btn { width:100%;justify-content:center; }
+    /* Back + Send back stay side by side on phones */
+    .sr-modal-foot .sr-btn { flex:1 1 0;justify-content:center;min-width:0 !important;padding:10px 12px !important; }
 }
 
-/* Phones: keep every column — the table scrolls sideways inside its card */
+/* Tables keep every column and never wrap cell text — they scroll sideways
+   inside their card on narrow screens */
 .sr-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%; }
-@media (max-width:640px) {
-    .sr-table { width:max-content;min-width:100%; }
-    .sr-table th, .sr-table td { white-space:nowrap; }
-}
 </style>
 
 @php
