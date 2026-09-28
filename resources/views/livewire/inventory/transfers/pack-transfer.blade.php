@@ -107,15 +107,16 @@
 .pt-prog-bar.empty    { background:var(--surface2); }
 
 /* Packed boxes table */
-.pt-table { width:100%; border-collapse:collapse; min-width:400px; }
+.pt-table { width:max-content; min-width:max(100%, 400px); border-collapse:collapse; }
 .pt-table thead th {
     padding:7px 12px; font-size:12px; font-weight:700; letter-spacing:.6px;
     text-transform:uppercase; color:var(--text-dim); border-bottom:1px solid var(--border); text-align:left;
+    white-space:nowrap;
 }
 .pt-table tbody tr { border-bottom:1px solid var(--border); }
 .pt-table tbody tr:last-child { border-bottom:none; }
 .pt-table tbody tr:hover { background:var(--surface2); }
-.pt-table tbody td { padding:8px 12px; font-size:14px; color:var(--text); vertical-align:middle; }
+.pt-table tbody td { padding:8px 12px; font-size:14px; color:var(--text); vertical-align:middle; white-space:nowrap; }
 .pt-code-cell { font-family:var(--mono); font-weight:700; font-size:14px; color:var(--accent); }
 
 /* Summary strip */

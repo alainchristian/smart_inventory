@@ -39,7 +39,7 @@
 .cw-row          { border-bottom:1px solid var(--border);transition:background var(--tr); }
 .cw-row:hover    { background:var(--surface2); }
 .cw-row.active   { background:var(--surface2); }
-.cw-td           { padding:13px 20px;vertical-align:middle; }
+.cw-td           { padding:13px 20px;vertical-align:middle;white-space:nowrap; }  /* one line; table scrolls in .cw-table-wrap */
 
 /* ── Inline write-off form ── */
 .cw-form-row td  { padding:0;border-bottom:1px solid var(--border); }
@@ -95,7 +95,6 @@
     /* keep every column: the table scrolls sideways inside the card */
     .cw-table-wrap { -webkit-overflow-scrolling:touch; }
     .cw-table      { min-width:760px; }
-    .cw-td         { white-space:nowrap; }
     .cw-form-row td { white-space:normal; }
     /* inline write-off form stays pinned to the visible part of the scrolled table */
     .cw-form-inner { position:sticky;left:0;box-sizing:border-box;

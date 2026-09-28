@@ -96,7 +96,8 @@
 .rl-tbl tbody tr:last-child { border-bottom:none }
 .rl-tbl tbody tr:hover  { background:var(--surface2) }
 .rl-tbl tbody tr.rl-exp { background:var(--surface2) }
-.rl-tbl td   { padding:13px 16px;font-size:13px;vertical-align:middle }
+.rl-tbl td   { padding:13px 16px;font-size:13px;vertical-align:middle;white-space:nowrap }
+.rl-tbl td[colspan] { white-space:normal }
 
 /* ── Badges & pills ─────────────────────────────────────────────────── */
 .rl-badge { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;

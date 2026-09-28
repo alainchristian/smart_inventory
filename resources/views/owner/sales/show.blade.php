@@ -58,6 +58,8 @@
 .oss-table tbody tr:last-child { border-bottom:none; }
 .oss-table tbody tr:hover { background:var(--surface2); }
 .oss-table td { padding:12px 16px; font-size:13px; color:var(--text); vertical-align:middle; }
+/* Cells stay on one line; the table scrolls inside its overflow-x wrapper */
+.oss-table th, .oss-table td { white-space:nowrap; }
 .oss-prod-name { font-weight:600; }
 .oss-val       { font-family:var(--mono); font-weight:700; }
 

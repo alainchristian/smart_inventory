@@ -60,6 +60,8 @@
 .lm-table tbody tr:hover { background:var(--surface2) }
 .lm-table tbody tr.inactive { opacity:.5 }
 .lm-table td  { padding:13px 16px;font-size:13px;vertical-align:middle }
+/* Cells stay on one line at every width; the table scrolls inside its overflow-x wrapper */
+.lm-table th, .lm-table td { white-space:nowrap }
 
 /* Location icon */
 .lm-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
@@ -183,8 +185,8 @@
     .lm-select,.lm-btn-new { width:100%;justify-content:center }
     .lm-drawer   { left:0;width:auto;max-width:none }
     .lm-drawer-body { padding:16px }
-    .lm-drawer-foot { flex-direction:column }
-    .lm-save-btn,.lm-cancel-btn { width:100%;text-align:center }
+    /* Cancel + Save stay side by side, sharing the width */
+    .lm-save-btn,.lm-cancel-btn { flex:1;text-align:center }
     .lm-field-row { grid-template-columns:1fr }
     .lm-table td,.lm-table th { padding:10px 10px }
 }
@@ -202,7 +204,6 @@
 @media(max-width:640px) {
     /* Tables stay tables: all columns kept, the table scrolls sideways in its card */
     .lm-table { min-width:900px }
-    .lm-table td { white-space:nowrap }
     .lm-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 </style>

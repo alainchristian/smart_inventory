@@ -76,7 +76,7 @@
     border-radius:var(--r);
 }
 .ss-table {
-    width:100%;border-collapse:collapse;font-size:13px;
+    width:max-content;min-width:100%;border-collapse:collapse;font-size:13px;
 }
 .ss-table thead tr {
     border-bottom:2px solid var(--border);
@@ -102,8 +102,9 @@
 .ss-table tbody tr.ok     td:first-child { border-left:3px solid transparent  }
 
 .ss-table td {
-    padding:11px 16px;color:var(--text);vertical-align:middle;
+    padding:11px 16px;color:var(--text);vertical-align:middle;white-space:nowrap;
 }
+.ss-table td[colspan] { white-space:normal }
 .ss-table td.right  { text-align:right }
 .ss-table td.center { text-align:center }
 .ss-table td.mono   {
@@ -293,7 +294,7 @@
 @if($statusFilter !== 'previously_stocked')
 
 <div class="ss-table-wrap">
-    <div style="overflow-x:auto">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
     <table class="ss-table">
         <thead>
             <tr>
@@ -450,7 +451,7 @@
             {{ count($previouslyStocked) }} products
         </span>
     </div>
-    <div style="overflow-x:auto">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
     <table class="ss-table">
         <thead>
             <tr>

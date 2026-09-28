@@ -48,6 +48,8 @@
 .al-table tbody tr.al-row:hover { background:var(--surface2);cursor:pointer }
 .al-table tbody tr.al-row.failed { border-left:3px solid var(--red) }
 .al-table td { padding:11px 16px;vertical-align:middle }
+/* Cells stay on one line at every width; the table scrolls inside .al-scroll */
+.al-table th, .al-table td { white-space:nowrap }
 
 /* ── Time cell ──────────────────────────────────────*/
 .al-time { font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:nowrap }
@@ -81,7 +83,7 @@
 
 /* ── Context cell ───────────────────────────────────*/
 .al-ref  { font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text) }
-.al-ctx  { font-size:11px;color:var(--text-dim);margin-top:2px }
+.al-ctx  { font-size:11px;color:var(--text-dim);margin-top:2px;max-width:360px;overflow:hidden;text-overflow:ellipsis }
 
 /* ── IP ─────────────────────────────────────────────*/
 .al-ip { font-family:var(--mono);font-size:11px;color:var(--text-dim) }
@@ -151,7 +153,6 @@
     .al-export-btn, .al-clear-btn { justify-content:center;min-height:38px !important;padding:8px 14px !important }
     .al-preset-btn { min-height:32px !important;min-width:0 !important;padding:6px 14px !important }
     .al-table { min-width:1100px }
-    .al-table td { white-space:nowrap }
 }
 </style>
 
@@ -386,7 +387,7 @@
                             <div class="al-ref">{{ $log->entity_identifier }}</div>
                         @endif
                         @if($context && $context !== $log->entity_identifier)
-                            <div class="al-ctx">{{ $context }}</div>
+                            <div class="al-ctx" title="{{ $context }}">{{ $context }}</div>
                         @endif
                     </td>
 

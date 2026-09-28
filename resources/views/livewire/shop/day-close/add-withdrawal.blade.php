@@ -25,8 +25,7 @@
 @keyframes aw-spin { to { transform:rotate(360deg) } }
 @media (max-width:480px) {
     .aw-row { grid-template-columns:1fr; }
-    .aw-actions { flex-direction:column-reverse; }
-    .aw-btn { width:100%; }
+    .aw-actions .aw-btn { flex:1; }
 }
 </style>
 

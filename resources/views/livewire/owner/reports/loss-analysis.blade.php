@@ -64,6 +64,7 @@
 
 /* 2-col grid */
 .la-grid-2      { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px }
+.la-grid-2 > *  { min-width:0 }  /* lets a wide table scroll instead of widening the column */
 
 /* Tables */
 .la-tbl-wrap    { overflow-x:auto;-webkit-overflow-scrolling:touch }
@@ -76,6 +77,8 @@
 .la-tbl tbody tr:hover { background:var(--surface2) }
 .la-tbl tfoot tr { border-top:2px solid var(--border);background:var(--bg) }
 .la-tbl td      { padding:11px 14px;font-size:13px;vertical-align:middle }
+/* Cells stay on one line; the table scrolls inside .la-tbl-wrap instead */
+.la-tbl th, .la-tbl td { white-space:nowrap }
 .la-num         { font-family:var(--mono);text-align:right;white-space:nowrap }
 
 /* Rank badges */
@@ -440,7 +443,7 @@
                          data-amounts='@json(array_column($reasons, "amount"))'
                          style="min-height:220px"></div>
                 </div>
-                <div style="margin-top:16px">
+                <div class="la-tbl-wrap" style="margin-top:16px">
                     <table class="la-tbl">
                         <thead>
                             <tr>
@@ -683,15 +686,15 @@
         </div>
         @if(count($products))
             <div class="la-tbl-wrap">
-                <table class="la-tbl" style="min-width:860px;table-layout:fixed">
+                <table class="la-tbl" style="min-width:964px;table-layout:fixed">
                     <colgroup>
                         <col style="width:44px">
                         <col style="width:210px">
-                        <col style="width:76px">
-                        <col style="width:86px">
+                        <col style="width:90px">
+                        <col style="width:90px">
                         <col style="width:130px">
-                        <col style="width:76px">
-                        <col style="width:86px">
+                        <col style="width:100px">
+                        <col style="width:90px">
                         <col style="width:210px">
                     </colgroup>
                     <thead>

@@ -30,15 +30,14 @@
     .ae-seg button { min-height:34px !important;min-width:0 !important;padding:7px 4px !important; }
 }
 @media (max-width:480px) {
-    .ae-actions { flex-direction:column-reverse; }
-    .ae-btn { width:100%; }
+    .ae-actions .ae-btn { flex:1; }
 }
 </style>
 
 <form wire:submit="saveExpense">
     <div class="ae-field">
         <label class="ae-label" for="ae-cat-{{ $this->getId() }}">Category <span>*</span></label>
-        <select id="ae-cat-{{ $this->getId() }}" wire:model="categoryId" class="ae-input">
+        <select id="ae-cat-{{ $this->getId() }}" wire:model.live="categoryId" class="ae-input">
             <option value="0">Select a category…</option>
             @foreach ($categories as $cat)
                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
@@ -79,6 +78,7 @@
     <div class="ae-field">
         <label class="ae-label" for="ae-desc-{{ $this->getId() }}">Description <span>*</span></label>
         <input id="ae-desc-{{ $this->getId() }}" type="text" wire:model="description" placeholder="What was this for?" class="ae-input">
+        <div class="ae-hint">Starts with the category — add any detail after it.</div>
         @error('description') <div class="ae-error">{{ $message }}</div> @enderror
     </div>
 

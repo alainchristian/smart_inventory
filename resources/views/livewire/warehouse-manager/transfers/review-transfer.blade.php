@@ -207,8 +207,8 @@
     .rt-meta-grid { grid-template-columns:1fr 1fr; }
 }
 @media(max-width:640px) {
-    .rt-action-bar { flex-direction:column; }
-    .rt-btn { width:100%; }
+    /* Reject/Approve and Cancel/Reject stay side by side on phones */
+    .rt-action-bar .rt-btn, .rt-modal-foot .rt-btn { flex:1 1 0;min-width:0 !important;padding:10px 12px !important;white-space:normal;line-height:1.25; }
     .rt-meta-grid { grid-template-columns:1fr; }
     .rt-stat-value { font-size:22px; }
 }

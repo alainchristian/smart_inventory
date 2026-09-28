@@ -168,6 +168,8 @@
 .fo-table tbody tr:last-child { border-bottom:none; }
 .fo-table tbody tr:hover { background:var(--surface2); }
 .fo-table td { padding:11px 14px;color:var(--text);vertical-align:middle; }
+/* Cells stay on one line at every width; the table scrolls inside .fo-table-scroll */
+.fo-table th, .fo-table td { white-space:nowrap; }
 .fo-table td.fo-num {
     text-align:right;font-family:var(--mono);font-weight:700;white-space:nowrap;font-size:13px;
 }
@@ -277,8 +279,6 @@
 /* ── Responsive ── */
 @media(max-width:900px) {
     .fo-charts { grid-template-columns:1fr; }
-    /* table scrolls sideways; keep shop names on one line instead of 3-line rows */
-    .fo-table td { white-space:nowrap; }
     .fo-kpis   { grid-template-columns:repeat(2,1fr); }
 }
 @media(max-width:640px) {
@@ -1199,6 +1199,7 @@
 .tx-table tbody tr:last-child { border-bottom:none; }
 .tx-table tbody tr:hover { background:var(--surface2); }
 .tx-table td { padding:9px 14px;color:var(--text);vertical-align:middle; }
+.tx-table th, .tx-table td { white-space:nowrap; }
 .tx-table td.r { text-align:right;font-family:var(--mono);font-weight:600; }
 .tx-table tfoot tr { background:var(--surface2);border-top:2px solid var(--border);position:sticky;bottom:0;z-index:2; }
 .tx-table tfoot td { padding:9px 14px;font-size:12px;font-weight:700;font-family:var(--mono); }
@@ -1704,7 +1705,7 @@
                                 @endif
                             </td>
                             <td style="font-size:12px;color:var(--text-dim);white-space:nowrap;">{{ $tx['shop_name'] }}</td>
-                            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $tx['description'] ?? '' }}">
                                 {{ $tx['description'] ?? '—' }}
                             </td>
                             <td>

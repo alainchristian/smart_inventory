@@ -19,6 +19,10 @@ class AddExpense extends Component
     public string $receiptReference = '';
     public bool $inDrawer = false;
 
+    // Category name last copied into the description, so a category change
+    // can swap it without wiping what the user typed after it.
+    public string $autoDescription = '';
+
     public function mount(int $dailySessionId): void
     {
         $user = auth()->user();
@@ -32,6 +36,21 @@ class AddExpense extends Component
         }
 
         $this->dailySessionId = $dailySessionId;
+    }
+
+    public function updatedCategoryId(): void
+    {
+        $name = (string) ExpenseCategory::whereKey($this->categoryId)->value('name');
+        $old  = $this->autoDescription;
+        $desc = $this->description;
+
+        if (trim($desc) === '' || $desc === $old) {
+            $this->description = $name;
+        } elseif ($old !== '' && str_starts_with($desc, $old)) {
+            $this->description = $name . substr($desc, strlen($old));
+        }
+
+        $this->autoDescription = $name;
     }
 
     public function saveExpense(): void
@@ -72,7 +91,7 @@ class AddExpense extends Component
                 'receipt_reference'   => $this->receiptReference,
             ], $user);
 
-            $this->reset(['categoryId', 'amount', 'description', 'receiptReference']);
+            $this->reset(['categoryId', 'amount', 'description', 'receiptReference', 'autoDescription']);
             $this->paymentMethod = 'cash';
             $this->dispatch('expense-added');
             $this->dispatch('notification', ['type' => 'success', 'message' => 'Expense recorded.']);

@@ -131,7 +131,7 @@
 
 /* ── Table ───────────────────────────────────────── */
 .bx-table-wrap { background:var(--surface);border:none;box-shadow:var(--shadow-card);border-radius:var(--r);overflow:hidden }
-.bx-table { width:100%;border-collapse:collapse;font-size:13px }
+.bx-table { width:max-content;min-width:100%;border-collapse:collapse;font-size:13px }
 .bx-table thead tr { border-bottom:2px solid var(--border) }
 .bx-table thead th {
     padding:10px 14px;text-align:left;
@@ -144,7 +144,8 @@
 .bx-table tbody tr.bx-row:last-child { border-bottom:none }
 .bx-table tbody tr.bx-row:hover { background:var(--surface2) }
 .bx-table tbody tr.bx-row.is-open { background:var(--surface2) }
-.bx-table td { padding:11px 14px;vertical-align:middle }
+.bx-table td { padding:11px 14px;vertical-align:middle;white-space:nowrap }
+.bx-table td[colspan] { white-space:normal }
 
 /* Badges */
 .bx-chip { display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap }
@@ -178,13 +179,13 @@
 .bx-expand-row td { padding:0;background:var(--surface) }
 .bx-expand-inner { padding:16px 20px 18px;border-left:3px solid var(--accent) }
 .bx-expand-title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:10px }
-.bx-sub-table { width:100%;border-collapse:collapse;font-size:12.5px }
+.bx-sub-table { width:max-content;min-width:100%;border-collapse:collapse;font-size:12.5px }
 .bx-sub-table thead tr { border-bottom:1px solid var(--border) }
 .bx-sub-table thead th { padding:6px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
 .bx-sub-table tbody tr { border-bottom:1px solid var(--border) }
 .bx-sub-table tbody tr:last-child { border-bottom:none }
 .bx-sub-table tbody tr:hover { background:var(--surface2) }
-.bx-sub-table td { padding:8px 10px;vertical-align:middle }
+.bx-sub-table td { padding:8px 10px;vertical-align:middle;white-space:nowrap }
 .bx-sub-empty { padding:16px;text-align:center;font-size:12px;color:var(--text-dim) }
 
 /* Empty state */

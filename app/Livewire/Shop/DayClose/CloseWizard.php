@@ -150,7 +150,23 @@ class CloseWizard extends Component
             return false;
         }
 
+        if ($this->hasSettlementDifference() && trim($this->notes) === '') {
+            $this->addError('notes', "Non-cash settled doesn't match what was collected — explain the difference.");
+            return false;
+        }
+
         return true;
+    }
+
+    /** Any non-cash channel where what was passed on differs from what was collected. */
+    private function hasSettlementDifference(): bool
+    {
+        $s = $this->summary;
+
+        return (int) $this->momoSettled         !== (int) ($s['total_sales_momo'] ?? 0)
+            || (int) $this->cardSettled         !== (int) ($s['total_sales_card'] ?? 0)
+            || (int) $this->bankTransferSettled !== (int) ($s['total_sales_bank_transfer'] ?? 0)
+            || (int) $this->otherSettled        !== (int) ($s['total_sales_other'] ?? 0);
     }
 
     public function updatedActualCashCounted(): void

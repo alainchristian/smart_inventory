@@ -82,6 +82,8 @@
       padding: 12px 16px; font-size: 13px; color: var(--text); 
       border-bottom: 1px solid var(--border); vertical-align: middle; 
     }
+    /* Cells stay on one line; the table scrolls inside .pd-table-wrap */
+    .pd-table th, .pd-table td { white-space: nowrap; }
     .pd-table tbody tr:last-child td { border-bottom: none; }
     .pd-table tbody tr:hover { background: var(--surface2); }
     

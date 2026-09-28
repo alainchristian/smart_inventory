@@ -50,7 +50,10 @@
 .odr-table-wrap { background:var(--surface);border:none;border-radius:var(--r);
                  box-shadow:var(--shadow-card);min-width:0; }
 .odr-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
-.odr-table { width:100%;border-collapse:collapse; }
+/* Cells never wrap: a table fills its card on desktop and scrolls sideways
+   inside .odr-table-scroll when it is wider than the screen. */
+.odr-table { width:max-content;min-width:100%;border-collapse:collapse; }
+.odr-table th, .odr-table td { white-space:nowrap; }
 .odr-table thead tr { border-bottom:2px solid var(--border); }
 .odr-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
                      letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);
@@ -110,7 +113,8 @@
    stacked full-width (which left huge dead white space next to a short
    table on a Today/Yesterday filter). */
 .odr-rc-grid    { display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;padding:16px 20px; }
-.odr-rc-block   { border:1px solid var(--border);border-radius:var(--r);overflow:hidden; }
+.odr-rc-block   { border:1px solid var(--border);border-radius:var(--r);min-width:0;
+                 overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch; }
 
 /* Icon-only button that reveals a footnote/caveat/warning in a popover on
    click, instead of printing it permanently on the page. No label text and
@@ -142,12 +146,9 @@
 .odr-rc-head    { display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 20px;
                  border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text); }
 .odr-rc-live    { font-size:12px;font-weight:500;color:var(--text-dim); }
-.odr-msg        { white-space:normal;min-width:260px; }  
 /* Wide (5+ column) tables: keep every column readable and scroll sideways inside the card */
 @media(max-width:900px) {
     .odr-table-wide { min-width:720px; }
-    .odr-table-wide td { white-space:nowrap; }
-    .odr-table-wide td.odr-msg { white-space:normal; }
 }
 @media(max-width:640px) {
     .odr-actions-sep { display:none; }
@@ -1281,7 +1282,7 @@
                 @if($odrHasDetail)
                 <th>Sale</th><th>Product</th><th>Qty</th>
                 <th style="text-align:right">List price</th><th style="text-align:right">Sold at</th>
-                <th style="text-align:right">Discount/Markup</th><th style="text-align:right">% off</th>
+                <th style="text-align:right">Discount/Markup</th><th style="text-align:right">Change %</th>
                 @if($odrCost)<th style="text-align:right">Profit at list</th><th style="text-align:right">Profit sold</th>@endif
                 @endif
                 <th style="text-align:right">Amount</th>
@@ -1301,7 +1302,8 @@
                 <td class="odr-num">{{ $d ? number_format($d['list']) : '' }}</td>
                 <td class="odr-num">{{ $d ? number_format($d['sold']) : '' }}</td>
                 <td class="odr-num" style="color:{{ ($d['discount'] ?? 0) < 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? (($d['discount'] > 0 ? '−' : ($d['discount'] < 0 ? '+' : '')) . number_format(abs($d['discount']))) : '' }}</td>
-                <td class="odr-num" style="color:var(--text-dim)">{{ $d ? number_format($d['pct'], 1) . '%' : '' }}</td>
+                {{-- pct is positive for a discount (sold below list), negative for a markup --}}
+                <td class="odr-num" style="color:{{ ($d['discount'] ?? 0) < 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? (($d['pct'] > 0 ? '−' : ($d['pct'] < 0 ? '+' : '')) . number_format(abs($d['pct']), 1) . '%') : '' }}</td>
                 @if($odrCost)
                 <td class="odr-num">{{ $d ? number_format($d['profit_at_list']) : '' }}</td>
                 <td class="odr-num" style="color:{{ ($d['profit_sold'] ?? 0) >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $d ? number_format($d['profit_sold']) : '' }}</td>

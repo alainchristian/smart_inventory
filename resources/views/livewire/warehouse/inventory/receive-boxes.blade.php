@@ -185,14 +185,15 @@
                border-radius:var(--r);overflow:hidden;margin-top:20px }
 .rb-tbl-head { display:flex;align-items:center;justify-content:space-between;
                padding:14px 18px;border-bottom:1px solid var(--border) }
-.rb-tbl      { width:100%;border-collapse:collapse;font-size:13px }
+.rb-tbl      { width:max-content;min-width:100%;border-collapse:collapse;font-size:13px }
 .rb-tbl thead tr { background:var(--bg);border-bottom:1px solid var(--border) }
 .rb-tbl thead th { padding:9px 14px;text-align:left;font-size:11px;font-weight:700;
                    letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
 .rb-tbl tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
 .rb-tbl tbody tr:last-child { border-bottom:none }
 .rb-tbl tbody tr:hover { background:var(--surface2) }
-.rb-tbl td { padding:11px 14px;vertical-align:middle }
+.rb-tbl td { padding:11px 14px;vertical-align:middle;white-space:nowrap }
+.rb-tbl td[colspan] { white-space:normal }
 .rb-new-btn { padding:6px 14px;background:transparent;border:1.5px solid var(--border);
               border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;
               font-family:var(--font);color:var(--text-sub);transition:all var(--tr) }
@@ -249,8 +250,8 @@
     .rb-grid-2 { grid-template-columns:1fr }
     .rb-summary { grid-template-columns:1fr 1fr }
     .rb-modal { align-self:flex-end;max-width:100vw;border-radius:var(--r) var(--r) 0 0;max-height:92vh }
-    .rb-modal-foot { flex-direction:column }
-    .rb-btn-confirm,.rb-btn-cancel { width:100%;text-align:center }
+    /* Cancel + Receive stay side by side on phones */
+    .rb-btn-confirm,.rb-btn-cancel { flex:1 1 0;min-width:0;text-align:center }
 }
 </style>
 
@@ -757,7 +758,7 @@
         </div>
         <button wire:click="startNew" type="button" class="rb-new-btn">Start New</button>
     </div>
-    <div style="overflow-x:auto">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
     <table class="rb-tbl">
         <thead>
             <tr>

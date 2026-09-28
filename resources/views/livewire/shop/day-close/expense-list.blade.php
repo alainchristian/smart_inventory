@@ -85,7 +85,11 @@
                         <td class="el-time el-hide-mob">{{ local_time($expense->recorded_at)->format('H:i') }}</td>
                         <td>
                             <div class="el-desc" title="{{ $expense->description }}">{{ $expense->description ?: '—' }}</div>
-                            <div style="margin-top:3px"><span class="el-cat">{{ $expense->is_system_generated ? 'Cash shortage (auto)' : ($expense->category->name ?? '—') }}</span></div>
+                            @php $elCat = $expense->is_system_generated ? 'Cash shortage (auto)' : ($expense->category->name ?? '—'); @endphp
+                            {{-- The description starts as the category name; skip the badge when it would just repeat it --}}
+                            @if (trim($expense->description) !== $elCat)
+                                <div style="margin-top:3px"><span class="el-cat">{{ $elCat }}</span></div>
+                            @endif
                         </td>
                         <td class="el-hide-mob" style="white-space:nowrap">{{ ['cash' => 'Cash', 'mobile_money' => 'MoMo', 'bank_transfer' => 'Bank', 'other' => 'Other'][$expense->payment_method] ?? ucfirst($expense->payment_method) }}</td>
                         <td class="el-amt">{{ number_format($expense->amount) }}</td>

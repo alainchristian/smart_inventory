@@ -56,7 +56,9 @@
 .cw-pct      { font-size:12px;color:var(--text-dim);font-family:var(--mono);width:44px;text-align:right;display:inline-block; }
 
 /* Pill tabs (step 2) */
-.cw-tabs     { display:flex;gap:4px;flex-wrap:wrap; }
+.cw-tabs     { display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;min-width:0; }
+.cw-tabs::-webkit-scrollbar { display:none; }
+.cw-tab      { flex-shrink:0; }
 .cw-tab      { display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;
                font-weight:600;font-family:var(--font);background:var(--surface);color:var(--text-dim);transition:all var(--tr);white-space:nowrap; }
 .cw-tab:hover  { border-color:var(--accent);color:var(--accent); }
@@ -162,10 +164,9 @@
 
 /* Phones: keep every column — the table scrolls sideways inside its card */
 .cw-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%; }
-@media (max-width:640px) {
-    .cw-table { width:max-content;min-width:100%; }
-    .cw-table th, .cw-table td { white-space:nowrap; }
-}
+/* Tables never wrap cell text — they scroll sideways inside their card */
+.cw-table { width:max-content;min-width:100%; }
+.cw-table th, .cw-table td { white-space:nowrap; }
 </style>
 
 @php
@@ -211,6 +212,7 @@
     $creditSales  = $s['total_sales_credit'] ?? 0;
     $nonCashSales = ($s['total_sales_momo'] ?? 0) + $cardAmt + $bankAmt + ($s['total_sales_other'] ?? 0);
     $settledTotal = (int) $momoSettled + (int) $cardSettled + (int) $bankTransferSettled + (int) $otherSettled;
+    $settleDiffs  = collect($ncChannels)->mapWithKeys(fn ($c) => [$c[1] => (int) $c[3] - (int) $this->{$c[1]}])->filter();
 
     $steps = [1 => 'Sales', 2 => 'Movements', 3 => 'Cash count', 4 => 'Confirm'];
 @endphp
@@ -233,6 +235,10 @@
         </p>
     </div>
 </div>
+
+@if (session()->has('success'))
+    <div class="cw-status" style="border-left-color:var(--green);margin:0 0 16px"><div class="cw-status-s" style="margin:0">{{ session('success') }}</div></div>
+@endif
 
 {{-- ── Stepper ── --}}
 <nav class="cw-steps" aria-label="Progress">
@@ -472,7 +478,7 @@
             @if (count($ncChannels))
                 <div class="cw-scroll"><table class="cw-table">
                     <thead>
-                        <tr><th>Channel</th><th style="text-align:right">Collected</th><th style="width:150px">Settled</th><th style="width:170px">Reference</th></tr>
+                        <tr><th>Channel</th><th style="text-align:right">Collected</th><th style="width:150px">Settled</th><th style="text-align:right">Difference</th><th style="width:170px">Reference</th></tr>
                     </thead>
                     <tbody>
                         @foreach ($ncChannels as $__n)
@@ -483,11 +489,24 @@
                                 </td>
                                 <td style="text-align:right" class="cw-row-v">{{ number_format($nTotal) }}</td>
                                 <td><input type="number" min="0" class="cw-num" wire:model.blur="{{ $nField }}" aria-label="{{ $nLabel }} settled"></td>
+                                @php $nDiff = $settleDiffs[$nField] ?? 0; @endphp
+                                <td style="text-align:right" class="cw-row-v">
+                                    @if ($nDiff === 0)
+                                        <span style="color:var(--green)">Matches</span>
+                                    @else
+                                        <span style="color:var(--amber)" title="{{ $nDiff > 0 ? 'Collected but not passed on' : 'Passed on more than was collected' }}">{{ $nDiff > 0 ? '−' : '+' }}{{ number_format(abs($nDiff)) }}</span>
+                                    @endif
+                                </td>
                                 <td><input type="text" class="cw-num" style="text-align:left;font-size:13px" wire:model.blur="{{ $nRef }}" placeholder="Txn ID" aria-label="{{ $nLabel }} reference"></td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table></div>
+                @if ($settleDiffs->isNotEmpty())
+                    <p class="cw-hint" style="margin:0;padding:10px 16px;border-top:1px solid var(--border);color:var(--amber)">
+                        Settled doesn't match what was collected. Explain why in the closing notes below — e.g. money still on the shop's MoMo, a transfer fee, a reversed payment, or a sale recorded under the wrong method.
+                    </p>
+                @endif
             @endif
             @if ($creditSales > 0)
                 <div class="cw-row" style="border-top:1px solid var(--border)">
@@ -500,9 +519,10 @@
 
     <div class="cw-card">
         <div class="cw-card-body">
-            <label class="cw-label" for="cw-notes">Closing notes <em>(optional)</em></label>
+            <label class="cw-label" for="cw-notes">Closing notes @if ($settleDiffs->isNotEmpty())<span style="color:var(--red)">*</span>@else<em>(optional)</em>@endif</label>
             <textarea id="cw-notes" rows="3" class="cw-input" style="resize:vertical" wire:model.blur="notes"
                       placeholder="Anything the owner should know about today — e.g. why the drawer is short"></textarea>
+            @error('notes') <div class="cw-error">{{ $message }}</div> @enderror
         </div>
     </div>
 @endif

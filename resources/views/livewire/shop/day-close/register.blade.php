@@ -208,6 +208,7 @@
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </a>
         @elseif ($isClosed)
+            <livewire:shop.day-close.reopen-session :sessionId="$session->id" :key="'dc-reopen-'.$session->id" />
             <a href="{{ route('shop.reports.daily') }}" class="dc-btn dc-btn-primary">Daily report</a>
         @else
             <button type="button" class="dc-btn dc-btn-primary" @click="openModal = true">
@@ -220,6 +221,9 @@
 
 @if (session()->has('error'))
     <div class="dc-notice" style="border-left-color:var(--red)">{{ session('error') }}</div>
+@endif
+@if (session()->has('success'))
+    <div class="dc-notice" style="border-left-color:var(--green)">{{ session('success') }}</div>
 @endif
 
 {{-- ── Older session left open ── --}}

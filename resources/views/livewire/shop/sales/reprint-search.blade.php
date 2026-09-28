@@ -27,13 +27,14 @@
 
 /* Table */
 .rs-table-wrap    { background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card) }
-.rs-table         { width:100%;border-collapse:collapse }
+.rs-table         { width:max-content;min-width:100%;border-collapse:collapse }
 .rs-table thead tr{ border-bottom:2px solid var(--border) }
 .rs-table thead th{ padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
 .rs-table tbody tr{ border-bottom:1px solid var(--border);transition:background var(--tr) }
 .rs-table tbody tr:last-child { border-bottom:none }
 .rs-table tbody tr:hover { background:var(--surface2) }
-.rs-table td      { padding:12px 16px;font-size:13px;vertical-align:middle }
+.rs-table td      { padding:12px 16px;font-size:13px;vertical-align:middle;white-space:nowrap }
+.rs-table td[colspan] { white-space:normal }
 
 /* Action buttons */
 .rs-action        { display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:7px;border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--text-sub);transition:all var(--tr);white-space:nowrap;text-decoration:none }
@@ -45,11 +46,8 @@
 .rs-empty-title   { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px }
 .rs-empty-sub     { font-size:13px;color:var(--text-dim) }
 
-/* Phones: keep every column — the table scrolls sideways (wrapper has overflow-x:auto) */
-@media(max-width:640px) {
-    .rs-table { width:max-content;min-width:100% }
-    .rs-table th, .rs-table td { white-space:nowrap }
-}
+/* Tables keep every column and never wrap cell text: on narrow screens the
+   table scrolls sideways (wrapper has overflow-x:auto) */
 
 /* Receipt view modal */
 .rs-overlay       { position:fixed;inset:0;background:rgba(26,31,54,.5);z-index:400;display:flex;align-items:center;justify-content:center;padding:16px }
@@ -151,8 +149,8 @@
                             <span style="font-size:12px;color:var(--text-dim)">Walk-in</span>
                         @endif
                     </td>
-                    <td class="rs-hide-mob" data-label="Items" style="font-size:12px;color:var(--text-dim);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ $itemStr }}">
-                        {{ $itemStr }}
+                    <td class="rs-hide-mob" data-label="Items" style="font-size:12px;color:var(--text-dim)" title="{{ $itemStr }}">
+                        <div style="max-width:240px;overflow:hidden;text-overflow:ellipsis">{{ $itemStr }}</div>
                     </td>
                     <td data-label="Total" style="text-align:right;white-space:nowrap">
                         <span style="font-family:var(--mono);font-weight:700;color:var(--accent)">{{ number_format($sale->total) }}</span>
