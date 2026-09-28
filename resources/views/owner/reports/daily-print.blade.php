@@ -693,6 +693,8 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
     </div>
     @endif
 
+    @include('reports.partials.inventory-snapshot-print', ['snap' => $inventorySnapshot, 'showCost' => $showProfit, 'showLocations' => $isAllShops, 'variant' => 'owner'])
+
     </div>{{-- /.grid --}}
 
     <div class="doc-footer">

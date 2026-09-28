@@ -331,6 +331,7 @@
 </div>
 
 </div>
+
 <div class="section-label">{{ $this->activeDateRangeLabel }} — {{ $this->selectedShopName }}</div>
 <div class="odr-grid">
 
@@ -1321,6 +1322,9 @@
     </div>
     @endif
 </div>
+
+{{-- Stock on hand right now — last, so the dense grid drops it into a half-empty row --}}
+@include('livewire.reports.partials.inventory-snapshot', ['snap' => $inventorySnapshot, 'showCost' => $showProfit, 'showLocations' => $isAllShops])
 
 </div>
 </div>

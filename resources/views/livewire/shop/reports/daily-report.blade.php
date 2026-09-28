@@ -297,6 +297,7 @@
 </div>
 
 </div>
+
 <div class="section-label">{{ $this->activeDateRangeLabel }}</div>
 <div class="dr-grid">
 
@@ -1187,6 +1188,9 @@
     </div>
     @endif
 </div>
+
+{{-- Stock on hand right now — last, so the dense grid drops it into a half-empty row --}}
+@include('livewire.reports.partials.inventory-snapshot', ['snap' => $inventorySnapshot, 'showCost' => false, 'showLocations' => false])
 
 </div>
 </div>

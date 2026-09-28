@@ -49,6 +49,16 @@ class DailySessionService
             throw new \Exception('A session already exists for today.');
         }
 
+        // An earlier day still open means its cash hasn't been counted: opening now
+        // would take the float from an older close and leave money untraced between
+        // the days (found in the data: 10,295,000 RWF). Close that day first.
+        $unclosed = DailySession::forShop($shopId)->open()
+            ->where('session_date', '<', $date)->orderBy('session_date')->first();
+        if ($unclosed) {
+            throw new \Exception('The register for ' . $unclosed->session_date->format('d M Y')
+                . ' is still open. Close it first so its cash count carries over to today.');
+        }
+
         return DB::transaction(function () use ($user, $shopId, $openingBalance, $date) {
             $session = DailySession::create([
                 'session_date'    => $date,
@@ -1054,6 +1064,31 @@ class DailySessionService
                     'Cash counted differs from expected by ' . $fmt($s->cash_variance) . ' RWF.',
                     $s->shop->name ?? null, $s->session_date, (int) $s->cash_variance);
             }
+        }
+
+        // opening_carryover — cash doesn't vanish between days: a register should open
+        // with what the same shop's previous closed register kept in the drawer. A break
+        // here is money no report traced (e.g. a day opened before the previous one was
+        // closed takes its suggested float from an older day).
+        foreach ($sessions as $s) {
+            $prev = DailySession::where('shop_id', $s->shop_id)
+                ->where('session_date', '<', $s->session_date->toDateString())
+                ->orderByDesc('session_date')->first();
+            if (! $prev || $prev->isOpen() || $prev->cash_retained === null) {
+                continue;
+            }
+            $gap = (int) $s->opening_balance - (int) $prev->cash_retained;
+            if ($gap === 0) {
+                continue;
+            }
+            $late = $prev->closed_at && $s->opened_at && $prev->closed_at->gt($s->opened_at)
+                ? ' The previous day was closed after this one was opened, so its count was not carried over.'
+                : '';
+            $add('opening_carryover', 'critical',
+                'Opened with ' . $fmt($s->opening_balance) . ' RWF but the previous close ('
+                . $prev->session_date->format('d M') . ') kept ' . $fmt($prev->cash_retained) . ' RWF in the drawer — '
+                . $fmt(abs($gap)) . ' RWF ' . ($gap < 0 ? 'unaccounted for' : 'more than expected') . ' between the two days.' . $late,
+                $s->shop->name ?? null, $s->session_date, $gap);
         }
 
         // price_overrides — one item per shop + business day. `details` = every modified sale line with

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
+use App\Services\Analytics\InventoryAnalyticsService;
 use App\Services\AuditLogger;
 use App\Services\DayClose\DailySessionService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -68,6 +69,8 @@ class DailyReportController extends Controller
             'comparison'     => $service->computeComparisonTotals($shopId, $validated['date_from'], $validated['date_to']),
             'checks'         => $service->getReportChecks($shopId, $validated['date_from'], $validated['date_to']),
             'generatedBy'    => $user->name,
+            // Stock on hand now — never at cost for shop managers.
+            'inventorySnapshot' => app(InventoryAnalyticsService::class)->getStockSnapshot($shopId, false),
         ];
     }
 

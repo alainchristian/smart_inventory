@@ -375,6 +375,48 @@ tr { page-break-inside:avoid; }
 </div>
 @endif
 
+{{-- Inventory snapshot — stock on hand when the PDF was made (not the report
+     period). Selling value only: no cost ever appears in this PDF. --}}
+@php
+    $snapT      = $inventorySnapshot['totals'];
+    $snapGroups = [];
+    if ($isAll && count($inventorySnapshot['by_location'])) {
+        $snapGroups['By location'] = $inventorySnapshot['by_location'];
+    }
+    $snapGroups['By category'] = $inventorySnapshot['by_category'];
+@endphp
+<div class="sec" style="page-break-inside:auto;">
+    <div class="sec-title">Inventory snapshot</div>
+    <div class="sec-note">Stock on hand at {{ $generated }}, not for the report period · values at selling price.</div>
+    <table class="data" style="margin-top:2mm;">
+        <thead><tr><th></th><th class="r">Stock value</th><th class="r">Share</th><th class="r">Full boxes</th><th class="r">Opened boxes</th><th class="r">Items</th></tr></thead>
+        <tbody>
+        @foreach($snapGroups as $label => $rows)
+            <tr><td colspan="6" class="b" style="color:var(--accent); font-size:6.5pt; text-transform:uppercase; padding-top:2.4mm;">{{ $label }}</td></tr>
+            @forelse($rows as $r)
+            <tr>
+                <td>{{ $r['name'] }}@isset($r['type']) <span class="dim">· {{ $r['type'] === 'warehouse' ? 'warehouse' : 'shop' }}</span>@endisset</td>
+                <td class="r">{{ $n($r['retail_value']) }}</td>
+                <td class="r dim">{{ $snapT['retail_value'] > 0 ? round($r['retail_value'] / $snapT['retail_value'] * 100) : 0 }}%</td>
+                <td class="r">{{ $n($r['full_boxes']) }} <span class="dim">· {{ $n($r['full_items']) }} pcs</span></td>
+                <td class="r">{{ $n($r['opened_boxes']) }} <span class="dim">· {{ $n($r['opened_items']) }} pcs</span></td>
+                <td class="r">{{ $n($r['items']) }}</td>
+            </tr>
+            @empty
+            <tr><td colspan="6" class="dim">No stock on hand</td></tr>
+            @endforelse
+        @endforeach
+            <tr class="tot">
+                <td>Total</td><td class="r">{{ $n($snapT['retail_value']) }}</td><td></td>
+                <td class="r">{{ $n($snapT['full_boxes']) }} <span class="dim">· {{ $n($snapT['full_items']) }} pcs</span></td>
+                <td class="r">{{ $n($snapT['opened_boxes']) }} <span class="dim">· {{ $n($snapT['opened_items']) }} pcs</span></td>
+                <td class="r">{{ $n($snapT['items']) }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="sec-note">{{ $n($snapT['products']) }} {{ \Illuminate\Support\Str::plural('product', $snapT['products']) }} in stock · {{ $n($snapT['damaged_boxes']) }} damaged {{ \Illuminate\Support\Str::plural('box', $snapT['damaged_boxes']) }} · {{ $n($snapT['in_transit_boxes']) }} {{ \Illuminate\Support\Str::plural('box', $snapT['in_transit_boxes']) }} in transit (not counted)</div>
+</div>
+
 {{-- Note: data-quality checks/warnings (session-open, price overrides, cash
      variance, etc.) are deliberately NOT shown in this PDF — this is a
      static, shareable/printable document, not the live dashboard, and those

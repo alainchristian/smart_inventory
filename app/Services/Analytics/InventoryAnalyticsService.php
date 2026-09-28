@@ -666,6 +666,86 @@ class InventoryAnalyticsService
     /**
      * Apply location filter to query
      */
+    /**
+     * Stock on hand right now, for the Daily Report's inventory snapshot.
+     * $shopId null = every location (shops + warehouses), else that shop only.
+     * Values follow getInventoryKpis(): items remaining × per-item price over
+     * full + opened boxes (Box::available()). Cost figures are only included
+     * when $withCost is true — never for a shop manager.
+     *
+     * Opened ("partial") boxes are ordinary stock: boxes get opened for loose
+     * sales, exchanges, damage checks… so they are reported, not flagged.
+     *
+     * @return array{totals: array, by_location: array, by_category: array}
+     */
+    public function getStockSnapshot(?int $shopId, bool $withCost = false): array
+    {
+        $scope = function ($q) use ($shopId) {
+            if ($shopId !== null) {
+                $q->where('boxes.location_type', LocationType::SHOP->value)->where('boxes.location_id', $shopId);
+            }
+            return $q;
+        };
+        $avail = "boxes.status IN ('full','partial') AND boxes.items_remaining > 0";
+        $cols = "
+            COUNT(*) FILTER (WHERE boxes.status = 'full' AND boxes.items_remaining > 0)                    AS full_boxes,
+            COUNT(*) FILTER (WHERE boxes.status = 'partial' AND boxes.items_remaining > 0)                 AS opened_boxes,
+            COALESCE(SUM(boxes.items_remaining) FILTER (WHERE boxes.status = 'full'), 0)                   AS full_items,
+            COALESCE(SUM(boxes.items_remaining) FILTER (WHERE boxes.status = 'partial'), 0)                AS opened_items,
+            COUNT(*) FILTER (WHERE boxes.status = 'damaged')                                               AS damaged_boxes,
+            COUNT(*) FILTER (WHERE boxes.status = 'in_transit')                                            AS in_transit_boxes,
+            COUNT(DISTINCT boxes.product_id) FILTER (WHERE $avail)                                         AS products,
+            COALESCE(SUM(boxes.items_remaining * products.selling_price) FILTER (WHERE $avail), 0)         AS retail_value,
+            COALESCE(SUM(boxes.items_remaining * products.purchase_price) FILTER (WHERE $avail), 0)        AS cost_value";
+
+        $row = fn ($r) => [
+            'full_boxes'       => (int) $r->full_boxes,
+            'opened_boxes'     => (int) $r->opened_boxes,
+            'full_items'       => (int) $r->full_items,
+            'opened_items'     => (int) $r->opened_items,
+            'items'            => (int) $r->full_items + (int) $r->opened_items,
+            'damaged_boxes'    => (int) $r->damaged_boxes,
+            'in_transit_boxes' => (int) $r->in_transit_boxes,
+            'products'         => (int) $r->products,
+            'retail_value'     => (int) $r->retail_value,
+            'cost_value'       => $withCost ? (int) $r->cost_value : null,
+            'margin_value'     => $withCost ? (int) $r->retail_value - (int) $r->cost_value : null,
+        ];
+        $statuses = ['full', 'partial', 'damaged', 'in_transit'];
+
+        $totals = $scope(DB::table('boxes')->join('products', 'boxes.product_id', '=', 'products.id')
+            ->whereIn('boxes.status', $statuses))->selectRaw($cols)->first();
+
+        $byLocation = collect();
+        if ($shopId === null) {
+            $byLocation = DB::table('boxes')->join('products', 'boxes.product_id', '=', 'products.id')
+                ->leftJoin('shops', fn ($j) => $j->on('boxes.location_id', '=', 'shops.id')->where('boxes.location_type', LocationType::SHOP->value))
+                ->leftJoin('warehouses', fn ($j) => $j->on('boxes.location_id', '=', 'warehouses.id')->where('boxes.location_type', LocationType::WAREHOUSE->value))
+                ->whereIn('boxes.status', $statuses)
+                ->groupBy('boxes.location_type', 'boxes.location_id', 'shops.name', 'warehouses.name')
+                ->selectRaw("boxes.location_type, COALESCE(shops.name, warehouses.name) AS name, $cols")
+                ->orderByRaw("boxes.location_type = 'warehouse' DESC, COALESCE(shops.name, warehouses.name)")
+                ->get()
+                ->map(fn ($r) => ['name' => $r->name ?? '—', 'type' => $r->location_type] + $row($r));
+        }
+
+        $byCategory = $scope(DB::table('boxes')->join('products', 'boxes.product_id', '=', 'products.id')
+                ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+                ->whereIn('boxes.status', $statuses))
+            ->groupBy('categories.name')
+            ->selectRaw("COALESCE(categories.name, 'Uncategorised') AS name, $cols")
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name] + $row($r))
+            ->filter(fn ($r) => $r['items'] > 0) // stock on hand only; damaged / in-transit totals are in the headline
+            ->sortByDesc('retail_value')->values();
+
+        return [
+            'totals'      => $row($totals),
+            'by_location' => $byLocation->values()->all(),
+            'by_category' => $byCategory->all(),
+        ];
+    }
+
     private function applyLocationFilter($query, ?string $locationFilter)
     {
         if (!$locationFilter || $locationFilter === 'all') {

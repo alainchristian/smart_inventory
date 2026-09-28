@@ -90,7 +90,8 @@ class Register extends Component
             ->with('openedBy', 'closedBy')
             ->first();
 
-        // An older session left open — informational, does not block today
+        // An older session left open blocks opening today: it must be closed first so
+        // its cash count carries over (DailySessionService::openSession enforces it)
         $blocker = DailySession::forShop($shopId)
             ->open()
             ->where('session_date', '<', $today)

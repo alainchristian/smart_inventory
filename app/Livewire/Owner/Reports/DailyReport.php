@@ -184,6 +184,12 @@ class DailyReport extends Component
         return app(DailySessionService::class)->getReportChecks($this->resolveShopId(), $this->dateFrom, $this->dateTo, $this->showProfit);
     }
 
+    /** Stock on hand right now (inventory snapshot) — cost only when profit is switched on. */
+    public function getInventorySnapshotProperty(): array
+    {
+        return app(\App\Services\Analytics\InventoryAnalyticsService::class)->getStockSnapshot($this->resolveShopId(), $this->showProfit);
+    }
+
     public function render()
     {
         return view('livewire.owner.reports.daily-report', [
@@ -194,6 +200,7 @@ class DailyReport extends Component
             'comparison'     => $this->comparison,
             'checks'         => $this->checks,
             'profitByProduct' => $this->profitByProduct,
+            'inventorySnapshot' => $this->inventorySnapshot,
         ]);
     }
 }

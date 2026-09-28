@@ -1303,3 +1303,42 @@ Tests: `tests/Feature/Reports/MobilePhase0FixesTest.php`.
   footer stays a row on phones.
 - Global toasts moved into `.app-toasts` (app.css): bottom-centre on phones.
 - Pages don't use the `m-` classes yet — that's Phase 3 (rollout).
+
+---
+
+## Daily Report: money traceability + inventory snapshot (2026-09-28)
+
+- **Audit:** within each day the cash reconciliation balances (other_adjustments
+  and variances all 0). The gap was BETWEEN days: Nyamirambo's 26 Sep register
+  opened with 760,000 while 25 Sep kept 11,055,000 — 25 Sep was closed 39 s after
+  26 Sep was opened, so the suggested float came from 24 Sep. 10,295,000 RWF
+  untraced; no check caught it.
+- New report check `opening_carryover` (critical, `getReportChecks`): a session's
+  opening balance must equal the same shop's previous closed session's
+  `cash_retained`. Tests: `tests/Feature/Reports/OpeningCarryoverCheckTest.php`.
+- **Rule (user decision):** `DailySessionService::openSession()` refuses while an
+  earlier day for the shop is still open; the Register shows "Close {date} first"
+  instead of Open register (was a warning only).
+- **Inventory snapshot** (owner + shop Daily Report, print pages, PDF):
+  `InventoryAnalyticsService::getStockSnapshot($shopId, $withCost)`. Same
+  valuation as the Inventory report (items_remaining × per-item price over
+  full + partial boxes); they must stay equal. Opened boxes are ordinary stock
+  (loose sales, exchanges, damage…): shown, never flagged.
+  - **Screen:** partial `livewire/reports/partials/inventory-snapshot.blade.php`
+    (prefix `isn-`). One half-width card with **no KPI cards**, included as
+    the LAST child of the report grid. The grid is `grid-auto-flow:dense`, so
+    the card drops into whichever row had only one card (e.g. next to
+    "Distribution by Payment Channel"). It is one table: full-width
+    single-cell group rows ("By location" for owner all-shops, "By category"),
+    a Total row, and a footnote (products, damaged, in transit). Keep it five
+    columns so it fits half a card; cost is a sub-line under the value.
+  - **Print:** `reports/partials/inventory-snapshot-print.blade.php`, full
+    width (`span-2`), because half a print page is too narrow. `variant`
+    owner/shop picks the heading style.
+  - **PDF (dompdf):** "Inventory snapshot" section after Refunds, retail only.
+    The PDF still never shows cost.
+  - Both controllers' `buildReportData()` pass `inventorySnapshot`.
+  - Cost appears only for the owner with profit on (screen `showProfit`,
+    print `profit=1`). Shop managers never get cost.
+  Tests: `tests/Feature/Reports/InventorySnapshotTest.php`.
+

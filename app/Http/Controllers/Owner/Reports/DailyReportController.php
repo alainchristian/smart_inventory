@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner\Reports;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
+use App\Services\Analytics\InventoryAnalyticsService;
 use App\Services\AuditLogger;
 use App\Services\DayClose\DailySessionService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -77,6 +78,8 @@ class DailyReportController extends Controller
             'comparison'     => $service->computeComparisonTotals($shopId, $validated['date_from'], $validated['date_to']),
             'checks'         => $service->getReportChecks($shopId, $validated['date_from'], $validated['date_to'], $request->boolean('profit')),
             'generatedBy'    => $user->name,
+            // Stock on hand now; cost only when the owner asked for profit figures.
+            'inventorySnapshot' => app(InventoryAnalyticsService::class)->getStockSnapshot($shopId, $request->boolean('profit')),
             'showProfit'     => $request->boolean('profit'),
             'profitByProduct' => $request->boolean('profit')
                 ? $service->getProfitByProduct($shopId, $validated['date_from'], $validated['date_to'])

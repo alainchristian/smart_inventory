@@ -585,6 +585,8 @@ tfoot td:last-child { text-align:right; }
     </div>
     @endif
 
+    @include('reports.partials.inventory-snapshot-print', ['snap' => $inventorySnapshot, 'showCost' => false, 'showLocations' => false, 'variant' => 'shop'])
+
     </div>{{-- /.grid --}}
 
     <div class="doc-footer">

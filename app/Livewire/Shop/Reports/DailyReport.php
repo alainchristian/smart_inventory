@@ -133,6 +133,12 @@ class DailyReport extends Component
         return app(DailySessionService::class)->getReportChecks(auth()->user()->location_id, $this->dateFrom, $this->dateTo);
     }
 
+    /** Stock on hand at this shop right now — never with cost (purchase price stays owner-only). */
+    public function getInventorySnapshotProperty(): array
+    {
+        return app(\App\Services\Analytics\InventoryAnalyticsService::class)->getStockSnapshot(auth()->user()->location_id, false);
+    }
+
     public function render()
     {
         return view('livewire.shop.reports.daily-report', [
@@ -142,6 +148,7 @@ class DailyReport extends Component
             'reconciliation' => $this->reconciliation,
             'comparison'     => $this->comparison,
             'checks'         => $this->checks,
+            'inventorySnapshot' => $this->inventorySnapshot,
         ]);
     }
 }

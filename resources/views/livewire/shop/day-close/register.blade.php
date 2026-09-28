@@ -210,6 +210,11 @@
         @elseif ($isClosed)
             <livewire:shop.day-close.reopen-session :sessionId="$session->id" :key="'dc-reopen-'.$session->id" />
             <a href="{{ route('shop.reports.daily') }}" class="dc-btn dc-btn-primary">Daily report</a>
+        @elseif ($blocker)
+            {{-- An earlier day is still open: it must be closed first so its cash count carries over --}}
+            <a href="{{ route('shop.session.close', ['session' => $blocker->id]) }}" class="dc-btn dc-btn-primary">
+                Close {{ $blocker->session_date->format('d M') }} first
+            </a>
         @else
             <button type="button" class="dc-btn dc-btn-primary" @click="openModal = true">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
@@ -380,8 +385,13 @@
         <div class="dc-empty">
             <div class="dc-empty-icon" style="background:var(--accent-dim);color:var(--accent)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg></div>
             <div class="dc-empty-title">The register isn't open yet</div>
-            <p class="dc-empty-sub">Count the cash in the drawer and open the register to start recording today's sales, expenses and cash movements.</p>
-            <button type="button" class="dc-btn dc-btn-primary" @click="openModal = true">Open register</button>
+            @if ($blocker)
+                <p class="dc-empty-sub">Close the {{ $blocker->session_date->format('d M Y') }} register first — its cash count becomes today's opening balance.</p>
+                <a href="{{ route('shop.session.close', ['session' => $blocker->id]) }}" class="dc-btn dc-btn-primary">Close {{ $blocker->session_date->format('d M') }} first</a>
+            @else
+                <p class="dc-empty-sub">Count the cash in the drawer and open the register to start recording today's sales, expenses and cash movements.</p>
+                <button type="button" class="dc-btn dc-btn-primary" @click="openModal = true">Open register</button>
+            @endif
         </div>
     </div>
 
