@@ -193,7 +193,7 @@
 <div style="display:flex;align-items:flex-start;justify-content:space-between;
             gap:12px;margin-bottom:22px;flex-wrap:wrap">
     <div>
-        <div style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.4px">
+        <div class="m-dup-title" style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.4px">
             Team Members
         </div>
         <div style="font-size:14px;color:var(--text-dim);margin-top:3px">
@@ -211,7 +211,7 @@
 </div>
 
 {{-- ── KPI bar ──────────────────────────────────────────────────────── --}}
-<div class="um-kpis">
+<div class="um-kpis m-kpis m-kpis-strip">
     <div class="um-kpi">
         <div class="um-kpi-row">
             <div class="um-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">

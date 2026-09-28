@@ -3,7 +3,7 @@
   {{-- Page header --}}
   <div class="dashboard-page-header">
     <div>
-      <h1>Products</h1>
+      <h1 class="m-dup-title">Products</h1>
       <p>Catalog management, stock health, pricing intelligence</p>
     </div>
     <livewire:dashboard.time-filter />

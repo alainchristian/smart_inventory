@@ -2868,6 +2868,16 @@ main,
   .m-kpis [class*="-kpi-stat"] { padding: 3px 0 !important; }
   .m-kpis [class*="-kpi-stat-v"] { font-size: 11px !important; }
   .m-kpis [class*="-kpi-stat-l"] { font-size: 10px !important; }
+  /* .bkpi cards (products, boxes) name their parts differently */
+  .m-kpis .bkpi { padding: var(--m-s2) !important; min-width: 0; }
+  .m-kpis .bkpi:hover { transform: none; }
+  .m-kpis .bkpi > div:first-child { margin-bottom: 8px !important; gap: 6px !important; }
+  .m-kpis .bkpi-icon { width: 28px !important; height: 28px !important; border-radius: 8px !important; }
+  .m-kpis .bkpi-icon svg { width: 14px !important; height: 14px !important; }
+  .m-kpis .bkpi-name { font-size: 10px !important; letter-spacing: .4px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .m-kpis .bkpi-value { font-size: var(--m-fs-value) !important; letter-spacing: -.5px !important; }
+  .m-kpis .bkpi-meta { font-size: 10px !important; }
+  .m-kpis .bkpi-pct { font-size: 10px !important; padding: 2px 6px !important; }
 
   /* .m-kpis-strip: count-only cards become a row of compact chips */
   .m-kpis.m-kpis-strip {

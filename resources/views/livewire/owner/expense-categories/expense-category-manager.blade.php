@@ -138,15 +138,15 @@
     .em-kpis { grid-template-columns:1fr 1fr;gap:8px }
     .em-kpi  { padding:12px 14px }
     .em-kpi-val { font-size:20px }
-    .em-bar { flex-direction:column;align-items:stretch }
-    .em-btn-new, .em-select { width:100%;justify-content:center }
+    /* search on its own row; status + New share the next one */
+    .em-search-wrap { flex:1 1 100%;min-width:0 }
+    .em-select { flex:1;min-width:0;font-size:16px }
+    .em-btn-new { flex-shrink:0 }
     .em-drawer { left:0;width:auto;max-width:none }
     .em-drawer-body { padding:16px }
     .em-table td, .em-table th { padding:10px 10px }
 }
 
-@media(max-width:480px) {
-    .em-kpis { grid-template-columns:1fr }
     .em-action { padding:4px 8px;font-size:11px }
 }
 @media(max-width:640px) {
@@ -156,7 +156,7 @@
 </style>
 
 {{-- KPIs --}}
-<div class="em-kpis">
+<div class="em-kpis m-kpis m-kpis-strip">
     <div class="em-kpi">
         <div class="em-kpi-row">
             <div class="em-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">

@@ -139,15 +139,13 @@
     .cu-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
 }
 @media(max-width:420px) {
-    .cu-kpis { grid-template-columns:1fr }
-}
 @keyframes cu-spin { to { transform:rotate(360deg) } }
 </style>
 
 <div class="cu-page">
     <div class="cu-header">
         <div>
-            <h1 class="cu-header-title">Customers</h1>
+            <h1 class="cu-header-title m-dup-title">Customers</h1>
             <p class="cu-header-sub">Register and manage customer records</p>
         </div>
         <button wire:click="openCreate" class="cu-btn-new">
@@ -156,7 +154,7 @@
         </button>
     </div>
 
-    <div class="cu-kpis">
+    <div class="cu-kpis m-kpis m-kpis-strip">
         <div class="cu-kpi">
             <div class="cu-kpi-row">
                 <div class="cu-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
@@ -206,10 +204,10 @@
                     <thead>
                         <tr>
                             <th>Name</th>
+                            <th style="text-align:right">Outstanding</th>
                             <th>Phone</th>
                             <th class="cu-hide-mob">Email</th>
                             <th class="cu-hide-mob">Shop</th>
-                            <th style="text-align:right">Outstanding</th>
                             <th class="cu-hide-mob">Registered By</th>
                             <th style="text-align:right">Actions</th>
                         </tr>
@@ -218,9 +216,6 @@
                         @foreach($customers as $customer)
                             <tr wire:key="customer-{{ $customer->id }}">
                                 <td style="font-weight:600;color:var(--text)">{{ $customer->name }}</td>
-                                <td style="font-family:var(--mono)">{{ $customer->phone }}</td>
-                                <td class="cu-hide-mob" style="color:var(--text-dim)">{{ $customer->email ?: '—' }}</td>
-                                <td class="cu-hide-mob" style="color:var(--text-dim)">{{ $customer->shop?->name ?? 'Unassigned' }}</td>
                                 <td style="text-align:right;white-space:nowrap">
                                     @if($customer->outstanding_balance > 0)
                                         <span class="cu-badge" style="background:var(--amber-dim);color:var(--amber)">
@@ -231,6 +226,9 @@
                                         <span style="color:var(--text-dim);font-family:var(--mono)">0 RWF</span>
                                     @endif
                                 </td>
+                                <td style="font-family:var(--mono)">{{ $customer->phone }}</td>
+                                <td class="cu-hide-mob" style="color:var(--text-dim)">{{ $customer->email ?: '—' }}</td>
+                                <td class="cu-hide-mob" style="color:var(--text-dim)">{{ $customer->shop?->name ?? 'Unassigned' }}</td>
                                 <td class="cu-hide-mob" style="color:var(--text-dim)">{{ $customer->registeredBy?->name ?? '—' }}</td>
                                 <td style="text-align:right">
                                     <button wire:click="openEdit({{ $customer->id }})" class="cu-action">Edit</button>

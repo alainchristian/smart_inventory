@@ -206,14 +206,14 @@
               </button>
             </th>
 
-            <th class="pl-hide-mob" style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
-                        text-transform:uppercase;color:var(--text-sub);text-align:left;white-space:nowrap">
-              Category
-            </th>
-
             <th style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
                         text-transform:uppercase;color:var(--text-sub);text-align:right;white-space:nowrap">
               Stock{{ $isOwner ? ' (all loc.)' : '' }}
+            </th>
+
+            <th class="pl-hide-mob" style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;
+                        text-transform:uppercase;color:var(--text-sub);text-align:left;white-space:nowrap">
+              Category
             </th>
 
             @if($isOwner)
@@ -297,15 +297,7 @@
               </div>
             </td>
 
-            {{-- Category --}}
-            <td class="pl-hide-mob" style="padding:10px 12px">
-              <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;
-                           background:var(--accent-dim);color:var(--accent);white-space:nowrap">
-                {{ $product->category->name ?? '--' }}
-              </span>
-            </td>
-
-            {{-- Stock --}}
+            {{-- Stock (2nd column: the figure you look for first) --}}
             <td style="padding:10px 12px;text-align:right">
               <div style="font-size:13px;font-weight:700;font-family:var(--mono);
                            color:{{ $isZeroStock ? 'var(--red)' : ($isLowStock ? 'var(--amber)' : 'var(--text)') }}">
@@ -322,6 +314,14 @@
               @elseif($isLowStock)
                 <div style="font-size:9px;font-weight:700;color:var(--amber);white-space:nowrap">LOW</div>
               @endif
+            </td>
+
+            {{-- Category --}}
+            <td class="pl-hide-mob" style="padding:10px 12px">
+              <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;
+                           background:var(--accent-dim);color:var(--accent);white-space:nowrap">
+                {{ $product->category->name ?? '--' }}
+              </span>
             </td>
 
             @if($isOwner)

@@ -144,7 +144,6 @@
 /* ── Responsive ─────────────────────────────────────────────────────── */
 @media(max-width:1024px) { .rl-kpis { grid-template-columns:repeat(2,1fr) } }
 @media(max-width:640px)  {
-    .rl-kpis { grid-template-columns:1fr }
     .rl-exp-grid { grid-template-columns:1fr }
     .rl-flt-seg { border-right:none;border-bottom:1px solid var(--border) }
     .rl-flt-seg:last-child { border-bottom:none }
@@ -168,7 +167,7 @@
 {{-- ── HEADER ──────────────────────────────────────────────────────── --}}
 <div class="rl-hdr">
     <div>
-        <h1 class="rl-hdr-ttl">Returns</h1>
+        <h1 class="rl-hdr-ttl m-dup-title">Returns</h1>
         <p class="rl-hdr-sub">@if($isOwner) All shops · @endif Refunds &amp; exchanges</p>
     </div>
     @if(!$isOwner)
@@ -275,7 +274,7 @@
 </div>
 
 {{-- ── KPI CARDS ─────────────────────────────────────────────────────── --}}
-<div class="rl-kpis">
+<div class="rl-kpis m-kpis">
 
     {{-- 1: Total Returns --}}
     <div class="rl-kpi">

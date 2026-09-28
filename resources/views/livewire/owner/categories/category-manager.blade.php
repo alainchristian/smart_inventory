@@ -141,15 +141,15 @@
     .cm-kpis { grid-template-columns:1fr 1fr;gap:8px }
     .cm-kpi  { padding:12px 14px }
     .cm-kpi-val { font-size:20px }
-    .cm-bar { flex-direction:column;align-items:stretch }
-    .cm-btn-new, .cm-select { width:100%;justify-content:center }
+    /* search on its own row; status + New share the next one */
+    .cm-search-wrap { flex:1 1 100%;min-width:0 }
+    .cm-select { flex:1;min-width:0;font-size:16px }
+    .cm-btn-new { flex-shrink:0 }
     .cm-drawer { left:0;width:auto;max-width:none }
     .cm-drawer-body { padding:16px }
     .cm-table td, .cm-table th { padding:10px 10px }
 }
 
-@media(max-width:480px) {
-    .cm-kpis { grid-template-columns:1fr }
     .cm-action { padding:4px 8px;font-size:11px }
 }
 @media(max-width:640px) {
@@ -159,7 +159,7 @@
 </style>
 
 {{-- KPIs --}}
-<div class="cm-kpis">
+<div class="cm-kpis m-kpis m-kpis-strip">
     <div class="cm-kpi">
         <div class="cm-kpi-row">
             <div class="cm-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">

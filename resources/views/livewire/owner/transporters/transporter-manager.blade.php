@@ -133,16 +133,16 @@
     .tm-kpis { grid-template-columns:1fr 1fr;gap:8px }
     .tm-kpi  { padding:12px 14px }
     .tm-kpi-val { font-size:20px }
-    .tm-bar { flex-direction:column;align-items:stretch }
-    .tm-btn-new, .tm-select { width:100%;justify-content:center }
+    /* search on its own row; status + New share the next one */
+    .tm-search-wrap { flex:1 1 100%;min-width:0 }
+    .tm-select { flex:1;min-width:0;font-size:16px }
+    .tm-btn-new { flex-shrink:0 }
     .tm-drawer { left:0;width:auto;max-width:none }
     .tm-drawer-body { padding:16px }
     .tm-table td, .tm-table th { padding:10px 10px }
     .tm-field-row { grid-template-columns:1fr }
 }
 
-@media(max-width:480px) {
-    .tm-kpis { grid-template-columns:1fr }
     .tm-action { padding:4px 8px;font-size:11px }
 }
 @media(max-width:640px) {
@@ -152,7 +152,7 @@
 </style>
 
 {{-- KPIs --}}
-<div class="tm-kpis">
+<div class="tm-kpis m-kpis m-kpis-strip">
     <div class="tm-kpi">
         <div class="tm-kpi-row">
             <div class="tm-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">

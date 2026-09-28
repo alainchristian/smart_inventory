@@ -120,7 +120,7 @@
 
     {{-- Page header --}}
     <div class="cw-header">
-        <h1 class="cw-header-title">Credit Write-offs</h1>
+        <h1 class="cw-header-title m-dup-title">Credit Write-offs</h1>
         <p class="cw-header-sub">Owner-only. Permanently reduces a customer's outstanding credit balance.</p>
     </div>
 
@@ -144,11 +144,11 @@
                     <thead>
                         <tr>
                             <th style="text-align:left;">Customer</th>
-                            <th style="text-align:left;">Phone</th>
-                            <th style="text-align:left;">Owed to</th>
                             <th>Outstanding</th>
-                            <th>Last Repayment</th>
                             <th>Action</th>
+                            <th style="text-align:left;">Owed to</th>
+                            <th style="text-align:left;">Phone</th>
+                            <th>Last Repayment</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -156,13 +156,8 @@
                             @php $isOpenRow = $writeoffCustomerId === $customer->id && $writeoffShopId === (int) $customer->balance_shop_id; @endphp
                             <tr class="cw-row {{ $isOpenRow ? 'active' : '' }}" wire:key="wo-{{ $customer->id }}-{{ $customer->balance_shop_id }}">
                                 <td class="cw-td" style="font-weight:600;color:var(--text);">{{ $customer->name }}</td>
-                                <td class="cw-td" style="font-family:var(--mono);color:var(--text-dim);font-size:13px;">{{ $customer->phone }}</td>
-                                <td class="cw-td" style="font-size:13px;color:var(--text-sub);">{{ $customer->balance_shop_name }}</td>
                                 <td class="cw-td" style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--red);font-size:15px;">
                                     {{ number_format($customer->outstanding_balance) }} RWF
-                                </td>
-                                <td class="cw-td" style="text-align:right;font-size:13px;color:var(--text-dim);">
-                                    {{ $customer->last_repayment_at ? $customer->last_repayment_at->diffForHumans() : 'Never' }}
                                 </td>
                                 <td class="cw-td" style="text-align:center;">
                                     @if($isOpenRow)
@@ -170,6 +165,11 @@
                                     @else
                                         <button wire:click="startWriteoff({{ $customer->id }}, {{ (int) $customer->balance_shop_id }})" class="cw-btn cw-btn-red-outline cw-btn-sm">Write Off</button>
                                     @endif
+                                </td>
+                                <td class="cw-td" style="font-size:13px;color:var(--text-sub);">{{ $customer->balance_shop_name }}</td>
+                                <td class="cw-td" style="font-family:var(--mono);color:var(--text-dim);font-size:13px;">{{ $customer->phone }}</td>
+                                <td class="cw-td" style="text-align:right;font-size:13px;color:var(--text-dim);">
+                                    {{ $customer->last_repayment_at ? $customer->last_repayment_at->diffForHumans() : 'Never' }}
                                 </td>
                             </tr>
 

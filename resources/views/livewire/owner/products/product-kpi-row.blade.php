@@ -1,9 +1,8 @@
 <style>
 .product-kpi-grid { grid-template-columns: repeat(4, 1fr) !important; }
 @media(max-width:900px) { .product-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-@media(max-width:480px)  { .product-kpi-grid { grid-template-columns: 1fr !important; } }
 </style>
-<div class="biz-kpi-grid product-kpi-grid">
+<div class="biz-kpi-grid product-kpi-grid m-kpis">
 
   {{-- Card 1: Active Products --}}
   <div class="bkpi blue" style="animation:fadeUp .4s ease .05s both">

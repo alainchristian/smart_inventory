@@ -199,7 +199,6 @@
 @media(max-width:480px) {
 
     .lm-action     { padding:4px 8px;font-size:11px }
-    .lm-kpis       { grid-template-columns:1fr }
     .lm-page-title { font-size:21px }
 }
 @media(max-width:640px) {
@@ -212,7 +211,7 @@
 {{-- ── Page header ──────────────────────────────────────────────────────── --}}
 <div class="lm-page-header">
     <div>
-        <div class="lm-page-title">Locations</div>
+        <div class="lm-page-title m-dup-title">Locations</div>
         <div class="lm-page-sub">Manage warehouses and retail shops across your business</div>
     </div>
     <button wire:click="openCreate" class="lm-btn-new">
@@ -225,7 +224,7 @@
 
 {{-- ── KPI strip ────────────────────────────────────────────────────────── --}}
 <div class="section-label">Overview</div>
-<div class="lm-kpis">
+<div class="lm-kpis m-kpis m-kpis-strip">
     <div class="lm-kpi">
         <div class="lm-kpi-row">
             <div class="lm-kpi-icon" style="background:var(--green-dim);color:var(--green)">

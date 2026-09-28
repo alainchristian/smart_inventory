@@ -145,11 +145,15 @@
     .al-select,.al-date { font-size:12px;padding:7px 9px }
     .al-drawer { left:0;width:auto;max-width:none }
 }
+.al-filter-panel { display:contents } /* desktop: its controls sit inline in .al-controls */
 @media (max-width:640px) {
-    /* Filters: 2-column grid instead of a ragged wrap of mixed-width controls */
-    .al-controls { display:grid;grid-template-columns:1fr 1fr;gap:8px }
-    .al-search-wrap { grid-column:1 / -1;min-width:0 }
-    .al-search { font-size:14px }
+    /* Filters: search + "Filters" on one row; everything else in a bottom sheet */
+    .al-controls { display:flex;flex-wrap:nowrap;gap:8px;align-items:center }
+    .al-search-wrap { flex:1;min-width:0 }
+    .al-search { font-size:16px } /* below 16px iOS zooms on focus */
+    .al-filter-panel { display:grid !important;grid-template-columns:1fr 1fr;gap:10px;align-content:start }
+    .al-filter-panel .m-sheet-handle, .al-filter-panel .al-sheet-foot { grid-column:1 / -1 }
+    .al-sheet-foot { margin:4px -16px -16px }
     .al-select, .al-date { width:100%;min-width:0;box-sizing:border-box }
     .al-export-btn, .al-clear-btn { justify-content:center;min-height:38px !important;padding:8px 14px !important }
     .al-preset-btn { min-height:32px !important;min-width:0 !important;padding:6px 14px !important }
@@ -165,7 +169,11 @@
 </div>
 
 {{-- ── Controls ─────────────────────────────────────────────────── --}}
-<div class="al-controls">
+@php
+    // filters behind the phone "Filters" sheet (dates come from the presets above, not counted)
+    $alFilterCount = collect([$filterUser, $filterModule, $filterActionType, $filterAction, $filterSeverity, $filterStatus])->filter()->count();
+@endphp
+<div class="al-controls" x-data="{ f: false }">
     {{-- Search --}}
     <div class="al-search-wrap">
         <svg class="al-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -176,6 +184,16 @@
                type="text"
                placeholder="Search reference, user, action…">
     </div>
+
+    {{-- Phones: one row (search + Filters); the rest opens as a bottom sheet --}}
+    <button type="button" class="m-filter-toggle m-only" @click="f = true">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M4 6h16M7 12h10M10 18h4"/></svg>
+        Filters @if($alFilterCount)<span class="m-count">{{ $alFilterCount }}</span>@endif
+    </button>
+    <div class="m-sheet-overlay m-only" x-show="f" x-cloak @click="f = false"></div>
+
+    <div class="m-filter-panel al-filter-panel" :class="{ open: f }">
+    <div class="m-sheet-handle m-only"></div>
 
     {{-- User filter --}}
     <select wire:model.live="filterUser" class="al-select">
@@ -242,6 +260,11 @@
         <x-icon name="x" size="11" /> Clear
     </button>
     @endif
+
+    <div class="m-sheet-foot m-only al-sheet-foot">
+        <button type="button" class="al-export-btn" @click="f = false">Done</button>
+    </div>
+    </div>{{-- /al-filter-panel --}}
 </div>
 
 {{-- ── Active filter chips ──────────────────────────────────────── --}}

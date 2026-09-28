@@ -144,9 +144,22 @@
     .dg-disp-full { grid-column:auto }
     .dg-form-2col { grid-template-columns:1fr }
 }
+.dg-filter-panel { display:contents } /* desktop: its controls sit inline in .dg-filter-row */
+@media(max-width:640px) {
+    .dg-filter { padding:12px 14px }
+    .dg-status-block { margin-bottom:10px !important }
+    .dg-filter-row { flex-wrap:nowrap;align-items:center }
+    .dg-search-group { min-width:0 !important }
+    .dg-search-group .dg-inp { font-size:16px } /* below 16px iOS zooms on focus */
+    .dg-filter-panel { display:flex !important } /* beat the desktop display:contents so it becomes the sheet */
+    .dg-filter-panel .dg-f-group { width:100% }
+    .dg-filter-panel .dg-inp { width:100%;box-sizing:border-box;font-size:16px }
+    .dg-filter-panel .dg-f-group:has(.dg-reset-btn) .dg-f-lbl { display:none }
+    .dg-sheet-foot { margin:4px -16px -16px }
+    .dg-sheet-foot .dg-reset-btn { justify-content:center }
+}
 @media(max-width:600px) {
     .dg-kpi-grid { grid-template-columns:1fr 1fr }
-    .dg-filter-row { flex-direction:column;align-items:stretch }
     /* status pills scroll sideways instead of stacking 3 rows deep */
     .dg-pills { flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
                 margin:0 -20px;padding:0 20px 2px }
@@ -172,7 +185,7 @@
 {{-- Header --}}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap">
     <div>
-        <h1 style="font-size:22px;font-weight:800;letter-spacing:-.4px;margin:0 0 3px">Damaged Goods</h1>
+        <h1 class="m-dup-title" style="font-size:22px;font-weight:800;letter-spacing:-.4px;margin:0 0 3px">Damaged Goods</h1>
         <p style="font-size:13px;color:var(--text-dim);margin:0">{{ $locationName }}</p>
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -236,8 +249,8 @@
 {{-- Filters --}}
 <div class="dg-filter">
     {{-- Disposition pills --}}
-    <div style="margin-bottom:14px">
-        <div class="dg-f-lbl" style="margin-bottom:8px">Status</div>
+    <div class="dg-status-block" style="margin-bottom:14px">
+        <div class="dg-f-lbl m-hide" style="margin-bottom:8px">Status</div>
         <div class="dg-pills">
             <button type="button" wire:click="setDispositionFilter('all')"
                     class="dg-pill {{ $dispositionFilter === 'all' ? 'on' : '' }}">All</button>
@@ -268,9 +281,10 @@
     </div>
 
     {{-- Row 2: search + dates + location + reset --}}
-    <div class="dg-filter-row">
-        <div class="dg-f-group" style="flex:2;min-width:180px">
-            <div class="dg-f-lbl">Search</div>
+    @php $dgFilterCount = (($isOwner && ($locationFilter ?? 'all') !== 'all') ? 1 : 0); @endphp
+    <div class="dg-filter-row" x-data="{ f: false }">
+        <div class="dg-f-group dg-search-group" style="flex:2;min-width:180px">
+            <div class="dg-f-lbl m-hide">Search</div>
             <div class="dg-inp-wrap">
                 <input type="text"
                        wire:model.live.debounce.300ms="search"
@@ -279,6 +293,15 @@
                 <svg class="dg-inp-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
         </div>
+
+        {{-- Phones: search + Filters on one row; location / dates / reset in a bottom sheet --}}
+        <button type="button" class="m-filter-toggle m-only" @click="f = true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M4 6h16M7 12h10M10 18h4"/></svg>
+            Filters @if($dgFilterCount)<span class="m-count">{{ $dgFilterCount }}</span>@endif
+        </button>
+        <div class="m-sheet-overlay m-only" x-show="f" x-cloak @click="f = false"></div>
+        <div class="m-filter-panel dg-filter-panel" :class="{ open: f }">
+        <div class="m-sheet-handle m-only"></div>
 
         @if($isOwner && count($locations) > 0)
             <div class="dg-f-group" style="flex:1;min-width:140px">
@@ -308,6 +331,8 @@
                 Reset
             </button>
         </div>
+        <div class="m-sheet-foot m-only dg-sheet-foot"><button type="button" class="dg-reset-btn" @click="f = false">Done</button></div>
+        </div>{{-- /dg-filter-panel --}}
     </div>
 </div>
 

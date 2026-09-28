@@ -200,8 +200,6 @@
     .bx-kpis { grid-template-columns:1fr 1fr;gap:8px }
     .bx-table td,.bx-table th { padding:9px 10px }
 }
-@media(max-width:480px) {
-    .bx-kpis { grid-template-columns:1fr }
     .bx-view-btn { padding:4px 8px;font-size:11px }
 }
 /* Phones: the table stays a table and scrolls sideways inside its card
@@ -216,7 +214,7 @@
 {{-- ── Page header ─────────────────────────────────────────────── --}}
 <div class="dashboard-page-header" style="margin-bottom:20px">
     <div>
-        <h1 style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.4px;margin:0 0 4px">Boxes</h1>
+        <h1 class="m-dup-title" style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.4px;margin:0 0 4px">Boxes</h1>
         <p style="font-size:14px;color:var(--text-dim);margin:0">Grouped by product — stock levels, sales performance, and expected revenue across every box</p>
     </div>
 </div>
@@ -226,7 +224,7 @@
   $sellable    = ($stats->full_count ?? 0) + ($stats->partial_count ?? 0);
   $activeTotal = $sellable + ($stats->damaged_count ?? 0);   // non-empty boxes
 @endphp
-<div class="bx-kpis">
+<div class="bx-kpis m-kpis">
 
     {{-- Card 1: Sellable Boxes --}}
     <div class="bkpi blue">

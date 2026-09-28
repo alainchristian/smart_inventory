@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="dashboard-page-header">
         <div>
-            <h1>Expense Categories</h1>
+            <h1 class="m-dup-title">Expense Categories</h1>
             <p>Manage operational expense classifications for day close tracking.</p>
         </div>
     </div>
