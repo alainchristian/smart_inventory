@@ -153,15 +153,19 @@
 .sa-pay-row:last-child { border-bottom:none }
 .sa-pay-dot  { width:10px;height:10px;border-radius:50%;flex-shrink:0 }
 .sa-pay-name { font-size:13px;font-weight:600;color:var(--text);width:120px;flex-shrink:0 }
-.sa-pay-bar-wrap { flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden }
-.sa-pay-bar  { height:100%;border-radius:4px;transition:width .6s ease }
+.sa-pay-bar-wrap { flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden }
+/* Top Products fills its card (the grid row is as tall as the right column):
+   the list scrolls inside the remaining height instead of a fixed 360px box */
+.sa-fill-card { display:flex;flex-direction:column }
+.sa-fill-card .sa-top-scroll { flex:1 1 0;height:0;min-height:240px;max-height:none !important }
+.sa-pay-bar  { height:100%;border-radius:3px;transition:width .6s ease }
 .sa-pay-amt  { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);
                width:120px;text-align:right;flex-shrink:0 }
 .sa-pay-pct  { font-size:11px;color:var(--text-dim);font-family:var(--mono);
                width:44px;text-align:right;flex-shrink:0 }
 
 /* ── Credit progress ─────────────────────────────────────────────── */
-.sa-credit-progress { height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin-top:8px }
+.sa-credit-progress { height:5px;border-radius:3px;background:var(--surface2);overflow:hidden;margin-top:8px }
 .sa-credit-fill { height:100%;border-radius:4px;transition:width .6s ease }
 
 /* ── Recon block styles (Revenue Reconciliation in Ledger) ───────── */
@@ -236,6 +240,7 @@
 @media(max-width:640px) {
     .sa-shop-sel { font-size:16px } /* below 16px iOS zooms on focus */
     .sa-top-scroll { max-height:none !important } /* no scroll box inside the scrolling page */
+    .sa-fill-card .sa-top-scroll { flex:none;height:auto;min-height:0 } /* phones: the card grows with the list */
     /* Ledger / Price Audit: the product column stays put while the figures scroll
        under it (the # / date column before it scrolls away) */
     .sa-ledger-tbl col:nth-child(2) { width:160px !important }
@@ -259,7 +264,7 @@
     .sa-pay-name { width:auto;flex:1;min-width:0 }
     .sa-pay-amt  { width:auto }
     .sa-pay-pct  { display:inline;width:auto }
-    .sa-pay-bar-wrap { order:5;flex:0 0 100%;height:6px }
+    .sa-pay-bar-wrap { order:5;flex:0 0 100%;height:4px }
     .sa-alert-strip { flex-direction:column;align-items:flex-start }
     .sa-mix-item { min-width:100% }
 }
@@ -788,7 +793,7 @@
 <div class="sa-two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
 
     {{-- Top Products --}}
-    <div class="sa-tbl-wrap" style="margin-bottom:0">
+    <div class="sa-tbl-wrap sa-fill-card" style="margin-bottom:0">
         <div class="sa-card-head">
             <div>
                 <div class="sa-card-title">Top Products</div>
@@ -853,7 +858,7 @@
                         @endif
                     </div>
                 </div>
-                <div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden">
+                <div style="height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">
                     <div style="height:100%;width:{{ $maxShopRev > 0 ? round($shop['revenue'] / $maxShopRev * 100) : 0 }}%;background:var(--accent);border-radius:3px;transition:width .6s ease"></div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:5px">
