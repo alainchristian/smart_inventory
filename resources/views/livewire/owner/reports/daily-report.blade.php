@@ -198,7 +198,7 @@
 
 <div class="odr-header">
     <div>
-        <h1 class="odr-header-title">Daily Report</h1>
+        <h1 class="odr-header-title m-dup-title">Daily Report</h1>
         <p class="odr-header-sub">{{ $this->activeDateRangeLabel }} · {{ $this->selectedShopName }} · {{ $summary['transaction_count'] }} {{ Str::plural('transaction', $summary['transaction_count']) }}</p>
     </div>
     <div class="odr-actions">

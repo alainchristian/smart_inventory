@@ -6,7 +6,7 @@
 <div wire:poll.30s>
 <style>
 /* ── Font size increases for better readability ───────────────────── */
-.cc-page-title { font-size:26px !important; }
+.cc-page-title { font-size:22px; }
 .cc-page-subtitle { font-size:14px !important; }
 .cc-section-title { font-size:16px !important; }
 .cc-section-subtitle { font-size:13px !important; }
@@ -17,7 +17,7 @@
 @media(max-width:640px) {
     .cc-header-controls { flex-direction:column !important; align-items:stretch !important; gap:10px !important; width:100%; }
     .cc-section { padding:16px !important; }
-    .cc-page-title { font-size:24px !important; }
+    .cc-page-title { font-size:20px; }
     .cc-page-subtitle { font-size:13px !important; }
 }
 
@@ -45,7 +45,6 @@
 
 @media(max-width:900px) { .cc-kpis { grid-template-columns:1fr 1fr;gap:10px } }
 @media(max-width:640px) {
-    .cc-kpis { grid-template-columns:1fr;gap:8px }
     .cc-kpi  { padding:14px }
     .cc-kpi-val { font-size:20px }
 }
@@ -65,10 +64,10 @@
 ══════════════════════════════════════════════════════════════════════════ --}}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap">
     <div>
-        <h1 class="cc-page-title" style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin:0 0 4px">
+        <h1 class="cc-page-title m-dup-title" style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin:0 0 4px">
             Customer Credit Report
         </h1>
-        <div class="cc-page-subtitle" style="font-size:13px;color:var(--text-dim);font-family:var(--mono)">
+        <div class="cc-page-subtitle" style="font-size:13px;color:var(--text-dim)">
             Track outstanding balances and payment history
             @if($locationFilter !== 'all')
                 · {{ $this->selectedShopName }}
@@ -98,7 +97,7 @@
         ? round(($summary['total_repaid'] / $summary['total_credit_given']) * 100, 1)
         : 0;
 @endphp
-<div class="cc-kpis">
+<div class="cc-kpis m-kpis">
     {{-- Total Outstanding --}}
     <div class="cc-kpi">
         <div class="cc-kpi-row">

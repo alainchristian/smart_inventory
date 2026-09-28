@@ -3000,7 +3000,7 @@ main,
 @media (max-width: 640px) {
   .m-page-head { margin-bottom: var(--m-s3) !important; gap: var(--m-s1) !important; align-items: center !important; }
   .m-page-head h1 { font-size: var(--m-fs-title) !important; }
-  .m-page-head .m-dup-title { display: none !important; }
+  .m-dup-title { display: none !important; } /* repeats the topbar title */
 }
 
 /* ── Global toasts: bottom-centre on phones, clear of the page header ──── */

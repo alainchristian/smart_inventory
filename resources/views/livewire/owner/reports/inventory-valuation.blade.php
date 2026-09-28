@@ -6,7 +6,7 @@
 <div>
 <style>
 .iv-page-title { font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin:0 0 4px }
-.iv-page-subtitle { font-size:13px;color:var(--text-dim);font-family:var(--mono) }
+.iv-page-subtitle { font-size:13px;color:var(--text-dim) }
 .iv-section-title { font-size:15px;font-weight:700;color:var(--text);margin:0 0 14px }
 .iv-section-sub { font-size:12px;color:var(--text-dim);margin:-10px 0 14px }
 .iv-table { width:100%;border-collapse:collapse }
@@ -121,7 +121,6 @@
     .iv-alert-strip { grid-template-columns:1fr 1fr }
 }
 @@media(max-width:480px) {
-    .iv-kpis    { grid-template-columns:1fr }
     .iv-kpi-stat-v { font-size:12px }
     .iv-kpi-stat-l { font-size:10px }
     .iv-abc-grid { grid-template-columns:1fr !important }
@@ -178,14 +177,14 @@
      PAGE HEADER
 ══════════════════════════════════════════════════════════════════════════ --}}
 <div style="margin-bottom:16px">
-    <h1 class="iv-page-title">Inventory Report</h1>
+    <h1 class="iv-page-title m-dup-title">Inventory Report</h1>
     <div class="iv-page-subtitle">Valuation · stock health · velocity · replenishment</div>
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════════════════
      HEADLINE KPI ROW (always visible)
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div class="iv-kpis">
+<div class="iv-kpis m-kpis">
 
     {{-- Card 1: Cost Value --}}
     <div class="iv-kpi">
@@ -641,7 +640,7 @@
         $deadLocked     = (int) ($vs['Dead_cost_value'] ?? 0);
         $damagedColor   = $shrinkage['items_damaged_90d'] > 0 ? 'var(--amber)' : 'var(--success)';
     @endphp
-    <div class="iv-kpis" style="margin-bottom:24px">
+    <div class="iv-kpis m-kpis" style="margin-bottom:24px">
 
         {{-- Low Stock --}}
         <div class="iv-kpi">

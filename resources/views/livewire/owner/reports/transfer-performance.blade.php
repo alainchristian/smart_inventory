@@ -156,7 +156,6 @@
 }
 @media(max-width:480px) {
     .tp-hide-mob   { display:none !important }
-    .tp-kpis       { grid-template-columns:1fr }
 }
 
 
@@ -165,8 +164,8 @@
 {{-- Page Header --}}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap">
     <div>
-        <div class="tp-title">Transfer Performance</div>
-        <div class="tp-subtitle">Logistics efficiency and discrepancy tracking &mdash; {{ $dateFrom }} to {{ $dateTo }}</div>
+        <div class="tp-title m-dup-title">Transfer Performance</div>
+        <div class="tp-subtitle">Logistics efficiency and discrepancy tracking &mdash; {{ \Carbon\Carbon::parse($dateFrom)->format('j M') }} – {{ \Carbon\Carbon::parse($dateTo)->format('j M Y') }}</div>
     </div>
 </div>
 
@@ -237,7 +236,7 @@
                     ? round(($kpis['total_transfers'] - $kpis['discrepancy_count']) / $kpis['total_transfers'] * 100, 1)
                     : 100;
 @endphp
-<div class="tp-kpis">
+<div class="tp-kpis m-kpis">
 
     {{-- Total Transfers --}}
     <div class="tp-kpi">

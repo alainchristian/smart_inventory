@@ -137,15 +137,14 @@
 }
 @media(max-width:480px) {
     .la-hide-mob   { display:none !important }
-    .la-kpis       { grid-template-columns:1fr }
 }
 </style>
 
 {{-- Page Header --}}
 <div class="la-header">
     <div>
-        <div class="la-title">Loss Analysis</div>
-        <div class="la-subtitle">Returns, damaged goods &amp; shrinkage &mdash; {{ $dateFrom }} to {{ $dateTo }}</div>
+        <div class="la-title m-dup-title">Loss Analysis</div>
+        <div class="la-subtitle">Returns, damaged goods &amp; shrinkage &mdash; {{ \Carbon\Carbon::parse($dateFrom)->format('j M') }} – {{ \Carbon\Carbon::parse($dateTo)->format('j M Y') }}</div>
     </div>
 </div>
 
@@ -205,7 +204,7 @@
                     : ($kpis['return_rate'] > 2 ? 'var(--amber)' : 'var(--green)');
     $rateLabel   = $kpis['return_rate'] > 5 ? 'High' : ($kpis['return_rate'] > 2 ? 'Medium' : 'Low');
 @endphp
-<div class="la-kpis">
+<div class="la-kpis m-kpis">
 
     {{-- Total Loss --}}
     <div class="la-kpi">

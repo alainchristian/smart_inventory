@@ -6,11 +6,23 @@
 <div wire:poll.30s>
 <style>
 /* ── Font size increases for better readability ───────────────────── */
-.pm-page-title { font-size:26px !important; }
+.pm-page-title { font-size:22px; }
 .pm-page-subtitle { font-size:14px !important; }
 .pm-date-btn { font-size:14px !important; padding:6px 16px !important; }
 .pm-date-input, .pm-shop-select { font-size:14px !important; }
 .pm-section-title { font-size:16px !important; }
+/* Revenue by payment method — one quiet row per method */
+.pm-mix      { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 32px }
+.pm-mix-row  { padding:12px 0;border-bottom:1px solid var(--border);min-width:0 }
+.pm-mix-top  { display:flex;align-items:center;gap:8px }
+.pm-mix-dot  { width:8px;height:8px;border-radius:50%;flex-shrink:0 }
+.pm-mix-name { flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+.pm-mix-amt  { font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);white-space:nowrap }
+.pm-mix-unit { font-size:10px;font-weight:500;color:var(--text-dim) }
+.pm-mix-bar  { height:4px;border-radius:2px;background:var(--border);margin:8px 0 6px;overflow:hidden }
+.pm-mix-bar > div { height:100%;border-radius:2px }
+.pm-mix-meta { font-size:11px;color:var(--text-dim) }
+.pm-mix-zero .pm-mix-name, .pm-mix-zero .pm-mix-amt { color:var(--text-dim) }
 .pm-section-subtitle { font-size:13px !important; }
 .pm-table thead th { font-size:12px !important; white-space:nowrap }
 .pm-table tbody td { font-size:14px !important; white-space:nowrap }
@@ -27,7 +39,7 @@
     .pm-header-controls select { width:100%; }
     .pm-date-sep { display:none; }
 
-    .pm-page-title { font-size:24px !important; }
+    .pm-page-title { font-size:20px; }
     .pm-page-subtitle { font-size:13px !important; }
     .pm-date-btn { font-size:13px !important; }
 }
@@ -60,7 +72,6 @@
 
 @media(max-width:900px) { .pm-kpis { grid-template-columns:1fr 1fr;gap:10px } }
 @media(max-width:640px) {
-    .pm-kpis { grid-template-columns:1fr;gap:8px }
     .pm-kpi  { padding:14px }
     .pm-kpi-val { font-size:20px }
 }
@@ -72,10 +83,10 @@
 ══════════════════════════════════════════════════════════════════════════ --}}
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap">
     <div>
-        <h1 class="pm-page-title" style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin:0 0 4px">
+        <h1 class="pm-page-title m-dup-title" style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin:0 0 4px">
             Payment Methods Report
         </h1>
-        <div class="pm-page-subtitle" style="font-size:13px;color:var(--text-dim);font-family:var(--mono)">
+        <div class="pm-page-subtitle" style="font-size:13px;color:var(--text-dim)">
             {{ $this->activeDateRangeLabel }}
             @if($locationFilter !== 'all')
                 · {{ $this->selectedShopName }}
@@ -133,7 +144,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      SUMMARY KPI GRID
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div class="pm-kpis">
+<div class="pm-kpis m-kpis">
     {{-- Total Revenue --}}
     <div class="pm-kpi">
         <div class="pm-kpi-row">
@@ -219,39 +230,31 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      PAYMENT METHOD BREAKDOWN
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div class="pm-section" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:32px">
+<div class="pm-section" style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:20px 24px;margin-bottom:24px">
     <h2 class="pm-section-title" style="font-size:18px;font-weight:700;color:var(--text);margin:0 0 20px">
         Revenue by Payment Method
     </h2>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+    <div class="pm-mix">
         @foreach($this->paymentMethodSummary as $method => $data)
             @php
                 $percentage = $this->totalRevenue > 0 ? round(($data['total'] / $this->totalRevenue) * 100, 1) : 0;
-                $colors = [
-                    'cash' => ['bg' => '#10b981', 'light' => 'rgba(16,185,129,0.1)'],
-                    'card' => ['bg' => '#3b82f6', 'light' => 'rgba(59,130,246,0.1)'],
-                    'mobile_money' => ['bg' => '#8b5cf6', 'light' => 'rgba(139,92,246,0.1)'],
-                    'bank_transfer' => ['bg' => '#f59e0b', 'light' => 'rgba(245,158,11,0.1)'],
-                    'credit' => ['bg' => '#ef4444', 'light' => 'rgba(239,68,68,0.1)'],
-                ];
-                $color = $colors[$method] ?? ['bg' => '#6b7280', 'light' => 'rgba(107,114,128,0.1)'];
+                $color = [
+                    'cash'          => 'var(--green)',
+                    'card'          => 'var(--accent)',
+                    'mobile_money'  => 'var(--violet)',
+                    'bank_transfer' => 'var(--amber)',
+                    'credit'        => 'var(--red)',
+                ][$method] ?? 'var(--text-dim)';
             @endphp
-            <div style="padding:16px;border-radius:10px;background:{{ $color['light'] }};border:2px solid {{ $color['bg'] }}20">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                    <div style="font-size:13px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px">
-                        {{ $data['label'] }}
-                    </div>
-                    <div style="font-size:11px;font-weight:700;color:{{ $color['bg'] }};background:white;padding:3px 8px;border-radius:6px">
-                        {{ $percentage }}%
-                    </div>
+            <div class="pm-mix-row {{ $data['total'] > 0 ? '' : 'pm-mix-zero' }}">
+                <div class="pm-mix-top">
+                    <span class="pm-mix-dot" style="background:{{ $color }}"></span>
+                    <span class="pm-mix-name">{{ $data['label'] }}</span>
+                    <span class="pm-mix-amt">{{ number_format($data['total']) }} <span class="pm-mix-unit">RWF</span></span>
                 </div>
-                <div style="font-size:22px;font-weight:800;color:{{ $color['bg'] }};font-family:var(--mono);margin-bottom:4px">
-                    {{ number_format($data['total']) }} RWF
-                </div>
-                <div style="font-size:11px;color:var(--text-sub);font-weight:500">
-                    {{ number_format($data['count']) }} transaction{{ $data['count'] != 1 ? 's' : '' }}
-                </div>
+                <div class="pm-mix-bar"><div style="width:{{ $percentage }}%;background:{{ $color }}"></div></div>
+                <div class="pm-mix-meta">{{ number_format($data['count']) }} transaction{{ $data['count'] != 1 ? 's' : '' }} · {{ $percentage }}%</div>
             </div>
         @endforeach
     </div>
@@ -260,7 +263,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      RECENT TRANSACTIONS
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div class="pm-section" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px">
+<div class="pm-section" style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:20px 24px">
     <h2 class="pm-section-title" style="font-size:18px;font-weight:700;color:var(--text);margin:0 0 16px">
         Recent Transactions
     </h2>
@@ -270,17 +273,23 @@
             <thead>
                 <tr style="border-bottom:2px solid var(--border)">
                     <th style="text-align:left;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Sale #</th>
+                    <th style="text-align:right;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Total</th>
                     <th style="text-align:left;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Date</th>
                     <th style="text-align:left;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Shop</th>
                     <th style="text-align:left;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Customer</th>
                     <th style="text-align:left;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Payment Methods</th>
-                    <th style="text-align:right;padding:12px 16px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">Total</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($this->recentTransactions as $sale)
                     <tr style="border-bottom:1px solid var(--border)">
                         <td data-label="Sale #" style="padding:12px 16px;font-family:var(--mono);font-weight:600;color:var(--text)">{{ $sale->sale_number }}</td>
+                        <td data-label="Total" style="text-align:right;padding:12px 16px;font-family:var(--mono);font-weight:700;color:var(--text);white-space:nowrap">
+                            {{ number_format($sale->total) }} RWF
+                            @if($sale->has_credit)
+                                <div style="font-size:10px;font-weight:600;color:var(--red);margin-top:2px">{{ number_format($sale->credit_amount) }} on credit</div>
+                            @endif
+                        </td>
                         <td data-label="Date" style="padding:12px 16px;color:var(--text-sub);font-size:12px">{{ local_time($sale->sale_date)->format('M d, Y h:i A') }}</td>
                         <td data-label="Shop" style="padding:12px 16px;color:var(--text)">{{ $sale->shop->name }}</td>
                         <td data-label="Customer" style="padding:12px 16px;color:var(--text)">
@@ -305,12 +314,6 @@
                                 <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);text-transform:uppercase">
                                     {{ $sale->payment_method->label() }}
                                 </span>
-                            @endif
-                        </td>
-                        <td data-label="Total" style="text-align:right;padding:12px 16px;font-family:var(--mono);font-weight:700;color:var(--text)">
-                            {{ number_format($sale->total) }} RWF
-                            @if($sale->has_credit)
-                                <span style="font-size:10px;color:var(--red);margin-left:4px">({{ number_format($sale->credit_amount) }} credit)</span>
                             @endif
                         </td>
                     </tr>

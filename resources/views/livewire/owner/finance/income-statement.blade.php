@@ -105,9 +105,11 @@
     .is-table td   { padding:8px 12px; }
     .is-section-hd { padding:6px 12px 3px; }
     .is-row-indent { padding-left:22px !important; }
-    .is-col-num    { width:120px; }
-    /* line-item labels keep a readable width; the statement scrolls sideways if needed */
-    .is-table      { min-width:470px; }
+    .is-col-num    { width:auto; }
+    /* Fits a phone: the decorative bar column goes and nothing forces the table wider
+       than the screen (it used to be min-width:470px, clipping every amount). A
+       comparison column, when shown, still scrolls inside .is-table-scroll. */
+    .is-col-bar    { display:none; }
     .is-filter-row { flex-wrap:wrap; }
     .is-filter-seg { border-right:none;border-bottom:1px solid var(--border);width:100%; }
     .is-filter-seg:last-child { border-bottom:none; }
@@ -120,7 +122,7 @@
     {{-- ── Header ── --}}
     <div class="is-header">
         <div>
-            <h1 class="is-header-title">Income Statement</h1>
+            <h1 class="is-header-title m-dup-title">Income Statement</h1>
             <p class="is-header-sub">
                 {{ $periodLabel }}
                 @if ($locationFilter !== 'all')
