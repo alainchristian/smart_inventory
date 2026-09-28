@@ -57,10 +57,12 @@
 
 /* ── Filter pills ───────────────────────────────────────────────────────── */
 .upos-filter-strip { display:flex; gap:6px; flex-wrap:wrap; min-width:0 }
-.upos-filter-pill { padding:5px 14px; border-radius:20px; border:1.5px solid var(--border); background:var(--surface); color:var(--text-dim); font-size:12px; font-weight:600; cursor:pointer; transition:all var(--tr); white-space:nowrap }
+.upos-filter-pill { display:inline-flex; align-items:center; gap:6px; flex-shrink:0; padding:6px 12px; border-radius:20px; border:1.5px solid var(--border); background:var(--surface); color:var(--text-dim); font-size:12px; font-weight:600; font-family:var(--font); line-height:1.2; cursor:pointer; transition:all var(--tr); white-space:nowrap }
+.upos-filter-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0 }
+.upos-filter-pill.active .upos-filter-dot { background:#fff !important }
 .upos-filter-pill:hover { border-color:var(--accent); color:var(--accent) }
 .upos-filter-pill.active { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12) }
-.upos-filter-pill .count { display:inline-block; background:var(--surface2); border-radius:10px; padding:1px 6px; font-size:10px; margin-left:4px; font-family:var(--mono) }
+.upos-filter-pill .count { display:inline-block; background:var(--surface2); border-radius:10px; padding:1px 6px; font-size:10px; font-family:var(--mono) }
 .upos-filter-pill.active .count { background:rgba(255,255,255,.2); color:#fff }
 
 /* ── Scanner panel ──────────────────────────────────────────────────────── */
@@ -152,7 +154,7 @@
 .upos-btn-primary:disabled { opacity:.5; cursor:not-allowed }
 .upos-btn-ghost { padding:10px 20px; border-radius:var(--rsm); border:1.5px solid var(--border); background:transparent; color:var(--text-dim); font-size:14px; font-weight:600; font-family:var(--font); cursor:pointer; transition:all var(--tr) }
 .upos-btn-ghost:hover { border-color:var(--accent); color:var(--accent) }
-.upos-btn-sm { padding:7px 14px; font-size:12px; border-radius:var(--rsm); border:1.5px solid var(--border); background:transparent; color:var(--text-dim); font-family:var(--font); cursor:pointer; transition:all var(--tr) }
+.upos-btn-sm { flex-shrink:0; white-space:nowrap; padding:7px 14px; font-size:12px; border-radius:var(--rsm); border:1.5px solid var(--border); background:transparent; color:var(--text-dim); font-family:var(--font); cursor:pointer; transition:all var(--tr) }
 .upos-btn-sm:hover { border-color:var(--accent); color:var(--accent) }
 .upos-btn-danger { background:var(--red); color:#fff; border:none; padding:10px 20px; border-radius:var(--rsm); font-size:14px; font-weight:700; font-family:var(--font); cursor:pointer; transition:opacity var(--tr) }
 .upos-btn-danger:hover { opacity:.85 }
@@ -236,7 +238,7 @@
 .upos-fulfillment-block { background:color-mix(in srgb,var(--accent) 5%,var(--surface)); border-radius:var(--rsm); padding:12px; border:1px solid var(--accent-dim) }
 .upos-fulfillment-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--accent); margin-bottom:10px }
 .upos-fulfillment-toggle { display:flex; border-radius:var(--rsm); overflow:hidden; border:1.5px solid var(--border); margin-bottom:10px }
-.upos-fulfillment-btn { flex:1; padding:7px; border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer; transition:all var(--tr) }
+.upos-fulfillment-btn { flex:1; padding:8px 6px; white-space:nowrap; border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer; transition:all var(--tr) }
 .upos-fulfillment-btn.active { background:var(--accent); color:#fff }
 .upos-fulfillment-note { margin-top:8px; font-size:11px; color:var(--accent); display:flex; align-items:flex-start; gap:5px }
 
@@ -290,7 +292,9 @@
 .upos-rc-total-val { font-size:18px; font-weight:800; font-family:var(--mono); color:var(--text) }
 .upos-rc-wh-note { background:var(--amber-dim); border-radius:var(--rsm); padding:10px 12px; font-size:12px; color:var(--amber); display:flex; align-items:flex-start; gap:8px }
 .upos-rc-foot { display:flex; gap:10px; padding:14px 24px; border-top:1px solid var(--border) }
-.upos-rc-foot button { flex:1 }
+.upos-rc-foot > * { flex:1; min-width:0; display:inline-flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap; text-decoration:none }
+.upos-rc-link { padding:10px 14px; border-radius:var(--rsm); border:1.5px solid var(--border); background:transparent; color:var(--text-dim); font-size:14px; font-weight:600; font-family:var(--font); transition:all var(--tr) }
+.upos-rc-link:hover { border-color:var(--accent); color:var(--accent) }
 
 /* ── Shop selection modal ────────────────────────────────────────────────── */
 .upos-shop-modal-card { max-width:420px }
@@ -307,7 +311,7 @@
     .upos-co-left { border-right:none; border-bottom:1px solid var(--border); overflow-y:visible; flex:none; }
     .upos-co-right { overflow-y:visible; flex:none; }
     .upos-bal-strip { position:sticky; top:0; z-index:10; box-shadow:0 4px 12px rgba(26,31,54,.08); }
-    .upos-co-complete { position:sticky; bottom:0; z-index:10; }
+    .upos-co-complete-bar { position:sticky; bottom:0; z-index:10; background:var(--surface); margin:0 -18px 0 -14px; padding:10px 18px 10px 14px; border-top:1px solid var(--border); box-shadow:0 -4px 12px rgba(26,31,54,.06) }
 }
 @media(max-width:860px) {
     .upos-layout { grid-template-columns:minmax(0,1fr) }
@@ -317,6 +321,11 @@
 }
 @media(max-width:640px) {
     .upos-unit-pill { min-height:0 !important;min-width:0 !important;padding:6px 12px !important }
+    .upos-filter-pill { min-height:34px !important;min-width:0 !important;padding:6px 12px !important }
+    .upos-fulfillment-btn { min-height:38px !important;min-width:0 !important;padding:8px 6px !important }
+    .upos-btn-sm { min-height:38px !important;min-width:0 !important;padding:7px 12px !important }
+    .upos-rc-foot { padding:12px 16px; gap:8px }
+    .upos-rc-foot > * { min-height:42px !important;padding:10px 8px !important;font-size:13px !important }
     .upos-filter-strip { flex-wrap:nowrap; overflow-x:auto; padding-bottom:2px; -ms-overflow-style:none; scrollbar-width:none }
     .upos-filter-strip::-webkit-scrollbar { display:none }
     .upos-stock-grid { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) }
@@ -395,11 +404,11 @@
                 {{ __('All') }} <span class="count">{{ count($shopStock) + count($warehouseStock) }}</span>
             </button>
             <button class="upos-filter-pill {{ $stockFilter === 'shop' ? 'active' : '' }}" wire:click="setStockFilter('shop')">
-                <span class="upos-badge shop" style="margin-right:2px">●</span> {{ __('Shop') }} <span class="count">{{ count($shopStock) }}</span>
+                <span class="upos-filter-dot" style="background:var(--green)"></span>{{ __('Shop') }} <span class="count">{{ count($shopStock) }}</span>
             </button>
             @if($warehouseId)
             <button class="upos-filter-pill {{ $stockFilter === 'warehouse' ? 'active' : '' }}" wire:click="setStockFilter('warehouse')">
-                <span class="upos-badge warehouse" style="margin-right:2px">●</span> {{ __('Warehouse') }} <span class="count">{{ count($warehouseStock) }}</span>
+                <span class="upos-filter-dot" style="background:var(--accent)"></span>{{ __('Warehouse') }} <span class="count">{{ count($warehouseStock) }}</span>
             </button>
             @endif
         </div>
@@ -517,7 +526,7 @@
 </div>{{-- end .upos-layout --}}
 
 {{-- ── Mobile FAB ─────────────────────────────────────────────────────────── --}}
-<div x-data="{ drawerOpen: false }" @keydown.escape.window="drawerOpen=false">
+<div x-data="{ drawerOpen: false }" @keydown.escape.window="drawerOpen=false" @upos-back-to-pos.window="drawerOpen=false">
     <button class="upos-cart-fab" @click="drawerOpen=true">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         @if(count($cart) > 0)
@@ -947,9 +956,11 @@
                 </div>
 
                 {{-- Complete button --}}
+                <div class="upos-co-complete-bar">
                 <button class="upos-co-complete" @click="complete()" :disabled="remain !== 0 || cash < 0 || {{ $selectedCustomerId ? 'false' : 'true' }}">
                     {{ __('Complete Sale') }}
                 </button>
+                </div>
                 @if(!$selectedCustomerId)
                 <div style="font-size:11px;color:var(--amber);text-align:center;margin-top:4px">
                     {{ __('Select or register a customer to continue') }}
@@ -980,11 +991,12 @@
 
 {{-- ── Receipt Modal ───────────────────────────────────────────────────────── --}}
 @if($showReceiptModal && $completedSale)
-<div class="upos-overlay" x-data @keydown.escape.window="$wire.closeReceipt()">
+<div class="upos-overlay" x-data="{ done() { this.$root.style.display = 'none'; window.dispatchEvent(new CustomEvent('upos-back-to-pos')); window.scrollTo({ top: 0 }); this.$wire.closeReceipt(); } }"
+     @keydown.escape.window="done()">
     <div class="upos-modal-card upos-rc-card" @click.stop role="dialog" aria-modal="true" aria-label="{{ __('Sale Complete') }}">
         {{-- Green banner --}}
         <div class="upos-rc-banner">
-            <button type="button" class="upos-rc-close" wire:click="closeReceipt" aria-label="{{ __('Close') }}" title="{{ __('Close') }}">
+            <button type="button" class="upos-rc-close" @click="done()" aria-label="{{ __('Close') }}" title="{{ __('Close') }}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
             <div class="upos-rc-banner-icon">
@@ -1086,17 +1098,15 @@
         </div>
 
         <div class="upos-rc-foot">
-            <button class="upos-btn-ghost" wire:click="closeReceipt">{{ __('New Sale') }}</button>
+            <button class="upos-btn-ghost" @click="done()">{{ __('New Sale') }}</button>
             <a href="{{ route('shop.receipts') }}" target="_blank"
-               style="display:inline-flex;align-items:center;gap:5px;padding:10px 14px;border-radius:var(--rsm);border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-size:13px;font-weight:600;text-decoration:none;transition:all var(--tr)"
-               onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
+               class="upos-rc-link">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                 {{ __('History') }}
             </a>
             <a class="upos-btn-primary" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none"
                href="{{ route('shop.receipt.print', $completedSale->id) }}" target="_blank" rel="noopener">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;margin-right:5px;vertical-align:middle"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 {{ __('Print') }}
             </a>
         </div>
