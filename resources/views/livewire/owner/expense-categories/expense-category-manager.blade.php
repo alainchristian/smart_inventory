@@ -1,20 +1,6 @@
 <div style="font-family:var(--font)">
 <style>
-/* ── KPI strip ───────────────────────────────────────── */
-.em-kpis       { display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px }
-.em-kpi        { background:var(--surface);border:none;border-radius:var(--r);
-                 box-shadow:var(--shadow-card);
-                 padding:22px 20px;display:flex;flex-direction:column;gap:16px;
-                 transition:box-shadow var(--tr) }
-.em-kpi:hover  { box-shadow:var(--shadow-card-hover) }
-.em-kpi-row    { display:flex;align-items:center;gap:12px }
-.em-kpi-icon   { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-                 justify-content:center;flex-shrink:0 }
-.em-kpi-body   { flex:1;min-width:0 }
-.em-kpi-label  { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                 color:var(--text-dim);line-height:1.2 }
-.em-kpi-val    { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;
-                 line-height:1;flex-shrink:0 }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* ── Filter bar ──────────────────────────────────────── */
 .em-bar          { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px }
@@ -135,9 +121,6 @@
 
 
 @media(max-width:768px) {
-    .em-kpis { grid-template-columns:1fr 1fr;gap:8px }
-    .em-kpi  { padding:12px 14px }
-    .em-kpi-val { font-size:20px }
     /* search on its own row; status + New share the next one */
     .em-search-wrap { flex:1 1 100%;min-width:0 }
     .em-select { flex:1;min-width:0;font-size:16px }
@@ -157,27 +140,59 @@
 </style>
 
 {{-- KPIs --}}
-<div class="em-kpis m-kpis m-kpis-strip">
-    <div class="em-kpi">
-        <div class="em-kpi-row">
-            <div class="em-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+<div class="ui-kpis m-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
             </div>
-            <div class="em-kpi-body">
-                <div class="em-kpi-label">Expense Categories</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Expense Categories</div>
+                <div class="ui-kpi-sub">spending types</div>
             </div>
-            <div class="em-kpi-val">{{ number_format($stats['total']) }}</div>
+        </div>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($stats['total']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['for_shops']) }}</span>
+                <span class="ui-kpi-stat-l">For shops</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['for_warehouses']) }}</span>
+                <span class="ui-kpi-stat-l">For warehouses</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['total'] - $stats['active']) }}</span>
+                <span class="ui-kpi-stat-l">Inactive</span>
+            </div>
         </div>
     </div>
-    <div class="em-kpi">
-        <div class="em-kpi-row">
-            <div class="em-kpi-icon" style="background:rgba(16,185,129,.15);color:var(--green)">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="em-kpi-body">
-                <div class="em-kpi-label">Active Categories</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Active Categories</div>
+                <div class="ui-kpi-sub">offered when recording</div>
             </div>
-            <div class="em-kpi-val">{{ number_format($stats['active']) }}</div>
+        </div>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($stats['active']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['used_this_month']) }}</span>
+                <span class="ui-kpi-stat-l">Used this month</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['spent_this_month']) }}</span>
+                <span class="ui-kpi-stat-l">Spent this month</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format(max(0, $stats['active'] - $stats['used_this_month'])) }}</span>
+                <span class="ui-kpi-stat-l">Unused this month</span>
+            </div>
         </div>
     </div>
 </div>

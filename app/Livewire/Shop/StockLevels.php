@@ -99,12 +99,43 @@ class StockLevels extends Component
             ->whereIn('boxes.status', ['full', 'partial'])
             ->where('boxes.items_remaining', '>', 0)
             ->whereNull('products.deleted_at')
-            ->selectRaw('
+            ->selectRaw("
                 COUNT(DISTINCT boxes.product_id) as product_count,
                 COUNT(boxes.id) as total_boxes,
-                SUM(boxes.items_remaining) as total_items
-            ')
+                SUM(boxes.items_remaining) as total_items,
+                COUNT(*) FILTER (WHERE boxes.status = 'full')    as sealed_boxes,
+                COUNT(*) FILTER (WHERE boxes.status = 'partial') as opened_boxes,
+                COALESCE(SUM(boxes.items_remaining) FILTER (WHERE boxes.status = 'full'), 0)    as sealed_items,
+                COALESCE(SUM(boxes.items_remaining) FILTER (WHERE boxes.status = 'partial'), 0) as opened_items
+            ")
             ->first();
+
+        // Out of stock: received here before, no boxes left (same rule as the
+        // "previously stocked" filter below)
+        $outOfStockCount = DB::table('transfer_boxes')
+            ->join('transfers', 'transfer_boxes.transfer_id', '=', 'transfers.id')
+            ->join('boxes', 'transfer_boxes.box_id', '=', 'boxes.id')
+            ->join('products', 'boxes.product_id', '=', 'products.id')
+            ->tap($onlySold)
+            ->where('transfers.to_shop_id', $this->shopId)
+            ->where('transfers.status', 'received')
+            ->whereNull('products.deleted_at')
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('boxes as here')
+                ->whereColumn('here.product_id', 'boxes.product_id')
+                ->where('here.location_type', LocationType::SHOP->value)
+                ->where('here.location_id', $this->shopId)
+                ->whereIn('here.status', ['full', 'partial'])
+                ->where('here.items_remaining', '>', 0))
+            ->distinct()
+            ->count('boxes.product_id');
+
+        // Boxes packed onto transfers to this shop that haven't been received yet
+        $arrivingBoxes = DB::table('transfer_boxes')
+            ->join('transfers', 'transfer_boxes.transfer_id', '=', 'transfers.id')
+            ->where('transfers.to_shop_id', $this->shopId)
+            ->whereIn('transfers.status', ['approved', 'in_transit', 'delivered'])
+            ->where('transfer_boxes.is_received', false)
+            ->count();
 
         // Low stock count: products with ≤ threshold non-empty boxes (separate query)
         $lowStockCount = DB::table('boxes')
@@ -190,6 +221,8 @@ class StockLevels extends Component
             'stockData'         => $stockData,
             'kpis'              => $kpis,
             'lowStockCount'     => $lowStockCount,
+            'outOfStockCount'   => $outOfStockCount,
+            'arrivingBoxes'     => $arrivingBoxes,
             'shopThreshold'     => $shopThreshold,
             'previouslyStocked' => $previouslyStocked,
         ]);

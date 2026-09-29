@@ -36,70 +36,7 @@
                    transition:border-color var(--tr); }
 .wsl-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim); }
 
-/* ── KPI grid ───────────────────────────────────────────────────────────── */
-.wsl-kpis    { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
-.wsl-kpi     { background:var(--surface);border:none;border-radius:var(--r);
-               box-shadow:var(--shadow-card);padding:20px;
-               display:flex;flex-direction:column;gap:14px;transition:box-shadow var(--tr); }
-.wsl-kpi:hover { box-shadow:var(--shadow-card-hover); }
-.wsl-kpi-row  { display:flex;align-items:center;gap:12px; }
-.wsl-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-                justify-content:center;flex-shrink:0; }
-.wsl-kpi-body { flex:1;min-width:0; }
-.wsl-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;
-                 text-transform:uppercase;color:var(--text-dim); }
-.wsl-kpi-val  { font-size:24px;font-weight:800;font-family:var(--mono);
-                letter-spacing:-1px;line-height:1; }
-.wsl-kpi-divider { height:1px;background:var(--border); }
-.wsl-kpi-footer { display:grid;grid-template-columns:repeat(3,1fr); }
-.wsl-kpi-stat   { display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0; }
-.wsl-kpi-stat-v { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text-sub); }
-.wsl-kpi-stat-l { font-size:10px;color:var(--text-dim);letter-spacing:.3px; }
-
-/* ── Table ──────────────────────────────────────────────────────────────── */
-.wsl-table-wrap  { background:var(--surface);border:none;border-radius:var(--r);
-                   box-shadow:var(--shadow-card); }
-.wsl-table-head  { padding:14px 16px;border-bottom:1px solid var(--border);
-                   display:flex;align-items:center;justify-content:space-between;gap:12px; }
-.wsl-table-title { font-size:13px;font-weight:700;color:var(--text);margin:0; }
-.wsl-scroll      { overflow-x:auto;-webkit-overflow-scrolling:touch; }
-.wsl-table       { width:100%;border-collapse:collapse;table-layout:fixed;min-width:960px; }
-.wsl-table thead tr { border-bottom:2px solid var(--border); }
-.wsl-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
-                      letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);
-                      white-space:nowrap; }
-.wsl-table thead th.c { text-align:center; }
-.wsl-table thead th.r { text-align:right; }
-.wsl-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr); }
-.wsl-table tbody tr:last-child { border-bottom:none; }
-.wsl-table tbody tr:hover     { background:var(--surface2); }
-.wsl-table tbody tr.wsl-low   { background:rgba(217,119,6,.04); }
-.wsl-table tbody tr.wsl-low:hover { background:rgba(217,119,6,.09); }
-.wsl-table td   { padding:12px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub);
-                  white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-.wsl-table td[colspan] { white-space:normal; }
-.wsl-table td.c { text-align:center; }
-.wsl-table td.r { text-align:right; }
-
-/* ── Badges ─────────────────────────────────────────────────────────────── */
-.wsl-badge     { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
-                 padding:3px 9px;border-radius:6px;white-space:nowrap; }
-.wsl-badge-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
-
-/* ── Empty state ────────────────────────────────────────────────────────── */
-.wsl-empty       { padding:60px 20px;text-align:center; }
-.wsl-empty-icon  { width:44px;height:44px;border-radius:12px;background:var(--surface2);
-                   display:flex;align-items:center;justify-content:center;margin:0 auto 14px; }
-.wsl-empty-title { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px; }
-.wsl-empty-sub   { font-size:13px;color:var(--text-dim); }
-
-/* ── Pagination ─────────────────────────────────────────────────────────── */
-.wsl-pagination { padding:12px 16px;border-top:1px solid var(--border); }
-
 /* ── Responsive ─────────────────────────────────────────────────────────── */
-@media(max-width:900px) {
-    .wsl-kpis { grid-template-columns:repeat(2,1fr); }
-}
 /* Tablet / small laptop (content area < 960px next to the sidebar): let the
    7 columns share the width instead of scrolling Items/Status off-screen */
 @media(max-width:1400px) {
@@ -108,7 +45,6 @@
 @media(max-width:900px) {
     .wsl-table thead th, .wsl-table td { padding-left:10px;padding-right:10px; }
 }
-@media(max-width:480px) { .wsl-kpis { grid-template-columns:1fr; } }
 @media(max-width:640px) {
     .wsl-bar { flex-direction:column;align-items:stretch; }
     .wsl-search-wrap { min-width:0; }
@@ -203,124 +139,128 @@
 </div>
 
 {{-- ── KPI cards ─────────────────────────────────────────────────────────── --}}
-<div class="wsl-kpis">
+<div class="ui-kpis m-kpis">
 
     {{-- Products --}}
-    <div class="wsl-kpi">
-        <div class="wsl-kpi-row">
-            <div class="wsl-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                 </svg>
             </div>
-            <div class="wsl-kpi-body">
-                <div class="wsl-kpi-label">Products</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Products</div>
+                <div class="ui-kpi-sub">Tracked in this warehouse</div>
             </div>
         </div>
-        <div class="wsl-kpi-val" style="color:var(--accent)">{{ number_format($productCount) }}</div>
-        <div class="wsl-kpi-divider"></div>
-        <div class="wsl-kpi-footer">
-            <div class="wsl-kpi-stat">
-                <span class="wsl-kpi-stat-v" style="color:var(--green)">{{ $inStockCount }}</span>
-                <span class="wsl-kpi-stat-l">In Stock</span>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($productCount) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--green)">{{ $inStockCount }}</span>
+                <span class="ui-kpi-stat-l">In Stock</span>
             </div>
-            <div class="wsl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="wsl-kpi-stat-v" style="color:var(--amber)">{{ $lowCount }}</span>
-                <span class="wsl-kpi-stat-l">Low</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--amber)">{{ $lowCount }}</span>
+                <span class="ui-kpi-stat-l">Low</span>
             </div>
-            <div class="wsl-kpi-stat">
-                <span class="wsl-kpi-stat-v" style="color:var(--red)">{{ $outCount }}</span>
-                <span class="wsl-kpi-stat-l">Out</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--red)">{{ $outCount }}</span>
+                <span class="ui-kpi-stat-l">Out</span>
             </div>
         </div>
     </div>
 
     {{-- Total Boxes --}}
-    <div class="wsl-kpi">
-        <div class="wsl-kpi-row">
-            <div class="wsl-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                 </svg>
             </div>
-            <div class="wsl-kpi-body">
-                <div class="wsl-kpi-label">Total Boxes</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Boxes</div>
+                <div class="ui-kpi-sub">Sealed and opened</div>
             </div>
         </div>
-        <div class="wsl-kpi-val" style="color:var(--green)">{{ number_format($totalBoxes) }}</div>
-        <div class="wsl-kpi-divider"></div>
-        <div class="wsl-kpi-footer">
-            <div class="wsl-kpi-stat">
-                <span class="wsl-kpi-stat-v">{{ number_format($fullBoxes) }}</span>
-                <span class="wsl-kpi-stat-l">Full</span>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($totalBoxes) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($fullBoxes) }}</span>
+                <span class="ui-kpi-stat-l">Full</span>
             </div>
-            <div class="wsl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="wsl-kpi-stat-v" style="color:var(--amber)">{{ number_format($partialBoxes) }}</span>
-                <span class="wsl-kpi-stat-l">Partial</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--amber)">{{ number_format($partialBoxes) }}</span>
+                <span class="ui-kpi-stat-l">Partial</span>
             </div>
-            <div class="wsl-kpi-stat">
-                <span class="wsl-kpi-stat-v">{{ $avgBoxes }}</span>
-                <span class="wsl-kpi-stat-l">Avg / Product</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $avgBoxes }}</span>
+                <span class="ui-kpi-stat-l">Avg / Product</span>
             </div>
         </div>
     </div>
 
     {{-- Low Stock --}}
-    <div class="wsl-kpi">
-        <div class="wsl-kpi-row">
-            <div class="wsl-kpi-icon" style="background:{{ $lowCount > 0 ? 'var(--amber-dim)' : 'var(--green-dim)' }};color:{{ $lowCount > 0 ? 'var(--amber)' : 'var(--green)' }}">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:{{ $lowCount > 0 ? 'var(--amber-dim)' : 'var(--green-dim)' }};color:{{ $lowCount > 0 ? 'var(--amber)' : 'var(--green)' }}">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
             </div>
-            <div class="wsl-kpi-body">
-                <div class="wsl-kpi-label">Low Stock</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Low Stock</div>
+                <div class="ui-kpi-sub">At or below threshold</div>
             </div>
         </div>
-        <div class="wsl-kpi-val" style="color:{{ $lowCount > 0 ? 'var(--amber)' : 'var(--green)' }}">{{ number_format($lowCount) }}</div>
-        <div class="wsl-kpi-divider"></div>
-        <div class="wsl-kpi-footer">
-            <div class="wsl-kpi-stat">
-                <span class="wsl-kpi-stat-v" style="color:var(--red)">{{ $outCount }}</span>
-                <span class="wsl-kpi-stat-l">Out of Stock</span>
+        <div class="ui-kpi-val" style="color:{{ $lowCount > 0 ? 'var(--amber)' : 'var(--green)' }}">{{ number_format($lowCount) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--red)">{{ $outCount }}</span>
+                <span class="ui-kpi-stat-l">Out of Stock</span>
             </div>
-            <div class="wsl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="wsl-kpi-stat-v" style="color:var(--amber)">{{ $lowCount }}</span>
-                <span class="wsl-kpi-stat-l">Low</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--amber)">{{ $lowCount }}</span>
+                <span class="ui-kpi-stat-l">Low</span>
             </div>
-            <div class="wsl-kpi-stat">
-                <span class="wsl-kpi-stat-v" style="color:var(--green)">{{ $inStockCount }}</span>
-                <span class="wsl-kpi-stat-l">OK</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--green)">{{ $inStockCount }}</span>
+                <span class="ui-kpi-stat-l">OK</span>
             </div>
         </div>
     </div>
 
     {{-- Total Items --}}
-    <div class="wsl-kpi">
-        <div class="wsl-kpi-row">
-            <div class="wsl-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                 </svg>
             </div>
-            <div class="wsl-kpi-body">
-                <div class="wsl-kpi-label">Total Items</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Items</div>
+                <div class="ui-kpi-sub">Pieces across all boxes</div>
             </div>
         </div>
-        <div class="wsl-kpi-val" style="color:var(--violet)">{{ number_format($totalItems) }}</div>
-        <div class="wsl-kpi-divider"></div>
-        <div class="wsl-kpi-footer">
-            <div class="wsl-kpi-stat">
-                <span class="wsl-kpi-stat-v">{{ number_format($fullBoxes) }}</span>
-                <span class="wsl-kpi-stat-l">Full Boxes</span>
+        <div class="ui-kpi-val" style="color:var(--violet)">{{ number_format($totalItems) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($fullBoxes) }}</span>
+                <span class="ui-kpi-stat-l">Full Boxes</span>
             </div>
-            <div class="wsl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="wsl-kpi-stat-v">{{ number_format($partialBoxes) }}</span>
-                <span class="wsl-kpi-stat-l">Partial Boxes</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($partialBoxes) }}</span>
+                <span class="ui-kpi-stat-l">Partial Boxes</span>
             </div>
-            <div class="wsl-kpi-stat">
-                <span class="wsl-kpi-stat-v">{{ $productCount > 0 ? number_format(round($totalItems / $productCount)) : 0 }}</span>
-                <span class="wsl-kpi-stat-l">Avg / Product</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $productCount > 0 ? number_format(round($totalItems / $productCount)) : 0 }}</span>
+                <span class="ui-kpi-stat-l">Avg / Product</span>
             </div>
         </div>
     </div>

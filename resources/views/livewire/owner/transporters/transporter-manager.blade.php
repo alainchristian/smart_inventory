@@ -1,20 +1,6 @@
 <div style="font-family:var(--font)">
 <style>
-/* ── KPI strip ───────────────────────────────────────── */
-.tm-kpis       { display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px }
-.tm-kpi        { background:var(--surface);border:none;border-radius:var(--r);
-                 box-shadow:var(--shadow-card);
-                 padding:22px 20px;display:flex;flex-direction:column;gap:16px;
-                 transition:box-shadow var(--tr) }
-.tm-kpi:hover  { box-shadow:var(--shadow-card-hover) }
-.tm-kpi-row    { display:flex;align-items:center;gap:12px }
-.tm-kpi-icon   { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-                 justify-content:center;flex-shrink:0 }
-.tm-kpi-body   { flex:1;min-width:0 }
-.tm-kpi-label  { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                 color:var(--text-dim);line-height:1.2 }
-.tm-kpi-val    { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;
-                 line-height:1;flex-shrink:0 }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* ── Filter bar ──────────────────────────────────────── */
 .tm-bar          { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px }
@@ -130,9 +116,6 @@
 
 
 @media(max-width:768px) {
-    .tm-kpis { grid-template-columns:1fr 1fr;gap:8px }
-    .tm-kpi  { padding:12px 14px }
-    .tm-kpi-val { font-size:20px }
     /* search on its own row; status + New share the next one */
     .tm-search-wrap { flex:1 1 100%;min-width:0 }
     .tm-select { flex:1;min-width:0;font-size:16px }
@@ -153,27 +136,59 @@
 </style>
 
 {{-- KPIs --}}
-<div class="tm-kpis m-kpis m-kpis-strip">
-    <div class="tm-kpi">
-        <div class="tm-kpi-row">
-            <div class="tm-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+<div class="ui-kpis m-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             </div>
-            <div class="tm-kpi-body">
-                <div class="tm-kpi-label">Total Transporters</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Transporters</div>
+                <div class="ui-kpi-sub">drivers and companies</div>
             </div>
-            <div class="tm-kpi-val">{{ number_format($stats['total']) }}</div>
+        </div>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($stats['total']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['active']) }}</span>
+                <span class="ui-kpi-stat-l">Active</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['total'] - $stats['active']) }}</span>
+                <span class="ui-kpi-stat-l">Inactive</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['used_this_month']) }}</span>
+                <span class="ui-kpi-stat-l">Used this month</span>
+            </div>
         </div>
     </div>
-    <div class="tm-kpi">
-        <div class="tm-kpi-row">
-            <div class="tm-kpi-icon" style="background:rgba(16,185,129,.15);color:var(--green)">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="tm-kpi-body">
-                <div class="tm-kpi-label">Active Transporters</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Active Transporters</div>
+                <div class="ui-kpi-sub">available for dispatch</div>
             </div>
-            <div class="tm-kpi-val">{{ number_format($stats['active']) }}</div>
+        </div>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($stats['active']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['deliveries_month']) }}</span>
+                <span class="ui-kpi-stat-l">Deliveries this month</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['last_used'] ?? '—' }}</span>
+                <span class="ui-kpi-stat-l">Last used</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['unused_30d']) }}</span>
+                <span class="ui-kpi-stat-l">Unused for 30 days</span>
+            </div>
         </div>
     </div>
 </div>

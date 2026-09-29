@@ -4,6 +4,7 @@ namespace App\Livewire\Owner\Transporters;
 
 use App\Models\ActivityLog;
 use App\Models\Transporter;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -222,9 +223,33 @@ class TransporterManager extends Component
 
     public function render()
     {
+        // Deliveries = warehouse→shop transfers shipped + warehouse sales handed to a transporter
+        $deliveries = DB::query()->fromSub(
+            DB::table('transfers')->whereNotNull('transporter_id')->whereNotNull('shipped_at')
+                ->select('transporter_id', 'shipped_at as delivered_at')
+                ->unionAll(
+                    DB::table('sales')->whereNotNull('fulfillment_transporter_id')->whereNotNull('fulfillment_confirmed_at')
+                        ->select('fulfillment_transporter_id as transporter_id', 'fulfillment_confirmed_at as delivered_at')
+                ),
+            'd'
+        )->groupBy('transporter_id')
+            ->selectRaw('transporter_id, MAX(delivered_at) AS last_at, COUNT(*) FILTER (WHERE delivered_at >= ?) AS this_month',
+                [business_today()->startOfMonth()->utc()])
+            ->get()->keyBy('transporter_id');
+
+        $transporters = Transporter::get(['id', 'is_active']);
+        $active       = $transporters->where('is_active', true);
+        $monthAgo     = now()->subDays(30);
+        $lastUsed     = $deliveries->max('last_at');
+
         $stats = [
-            'total'  => Transporter::count(),
-            'active' => Transporter::where('is_active', true)->count(),
+            'total'            => $transporters->count(),
+            'active'           => $active->count(),
+            'used_this_month'  => $deliveries->filter(fn ($d) => $d->this_month > 0)->count(),
+            'deliveries_month' => (int) $deliveries->sum('this_month'),
+            'last_used'        => $lastUsed ? local_time($lastUsed)->format('d M Y') : null,
+            'unused_30d'       => $active->filter(fn ($t) => ! isset($deliveries[$t->id])
+                || \Illuminate\Support\Carbon::parse($deliveries[$t->id]->last_at, 'UTC')->lt($monthAgo))->count(),
         ];
 
         $rows = Transporter::query()

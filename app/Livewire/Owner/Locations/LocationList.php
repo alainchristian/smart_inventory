@@ -4,6 +4,7 @@ namespace App\Livewire\Owner\Locations;
 
 use App\Models\ActivityLog;
 use App\Models\Box;
+use App\Models\DailySession;
 use App\Models\Shop;
 use App\Models\Transfer;
 use App\Models\User;
@@ -372,11 +373,30 @@ class LocationList extends Component
     public function render()
     {
         // Stats (always both, for tab badges)
+        $shops = Shop::query()->toBase()->selectRaw('
+                COUNT(*)                                        AS total,
+                COUNT(*) FILTER (WHERE is_active)               AS active,
+                COUNT(*) FILTER (WHERE NOT sells_all_categories) AS specialised
+            ')->first();
+        $warehouses = Warehouse::query()->toBase()->selectRaw('
+                COUNT(*) AS total, COUNT(*) FILTER (WHERE is_active) AS active
+            ')->first();
+        $staff = User::query()->toBase()->where('is_active', true)->whereNotNull('location_id')->selectRaw("
+                COUNT(*)                                            AS total,
+                COUNT(*) FILTER (WHERE location_type = 'warehouse') AS warehouse
+            ")->first();
+
         $stats = [
-            'warehouses_total'  => Warehouse::count(),
-            'warehouses_active' => Warehouse::where('is_active', true)->count(),
-            'shops_total'       => Shop::count(),
-            'shops_active'      => Shop::where('is_active', true)->count(),
+            'warehouses_total'  => (int) $warehouses->total,
+            'warehouses_active' => (int) $warehouses->active,
+            'shops_total'       => (int) $shops->total,
+            'shops_active'      => (int) $shops->active,
+            'shops_specialised' => (int) $shops->specialised,
+            'staff_total'       => (int) $staff->total,
+            'staff_warehouse'   => (int) $staff->warehouse,
+            'registers_open'    => DailySession::open()
+                ->whereDate('session_date', business_today()->toDateString())
+                ->count(),
         ];
 
         if ($this->activeTab === 'warehouses') {

@@ -4,6 +4,7 @@ namespace App\Livewire\Shop\Returns;
 
 use App\Models\ReturnModel;
 use App\Models\Shop;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -158,13 +159,32 @@ class ReturnList extends Component
             $baseQuery->whereDate('processed_at', '<=', $this->dateTo);
         }
 
-        return [
-            'total_returns'    => (clone $baseQuery)->count(),
-            'pending_count'    => (clone $baseQuery)->pendingApproval()->count(),
-            'pending_approval' => (clone $baseQuery)->whereNull('approved_at')->whereNull('approved_by')->count(),
-            'total_refunds'    => (clone $baseQuery)->refunds()->sum('refund_amount'),
-            'exchange_count'   => (clone $baseQuery)->exchanges()->count(),
-        ];
+        // Every card and footer figure in one pass over the filtered returns
+        $pending = 'approved_at IS NULL AND approved_by IS NULL';
+        $c = (clone $baseQuery)->toBase()->selectRaw("
+                COUNT(*)                                                               AS total_returns,
+                COUNT(*) FILTER (WHERE approved_at IS NULL)                            AS pending_count,
+                COUNT(*) FILTER (WHERE {$pending})                                     AS pending_approval,
+                COALESCE(SUM(refund_amount) FILTER (WHERE NOT is_exchange), 0)         AS total_refunds,
+                COUNT(*) FILTER (WHERE NOT is_exchange)                                AS refund_count,
+                COALESCE(MAX(refund_amount) FILTER (WHERE NOT is_exchange), 0)         AS largest_refund,
+                COUNT(*) FILTER (WHERE refund_method = 'credit_balance' AND NOT is_exchange) AS reduced_debt_count,
+                COUNT(*) FILTER (WHERE is_exchange)                                    AS exchange_count,
+                COUNT(*) FILTER (WHERE is_exchange AND {$pending})                     AS exchange_pending,
+                COALESCE(SUM(refund_amount) FILTER (WHERE NOT is_exchange AND {$pending}), 0) AS pending_refund_value,
+                MIN(processed_at) FILTER (WHERE {$pending})                            AS oldest_pending_at
+            ")->first();
+
+        $stats = collect((array) $c)->except('oldest_pending_at')->map(fn ($v) => (int) $v)->all();
+        $stats['approved_count']     = $stats['total_returns'] - $stats['pending_approval'];
+        $stats['exchange_approved']  = $stats['exchange_count'] - $stats['exchange_pending'];
+        $stats['avg_refund']         = $stats['refund_count'] > 0 ? intdiv($stats['total_refunds'], $stats['refund_count']) : 0;
+        $stats['oldest_pending']     = $c->oldest_pending_at ? local_time($c->oldest_pending_at)->diffForHumans(short: true) : null;
+        $stats['items_exchanged']    = (int) DB::table('return_items')
+            ->whereIn('return_id', (clone $baseQuery)->exchanges()->select('id'))
+            ->sum('quantity_returned');
+
+        return $stats;
     }
 
     public function render()

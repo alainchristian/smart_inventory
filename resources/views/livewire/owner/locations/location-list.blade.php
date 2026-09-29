@@ -1,22 +1,6 @@
 <div style="font-family:var(--font)">
 <style>
-/* ── KPI strip ───────────────────────────────────────── */
-.lm-kpis       { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
-.lm-kpi        { background:var(--surface);border:none;border-radius:var(--r);
-                 box-shadow:var(--shadow-card);
-                 padding:22px 20px;display:flex;flex-direction:column;gap:16px;
-                 transition:box-shadow var(--tr) }
-.lm-kpi:hover  { box-shadow:var(--shadow-card-hover) }
-.lm-kpi-row    { display:flex;align-items:center;gap:12px }
-.lm-kpi-icon   { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-                 justify-content:center;flex-shrink:0 }
-.lm-kpi-body   { flex:1;min-width:0 }
-.lm-kpi-label  { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                 color:var(--text-dim);line-height:1.2 }
-.lm-kpi-sub    { font-size:12px;color:var(--text-dim);margin-top:2px }
-.lm-kpi-val    { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;
-                 line-height:1;flex-shrink:0 }
-.lm-kpi-bar    { height:3px;border-radius:3px }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* ── Tab strip ───────────────────────────────────────── */
 .lm-tabs      { display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap }
@@ -179,9 +163,6 @@
 
 /* Mobile */
 @media(max-width:768px) {
-    .lm-kpis     { grid-template-columns:1fr 1fr;gap:8px }
-    .lm-kpi      { padding:12px 14px }
-    .lm-kpi-val  { font-size:20px }
     .lm-bar      { flex-direction:column;align-items:stretch }
     .lm-select,.lm-btn-new { width:100%;justify-content:center }
     .lm-drawer   { left:0;width:auto;max-width:none }
@@ -224,86 +205,112 @@
 
 {{-- ── KPI strip ────────────────────────────────────────────────────────── --}}
 <div class="section-label">Overview</div>
-<div class="lm-kpis m-kpis m-kpis-strip">
-    <div class="lm-kpi">
-        <div class="lm-kpi-row">
-            <div class="lm-kpi-icon" style="background:var(--green-dim);color:var(--green)">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="2" y="7" width="20" height="14" rx="2"/>
-                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-                </svg>
+<div class="ui-kpis m-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
             </div>
-            <div class="lm-kpi-body">
-                <div class="lm-kpi-label">Warehouses</div>
-                <div class="lm-kpi-sub">{{ $stats['warehouses_active'] }}/{{ $stats['warehouses_total'] }} active</div>
-            </div>
-            <div class="lm-kpi-val" style="color:var(--green)">{{ $stats['warehouses_active'] }}</div>
-        </div>
-        <div class="lm-kpi-bar" style="background:var(--green-dim)">
-            <div style="height:100%;border-radius:3px;background:var(--green);
-                        width:{{ $stats['warehouses_total'] > 0 ? round($stats['warehouses_active']/$stats['warehouses_total']*100) : 0 }}%">
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Warehouses</div>
+                <div class="ui-kpi-sub">{{ $stats['warehouses_active'] }}/{{ $stats['warehouses_total'] }} active</div>
             </div>
         </div>
-    </div>
-    <div class="lm-kpi">
-        <div class="lm-kpi-row">
-            <div class="lm-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ $stats['warehouses_active'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['warehouses_active'] }}</span>
+                <span class="ui-kpi-stat-l">Active</span>
             </div>
-            <div class="lm-kpi-body">
-                <div class="lm-kpi-label">Shops</div>
-                <div class="lm-kpi-sub">{{ $stats['shops_active'] }}/{{ $stats['shops_total'] }} active</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['warehouses_total'] - $stats['warehouses_active'] }}</span>
+                <span class="ui-kpi-stat-l">Inactive</span>
             </div>
-            <div class="lm-kpi-val" style="color:var(--accent)">{{ $stats['shops_active'] }}</div>
-        </div>
-        <div class="lm-kpi-bar" style="background:var(--accent-dim)">
-            <div style="height:100%;border-radius:3px;background:var(--accent);
-                        width:{{ $stats['shops_total'] > 0 ? round($stats['shops_active']/$stats['shops_total']*100) : 0 }}%">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['staff_warehouse'] }}</span>
+                <span class="ui-kpi-stat-l">Staff assigned</span>
             </div>
         </div>
     </div>
-    <div class="lm-kpi">
-        <div class="lm-kpi-row">
-            <div class="lm-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="2" y1="12" x2="22" y2="12"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                </svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             </div>
-            <div class="lm-kpi-body">
-                <div class="lm-kpi-label">Total Locations</div>
-                <div class="lm-kpi-sub">across the business</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Shops</div>
+                <div class="ui-kpi-sub">{{ $stats['shops_active'] }}/{{ $stats['shops_total'] }} active</div>
             </div>
-            <div class="lm-kpi-val">{{ $stats['warehouses_total'] + $stats['shops_total'] }}</div>
         </div>
-        <div class="lm-kpi-bar" style="background:var(--violet-dim)">
-            <div style="height:100%;border-radius:3px;background:var(--violet);width:100%"></div>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ $stats['shops_active'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['shops_active'] }}</span>
+                <span class="ui-kpi-stat-l">Active</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['shops_total'] - $stats['shops_active'] }}</span>
+                <span class="ui-kpi-stat-l">Inactive</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['registers_open'] }}</span>
+                <span class="ui-kpi-stat-l">Registers open today</span>
+            </div>
         </div>
     </div>
-    @php
-        $totalAll = $stats['warehouses_total'] + $stats['shops_total'];
-        $totalActive = $stats['warehouses_active'] + $stats['shops_active'];
-    @endphp
-    <div class="lm-kpi">
-        <div class="lm-kpi-row">
-            <div class="lm-kpi-icon" style="background:var(--green-dim);color:var(--green)">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <polyline points="20 6 9 17 4 12"/>
-                </svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
-            <div class="lm-kpi-body">
-                <div class="lm-kpi-label">Active Total</div>
-                <div class="lm-kpi-sub">warehouses + shops</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Locations</div>
+                <div class="ui-kpi-sub">across the business</div>
             </div>
-            <div class="lm-kpi-val" style="color:var(--green)">{{ $totalActive }}</div>
         </div>
-        <div class="lm-kpi-bar" style="background:var(--green-dim)">
-            <div style="height:100%;border-radius:3px;background:var(--green);
-                        width:{{ $totalAll > 0 ? round($totalActive/$totalAll*100) : 0 }}%">
+        <div class="ui-kpi-val">{{ $stats['warehouses_total'] + $stats['shops_total'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['warehouses_total'] }}</span>
+                <span class="ui-kpi-stat-l">Warehouses</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['shops_total'] }}</span>
+                <span class="ui-kpi-stat-l">Shops</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ ($stats['warehouses_total'] - $stats['warehouses_active']) + ($stats['shops_total'] - $stats['shops_active']) }}</span>
+                <span class="ui-kpi-stat-l">Inactive</span>
+            </div>
+        </div>
+    </div>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Active Total</div>
+                <div class="ui-kpi-sub">warehouses + shops</div>
+            </div>
+        </div>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ $stats['warehouses_active'] + $stats['shops_active'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['staff_total'] }}</span>
+                <span class="ui-kpi-stat-l">Staff total</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['shops_specialised'] }}</span>
+                <span class="ui-kpi-stat-l">Specialised shops</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $stats['shops_total'] - $stats['shops_specialised'] }}</span>
+                <span class="ui-kpi-stat-l">General shops</span>
             </div>
         </div>
     </div>

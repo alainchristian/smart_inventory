@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Shop;
 use App\Services\Sales\CustomerService;
 use Illuminate\Validation\Rule;
+use App\Services\SettingsService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -167,10 +168,22 @@ class CustomerList extends Component
             ->orderBy('name')
             ->paginate(25);
 
-        $stats = [
-            'total'       => Customer::count(),
-            'outstanding' => Customer::where('outstanding_balance', '>', 0)->count(),
-        ];
+        // Overdue: same definition as CreditRepayments / GenerateSystemAlerts
+        $overdueCutoff = now()->subDays(app(SettingsService::class)->overdueCreditDays());
+        $c = Customer::query()->toBase()->selectRaw('
+                COUNT(*)                                                     AS total,
+                COUNT(*) FILTER (WHERE outstanding_balance > 0)              AS outstanding,
+                COUNT(*) FILTER (WHERE created_at >= ?)                      AS added_this_month,
+                COUNT(*) FILTER (WHERE last_purchase_at >= ?)                AS bought_30d,
+                COALESCE(SUM(outstanding_balance), 0)                        AS total_owed,
+                COALESCE(MAX(outstanding_balance), 0)                        AS largest_balance,
+                COUNT(*) FILTER (WHERE outstanding_balance > 0 AND (
+                    (last_repayment_at IS NULL AND last_credit_at < ?) OR last_repayment_at < ?
+                ))                                                           AS overdue
+            ', [business_today()->startOfMonth()->utc(), now()->subDays(30), $overdueCutoff, $overdueCutoff])
+            ->first();
+
+        $stats = collect((array) $c)->map(fn ($v) => (int) $v)->all();
 
         return view('livewire.owner.customers.customer-list', [
             'customers' => $customers,

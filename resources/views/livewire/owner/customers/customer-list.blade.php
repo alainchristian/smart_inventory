@@ -2,19 +2,7 @@
 <style>
 .cu-page   { padding:0 0 80px; }
 
-/* ── KPI bar ─────────────────────────────────────── */
-.cu-kpis      { display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:22px;max-width:480px }
-.cu-kpi       { background:var(--surface);border:none;border-radius:var(--r);
-                box-shadow:var(--shadow-card);padding:22px 20px;
-                display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
-.cu-kpi:hover { box-shadow:var(--shadow-card-hover) }
-.cu-kpi-row   { display:flex;align-items:center;gap:12px }
-.cu-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-                justify-content:center;flex-shrink:0 }
-.cu-kpi-body  { flex:1;min-width:0 }
-.cu-kpi-label { font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim);line-height:1.2 }
-.cu-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;color:var(--text);line-height:1;flex-shrink:0 }
-.cu-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 .cu-header { display:flex;align-items:flex-start;justify-content:space-between;
              gap:16px;margin-bottom:22px;flex-wrap:wrap; }
@@ -71,9 +59,6 @@
 .cu-empty-title { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px; }
 .cu-empty-sub   { font-size:13px;color:var(--text-dim); }
 
-@media(max-width:768px) {
-    .cu-kpis { grid-template-columns:1fr 1fr; max-width:100%; }
-}
 
 /* ── Drawer ──────────────────────────────────────── */
 .cu-overlay { position:fixed;inset:0;z-index:400;background:rgba(26,31,54,.45);backdrop-filter:blur(2px); }
@@ -131,9 +116,6 @@
 }
 @media(max-width:640px) {
     .cu-header-title { font-size:22px }
-    .cu-kpi     { padding:14px;gap:10px;min-width:0 }
-    .cu-kpi-row { gap:10px }
-    .cu-kpi-val { font-size:20px }
     .cu-search-wrap { min-width:0;flex-basis:100% }
     .cu-table { min-width:860px }
     .cu-action { min-height:30px !important;min-width:0 !important;padding:5px 11px !important }
@@ -154,29 +136,59 @@
         </button>
     </div>
 
-    <div class="cu-kpis m-kpis m-kpis-strip">
-        <div class="cu-kpi">
-            <div class="cu-kpi-row">
-                <div class="cu-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpis m-kpis">
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                 </div>
-                <div class="cu-kpi-body">
-                    <div class="cu-kpi-label">Total Customers</div>
-                    <div class="cu-kpi-sub">registered</div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Total Customers</div>
+                    <div class="ui-kpi-sub">registered</div>
                 </div>
-                <div class="cu-kpi-val" style="color:var(--accent)">{{ $stats['total'] }}</div>
+            </div>
+            <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($stats['total']) }}</div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($stats['added_this_month']) }}</span>
+                    <span class="ui-kpi-stat-l">New this month</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($stats['bought_30d']) }}</span>
+                    <span class="ui-kpi-stat-l">Bought in last 30 days</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($stats['outstanding']) }}</span>
+                    <span class="ui-kpi-stat-l">With credit</span>
+                </div>
             </div>
         </div>
-        <div class="cu-kpi">
-            <div class="cu-kpi-row">
-                <div class="cu-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 </div>
-                <div class="cu-kpi-body">
-                    <div class="cu-kpi-label">With Balance</div>
-                    <div class="cu-kpi-sub">owe credit</div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">With Balance</div>
+                    <div class="ui-kpi-sub">owe credit</div>
                 </div>
-                <div class="cu-kpi-val" style="color:var(--amber)">{{ $stats['outstanding'] }}</div>
+            </div>
+            <div class="ui-kpi-val" style="color:var(--amber)">{{ number_format($stats['outstanding']) }}</div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($stats['total_owed']) }}</span>
+                    <span class="ui-kpi-stat-l">Total owed</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="{{ $stats['overdue'] > 0 ? 'color:var(--red)' : '' }}">{{ number_format($stats['overdue']) }}</span>
+                    <span class="ui-kpi-stat-l">Overdue</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($stats['largest_balance']) }}</span>
+                    <span class="ui-kpi-stat-l">Largest balance</span>
+                </div>
             </div>
         </div>
     </div>

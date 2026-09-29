@@ -6,40 +6,12 @@
     />
 @else
 
-@php
-    $rlRefundCount   = max(0, ($kpiStats['total_returns'] ?? 0) - ($kpiStats['exchange_count'] ?? 0));
-    $rlApprovedCount = max(0, ($kpiStats['total_returns'] ?? 0) - ($kpiStats['pending_approval'] ?? 0));
-    $rlAvgRefund     = $rlRefundCount > 0 ? intval(($kpiStats['total_refunds'] ?? 0) / $rlRefundCount) : 0;
-    $rlPendingPct    = ($kpiStats['total_returns'] ?? 0) > 0
-                        ? round((($kpiStats['pending_approval'] ?? 0) / ($kpiStats['total_returns'] ?? 1)) * 100) : 0;
-    $rlExchPct       = ($kpiStats['total_returns'] ?? 0) > 0
-                        ? round((($kpiStats['exchange_count'] ?? 0) / ($kpiStats['total_returns'] ?? 1)) * 100) : 0;
-@endphp
 
 <div style="font-family:var(--font);padding-bottom:80px">
 <style>
 [x-cloak] { display:none !important }
 
 /* ── KPI Cards ─────────────────────────────────────────────────────── */
-.rl-kpis      { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
-.rl-kpi       { background:var(--surface);border:none;border-radius:var(--r);
-                box-shadow:var(--shadow-card);padding:22px 20px;
-                display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
-.rl-kpi:hover { box-shadow:var(--shadow-card-hover) }
-.rl-kpi-row   { display:flex;align-items:center;gap:12px }
-.rl-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-                justify-content:center;flex-shrink:0 }
-.rl-kpi-body  { flex:1;min-width:0 }
-.rl-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                color:var(--text-dim);line-height:1.2 }
-.rl-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px }
-.rl-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
-.rl-kpi-bar   { height:3px;border-radius:3px }
-.rl-kpi-div   { height:1px;background:var(--border) }
-.rl-kpi-foot  { display:grid;grid-template-columns:repeat(3,1fr) }
-.rl-kpi-stat  { display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 }
-.rl-kpi-sv    { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text-sub) }
-.rl-kpi-sl    { font-size:10px;color:var(--text-dim);letter-spacing:.3px }
 
 /* ── Header ─────────────────────────────────────────────────────────── */
 .rl-hdr     { display:flex;align-items:flex-start;justify-content:space-between;
@@ -142,7 +114,6 @@
 .rl-empty-sub   { font-size:13px;color:var(--text-dim) }
 
 /* ── Responsive ─────────────────────────────────────────────────────── */
-@media(max-width:1024px) { .rl-kpis { grid-template-columns:repeat(2,1fr) } }
 @media(max-width:640px)  {
     .rl-exp-grid { grid-template-columns:1fr }
     .rl-flt-seg { border-right:none;border-bottom:1px solid var(--border) }
@@ -274,137 +245,115 @@
 </div>
 
 {{-- ── KPI CARDS ─────────────────────────────────────────────────────── --}}
-<div class="rl-kpis m-kpis">
-
-    {{-- 1: Total Returns --}}
-    <div class="rl-kpi">
-        <div class="rl-kpi-row">
-            <div class="rl-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/>
-                </svg>
+<div class="ui-kpis m-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/></svg>
             </div>
-            <div class="rl-kpi-body">
-                <div class="rl-kpi-label">Total Returns</div>
-                <div class="rl-kpi-sub">This period</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Returns</div>
+                <div class="ui-kpi-sub">This period</div>
             </div>
         </div>
-        <div class="rl-kpi-val" style="color:var(--accent)">{{ $kpiStats['total_returns'] ?? 0 }}</div>
-        <div class="rl-kpi-div"></div>
-        <div class="rl-kpi-foot">
-            <div class="rl-kpi-stat">
-                <span class="rl-kpi-sv">{{ $rlRefundCount }}</span>
-                <span class="rl-kpi-sl">Refunds</span>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ $kpiStats['total_returns'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['refund_count'] }}</span>
+                <span class="ui-kpi-stat-l">Refunds</span>
             </div>
-            <div class="rl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="rl-kpi-sv">{{ $kpiStats['exchange_count'] ?? 0 }}</span>
-                <span class="rl-kpi-sl">Exchanges</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['exchange_count'] }}</span>
+                <span class="ui-kpi-stat-l">Exchanges</span>
             </div>
-            <div class="rl-kpi-stat">
-                <span class="rl-kpi-sv" style="color:var(--green)">{{ $rlApprovedCount }}</span>
-                <span class="rl-kpi-sl">Approved</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['reduced_debt_count'] }}</span>
+                <span class="ui-kpi-stat-l">Reduced debt</span>
             </div>
         </div>
     </div>
-
-    {{-- 2: Cash Refunded --}}
-    <div class="rl-kpi">
-        <div class="rl-kpi-row">
-            <div class="rl-kpi-icon" style="background:var(--red-dim);color:var(--red)">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="rl-kpi-body">
-                <div class="rl-kpi-label">Cash Refunded</div>
-                <div class="rl-kpi-sub">Total issued</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Cash Refunded</div>
+                <div class="ui-kpi-sub">Total issued</div>
             </div>
         </div>
-        <div class="rl-kpi-val" style="color:var(--red)">
-            {{ number_format($kpiStats['total_refunds'] ?? 0) }}<span style="font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px">RWF</span>
-        </div>
-        <div class="rl-kpi-bar" style="background:var(--red-dim)">
-            <div style="height:100%;border-radius:3px;background:var(--red);width:{{ ($kpiStats['total_refunds'] ?? 0) > 0 ? 100 : 0 }}%"></div>
-        </div>
-        <div class="rl-kpi-div"></div>
-        <div class="rl-kpi-foot">
-            <div class="rl-kpi-stat">
-                <span class="rl-kpi-sv">{{ $rlRefundCount }}</span>
-                <span class="rl-kpi-sl">Refunds</span>
+        <div class="ui-kpi-val" style="color:var(--red)">{{ number_format($kpiStats['total_refunds']) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['refund_count'] }}</span>
+                <span class="ui-kpi-stat-l">Refunds</span>
             </div>
-            <div class="rl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="rl-kpi-sv">{{ $rlAvgRefund > 0 ? number_format($rlAvgRefund) : '—' }}</span>
-                <span class="rl-kpi-sl">Avg/Refund</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['avg_refund'] > 0 ? number_format($kpiStats['avg_refund']) : '—' }}</span>
+                <span class="ui-kpi-stat-l">Average</span>
             </div>
-            <div class="rl-kpi-stat">
-                <span class="rl-kpi-sv" style="color:var(--green)">{{ $rlApprovedCount }}</span>
-                <span class="rl-kpi-sl">Approved</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['largest_refund'] > 0 ? number_format($kpiStats['largest_refund']) : '—' }}</span>
+                <span class="ui-kpi-stat-l">Largest</span>
             </div>
         </div>
     </div>
-
-    {{-- 3: Exchanges --}}
-    <div class="rl-kpi">
-        <div class="rl-kpi-row">
-            <div class="rl-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                </svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             </div>
-            <div class="rl-kpi-body">
-                <div class="rl-kpi-label">Exchanges</div>
-                <div class="rl-kpi-sub">No refund issued</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Exchanges</div>
+                <div class="ui-kpi-sub">No refund issued</div>
             </div>
         </div>
-        <div class="rl-kpi-val" style="color:var(--violet)">{{ $kpiStats['exchange_count'] ?? 0 }}</div>
-        <div class="rl-kpi-div"></div>
-        <div class="rl-kpi-foot">
-            <div class="rl-kpi-stat">
-                <span class="rl-kpi-sv">{{ $rlExchPct }}%</span>
-                <span class="rl-kpi-sl">Of Returns</span>
+        <div class="ui-kpi-val" style="color:var(--violet)">{{ $kpiStats['exchange_count'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['items_exchanged']) }}</span>
+                <span class="ui-kpi-stat-l">Items exchanged</span>
             </div>
-            <div class="rl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="rl-kpi-sv">{{ $rlRefundCount }}</span>
-                <span class="rl-kpi-sl">Refunds</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['exchange_approved'] }}</span>
+                <span class="ui-kpi-stat-l">Approved</span>
             </div>
-            <div class="rl-kpi-stat">
-                <span class="rl-kpi-sv">{{ $kpiStats['total_returns'] ?? 0 }}</span>
-                <span class="rl-kpi-sl">Total</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="{{ $kpiStats['exchange_pending'] > 0 ? 'color:var(--amber)' : '' }}">{{ $kpiStats['exchange_pending'] }}</span>
+                <span class="ui-kpi-stat-l">Pending</span>
             </div>
         </div>
     </div>
-
-    {{-- 4: Pending Approval --}}
-    <div class="rl-kpi">
-        <div class="rl-kpi-row">
-            <div class="rl-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="rl-kpi-body">
-                <div class="rl-kpi-label">Pending Approval</div>
-                <div class="rl-kpi-sub">Awaiting owner</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Pending Approval</div>
+                <div class="ui-kpi-sub">Awaiting owner</div>
             </div>
         </div>
-        <div class="rl-kpi-val" style="color:var(--amber)">{{ $kpiStats['pending_approval'] ?? 0 }}</div>
-        <div class="rl-kpi-div"></div>
-        <div class="rl-kpi-foot">
-            <div class="rl-kpi-stat">
-                <span class="rl-kpi-sv" style="color:var(--amber)">{{ $kpiStats['pending_approval'] ?? 0 }}</span>
-                <span class="rl-kpi-sl">Awaiting</span>
+        <div class="ui-kpi-val" style="color:var(--amber)">{{ $kpiStats['pending_approval'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['oldest_pending'] ?? '—' }}</span>
+                <span class="ui-kpi-stat-l">Oldest waiting</span>
             </div>
-            <div class="rl-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="rl-kpi-sv" style="color:var(--green)">{{ $rlApprovedCount }}</span>
-                <span class="rl-kpi-sl">Approved</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['approved_count'] }}</span>
+                <span class="ui-kpi-stat-l">Approved</span>
             </div>
-            <div class="rl-kpi-stat">
-                <span class="rl-kpi-sv">{{ $rlPendingPct }}%</span>
-                <span class="rl-kpi-sl">Pending Rate</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['pending_refund_value']) }}</span>
+                <span class="ui-kpi-stat-l">Pending refund value</span>
             </div>
         </div>
     </div>
-
 </div>
 
 {{-- ── PENDING APPROVALS BANNER ─────────────────────────────────────── --}}

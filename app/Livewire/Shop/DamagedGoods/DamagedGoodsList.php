@@ -326,12 +326,28 @@ class DamagedGoodsList extends Component
             $q->whereDate('recorded_at', '<=', $this->dateTo);
         }
 
-        return [
-            'total_damaged'  => (clone $q)->count(),
-            'pending_count'  => (clone $q)->pendingDisposition()->count(),
-            'total_quantity' => (clone $q)->sum('quantity_damaged'),
-            'total_loss'     => (clone $q)->sum('estimated_loss'),
-        ];
+        // Every card and footer figure in one pass
+        $c = $q->toBase()->selectRaw("
+                COUNT(*)                                                                        AS total_damaged,
+                COUNT(*) FILTER (WHERE disposition = 'pending')                                 AS pending_count,
+                COALESCE(SUM(quantity_damaged), 0)                                              AS total_quantity,
+                COALESCE(SUM(estimated_loss), 0)                                                AS total_loss,
+                COALESCE(SUM(quantity_damaged) FILTER (WHERE disposition = 'pending'), 0)       AS pending_quantity,
+                COALESCE(SUM(estimated_loss) FILTER (WHERE disposition = 'pending'), 0)         AS pending_loss,
+                COALESCE(SUM(quantity_damaged) FILTER (WHERE location_type = 'shop'), 0)        AS shop_quantity,
+                COALESCE(SUM(quantity_damaged) FILTER (WHERE location_type = 'warehouse'), 0)   AS warehouse_quantity,
+                COALESCE(SUM(estimated_loss) FILTER (WHERE disposition = 'write_off'), 0)       AS written_off_loss,
+                COALESCE(SUM(estimated_loss) FILTER (WHERE disposition = 'return_to_supplier'), 0) AS supplier_loss,
+                MIN(recorded_at) FILTER (WHERE disposition = 'pending')                         AS oldest_pending_at
+            ")->first();
+
+        $stats = collect((array) $c)->except('oldest_pending_at')->map(fn ($v) => (int) $v)->all();
+        $stats['decided_count']  = $stats['total_damaged'] - $stats['pending_count'];
+        $stats['other_loss']     = $stats['total_loss'] - $stats['written_off_loss'] - $stats['supplier_loss'];
+        $stats['avg_quantity']   = $stats['total_damaged'] > 0 ? round($stats['total_quantity'] / $stats['total_damaged'], 1) : 0;
+        $stats['oldest_pending'] = $c->oldest_pending_at ? local_time($c->oldest_pending_at)->diffForHumans(short: true) : null;
+
+        return $stats;
     }
 
     // ── Render ───────────────────────────────────────────────────────────────────

@@ -359,13 +359,25 @@ class UserList extends Component
             ->orderBy('name')
             ->paginate(20);
 
-        $stats = [
-            'total'     => User::count(),
-            'active'    => User::where('is_active', true)->count(),
-            'owners'    => User::where('role', 'owner')->count(),
-            'warehouse' => User::where('role', 'warehouse_manager')->count(),
-            'shop'      => User::where('role', 'shop_manager')->count(),
-        ];
+        // One query for every KPI card and its footer
+        $c = User::query()->toBase()->selectRaw("
+                COUNT(*)                                                                 AS total,
+                COUNT(*) FILTER (WHERE is_active)                                        AS active,
+                COUNT(*) FILTER (WHERE created_at >= ?)                                  AS added_this_month,
+                COUNT(*) FILTER (WHERE role = 'owner')                                   AS owners,
+                COUNT(*) FILTER (WHERE role = 'owner' AND is_active)                     AS owners_active,
+                MAX(created_at) FILTER (WHERE role = 'owner')                            AS owner_last_added,
+                COUNT(*) FILTER (WHERE role = 'warehouse_manager')                       AS warehouse,
+                COUNT(*) FILTER (WHERE role = 'warehouse_manager' AND is_active)         AS warehouse_active,
+                COUNT(*) FILTER (WHERE role = 'warehouse_manager' AND location_id IS NULL) AS warehouse_unassigned,
+                COUNT(*) FILTER (WHERE role = 'shop_manager')                            AS shop,
+                COUNT(*) FILTER (WHERE role = 'shop_manager' AND is_active)              AS shop_active,
+                COUNT(*) FILTER (WHERE role = 'shop_manager' AND location_id IS NULL)    AS shop_unassigned
+            ", [business_today()->startOfMonth()->utc()])
+            ->first();
+
+        $stats = collect((array) $c)->except('owner_last_added')->map(fn ($v) => (int) $v)->all();
+        $stats['owner_last_added'] = local_time($c->owner_last_added)?->format('d M Y');
 
         return view('livewire.owner.users.user-list', compact('users', 'stats'));
     }

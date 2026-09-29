@@ -4,6 +4,7 @@ namespace App\Livewire\Owner\ExpenseCategories;
 
 use App\Models\ActivityLog;
 use App\Models\ExpenseCategory;
+use App\Models\Expense;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -218,9 +219,23 @@ class ExpenseCategoryManager extends Component
 
     public function render()
     {
-        $stats = [
-            'total'  => ExpenseCategory::count(),
-            'active' => ExpenseCategory::where('is_active', true)->count(),
+        $c = ExpenseCategory::query()->toBase()->selectRaw("
+                COUNT(*)                                                     AS total,
+                COUNT(*) FILTER (WHERE is_active)                            AS active,
+                COUNT(*) FILTER (WHERE applies_to IN ('shop', 'both'))       AS for_shops,
+                COUNT(*) FILTER (WHERE applies_to IN ('warehouse', 'both'))  AS for_warehouses
+            ")->first();
+
+        // This month's spending, by register day (session_date) like the Daily Report
+        $month = Expense::query()->toBase()
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
+            ->where('daily_sessions.session_date', '>=', business_today()->startOfMonth()->toDateString())
+            ->selectRaw('COUNT(DISTINCT expenses.expense_category_id) AS used, COALESCE(SUM(expenses.amount), 0) AS spent')
+            ->first();
+
+        $stats = collect((array) $c)->map(fn ($v) => (int) $v)->all() + [
+            'used_this_month'  => (int) $month->used,
+            'spent_this_month' => (int) $month->spent,
         ];
 
         $rows = ExpenseCategory::query()

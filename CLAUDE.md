@@ -1404,3 +1404,53 @@ chart is broken. Hidden iframes have the same problem.
 **Still open:** Cloudflare cache rule for `/build/*` (Edge + Browser TTL
 1 year) is a dashboard setting, not code. Assets currently get Cloudflare's
 default 4 h `max-age`.
+
+---
+
+## Summary cards unified on the Finance Overview card (2026-09-29)
+
+User asked for every summary-card row to look and behave like Finance
+Overview's. **The card is now shared:** `.ui-kpis` / `.ui-kpi*` in
+`resources/css/app.css` (a copy of `.fo-kpi`: icon + label/sub, big mono
+value, divider, footer of label-left/value-right rows; markup is value
+then label, `row-reverse` flips it). Grid is 4 columns, 2 at ≤900px, and
+`.m-kpis` gives the phone layout. The family is named `ui-kpi-*`, not
+`kpi-*`, because the `m-kpis` phone rules match `[class*="-kpi-icon"]` etc.
+Column count: set `--kpi-cols` in the page's own CSS (e.g. Users
+`.um-kpis { --kpi-cols:5 }`), never inline — an inline value beats the
+page's media queries. Pages with 2 cards keep 4 columns so every card is
+the same width. **New summary cards use `ui-kpi`; don't add another
+per-page copy of the card CSS.**
+
+- **Moved to `ui-kpi` (page-local KPI CSS deleted):** Credit Repayments,
+  Warehouse Stock Levels (old 3-column footer), and — with new footers,
+  stats agreed with the user — Users, Locations, Shop Stock, Returns,
+  Damaged Goods, Daily Close report (gained icons), Customers, Categories,
+  Expense Categories, Transporters. `m-kpis-strip` was dropped from these
+  (it hides footers).
+- **Already matching, untouched:** `fo-`, `iv-`, `sa-`, `la-`, `tp-`, `cc-`,
+  `pm-`, `rv-`, `dc-`, `sh-`, `fq-`. Switch them to `ui-kpi` when next edited.
+- **Deliberately different, untouched (user decision):** owner dashboard
+  `BusinessKpiRow` (`kpi5-`, sparklines), shop / warehouse dashboards
+  (`db-kpi`, sparklines), Sales History (`sli-kpi`, bars), products / box
+  list (`bkpi`), Credit Write-offs, Settings status strip.
+- Footer figures come from one aggregate query per page where possible
+  (`COUNT(*) FILTER (WHERE …)`), e.g. `UserList`, `ReturnList::getKpiStats()`,
+  `DamagedGoodsList::getKpiStats()`, `CustomerList`. Month windows use
+  `business_today()->startOfMonth()->utc()` for timestamps and the local
+  date string for `daily_sessions.session_date`.
+- Returns have no reject action, so the Pending Approval card shows
+  "Pending refund value" instead of a rejected count.
+- Transporter "deliveries" = transfers with `shipped_at` + warehouse sales
+  with `fulfillment_confirmed_at`.
+- `.claude/skills/ui-design.md` is not in the repo checkout, so its KPI
+  section wasn't updated.
+
+Verified by: `php -l` on every changed class; div / Blade-directive balance
+per view vs HEAD; every `$stats[...]` key used in a view is produced by
+its component; CSS built with Vite and every converted card row rendered
+next to Finance Overview at 1228px and 390px. **Not run** (the session's
+container couldn't install Composer packages): `php artisan view:cache`,
+the test suite, or the real pages. Tests that render these components:
+DailyCloseBalanceTest, PerShopCreditTest, CategoryParentTest,
+ShopSpecialisationTest.

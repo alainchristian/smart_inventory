@@ -41,19 +41,7 @@
 .dcr-flash strong { font-weight:700; }
 .dcr-flash-sub    { color:var(--text-dim);font-size:11px;margin-top:2px; }
 
-/* ── KPI strip ── */
-.dcr-kpis         { display:grid;grid-template-columns:repeat(4,1fr);
-                    gap:0;background:var(--surface);border-radius:14px;
-                    overflow:hidden;border:none;
-                    box-shadow:var(--shadow-card);margin-bottom:20px; }
-.dcr-kpi          { background:var(--surface);padding:14px 16px;
-                    border-right:1px solid var(--border); }
-.dcr-kpi:last-child { border-right:none; }
-.dcr-kpi-label    { font-size:10px;font-weight:700;text-transform:uppercase;
-                    letter-spacing:0.6px;color:var(--text-dim);margin-bottom:6px; }
-.dcr-kpi-val      { font-size:20px;font-weight:800;font-family:var(--mono);
-                    line-height:1;letter-spacing:-0.5px; }
-.dcr-kpi-sub      { font-size:11px;color:var(--text-dim);margin-top:4px; }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* ── Balance statement card ── */
 .dcr-balance      { background:var(--surface);border:none;
@@ -212,10 +200,6 @@
 @media(max-width:640px) {
     .dcr-datebar    { gap:8px; }
     .dcr-day-label  { display:none; }
-    .dcr-kpis       { grid-template-columns:repeat(2,1fr); }
-    .dcr-kpi:nth-child(even) { border-right:none; }
-    .dcr-kpi:nth-child(1),.dcr-kpi:nth-child(2) { border-bottom:1px solid var(--border); }
-    .dcr-kpi-val    { font-size:17px; }
     .dcr-taccounts  { grid-template-columns:1fr; }
     .dcr-tacol:first-child { border-right:none;border-bottom:1px solid var(--border); }
     .dcr-tatotal-val { font-size:17px; }
@@ -228,7 +212,6 @@
 }
 
 @media(max-width:400px) {
-    .dcr-kpi-val { font-size:15px; }
     .dcr-skpi    { min-width:50%; }
 }
 
@@ -436,35 +419,114 @@
     {{-- ════════════════════════════════════════
          DAY KPI STRIP
          ════════════════════════════════════════ --}}
-    <div class="dcr-kpis">
-        <div class="dcr-kpi">
-            <div class="dcr-kpi-label">Revenue</div>
-            <div class="dcr-kpi-val" style="color:var(--accent);">{{ number_format($dayRevenue) }}</div>
-            <div class="dcr-kpi-sub">{{ $saleCount }} sale{{ $saleCount !== 1 ? 's' : '' }} · RWF</div>
-        </div>
-        <div class="dcr-kpi">
-            <div class="dcr-kpi-label">Operating Profit</div>
-            <div class="dcr-kpi-val"
-                 style="color:{{ $operatingProfit >= 0 ? 'var(--green)' : 'var(--red)' }};">
-                {{ number_format($operatingProfit) }}
+    <div class="ui-kpis m-kpis">
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                </div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Revenue</div>
+                    <div class="ui-kpi-sub">{{ $saleCount }} sale{{ $saleCount !== 1 ? 's' : '' }}</div>
+                </div>
             </div>
-            <div class="dcr-kpi-sub">Revenue − refunds − expenses · RWF</div>
-        </div>
-        <div class="dcr-kpi">
-            <div class="dcr-kpi-label">Sessions</div>
-            <div class="dcr-kpi-val"
-                 style="color:{{ $allClosed ? 'var(--green)' : 'var(--amber)' }};">
-                {{ $closedSessions }}<span style="font-size:13px;font-weight:500;color:var(--text-dim);">/{{ $totalSessions }}</span>
+            <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($dayRevenue) }}<span class="ui-kpi-unit">RWF</span></div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($saleCount) }}</span>
+                    <span class="ui-kpi-stat-l">Sales</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($pCash) }}</span>
+                    <span class="ui-kpi-stat-l">Cash</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($pMomo) }}</span>
+                    <span class="ui-kpi-stat-l">MoMo</span>
+                </div>
             </div>
-            <div class="dcr-kpi-sub">{{ $allClosed ? 'All closed' : ($totalSessions - $closedSessions) . ' still open' }}</div>
         </div>
-        <div class="dcr-kpi">
-            <div class="dcr-kpi-label">Cash Variance</div>
-            <div class="dcr-kpi-val"
-                 style="color:{{ $dayVariance < 0 ? 'var(--red)' : ($dayVariance > 0 ? 'var(--amber)' : 'var(--text-dim)') }};">
-                {{ $dayVariance >= 0 ? '+' : '' }}{{ number_format($dayVariance) }}
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:{{ $operatingProfit >= 0 ? 'var(--green-dim)' : 'var(--red-dim)' }};color:{{ $operatingProfit >= 0 ? 'var(--green)' : 'var(--red)' }}">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                </div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Operating Profit</div>
+                    <div class="ui-kpi-sub">Revenue − refunds − expenses</div>
+                </div>
             </div>
-            <div class="dcr-kpi-sub">Across all sessions · RWF</div>
+            <div class="ui-kpi-val" style="color:{{ $operatingProfit >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ number_format($operatingProfit) }}<span class="ui-kpi-unit">RWF</span></div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($dayRefunds) }}</span>
+                    <span class="ui-kpi-stat-l">Refunds</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ number_format($dayExpenses) }}</span>
+                    <span class="ui-kpi-stat-l">Expenses</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ $profitMargin !== null ? $profitMargin . '%' : '—' }}</span>
+                    <span class="ui-kpi-stat-l">Margin</span>
+                </div>
+            </div>
+        </div>
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:{{ $allClosed ? 'var(--green-dim)' : 'var(--amber-dim)' }};color:{{ $allClosed ? 'var(--green)' : 'var(--amber)' }}">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 15h2m4 0h2"/></svg>
+                </div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Sessions</div>
+                    <div class="ui-kpi-sub">{{ $allClosed ? 'All closed' : ($totalSessions - $closedSessions) . ' still open' }}</div>
+                </div>
+            </div>
+            <div class="ui-kpi-val" style="color:{{ $allClosed ? 'var(--green)' : 'var(--amber)' }}">{{ $closedSessions }}<span class="ui-kpi-unit">/{{ $totalSessions }}</span></div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ $closedSessions - $lockedSessions }}</span>
+                    <span class="ui-kpi-stat-l">Closed</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="{{ $allClosed ? '' : 'color:var(--amber)' }}">{{ $totalSessions - $closedSessions }}</span>
+                    <span class="ui-kpi-stat-l">Open</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ $lockedSessions }}</span>
+                    <span class="ui-kpi-stat-l">Locked</span>
+                </div>
+            </div>
+        </div>
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:{{ $dayVariance < 0 ? 'var(--red-dim)' : ($dayVariance > 0 ? 'var(--amber-dim)' : 'var(--green-dim)') }};color:{{ $dayVariance < 0 ? 'var(--red)' : ($dayVariance > 0 ? 'var(--amber)' : 'var(--green)') }}">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Cash Variance</div>
+                    <div class="ui-kpi-sub">Across all sessions</div>
+                </div>
+            </div>
+            <div class="ui-kpi-val" style="color:{{ $dayVariance < 0 ? 'var(--red)' : ($dayVariance > 0 ? 'var(--amber)' : 'var(--text-dim)') }}">{{ $dayVariance >= 0 ? '+' : '' }}{{ number_format($dayVariance) }}<span class="ui-kpi-unit">RWF</span></div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="{{ $shortCount > 0 ? 'color:var(--red)' : '' }}">{{ $shortCount }}</span>
+                    <span class="ui-kpi-stat-l">Shortages</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="{{ $overCount > 0 ? 'color:var(--amber)' : '' }}">{{ $overCount }}</span>
+                    <span class="ui-kpi-stat-l">Surpluses</span>
+                </div>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v">{{ $varianceShops }}</span>
+                    <span class="ui-kpi-stat-l">Shops with variance</span>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -197,6 +197,14 @@ class DailyCloseReport extends Component
         $allClosed      = $closedSessions === $totalSessions;
         $operatingProfit = $dayRevenue - $dayRefunds - $dayExpenses;
         $netOperating    = $operatingProfit - $dayWithdrawals;
+        $profitMargin    = $dayRevenue > 0 ? round($operatingProfit / $dayRevenue * 100, 1) : null;
+
+        // KPI footers: session states and the closed sessions' count variances
+        $lockedSessions = $this->sessions->where('status', 'locked')->count();
+        $counted        = $this->sessions->filter(fn ($s) => ! $s->isOpen());
+        $shortCount     = $counted->filter(fn ($s) => (int) $s->cash_variance < 0)->count();
+        $overCount      = $counted->filter(fn ($s) => (int) $s->cash_variance > 0)->count();
+        $varianceShops  = $counted->filter(fn ($s) => (int) $s->cash_variance !== 0)->pluck('shop_id')->unique()->count();
 
         // Payment channel sales
         $pCash   = (int) $this->sessions->sum('total_sales_cash');
@@ -333,7 +341,8 @@ class DailyCloseReport extends Component
         return compact(
             'dayOpening', 'dayRevenue', 'dayRepayments', 'dayRefunds', 'dayExpenses',
             'dayWithdrawals', 'dayBanked', 'dayVariance', 'totalSessions', 'closedSessions',
-            'allClosed', 'operatingProfit', 'netOperating',
+            'allClosed', 'operatingProfit', 'netOperating', 'profitMargin',
+            'lockedSessions', 'shortCount', 'overCount', 'varianceShops',
             'pCash', 'pMomo', 'pCard', 'pBank', 'pCredit',
             'showCard', 'showBank',
             'cashRetained', 'momoAvailable', 'creditOutstanding',

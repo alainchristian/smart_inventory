@@ -1,20 +1,6 @@
 <div style="font-family:var(--font)">
 <style>
-/* ── KPI strip ───────────────────────────────────────── */
-.cm-kpis       { display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px }
-.cm-kpi        { background:var(--surface);border:none;border-radius:var(--r);
-                 box-shadow:var(--shadow-card);
-                 padding:22px 20px;display:flex;flex-direction:column;gap:16px;
-                 transition:box-shadow var(--tr) }
-.cm-kpi:hover  { box-shadow:var(--shadow-card-hover) }
-.cm-kpi-row    { display:flex;align-items:center;gap:12px }
-.cm-kpi-icon   { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-                 justify-content:center;flex-shrink:0 }
-.cm-kpi-body   { flex:1;min-width:0 }
-.cm-kpi-label  { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                 color:var(--text-dim);line-height:1.2 }
-.cm-kpi-val    { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;
-                 line-height:1;flex-shrink:0 }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* ── Filter bar ──────────────────────────────────────── */
 .cm-bar          { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px }
@@ -138,9 +124,6 @@
 
 
 @media(max-width:768px) {
-    .cm-kpis { grid-template-columns:1fr 1fr;gap:8px }
-    .cm-kpi  { padding:12px 14px }
-    .cm-kpi-val { font-size:20px }
     /* search on its own row; status + New share the next one */
     .cm-search-wrap { flex:1 1 100%;min-width:0 }
     .cm-select { flex:1;min-width:0;font-size:16px }
@@ -160,27 +143,59 @@
 </style>
 
 {{-- KPIs --}}
-<div class="cm-kpis m-kpis m-kpis-strip">
-    <div class="cm-kpi">
-        <div class="cm-kpi-row">
-            <div class="cm-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+<div class="ui-kpis m-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
             </div>
-            <div class="cm-kpi-body">
-                <div class="cm-kpi-label">Total Categories</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Categories</div>
+                <div class="ui-kpi-sub">product groups</div>
             </div>
-            <div class="cm-kpi-val">{{ number_format($stats['total']) }}</div>
+        </div>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($stats['total']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['top_level']) }}</span>
+                <span class="ui-kpi-stat-l">Top-level</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['sub']) }}</span>
+                <span class="ui-kpi-stat-l">Sub-categories</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['total'] - $stats['active']) }}</span>
+                <span class="ui-kpi-stat-l">Inactive</span>
+            </div>
         </div>
     </div>
-    <div class="cm-kpi">
-        <div class="cm-kpi-row">
-            <div class="cm-kpi-icon" style="background:rgba(16,185,129,.15);color:var(--green)">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="cm-kpi-body">
-                <div class="cm-kpi-label">Active Categories</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Active Categories</div>
+                <div class="ui-kpi-sub">offered on products</div>
             </div>
-            <div class="cm-kpi-val">{{ number_format($stats['active']) }}</div>
+        </div>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($stats['active']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['with_products']) }}</span>
+                <span class="ui-kpi-stat-l">With products</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['active'] - $stats['with_products']) }}</span>
+                <span class="ui-kpi-stat-l">Empty</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats['sold_by_item']) }}</span>
+                <span class="ui-kpi-stat-l">Sold by the item</span>
+            </div>
         </div>
     </div>
 </div>

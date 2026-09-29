@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Category;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use App\Services\SettingsService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -300,12 +301,44 @@ class CategoryManager extends Component
             ->values();
     }
 
+    /** KPI card + footer figures. The category table is small: one load, tree walked in PHP. */
+    private function kpiStats(): array
+    {
+        $cats = Category::query()
+            ->withCount('products')
+            ->get(['id', 'parent_id', 'is_active']);
+        $active = $cats->where('is_active', true);
+
+        // Same rule as SettingsService::categoryAllowsIndividualSales(): a ticked
+        // category covers its sub-categories. Walked in memory instead of per id.
+        $settings = app(SettingsService::class);
+        $ticked   = $settings->allowIndividualItemSales()
+            ? array_map('intval', $settings->individualSaleCategoryIds())
+            : [];
+        $parentOf = $cats->pluck('parent_id', 'id');
+        $byItem   = $active->filter(function ($c) use ($ticked, $parentOf) {
+            for ($id = $c->id, $seen = []; $id && ! isset($seen[$id]); $id = (int) ($parentOf[$id] ?? 0)) {
+                if (in_array($id, $ticked, true)) {
+                    return true;
+                }
+                $seen[$id] = true;
+            }
+            return false;
+        })->count();
+
+        return [
+            'total'         => $cats->count(),
+            'active'        => $active->count(),
+            'top_level'     => $cats->whereNull('parent_id')->count(),
+            'sub'           => $cats->whereNotNull('parent_id')->count(),
+            'with_products' => $active->where('products_count', '>', 0)->count(),
+            'sold_by_item'  => $byItem,
+        ];
+    }
+
     public function render()
     {
-        $stats = [
-            'total'  => Category::count(),
-            'active' => Category::where('is_active', true)->count(),
-        ];
+        $stats = $this->kpiStats();
 
         $matching = Category::query()
             ->with('parent:id,name')

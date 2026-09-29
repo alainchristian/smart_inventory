@@ -8,13 +8,7 @@
 @else
 <div class="dg-page" style="font-family:var(--font);color:var(--text);padding-bottom:60px">
 <style>
-/* ── KPI Cards ── */
-.dg-kpi-grid  { display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px }
-.dg-kpi-card  { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:18px 20px }
-.dg-kpi-icon  { width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px }
-.dg-kpi-val   { font-size:26px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1;margin-bottom:4px }
-.dg-kpi-lbl   { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim) }
-.dg-kpi-sub   { font-size:11px;color:var(--text-dim);margin-top:4px }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* ── Filter card ── */
 .dg-filter    { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:16px 20px;margin-bottom:20px }
@@ -138,7 +132,6 @@
 
 /* Responsive */
 @media(max-width:900px) {
-    .dg-kpi-grid { grid-template-columns:1fr 1fr }
     .dg-exp-grid { grid-template-columns:1fr }
     .dg-disp-grid { grid-template-columns:1fr }
     .dg-disp-full { grid-column:auto }
@@ -159,7 +152,6 @@
     .dg-sheet-foot .dg-reset-btn { justify-content:center }
 }
 @media(max-width:600px) {
-    .dg-kpi-grid { grid-template-columns:1fr 1fr }
     /* status pills scroll sideways instead of stacking 3 rows deep */
     .dg-pills { flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
                 margin:0 -20px;padding:0 20px 2px }
@@ -203,46 +195,114 @@
 </div>
 
 {{-- KPI Cards --}}
-<div class="dg-kpi-grid">
-    <div class="dg-kpi-card">
-        <div class="dg-kpi-icon" style="background:var(--accent-dim)">
-            <svg width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+<div class="ui-kpis m-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Records</div>
+                <div class="ui-kpi-sub">{{ number_format($kpiStats['total_quantity']) }} items logged</div>
+            </div>
         </div>
-        <div class="dg-kpi-val" style="color:var(--text)">{{ number_format($kpiStats['total_damaged']) }}</div>
-        <div class="dg-kpi-lbl">Total Records</div>
-        <div class="dg-kpi-sub">{{ number_format($kpiStats['total_quantity']) }} items logged</div>
+        <div class="ui-kpi-val">{{ number_format($kpiStats['total_damaged']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="{{ $kpiStats['pending_count'] > 0 ? 'color:var(--amber)' : '' }}">{{ number_format($kpiStats['pending_count']) }}</span>
+                <span class="ui-kpi-stat-l">Pending</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['decided_count']) }}</span>
+                <span class="ui-kpi-stat-l">Decided</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['total_quantity']) }}</span>
+                <span class="ui-kpi-stat-l">Items</span>
+            </div>
+        </div>
     </div>
-    <div class="dg-kpi-card">
-        <div class="dg-kpi-icon" style="background:var(--amber-dim)">
-            <svg width="16" height="16" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Pending Decision</div>
+                <div class="ui-kpi-sub">{{ $kpiStats['pending_count'] > 0 ? 'Requires action' : 'All resolved' }}</div>
+            </div>
         </div>
-        <div class="dg-kpi-val" style="color:{{ $kpiStats['pending_count'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">{{ number_format($kpiStats['pending_count']) }}</div>
-        <div class="dg-kpi-lbl">Pending Decision</div>
-        <div class="dg-kpi-sub">{{ $kpiStats['pending_count'] > 0 ? 'Requires action' : 'All resolved' }}</div>
+        <div class="ui-kpi-val" style="color:{{ $kpiStats['pending_count'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">{{ number_format($kpiStats['pending_count']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['oldest_pending'] ?? '—' }}</span>
+                <span class="ui-kpi-stat-l">Oldest waiting</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['pending_quantity']) }}</span>
+                <span class="ui-kpi-stat-l">Items</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['pending_loss']) }}</span>
+                <span class="ui-kpi-stat-l">Est. value</span>
+            </div>
+        </div>
     </div>
-    <div class="dg-kpi-card">
-        <div class="dg-kpi-icon" style="background:var(--red-dim)">
-            <svg width="16" height="16" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-1.964-1.333-2.732 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-1.964-1.333-2.732 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Items Damaged</div>
+                <div class="ui-kpi-sub">Units lost from stock</div>
+            </div>
         </div>
-        <div class="dg-kpi-val" style="color:var(--red)">{{ number_format($kpiStats['total_quantity']) }}</div>
-        <div class="dg-kpi-lbl">Items Damaged</div>
-        <div class="dg-kpi-sub">Units lost from stock</div>
+        <div class="ui-kpi-val" style="color:var(--red)">{{ number_format($kpiStats['total_quantity']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['shop_quantity']) }}</span>
+                <span class="ui-kpi-stat-l">At shops</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['warehouse_quantity']) }}</span>
+                <span class="ui-kpi-stat-l">At warehouses</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpiStats['avg_quantity'] }}</span>
+                <span class="ui-kpi-stat-l">Avg per record</span>
+            </div>
+        </div>
     </div>
-    <div class="dg-kpi-card">
-        <div class="dg-kpi-icon" style="background:var(--red-dim)">
-            <svg width="16" height="16" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Est. Loss</div>
+                <div class="ui-kpi-sub">Value lost from damage</div>
+            </div>
         </div>
-        <div class="dg-kpi-val" style="color:var(--red)">
-            @if($kpiStats['total_loss'] >= 1000000)
-                {{ number_format($kpiStats['total_loss'] / 1000000, 1) }}M
-            @elseif($kpiStats['total_loss'] >= 1000)
-                {{ number_format($kpiStats['total_loss'] / 1000, 0) }}K
-            @else
-                {{ number_format($kpiStats['total_loss']) }}
-            @endif
+        <div class="ui-kpi-val" style="color:var(--red)">{{ number_format($kpiStats['total_loss']) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['written_off_loss']) }}</span>
+                <span class="ui-kpi-stat-l">Written off</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['supplier_loss']) }}</span>
+                <span class="ui-kpi-stat-l">Returned to supplier</span>
+            </div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpiStats['other_loss']) }}</span>
+                <span class="ui-kpi-stat-l">Other / pending</span>
+            </div>
         </div>
-        <div class="dg-kpi-lbl">Est. Loss (RWF)</div>
-        <div class="dg-kpi-sub">Value lost from damage</div>
     </div>
 </div>
 

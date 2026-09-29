@@ -12,23 +12,6 @@
 .cr-header-title { font-size:22px;font-weight:800;color:var(--text);margin:0 0 4px }
 .cr-header-sub   { font-size:13px;color:var(--text-dim);margin:0 }
 
-.cr-kpis      { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
-.cr-kpi       { background:var(--surface);border:none;border-radius:var(--r);
-                box-shadow:var(--shadow-card);padding:22px 20px;
-                display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
-.cr-kpi:hover { box-shadow:var(--shadow-card-hover) }
-.cr-kpi-row   { display:flex;align-items:center;gap:12px }
-.cr-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0 }
-.cr-kpi-body  { flex:1;min-width:0 }
-.cr-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);line-height:1.2 }
-.cr-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px }
-.cr-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
-.cr-kpi-divider { height:1px;background:var(--border) }
-.cr-kpi-footer  { display:grid;grid-template-columns:repeat(3,1fr) }
-.cr-kpi-stat    { display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 }
-.cr-kpi-stat-v  { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text-sub) }
-.cr-kpi-stat-l  { font-size:10px;color:var(--text-dim);letter-spacing:.3px;text-align:center }
-
 .cr-bar         { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px }
 .cr-search-wrap { flex:1;min-width:200px;position:relative }
 .cr-search-icon { position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-dim);pointer-events:none }
@@ -61,15 +44,6 @@
 .cr-empty-title { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px }
 .cr-empty-sub   { font-size:13px;color:var(--text-dim) }
 
-/* 4-up only when there is room: at 1024 (sidebar shown) the footer numbers
-   overlapped and the 4th card ran off the page */
-@media(max-width:1200px) { .cr-kpis { grid-template-columns:1fr 1fr } }
-@media(max-width:900px) {
-    .cr-kpis { grid-template-columns:1fr 1fr;gap:8px }
-    .cr-kpi  { padding:14px;gap:10px }
-    .cr-kpi-val { font-size:20px }
-}
-@media(max-width:480px) { .cr-kpis { grid-template-columns:1fr } }
 /* Tablet: let the 6 columns share the card width so "Record Payment" isn't
    pushed off the right edge (phones get the card layout below) */
 @media(min-width:641px) and (max-width:1100px) {
@@ -168,127 +142,127 @@
 </div>
 
 {{-- KPI Cards --}}
-<div class="cr-kpis">
+<div class="ui-kpis m-kpis">
     {{-- Total Outstanding --}}
-    <div class="cr-kpi">
-        <div class="cr-kpi-row">
-            <div class="cr-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <rect x="2" y="6" width="20" height="12" rx="2"/><path stroke-linecap="round" d="M2 10h20M6 15h4"/>
                 </svg>
             </div>
-            <div class="cr-kpi-body">
-                <div class="cr-kpi-label">{{ __('Total Outstanding') }}</div>
-                <div class="cr-kpi-sub">{{ __('Owed across all customers') }}</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">{{ __('Total Outstanding') }}</div>
+                <div class="ui-kpi-sub">{{ __('Owed across all customers') }}</div>
             </div>
         </div>
-        <div class="cr-kpi-val" style="color:var(--red)">{{ number_format($this->stats['total_outstanding']) }}<span style="font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px">RWF</span></div>
-        <div class="cr-kpi-divider"></div>
-        <div class="cr-kpi-footer">
-            <div class="cr-kpi-stat">
-                <span class="cr-kpi-stat-v">{{ $this->stats['customer_count'] }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Customers') }}</span>
+        <div class="ui-kpi-val" style="color:var(--red)">{{ number_format($this->stats['total_outstanding']) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $this->stats['customer_count'] }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Customers') }}</span>
             </div>
-            <div class="cr-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="cr-kpi-stat-v">{{ number_format($this->stats['highest_balance']) }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Highest') }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($this->stats['highest_balance']) }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Highest') }}</span>
             </div>
-            <div class="cr-kpi-stat">
-                <span class="cr-kpi-stat-v">{{ number_format($this->stats['avg_balance']) }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Avg Balance') }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($this->stats['avg_balance']) }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Avg Balance') }}</span>
             </div>
         </div>
     </div>
 
     {{-- Collected Today --}}
-    <div class="cr-kpi">
-        <div class="cr-kpi-row">
-            <div class="cr-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m-4-4h8M4 6h16v12H4z"/>
                 </svg>
             </div>
-            <div class="cr-kpi-body">
-                <div class="cr-kpi-label">{{ __('Collected Today') }}</div>
-                <div class="cr-kpi-sub">{{ __('Repayments recorded today') }}</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">{{ __('Collected Today') }}</div>
+                <div class="ui-kpi-sub">{{ __('Repayments recorded today') }}</div>
             </div>
         </div>
-        <div class="cr-kpi-val" style="color:var(--green)">{{ number_format($this->stats['collected_today']) }}<span style="font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px">RWF</span></div>
-        <div class="cr-kpi-divider"></div>
-        <div class="cr-kpi-footer">
-            <div class="cr-kpi-stat">
-                <span class="cr-kpi-stat-v">{{ $this->stats['repayments_today_count'] }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Payments') }}</span>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($this->stats['collected_today']) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $this->stats['repayments_today_count'] }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Payments') }}</span>
             </div>
-            <div class="cr-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="cr-kpi-stat-v">{{ number_format($this->stats['avg_payment_today']) }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Avg Payment') }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($this->stats['avg_payment_today']) }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Avg Payment') }}</span>
             </div>
-            <div class="cr-kpi-stat">
-                <span class="cr-kpi-stat-v">{{ $this->stats['customers_paid_today'] }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Customers') }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $this->stats['customers_paid_today'] }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Customers') }}</span>
             </div>
         </div>
     </div>
 
     {{-- Repayment Rate --}}
-    <div class="cr-kpi">
-        <div class="cr-kpi-row">
-            <div class="cr-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8M21 7v6h-6"/>
                 </svg>
             </div>
-            <div class="cr-kpi-body">
-                <div class="cr-kpi-label">{{ __('Repayment Rate') }}</div>
-                <div class="cr-kpi-sub">{{ __('All-time, credit given vs repaid') }}</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">{{ __('Repayment Rate') }}</div>
+                <div class="ui-kpi-sub">{{ __('All-time, credit given vs repaid') }}</div>
             </div>
         </div>
-        <div class="cr-kpi-val" style="color:var(--accent)">{{ $this->stats['repayment_rate'] }}<span style="font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px">%</span></div>
-        <div class="cr-kpi-divider"></div>
-        <div class="cr-kpi-footer">
-            <div class="cr-kpi-stat">
-                <span class="cr-kpi-stat-v">{{ number_format($this->stats['all_credit_given']) }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Credit Given') }}</span>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ $this->stats['repayment_rate'] }}<span class="ui-kpi-unit">%</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($this->stats['all_credit_given']) }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Credit Given') }}</span>
             </div>
-            <div class="cr-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="cr-kpi-stat-v">{{ number_format($this->stats['all_repaid']) }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Repaid') }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($this->stats['all_repaid']) }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Repaid') }}</span>
             </div>
-            <div class="cr-kpi-stat">
-                <span class="cr-kpi-stat-v">{{ number_format($this->stats['total_written_off']) }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Written Off') }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($this->stats['total_written_off']) }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Written Off') }}</span>
             </div>
         </div>
     </div>
 
     {{-- Overdue --}}
-    <div class="cr-kpi">
-        <div class="cr-kpi-row">
-            <div class="cr-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/>
                 </svg>
             </div>
-            <div class="cr-kpi-body">
-                <div class="cr-kpi-label">{{ __('Overdue Customers') }}</div>
-                <div class="cr-kpi-sub">{{ __('No repayment in :days+ days', ['days' => $this->stats['overdue_days']]) }}</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">{{ __('Overdue Customers') }}</div>
+                <div class="ui-kpi-sub">{{ __('No repayment in :days+ days', ['days' => $this->stats['overdue_days']]) }}</div>
             </div>
         </div>
-        <div class="cr-kpi-val" style="color:var(--amber)">{{ $this->stats['overdue_count'] }}</div>
-        <div class="cr-kpi-divider"></div>
-        <div class="cr-kpi-footer">
-            <div class="cr-kpi-stat">
-                <span class="cr-kpi-stat-v">{{ $this->stats['customer_count'] }}</span>
-                <span class="cr-kpi-stat-l">{{ __('Total Owing') }}</span>
+        <div class="ui-kpi-val" style="color:var(--amber)">{{ $this->stats['overdue_count'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $this->stats['customer_count'] }}</span>
+                <span class="ui-kpi-stat-l">{{ __('Total Owing') }}</span>
             </div>
-            <div class="cr-kpi-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
-                <span class="cr-kpi-stat-v">{{ $this->stats['customer_count'] > 0 ? round(($this->stats['overdue_count'] / $this->stats['customer_count']) * 100) : 0 }}%</span>
-                <span class="cr-kpi-stat-l">{{ __('Of Total') }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $this->stats['customer_count'] > 0 ? round(($this->stats['overdue_count'] / $this->stats['customer_count']) * 100) : 0 }}%</span>
+                <span class="ui-kpi-stat-l">{{ __('Of Total') }}</span>
             </div>
-            <div class="cr-kpi-stat">
-                <span class="cr-kpi-stat-v">{{ $this->stats['overdue_days'] }}d</span>
-                <span class="cr-kpi-stat-l">{{ __('Threshold') }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $this->stats['overdue_days'] }}d</span>
+                <span class="ui-kpi-stat-l">{{ __('Threshold') }}</span>
             </div>
         </div>
     </div>
