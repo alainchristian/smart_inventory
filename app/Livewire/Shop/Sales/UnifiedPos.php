@@ -446,9 +446,10 @@ class UnifiedPos extends Component
 
     public function checkForScans(): void
     {
-        if (!$this->scannerSession) return;
+        // Polled every 2s: when nothing was scanned, don't re-render the whole POS
+        if (!$this->scannerSession) { $this->skipRender(); return; }
         $this->scannerSession->refresh();
-        if (!$this->scannerSession->last_scanned_barcode) return;
+        if (!$this->scannerSession->last_scanned_barcode) { $this->skipRender(); return; }
 
         $barcode = $this->scannerSession->last_scanned_barcode;
         $this->lastProcessedScan = $barcode;
@@ -1616,8 +1617,17 @@ class UnifiedPos extends Component
 
     public function checkApprovals(): void
     {
-        $prevIds = collect($this->heldSales)->filter(fn ($h) => !$h['is_approved'])->pluck('id')->toArray();
+        $prevIds  = collect($this->heldSales)->filter(fn ($h) => !$h['is_approved'])->pluck('id')->toArray();
+        $withoutAge = fn (array $list) => array_map(fn ($h) => array_diff_key($h, ['age' => 1]), $list);
+        $before   = $withoutAge($this->heldSales);
         $this->loadHeldSales();
+
+        // Polled every 5s: skip the full POS re-render unless a hold changed
+        // (the relative "age" text alone isn't worth one)
+        if ($withoutAge($this->heldSales) === $before) {
+            $this->skipRender();
+            return;
+        }
 
         foreach (collect($this->heldSales)->filter(fn ($h) => $h['is_approved'] && in_array($h['id'], $prevIds)) as $h) {
             $this->dispatch('notification', ['type' => 'success', 'message' => __(':ref approved! Tap to resume.', ['ref' => $h['reference']])]);
