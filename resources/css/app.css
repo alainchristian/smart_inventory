@@ -2659,6 +2659,13 @@ main,
 .ui-kpi-stat-v { font-size: 13px; font-weight: 700; font-family: var(--mono); color: var(--text-sub); letter-spacing: -.3px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-kpi-stat-l { font-size: 11px; color: var(--text-dim); flex-shrink: 0; margin-right: 8px; }
 @media (max-width: 900px) { .ui-kpis { grid-template-columns: repeat(var(--kpi-cols-sm, 2), minmax(0, 1fr)); } }
+/* .ui-kpis-compact: tighter cards ≤768px, for pages that stack full-width
+   cards on phones instead of using .m-kpis (day-close, fulfillment) */
+@media (max-width: 768px) {
+  .ui-kpis-compact { gap: 10px; }
+  .ui-kpis-compact > .ui-kpi { padding: 14px; gap: 10px; }
+  .ui-kpis-compact .ui-kpi-val { font-size: 20px; }
+}
 
 /* ── KPI grid: 2-up compact cards on phones ─────────────────────────────
    Add .m-kpis to a page's KPI grid (the element whose children are the

@@ -15,21 +15,9 @@
              outline:none;cursor:pointer;font-family:var(--font); }
 .sh-select:focus { border-color:var(--accent); }
 
-/* KPIs (.iv-kpi anatomy) */
-.sh-kpis      { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
-.sh-kpi       { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0;transition:box-shadow var(--tr); }
-.sh-kpi:hover { box-shadow:var(--shadow-card-hover); }
-.sh-kpi-row   { display:flex;align-items:center;gap:12px; }
-.sh-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-.sh-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);line-height:1.2; }
-.sh-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px; }
-.sh-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1;white-space:nowrap; }
-.sh-kpi-unit  { font-size:12px;font-weight:500;color:var(--text-dim);margin-left:4px;letter-spacing:0; }
-.sh-kpi-divider { height:1px;background:var(--border); }
-.sh-kpi-stat  { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border); }
-.sh-kpi-stat:last-child { border-bottom:none; }
-.sh-kpi-stat-l { font-size:11px;color:var(--text-dim);margin-right:8px; }
-.sh-kpi-stat-v { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);white-space:nowrap; }
+/* KPI cards: shared .ui-kpi (app.css) */
+@media (max-width:1100px) { .sh-kpis { --kpi-cols:2; } }
+@media (max-width:480px)  { .sh-kpis { --kpi-cols-sm:1; } }
 
 /* Table card */
 .sh-card      { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);min-width:0; }
@@ -107,11 +95,8 @@
 .sh-btn-dark { background:var(--text);border-color:var(--text);color:var(--surface); }
 .sh-btn-dark:hover { background:var(--text);color:var(--surface);opacity:.88; }
 
-@media (max-width:1100px) { .sh-kpis { grid-template-columns:1fr 1fr; } }
 @media (max-width:768px) {
     .sh-title { font-size:19px; }
-    .sh-kpi { padding:14px;gap:10px; }
-    .sh-kpi-val { font-size:20px; }
     .sh-drawer { left:0;width:auto; }
 }
 @media (max-width:640px) {
@@ -121,7 +106,6 @@
     .sh-row, .sh-sec, .sh-none { padding-left:16px;padding-right:16px; }
     .sh-verdict, .sh-note { margin-left:16px;margin-right:16px; }
 }
-@media (max-width:480px) { .sh-kpis { grid-template-columns:1fr; } }
 </style>
 
 @php
@@ -164,57 +148,57 @@
 
 @if ((int) $stats->sessions > 0)
 {{-- ── KPIs ── --}}
-<div class="sh-kpis">
-    <div class="sh-kpi">
-        <div class="sh-kpi-row">
-            <div class="sh-kpi-icon" style="background:var(--accent-dim);color:var(--accent)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg></div>
-            <div><div class="sh-kpi-label">Sessions</div><div class="sh-kpi-sub">All time</div></div>
+<div class="ui-kpis ui-kpis-compact sh-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+            <div class="ui-kpi-body"><div class="ui-kpi-label">Sessions</div><div class="ui-kpi-sub">All time</div></div>
         </div>
-        <div class="sh-kpi-val" style="color:var(--text)">{{ number_format($stats->sessions) }}</div>
-        <div class="sh-kpi-divider"></div>
-        <div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Open</span><span class="sh-kpi-stat-v" style="{{ $stats->open ? 'color:var(--green)' : '' }}">{{ $stats->open }}</span></div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Closed, awaiting lock</span><span class="sh-kpi-stat-v">{{ $stats->closed }}</span></div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Locked</span><span class="sh-kpi-stat-v">{{ $stats->locked }}</span></div>
-        </div>
-    </div>
-
-    <div class="sh-kpi">
-        <div class="sh-kpi-row">
-            <div class="sh-kpi-icon" style="background:var(--success-dim);color:var(--success)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div>
-            <div><div class="sh-kpi-label">Sales</div><div class="sh-kpi-sub">Across all sessions</div></div>
-        </div>
-        <div class="sh-kpi-val" style="color:var(--text)">{{ number_format($stats->sales) }}<span class="sh-kpi-unit">RWF</span></div>
-        <div class="sh-kpi-divider"></div>
-        <div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Avg per session</span><span class="sh-kpi-stat-v">{{ number_format($stats->sessions ? $stats->sales / $stats->sessions : 0) }}</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($stats->sessions) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="{{ $stats->open ? 'color:var(--green)' : '' }}">{{ $stats->open }}</span><span class="ui-kpi-stat-l">Open</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $stats->closed }}</span><span class="ui-kpi-stat-l">Closed, awaiting lock</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $stats->locked }}</span><span class="ui-kpi-stat-l">Locked</span></div>
         </div>
     </div>
 
-    <div class="sh-kpi">
-        <div class="sh-kpi-row">
-            <div class="sh-kpi-icon" style="background:var(--red-dim);color:var(--red)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg></div>
-            <div><div class="sh-kpi-label">Paid out</div><div class="sh-kpi-sub">Expenses + withdrawals</div></div>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--success-dim);color:var(--success)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div>
+            <div class="ui-kpi-body"><div class="ui-kpi-label">Sales</div><div class="ui-kpi-sub">Across all sessions</div></div>
         </div>
-        <div class="sh-kpi-val" style="color:{{ $paidOut ? 'var(--red)' : 'var(--text-dim)' }}">{{ number_format($paidOut) }}<span class="sh-kpi-unit">RWF</span></div>
-        <div class="sh-kpi-divider"></div>
-        <div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Expenses</span><span class="sh-kpi-stat-v">{{ number_format($stats->expenses) }}</span></div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Withdrawals</span><span class="sh-kpi-stat-v">{{ number_format($stats->withdrawals) }}</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($stats->sales) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($stats->sessions ? $stats->sales / $stats->sessions : 0) }}</span><span class="ui-kpi-stat-l">Avg per session</span></div>
         </div>
     </div>
 
-    <div class="sh-kpi">
-        <div class="sh-kpi-row">
-            <div class="sh-kpi-icon" style="background:var(--amber-dim);color:var(--amber)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg></div>
-            <div><div class="sh-kpi-label">Net variance</div><div class="sh-kpi-sub">Counted vs expected cash</div></div>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg></div>
+            <div class="ui-kpi-body"><div class="ui-kpi-label">Paid out</div><div class="ui-kpi-sub">Expenses + withdrawals</div></div>
         </div>
-        <div class="sh-kpi-val" style="color:{{ $netVar < 0 ? 'var(--red)' : ($netVar > 0 ? 'var(--amber)' : 'var(--green)') }}">{{ $fmtVar($netVar) }}<span class="sh-kpi-unit">RWF</span></div>
-        <div class="sh-kpi-divider"></div>
-        <div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Balanced days</span><span class="sh-kpi-stat-v" style="color:var(--green)">{{ $stats->balanced }}</span></div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Short days</span><span class="sh-kpi-stat-v" style="{{ $stats->short ? 'color:var(--red)' : '' }}">{{ $stats->short }}</span></div>
-            <div class="sh-kpi-stat"><span class="sh-kpi-stat-l">Over days</span><span class="sh-kpi-stat-v" style="{{ $stats->over ? 'color:var(--amber)' : '' }}">{{ $stats->over }}</span></div>
+        <div class="ui-kpi-val" style="color:{{ $paidOut ? 'var(--red)' : 'var(--text-dim)' }}">{{ number_format($paidOut) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($stats->expenses) }}</span><span class="ui-kpi-stat-l">Expenses</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($stats->withdrawals) }}</span><span class="ui-kpi-stat-l">Withdrawals</span></div>
+        </div>
+    </div>
+
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg></div>
+            <div class="ui-kpi-body"><div class="ui-kpi-label">Net variance</div><div class="ui-kpi-sub">Counted vs expected cash</div></div>
+        </div>
+        <div class="ui-kpi-val" style="color:{{ $netVar < 0 ? 'var(--red)' : ($netVar > 0 ? 'var(--amber)' : 'var(--green)') }}">{{ $fmtVar($netVar) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--green)">{{ $stats->balanced }}</span><span class="ui-kpi-stat-l">Balanced days</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="{{ $stats->short ? 'color:var(--red)' : '' }}">{{ $stats->short }}</span><span class="ui-kpi-stat-l">Short days</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="{{ $stats->over ? 'color:var(--amber)' : '' }}">{{ $stats->over }}</span><span class="ui-kpi-stat-l">Over days</span></div>
         </div>
     </div>
 </div>

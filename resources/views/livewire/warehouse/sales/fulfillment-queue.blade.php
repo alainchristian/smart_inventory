@@ -22,21 +22,8 @@
 .fq-tab-count  { font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(255,255,255,.22);font-family:var(--mono); }
 .fq-tab:not(.active) .fq-tab-count { background:var(--surface2);color:var(--text-dim); }
 
-/* KPIs — .iv-kpi anatomy */
-.fq-kpis      { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px; }
-.fq-kpi       { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0;transition:box-shadow var(--tr); }
-.fq-kpi:hover { box-shadow:var(--shadow-card-hover); }
-.fq-kpi-row   { display:flex;align-items:center;gap:12px; }
-.fq-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-.fq-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);line-height:1.2; }
-.fq-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px; }
-.fq-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1;white-space:nowrap; }
-.fq-kpi-unit  { font-size:12px;font-weight:500;color:var(--text-dim);margin-left:4px;letter-spacing:0; }
-.fq-kpi-divider { height:1px;background:var(--border); }
-.fq-kpi-stat  { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border); }
-.fq-kpi-stat:last-child { border-bottom:none; }
-.fq-kpi-stat-l { font-size:11px;color:var(--text-dim);margin-right:8px; }
-.fq-kpi-stat-v { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);white-space:nowrap; }
+/* KPI cards: shared .ui-kpi (app.css), 3 across down to phones */
+.fq-kpis { --kpi-cols:3;--kpi-cols-sm:3; }
 
 /* Cards */
 .fq-card      { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);min-width:0;margin-bottom:16px; }
@@ -172,10 +159,8 @@
     .fq-c-act { grid-column:4;grid-row:1 / span 2; }
 }
 @media (max-width:768px) {
-    .fq-kpis { grid-template-columns:repeat(3,minmax(0,1fr));gap:8px; }
-    .fq-kpi-stat { flex-wrap:wrap;column-gap:6px; }
-    .fq-kpi { padding:14px;gap:10px; }
-    .fq-kpi-val { font-size:20px; }
+    /* 3 narrow cards: a long figure ("16 boxes + 11 items") wraps in place */
+    .fq-kpis .ui-kpi-stat-v { white-space:normal;text-align:right; }
     .fq-title { font-size:19px; }
     .fq-row { grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:12px 16px; }
     .fq-c-ref { grid-column:1; }
@@ -188,7 +173,7 @@
 @media (max-width:640px) {
     /* The work comes first on a phone — summary cards move below the list */
     .fq-page { display:flex;flex-direction:column; }
-    .fq-kpis { order:10;margin:4px 0 0;grid-template-columns:1fr; }
+    .fq-kpis { order:10;margin:4px 0 0;--kpi-cols-sm:1; }
     .fq-tab, .fq-preset, .fq-link, .fq-sig-clear { min-height:32px !important;min-width:0 !important;padding:5px 11px !important; }
     .fq-back, .fq-d-close, .fq-icon-btn { min-height:0 !important;min-width:0 !important;padding:0 !important; }
     .fq-btn-sm { min-height:32px !important;padding:6px 14px !important; }
@@ -198,7 +183,6 @@
     .fq-modal-foot .fq-btn { flex:1 1 0;min-width:0 !important;justify-content:center; }
     .fq-notice { flex-wrap:wrap; }
 }
-@media (max-width:480px) { .fq-kpis { grid-template-columns:1fr; } }
 </style>
 
 @php
@@ -229,43 +213,43 @@
 </div>
 
 {{-- ── KPIs (always all pending orders, never the filtered list) ── --}}
-<div class="fq-kpis">
-    <div class="fq-kpi">
-        <div class="fq-kpi-row">
-            <div class="fq-kpi-icon" style="background:var(--accent-dim);color:var(--accent)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
-            <div><div class="fq-kpi-label">Awaiting dispatch</div><div class="fq-kpi-sub">Sold, not yet handed over</div></div>
+<div class="ui-kpis ui-kpis-compact fq-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+            <div class="ui-kpi-body"><div class="ui-kpi-label">Awaiting dispatch</div><div class="ui-kpi-sub">Sold, not yet handed over</div></div>
         </div>
-        <div class="fq-kpi-val" style="color:var(--text)">{{ $stats['pending'] }}<span class="fq-kpi-unit">{{ $stats['pending'] === 1 ? 'order' : 'orders' }}</span></div>
-        <div class="fq-kpi-divider"></div>
-        <div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">To pick</span><span class="fq-kpi-stat-v">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($stats['pending_boxes'], $stats['pending_items']) }}</span></div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Via transporter · pickup</span><span class="fq-kpi-stat-v">{{ $stats['pending_transport'] }} · {{ $stats['pending'] - $stats['pending_transport'] }}</span></div>
-        </div>
-    </div>
-
-    <div class="fq-kpi">
-        <div class="fq-kpi-row">
-            <div class="fq-kpi-icon" style="background:var(--{{ $oldTone === 'text-dim' ? 'surface2' : $oldTone . '-dim' }});color:var(--{{ $oldTone }})"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-            <div><div class="fq-kpi-label">Oldest waiting</div><div class="fq-kpi-sub">Time since the sale</div></div>
-        </div>
-        <div class="fq-kpi-val" style="color:var(--{{ $oldTone === 'green' ? 'text' : $oldTone }})">{{ $fmtAge($stats['oldest_minutes']) }}</div>
-        <div class="fq-kpi-divider"></div>
-        <div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Waiting over 30 min</span><span class="fq-kpi-stat-v" style="{{ $stats['over_30m'] ? 'color:var(--amber)' : '' }}">{{ $stats['over_30m'] }}</span></div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Waiting over 2 h</span><span class="fq-kpi-stat-v" style="{{ $stats['over_2h'] ? 'color:var(--red)' : '' }}">{{ $stats['over_2h'] }}</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ $stats['pending'] }}<span class="ui-kpi-unit">{{ $stats['pending'] === 1 ? 'order' : 'orders' }}</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($stats['pending_boxes'], $stats['pending_items']) }}</span><span class="ui-kpi-stat-l">To pick</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $stats['pending_transport'] }} · {{ $stats['pending'] - $stats['pending_transport'] }}</span><span class="ui-kpi-stat-l">Via transporter · pickup</span></div>
         </div>
     </div>
 
-    <div class="fq-kpi">
-        <div class="fq-kpi-row">
-            <div class="fq-kpi-icon" style="background:var(--green-dim);color:var(--green)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <div><div class="fq-kpi-label">Dispatched today</div><div class="fq-kpi-sub">Handed over and signed for</div></div>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--{{ $oldTone === 'text-dim' ? 'surface2' : $oldTone . '-dim' }});color:var(--{{ $oldTone }})"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="ui-kpi-body"><div class="ui-kpi-label">Oldest waiting</div><div class="ui-kpi-sub">Time since the sale</div></div>
         </div>
-        <div class="fq-kpi-val" style="color:var(--{{ $stats['today'] ? 'green' : 'text-dim' }})">{{ $stats['today'] }}<span class="fq-kpi-unit">{{ $stats['today'] === 1 ? 'order' : 'orders' }}</span></div>
-        <div class="fq-kpi-divider"></div>
-        <div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Handed over</span><span class="fq-kpi-stat-v">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($stats['today_boxes'], $stats['today_items']) }}</span></div>
-            <div class="fq-kpi-stat"><span class="fq-kpi-stat-l">Via transporter · pickup</span><span class="fq-kpi-stat-v">{{ $stats['today_transport'] }} · {{ $stats['today'] - $stats['today_transport'] }}</span></div>
+        <div class="ui-kpi-val" style="color:var(--{{ $oldTone === 'green' ? 'text' : $oldTone }})">{{ $fmtAge($stats['oldest_minutes']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="{{ $stats['over_30m'] ? 'color:var(--amber)' : '' }}">{{ $stats['over_30m'] }}</span><span class="ui-kpi-stat-l">Waiting over 30 min</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="{{ $stats['over_2h'] ? 'color:var(--red)' : '' }}">{{ $stats['over_2h'] }}</span><span class="ui-kpi-stat-l">Waiting over 2 h</span></div>
+        </div>
+    </div>
+
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="ui-kpi-body"><div class="ui-kpi-label">Dispatched today</div><div class="ui-kpi-sub">Handed over and signed for</div></div>
+        </div>
+        <div class="ui-kpi-val" style="color:var(--{{ $stats['today'] ? 'green' : 'text-dim' }})">{{ $stats['today'] }}<span class="ui-kpi-unit">{{ $stats['today'] === 1 ? 'order' : 'orders' }}</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ \App\Livewire\Warehouse\Sales\FulfillmentQueue::packLabel($stats['today_boxes'], $stats['today_items']) }}</span><span class="ui-kpi-stat-l">Handed over</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $stats['today_transport'] }} · {{ $stats['today'] - $stats['today_transport'] }}</span><span class="ui-kpi-stat-l">Via transporter · pickup</span></div>
         </div>
     </div>
 </div>

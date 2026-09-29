@@ -43,24 +43,7 @@
 .dc-notice a { color:var(--amber);font-weight:700;text-decoration:none;margin-left:auto;white-space:nowrap; }
 .dc-notice a:hover { text-decoration:underline; }
 
-/* KPI cards — .iv-kpi anatomy (vertical-list footer) */
-.dc-kpis      { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
-.dc-kpi       { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:20px;
-                display:flex;flex-direction:column;gap:14px;transition:box-shadow var(--tr);min-width:0; }
-.dc-kpi:hover { box-shadow:var(--shadow-card-hover); }
-.dc-kpi-row   { display:flex;align-items:center;gap:12px; }
-.dc-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-.dc-kpi-body  { flex:1;min-width:0; }
-.dc-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);line-height:1.2; }
-.dc-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px; }
-.dc-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1;white-space:nowrap; }
-.dc-kpi-unit  { font-size:12px;font-weight:500;color:var(--text-dim);margin-left:4px;letter-spacing:0; }
-.dc-kpi-divider { height:1px;background:var(--border); }
-.dc-kpi-footer  { display:flex;flex-direction:column; }
-.dc-kpi-stat    { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0; }
-.dc-kpi-stat:last-child { border-bottom:none; }
-.dc-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px; }
-.dc-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* Main grid */
 .dc-grid  { display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start; }
@@ -120,14 +103,11 @@
 @keyframes dc-spin { to { transform:rotate(360deg) } }
 
 @media (max-width:1100px) {
-    .dc-kpis { grid-template-columns:1fr 1fr; }
+    .dc-kpis { --kpi-cols:2; }
     .dc-grid { grid-template-columns:1fr; }
 }
 @media (max-width:768px) {
     .dc-header-title { font-size:19px; }
-    .dc-kpis { gap:10px; }
-    .dc-kpi  { padding:14px;gap:10px; }
-    .dc-kpi-val { font-size:20px; }
     .dc-closed-stats { grid-template-columns:1fr 1fr; }
     .dc-closed-stat:nth-child(2) { border-right:none; }
     .dc-closed-stat:nth-child(-n+2) { border-bottom:1px solid var(--border); }
@@ -139,7 +119,7 @@
     .dc-notice a { min-height:0 !important;min-width:0 !important;padding:4px 0 !important; }
 }
 @media (max-width:480px) {
-    .dc-kpis { grid-template-columns:1fr; }
+    .dc-kpis { --kpi-cols-sm:1; }
     .dc-card-head, .dc-ledger, .dc-led-total { padding-left:14px;padding-right:14px; }
     .dc-menu { right:auto;left:0; }
     .dc-hide-xs { display:none; }
@@ -249,64 +229,64 @@
     @endphp
 
     {{-- ── KPIs ── --}}
-    <div class="dc-kpis">
-        <div class="dc-kpi">
-            <div class="dc-kpi-row">
-                <div class="dc-kpi-icon" style="background:var(--green-dim);color:var(--green)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
-                <div class="dc-kpi-body"><div class="dc-kpi-label">Cash in drawer</div><div class="dc-kpi-sub">Expected right now</div></div>
+    <div class="ui-kpis ui-kpis-compact dc-kpis">
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+                <div class="ui-kpi-body"><div class="ui-kpi-label">Cash in drawer</div><div class="ui-kpi-sub">Expected right now</div></div>
             </div>
-            <div class="dc-kpi-val" style="color:var(--green)">{{ number_format($s['expected_cash']) }}<span class="dc-kpi-unit">RWF</span></div>
-            <div class="dc-kpi-divider"></div>
-            <div class="dc-kpi-footer">
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Opening</span><span class="dc-kpi-stat-v">{{ number_format($s['opening_balance']) }}</span></div>
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Cash in</span><span class="dc-kpi-stat-v" style="color:var(--green)">+{{ number_format($cashIn) }}</span></div>
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Cash out</span><span class="dc-kpi-stat-v" style="color:var(--red)">−{{ number_format($cashOut) }}</span></div>
-            </div>
-        </div>
-
-        <div class="dc-kpi">
-            <div class="dc-kpi-row">
-                <div class="dc-kpi-icon" style="background:var(--success-dim);color:var(--success)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div>
-                <div class="dc-kpi-body"><div class="dc-kpi-label">Sales today</div><div class="dc-kpi-sub">{{ $s['transaction_count'] }} {{ $s['transaction_count'] === 1 ? 'transaction' : 'transactions' }}</div></div>
-            </div>
-            <div class="dc-kpi-val" style="color:var(--text)">{{ number_format($s['total_sales']) }}<span class="dc-kpi-unit">RWF</span></div>
-            <div class="dc-kpi-divider"></div>
-            <div class="dc-kpi-footer">
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Cash</span><span class="dc-kpi-stat-v">{{ number_format($s['total_sales_cash']) }}</span></div>
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">MoMo</span><span class="dc-kpi-stat-v">{{ number_format($s['total_sales_momo']) }}</span></div>
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Credit</span><span class="dc-kpi-stat-v" style="{{ $s['total_sales_credit'] > 0 ? 'color:var(--amber)' : '' }}">{{ number_format($s['total_sales_credit']) }}</span></div>
+            <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($s['expected_cash']) }}<span class="ui-kpi-unit">RWF</span></div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($s['opening_balance']) }}</span><span class="ui-kpi-stat-l">Opening</span></div>
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--green)">+{{ number_format($cashIn) }}</span><span class="ui-kpi-stat-l">Cash in</span></div>
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--red)">−{{ number_format($cashOut) }}</span><span class="ui-kpi-stat-l">Cash out</span></div>
             </div>
         </div>
 
-        <div class="dc-kpi">
-            <div class="dc-kpi-row">
-                <div class="dc-kpi-icon" style="background:var(--accent-dim);color:var(--accent)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
-                <div class="dc-kpi-body"><div class="dc-kpi-label">Mobile money</div><div class="dc-kpi-sub">Available balance</div></div>
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:var(--success-dim);color:var(--success)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div>
+                <div class="ui-kpi-body"><div class="ui-kpi-label">Sales today</div><div class="ui-kpi-sub">{{ $s['transaction_count'] }} {{ $s['transaction_count'] === 1 ? 'transaction' : 'transactions' }}</div></div>
             </div>
-            <div class="dc-kpi-val" style="color:{{ $s['momo_available'] >= 0 ? 'var(--accent)' : 'var(--red)' }}">{{ number_format($s['momo_available']) }}<span class="dc-kpi-unit">RWF</span></div>
-            <div class="dc-kpi-divider"></div>
-            <div class="dc-kpi-footer">
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">MoMo in</span><span class="dc-kpi-stat-v">{{ number_format($s['total_sales_momo'] + ($s['total_repayments_momo'] ?? 0)) }}</span></div>
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">MoMo out</span><span class="dc-kpi-stat-v">{{ number_format(($s['total_expenses_momo'] ?? 0) + ($s['total_withdrawals_momo'] ?? 0) + ($s['momo_deposits'] ?? 0)) }}</span></div>
+            <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($s['total_sales']) }}<span class="ui-kpi-unit">RWF</span></div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($s['total_sales_cash']) }}</span><span class="ui-kpi-stat-l">Cash</span></div>
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($s['total_sales_momo']) }}</span><span class="ui-kpi-stat-l">MoMo</span></div>
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="{{ $s['total_sales_credit'] > 0 ? 'color:var(--amber)' : '' }}">{{ number_format($s['total_sales_credit']) }}</span><span class="ui-kpi-stat-l">Credit</span></div>
+            </div>
+        </div>
+
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
+                <div class="ui-kpi-body"><div class="ui-kpi-label">Mobile money</div><div class="ui-kpi-sub">Available balance</div></div>
+            </div>
+            <div class="ui-kpi-val" style="color:{{ $s['momo_available'] >= 0 ? 'var(--accent)' : 'var(--red)' }}">{{ number_format($s['momo_available']) }}<span class="ui-kpi-unit">RWF</span></div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($s['total_sales_momo'] + ($s['total_repayments_momo'] ?? 0)) }}</span><span class="ui-kpi-stat-l">MoMo in</span></div>
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format(($s['total_expenses_momo'] ?? 0) + ($s['total_withdrawals_momo'] ?? 0) + ($s['momo_deposits'] ?? 0)) }}</span><span class="ui-kpi-stat-l">MoMo out</span></div>
                 @if ($allowBank)
-                    <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Bank available</span><span class="dc-kpi-stat-v" style="color:var(--violet)">{{ number_format($s['bank_available']) }}</span></div>
+                    <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--violet)">{{ number_format($s['bank_available']) }}</span><span class="ui-kpi-stat-l">Bank available</span></div>
                 @else
-                    <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Repayments</span><span class="dc-kpi-stat-v">{{ number_format($s['total_repayments_momo'] ?? 0) }}</span></div>
+                    <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($s['total_repayments_momo'] ?? 0) }}</span><span class="ui-kpi-stat-l">Repayments</span></div>
                 @endif
             </div>
         </div>
 
-        <div class="dc-kpi">
-            <div class="dc-kpi-row">
-                <div class="dc-kpi-icon" style="background:var(--red-dim);color:var(--red)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg></div>
-                <div class="dc-kpi-body"><div class="dc-kpi-label">Money out</div><div class="dc-kpi-sub">All channels</div></div>
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg></div>
+                <div class="ui-kpi-body"><div class="ui-kpi-label">Money out</div><div class="ui-kpi-sub">All channels</div></div>
             </div>
-            <div class="dc-kpi-val" style="color:{{ $moneyOut > 0 ? 'var(--red)' : 'var(--text-dim)' }}">{{ number_format($moneyOut) }}<span class="dc-kpi-unit">RWF</span></div>
-            <div class="dc-kpi-divider"></div>
-            <div class="dc-kpi-footer">
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Expenses · {{ $s['expense_count'] }}</span><span class="dc-kpi-stat-v">{{ number_format($s['total_expenses']) }}</span></div>
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Withdrawals · {{ $s['withdrawal_count'] }}</span><span class="dc-kpi-stat-v">{{ number_format($s['total_withdrawals']) }}</span></div>
-                <div class="dc-kpi-stat"><span class="dc-kpi-stat-l">Bank deposits · {{ $s['bank_deposit_count'] }}</span><span class="dc-kpi-stat-v">{{ number_format($s['total_bank_deposits']) }}</span></div>
+            <div class="ui-kpi-val" style="color:{{ $moneyOut > 0 ? 'var(--red)' : 'var(--text-dim)' }}">{{ number_format($moneyOut) }}<span class="ui-kpi-unit">RWF</span></div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($s['total_expenses']) }}</span><span class="ui-kpi-stat-l">Expenses · {{ $s['expense_count'] }}</span></div>
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($s['total_withdrawals']) }}</span><span class="ui-kpi-stat-l">Withdrawals · {{ $s['withdrawal_count'] }}</span></div>
+                <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($s['total_bank_deposits']) }}</span><span class="ui-kpi-stat-l">Bank deposits · {{ $s['bank_deposit_count'] }}</span></div>
             </div>
         </div>
     </div>
