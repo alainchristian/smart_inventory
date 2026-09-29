@@ -177,7 +177,9 @@ class ReportViewer extends Component
     {
         $report = $this->report();
 
-        return 'custom_report:' . $report->id . ':' . md5(json_encode([$report->updated_at?->timestamp, $report->config, $this->filters()]));
+        // Keyed on the config itself (not updated_at, which a run used to bump,
+        // so every request missed the cache and re-ran the whole report)
+        return 'custom_report:' . $report->id . ':' . md5(json_encode([$report->config, $this->filters()]));
     }
 
     /** Short cache while the period includes today, since today's numbers still move */

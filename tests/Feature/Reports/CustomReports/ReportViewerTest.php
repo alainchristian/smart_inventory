@@ -87,6 +87,23 @@ class ReportViewerTest extends TestCase
         $this->assertSame(3, ReportRunHistory::where('report_id', $report->id)->count());
     }
 
+    public function test_a_run_does_not_invalidate_its_own_cache(): void
+    {
+        // markRun() used to bump updated_at, which was part of the cache key,
+        // so every later request (a second or more on) re-ran the report
+        $report  = $this->report();
+        $updated = $report->updated_at->toDateTimeString();
+
+        $this->travel(5)->seconds();   // the report was saved a while before it's viewed
+        $c = $this->viewer($report)->call('load');
+        $this->travel(5)->seconds();
+        $c->call('toggleHistory')->call('toggleHistory')->call('openDetails', 'k1');
+
+        $this->assertSame(1, ReportRunHistory::where('report_id', $report->id)->count());
+        $this->assertSame($updated, $report->fresh()->updated_at->toDateTimeString());
+        $this->assertSame(1, $report->fresh()->run_count);
+    }
+
     public function test_history_keeps_headlines_not_full_results(): void
     {
         $report = $this->report();

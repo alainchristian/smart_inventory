@@ -1690,3 +1690,38 @@ Tests: `tests/Feature/Reports/CustomReports/ReportViewerTest.php`.
   `display:flex` beat the ≤640px hide rule. Fixed.
 
 Tests: `tests/Feature/Reports/CustomReports/ReportBuilderTest.php`.
+
+## Custom Reports rebuild — Phase 5: library (2026-09-29)
+
+`ReportLibrary` + `report-library.blade.php` (prefix `rl-`) rewritten.
+- Header with one "New report" button, then a "Start from a template" card
+  showing 4 templates ("Show all 14" expands, Alpine).
+- Toolbar: pill tabs All / Mine / Shared with me, with counts from one
+  `COUNT(*) FILTER` query; search over name and description (LIKE wildcards
+  escaped, so "%" is literal); sort Recently run (never-run last) / Most
+  run / Newest / Name. Search, tab and sort are in the URL.
+- **Table** (tables stay tables: `m-scroll` + `m-sticky-first`):
+  - report name and description, blocks, default period as a label
+    ("Last month", not `last_month`) + "Emailed" badge
+  - owner ("You" / name) + "Shared" badge
+  - last run (relative, exact time on hover), runs
+  - Open, then icon buttons: Edit, Make a copy, Share, Delete. Edit /
+    share / delete are creator-only in the UI and the component.
+  - Row actions are inline icons, not a dropdown, because a menu inside
+    the horizontally scrolling table gets clipped.
+- Delete uses the inline confirm row (§13; no `wire:confirm`), and warns
+  when the report is shared. Toasts replace `session()->flash`, which the
+  page never showed.
+- "Make a copy" works for any report you can see (not hidden ones). The
+  copy is yours and private.
+- **Cache bug found here (phase 3 code):** `SavedReport::markRun()` saved
+  the report and so bumped `updated_at`, and the viewer's cache key
+  included `updated_at`. Every run invalidated its own cache, so each later
+  click (filters, history, details) re-ran the whole report and wrote
+  another history row. `markRun()` no longer touches timestamps, and the
+  key uses the config itself. It showed up as a flaky test, only when the
+  run crossed a second boundary. `ReportViewerTest::
+  test_a_run_does_not_invalidate_its_own_cache` reproduces it by moving the
+  clock; it fails without the fix.
+
+Tests: `tests/Feature/Reports/CustomReports/ReportLibraryTest.php`.
