@@ -1646,3 +1646,47 @@ Tests: `tests/Feature/Reports/CustomReports/{MetricContractTest,ReportRunnerTest
   sent, and `wire:init` never loads.
 
 Tests: `tests/Feature/Reports/CustomReports/ReportViewerTest.php`.
+
+## Custom Reports rebuild — Phase 4: builder (2026-09-29)
+
+`ReportBuilder` + `report-builder.blade.php` (prefix `rb-`) rewritten.
+- **Layout:** report settings card, then a two-pane page:
+  - catalogue on the left, sticky (`partials/builder-catalogue.blade.php`:
+    search, domain pills, display chips, "Added" count, "Ignores period")
+  - block list on the right
+  Below 900px the catalogue becomes a bottom sheet ("Add block"). An empty
+  report shows the 14 templates inline (the modal is gone).
+- **Blocks:** drag handle (Sortable.js, now bundled from npm in `app.js` as
+  `window.Sortable`, no CDN), move up/down, duplicate, remove, and a
+  **live preview** of the headline figure or row count.
+  - `#[Computed] previews()`, cached per block settings + default
+    period/location
+  - `wire:init="loadPreviews"`
+  - editing one block re-runs only that block
+- **Block drawer** (click a block):
+  - title, "Show as", width (not for summary cards)
+  - sort by / order / top N. The column list comes from the preview, so
+    there's no more typing internal keys.
+  - alert levels (summary cards; the hint says "falls to or below" or
+    "rises to or above" from the metric's `good`)
+  - period and location for this block only. Disabled with the reason
+    when they can't apply: `period_note`, "Always covers every location",
+    or no warehouses for shop-only figures.
+  - `$edit` is bound with `wire:model`; `updatedEdit()` writes it back
+    through `sanitiseBlock()`
+- **Sanitising:** `canvas` is public, so the browser can send anything.
+  `updatedCanvas()` and `save()` rebuild every block from known keys:
+  - valid metric, viz and width; title ≤120, text ≤5000
+  - overrides only where the metric supports them
+  - thresholds only on cards
+  - sort key `[a-z0-9_]`, limit 1–100
+  Max 40 blocks. Save also validates the custom dates, cron and each
+  recipient email.
+- Save redirects to the viewer (navigate); the viewer turns
+  `session('success')` into a toast.
+- Screenshots (1440 / 390, drawer opened through `$wire.selectBlock` from a
+  same-origin wrapper page) found the phone header showing Cancel/Save
+  twice next to the sticky `m-actions`. The cause: an inline
+  `display:flex` beat the ≤640px hide rule. Fixed.
+
+Tests: `tests/Feature/Reports/CustomReports/ReportBuilderTest.php`.

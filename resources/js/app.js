@@ -10,6 +10,10 @@ import '@fontsource/dm-sans/800.css';
 import '@fontsource/dm-mono/400.css';
 import '@fontsource/dm-mono/500.css';
 
+// Drag-to-reorder (report builder). Bundled instead of loaded from jsdelivr.
+import Sortable from 'sortablejs';
+window.Sortable = Sortable;
+
 // Wait for Alpine (bundled with Livewire) to be available
 document.addEventListener('alpine:init', () => {
     // Get the Alpine instance from Livewire

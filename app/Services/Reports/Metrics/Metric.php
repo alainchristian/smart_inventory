@@ -86,6 +86,7 @@ abstract class Metric
             'needs_location' => $this->locations !== 'none',
             'locations'      => $this->locations,
             'good'           => $this->good,
+            'period_note'    => $this->periodNote(),
         ];
     }
 

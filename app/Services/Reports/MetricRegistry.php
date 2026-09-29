@@ -73,6 +73,7 @@ class MetricRegistry
         'needs_location' => false,
         'locations'      => 'none',
         'good'           => 'neutral',
+        'period_note'    => null,
     ];
 
     /** @var array<string, Metric>|null */

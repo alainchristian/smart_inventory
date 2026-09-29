@@ -78,6 +78,9 @@ class ReportViewer extends Component
             'viewed_at' => now(),
             'was_run'   => false,
         ]);
+        if ($msg = session('success')) {   // e.g. "Report saved." from the builder
+            $this->dispatch('notification', ['type' => 'success', 'message' => $msg]);
+        }
     }
 
     public function load(): void
