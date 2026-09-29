@@ -6,23 +6,17 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }} - {{ __('Operations Centre') }}</title>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-
+    {{-- Fonts (DM Sans / DM Mono) are self-hosted via @fontsource, imported in app.js --}}
 @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     @stack('styles')
 
-    {{-- Chart.js loaded ONCE here in the head. --}}
-    {{-- Loading it inside @push('scripts') or dynamically via createElement fails --}}
+    {{-- Chart.js + ApexCharts loaded ONCE here in the head (bundled, served from /build). --}}
+    {{-- Loading them inside @push('scripts') or dynamically via createElement fails --}}
     {{-- with Livewire SPA navigation because @stack('scripts') does not re-execute --}}
     {{-- on navigate, and async script injection races against Alpine component init. --}}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-    {{-- ApexCharts for sales analytics --}}
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
+    {{-- As a module it is deferred: it runs before DOMContentLoaded / Livewire start. --}}
+    @vite('resources/js/charts.js')
 
     <!-- Theme lock -->
     <script>
