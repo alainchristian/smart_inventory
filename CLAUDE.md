@@ -1342,3 +1342,65 @@ Tests: `tests/Feature/Reports/MobilePhase0FixesTest.php`.
     print `profit=1`). Shop managers never get cost.
   Tests: `tests/Feature/Reports/InventorySnapshotTest.php`.
 
+
+---
+
+## Production speed pass (2026-09-29)
+
+Production: alinox.org on Railway behind Cloudflare, users in Rwanda.
+
+**Measuring.** `App\Http\Middleware\ServerTiming` (first in the `web` group)
+adds `Server-Timing: app;dur=…, db;dur=…;desc="N queries"` to every
+response, including Livewire updates (DevTools → Network → Timing). Requests
+slower than 1 s are logged as `Slow request` with route and query count
+(`railway logs … | grep "Slow request"`). In tinker the `app` figure is
+wrong, because artisan also defines `LARAVEL_START`.
+
+**Infrastructure** (no code):
+- App, Postgres and scheduler moved us-west2 → europe-west4 (Amsterdam) with
+  `railway scale --service X eu-west=1 us-west=0`. The Postgres volume
+  migration took about 2 min. Backups taken first: `D:\backups\alinox\`
+  (production is PG 18; use `docker run postgres:18 pg_dump`).
+- `DB_PERSISTENT=true` (new `config/database.php` pgsql `options`) reuses
+  the connection across FrankenPHP requests. `/login` db time went 40 → 4 ms.
+  `DB_SSLMODE` is now configurable (default `prefer`, unchanged).
+- `LOG_LEVEL=warning`.
+
+**Code — rules to keep:**
+- **Query counts must not grow with the period or the catalogue.**
+  - `BusinessKpiRow` computes each metric's windows and sparkline buckets
+    in one `SUM(CASE WHEN col BETWEEN ? AND ?)` query (`windowSums()`).
+    That's 14 queries for any period, down from 39–105.
+    `DashboardWidgetsRenderTest` caps it at 15.
+  - For stock of many products use `Product::stockSummaryFor()` (one
+    query). Same rules as `getCurrentStock()` / `isLowStock()`, and
+    `StockSummaryTest` checks them against each other.
+    `getCurrentStock()` is for single products only.
+- **Chart.js / ApexCharts are bundled** (`resources/js/charts.js`, a Vite
+  entry loaded as a deferred module). Don't add CDN script tags back.
+  Livewire starts on DOMContentLoaded, after deferred modules, so `@script`
+  chart code is safe. Never call `Chart` from an inline script that runs
+  while the page parses.
+- **Fonts are self-hosted** via `@fontsource` (imported in `app.js`). Don't
+  add Google Fonts links.
+- **Notification bell is its own component** (`Layout\NotificationBell`).
+  Its 15 s poll renders only the badge while closed; the lists render
+  after `openPanel()`. The poll payload went from ~92 KB to 5 KB.
+  **Don't put a `wire:poll` on Topbar**: it re-renders the whole topbar.
+- **Polls that usually find nothing must `skipRender()`**: see
+  `UnifiedPos::checkForScans()` / `checkApprovals()` (`PosPollingTest`).
+
+**Decided against:** persisting the sidebar with `@persist`. It renders in
+about 11 ms and 2.5 KB gzipped per page, but its active-link / open-group
+state lives in 106 server-side `routeIs()` checks. Moving those to the
+client isn't worth the breakage risk.
+
+**Browser-check gotcha:** the automated Chrome tab often reports
+`visibilityState: hidden`, which pauses `requestAnimationFrame`. Charts that
+draw via rAF (sales-performance) then look "not drawn" until the tab is
+visible. Take a screenshot (it brings the tab forward) before concluding a
+chart is broken. Hidden iframes have the same problem.
+
+**Still open:** Cloudflare cache rule for `/build/*` (Edge + Browser TTL
+1 year) is a dashboard setting, not code. Assets currently get Cloudflare's
+default 4 h `max-age`.
