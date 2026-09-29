@@ -29,7 +29,9 @@
 - `sale_date` is a **TIMESTAMP** — always pass Carbon objects to `whereBetween`, never raw date strings
 
 ### Charts — reliability rules
-- Chart.js loaded once in `<head>` (no defer/async) via CDN
+- Chart.js loaded once in `<head>` — since 2026-09-29 bundled via Vite (`resources/js/charts.js`,
+  deferred module), not the jsdelivr CDN. Safe because Livewire starts on DOMContentLoaded, after
+  deferred modules run; never call `Chart` from an inline script that runs during HTML parsing.
 - Init order: `livewire:initialized` → `livewire:navigated` → `commit` hook (filter changes) → DOMContentLoaded fallback
 - All re-renders use `chart.update('none')` — no animations on filter change
 - Sparklines use `canvas.classList.remove/add('db-spark-refresh')` for a brief pop-in on each redraw
