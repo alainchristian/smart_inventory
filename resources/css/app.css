@@ -666,13 +666,6 @@ aside nav p.text-gray-400 {
 }
 
 /* Grid layouts */
-.biz-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 18px;
-  margin-bottom: 18px;
-}
-
 .ops-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -704,10 +697,6 @@ aside nav p.text-gray-400 {
     gap: 18px;
 }
 
-@media (max-width: 1400px) {
-    .biz-kpi-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
 @media (max-width: 1200px) {
     .row-sales-shops  { grid-template-columns: 1fr; }
     .row-ops-activity { grid-template-columns: 1fr 1fr; }
@@ -717,7 +706,6 @@ aside nav p.text-gray-400 {
 
 @media (max-width: 900px) {
     .row-ops-activity { grid-template-columns: 1fr; }
-    .biz-kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .ops-kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
@@ -725,8 +713,7 @@ aside nav p.text-gray-400 {
     .row-sales-shops,
     .row-ops-activity,
     .row-trace-alerts { grid-template-columns: 1fr; gap: 14px; }
-    .biz-kpi-grid, .ops-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .biz-kpi-grid { gap: 10px; }
+    .ops-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .right-stack-panel { flex-direction: column; }
 }
 
@@ -739,151 +726,6 @@ aside nav p.text-gray-400 {
   flex-direction: column;
   gap: 14px;
   min-width: 0;
-}
-
-/* Business KPI cards */
-.bkpi {
-  background: var(--surface);
-  border: none;
-  border-radius: var(--r);
-  padding: 22px 24px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-  transition: transform var(--tr), box-shadow var(--tr);
-}
-
-.bkpi::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-}
-
-.bkpi.pink::after {
-  background: linear-gradient(90deg, var(--pink), transparent);
-}
-
-.bkpi.green::after {
-  background: linear-gradient(90deg, var(--green), transparent);
-}
-
-.bkpi.blue::after {
-  background: linear-gradient(90deg, var(--accent), transparent);
-}
-
-.bkpi.violet::after {
-  background: linear-gradient(90deg, var(--violet), transparent);
-}
-
-.bkpi.amber::after {
-  background: linear-gradient(90deg, var(--amber), transparent);
-}
-
-.bkpi:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
-}
-
-.bkpi-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-}
-
-.bkpi-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.bkpi-icon.pink {
-  background: var(--pink-dim);
-  color: var(--pink);
-}
-
-.bkpi-icon.green {
-  background: var(--green-dim);
-  color: var(--green);
-}
-
-.bkpi-icon.blue {
-  background: var(--accent-dim);
-  color: var(--accent);
-}
-
-.bkpi-icon.violet {
-  background: var(--violet-dim);
-  color: var(--violet);
-}
-
-.bkpi-icon.amber {
-  background: var(--amber-dim);
-  color: var(--amber);
-}
-
-.bkpi-pct.down {
-  background: var(--red-dim);
-  color: var(--red);
-}
-
-.bkpi-pct.amber {
-  background: var(--amber-dim);
-  color: var(--amber);
-}
-
-.bkpi-name {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .6px;
-  text-transform: uppercase;
-  color: var(--text-sub);
-}
-
-.bkpi-value {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -1px;
-  line-height: 1.1;
-  color: var(--text);
-}
-
-.bkpi-meta {
-  font-size: 12px;
-  color: var(--text-dim);
-  margin-top: 5px;
-  font-family: var(--mono);
-}
-
-.bkpi-pct {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-family: var(--mono);
-}
-
-.bkpi-pct.up {
-  background: var(--success-glow);
-  color: var(--success);
-}
-
-.bkpi-pct.green {
-  background: var(--green-glow);
-  color: var(--green);
-}
-
-.bkpi-pct.blue {
-  background: var(--accent-glow);
-  color: var(--accent);
-}
-
-.bkpi-pct.violet {
-  background: var(--violet-glow);
-  color: var(--violet);
 }
 
 .loc-stats {
@@ -1387,10 +1229,6 @@ aside nav p.text-gray-400 {
 
 @media (max-width: 1200px) {
 
-  .biz-kpi-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   .ops-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1496,18 +1334,6 @@ aside nav p.text-gray-400 {
     font-size: 11px;
   }
 
-  .bkpi {
-    padding: 14px 16px;
-  }
-
-  .bkpi-value {
-    font-size: 22px;
-  }
-
-  .bkpi-meta {
-    font-size: 10px;
-  }
-
   .okpi {
     padding: 12px 14px;
     gap: 10px;
@@ -1563,11 +1389,6 @@ aside nav p.text-gray-400 {
 }
 
 @media (max-width: 640px) {
-  .biz-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
   .ops-kpi-grid {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -1594,10 +1415,6 @@ aside nav p.text-gray-400 {
   .currency-chip {
     width: 100%;
     justify-content: center;
-  }
-
-  .bkpi-value {
-    font-size: 20px;
   }
 
   .loc-stat-val {
@@ -1653,32 +1470,6 @@ aside nav p.text-gray-400 {
 
   .card-subtitle {
     font-size: 10px;
-  }
-
-  .bkpi {
-    padding: 12px 14px;
-  }
-
-  .bkpi-icon {
-    width: 30px;
-    height: 30px;
-  }
-
-  .bkpi-icon svg {
-    width: 15px;
-    height: 15px;
-  }
-
-  .bkpi-name {
-    font-size: 10px;
-  }
-
-  .bkpi-value {
-    font-size: 18px;
-  }
-
-  .bkpi-meta {
-    font-size: 9px;
   }
 
   .okpi {
@@ -2063,10 +1854,6 @@ main table th {
 }
 
 /* KPI card min height for breathing room */
-.bkpi {
-  min-height: 140px;
-}
-
 .okpi {
   min-height: 80px;
 }
@@ -2234,7 +2021,6 @@ main,
 
   /* ── General: no card overflows on small screens ── */
   .card,
-  .bkpi,
   .okpi {
     overflow: hidden;
     min-width: 0;
@@ -2904,16 +2690,6 @@ main,
   .m-kpis [class*="-kpi-stat"] { padding: 3px 0 !important; }
   .m-kpis [class*="-kpi-stat-v"] { font-size: 11px !important; }
   .m-kpis [class*="-kpi-stat-l"] { font-size: 10px !important; }
-  /* .bkpi cards (products, boxes) name their parts differently */
-  .m-kpis .bkpi { padding: var(--m-s2) !important; min-width: 0; }
-  .m-kpis .bkpi:hover { transform: none; }
-  .m-kpis .bkpi > div:first-child { margin-bottom: 8px !important; gap: 6px !important; }
-  .m-kpis .bkpi-icon { width: 28px !important; height: 28px !important; border-radius: 8px !important; }
-  .m-kpis .bkpi-icon svg { width: 14px !important; height: 14px !important; }
-  .m-kpis .bkpi-name { font-size: 10px !important; letter-spacing: .4px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  .m-kpis .bkpi-value { font-size: var(--m-fs-value) !important; letter-spacing: -.5px !important; }
-  .m-kpis .bkpi-meta { font-size: 10px !important; }
-  .m-kpis .bkpi-pct { font-size: 10px !important; padding: 2px 6px !important; }
 
   /* .m-kpis-strip: count-only cards become a row of compact chips */
   .m-kpis.m-kpis-strip {
