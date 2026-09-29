@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.password.change' => \App\Http\Middleware\CheckPasswordChange::class,
         ]);
 
+        // Server-Timing header (app / db time + query count) for measuring
+        // production speed from DevTools; logs requests slower than 1s
+        $middleware->prependToGroup('web', \App\Http\Middleware\ServerTiming::class);
+
         // Resolve and set the request's locale before anything else runs
         // (flash messages, validation errors, etc. must already be in the right language)
         $middleware->appendToGroup('web', \App\Http\Middleware\SetLocale::class);
