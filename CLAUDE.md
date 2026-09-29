@@ -1413,14 +1413,20 @@ User asked for every summary-card row to look and behave like Finance
 Overview's. **The card is now shared:** `.ui-kpis` / `.ui-kpi*` in
 `resources/css/app.css` (a copy of `.fo-kpi`: icon + label/sub, big mono
 value, divider, footer of label-left/value-right rows; markup is value
-then label, `row-reverse` flips it). Grid is 4 columns, 2 at ≤900px, and
-`.m-kpis` gives the phone layout. The family is named `ui-kpi-*`, not
-`kpi-*`, because the `m-kpis` phone rules match `[class*="-kpi-icon"]` etc.
-Column count: set `--kpi-cols` in the page's own CSS (e.g. Users
-`.um-kpis { --kpi-cols:5 }`), never inline — an inline value beats the
-page's media queries. Pages with 2 cards keep 4 columns so every card is
-the same width. **New summary cards use `ui-kpi`; don't add another
-per-page copy of the card CSS.**
+then label, `row-reverse` flips it — never put the label first). Optional
+`.ui-kpi-bar` is a 3px track under the value. Grid is `--kpi-cols` (default
+4) columns, `--kpi-cols-sm` (default 2) at ≤900px, and `.m-kpis` gives the
+2-up compact phone layout. Pages that stack full-width cards on phones
+instead add `.ui-kpis-compact` (≤768px: 14px padding, 20px value). The
+family is named `ui-kpi-*`, not `kpi-*`, because the `m-kpis` phone rules
+match `[class*="-kpi-icon"]` etc. Column counts: keep the page's old grid
+class next to `ui-kpis` as a hook and set the variables in the page's own
+CSS (e.g. Users `.um-kpis { --kpi-cols:5 }`, Register
+`@media (max-width:480px) { .dc-kpis { --kpi-cols-sm:1 } }`), never inline —
+an inline value beats the page's media queries. Pages with 2 cards keep 4
+columns so every card is the same width. `.ui-kpi-sub` never wraps (it
+ends in an ellipsis), so keep subtitles short. **New summary cards use
+`ui-kpi`; don't add another per-page copy of the card CSS.**
 
 - **Moved to `ui-kpi` (page-local KPI CSS deleted):** Credit Repayments,
   Warehouse Stock Levels (old 3-column footer), and — with new footers,
@@ -1428,15 +1434,28 @@ per-page copy of the card CSS.**
   Damaged Goods, Daily Close report (gained icons), Customers, Categories,
   Expense Categories, Transporters. `m-kpis-strip` was dropped from these
   (it hides footers).
-- **Already matching, untouched:** `fo-`, `iv-`, `sa-`, `la-`, `tp-`, `cc-`,
-  `pm-`, `rv-`, `dc-`, `sh-`, `fq-`. Switch them to `ui-kpi` when next edited.
+- **Pages that already looked like it, now on `ui-kpi` too** (their CSS
+  copies deleted): Finance Overview, Inventory Valuation, Sales Analytics,
+  Loss Analysis, Transfer Performance, Customer Credit, Payment Methods,
+  day-close Register, Session History, Fulfillment. Register / Session
+  History / Fulfillment / Inventory Valuation had label-first stat rows;
+  they were swapped to value-first. Fulfillment keeps its page extras (3
+  columns down to phones, cards below the list on phones via `order`, long
+  figures wrap inside their cell at ≤768px).
+- **Report Viewer (`rv-kpi-*`) deliberately not converted:** its KPI is the
+  body of a report block inside `rv-block-card` (28px sans value, top-aligned
+  icon, margin-based spacing), not a standalone summary card. Wrapping it in
+  `.ui-kpi` would nest a card inside a card.
 - **Products and Boxes** (`ProductKpiRow`, `BoxList`, formerly `bkpi`) moved
   to `ui-kpi` in a follow-up the same day. Filler footers replaced: Price
   Overrides → lines changed / discounts / markups; Best Margin → product /
   avg margin / priced below cost; Damaged → intact / damage rate / used up;
   Expiring Soon → already expired / later than 30 days / no expiry date.
-  Damaged and Expiring Soon stay clickable filters. `.bkpi` CSS in app.css
-  is now unused (only a comment in inventory-valuation mentions it).
+  Damaged and Expiring Soon stay clickable filters (the card has a `title`
+  tooltip; the subtitle no longer says "click to filter"). Boxes' item and
+  expiry figures count sellable (full/partial) boxes only, so the footers
+  add up to Sellable Boxes. The `.bkpi` and `.biz-kpi-grid` CSS was deleted
+  (`.ops-kpi-grid` is also unused, left in place).
 - **Deliberately different, untouched (user decision):** owner dashboard
   `BusinessKpiRow` (`kpi5-`, sparklines), shop / warehouse dashboards
   (`db-kpi`, sparklines), Sales History (`sli-kpi`, bars), Credit
@@ -1453,11 +1472,38 @@ per-page copy of the card CSS.**
 - `.claude/skills/ui-design.md` is not in the repo checkout, so its KPI
   section wasn't updated.
 
-Verified by: `php -l` on every changed class; div / Blade-directive balance
-per view vs HEAD; every `$stats[...]` key used in a view is produced by
-its component; CSS built with Vite and every converted card row rendered
-next to Finance Overview at 1228px and 390px. **Not run** (the session's
-container couldn't install Composer packages): `php artisan view:cache`,
-the test suite, or the real pages. Tests that render these components:
-DailyCloseBalanceTest, PerShopCreditTest, CategoryParentTest,
-ShopSpecialisationTest.
+**Checked in a browser (same day, local session).** Every page above was
+rendered as its real role (owner / shop manager / warehouse manager) at
+1440px and 390px with the temporary `?__as=` middleware (deleted after).
+Pages moved in the second pass were pixel-diffed before vs after. Bugs
+found and fixed:
+- The move to `ui-kpi` had also deleted Warehouse Stock Levels' table,
+  badge, empty-state and pagination CSS (the inventory table rendered
+  unstyled). Restored. When deleting a page's KPI CSS, delete only the
+  `-kpi` rules.
+- Boxes' Damaged subtitle wrapped and pushed its value down; the expiry
+  footer didn't add up to Sellable Boxes (it counted damaged / in-transit
+  boxes).
+- Shop Stock's "In stock" footer row counted healthy products only; now
+  labelled "Healthy".
+Known leftovers: Warehouse Stock Levels' Total Items footer repeats the
+full / partial box counts from the Total Boxes card (the component has no
+per-status item counts). Accepted size changes from unifying: Customer
+Credit / Payment Methods cards ~13px shorter, Loss / Transfer ~27px taller,
+Register / Session History / Fulfillment ~10px taller, and "RWF" units no
+longer inherit −1px letter-spacing.
+
+Tests run on `smart_inventory_test` (51 passed): DailyCloseBalance,
+PerShopCredit, CategoryParent, ShopSpecialisation, MobilePhase0Fixes,
+FulfillmentQueue, RegisterRedesign, SessionHistory, DashboardWidgetsRender.
+`php artisan view:cache` compiles every view.
+
+**Screenshot gotchas:** `php artisan serve` runs one PHP worker by default,
+and several headless Chromes with `wire:poll` pages queue behind each other
+for minutes. Start it with `PHP_CLI_SERVER_WORKERS=4` and wrap each Chrome in
+`timeout`. Pages behind the open-register gate were rendered through a
+temporary route that opens today's session inside a transaction and rolls
+back. Livewire's follow-up requests then see no session and re-render the
+gate, so keep `--virtual-time-budget` short (~2.5s). A blank 390px frame
+usually means a follow-up Livewire request failed auth (Livewire's error
+overlay), so put `__as` in the URL so the referer carries it.
