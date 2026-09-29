@@ -73,30 +73,7 @@
 .fo-date-input:focus { color:var(--accent); }
 .fo-shop-select:focus { color:var(--accent); }
 
-/* ── KPI cards ── */
-.fo-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px }
-.fo-kpi  { background:var(--surface);border:none;border-radius:var(--r);
-           box-shadow:var(--shadow-card);padding:22px 20px;
-           display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
-.fo-kpi:hover { box-shadow:var(--shadow-card-hover) }
-.fo-kpi-row   { display:flex;align-items:center;gap:12px }
-.fo-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-                justify-content:center;flex-shrink:0 }
-.fo-kpi-body  { flex:1;min-width:0 }
-.fo-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                color:var(--text-dim);line-height:1.2 }
-.fo-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px }
-.fo-kpi-badge { font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;flex-shrink:0 }
-.fo-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
-.fo-kpi-unit  { font-size:13px;font-weight:500;color:var(--text-dim);margin-left:3px }
-.fo-kpi-divider { height:1px;background:var(--border) }
-.fo-kpi-footer  { display:flex;flex-direction:column;gap:0 }
-.fo-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
-                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
-.fo-kpi-stat:last-child { border-bottom:none }
-.fo-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
-                  letter-spacing:-.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.fo-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* ── Shop ranking ── */
 .fo-ranking {
@@ -279,7 +256,6 @@
 /* ── Responsive ── */
 @media(max-width:900px) {
     .fo-charts { grid-template-columns:1fr; }
-    .fo-kpis   { grid-template-columns:repeat(2,1fr); }
 }
 @media(max-width:640px) {
     .fo-page-sub { display:none; } /* the date inputs right below show the same range */
@@ -421,93 +397,93 @@
 @endphp
 
 {{-- ── KPI cards (4) ── --}}
-<div class="fo-kpis m-kpis">
+<div class="ui-kpis m-kpis">
 
     {{-- Revenue --}}
-    <div class="fo-kpi">
-        <div class="fo-kpi-row">
-            <div class="fo-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
             </div>
-            <div class="fo-kpi-body">
-                <div class="fo-kpi-label">Revenue</div>
-                <div class="fo-kpi-sub">Total net sales</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Revenue</div>
+                <div class="ui-kpi-sub">Total net sales</div>
             </div>
         </div>
-        <div class="fo-kpi-val" style="color:var(--accent)">{{ number_format($svcRevenue) }}<span class="fo-kpi-unit">RWF</span></div>
-        <div class="fo-kpi-divider"></div>
-        <div class="fo-kpi-footer">
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($sessionCount) }}</span>
-                <span class="fo-kpi-stat-l">Sessions</span>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($svcRevenue) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($sessionCount) }}</span>
+                <span class="ui-kpi-stat-l">Sessions</span>
             </div>
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($totalRefunds) }}</span>
-                <span class="fo-kpi-stat-l">Refunds</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($totalRefunds) }}</span>
+                <span class="ui-kpi-stat-l">Refunds</span>
             </div>
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($totalRepayments) }}</span>
-                <span class="fo-kpi-stat-l">Repayments</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($totalRepayments) }}</span>
+                <span class="ui-kpi-stat-l">Repayments</span>
             </div>
         </div>
     </div>
 
     {{-- Expenses --}}
-    <div class="fo-kpi">
-        <div class="fo-kpi-row">
-            <div class="fo-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             </div>
-            <div class="fo-kpi-body">
-                <div class="fo-kpi-label">Expenses</div>
-                <div class="fo-kpi-sub">Operational costs</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Expenses</div>
+                <div class="ui-kpi-sub">Operational costs</div>
             </div>
-            <span class="fo-kpi-badge" style="background:var(--amber-dim);color:var(--amber)">{{ $expenseRatio }}%</span>
+            <span class="ui-kpi-badge" style="background:var(--amber-dim);color:var(--amber)">{{ $expenseRatio }}%</span>
         </div>
-        <div class="fo-kpi-val" style="color:var(--amber)">{{ number_format($svcExpenses) }}<span class="fo-kpi-unit">RWF</span></div>
-        <div class="fo-kpi-divider"></div>
-        <div class="fo-kpi-footer">
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($totalBanked) }}</span>
-                <span class="fo-kpi-stat-l">Banked</span>
+        <div class="ui-kpi-val" style="color:var(--amber)">{{ number_format($svcExpenses) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($totalBanked) }}</span>
+                <span class="ui-kpi-stat-l">Banked</span>
             </div>
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($svcWithdrawals) }}</span>
-                <span class="fo-kpi-stat-l">Withdrawn</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($svcWithdrawals) }}</span>
+                <span class="ui-kpi-stat-l">Withdrawn</span>
             </div>
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ $days }}</span>
-                <span class="fo-kpi-stat-l">Days</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $days }}</span>
+                <span class="ui-kpi-stat-l">Days</span>
             </div>
         </div>
     </div>
 
     {{-- Net Result --}}
     @php $netColor = $totalNetResult >= 0 ? 'var(--green)' : 'var(--red)'; $netDim = $totalNetResult >= 0 ? 'var(--green-dim)' : 'var(--red-dim)'; @endphp
-    <div class="fo-kpi">
-        <div class="fo-kpi-row">
-            <div class="fo-kpi-icon" style="background:{{ $netDim }};color:{{ $netColor }}">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:{{ $netDim }};color:{{ $netColor }}">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
-            <div class="fo-kpi-body">
-                <div class="fo-kpi-label">Net Result</div>
-                <div class="fo-kpi-sub">After all deductions</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Net Result</div>
+                <div class="ui-kpi-sub">After all deductions</div>
             </div>
         </div>
-        <div class="fo-kpi-val" style="color:{{ $netColor }}">{{ number_format($totalNetResult) }}<span class="fo-kpi-unit">RWF</span></div>
-        <div class="fo-kpi-divider"></div>
-        <div class="fo-kpi-footer">
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($totalOpProfit) }}</span>
-                <span class="fo-kpi-stat-l">Op. Profit</span>
+        <div class="ui-kpi-val" style="color:{{ $netColor }}">{{ number_format($totalNetResult) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($totalOpProfit) }}</span>
+                <span class="ui-kpi-stat-l">Op. Profit</span>
             </div>
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($svcGross) }}</span>
-                <span class="fo-kpi-stat-l">Gross Profit</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($svcGross) }}</span>
+                <span class="ui-kpi-stat-l">Gross Profit</span>
             </div>
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($totalWithdrawals) }}</span>
-                <span class="fo-kpi-stat-l">Withdrawn</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($totalWithdrawals) }}</span>
+                <span class="ui-kpi-stat-l">Withdrawn</span>
             </div>
         </div>
     </div>
@@ -517,30 +493,30 @@
         $varColor = $totalVariance < 0 ? 'var(--red)' : ($totalVariance > 0 ? 'var(--amber)' : 'var(--green)');
         $varDim   = $totalVariance < 0 ? 'var(--red-dim)' : ($totalVariance > 0 ? 'var(--amber-dim)' : 'var(--green-dim)');
     @endphp
-    <div class="fo-kpi">
-        <div class="fo-kpi-row">
-            <div class="fo-kpi-icon" style="background:{{ $varDim }};color:{{ $varColor }}">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:{{ $varDim }};color:{{ $varColor }}">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <div class="fo-kpi-body">
-                <div class="fo-kpi-label">Cash Variance</div>
-                <div class="fo-kpi-sub">Expected vs actual</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Cash Variance</div>
+                <div class="ui-kpi-sub">Expected vs actual</div>
             </div>
         </div>
-        <div class="fo-kpi-val" style="color:{{ $varColor }}">{{ number_format($totalVariance) }}<span class="fo-kpi-unit">RWF</span></div>
-        <div class="fo-kpi-divider"></div>
-        <div class="fo-kpi-footer">
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($sessionCount) }}</span>
-                <span class="fo-kpi-stat-l">Sessions</span>
+        <div class="ui-kpi-val" style="color:{{ $varColor }}">{{ number_format($totalVariance) }}<span class="ui-kpi-unit">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($sessionCount) }}</span>
+                <span class="ui-kpi-stat-l">Sessions</span>
             </div>
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($closedCount) }}</span>
-                <span class="fo-kpi-stat-l">Closed</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($closedCount) }}</span>
+                <span class="ui-kpi-stat-l">Closed</span>
             </div>
-            <div class="fo-kpi-stat">
-                <span class="fo-kpi-stat-v">{{ number_format($svcShortage) }}</span>
-                <span class="fo-kpi-stat-l">Shortage</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($svcShortage) }}</span>
+                <span class="ui-kpi-stat-l">Shortage</span>
             </div>
         </div>
     </div>

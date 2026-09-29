@@ -1,7 +1,7 @@
 {{-- ┌─────────────────────────────────────────────────────────────────────────┐
     │  Owner · Customer Credit Report                                        │
     │  Track customer credit balances and payment history                   │
-    │  KPI cards follow the .iv-kpi/.sa-kpi canonical structure              │
+    │  KPI cards use the shared .ui-kpi card (resources/css/app.css)        │
     └─────────────────────────────────────────────────────────────────────────┘ --}}
 <div wire:poll.30s>
 <style>
@@ -21,33 +21,8 @@
     .cc-page-subtitle { font-size:13px !important; }
 }
 
-/* ── KPI cards — same anatomy as inventory-valuation's .iv-kpi ──────── */
-.cc-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
-.cc-kpi  { background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);
-           padding:22px 20px;display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
-.cc-kpi:hover { box-shadow:var(--shadow-card-hover) }
-.cc-kpi-row  { display:flex;align-items:center;gap:12px }
-.cc-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-               justify-content:center;flex-shrink:0 }
-.cc-kpi-body { flex:1;min-width:0 }
-.cc-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                color:var(--text-dim) }
-.cc-kpi-sub  { font-size:12px;color:var(--text-dim);margin-top:2px }
-.cc-kpi-val  { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px }
-.cc-kpi-divider { height:1px;background:var(--border) }
-.cc-kpi-footer  { display:flex;flex-direction:column;gap:0 }
-.cc-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
-                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
-.cc-kpi-stat:last-child { border-bottom:none }
-.cc-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px;
-                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.cc-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
+/* KPI cards: shared .ui-kpi (app.css) */
 
-@media(max-width:900px) { .cc-kpis { grid-template-columns:1fr 1fr;gap:10px } }
-@media(max-width:640px) {
-    .cc-kpi  { padding:14px }
-    .cc-kpi-val { font-size:20px }
-}
 
 
 /* Modal styles */
@@ -97,84 +72,84 @@
         ? round(($summary['total_repaid'] / $summary['total_credit_given']) * 100, 1)
         : 0;
 @endphp
-<div class="cc-kpis m-kpis">
+<div class="ui-kpis m-kpis">
     {{-- Total Outstanding --}}
-    <div class="cc-kpi">
-        <div class="cc-kpi-row">
-            <div class="cc-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
                 <x-icon name="credit-card" size="16" />
             </div>
-            <div class="cc-kpi-body">
-                <div class="cc-kpi-label">Total Outstanding</div>
-                <div class="cc-kpi-sub">Unpaid customer credit</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Outstanding</div>
+                <div class="ui-kpi-sub">Unpaid customer credit</div>
             </div>
         </div>
-        <div class="cc-kpi-val" style="color:var(--red)">{{ number_format($summary['total_outstanding']) }}</div>
-        <div class="cc-kpi-divider"></div>
-        <div class="cc-kpi-footer">
-            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="cc-kpi-stat-l">Customers</span></div>
-            <div class="cc-kpi-stat" ><span class="cc-kpi-stat-v">{{ number_format($summary['total_credit_given']) }}</span><span class="cc-kpi-stat-l">Given</span></div>
-            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ $repaymentRate }}%</span><span class="cc-kpi-stat-l">Repaid</span></div>
+        <div class="ui-kpi-val" style="color:var(--red)">{{ number_format($summary['total_outstanding']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="ui-kpi-stat-l">Customers</span></div>
+            <div class="ui-kpi-stat" ><span class="ui-kpi-stat-v">{{ number_format($summary['total_credit_given']) }}</span><span class="ui-kpi-stat-l">Given</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $repaymentRate }}%</span><span class="ui-kpi-stat-l">Repaid</span></div>
         </div>
     </div>
 
     {{-- Customers with Credit --}}
-    <div class="cc-kpi">
-        <div class="cc-kpi-row">
-            <div class="cc-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <x-icon name="users" size="16" />
             </div>
-            <div class="cc-kpi-body">
-                <div class="cc-kpi-label">Customers with Credit</div>
-                <div class="cc-kpi-sub">Balance &gt; 0</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Customers with Credit</div>
+                <div class="ui-kpi-sub">Balance &gt; 0</div>
             </div>
         </div>
-        <div class="cc-kpi-val" style="color:var(--text)">{{ number_format($summary['total_customers_with_credit']) }}</div>
-        <div class="cc-kpi-divider"></div>
-        <div class="cc-kpi-footer">
-            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="cc-kpi-stat-l">Outstanding</span></div>
-            <div class="cc-kpi-stat" ><span class="cc-kpi-stat-v">{{ number_format($summary['total_credit_given']) }}</span><span class="cc-kpi-stat-l">Given</span></div>
-            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_repaid']) }}</span><span class="cc-kpi-stat-l">Repaid</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($summary['total_customers_with_credit']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="ui-kpi-stat-l">Outstanding</span></div>
+            <div class="ui-kpi-stat" ><span class="ui-kpi-stat-v">{{ number_format($summary['total_credit_given']) }}</span><span class="ui-kpi-stat-l">Given</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($summary['total_repaid']) }}</span><span class="ui-kpi-stat-l">Repaid</span></div>
         </div>
     </div>
 
     {{-- Total Credit Given --}}
-    <div class="cc-kpi">
-        <div class="cc-kpi-row">
-            <div class="cc-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <x-icon name="dollar-sign" size="16" />
             </div>
-            <div class="cc-kpi-body">
-                <div class="cc-kpi-label">Total Credit Given</div>
-                <div class="cc-kpi-sub">Lifetime, all customers</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Credit Given</div>
+                <div class="ui-kpi-sub">Lifetime, all customers</div>
             </div>
         </div>
-        <div class="cc-kpi-val" style="color:var(--text)">{{ number_format($summary['total_credit_given']) }}</div>
-        <div class="cc-kpi-divider"></div>
-        <div class="cc-kpi-footer">
-            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="cc-kpi-stat-l">Customers</span></div>
-            <div class="cc-kpi-stat" ><span class="cc-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="cc-kpi-stat-l">Outstanding</span></div>
-            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_repaid']) }}</span><span class="cc-kpi-stat-l">Repaid</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($summary['total_credit_given']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="ui-kpi-stat-l">Customers</span></div>
+            <div class="ui-kpi-stat" ><span class="ui-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="ui-kpi-stat-l">Outstanding</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($summary['total_repaid']) }}</span><span class="ui-kpi-stat-l">Repaid</span></div>
         </div>
     </div>
 
     {{-- Total Repaid --}}
-    <div class="cc-kpi">
-        <div class="cc-kpi-row">
-            <div class="cc-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <x-icon name="check" size="16" />
             </div>
-            <div class="cc-kpi-body">
-                <div class="cc-kpi-label">Total Repaid</div>
-                <div class="cc-kpi-sub">Of {{ number_format($summary['total_credit_given']) }} given</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Repaid</div>
+                <div class="ui-kpi-sub">Of {{ number_format($summary['total_credit_given']) }} given</div>
             </div>
         </div>
-        <div class="cc-kpi-val" style="color:var(--green)">{{ number_format($summary['total_repaid']) }}</div>
-        <div class="cc-kpi-divider"></div>
-        <div class="cc-kpi-footer">
-            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ $repaymentRate }}%</span><span class="cc-kpi-stat-l">Rate</span></div>
-            <div class="cc-kpi-stat" ><span class="cc-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="cc-kpi-stat-l">Outstanding</span></div>
-            <div class="cc-kpi-stat"><span class="cc-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="cc-kpi-stat-l">Customers</span></div>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($summary['total_repaid']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $repaymentRate }}%</span><span class="ui-kpi-stat-l">Rate</span></div>
+            <div class="ui-kpi-stat" ><span class="ui-kpi-stat-v">{{ number_format($summary['total_outstanding']) }}</span><span class="ui-kpi-stat-l">Outstanding</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($summary['total_customers_with_credit']) }}</span><span class="ui-kpi-stat-l">Customers</span></div>
         </div>
     </div>
 </div>

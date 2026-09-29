@@ -1,7 +1,7 @@
 {{-- ┌─────────────────────────────────────────────────────────────────────────┐
     │  Owner · Payment Methods Report                                        │
     │  Track revenue by payment method and split payment analysis           │
-    │  KPI cards follow the .iv-kpi/.sa-kpi canonical structure              │
+    │  KPI cards use the shared .ui-kpi card (resources/css/app.css)        │
     └─────────────────────────────────────────────────────────────────────────┘ --}}
 <div wire:poll.30s>
 <style>
@@ -44,37 +44,12 @@
     .pm-date-btn { font-size:13px !important; }
 }
 
-/* ── KPI cards — same anatomy as inventory-valuation's .iv-kpi ──────── */
-.pm-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
-.pm-kpi  { background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);
-           padding:22px 20px;display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
-.pm-kpi:hover { box-shadow:var(--shadow-card-hover) }
-.pm-kpi-row  { display:flex;align-items:center;gap:12px }
-.pm-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-               justify-content:center;flex-shrink:0 }
-.pm-kpi-body { flex:1;min-width:0 }
-.pm-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                color:var(--text-dim) }
-.pm-kpi-sub  { font-size:12px;color:var(--text-dim);margin-top:2px }
-.pm-kpi-val  { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px }
-.pm-kpi-divider { height:1px;background:var(--border) }
-.pm-kpi-footer  { display:flex;flex-direction:column;gap:0 }
-.pm-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
-                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
-.pm-kpi-stat:last-child { border-bottom:none }
-.pm-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px;
-                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.pm-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
+/* KPI cards: shared .ui-kpi (app.css) */
 .pm-growth   { font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;
                font-family:var(--mono);white-space:nowrap;flex-shrink:0 }
 .pm-growth.up      { background:var(--green-dim);color:var(--green) }
 .pm-growth.neutral { background:var(--surface2);color:var(--text-dim) }
 
-@media(max-width:900px) { .pm-kpis { grid-template-columns:1fr 1fr;gap:10px } }
-@media(max-width:640px) {
-    .pm-kpi  { padding:14px }
-    .pm-kpi-val { font-size:20px }
-}
 
 </style>
 
@@ -144,85 +119,85 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      SUMMARY KPI GRID
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div class="pm-kpis m-kpis">
+<div class="ui-kpis m-kpis">
     {{-- Total Revenue --}}
-    <div class="pm-kpi">
-        <div class="pm-kpi-row">
-            <div class="pm-kpi-icon" style="background:var(--pink-dim);color:var(--pink)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--pink-dim);color:var(--pink)">
                 <x-icon name="dollar-sign" size="16" />
             </div>
-            <div class="pm-kpi-body">
-                <div class="pm-kpi-label">Total Revenue</div>
-                <div class="pm-kpi-sub">{{ number_format($this->totalTransactions) }} transactions</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Revenue</div>
+                <div class="ui-kpi-sub">{{ number_format($this->totalTransactions) }} transactions</div>
             </div>
         </div>
-        <div class="pm-kpi-val" style="color:var(--text)">{{ number_format($this->totalRevenue) }}</div>
-        <div class="pm-kpi-divider"></div>
-        <div class="pm-kpi-footer">
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['split'] }}</span><span class="pm-kpi-stat-l">Split</span></div>
-            <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ $this->creditSalesStats['count'] }}</span><span class="pm-kpi-stat-l">Credit</span></div>
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalTransactions) }}</span><span class="pm-kpi-stat-l">Total Txns</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($this->totalRevenue) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $this->splitPaymentStats['split'] }}</span><span class="ui-kpi-stat-l">Split</span></div>
+            <div class="ui-kpi-stat" ><span class="ui-kpi-stat-v">{{ $this->creditSalesStats['count'] }}</span><span class="ui-kpi-stat-l">Credit</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($this->totalTransactions) }}</span><span class="ui-kpi-stat-l">Total Txns</span></div>
         </div>
     </div>
 
     {{-- Total Transactions --}}
-    <div class="pm-kpi">
-        <div class="pm-kpi-row">
-            <div class="pm-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <x-icon name="clipboard" size="16" />
             </div>
-            <div class="pm-kpi-body">
-                <div class="pm-kpi-label">Transactions</div>
-                <div class="pm-kpi-sub">Non-voided sales</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Transactions</div>
+                <div class="ui-kpi-sub">Non-voided sales</div>
             </div>
         </div>
-        <div class="pm-kpi-val" style="color:var(--text)">{{ number_format($this->totalTransactions) }}</div>
-        <div class="pm-kpi-divider"></div>
-        <div class="pm-kpi-footer">
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['single'] }}</span><span class="pm-kpi-stat-l">Single</span></div>
-            <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['split'] }}</span><span class="pm-kpi-stat-l">Split</span></div>
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalRevenue) }}</span><span class="pm-kpi-stat-l">Revenue</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($this->totalTransactions) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $this->splitPaymentStats['single'] }}</span><span class="ui-kpi-stat-l">Single</span></div>
+            <div class="ui-kpi-stat" ><span class="ui-kpi-stat-v">{{ $this->splitPaymentStats['split'] }}</span><span class="ui-kpi-stat-l">Split</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($this->totalRevenue) }}</span><span class="ui-kpi-stat-l">Revenue</span></div>
         </div>
     </div>
 
     {{-- Split Payments --}}
-    <div class="pm-kpi">
-        <div class="pm-kpi-row">
-            <div class="pm-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <x-icon name="credit-card" size="16" />
             </div>
-            <div class="pm-kpi-body">
-                <div class="pm-kpi-label">Split Payments</div>
-                <div class="pm-kpi-sub">Multiple methods per sale</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Split Payments</div>
+                <div class="ui-kpi-sub">Multiple methods per sale</div>
             </div>
             <span class="pm-growth {{ $this->splitPaymentStats['split_percentage'] >= 20 ? 'up' : 'neutral' }}">{{ $this->splitPaymentStats['split_percentage'] }}%</span>
         </div>
-        <div class="pm-kpi-val" style="color:var(--violet)">{{ $this->splitPaymentStats['split'] }}</div>
-        <div class="pm-kpi-divider"></div>
-        <div class="pm-kpi-footer">
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['single'] }}</span><span class="pm-kpi-stat-l">Single</span></div>
-            <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['total'] }}</span><span class="pm-kpi-stat-l">Total</span></div>
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->splitPaymentStats['split_percentage'] }}%</span><span class="pm-kpi-stat-l">Rate</span></div>
+        <div class="ui-kpi-val" style="color:var(--violet)">{{ $this->splitPaymentStats['split'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $this->splitPaymentStats['single'] }}</span><span class="ui-kpi-stat-l">Single</span></div>
+            <div class="ui-kpi-stat" ><span class="ui-kpi-stat-v">{{ $this->splitPaymentStats['total'] }}</span><span class="ui-kpi-stat-l">Total</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $this->splitPaymentStats['split_percentage'] }}%</span><span class="ui-kpi-stat-l">Rate</span></div>
         </div>
     </div>
 
     {{-- Credit Sales --}}
-    <div class="pm-kpi">
-        <div class="pm-kpi-row">
-            <div class="pm-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
                 <x-icon name="tag" size="16" />
             </div>
-            <div class="pm-kpi-body">
-                <div class="pm-kpi-label">Credit Given</div>
-                <div class="pm-kpi-sub">{{ $this->creditSalesStats['count'] }} credit sales</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Credit Given</div>
+                <div class="ui-kpi-sub">{{ $this->creditSalesStats['count'] }} credit sales</div>
             </div>
         </div>
-        <div class="pm-kpi-val" style="color:var(--red)">{{ number_format($this->creditSalesStats['total_credit_given']) }}</div>
-        <div class="pm-kpi-divider"></div>
-        <div class="pm-kpi-footer">
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ $this->creditSalesStats['count'] }}</span><span class="pm-kpi-stat-l">Sales</span></div>
-            <div class="pm-kpi-stat" ><span class="pm-kpi-stat-v">{{ number_format($this->totalTransactions) }}</span><span class="pm-kpi-stat-l">Total Txns</span></div>
-            <div class="pm-kpi-stat"><span class="pm-kpi-stat-v">{{ number_format($this->totalRevenue) }}</span><span class="pm-kpi-stat-l">Revenue</span></div>
+        <div class="ui-kpi-val" style="color:var(--red)">{{ number_format($this->creditSalesStats['total_credit_given']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $this->creditSalesStats['count'] }}</span><span class="ui-kpi-stat-l">Sales</span></div>
+            <div class="ui-kpi-stat" ><span class="ui-kpi-stat-v">{{ number_format($this->totalTransactions) }}</span><span class="ui-kpi-stat-l">Total Txns</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($this->totalRevenue) }}</span><span class="ui-kpi-stat-l">Revenue</span></div>
         </div>
     </div>
 </div>
