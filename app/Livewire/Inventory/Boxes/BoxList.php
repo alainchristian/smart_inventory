@@ -280,29 +280,31 @@ class BoxList extends Component
                 $q->where('boxes.location_type', $this->locationType)
             );
 
+        // Item and expiry figures cover sellable (full/partial) boxes only, so
+        // the KPI footers add up to the Sellable Boxes card
         $stats = (clone $statsQuery)->selectRaw("
             COUNT(*)                                                          AS total,
             SUM(CASE WHEN boxes.status = 'full'    THEN 1 ELSE 0 END)        AS full_count,
             SUM(CASE WHEN boxes.status = 'partial' THEN 1 ELSE 0 END)        AS partial_count,
             SUM(CASE WHEN boxes.status = 'empty'   THEN 1 ELSE 0 END)        AS empty_count,
             SUM(CASE WHEN boxes.status = 'damaged' THEN 1 ELSE 0 END)        AS damaged_count,
-            SUM(CASE WHEN boxes.status != 'empty' THEN boxes.items_remaining ELSE 0 END) AS total_items,
-            SUM(CASE WHEN boxes.status != 'empty' THEN boxes.items_total     ELSE 0 END) AS total_capacity,
+            SUM(CASE WHEN boxes.status IN ('full','partial') THEN boxes.items_remaining ELSE 0 END) AS total_items,
+            SUM(CASE WHEN boxes.status IN ('full','partial') THEN boxes.items_total     ELSE 0 END) AS total_capacity,
             SUM(CASE WHEN boxes.status IN ('full','partial') AND boxes.items_remaining > 0
                      THEN boxes.items_remaining * products.purchase_price ELSE 0 END) AS cost_value,
             SUM(CASE WHEN boxes.status IN ('full','partial') AND boxes.items_remaining > 0
                      THEN boxes.items_remaining * products.selling_price  ELSE 0 END) AS retail_value,
-            SUM(CASE WHEN boxes.status != 'empty'
+            SUM(CASE WHEN boxes.status IN ('full','partial')
                      AND boxes.expiry_date IS NOT NULL
                      AND boxes.expiry_date <= NOW() + INTERVAL '30 days'
                      AND boxes.expiry_date >= NOW()
                      THEN 1 ELSE 0 END)                                        AS expiring_soon,
-            SUM(CASE WHEN boxes.status != 'empty'
+            SUM(CASE WHEN boxes.status IN ('full','partial')
                      AND boxes.expiry_date < NOW() THEN 1 ELSE 0 END)          AS expired_count,
-            SUM(CASE WHEN boxes.status != 'empty'
+            SUM(CASE WHEN boxes.status IN ('full','partial')
                      AND boxes.expiry_date > NOW() + INTERVAL '30 days'
                      THEN 1 ELSE 0 END)                                        AS expiry_later,
-            SUM(CASE WHEN boxes.status != 'empty'
+            SUM(CASE WHEN boxes.status IN ('full','partial')
                      AND boxes.expiry_date IS NULL THEN 1 ELSE 0 END)          AS no_expiry
         ")->first();
 

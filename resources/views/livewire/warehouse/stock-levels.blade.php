@@ -36,6 +36,46 @@
                    transition:border-color var(--tr); }
 .wsl-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim); }
 
+/* ── Table ──────────────────────────────────────────────────────────────── */
+.wsl-table-wrap  { background:var(--surface);border:none;border-radius:var(--r);
+                   box-shadow:var(--shadow-card); }
+.wsl-table-head  { padding:14px 16px;border-bottom:1px solid var(--border);
+                   display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.wsl-table-title { font-size:13px;font-weight:700;color:var(--text);margin:0; }
+.wsl-scroll      { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+.wsl-table       { width:100%;border-collapse:collapse;table-layout:fixed;min-width:960px; }
+.wsl-table thead tr { border-bottom:2px solid var(--border); }
+.wsl-table thead th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;
+                      letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);
+                      white-space:nowrap; }
+.wsl-table thead th.c { text-align:center; }
+.wsl-table thead th.r { text-align:right; }
+.wsl-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr); }
+.wsl-table tbody tr:last-child { border-bottom:none; }
+.wsl-table tbody tr:hover     { background:var(--surface2); }
+.wsl-table tbody tr.wsl-low   { background:rgba(217,119,6,.04); }
+.wsl-table tbody tr.wsl-low:hover { background:rgba(217,119,6,.09); }
+.wsl-table td   { padding:12px 16px;font-size:13px;vertical-align:middle;color:var(--text-sub);
+                  white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.wsl-table td[colspan] { white-space:normal; }
+.wsl-table td.c { text-align:center; }
+.wsl-table td.r { text-align:right; }
+
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+.wsl-badge     { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+                 padding:3px 9px;border-radius:6px;white-space:nowrap; }
+.wsl-badge-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.wsl-empty       { padding:60px 20px;text-align:center; }
+.wsl-empty-icon  { width:44px;height:44px;border-radius:12px;background:var(--surface2);
+                   display:flex;align-items:center;justify-content:center;margin:0 auto 14px; }
+.wsl-empty-title { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px; }
+.wsl-empty-sub   { font-size:13px;color:var(--text-dim); }
+
+/* ── Pagination ─────────────────────────────────────────────────────────── */
+.wsl-pagination { padding:12px 16px;border-top:1px solid var(--border); }
+
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 /* Tablet / small laptop (content area < 960px next to the sidebar): let the
    7 columns share the width instead of scrolling Items/Status off-screen */

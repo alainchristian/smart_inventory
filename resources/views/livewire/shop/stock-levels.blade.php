@@ -199,7 +199,7 @@
         <div class="ui-kpi-footer">
             <div class="ui-kpi-stat">
                 <span class="ui-kpi-stat-v">{{ number_format(max(0, ($kpis->product_count ?? 0) - ($lowStockCount ?? 0))) }}</span>
-                <span class="ui-kpi-stat-l">In stock</span>
+                <span class="ui-kpi-stat-l">Healthy</span>
             </div>
             <div class="ui-kpi-stat">
                 <span class="ui-kpi-stat-v" style="{{ ($lowStockCount ?? 0) > 0 ? 'color:var(--amber)' : '' }}">{{ number_format($lowStockCount ?? 0) }}</span>
