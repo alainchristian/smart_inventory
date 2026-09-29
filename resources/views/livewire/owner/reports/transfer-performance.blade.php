@@ -13,29 +13,7 @@
                    outline:none;cursor:pointer;font-family:var(--font) }
 .tp-ctrl-select:focus { border-color:var(--accent) }
 
-/* KPI strip */
-.tp-kpis         { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px }
-.tp-kpi          { background:var(--surface);border:none;border-radius:var(--r);
-                   box-shadow:var(--shadow-card);padding:20px 18px;
-                   display:flex;flex-direction:column;gap:14px;transition:box-shadow var(--tr) }
-.tp-kpi:hover    { box-shadow:var(--shadow-card-hover) }
-.tp-kpi-row      { display:flex;align-items:center;gap:10px }
-.tp-kpi-icon     { width:34px;height:34px;border-radius:9px;display:flex;align-items:center;
-                   justify-content:center;flex-shrink:0 }
-.tp-kpi-body     { flex:1;min-width:0 }
-.tp-kpi-label    { font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                   color:var(--text-dim);line-height:1.2 }
-.tp-kpi-sub      { font-size:13px;color:var(--text-dim);margin-top:2px }
-.tp-kpi-val      { font-size:26px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
-.tp-kpi-bar      { height:3px;border-radius:3px }
-.tp-kpi-divider  { height:1px;background:var(--border) }
-.tp-kpi-footer   { display:flex;flex-direction:column;gap:0 }
-.tp-kpi-stat     { display:flex;flex-direction:row-reverse;justify-content:space-between;
-                   align-items:center;padding:4px 0;border-bottom:1px solid var(--border);min-width:0 }
-.tp-kpi-stat:last-child { border-bottom:none }
-.tp-kpi-stat-v   { font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
-                   letter-spacing:-.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.tp-kpi-stat-l   { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* Tabs */
 .tp-tabs         { display:grid;grid-template-columns:repeat(4,1fr);
@@ -131,15 +109,11 @@
 
 /* Responsive */
 @media(max-width:900px) {
-    .tp-kpis    { grid-template-columns:1fr 1fr;gap:10px }
     .tp-grid-2  { grid-template-columns:1fr }
     .tp-stepper { flex-wrap:wrap;gap:12px }
     .tp-step-line { display:none }
 }
 @media(max-width:640px) {
-    .tp-kpis    { grid-template-columns:1fr 1fr;gap:8px }
-    .tp-kpi     { padding:14px 12px;gap:10px }
-    .tp-kpi-val { font-size:22px }
     .tp-tabs    { display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
                   scrollbar-width:none;flex-wrap:nowrap }
     .tp-tabs::-webkit-scrollbar { display:none }
@@ -236,123 +210,123 @@
                     ? round(($kpis['total_transfers'] - $kpis['discrepancy_count']) / $kpis['total_transfers'] * 100, 1)
                     : 100;
 @endphp
-<div class="tp-kpis m-kpis">
+<div class="ui-kpis m-kpis">
 
     {{-- Total Transfers --}}
-    <div class="tp-kpi">
-        <div class="tp-kpi-row">
-            <div class="tp-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             </div>
-            <div class="tp-kpi-body">
-                <div class="tp-kpi-label">Total Transfers</div>
-                <div class="tp-kpi-sub">For selected period</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Transfers</div>
+                <div class="ui-kpi-sub">For selected period</div>
             </div>
         </div>
-        <div class="tp-kpi-val" style="color:var(--violet)">{{ number_format($kpis['total_transfers']) }}</div>
-        <div class="tp-kpi-bar" style="background:var(--violet-dim)">
+        <div class="ui-kpi-val" style="color:var(--violet)">{{ number_format($kpis['total_transfers']) }}</div>
+        <div class="ui-kpi-bar" style="background:var(--violet-dim)">
             <div style="height:100%;border-radius:3px;background:var(--violet);width:100%"></div>
         </div>
-        <div class="tp-kpi-divider"></div>
-        <div class="tp-kpi-footer">
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">{{ number_format($avgDaily, 1) }}</span>
-                <span class="tp-kpi-stat-l">Per Day</span>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($avgDaily, 1) }}</span>
+                <span class="ui-kpi-stat-l">Per Day</span>
             </div>
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">{{ $inTransitCount }}</span>
-                <span class="tp-kpi-stat-l">In Transit</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $inTransitCount }}</span>
+                <span class="ui-kpi-stat-l">In Transit</span>
             </div>
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">{{ $kpis['discrepancy_count'] }}</span>
-                <span class="tp-kpi-stat-l">Issues</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpis['discrepancy_count'] }}</span>
+                <span class="ui-kpi-stat-l">Issues</span>
             </div>
         </div>
     </div>
 
     {{-- Avg Completion Time --}}
-    <div class="tp-kpi">
-        <div class="tp-kpi-row">
-            <div class="tp-kpi-icon" style="background:{{ $compIconBg }};color:{{ $compColor }}">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:{{ $compIconBg }};color:{{ $compColor }}">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="tp-kpi-body">
-                <div class="tp-kpi-label">Avg Completion</div>
-                <div class="tp-kpi-sub">Request to receipt</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Avg Completion</div>
+                <div class="ui-kpi-sub">Request to receipt</div>
             </div>
         </div>
-        <div class="tp-kpi-val" style="color:{{ $compColor }}">{{ number_format($compHrs, 1) }}<span style="font-size:17px;font-weight:600">h</span></div>
-        <div class="tp-kpi-divider"></div>
-        <div class="tp-kpi-footer">
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">{{ $receivedCount }}</span>
-                <span class="tp-kpi-stat-l">Completed</span>
+        <div class="ui-kpi-val" style="color:{{ $compColor }}">{{ number_format($compHrs, 1) }}<span style="font-size:17px;font-weight:600">h</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $receivedCount }}</span>
+                <span class="ui-kpi-stat-l">Completed</span>
             </div>
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v" style="color:{{ $compColor }}">{{ $compLabel }}</span>
-                <span class="tp-kpi-stat-l">Performance</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:{{ $compColor }}">{{ $compLabel }}</span>
+                <span class="ui-kpi-stat-l">Performance</span>
             </div>
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">&lt; 48h</span>
-                <span class="tp-kpi-stat-l">Target</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">&lt; 48h</span>
+                <span class="ui-kpi-stat-l">Target</span>
             </div>
         </div>
     </div>
 
     {{-- Discrepancy Rate --}}
-    <div class="tp-kpi">
-        <div class="tp-kpi-row">
-            <div class="tp-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             </div>
-            <div class="tp-kpi-body">
-                <div class="tp-kpi-label">Discrepancy Rate</div>
-                <div class="tp-kpi-sub">Transfers with issues</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Discrepancy Rate</div>
+                <div class="ui-kpi-sub">Transfers with issues</div>
             </div>
         </div>
-        <div class="tp-kpi-val" style="color:{{ $discColor }}">{{ number_format($discRate, 2) }}<span style="font-size:19px;font-weight:700">%</span></div>
-        <div class="tp-kpi-divider"></div>
-        <div class="tp-kpi-footer">
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">{{ $kpis['discrepancy_count'] }}</span>
-                <span class="tp-kpi-stat-l">Incidents</span>
+        <div class="ui-kpi-val" style="color:{{ $discColor }}">{{ number_format($discRate, 2) }}<span style="font-size:19px;font-weight:700">%</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpis['discrepancy_count'] }}</span>
+                <span class="ui-kpi-stat-l">Incidents</span>
             </div>
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v" style="color:{{ $discColor }}">{{ $discLabel }}</span>
-                <span class="tp-kpi-stat-l">Risk Level</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:{{ $discColor }}">{{ $discLabel }}</span>
+                <span class="ui-kpi-stat-l">Risk Level</span>
             </div>
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">&lt; 5%</span>
-                <span class="tp-kpi-stat-l">Target</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">&lt; 5%</span>
+                <span class="ui-kpi-stat-l">Target</span>
             </div>
         </div>
     </div>
 
     {{-- Success Rate --}}
-    <div class="tp-kpi">
-        <div class="tp-kpi-row">
-            <div class="tp-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="tp-kpi-body">
-                <div class="tp-kpi-label">Success Rate</div>
-                <div class="tp-kpi-sub">Clean transfers</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Success Rate</div>
+                <div class="ui-kpi-sub">Clean transfers</div>
             </div>
         </div>
-        <div class="tp-kpi-val" style="color:{{ $successRate >= 95 ? 'var(--green)' : ($successRate >= 80 ? 'var(--accent)' : 'var(--amber)') }}">{{ number_format($successRate, 1) }}<span style="font-size:19px;font-weight:700">%</span></div>
-        <div class="tp-kpi-divider"></div>
-        <div class="tp-kpi-footer">
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">{{ $receivedCount }}</span>
-                <span class="tp-kpi-stat-l">Received</span>
+        <div class="ui-kpi-val" style="color:{{ $successRate >= 95 ? 'var(--green)' : ($successRate >= 80 ? 'var(--accent)' : 'var(--amber)') }}">{{ number_format($successRate, 1) }}<span style="font-size:19px;font-weight:700">%</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $receivedCount }}</span>
+                <span class="ui-kpi-stat-l">Received</span>
             </div>
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">{{ $pendingCount }}</span>
-                <span class="tp-kpi-stat-l">Pending</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $pendingCount }}</span>
+                <span class="ui-kpi-stat-l">Pending</span>
             </div>
-            <div class="tp-kpi-stat">
-                <span class="tp-kpi-stat-v">{{ $cancelCount }}</span>
-                <span class="tp-kpi-stat-l">Cancelled</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $cancelCount }}</span>
+                <span class="ui-kpi-stat-l">Cancelled</span>
             </div>
         </div>
     </div>

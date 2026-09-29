@@ -15,29 +15,7 @@
                   outline:none;cursor:pointer;font-family:var(--font) }
 .la-loc-select:focus { border-color:var(--accent) }
 
-/* KPI strip */
-.la-kpis        { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px }
-.la-kpi         { background:var(--surface);border:none;border-radius:var(--r);
-                  box-shadow:var(--shadow-card);padding:20px 18px;
-                  display:flex;flex-direction:column;gap:14px;transition:box-shadow var(--tr) }
-.la-kpi:hover   { box-shadow:var(--shadow-card-hover) }
-.la-kpi-row     { display:flex;align-items:center;gap:10px }
-.la-kpi-icon    { width:34px;height:34px;border-radius:9px;display:flex;align-items:center;
-                  justify-content:center;flex-shrink:0 }
-.la-kpi-body    { flex:1;min-width:0 }
-.la-kpi-label   { font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                  color:var(--text-dim);line-height:1.2 }
-.la-kpi-sub     { font-size:11px;color:var(--text-dim);margin-top:2px }
-.la-kpi-val     { font-size:22px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
-.la-kpi-bar     { height:3px;border-radius:3px }
-.la-kpi-divider { height:1px;background:var(--border) }
-.la-kpi-footer  { display:flex;flex-direction:column;gap:0 }
-.la-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
-                  align-items:center;padding:4px 0;border-bottom:1px solid var(--border);min-width:0 }
-.la-kpi-stat:last-child { border-bottom:none }
-.la-kpi-stat-v  { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text-sub);
-                  letter-spacing:-.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.la-kpi-stat-l  { font-size:10px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* Tabs */
 .la-tabs        { display:grid;grid-template-columns:repeat(4,1fr);
@@ -114,13 +92,9 @@
 
 /* Responsive */
 @media(max-width:900px) {
-    .la-kpis    { grid-template-columns:1fr 1fr;gap:10px }
     .la-grid-2  { grid-template-columns:1fr }
 }
 @media(max-width:640px) {
-    .la-kpis    { grid-template-columns:1fr 1fr;gap:8px }
-    .la-kpi     { padding:14px 12px;gap:10px }
-    .la-kpi-val { font-size:18px }
     .la-tabs    { display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
                   scrollbar-width:none;flex-wrap:nowrap }
     .la-tabs::-webkit-scrollbar { display:none }
@@ -204,123 +178,123 @@
                     : ($kpis['return_rate'] > 2 ? 'var(--amber)' : 'var(--green)');
     $rateLabel   = $kpis['return_rate'] > 5 ? 'High' : ($kpis['return_rate'] > 2 ? 'Medium' : 'Low');
 @endphp
-<div class="la-kpis m-kpis">
+<div class="ui-kpis m-kpis">
 
     {{-- Total Loss --}}
-    <div class="la-kpi">
-        <div class="la-kpi-row">
-            <div class="la-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
             </div>
-            <div class="la-kpi-body">
-                <div class="la-kpi-label">Total Loss</div>
-                <div class="la-kpi-sub">Refunds + Damaged</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Loss</div>
+                <div class="ui-kpi-sub">Refunds + Damaged</div>
             </div>
         </div>
-        <div class="la-kpi-val" style="color:var(--red)">{{ number_format($kpis['total_loss']) }} <span style="font-size:12px;font-weight:600;color:var(--text-dim)">RWF</span></div>
-        <div class="la-kpi-bar" style="background:var(--red-dim)">
+        <div class="ui-kpi-val" style="color:var(--red)">{{ number_format($kpis['total_loss']) }} <span style="font-size:12px;font-weight:600;color:var(--text-dim)">RWF</span></div>
+        <div class="ui-kpi-bar" style="background:var(--red-dim)">
             <div style="height:100%;border-radius:3px;background:var(--red);width:100%"></div>
         </div>
-        <div class="la-kpi-divider"></div>
-        <div class="la-kpi-footer">
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ number_format($kpis['total_refunds']) }}</span>
-                <span class="la-kpi-stat-l">Refunds RWF</span>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpis['total_refunds']) }}</span>
+                <span class="ui-kpi-stat-l">Refunds RWF</span>
             </div>
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ number_format($kpis['damaged_loss']) }}</span>
-                <span class="la-kpi-stat-l">Damaged RWF</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($kpis['damaged_loss']) }}</span>
+                <span class="ui-kpi-stat-l">Damaged RWF</span>
             </div>
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ $lossShare }}%</span>
-                <span class="la-kpi-stat-l">Refund Share</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $lossShare }}%</span>
+                <span class="ui-kpi-stat-l">Refund Share</span>
             </div>
         </div>
     </div>
 
     {{-- Total Refunds --}}
-    <div class="la-kpi">
-        <div class="la-kpi-row">
-            <div class="la-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
             </div>
-            <div class="la-kpi-body">
-                <div class="la-kpi-label">Total Refunds</div>
-                <div class="la-kpi-sub">Cash returned to customers</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Refunds</div>
+                <div class="ui-kpi-sub">Cash returned to customers</div>
             </div>
         </div>
-        <div class="la-kpi-val" style="color:var(--amber)">{{ number_format($kpis['total_refunds']) }} <span style="font-size:12px;font-weight:600;color:var(--text-dim)">RWF</span></div>
-        <div class="la-kpi-divider"></div>
-        <div class="la-kpi-footer">
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ $kpis['returns_count'] }}</span>
-                <span class="la-kpi-stat-l">Returns</span>
+        <div class="ui-kpi-val" style="color:var(--amber)">{{ number_format($kpis['total_refunds']) }} <span style="font-size:12px;font-weight:600;color:var(--text-dim)">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpis['returns_count'] }}</span>
+                <span class="ui-kpi-stat-l">Returns</span>
             </div>
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ number_format($avgRefund) }}</span>
-                <span class="la-kpi-stat-l">Avg / Return</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($avgRefund) }}</span>
+                <span class="ui-kpi-stat-l">Avg / Return</span>
             </div>
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v" style="color:{{ $rateColor }}">{{ number_format($kpis['return_rate'], 1) }}%</span>
-                <span class="la-kpi-stat-l">Return Rate</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:{{ $rateColor }}">{{ number_format($kpis['return_rate'], 1) }}%</span>
+                <span class="ui-kpi-stat-l">Return Rate</span>
             </div>
         </div>
     </div>
 
     {{-- Return Rate --}}
-    <div class="la-kpi">
-        <div class="la-kpi-row">
-            <div class="la-kpi-icon" style="background:{{ $kpis['return_rate'] > 5 ? 'var(--red-dim)' : ($kpis['return_rate'] > 2 ? 'var(--amber-dim)' : 'var(--green-dim)') }};color:{{ $rateColor }}">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:{{ $kpis['return_rate'] > 5 ? 'var(--red-dim)' : ($kpis['return_rate'] > 2 ? 'var(--amber-dim)' : 'var(--green-dim)') }};color:{{ $rateColor }}">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             </div>
-            <div class="la-kpi-body">
-                <div class="la-kpi-label">Return Rate</div>
-                <div class="la-kpi-sub">Returns ÷ Total Sales</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Return Rate</div>
+                <div class="ui-kpi-sub">Returns ÷ Total Sales</div>
             </div>
         </div>
-        <div class="la-kpi-val" style="color:{{ $rateColor }}">{{ number_format($kpis['return_rate'], 2) }}<span style="font-size:16px;font-weight:700">%</span></div>
-        <div class="la-kpi-divider"></div>
-        <div class="la-kpi-footer">
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ $kpis['returns_count'] }}</span>
-                <span class="la-kpi-stat-l">Returns</span>
+        <div class="ui-kpi-val" style="color:{{ $rateColor }}">{{ number_format($kpis['return_rate'], 2) }}<span style="font-size:16px;font-weight:700">%</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $kpis['returns_count'] }}</span>
+                <span class="ui-kpi-stat-l">Returns</span>
             </div>
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v" style="color:{{ $rateColor }}">{{ $rateLabel }}</span>
-                <span class="la-kpi-stat-l">Risk Level</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:{{ $rateColor }}">{{ $rateLabel }}</span>
+                <span class="ui-kpi-stat-l">Risk Level</span>
             </div>
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">&lt; 2%</span>
-                <span class="la-kpi-stat-l">Target</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">&lt; 2%</span>
+                <span class="ui-kpi-stat-l">Target</span>
             </div>
         </div>
     </div>
 
     {{-- Damaged Goods --}}
-    <div class="la-kpi">
-        <div class="la-kpi-row">
-            <div class="la-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="la-kpi-body">
-                <div class="la-kpi-label">Damaged Goods</div>
-                <div class="la-kpi-sub">Estimated value lost</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Damaged Goods</div>
+                <div class="ui-kpi-sub">Estimated value lost</div>
             </div>
         </div>
-        <div class="la-kpi-val" style="color:var(--violet)">{{ number_format($kpis['damaged_loss']) }} <span style="font-size:12px;font-weight:600;color:var(--text-dim)">RWF</span></div>
-        <div class="la-kpi-divider"></div>
-        <div class="la-kpi-footer">
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ $damagedCount }}</span>
-                <span class="la-kpi-stat-l">Incidents</span>
+        <div class="ui-kpi-val" style="color:var(--violet)">{{ number_format($kpis['damaged_loss']) }} <span style="font-size:12px;font-weight:600;color:var(--text-dim)">RWF</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $damagedCount }}</span>
+                <span class="ui-kpi-stat-l">Incidents</span>
             </div>
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ $damagedCount > 0 ? number_format((int) round($kpis['damaged_loss'] / $damagedCount)) : '—' }}</span>
-                <span class="la-kpi-stat-l">Avg / Incident</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $damagedCount > 0 ? number_format((int) round($kpis['damaged_loss'] / $damagedCount)) : '—' }}</span>
+                <span class="ui-kpi-stat-l">Avg / Incident</span>
             </div>
-            <div class="la-kpi-stat">
-                <span class="la-kpi-stat-v">{{ $dmgShare }}%</span>
-                <span class="la-kpi-stat-l">Of Total Loss</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $dmgShare }}%</span>
+                <span class="ui-kpi-stat-l">Of Total Loss</span>
             </div>
         </div>
     </div>

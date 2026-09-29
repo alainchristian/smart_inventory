@@ -2624,10 +2624,12 @@ main,
 /* ── Summary (KPI) cards — the Finance Overview card, shared ──────────────
    .ui-kpis grid (4 columns; for another count set --kpi-cols in the page's
    own CSS, e.g. .um-kpis { --kpi-cols:5 } — not inline, or its media
-   queries can't change it; 2 columns ≤900px — add .m-kpis for phones;
-   pages with 2 cards keep 4 columns so every card is the same width) >
+   queries can't change it; ≤900px it's --kpi-cols-sm, default 2 — add
+   .m-kpis for the shared 2-up phone layout; pages with 2 cards keep 4
+   columns so every card is the same width) >
    .ui-kpi > .ui-kpi-row (.ui-kpi-icon + .ui-kpi-body [.ui-kpi-label,
    .ui-kpi-sub] + optional .ui-kpi-badge) > .ui-kpi-val [.ui-kpi-unit] >
+   optional .ui-kpi-bar (3px track; inline background + an inner fill div) >
    .ui-kpi-divider > .ui-kpi-footer > .ui-kpi-stat [.ui-kpi-stat-v,
    .ui-kpi-stat-l]. Value comes before label in the markup; row-reverse puts
    the label on the left. Colour the icon/value with inline token styles. */
@@ -2646,6 +2648,7 @@ main,
 .ui-kpi-badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
 .ui-kpi-val   { font-size: 24px; font-weight: 800; font-family: var(--mono); letter-spacing: -1px; line-height: 1; color: var(--text); }
 .ui-kpi-unit  { font-size: 13px; font-weight: 500; color: var(--text-dim); margin-left: 3px; letter-spacing: 0; }
+.ui-kpi-bar     { height: 3px; border-radius: 3px; background: var(--surface2); }
 .ui-kpi-divider { height: 1px; background: var(--border); }
 .ui-kpi-footer  { display: flex; flex-direction: column; gap: 0; }
 .ui-kpi-stat {
@@ -2655,7 +2658,7 @@ main,
 .ui-kpi-stat:last-child { border-bottom: none; }
 .ui-kpi-stat-v { font-size: 13px; font-weight: 700; font-family: var(--mono); color: var(--text-sub); letter-spacing: -.3px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-kpi-stat-l { font-size: 11px; color: var(--text-dim); flex-shrink: 0; margin-right: 8px; }
-@media (max-width: 900px) { .ui-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .ui-kpis { grid-template-columns: repeat(var(--kpi-cols-sm, 2), minmax(0, 1fr)); } }
 
 /* ── KPI grid: 2-up compact cards on phones ─────────────────────────────
    Add .m-kpis to a page's KPI grid (the element whose children are the
