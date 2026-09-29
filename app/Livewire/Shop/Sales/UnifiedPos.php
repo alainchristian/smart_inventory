@@ -268,7 +268,7 @@ class UnifiedPos extends Component
         // (it's shown on the shop's stock page to send back to the warehouse)
         $sellable = $this->shopSellableCategoryIds();
 
-        $this->shopStock = Product::where('is_active', true)
+        $products = Product::where('is_active', true)
             ->when($sellable !== null, fn ($q) => $q->whereIn('category_id', $sellable ?: [0]))
             ->whereHas('boxes', function ($q) {
                 $q->where('location_type', 'shop')
@@ -278,9 +278,19 @@ class UnifiedPos extends Component
             })
             ->with('category')
             ->orderBy('name')
-            ->get()
-            ->map(function ($product) {
-                $stock = $product->getCurrentStock('shop', $this->shopId);
+            ->get();
+
+        // One grouped query for every product's stock (was 3 queries per product)
+        $stockById = Product::stockSummaryFor('shop', $this->shopId, $products->pluck('id'));
+
+        $this->shopStock = $products
+            ->map(function ($product) use ($stockById) {
+                $s     = $stockById[$product->id];
+                $stock = [
+                    'full_boxes'    => $s['full_boxes'],
+                    'partial_boxes' => $s['partial_boxes'],
+                    'total_items'   => $s['total_items'],
+                ];
                 return [
                     'id'            => $product->id,
                     'name'          => $product->name,

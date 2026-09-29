@@ -157,19 +157,19 @@ class ReviewTransfer extends Component
 
     public function render()
     {
-        // Get warehouse stock for all products
+        // Warehouse stock for all products in two queries (was 4 per item);
+        // like Product::find(), soft-deleted products are left out
+        $productIds = Product::whereIn('id', array_column($this->items, 'product_id'))->pluck('id');
+        $stockById  = Product::stockSummaryFor('warehouse', $this->transfer->from_warehouse_id, $productIds);
+
         $stockLevels = [];
-        foreach ($this->items as $item) {
-            $product = Product::find($item['product_id']);
-            if ($product) {
-                $stock = $product->getCurrentStock('warehouse', $this->transfer->from_warehouse_id);
-                $stockLevels[$product->id] = [
-                    'full_boxes' => $stock['full_boxes'],
-                    'partial_boxes' => $stock['partial_boxes'],
-                    'total_boxes' => $stock['full_boxes'] + $stock['partial_boxes'],
-                    'total_items' => $stock['total_items'],
-                ];
-            }
+        foreach ($stockById as $productId => $stock) {
+            $stockLevels[$productId] = [
+                'full_boxes' => $stock['full_boxes'],
+                'partial_boxes' => $stock['partial_boxes'],
+                'total_boxes' => $stock['full_boxes'] + $stock['partial_boxes'],
+                'total_items' => $stock['total_items'],
+            ];
         }
 
         return view('livewire.warehouse-manager.transfers.review-transfer', [

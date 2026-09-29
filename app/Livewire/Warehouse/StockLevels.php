@@ -72,13 +72,17 @@ class StockLevels extends Component
 
         $warehouseThreshold = app(SettingsService::class)->lowStockBoxesWarehouse();
 
-        // Get stock levels for each product
+        // Stock for the whole page in one query (was 5 queries per product:
+        // getCurrentStock() + isLowStock() twice); same rules, see stockSummaryFor()
+        $stockById = Product::stockSummaryFor(LocationType::WAREHOUSE->value, $this->warehouseId, $products->pluck('id'));
+
         $stockData = [];
         foreach ($products as $product) {
-            $stock = $product->getCurrentStock(LocationType::WAREHOUSE->value, $this->warehouseId);
+            $stock      = $stockById[$product->id];
+            $isLowStock = $stock['stocked_boxes'] <= $warehouseThreshold;
 
             // Apply status filter
-            if ($this->statusFilter === 'low' && !$product->isLowStock(LocationType::WAREHOUSE->value, $this->warehouseId, $warehouseThreshold)) {
+            if ($this->statusFilter === 'low' && !$isLowStock) {
                 continue;
             } elseif ($this->statusFilter === 'out' && $stock['total_items'] > 0) {
                 continue;
@@ -89,7 +93,7 @@ class StockLevels extends Component
                 'full_boxes'    => $stock['full_boxes'],
                 'partial_boxes' => $stock['partial_boxes'],
                 'total_items'   => $stock['total_items'],
-                'is_low_stock'  => $product->isLowStock(LocationType::WAREHOUSE->value, $this->warehouseId, $warehouseThreshold),
+                'is_low_stock'  => $isLowStock,
             ];
         }
 

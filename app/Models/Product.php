@@ -158,6 +158,44 @@ class Product extends Model
         ];
     }
 
+    /**
+     * getCurrentStock() + the isLowStock() box count for many products in ONE
+     * query, keyed by product id (products with no boxes get zeros).
+     * Same rules as the per-product methods:
+     *   full_boxes / partial_boxes: status full / partial
+     *   total_items:  items_remaining over ALL statuses at the location
+     *   stocked_boxes: status != empty AND items_remaining > 0 (isLowStock)
+     */
+    public static function stockSummaryFor(string $locationType, int $locationId, iterable $productIds): array
+    {
+        $ids = collect($productIds)->map(fn ($id) => (int) $id)->unique()->values();
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $rows = \Illuminate\Support\Facades\DB::table('boxes')
+            ->where('location_type', $locationType)
+            ->where('location_id', $locationId)
+            ->whereIn('product_id', $ids)
+            ->groupBy('product_id')
+            ->selectRaw("
+                product_id,
+                COUNT(*) FILTER (WHERE status = 'full')    AS full_boxes,
+                COUNT(*) FILTER (WHERE status = 'partial') AS partial_boxes,
+                COALESCE(SUM(items_remaining), 0)          AS total_items,
+                COUNT(*) FILTER (WHERE status::text != 'empty' AND items_remaining > 0) AS stocked_boxes
+            ")
+            ->get()
+            ->keyBy('product_id');
+
+        return $ids->mapWithKeys(fn ($id) => [$id => [
+            'full_boxes'    => (int) ($rows[$id]->full_boxes ?? 0),
+            'partial_boxes' => (int) ($rows[$id]->partial_boxes ?? 0),
+            'total_items'   => (int) ($rows[$id]->total_items ?? 0),
+            'stocked_boxes' => (int) ($rows[$id]->stocked_boxes ?? 0),
+        ]])->all();
+    }
+
     // Scopes
     public function scopeActive($query)
     {
