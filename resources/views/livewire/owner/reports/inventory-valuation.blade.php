@@ -1,7 +1,7 @@
 {{-- ┌─────────────────────────────────────────────────────────────────────────┐
     │  Owner · Inventory Report                                               │
     │  Tabs: Overview · Valuation · Stock Health · Replenishment             │
-    │  Design system: var(--*) tokens, .bkpi pattern                        │
+    │  Design system: var(--*) tokens, shared .ui-kpi summary cards          │
     └─────────────────────────────────────────────────────────────────────────┘ --}}
 <div>
 <style>
@@ -43,23 +43,7 @@
 .iv-sort-th:hover { color:var(--accent) }
 .iv-sort-arrow { display:inline-block;margin-left:4px;font-size:10px;opacity:.5 }
 .iv-sort-th.active .iv-sort-arrow { opacity:1;color:var(--accent) }
-/* KPI cards — mirrors sa-kpi-* */
-.iv-kpis      { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
-.iv-kpi       { background:var(--surface);border:none;border-radius:var(--r);box-shadow:var(--shadow-card);padding:22px 20px;display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
-.iv-kpi:hover { box-shadow:var(--shadow-card-hover) }
-.iv-kpi-row   { display:flex;align-items:center;gap:12px }
-.iv-kpi-icon  { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0 }
-.iv-kpi-body  { flex:1;min-width:0 }
-.iv-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);line-height:1.2 }
-.iv-kpi-sub   { font-size:12px;color:var(--text-dim);margin-top:2px }
-.iv-kpi-val   { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1 }
-.iv-kpi-bar   { height:3px;border-radius:3px }
-.iv-kpi-divider { height:1px;background:var(--border) }
-.iv-kpi-footer  { display:flex;flex-direction:column;gap:0 }
-.iv-kpi-stat    { display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
-.iv-kpi-stat:last-child { border-bottom:none }
-.iv-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-0.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.iv-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
+/* KPI cards: shared .ui-kpi (app.css) */
 /* Full-width tab strip — mirrors sa-tabs */
 .iv-tabs { display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);box-shadow:var(--shadow-card);border-radius:var(--r);margin-bottom:24px;overflow:hidden }
 .iv-tab  { display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 10px;border:none;border-radius:0;border-bottom:2.5px solid transparent;border-right:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);background:transparent;color:var(--text-dim);transition:all var(--tr);white-space:nowrap }
@@ -94,9 +78,6 @@
     .iv-abc-grid { grid-template-columns:1fr 1fr !important }
 }
 @@media(max-width:768px) {
-    .iv-kpis    { grid-template-columns:1fr 1fr;gap:10px }
-    .iv-kpi     { padding:14px }
-    .iv-kpi-val { font-size:20px }
     .iv-presets { padding:10px 12px }
     .iv-preset  { padding:5px 10px;font-size:11px }
     .iv-alert-strip { grid-template-columns:1fr 1fr }
@@ -115,14 +96,9 @@
     .iv-loc-sel   { max-width:none;width:100% }
 }
 @@media(max-width:600px) {
-    .iv-kpis    { grid-template-columns:1fr 1fr;gap:8px }
-    .iv-kpi     { padding:14px 12px }
-    .iv-kpi-val { font-size:18px }
     .iv-alert-strip { grid-template-columns:1fr 1fr }
 }
 @@media(max-width:480px) {
-    .iv-kpi-stat-v { font-size:12px }
-    .iv-kpi-stat-l { font-size:10px }
     .iv-abc-grid { grid-template-columns:1fr !important }
     .iv-alert-strip { grid-template-columns:1fr }
     .iv-alert-cell  { border-right:none;border-bottom:1px solid var(--border) }
@@ -184,124 +160,124 @@
 {{-- ══════════════════════════════════════════════════════════════════════════
      HEADLINE KPI ROW (always visible)
 ══════════════════════════════════════════════════════════════════════════ --}}
-<div class="iv-kpis m-kpis">
+<div class="ui-kpis m-kpis">
 
     {{-- Card 1: Cost Value --}}
-    <div class="iv-kpi">
-        <div class="iv-kpi-row">
-            <div class="iv-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
-            <div class="iv-kpi-body">
-                <div class="iv-kpi-label">Cost Value</div>
-                <div class="iv-kpi-sub">RWF · capital invested</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Cost Value</div>
+                <div class="ui-kpi-sub">RWF · capital invested</div>
             </div>
         </div>
-        <div class="iv-kpi-val" style="color:var(--text)">{{ number_format($kpis['purchase_value']) }}</div>
-        <div class="iv-kpi-divider"></div>
-        <div class="iv-kpi-footer">
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Retail Value</span>
-                <span class="iv-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($kpis['retail_value']) }}</span>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($kpis['purchase_value']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($kpis['retail_value']) }}</span>
+                <span class="ui-kpi-stat-l">Retail Value</span>
             </div>
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Margin</span>
-                <span class="iv-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($kpis['potential_profit']) }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($kpis['potential_profit']) }}</span>
+                <span class="ui-kpi-stat-l">Margin</span>
             </div>
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Return %</span>
-                <span class="iv-kpi-stat-v" style="color:{{ $marginPct >= 20 ? 'var(--green)' : ($marginPct >= 10 ? 'var(--amber)' : 'var(--red)') }}">{{ $marginPct }}%</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:{{ $marginPct >= 20 ? 'var(--green)' : ($marginPct >= 10 ? 'var(--amber)' : 'var(--red)') }}">{{ $marginPct }}%</span>
+                <span class="ui-kpi-stat-l">Return %</span>
             </div>
         </div>
     </div>
 
     {{-- Card 2: Fill Rate --}}
-    <div class="iv-kpi">
-        <div class="iv-kpi-row">
-            <div class="iv-kpi-icon" style="background:color-mix(in srgb, {{ $fillColor }} 12%, transparent);color:{{ $fillColor }}">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:color-mix(in srgb, {{ $fillColor }} 12%, transparent);color:{{ $fillColor }}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
             </div>
-            <div class="iv-kpi-body">
-                <div class="iv-kpi-label">Fill Rate</div>
-                <div class="iv-kpi-sub">@if($fillRate === null) No stock @else items vs capacity @endif</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Fill Rate</div>
+                <div class="ui-kpi-sub">@if($fillRate === null) No stock @else items vs capacity @endif</div>
             </div>
         </div>
-        <div class="iv-kpi-val" style="color:{{ $fillColor }}">
+        <div class="ui-kpi-val" style="color:{{ $fillColor }}">
             @if($fillRate !== null) {{ $fillRate }}% @else — @endif
         </div>
-        <div class="iv-kpi-divider"></div>
-        <div class="iv-kpi-footer">
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Full boxes</span>
-                <span class="iv-kpi-stat-v" style="color:var(--success)">{{ number_format($kpis['box_full_count']) }}</span>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--success)">{{ number_format($kpis['box_full_count']) }}</span>
+                <span class="ui-kpi-stat-l">Full boxes</span>
             </div>
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Partial boxes</span>
-                <span class="iv-kpi-stat-v" style="color:var(--amber)">{{ number_format($kpis['box_partial_count']) }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--amber)">{{ number_format($kpis['box_partial_count']) }}</span>
+                <span class="ui-kpi-stat-l">Partial boxes</span>
             </div>
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Damaged</span>
-                <span class="iv-kpi-stat-v" style="color:var(--red)">{{ number_format($kpis['box_damaged_count']) }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--red)">{{ number_format($kpis['box_damaged_count']) }}</span>
+                <span class="ui-kpi-stat-l">Damaged</span>
             </div>
         </div>
     </div>
 
     {{-- Card 3: Stock Turnover --}}
-    <div class="iv-kpi">
-        <div class="iv-kpi-row">
-            <div class="iv-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
             </div>
-            <div class="iv-kpi-body">
-                <div class="iv-kpi-label">Stock Turnover</div>
-                <div class="iv-kpi-sub">@if($isWarehouse) N/A for warehouses @else annual COGS ÷ inventory @endif</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Stock Turnover</div>
+                <div class="ui-kpi-sub">@if($isWarehouse) N/A for warehouses @else annual COGS ÷ inventory @endif</div>
             </div>
         </div>
-        <div class="iv-kpi-val" style="color:var(--violet)">
+        <div class="ui-kpi-val" style="color:var(--violet)">
             @if($isWarehouse) — @else {{ number_format($kpis['turnover_rate'], 2) }}× @endif
         </div>
-        <div class="iv-kpi-divider"></div>
-        <div class="iv-kpi-footer">
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Products tracked</span>
-                <span class="iv-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($kpis['product_count']) }}</span>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($kpis['product_count']) }}</span>
+                <span class="ui-kpi-stat-l">Products tracked</span>
             </div>
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">COGS window</span>
-                <span class="iv-kpi-stat-v" style="color:var(--text-dim)">365 days</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-dim)">365 days</span>
+                <span class="ui-kpi-stat-l">COGS window</span>
             </div>
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Annual rate</span>
-                <span class="iv-kpi-stat-v" style="color:var(--violet)">{{ $isWarehouse ? '—' : number_format($kpis['turnover_rate'], 2).'×' }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--violet)">{{ $isWarehouse ? '—' : number_format($kpis['turnover_rate'], 2).'×' }}</span>
+                <span class="ui-kpi-stat-l">Annual rate</span>
             </div>
         </div>
     </div>
 
     {{-- Card 4: Shrinkage Rate --}}
-    <div class="iv-kpi">
-        <div class="iv-kpi-row">
-            <div class="iv-kpi-icon" style="background:color-mix(in srgb, {{ $shrinkColor }} 12%, transparent);color:{{ $shrinkColor }}">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:color-mix(in srgb, {{ $shrinkColor }} 12%, transparent);color:{{ $shrinkColor }}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
-            <div class="iv-kpi-body">
-                <div class="iv-kpi-label">Shrinkage Rate</div>
-                <div class="iv-kpi-sub">{{ $lookbackDays }}d window</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Shrinkage Rate</div>
+                <div class="ui-kpi-sub">{{ $lookbackDays }}d window</div>
             </div>
         </div>
-        <div class="iv-kpi-val" style="color:{{ $shrinkColor }}">{{ $shrinkage['shrinkage_pct'] }}%</div>
-        <div class="iv-kpi-divider"></div>
-        <div class="iv-kpi-footer">
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Units damaged</span>
-                <span class="iv-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($shrinkage['items_damaged_90d']) }}</span>
+        <div class="ui-kpi-val" style="color:{{ $shrinkColor }}">{{ $shrinkage['shrinkage_pct'] }}%</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($shrinkage['items_damaged_90d']) }}</span>
+                <span class="ui-kpi-stat-l">Units damaged</span>
             </div>
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Est. loss (RWF)</span>
-                <span class="iv-kpi-stat-v" style="color:{{ $shrinkColor }}">{{ number_format($shrinkage['estimated_loss']) }}</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:{{ $shrinkColor }}">{{ number_format($shrinkage['estimated_loss']) }}</span>
+                <span class="ui-kpi-stat-l">Est. loss (RWF)</span>
             </div>
-            <div class="iv-kpi-stat">
-                <span class="iv-kpi-stat-l">Period</span>
-                <span class="iv-kpi-stat-v" style="color:var(--text-dim)">{{ $lookbackDays }} days</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-dim)">{{ $lookbackDays }} days</span>
+                <span class="ui-kpi-stat-l">Period</span>
             </div>
         </div>
     </div>
@@ -640,126 +616,126 @@
         $deadLocked     = (int) ($vs['Dead_cost_value'] ?? 0);
         $damagedColor   = $shrinkage['items_damaged_90d'] > 0 ? 'var(--amber)' : 'var(--success)';
     @endphp
-    <div class="iv-kpis m-kpis" style="margin-bottom:24px">
+    <div class="ui-kpis m-kpis" style="margin-bottom:24px">
 
         {{-- Low Stock --}}
-        <div class="iv-kpi">
-            <div class="iv-kpi-row">
-                <div class="iv-kpi-icon" style="background:color-mix(in srgb,var(--amber) 12%,transparent);color:var(--amber)">
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:color-mix(in srgb,var(--amber) 12%,transparent);color:var(--amber)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                 </div>
-                <div class="iv-kpi-body">
-                    <div class="iv-kpi-label">Low Stock</div>
-                    <div class="iv-kpi-sub">products below threshold</div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Low Stock</div>
+                    <div class="ui-kpi-sub">products below threshold</div>
                 </div>
             </div>
-            <div class="iv-kpi-val" style="color:{{ ($health['low_stock_count'] ?? 0) > 0 ? 'var(--amber)' : 'var(--success)' }}">
+            <div class="ui-kpi-val" style="color:{{ ($health['low_stock_count'] ?? 0) > 0 ? 'var(--amber)' : 'var(--success)' }}">
                 {{ number_format($health['low_stock_count'] ?? 0) }}
             </div>
-            <div class="iv-kpi-divider"></div>
-            <div class="iv-kpi-footer">
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Products at risk</span>
-                    <span class="iv-kpi-stat-v" style="color:var(--amber)">{{ number_format($health['low_stock_count'] ?? 0) }}</span>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:var(--amber)">{{ number_format($health['low_stock_count'] ?? 0) }}</span>
+                    <span class="ui-kpi-stat-l">Products at risk</span>
                 </div>
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Tracking basis</span>
-                    <span class="iv-kpi-stat-v" style="color:var(--text-dim)">item threshold</span>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:var(--text-dim)">item threshold</span>
+                    <span class="ui-kpi-stat-l">Tracking basis</span>
                 </div>
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Scope</span>
-                    <span class="iv-kpi-stat-v" style="color:var(--text-dim)">all locations</span>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:var(--text-dim)">all locations</span>
+                    <span class="ui-kpi-stat-l">Scope</span>
                 </div>
             </div>
         </div>
 
         {{-- Dead Stock --}}
-        <div class="iv-kpi">
-            <div class="iv-kpi-row">
-                <div class="iv-kpi-icon" style="background:color-mix(in srgb,{{ $deadColor }} 12%,transparent);color:{{ $deadColor }}">
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:color-mix(in srgb,{{ $deadColor }} 12%,transparent);color:{{ $deadColor }}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
                 </div>
-                <div class="iv-kpi-body">
-                    <div class="iv-kpi-label">Dead Stock</div>
-                    <div class="iv-kpi-sub">no sales in 90 days</div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Dead Stock</div>
+                    <div class="ui-kpi-sub">no sales in 90 days</div>
                 </div>
             </div>
-            <div class="iv-kpi-val" style="color:{{ $deadColor }}">
+            <div class="ui-kpi-val" style="color:{{ $deadColor }}">
                 {{ number_format($health['dead_stock_count'] ?? 0) }}
             </div>
-            <div class="iv-kpi-divider"></div>
-            <div class="iv-kpi-footer">
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Products affected</span>
-                    <span class="iv-kpi-stat-v" style="color:{{ $deadColor }}">{{ number_format($health['dead_stock_count'] ?? 0) }}</span>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:{{ $deadColor }}">{{ number_format($health['dead_stock_count'] ?? 0) }}</span>
+                    <span class="ui-kpi-stat-l">Products affected</span>
                 </div>
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Capital locked (RWF)</span>
-                    <span class="iv-kpi-stat-v" style="color:var(--red)">{{ number_format($deadLocked) }}</span>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:var(--red)">{{ number_format($deadLocked) }}</span>
+                    <span class="ui-kpi-stat-l">Capital locked (RWF)</span>
                 </div>
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Action</span>
-                    <span class="iv-kpi-stat-v" style="color:var(--accent);cursor:pointer" wire:click="setTab('replenishment')">review →</span>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:var(--accent);cursor:pointer" wire:click="setTab('replenishment')">review →</span>
+                    <span class="ui-kpi-stat-l">Action</span>
                 </div>
             </div>
         </div>
 
         {{-- Expiring Soon --}}
-        <div class="iv-kpi">
-            <div class="iv-kpi-row">
-                <div class="iv-kpi-icon" style="background:color-mix(in srgb,{{ $expiringColor }} 12%,transparent);color:{{ $expiringColor }}">
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:color-mix(in srgb,{{ $expiringColor }} 12%,transparent);color:{{ $expiringColor }}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 </div>
-                <div class="iv-kpi-body">
-                    <div class="iv-kpi-label">Expiring Soon</div>
-                    <div class="iv-kpi-sub">batches within 30 days</div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Expiring Soon</div>
+                    <div class="ui-kpi-sub">batches within 30 days</div>
                 </div>
             </div>
-            <div class="iv-kpi-val" style="color:{{ $expiringColor }}">
+            <div class="ui-kpi-val" style="color:{{ $expiringColor }}">
                 {{ count($expiring) }}
             </div>
-            <div class="iv-kpi-divider"></div>
-            <div class="iv-kpi-footer">
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Batches expiring</span>
-                    <span class="iv-kpi-stat-v" style="color:{{ $expiringColor }}">{{ count($expiring) }}</span>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:{{ $expiringColor }}">{{ count($expiring) }}</span>
+                    <span class="ui-kpi-stat-l">Batches expiring</span>
                 </div>
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Cost at risk (RWF)</span>
-                    <span class="iv-kpi-stat-v" style="color:{{ $expiringColor }}">{{ number_format($expiringCost) }}</span>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:{{ $expiringColor }}">{{ number_format($expiringCost) }}</span>
+                    <span class="ui-kpi-stat-l">Cost at risk (RWF)</span>
                 </div>
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Window</span>
-                    <span class="iv-kpi-stat-v" style="color:var(--text-dim)">30 days</span>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:var(--text-dim)">30 days</span>
+                    <span class="ui-kpi-stat-l">Window</span>
                 </div>
             </div>
         </div>
 
         {{-- Shrinkage --}}
-        <div class="iv-kpi">
-            <div class="iv-kpi-row">
-                <div class="iv-kpi-icon" style="background:color-mix(in srgb,{{ $damagedColor }} 12%,transparent);color:{{ $damagedColor }}">
+        <div class="ui-kpi">
+            <div class="ui-kpi-row">
+                <div class="ui-kpi-icon" style="background:color-mix(in srgb,{{ $damagedColor }} 12%,transparent);color:{{ $damagedColor }}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 </div>
-                <div class="iv-kpi-body">
-                    <div class="iv-kpi-label">Shrinkage</div>
-                    <div class="iv-kpi-sub">{{ $lookbackDays }}d window</div>
+                <div class="ui-kpi-body">
+                    <div class="ui-kpi-label">Shrinkage</div>
+                    <div class="ui-kpi-sub">{{ $lookbackDays }}d window</div>
                 </div>
             </div>
-            <div class="iv-kpi-val" style="color:{{ $damagedColor }}">{{ $shrinkage['shrinkage_pct'] }}%</div>
-            <div class="iv-kpi-divider"></div>
-            <div class="iv-kpi-footer">
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Units damaged</span>
-                    <span class="iv-kpi-stat-v" style="color:{{ $damagedColor }}">{{ number_format($shrinkage['items_damaged_90d']) }}</span>
+            <div class="ui-kpi-val" style="color:{{ $damagedColor }}">{{ $shrinkage['shrinkage_pct'] }}%</div>
+            <div class="ui-kpi-divider"></div>
+            <div class="ui-kpi-footer">
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:{{ $damagedColor }}">{{ number_format($shrinkage['items_damaged_90d']) }}</span>
+                    <span class="ui-kpi-stat-l">Units damaged</span>
                 </div>
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Est. loss (RWF)</span>
-                    <span class="iv-kpi-stat-v" style="color:{{ $damagedColor }}">{{ number_format($shrinkage['estimated_loss']) }}</span>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:{{ $damagedColor }}">{{ number_format($shrinkage['estimated_loss']) }}</span>
+                    <span class="ui-kpi-stat-l">Est. loss (RWF)</span>
                 </div>
-                <div class="iv-kpi-stat">
-                    <span class="iv-kpi-stat-l">Period</span>
-                    <span class="iv-kpi-stat-v" style="color:var(--text-dim)">{{ $lookbackDays }} days</span>
+                <div class="ui-kpi-stat">
+                    <span class="ui-kpi-stat-v" style="color:var(--text-dim)">{{ $lookbackDays }} days</span>
+                    <span class="ui-kpi-stat-l">Period</span>
                 </div>
             </div>
         </div>

@@ -52,35 +52,12 @@
 .sa-tab:hover  { background:var(--surface2);color:var(--text);border-bottom-color:var(--border-hi) }
 .sa-tab.active { background:var(--accent-dim);color:var(--accent);border-bottom-color:var(--accent) }
 
-/* ── KPI cards ───────────────────────────────────────────────────── */
-.sa-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px }
-.sa-kpi  { background:var(--surface);border:none;border-radius:var(--r);
-           box-shadow:var(--shadow-card);padding:22px 20px;
-           display:flex;flex-direction:column;gap:16px;transition:box-shadow var(--tr) }
-.sa-kpi:hover { box-shadow:var(--shadow-card-hover) }
-.sa-kpi-row  { display:flex;align-items:center;gap:12px }
-.sa-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-               justify-content:center;flex-shrink:0 }
-.sa-kpi-body { flex:1;min-width:0 }
-.sa-kpi-label { font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-                color:var(--text-dim);line-height:1.2 }
-.sa-kpi-sub  { font-size:12px;color:var(--text-dim);margin-top:2px }
-.sa-kpi-val  { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;
-               line-height:1;flex-shrink:0 }
+/* ── KPI cards: shared .ui-kpi (app.css); growth badge ─────────── */
 .sa-growth   { font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;
                font-family:var(--mono);white-space:nowrap;flex-shrink:0 }
 .sa-growth.up   { background:var(--green-dim);color:var(--green) }
 .sa-growth.down { background:var(--red-dim);color:var(--red) }
 .sa-growth.neutral { background:var(--surface2);color:var(--text-dim) }
-.sa-kpi-divider { height:1px;background:var(--border) }
-.sa-kpi-footer  { display:flex;flex-direction:column;gap:0 }
-.sa-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
-                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
-.sa-kpi-stat:last-child { border-bottom:none }
-.sa-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px;
-                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.sa-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px }
-.sa-kpi-bar     { height:3px;border-radius:3px;background:var(--surface2) }
 
 /* ── Generic card ────────────────────────────────────────────────── */
 .sa-card { background:var(--surface);border:none;box-shadow:var(--shadow-card);
@@ -379,19 +356,19 @@
 @endphp
 
 {{-- ── 4 KPI Cards ─────────────────────────────────────────────────────── --}}
-<div class="sa-kpis m-kpis">
+<div class="ui-kpis m-kpis">
 
     {{-- Revenue --}}
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--pink-dim);color:var(--pink)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--pink-dim);color:var(--pink)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
                 </svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Revenue</div>
-                <div class="sa-kpi-sub">{{ number_format($rev['transactions_count']) }} transactions</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Revenue</div>
+                <div class="ui-kpi-sub">{{ number_format($rev['transactions_count']) }} transactions</div>
             </div>
             @php $rg = $rev['growth_percentage'] @endphp
             @if($rg === null)
@@ -400,35 +377,35 @@
             <span class="sa-growth {{ $rg >= 0 ? 'up' : 'down' }}">{{ $rg >= 0 ? '↑' : '↓' }} {{ abs($rg) }}%</span>
             @endif
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($rev['total_revenue']) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text)">{{ number_format($rev['avg_transaction_value']) }}</span>
-                <span class="sa-kpi-stat-l">Avg Order</span>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($rev['total_revenue']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text)">{{ number_format($rev['avg_transaction_value']) }}</span>
+                <span class="ui-kpi-stat-l">Avg Order</span>
             </div>
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:{{ $rev['total_discount'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">{{ number_format($rev['total_discount']) }}</span>
-                <span class="sa-kpi-stat-l">Discounts</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:{{ $rev['total_discount'] > 0 ? 'var(--amber)' : 'var(--text-dim)' }}">{{ number_format($rev['total_discount']) }}</span>
+                <span class="ui-kpi-stat-l">Discounts</span>
             </div>
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text-dim)">{{ number_format($rev['previous_revenue']) }}</span>
-                <span class="sa-kpi-stat-l">Prev Period</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-dim)">{{ number_format($rev['previous_revenue']) }}</span>
+                <span class="ui-kpi-stat-l">Prev Period</span>
             </div>
         </div>
     </div>
 
     {{-- Gross Profit --}}
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
                 </svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Gross Profit</div>
-                <div class="sa-kpi-sub">After cost of goods</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Gross Profit</div>
+                <div class="ui-kpi-sub">After cost of goods</div>
             </div>
             @php $gg = $gp['gross_profit_growth'] @endphp
             @if($gg === null)
@@ -437,39 +414,39 @@
             <span class="sa-growth {{ $gg >= 0 ? 'up' : 'down' }}">{{ $gg >= 0 ? '↑' : '↓' }} {{ abs($gg) }}%</span>
             @endif
         </div>
-        <div class="sa-kpi-val" style="color:var(--green)">{{ number_format($gp['gross_profit']) }}</div>
-        <div class="sa-kpi-bar" style="background:var(--green-dim)">
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($gp['gross_profit']) }}</div>
+        <div class="ui-kpi-bar" style="background:var(--green-dim)">
             <div style="height:100%;border-radius:3px;background:var(--green);width:{{ min($gp['margin_pct'], 100) }}%"></div>
         </div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat">
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
                 @php $mp = $gp['margin_pct'] @endphp
-                <span class="sa-kpi-stat-v" style="color:{{ $mp >= 30 ? 'var(--green)' : ($mp >= 15 ? 'var(--amber)' : 'var(--red)') }}">{{ $mp }}%</span>
-                <span class="sa-kpi-stat-l">Margin</span>
+                <span class="ui-kpi-stat-v" style="color:{{ $mp >= 30 ? 'var(--green)' : ($mp >= 15 ? 'var(--amber)' : 'var(--red)') }}">{{ $mp }}%</span>
+                <span class="ui-kpi-stat-l">Margin</span>
             </div>
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text-dim)">{{ number_format($gp['total_cost']) }}</span>
-                <span class="sa-kpi-stat-l">COGS</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-dim)">{{ number_format($gp['total_cost']) }}</span>
+                <span class="ui-kpi-stat-l">COGS</span>
             </div>
-            <div class="sa-kpi-stat">
+            <div class="ui-kpi-stat">
                 @php $md = $gp['margin_delta'] @endphp
-                <span class="sa-kpi-stat-v" style="color:{{ $md >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $md >= 0 ? '+' : '' }}{{ $md }}pp</span>
-                <span class="sa-kpi-stat-l">vs Prev</span>
+                <span class="ui-kpi-stat-v" style="color:{{ $md >= 0 ? 'var(--green)' : 'var(--red)' }}">{{ $md >= 0 ? '+' : '' }}{{ $md }}pp</span>
+                <span class="ui-kpi-stat-l">vs Prev</span>
             </div>
         </div>
     </div>
 
     {{-- Items Sold --}}
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
                 </svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Items Sold</div>
-                <div class="sa-kpi-sub">Units in period</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Items Sold</div>
+                <div class="ui-kpi-sub">Units in period</div>
             </div>
             @php $ig = $iss['growth'] @endphp
             @if($ig === null)
@@ -478,53 +455,53 @@
             <span class="sa-growth {{ $ig >= 0 ? 'up' : 'down' }}">{{ $ig >= 0 ? '↑' : '↓' }} {{ abs($ig) }}%</span>
             @endif
         </div>
-        <div class="sa-kpi-val" style="color:var(--violet)">{{ number_format($iss['items_sold']) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text-sub)">{{ $ov['override_sales_count'] }}</span>
-                <span class="sa-kpi-stat-l">Overrides</span>
+        <div class="ui-kpi-val" style="color:var(--violet)">{{ number_format($iss['items_sold']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-sub)">{{ $ov['override_sales_count'] }}</span>
+                <span class="ui-kpi-stat-l">Overrides</span>
             </div>
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text-sub)">{{ $vo['voided_count'] }}</span>
-                <span class="sa-kpi-stat-l">Voided</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-sub)">{{ $vo['voided_count'] }}</span>
+                <span class="ui-kpi-stat-l">Voided</span>
             </div>
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text-dim)">{{ $ov['override_rate'] }}%</span>
-                <span class="sa-kpi-stat-l">Override %</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-dim)">{{ $ov['override_rate'] }}%</span>
+                <span class="ui-kpi-stat-l">Override %</span>
             </div>
         </div>
     </div>
 
     {{-- Net Revenue / Returns --}}
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Net Revenue</div>
-                <div class="sa-kpi-sub">After {{ $ret['returns_count'] }} returns</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Net Revenue</div>
+                <div class="ui-kpi-sub">After {{ $ret['returns_count'] }} returns</div>
             </div>
             @php $rr = $ret['return_rate'] @endphp
             <span class="sa-growth {{ $rr > 5 ? 'down' : 'neutral' }}">{{ $rr }}% ret.</span>
         </div>
-        <div class="sa-kpi-val" style="color:var(--accent)">{{ number_format($gp['net_revenue']) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($ret['returned_revenue']) }}</span>
-                <span class="sa-kpi-stat-l">Refunded</span>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($gp['net_revenue']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-sub)">{{ number_format($ret['returned_revenue']) }}</span>
+                <span class="ui-kpi-stat-l">Refunded</span>
             </div>
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text-dim)">{{ $ret['exchange_count'] }}</span>
-                <span class="sa-kpi-stat-l">Exchanges</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-dim)">{{ $ret['exchange_count'] }}</span>
+                <span class="ui-kpi-stat-l">Exchanges</span>
             </div>
-            <div class="sa-kpi-stat">
-                <span class="sa-kpi-stat-v" style="color:var(--text-dim)">{{ $ret['items_returned'] }}</span>
-                <span class="sa-kpi-stat-l">Items Back</span>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="color:var(--text-dim)">{{ $ret['items_returned'] }}</span>
+                <span class="ui-kpi-stat-l">Items Back</span>
             </div>
         </div>
     </div>
@@ -903,7 +880,7 @@
 <div class="sa-card" style="margin-bottom:20px">
     <div class="sa-card-head">
         <div style="display:flex;align-items:center;gap:10px">
-            <div class="sa-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
@@ -955,82 +932,82 @@
     $gapIsMaterial     = $profitGap > 0 && $gp['gross_profit'] > 0 && ($profitGap / $gp['gross_profit']) > 0.05;
 @endphp
 
-<div class="sa-kpis m-kpis">
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+<div class="ui-kpis m-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Gross Revenue</div>
-                <div class="sa-kpi-sub">{{ $rev['transactions_count'] }} transactions</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Gross Revenue</div>
+                <div class="ui-kpi-sub">{{ $rev['transactions_count'] }} transactions</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($gp['revenue']) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($gp['total_cost']) }}</span><span class="sa-kpi-stat-l">Cost</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($iss['items_sold']) }}</span><span class="sa-kpi-stat-l">Items</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $rev['transactions_count'] }}</span><span class="sa-kpi-stat-l">Txns</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($gp['revenue']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($gp['total_cost']) }}</span><span class="ui-kpi-stat-l">Cost</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($iss['items_sold']) }}</span><span class="ui-kpi-stat-l">Items</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $rev['transactions_count'] }}</span><span class="ui-kpi-stat-l">Txns</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Gross Profit</div>
-                <div class="sa-kpi-sub">{{ $gp['margin_pct'] }}% margin</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Gross Profit</div>
+                <div class="ui-kpi-sub">{{ $gp['margin_pct'] }}% margin</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--green)">{{ number_format($gp['gross_profit']) }}</div>
-        <div class="sa-kpi-bar" style="background:var(--green-dim)">
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($gp['gross_profit']) }}</div>
+        <div class="ui-kpi-bar" style="background:var(--green-dim)">
             <div style="height:100%;border-radius:3px;background:var(--green);width:{{ min($gp['margin_pct'], 100) }}%"></div>
         </div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $gp['margin_pct'] }}%</span><span class="sa-kpi-stat-l">Margin</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($gp['total_cost']) }}</span><span class="sa-kpi-stat-l">COGS</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($iss['items_sold']) }}</span><span class="sa-kpi-stat-l">Units</span></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $gp['margin_pct'] }}%</span><span class="ui-kpi-stat-l">Margin</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($gp['total_cost']) }}</span><span class="ui-kpi-stat-l">COGS</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($iss['items_sold']) }}</span><span class="ui-kpi-stat-l">Units</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Items Sold</div>
-                <div class="sa-kpi-sub">Units in period</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Items Sold</div>
+                <div class="ui-kpi-sub">Units in period</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($iss['items_sold']) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $rev['transactions_count'] }}</span><span class="sa-kpi-stat-l">Txns</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $iss['items_sold'] > 0 && $rev['transactions_count'] > 0 ? round($iss['items_sold'] / $rev['transactions_count'], 1) : '—' }}</span><span class="sa-kpi-stat-l">Per Txn</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($rev['avg_transaction_value']) }}</span><span class="sa-kpi-stat-l">Avg Order</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($iss['items_sold']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $rev['transactions_count'] }}</span><span class="ui-kpi-stat-l">Txns</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $iss['items_sold'] > 0 && $rev['transactions_count'] > 0 ? round($iss['items_sold'] / $rev['transactions_count'], 1) : '—' }}</span><span class="ui-kpi-stat-l">Per Txn</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($rev['avg_transaction_value']) }}</span><span class="ui-kpi-stat-l">Avg Order</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Outstanding Credit</div>
-                <div class="sa-kpi-sub">{{ $repaymentRate }}% repaid</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Outstanding Credit</div>
+                <div class="ui-kpi-sub">{{ $repaymentRate }}% repaid</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($trueOutstanding) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="sa-kpi-stat-l">Total Given</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ number_format($totalCreditRepaid) }}</span><span class="sa-kpi-stat-l">Repaid</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $repaymentRate }}%</span><span class="sa-kpi-stat-l">Rate</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($trueOutstanding) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="ui-kpi-stat-l">Total Given</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--green)">{{ number_format($totalCreditRepaid) }}</span><span class="ui-kpi-stat-l">Repaid</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $repaymentRate }}%</span><span class="ui-kpi-stat-l">Rate</span></div>
         </div>
     </div>
 </div>
@@ -1245,79 +1222,79 @@
     $avgMarkup   = $overStat['markup_items_count'] > 0 ? round($overStat['total_markup_given'] / $overStat['markup_items_count']) : 0;
     $netVsList   = $overStat['total_markup_given'] - $overStat['total_discount_given'];
 @endphp
-<div class="sa-kpis m-kpis">
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+<div class="ui-kpis m-kpis">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Overridden Sales</div>
-                <div class="sa-kpi-sub">Sales with price changes</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Overridden Sales</div>
+                <div class="ui-kpi-sub">Sales with price changes</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ $overStat['override_sales_count'] }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="sa-kpi-stat-l">Items changed</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--red)">{{ $overStat['discount_items_count'] }}</span><span class="sa-kpi-stat-l">Below list</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ $overStat['markup_items_count'] }}</span><span class="sa-kpi-stat-l">Above list</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ $overStat['override_sales_count'] }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $overStat['override_items_count'] }}</span><span class="ui-kpi-stat-l">Items changed</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--red)">{{ $overStat['discount_items_count'] }}</span><span class="ui-kpi-stat-l">Below list</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--green)">{{ $overStat['markup_items_count'] }}</span><span class="ui-kpi-stat-l">Above list</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Discounts Given</div>
-                <div class="sa-kpi-sub">Sold below list price</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Discounts Given</div>
+                <div class="ui-kpi-sub">Sold below list price</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($overStat['total_discount_given']) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['discount_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDiscount) }}</span><span class="sa-kpi-stat-l">Avg/Item</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($overStat['total_discount_given']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $overStat['discount_items_count'] }}</span><span class="ui-kpi-stat-l">Items</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($avgDiscount) }}</span><span class="ui-kpi-stat-l">Avg/Item</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Markups</div>
-                <div class="sa-kpi-sub">Charged above list price</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Markups</div>
+                <div class="ui-kpi-sub">Charged above list price</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($overStat['total_markup_given']) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['markup_items_count'] }}</span><span class="sa-kpi-stat-l">Items</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgMarkup) }}</span><span class="sa-kpi-stat-l">Avg/Item</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:{{ $netVsList > 0 ? 'var(--green)' : ($netVsList < 0 ? 'var(--red)' : 'var(--text-sub)') }}">{{ $netVsList > 0 ? '+' : ($netVsList < 0 ? '−' : '') }}{{ number_format(abs($netVsList)) }}</span><span class="sa-kpi-stat-l">Net vs list</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($overStat['total_markup_given']) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $overStat['markup_items_count'] }}</span><span class="ui-kpi-stat-l">Items</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($avgMarkup) }}</span><span class="ui-kpi-stat-l">Avg/Item</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:{{ $netVsList > 0 ? 'var(--green)' : ($netVsList < 0 ? 'var(--red)' : 'var(--text-sub)') }}">{{ $netVsList > 0 ? '+' : ($netVsList < 0 ? '−' : '') }}{{ number_format(abs($netVsList)) }}</span><span class="ui-kpi-stat-l">Net vs list</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Override Rate</div>
-                <div class="sa-kpi-sub">Of all non-voided sales</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Override Rate</div>
+                <div class="ui-kpi-sub">Of all non-voided sales</div>
             </div>
             <span class="sa-growth {{ $overStat['override_rate'] > 20 ? 'down' : ($overStat['override_rate'] > 10 ? 'neutral' : 'up') }}">{{ $overStat['override_rate'] > 20 ? '↑ High' : ($overStat['override_rate'] > 10 ? '→ Moderate' : '↓ Low') }}</span>
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ $overStat['override_rate'] }}%</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['override_sales_count'] }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $overStat['total_sales'] }}</span><span class="sa-kpi-stat-l">All sales</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ $overStat['override_rate'] }}%</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $overStat['override_sales_count'] }}</span><span class="ui-kpi-stat-l">Sales</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $overStat['total_sales'] }}</span><span class="ui-kpi-stat-l">All sales</span></div>
         </div>
     </div>
 </div>
@@ -1737,89 +1714,89 @@
 @endphp
 
 {{-- 4 headline KPIs --}}
-<div class="sa-kpis m-kpis" style="margin-bottom:20px">
+<div class="ui-kpis m-kpis" style="margin-bottom:20px">
     @php $cashPct = $totalRevenue > 0 ? round(($paymentMethods['cash']['total'] / $totalRevenue) * 100, 1) : 0; @endphp
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--violet-dim);color:var(--violet)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Total Revenue</div>
-                <div class="sa-kpi-sub">{{ $totalSales }} transactions</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Total Revenue</div>
+                <div class="ui-kpi-sub">{{ $totalSales }} transactions</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--text)">{{ number_format($totalRevenue) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgTransactionValue) }}</span><span class="sa-kpi-stat-l">Avg Order</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $splitPaymentSales }}</span><span class="sa-kpi-stat-l">Split</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditCount }}</span><span class="sa-kpi-stat-l">Credit Sales</span></div>
+        <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($totalRevenue) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($avgTransactionValue) }}</span><span class="ui-kpi-stat-l">Avg Order</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $splitPaymentSales }}</span><span class="ui-kpi-stat-l">Split</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $creditCount }}</span><span class="ui-kpi-stat-l">Credit Sales</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Cash</div>
-                <div class="sa-kpi-sub">{{ $paymentMethods['cash']['count'] }} transactions</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Cash</div>
+                <div class="ui-kpi-sub">{{ $paymentMethods['cash']['count'] }} transactions</div>
             </div>
             <span class="sa-growth neutral">{{ $cashPct }}% of total</span>
         </div>
-        <div class="sa-kpi-val" style="color:var(--green)">{{ number_format($paymentMethods['cash']['total']) }}</div>
-        <div class="sa-kpi-bar" style="background:var(--green-dim)"><div style="height:100%;border-radius:3px;background:var(--green);width:{{ $cashPct }}%"></div></div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $paymentMethods['cash']['count'] }}</span><span class="sa-kpi-stat-l">Txns</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $paymentMethods['cash']['count'] > 0 ? number_format(round($paymentMethods['cash']['total'] / $paymentMethods['cash']['count'])) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Txn</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $cashPct }}%</span><span class="sa-kpi-stat-l">of Total</span></div>
+        <div class="ui-kpi-val" style="color:var(--green)">{{ number_format($paymentMethods['cash']['total']) }}</div>
+        <div class="ui-kpi-bar" style="background:var(--green-dim)"><div style="height:100%;border-radius:3px;background:var(--green);width:{{ $cashPct }}%"></div></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $paymentMethods['cash']['count'] }}</span><span class="ui-kpi-stat-l">Txns</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $paymentMethods['cash']['count'] > 0 ? number_format(round($paymentMethods['cash']['total'] / $paymentMethods['cash']['count'])) : '—' }}</span><span class="ui-kpi-stat-l">Avg/Txn</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $cashPct }}%</span><span class="ui-kpi-stat-l">of Total</span></div>
         </div>
     </div>
 
     @php $mmPct = $totalRevenue > 0 ? round(($paymentMethods['mobile_money']['total'] / $totalRevenue) * 100, 1) : 0; @endphp
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--pink-dim);color:var(--pink)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--pink-dim);color:var(--pink)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Mobile Money</div>
-                <div class="sa-kpi-sub">{{ $paymentMethods['mobile_money']['count'] }} transactions</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Mobile Money</div>
+                <div class="ui-kpi-sub">{{ $paymentMethods['mobile_money']['count'] }} transactions</div>
             </div>
             <span class="sa-growth neutral">{{ $mmPct }}% of total</span>
         </div>
-        <div class="sa-kpi-val" style="color:var(--pink)">{{ number_format($paymentMethods['mobile_money']['total']) }}</div>
-        <div class="sa-kpi-bar" style="background:var(--pink-dim)"><div style="height:100%;border-radius:3px;background:var(--pink);width:{{ $mmPct }}%"></div></div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $paymentMethods['mobile_money']['count'] }}</span><span class="sa-kpi-stat-l">Txns</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $paymentMethods['mobile_money']['count'] > 0 ? number_format(round($paymentMethods['mobile_money']['total'] / $paymentMethods['mobile_money']['count'])) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Txn</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $mmPct }}%</span><span class="sa-kpi-stat-l">of Total</span></div>
+        <div class="ui-kpi-val" style="color:var(--pink)">{{ number_format($paymentMethods['mobile_money']['total']) }}</div>
+        <div class="ui-kpi-bar" style="background:var(--pink-dim)"><div style="height:100%;border-radius:3px;background:var(--pink);width:{{ $mmPct }}%"></div></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $paymentMethods['mobile_money']['count'] }}</span><span class="ui-kpi-stat-l">Txns</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $paymentMethods['mobile_money']['count'] > 0 ? number_format(round($paymentMethods['mobile_money']['total'] / $paymentMethods['mobile_money']['count'])) : '—' }}</span><span class="ui-kpi-stat-l">Avg/Txn</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $mmPct }}%</span><span class="ui-kpi-stat-l">of Total</span></div>
         </div>
     </div>
 
     @php $crPct = $totalRevenue > 0 ? round(($paymentMethods['credit']['total'] / $totalRevenue) * 100, 1) : 0; @endphp
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Credit</div>
-                <div class="sa-kpi-sub">{{ $creditCount }} credit sales</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Credit</div>
+                <div class="ui-kpi-sub">{{ $creditCount }} credit sales</div>
             </div>
             <span class="sa-growth {{ $crPct > 20 ? 'down' : 'neutral' }}">{{ $crPct }}% of total</span>
         </div>
-        <div class="sa-kpi-val" style="color:var(--amber)">{{ number_format($paymentMethods['credit']['total']) }}</div>
-        <div class="sa-kpi-bar" style="background:var(--amber-dim)"><div style="height:100%;border-radius:3px;background:var(--amber);width:{{ $crPct }}%"></div></div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditCount }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditCount > 0 ? number_format(round($paymentMethods['credit']['total'] / $creditCount)) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Sale</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:{{ $crPct > 20 ? 'var(--amber)' : 'var(--text-sub)' }}">{{ $crPct }}%</span><span class="sa-kpi-stat-l">of Total</span></div>
+        <div class="ui-kpi-val" style="color:var(--amber)">{{ number_format($paymentMethods['credit']['total']) }}</div>
+        <div class="ui-kpi-bar" style="background:var(--amber-dim)"><div style="height:100%;border-radius:3px;background:var(--amber);width:{{ $crPct }}%"></div></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $creditCount }}</span><span class="ui-kpi-stat-l">Sales</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $creditCount > 0 ? number_format(round($paymentMethods['credit']['total'] / $creditCount)) : '—' }}</span><span class="ui-kpi-stat-l">Avg/Sale</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:{{ $crPct > 20 ? 'var(--amber)' : 'var(--text-sub)' }}">{{ $crPct }}%</span><span class="ui-kpi-stat-l">of Total</span></div>
         </div>
     </div>
 </div>
@@ -1895,84 +1872,84 @@
     $avgDebt              = $customersWithCredit > 0 ? round($totalOutstanding / $customersWithCredit) : 0;
 @endphp
 
-<div class="sa-kpis m-kpis" style="margin-bottom:20px">
+<div class="ui-kpis m-kpis" style="margin-bottom:20px">
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--red-dim);color:var(--red)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--red-dim);color:var(--red)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Outstanding Balance</div>
-                <div class="sa-kpi-sub">{{ $customersWithCredit }} customers · all time</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Outstanding Balance</div>
+                <div class="ui-kpi-sub">{{ $customersWithCredit }} customers · all time</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--red)">{{ number_format($totalOutstanding) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="sa-kpi-stat-l">Total Given</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ number_format($totalRepaid) }}</span><span class="sa-kpi-stat-l">Repaid</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDebt) }}</span><span class="sa-kpi-stat-l">Avg Debt</span></div>
+        <div class="ui-kpi-val" style="color:var(--red)">{{ number_format($totalOutstanding) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="ui-kpi-stat-l">Total Given</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--green)">{{ number_format($totalRepaid) }}</span><span class="ui-kpi-stat-l">Repaid</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($avgDebt) }}</span><span class="ui-kpi-stat-l">Avg Debt</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Credit Given (Period)</div>
-                <div class="sa-kpi-sub">{{ $creditSalesCount }} credit sales</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Credit Given (Period)</div>
+                <div class="ui-kpi-sub">{{ $creditSalesCount }} credit sales</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--amber)">{{ number_format($creditGivenInPeriod) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditSalesCount }}</span><span class="sa-kpi-stat-l">Sales</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $creditSalesCount > 0 ? number_format(round($creditGivenInPeriod / $creditSalesCount)) : '—' }}</span><span class="sa-kpi-stat-l">Avg/Sale</span></div>
+        <div class="ui-kpi-val" style="color:var(--amber)">{{ number_format($creditGivenInPeriod) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $creditSalesCount }}</span><span class="ui-kpi-stat-l">Sales</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $creditSalesCount > 0 ? number_format(round($creditGivenInPeriod / $creditSalesCount)) : '—' }}</span><span class="ui-kpi-stat-l">Avg/Sale</span></div>
             @php $periodRevenue = $this->grossProfitKpis['revenue'] @endphp
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ $periodRevenue > 0 ? round(($creditGivenInPeriod / $periodRevenue) * 100, 1) : 0 }}%</span><span class="sa-kpi-stat-l">of Revenue</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ $periodRevenue > 0 ? round(($creditGivenInPeriod / $periodRevenue) * 100, 1) : 0 }}%</span><span class="ui-kpi-stat-l">of Revenue</span></div>
         </div>
     </div>
 
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Customers with Credit</div>
-                <div class="sa-kpi-sub">Currently carrying a balance</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Customers with Credit</div>
+                <div class="ui-kpi-sub">Currently carrying a balance</div>
             </div>
         </div>
-        <div class="sa-kpi-val" style="color:var(--accent)">{{ number_format($customersWithCredit) }}</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($avgDebt) }}</span><span class="sa-kpi-stat-l">Avg Debt</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($totalOutstanding) }}</span><span class="sa-kpi-stat-l">Total Owed</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:{{ $repaymentRate >= 80 ? 'var(--green)' : ($repaymentRate >= 50 ? 'var(--amber)' : 'var(--red)') }}">{{ $repaymentRate }}%</span><span class="sa-kpi-stat-l">Repaid</span></div>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($customersWithCredit) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($avgDebt) }}</span><span class="ui-kpi-stat-l">Avg Debt</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($totalOutstanding) }}</span><span class="ui-kpi-stat-l">Total Owed</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:{{ $repaymentRate >= 80 ? 'var(--green)' : ($repaymentRate >= 50 ? 'var(--amber)' : 'var(--red)') }}">{{ $repaymentRate }}%</span><span class="ui-kpi-stat-l">Repaid</span></div>
         </div>
     </div>
 
     @php $rpColor = $repaymentRate >= 80 ? 'var(--green)' : ($repaymentRate >= 50 ? 'var(--amber)' : 'var(--red)') @endphp
-    <div class="sa-kpi">
-        <div class="sa-kpi-row">
-            <div class="sa-kpi-icon" style="background:var(--green-dim);color:var(--green)">
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             </div>
-            <div class="sa-kpi-body">
-                <div class="sa-kpi-label">Repayment Rate</div>
-                <div class="sa-kpi-sub">{{ number_format($totalRepaid) }} RWF repaid</div>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Repayment Rate</div>
+                <div class="ui-kpi-sub">{{ number_format($totalRepaid) }} RWF repaid</div>
             </div>
             <span class="sa-growth {{ $repaymentRate >= 80 ? 'up' : ($repaymentRate >= 50 ? 'neutral' : 'down') }}">{{ $repaymentRate >= 80 ? '↑ Good' : ($repaymentRate >= 50 ? '→ Fair' : '↓ Low') }}</span>
         </div>
-        <div class="sa-kpi-val" style="color:{{ $rpColor }}">{{ $repaymentRate }}%</div>
-        <div class="sa-kpi-divider"></div>
-        <div class="sa-kpi-footer">
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--green)">{{ number_format($totalRepaid) }}</span><span class="sa-kpi-stat-l">Repaid</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v" style="color:var(--red)">{{ number_format($totalOutstanding) }}</span><span class="sa-kpi-stat-l">Still Owed</span></div>
-            <div class="sa-kpi-stat"><span class="sa-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="sa-kpi-stat-l">Total Given</span></div>
+        <div class="ui-kpi-val" style="color:{{ $rpColor }}">{{ $repaymentRate }}%</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--green)">{{ number_format($totalRepaid) }}</span><span class="ui-kpi-stat-l">Repaid</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v" style="color:var(--red)">{{ number_format($totalOutstanding) }}</span><span class="ui-kpi-stat-l">Still Owed</span></div>
+            <div class="ui-kpi-stat"><span class="ui-kpi-stat-v">{{ number_format($totalCreditGiven) }}</span><span class="ui-kpi-stat-l">Total Given</span></div>
         </div>
     </div>
 
