@@ -11,6 +11,7 @@ class InventoryRetailValue extends Metric
     protected string $label       = 'Inventory Retail Value';
     protected string $description = 'Stock on hand valued at selling price';
     protected string $domain      = 'inventory';
+    protected array  $related     = ['inventory_by_location', 'inventory_category_concentration'];
     protected bool   $usesDates   = false;
     protected string $locations   = 'any';
     protected string $good        = 'neutral';

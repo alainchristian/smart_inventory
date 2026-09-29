@@ -11,6 +11,7 @@ class SalesTransactionCount extends Metric
     protected string $label       = 'Transaction Count';
     protected string $description = 'Number of completed sales';
     protected string $domain      = 'sales';
+    protected array  $related     = ['sales_by_shop', 'sales_payment_methods'];
 
     public function fetch(ReportContext $ctx): array
     {

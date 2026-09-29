@@ -11,6 +11,7 @@ class InventoryDeadStock extends Metric
     protected string $label       = 'Dead Stock';
     protected string $description = 'Products in stock with no sales in the last 90 days';
     protected string $domain      = 'inventory';
+    protected array  $related     = ['inventory_abc_summary'];
     protected array  $viz         = ['kpi_card', 'table'];
     protected bool   $usesDates   = false;
     protected string $locations   = 'any';

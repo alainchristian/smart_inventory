@@ -32,22 +32,13 @@ class RunScheduledReports extends Command
             }
 
             $runner  = app(\App\Services\Reports\ReportRunner::class);
+            $started = microtime(true);
             $results = $runner->run($report->resolvedConfig(), $report->id, false);
             $report->update(['last_scheduled_run_at' => now()]);
 
-            // Save a history record marked as scheduled
-            \App\Models\ReportRunHistory::create([
-                'report_id'       => $report->id,
-                'run_by'          => $report->created_by,
-                'run_at'          => now(),
-                'config_snapshot' => $report->resolvedConfig(),
-                'results'         => $results,
-                'duration_ms'     => 0,
-                'was_scheduled'   => true,
-            ]);
-
-            // Cache the results
-            $report->cacheResults($results);
+            // History row marked as scheduled (headline figures only)
+            $runner->recordRun($report->id, $report->resolvedConfig(), $results,
+                (int) round((microtime(true) - $started) * 1000), scheduled: true);
 
             // Notify recipients via a simple plain-text email
             foreach (($report->schedule_recipients ?? []) as $email) {

@@ -153,9 +153,18 @@ class MetricContractTest extends TestCase
 
         \Livewire\Livewire::actingAs($owner)
             ->test(\App\Livewire\Owner\Reports\ReportViewer::class, ['reportId' => $report->id])
-            ->call('run')
+            ->call('load')
             ->assertOk()
             ->assertSee('Stock Value by Location');
+    }
+
+    public function test_related_metrics_exist(): void
+    {
+        foreach ($this->registry()->metrics() as $metric) {
+            foreach ($metric->related() as $id) {
+                $this->assertNotNull($this->registry()->metric($id), "{$metric->id()} links to missing {$id}");
+            }
+        }
     }
 
     public function test_grouped_service_shapes_become_tables(): void

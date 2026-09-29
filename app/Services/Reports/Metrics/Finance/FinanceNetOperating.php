@@ -11,6 +11,7 @@ class FinanceNetOperating extends Metric
     protected string $label       = 'Net Operating Result';
     protected string $description = 'Revenue minus cost of goods minus operating expenses';
     protected string $domain      = 'finance';
+    protected array  $related     = ['finance_expense_summary', 'sales_by_shop'];
 
     public function fetch(ReportContext $ctx): array
     {

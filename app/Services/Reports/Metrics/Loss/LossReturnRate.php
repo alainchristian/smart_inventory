@@ -11,6 +11,7 @@ class LossReturnRate extends Metric
     protected string $label       = 'Return Rate';
     protected string $description = 'Returns as a percentage of sales';
     protected string $domain      = 'loss';
+    protected array  $related     = ['loss_by_product'];
     protected string $good        = 'down';
 
     public function fetch(ReportContext $ctx): array

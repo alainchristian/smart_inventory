@@ -2,302 +2,355 @@
 namespace App\Livewire\Owner\Reports;
 
 use App\Models\ReportRunHistory;
-use App\Models\ReportAnnotation;
 use App\Models\ReportViewLog;
 use App\Models\SavedReport;
 use App\Models\Shop;
 use App\Models\Warehouse;
-use App\Services\Analytics\FinanceAnalyticsService;
-use App\Services\Analytics\InventoryAnalyticsService;
-use App\Services\Analytics\LossAnalyticsService;
-use App\Services\Analytics\SalesAnalyticsService;
-use App\Services\Analytics\TransferAnalyticsService;
-use App\Services\Reports\ReportRunner;
 use App\Services\Reports\ExportReportAction;
+use App\Services\Reports\MetricRegistry;
+use App\Services\Reports\ReportContext;
+use App\Services\Reports\ReportPeriod;
+use App\Services\Reports\ReportRunner;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
+/**
+ * Runs a saved report for the filters in the bar (period, location,
+ * comparison). The saved config only provides the defaults; changing a
+ * filter never changes the report. Results are cached per filter set,
+ * never held in Livewire state.
+ */
 class ReportViewer extends Component
 {
     #[Locked]
-    public int   $reportId;
-    public bool  $isRunning = false;
-    public array $results   = [];
-    public bool  $hasRun    = false;
-    public int   $currentRunHistoryId = 0;
+    public int $reportId;
 
-    // History drawer
-    public bool  $showHistory      = false;
-    public int   $viewingHistoryId = 0;
-    public array $historyResults   = [];
+    // Filters (in the URL so a filtered view can be shared or reloaded)
+    #[Url(as: 'period')]
+    public string $preset = '';
+    #[Url(as: 'from')]
+    public string $dateFrom = '';
+    #[Url(as: 'to')]
+    public string $dateTo = '';
+    #[Url(as: 'loc')]
+    public string $location = '';
+    #[Url(as: 'compare')]
+    public string $comparison = '';
 
-    // Annotations
-    public string $annotatingBlockId  = '';
-    public string $annotationText     = '';
-    public bool   $showAnnotationForm = false;
+    /** Set by wire:init so the page paints before the report runs */
+    public bool $ready = false;
 
-    // Breakdowns (lazy-loaded per block)
-    public array  $breakdowns       = [];
-    public string $openBreakdownId  = '';
+    public bool $showHistory = false;
+
+    /** Block whose "Details" sheet is open */
+    public string $detailBlockId = '';
 
     public function mount(int $reportId): void
     {
-        $this->reportId = $reportId;
-        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
-            abort(403, 'Unauthorized access.');
-        }
-        abort_unless(SavedReport::findOrFail($reportId)->isVisibleTo(auth()->user()), 403);
+        $user = auth()->user();
+        abort_unless($user->isOwner() || $user->isAdmin(), 403);
 
-        // Log page view
+        $this->reportId = $reportId;
+        $config = $this->report()->resolvedConfig();
+
+        // URL values win; anything missing or invalid falls back to the saved defaults
+        if (! array_key_exists($this->preset, ReportPeriod::PRESETS)) {
+            $this->preset = array_key_exists($config['date_range'], ReportPeriod::PRESETS) ? $config['date_range'] : 'month';
+            $this->dateFrom = (string) ($config['date_from'] ?? '');
+            $this->dateTo   = (string) ($config['date_to'] ?? '');
+        }
+        if ($this->location === '') {
+            $this->location = $config['location_filter'] ?? 'all';
+        }
+        $this->location = ReportContext::normaliseLocation($this->location);
+        if (! array_key_exists($this->comparison, ReportPeriod::COMPARISONS)) {
+            $this->comparison = $config['comparison_mode'] ?? 'none';
+        }
+        $this->syncDates();
+
         ReportViewLog::create([
             'report_id' => $reportId,
-            'viewed_by' => auth()->id(),
+            'viewed_by' => $user->id,
             'viewed_at' => now(),
             'was_run'   => false,
         ]);
+    }
 
-        // Show cached results immediately if available
-        $report = SavedReport::find($reportId);
-        if ($report && $report->hasFreshCache()) {
-            $this->results = $report->last_results;
-            $this->hasRun  = true;
+    public function load(): void
+    {
+        $this->ready = true;
+    }
+
+    // ── Filters ──────────────────────────────────────────────────────────
+
+    public function setPreset(string $preset): void
+    {
+        if (! array_key_exists($preset, ReportPeriod::PRESETS) || $preset === 'custom') {
+            return;
+        }
+        $this->preset = $preset;
+        $this->syncDates();
+        $this->closeDetails();
+    }
+
+    public function updatedDateFrom(): void { $this->preset = 'custom'; $this->syncDates(); $this->closeDetails(); }
+    public function updatedDateTo(): void   { $this->preset = 'custom'; $this->syncDates(); $this->closeDetails(); }
+
+    public function updatedLocation(): void
+    {
+        $this->location = ReportContext::normaliseLocation($this->location);
+        $this->closeDetails();
+    }
+
+    public function updatedComparison(): void
+    {
+        if (! array_key_exists($this->comparison, ReportPeriod::COMPARISONS)) {
+            $this->comparison = 'none';
         }
     }
 
-    public function run(): void
+    public function resetFilters(): void
     {
-        $report = SavedReport::findOrFail($this->reportId);
+        $this->preset = $this->dateFrom = $this->dateTo = $this->location = $this->comparison = '';
+        $this->mountDefaults();
+        $this->closeDetails();
+    }
 
+    private function mountDefaults(): void
+    {
+        $config = $this->report()->resolvedConfig();
+        $this->preset     = array_key_exists($config['date_range'], ReportPeriod::PRESETS) ? $config['date_range'] : 'month';
+        $this->dateFrom   = (string) ($config['date_from'] ?? '');
+        $this->dateTo     = (string) ($config['date_to'] ?? '');
+        $this->location   = ReportContext::normaliseLocation($config['location_filter'] ?? 'all');
+        $this->comparison = $config['comparison_mode'] ?? 'none';
+        $this->syncDates();
+    }
+
+    /** Presets fill the dates; custom keeps valid typed dates and resolves the rest */
+    private function syncDates(): void
+    {
+        $valid = fn ($d) => is_string($d) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) && strtotime($d) !== false;
+
+        if ($this->preset === 'custom' && $valid($this->dateFrom) && $valid($this->dateTo)) {
+            [$this->dateFrom, $this->dateTo] = ReportPeriod::resolve('custom', $this->dateFrom, $this->dateTo);
+            return;
+        }
+        if ($this->preset === 'custom') {
+            $this->preset = 'month';
+        }
+        [$this->dateFrom, $this->dateTo] = ReportPeriod::resolve($this->preset);
+    }
+
+    protected function filters(): array
+    {
+        return [
+            'date_range'      => 'custom',   // the dates below are already resolved
+            'date_from'       => $this->dateFrom,
+            'date_to'         => $this->dateTo,
+            'location_filter' => $this->location,
+            'comparison_mode' => $this->comparison,
+        ];
+    }
+
+    #[Computed]
+    public function isDefaultView(): bool
+    {
+        $config = $this->report()->resolvedConfig();
+        [$from, $to] = app(ReportRunner::class)->resolveDates($config);
+
+        return $from === $this->dateFrom && $to === $this->dateTo
+            && ReportContext::normaliseLocation($config['location_filter'] ?? 'all') === $this->location
+            && ($config['comparison_mode'] ?? 'none') === $this->comparison;
+    }
+
+    // ── Results ──────────────────────────────────────────────────────────
+
+    private function cacheKey(): string
+    {
+        $report = $this->report();
+
+        return 'custom_report:' . $report->id . ':' . md5(json_encode([$report->updated_at?->timestamp, $report->config, $this->filters()]));
+    }
+
+    /** Short cache while the period includes today, since today's numbers still move */
+    private function cacheTtl(): int
+    {
+        return $this->dateTo >= business_today()->toDateString() ? 300 : 3600;
+    }
+
+    #[Computed]
+    public function results(): array
+    {
+        if (! $this->ready) {
+            return [];
+        }
+
+        return Cache::remember($this->cacheKey(), $this->cacheTtl(), function () {
+            return app(ReportRunner::class)->run($this->report()->resolvedConfig(), $this->reportId, true, $this->filters());
+        });
+    }
+
+    /** Re-run now, skipping the cache */
+    public function refresh(): void
+    {
+        Cache::forget($this->cacheKey());
+        unset($this->results);
         ReportViewLog::create([
             'report_id' => $this->reportId,
             'viewed_by' => auth()->id(),
             'viewed_at' => now(),
             'was_run'   => true,
         ]);
-
-        $this->isRunning = true;
-        $runner          = app(ReportRunner::class);
-        $this->results   = $runner->run($report->resolvedConfig(), $this->reportId, true);
-        $this->hasRun    = true;
-        $this->isRunning = false;
-
-        // Track latest run history id
-        $latest = $report->runHistory()->first();
-        $this->currentRunHistoryId = $latest?->id ?? 0;
+        $this->dispatch('notification', ['type' => 'success', 'message' => 'Report refreshed.']);
     }
+
+    // ── Details sheet (related blocks for one KPI) ───────────────────────
+
+    public function openDetails(string $blockId): void
+    {
+        $this->detailBlockId = $blockId;
+    }
+
+    public function closeDetails(): void
+    {
+        $this->detailBlockId = '';
+    }
+
+    #[Computed]
+    public function details(): array
+    {
+        $entry = $this->results[$this->detailBlockId] ?? null;
+        $metric = $entry ? app(MetricRegistry::class)->metric($entry['block']['metric_id'] ?? '') : null;
+        if (! $metric || ! $metric->related()) {
+            return [];
+        }
+
+        $block = $entry['block'];
+
+        return Cache::remember($this->cacheKey() . ':details:' . $this->detailBlockId, $this->cacheTtl(), function () use ($metric, $block) {
+            $registry = app(MetricRegistry::class);
+            $runner   = app(ReportRunner::class);
+            $out = [];
+            foreach ($metric->related() as $id) {
+                $related = $registry->metric($id);
+                if (! $related) continue;
+                [, $result] = $runner->runBlock($related, [
+                    'id'                       => $id,
+                    'date_range_override'      => $block['date_range_override'] ?? null,
+                    'date_from_override'       => $block['date_from_override'] ?? null,
+                    'date_to_override'         => $block['date_to_override'] ?? null,
+                    'location_filter_override' => $block['location_filter_override'] ?? null,
+                    'block_options'            => ['limit' => 5],
+                ], $this->dateFrom, $this->dateTo, $this->location);
+                $out[] = ['title' => $related->meta()['label'], 'result' => $result->toArray()];
+            }
+            return $out;
+        });
+    }
+
+    // ── History ─────────────────────────────────────────────────────────
+
+    public function toggleHistory(): void
+    {
+        $this->showHistory = ! $this->showHistory;
+    }
+
+    /** Show the report again with the filters an earlier run used */
+    public function applyHistoryRun(int $historyId): void
+    {
+        $run = ReportRunHistory::where('report_id', $this->reportId)->findOrFail($historyId);
+        $cfg = $run->config_snapshot ?? [];
+        [$from, $to] = ReportPeriod::resolve($cfg['date_range'] ?? 'month', $cfg['date_from'] ?? null, $cfg['date_to'] ?? null);
+
+        $this->preset     = 'custom';
+        $this->dateFrom   = $from;
+        $this->dateTo     = $to;
+        $this->location   = ReportContext::normaliseLocation($cfg['location_filter'] ?? 'all');
+        $this->comparison = array_key_exists($cfg['comparison_mode'] ?? '', ReportPeriod::COMPARISONS) ? $cfg['comparison_mode'] : 'none';
+        $this->syncDates();
+        $this->showHistory = false;
+        $this->closeDetails();
+    }
+
+    #[Computed]
+    public function history()
+    {
+        return ReportRunHistory::with('runner:id,name')
+            ->where('report_id', $this->reportId)
+            ->orderByDesc('run_at')->orderByDesc('id')
+            ->limit(12)->get();
+    }
+
+    // ── Export ───────────────────────────────────────────────────────────
 
     public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $report  = SavedReport::findOrFail($this->reportId);
-        $results = $this->hasRun ? $this->results : ($report->last_results ?? []);
-        $csv     = app(ExportReportAction::class)->toCsv($report, $results);
+        $report = $this->report();
+        $config = app(ReportRunner::class)->effectiveConfig($report->resolvedConfig(), $this->filters());
+        $csv    = app(ExportReportAction::class)->toCsv($report, $this->results, $config);
 
         return response()->streamDownload(function () use ($csv) {
             echo $csv;
-        }, str($report->name)->slug() . '-' . now()->format('Y-m-d') . '.csv', [
+        }, str($report->name)->slug() . '-' . $this->dateFrom . '-to-' . $this->dateTo . '.csv', [
             'Content-Type' => 'text/csv',
         ]);
     }
 
-    public function exportPrint(): void
+    // ── Helpers ─────────────────────────────────────────────────────────
+
+    private ?SavedReport $reportCache = null;
+
+    protected function report(): SavedReport
     {
-        $this->dispatch('open-print-view', reportId: $this->reportId);
-    }
+        $this->reportCache ??= SavedReport::with('creator:id,name')->findOrFail($this->reportId);
+        abort_unless($this->reportCache->isVisibleTo(auth()->user()), 403);
 
-    public function togglePin(): void
-    {
-        $report = SavedReport::findOrFail($this->reportId);
-        if ($report->created_by !== auth()->id()) abort(403);
-
-        if ($report->pinned_to_dashboard) {
-            $report->update(['pinned_to_dashboard' => false, 'dashboard_position' => null]);
-            session()->flash('success', 'Report unpinned from dashboard.');
-        } else {
-            $pinnedCount = SavedReport::where('pinned_to_dashboard', true)->count();
-            if ($pinnedCount >= 3) {
-                session()->flash('error', 'Maximum 3 reports can be pinned. Unpin one first.');
-                return;
-            }
-            $maxPos = SavedReport::where('pinned_to_dashboard', true)->max('dashboard_position') ?? 0;
-            $report->update([
-                'pinned_to_dashboard' => true,
-                'dashboard_position'  => $maxPos + 1,
-            ]);
-            session()->flash('success', 'Report pinned to dashboard.');
-        }
-    }
-
-    // ── History drawer ───────────────────────────────────────────────────────
-
-    public function toggleHistory(): void
-    {
-        $this->showHistory = !$this->showHistory;
-    }
-
-    public function viewHistoryRun(int $historyId): void
-    {
-        $run = ReportRunHistory::findOrFail($historyId);
-        if ($run->report_id !== $this->reportId) abort(403);
-        $this->historyResults      = $run->results ?? [];
-        $this->viewingHistoryId    = $historyId;
-        $this->currentRunHistoryId = $historyId;
-        $this->results             = $this->historyResults;
-        $this->hasRun              = true;
-        $this->showHistory         = false;
-    }
-
-    // ── Annotations ──────────────────────────────────────────────────────────
-
-    public function openAnnotation(string $blockId): void
-    {
-        $this->annotatingBlockId  = $blockId;
-        $this->annotationText     = '';
-        $this->showAnnotationForm = true;
-    }
-
-    public function saveAnnotation(): void
-    {
-        if (!trim($this->annotationText)) return;
-
-        ReportAnnotation::create([
-            'report_id'      => $this->reportId,
-            'run_history_id' => $this->currentRunHistoryId ?: null,
-            'block_id'       => $this->annotatingBlockId ?: null,
-            'note'           => trim($this->annotationText),
-            'created_by'     => auth()->id(),
-        ]);
-
-        $this->showAnnotationForm = false;
-        $this->annotationText     = '';
-        $this->annotatingBlockId  = '';
-    }
-
-    // ── Breakdowns ───────────────────────────────────────────────────────────
-
-    public function loadBreakdown(string $blockId): void
-    {
-        if ($this->openBreakdownId === $blockId) {
-            $this->openBreakdownId = '';
-            return;
-        }
-        $this->openBreakdownId = $blockId;
-
-        if (isset($this->breakdowns[$blockId])) return;
-
-        $blockResult = $this->results[$blockId] ?? null;
-        if (! $blockResult) return;
-
-        $block    = $blockResult['block'];
-        $metricId = $block['metric_id'] ?? '';
-        $data     = is_array($blockResult['data'] ?? null) ? $blockResult['data'] : [];
-
-        $report = SavedReport::find($this->reportId);
-        $config = $report->resolvedConfig();
-        $runner = app(ReportRunner::class);
-
-        [$from, $to] = $runner->resolveDates(
-            ! empty($block['date_range_override'])
-                ? [
-                    'date_range' => $block['date_range_override'],
-                    'date_from'  => $block['date_from_override'] ?? null,
-                    'date_to'    => $block['date_to_override'] ?? null,
-                ]
-                : $config
-        );
-        $loc = $block['location_filter_override'] ?? $config['location_filter'] ?? 'all';
-
-        try {
-            $this->breakdowns[$blockId] = $this->resolveBreakdown($metricId, $data, $from, $to, $loc);
-        } catch (\Throwable $e) {
-            $this->breakdowns[$blockId] = ['type' => 'error', 'message' => $e->getMessage()];
-        }
-    }
-
-    private function resolveBreakdown(string $metricId, array $existing, string $from, string $to, string $loc): array
-    {
-        $sales     = app(SalesAnalyticsService::class);
-        $inventory = app(InventoryAnalyticsService::class);
-        $loss      = app(LossAnalyticsService::class);
-        $finance   = app(FinanceAnalyticsService::class);
-        $transfers = app(TransferAnalyticsService::class);
-
-        return match (true) {
-
-            in_array($metricId, ['sales_revenue', 'sales_transaction_count']) => [
-                'type'     => 'sales_summary',
-                'shops'    => array_slice($sales->getShopPerformance($from, $to), 0, 5),
-                'products' => array_slice($sales->getTopProducts($from, $to, $loc, 5), 0, 5),
-                'methods'  => $sales->getPaymentMethodBreakdown($from, $to, $loc),
-            ],
-
-            in_array($metricId, ['sales_gross_profit', 'sales_avg_basket', 'sales_voided']) => [
-                'type'     => 'sales_margin',
-                'products' => array_slice($sales->getTopProducts($from, $to, $loc, 5), 0, 5),
-                'types'    => $sales->getSaleTypeBreakdown($from, $to, $loc),
-            ],
-
-            in_array($metricId, ['inventory_cost_value', 'inventory_retail_value']) => [
-                'type'       => 'inventory_categories',
-                'categories' => array_slice($inventory->getCategoryConcentration($loc), 0, 5),
-                'locations'  => (function () use ($inventory) {
-                    $d = $inventory->getInventoryByLocation();
-                    return collect(array_merge($d['warehouses'] ?? [], $d['shops'] ?? []))
-                        ->map(fn ($r) => array_merge($r, ['cost_value' => $r['value'] ?? 0]))
-                        ->sortByDesc('cost_value')
-                        ->values()
-                        ->toArray();
-                })(),
-            ],
-
-            in_array($metricId, ['inventory_fill_rate', 'ops_low_stock_count', 'inventory_dead_stock']) => [
-                'type'  => 'stock_health',
-                'items' => array_slice($inventory->getDaysOnHandPerProduct($loc, 10), 0, 8),
-            ],
-
-            in_array($metricId, ['loss_total', 'loss_return_rate', 'loss_damaged_value', 'loss_shrinkage']) => [
-                'type'     => 'loss_detail',
-                'products' => array_slice($loss->getProblemProducts($from, $to, $loc, 5), 0, 5),
-                'reasons'  => $loss->getReturnReasonBreakdown($from, $to, $loc),
-            ],
-
-            $metricId === 'replenishment_critical' => [
-                'type'  => 'critical_stock',
-                'items' => array_slice($existing, 0, 8),
-            ],
-
-            $metricId === 'finance_net_operating' => [
-                'type'     => 'finance_pl',
-                'expenses' => $finance->getExpenseSummary($from, $to, $loc),
-                'net'      => $existing,
-            ],
-
-            in_array($metricId, ['finance_expense_summary', 'finance_expense_trend']) => [
-                'type'       => 'expense_categories',
-                'by_category'=> $existing['by_category'] ?? [],
-                'total'      => $existing['total_expenses'] ?? 0,
-            ],
-
-            in_array($metricId, ['finance_cash_variance', 'finance_withdrawal_summary']) => [
-                'type'     => 'finance_cash',
-                'existing' => $existing,
-            ],
-
-            in_array($metricId, ['transfers_kpis', 'transfers_discrepancies']) => [
-                'type'   => 'transfer_routes',
-                'routes' => array_slice($transfers->getTransferRoutes($from, $to), 0, 6),
-            ],
-
-            default => ['type' => 'none'],
-        };
+        return $this->reportCache;
     }
 
     public function render()
     {
-        $report = SavedReport::with('creator')->findOrFail($this->reportId);
+        $results = $this->results;
+        $kpis = $blocks = [];
+        foreach ($results as $id => $entry) {
+            if (($entry['block']['viz'] ?? '') === 'kpi_card' && $entry['result'] !== null) {
+                $kpis[$id] = $entry;
+            } else {
+                $blocks[$id] = $entry;
+            }
+        }
+
+        // Key findings: problems first, then good news; at most 4
+        $tones = ['bad' => 0, 'warn' => 1, 'good' => 2];
+        $findings = collect($results)
+            ->filter(fn ($e) => isset($e['result']['insight']['tone'], $tones[$e['result']['insight']['tone']]))
+            ->map(fn ($e) => ['title' => $e['block']['title'] ?? '', 'text' => $e['result']['insight']['text'], 'tone' => $e['result']['insight']['tone']])
+            ->sortBy(fn ($f) => $tones[$f['tone']])
+            ->take(4)->values()->all();
+
+        $comparisonPeriod = $this->comparison !== 'none'
+            ? ReportPeriod::prior($this->comparison, $this->dateFrom, $this->dateTo)
+            : null;
+
         return view('livewire.owner.reports.report-viewer', [
-            'report'     => $report,
-            'warehouses' => Warehouse::pluck('name', 'id'),
-            'shops'      => Shop::pluck('name', 'id'),
+            'report'           => $this->report(),
+            'kpis'             => $kpis,
+            'blocks'           => $blocks,
+            'findings'         => $findings,
+            'periodLabel'      => ReportPeriod::label($this->dateFrom, $this->dateTo),
+            'locationLabel'    => ReportContext::locationLabel($this->location),
+            'comparisonLabel'  => $comparisonPeriod ? ReportPeriod::label(...$comparisonPeriod) : null,
+            'blockCount'       => $this->report()->blockCount(),
+            'shops'            => Shop::orderBy('name')->pluck('name', 'id'),
+            'warehouses'       => Warehouse::orderBy('name')->pluck('name', 'id'),
+            'presets'          => array_diff_key(ReportPeriod::PRESETS, ['custom' => true]),
+            'printUrl'         => route('owner.reports.custom.print', $this->reportId) . '?' . http_build_query($this->filters()),
+            'canEdit'          => $this->report()->created_by === auth()->id(),
         ]);
     }
 }

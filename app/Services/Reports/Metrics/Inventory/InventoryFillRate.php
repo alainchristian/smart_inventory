@@ -11,6 +11,7 @@ class InventoryFillRate extends Metric
     protected string $label       = 'Portfolio Fill Rate';
     protected string $description = 'Items left in boxes as a % of the boxes\' full capacity';
     protected string $domain      = 'inventory';
+    protected array  $related     = ['inventory_by_location'];
     protected bool   $usesDates   = false;
     protected string $locations   = 'any';
 

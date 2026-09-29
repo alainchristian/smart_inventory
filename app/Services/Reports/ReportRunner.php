@@ -143,8 +143,10 @@ class ReportRunner
                 try {
                     [$priorRaw, $priorResult] = $metric->evaluate($ctx->withDates(...$prior));
                     $result->comparison = $this->compare($metric, $result->value(), $priorResult->value(), $prior);
-                    $raw['_comparison'] = $priorRaw;
-                    $raw['_comparison_period'] = $prior[0] . ' – ' . $prior[1];
+                    if (! array_is_list($raw)) {  // never mix string keys into a list of rows
+                        $raw['_comparison'] = $priorRaw;
+                        $raw['_comparison_period'] = $prior[0] . ' – ' . $prior[1];
+                    }
                 } catch (\Throwable $e) {
                     report($e);
                 }
@@ -242,19 +244,48 @@ class ReportRunner
         return $rows->values()->toArray();
     }
 
-    private function recordRun(int $reportId, array $config, array $results, int $durationMs): void
+    /**
+     * Headline figures per block, which is all run history keeps.
+     *
+     * @return list<array{block_id:string,title:string,value:int|float|null,type:string}>
+     */
+    public static function summarise(array $results): array
     {
+        $out = [];
+        foreach ($results as $id => $entry) {
+            $headline = $entry['result']['headline'] ?? null;
+            if ($headline === null || ! empty($entry['result']['error'])) {
+                continue;
+            }
+            $out[] = [
+                'block_id' => (string) $id,
+                'title'    => $entry['block']['title'] ?? ($entry['meta']['label'] ?? ''),
+                'value'    => $headline['value'],
+                'type'     => $headline['type'],
+            ];
+        }
+
+        return $out;
+    }
+
+    public function recordRun(int $reportId, array $config, array $results, int $durationMs, bool $scheduled = false): void
+    {
+        unset($config['blocks']);  // the report's own config holds the blocks
+
         \App\Models\ReportRunHistory::create([
             'report_id'       => $reportId,
             'run_by'          => auth()->id() ?? \App\Models\SavedReport::whereKey($reportId)->value('created_by'),
             'run_at'          => now(),
             'config_snapshot' => $config,
-            'results'         => $results,
+            'results'         => null,
+            'summary'         => self::summarise($results),
             'duration_ms'     => $durationMs,
-            'was_scheduled'   => false,
+            'was_scheduled'   => $scheduled,
         ]);
 
-        \App\Models\SavedReport::find($reportId)?->cacheResults($results);
+        if (! $scheduled) {
+            \App\Models\SavedReport::find($reportId)?->markRun();
+        }
 
         // Keep the last 12 runs
         $keep = \App\Models\ReportRunHistory::where('report_id', $reportId)

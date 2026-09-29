@@ -37,6 +37,8 @@ abstract class Metric
     protected string $locations = 'shop';
     /** Which way the headline should move: up | down | neutral */
     protected string $good = 'up';
+    /** Metric ids shown (top 5 rows) in this block's "Details" sheet */
+    protected array $related = [];
     /** Shown when $usesDates is false: what time span the figure covers instead */
     protected ?string $periodNote = "Stock as it is now. The report period doesn't apply.";
 
@@ -68,6 +70,7 @@ abstract class Metric
     public function locations(): string     { return $this->locations; }
     public function goodDirection(): string { return $this->good; }
     public function periodNote(): ?string   { return $this->usesDates ? null : $this->periodNote; }
+    public function related(): array        { return $this->related; }
 
     /** Same keys the old catalogue had, plus locations / good / uses_dates */
     public function meta(): array

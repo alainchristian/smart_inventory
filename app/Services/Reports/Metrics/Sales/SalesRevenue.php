@@ -11,6 +11,7 @@ class SalesRevenue extends Metric
     protected string $label       = 'Total Revenue';
     protected string $description = 'Revenue for the period, with growth against the period before';
     protected string $domain      = 'sales';
+    protected array  $related     = ['sales_by_shop', 'sales_payment_methods', 'sales_top_products'];
     protected array  $viz         = ['kpi_card', 'bar_chart'];
 
     public function fetch(ReportContext $ctx): array

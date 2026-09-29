@@ -11,6 +11,7 @@ class OpsLowStockCount extends Metric
     protected string $label       = 'Low Stock Products';
     protected string $description = 'Products at or below their low-stock level';
     protected string $domain      = 'operations';
+    protected array  $related     = ['replenishment_days_on_hand'];
     protected bool   $usesDates   = false;
     protected string $locations   = 'any';
     protected string $good        = 'down';

@@ -95,6 +95,15 @@ class SavedReport extends Model
             && $this->last_results !== null;
     }
 
+    /** Count a run without storing its results (the viewer re-runs from cached analytics) */
+    public function markRun(): void
+    {
+        $this->forceFill([
+            'last_run_at' => now(),
+            'run_count'   => $this->run_count + 1,
+        ])->save();
+    }
+
     public function cacheResults(array $results, int $ttlHours = 4): void
     {
         $this->update([

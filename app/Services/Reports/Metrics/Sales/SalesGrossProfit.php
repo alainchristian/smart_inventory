@@ -11,6 +11,7 @@ class SalesGrossProfit extends Metric
     protected string $label       = 'Gross Profit & Margin';
     protected string $description = 'Revenue minus the cost of the goods sold, and the margin %';
     protected string $domain      = 'sales';
+    protected array  $related     = ['sales_top_products', 'sales_by_shop'];
 
     public function fetch(ReportContext $ctx): array
     {

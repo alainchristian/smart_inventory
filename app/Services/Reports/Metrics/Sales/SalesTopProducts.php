@@ -22,6 +22,16 @@ class SalesTopProducts extends Metric
 
     public function present(array $raw, ReportContext $ctx): MetricResult
     {
+        // The service keeps full-box and loose sales of a product as separate
+        // rows; without a label the same product looked listed twice.
+        $names = array_count_values(array_column($raw, 'product_name'));
+        $raw = array_map(function ($row) use ($names) {
+            if (($names[$row['product_name']] ?? 0) > 1 && array_key_exists('is_full_box', $row)) {
+                $row['product_name'] .= $row['is_full_box'] ? ' (by box)' : ' (loose)';
+            }
+            return $row;
+        }, $raw);
+
         return MetricResult::make()
             ->headline(array_sum(array_column($raw, 'revenue')), 'money', 'Revenue (listed products)')
             ->table([

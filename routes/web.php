@@ -179,8 +179,12 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/custom/{report}/edit', [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'edit'])->name('custom.edit');
         Route::get('/custom/{report}/print', function (\App\Models\SavedReport $report) {
             abort_unless($report->isVisibleTo(auth()->user()), 403);
-            $results = $report->last_results ?? [];
-            $html = app(\App\Services\Reports\ExportReportAction::class)->toPrintHtml($report, $results);
+            // Same filters as the viewer (period / location / comparison in the query string)
+            $runner  = app(\App\Services\Reports\ReportRunner::class);
+            $filters = request()->only(['date_range', 'date_from', 'date_to', 'location_filter', 'comparison_mode']);
+            $config  = $runner->effectiveConfig($report->resolvedConfig(), $filters);
+            $results = $runner->run($report->resolvedConfig(), null, false, $filters);
+            $html = app(\App\Services\Reports\ExportReportAction::class)->toPrintHtml($report, $results, $config);
             return response($html)->header('Content-Type', 'text/html');
         })->name('custom.print');
     });

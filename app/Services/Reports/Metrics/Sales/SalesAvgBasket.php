@@ -11,6 +11,7 @@ class SalesAvgBasket extends Metric
     protected string $label       = 'Average Basket Value';
     protected string $description = 'Average revenue per sale';
     protected string $domain      = 'sales';
+    protected array  $related     = ['sales_by_shop', 'sales_top_products'];
 
     public function fetch(ReportContext $ctx): array
     {

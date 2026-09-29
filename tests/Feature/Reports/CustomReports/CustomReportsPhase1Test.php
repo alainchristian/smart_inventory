@@ -186,16 +186,22 @@ class CustomReportsPhase1Test extends TestCase
         $owner  = $this->owner();
         $report = $this->report($owner, ['name' => '=HYPERLINK("x")']);
 
+        $result = \App\Services\Reports\MetricResult::make()
+            ->headline(3, 'count', 'Products')
+            ->table(['product_name' => ['Product', 'text'], 'revenue' => ['Revenue', 'money'], 'units' => ['Units', 'count']],
+                [['product_name' => '@SUM(A1)', 'revenue' => '-1500.50', 'units' => 3]]);
+
         $csv = app(ExportReportAction::class)->toCsv($report, [
             'b1' => [
-                'block' => ['id' => 'b1', 'metric_id' => 'sales_top_products', 'viz' => 'table', 'title' => 'Top'],
-                'meta'  => ['label' => 'Top', 'default_viz' => 'table'],
-                'data'  => [['product_name' => '@SUM(A1)', 'revenue' => '-1500.50', 'units' => 3]],
+                'block'  => ['id' => 'b1', 'metric_id' => 'sales_top_products', 'viz' => 'table', 'title' => 'Top'],
+                'meta'   => ['label' => 'Top', 'default_viz' => 'table'],
+                'result' => $result->toArray(),
             ],
         ]);
 
         $this->assertStringContainsString('"\'=HYPERLINK(""x"")"', $csv);
         $this->assertStringContainsString('"\'@SUM(A1)","-1500.50","3"', $csv);
+        $this->assertStringContainsString('"Product","Revenue (RWF)","Units"', $csv);
     }
 
     public function test_wipe_tools_name_real_report_tables(): void

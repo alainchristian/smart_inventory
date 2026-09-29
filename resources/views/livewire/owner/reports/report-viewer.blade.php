@@ -1,887 +1,695 @@
-{{-- ┌─────────────────────────────────────────────────────────────────────────┐
-    │  Owner · Report Viewer                                                  │
-    │  Runs and displays a saved custom report                                │
-    └─────────────────────────────────────────────────────────────────────────┘ --}}
-<div>
+@php
+    use App\Services\Reports\ReportFormat as F;
+
+    // Icon + colour per domain
+    $domainIcon = [
+        'sales'         => ['accent', '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>'],
+        'inventory'     => ['violet', '<path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>'],
+        'replenishment' => ['amber', '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>'],
+        'loss'          => ['red', '<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>'],
+        'transfers'     => ['accent', '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>'],
+        'operations'    => ['amber', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
+        'finance'       => ['green', '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
+    ];
+    $toneColor = ['good' => 'green', 'warn' => 'amber', 'bad' => 'red', 'neutral' => 'accent'];
+    $defaultTextTitle = 'Text / Narrative';
+@endphp
+<div class="rv-page" style="font-family:var(--font)" wire:init="load">
 <style>
-.rv-page-title { font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin:0 0 4px }
-.rv-page-subtitle { font-size:13px;color:var(--text-sub) }
-.rv-hdr { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap }
-.rv-hdr-meta { display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px }
-.rv-chip { display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px;background:var(--surface2);color:var(--text-sub);border:1px solid var(--border) }
-.rv-run-btn { padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);font-size:14px;font-weight:700;cursor:pointer }
-.rv-run-btn:hover { opacity:.9 }
-.rv-run-btn:disabled { opacity:.5;cursor:default }
-.rv-edit-btn { display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:transparent;border:1px solid var(--border);border-radius:var(--rsm);font-size:13px;color:var(--text-sub);text-decoration:none;cursor:pointer }
-.rv-edit-btn:hover { background:var(--surface2);color:var(--text) }
-.rv-placeholder { text-align:center;padding:80px 20px;border:2px dashed var(--border);border-radius:var(--r);margin-top:8px }
-.rv-results { display:flex;flex-wrap:wrap;gap:16px;margin-top:8px }
-.rv-block-half { width:calc(50% - 8px);box-sizing:border-box }
-.rv-block-full { width:100%;box-sizing:border-box }
-.rv-block-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden }
-.rv-block-header { padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;color:var(--text) }
-.rv-block-body { padding:16px }
-.rv-kpi-value { font-size:28px;font-weight:700;color:var(--text);letter-spacing:-1px;margin:0 }
-.rv-kpi-sub { font-size:12px;color:var(--text-dim);margin-top:4px }
-{{-- KPI card body — same icon/divider/footer anatomy as .iv-kpi/.sa-kpi,
-     minus the outer card chrome (rv-block-card already provides that) --}}
-.rv-kpi-row  { display:flex;align-items:flex-start;gap:12px }
-.rv-kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
-               justify-content:center;flex-shrink:0;background:var(--accent-dim);color:var(--accent) }
-.rv-kpi-body { flex:1;min-width:0 }
-.rv-kpi-divider { height:1px;background:var(--border);margin-top:14px }
-.rv-kpi-footer  { display:flex;flex-direction:column;gap:0;margin-top:10px }
-.rv-kpi-stat    { display:flex;flex-direction:row-reverse;justify-content:space-between;
-                  align-items:center;padding:5px 0;border-bottom:1px solid var(--border);min-width:0 }
-.rv-kpi-stat:last-child { border-bottom:none }
-.rv-kpi-stat-v  { font-size:13px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px;
-                  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.rv-kpi-stat-l  { font-size:11px;color:var(--text-dim);flex-shrink:0;margin-right:8px;text-transform:capitalize }
-.rv-table { width:100%;border-collapse:collapse }
-.rv-table thead th { font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap }
-.rv-table tbody td { font-size:13px;color:var(--text);padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap }
-.rv-table tbody tr:last-child td { border-bottom:none }
-.rv-table-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch }
-.rv-error-card { background:var(--danger-glow);border:1px solid var(--red-dim);border-radius:var(--rsm);padding:14px;color:var(--red) }
-.rv-chart-wrap { position:relative;height:240px }
-.rv-cache-badge { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--success-glow);color:var(--success);border:1px solid var(--success) }
-.rv-icon-btn { display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:var(--rsm);font-size:13px;color:var(--text-sub);cursor:pointer;text-decoration:none }
-.rv-icon-btn:hover { background:var(--surface2);color:var(--text) }
-.rv-icon-btn.active { background:var(--accent-dim);color:var(--accent);border-color:var(--accent-dim) }
-.rv-kpi-delta { display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:8px }
-.rv-kpi-delta.up { background:rgba(0,200,100,.12);color:var(--success) }
-.rv-kpi-delta.down { background:rgba(220,50,50,.1);color:var(--red) }
-.rv-threshold-dot { display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:8px;vertical-align:middle }
-.rv-threshold-dot.ok { background:var(--success) }
-.rv-threshold-dot.warn { background:var(--amber) }
-.rv-threshold-dot.crit { background:var(--red) }
-.rv-text-block { font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap }
-.rv-annotate-btn { background:transparent;border:none;cursor:pointer;color:var(--text-dim);font-size:11px;padding:2px 6px;border-radius:4px }
-.rv-annotate-btn:hover { background:var(--surface2);color:var(--accent) }
-/* Inline block insight */
-/* Breakdown panel */
-.rv-breakdown-toggle { display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:5px 10px 5px 0;background:transparent;border:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--text-dim);letter-spacing:.2px }
-.rv-breakdown-toggle:hover { color:var(--accent) }
-.rv-breakdown-toggle svg { transition:transform .2s }
-.rv-breakdown-toggle.open svg { transform:rotate(180deg) }
-.rv-breakdown-panel { margin-top:10px;border-top:1px solid var(--border);padding-top:12px }
-.rv-bk-section { margin-bottom:12px }
-.rv-bk-section:last-child { margin-bottom:0 }
-.rv-bk-label { font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:6px }
-.rv-bk-row { display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12.5px }
-.rv-bk-row:last-child { border-bottom:none }
-.rv-bk-name { flex:1;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-.rv-bk-val  { color:var(--text);font-weight:700;font-size:12px;white-space:nowrap }
-.rv-bk-pct  { min-width:38px;text-align:right;font-size:11px;font-weight:700;color:var(--text-dim) }
-.rv-bk-bar-wrap { width:60px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0 }
-.rv-bk-bar  { height:5px;background:var(--accent);border-radius:3px }
-.rv-bk-pill { display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700 }
-.rv-bk-pill.ok   { background:var(--green-dim,rgba(0,180,80,.1));color:var(--green) }
-.rv-bk-pill.warn { background:var(--amber-dim,rgba(240,160,0,.08));color:var(--amber) }
-.rv-bk-pill.crit { background:var(--danger-glow,rgba(220,50,50,.07));color:var(--red) }
-.rv-insight { display:flex;align-items:flex-start;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12.5px;line-height:1.5;font-weight:500 }
-.rv-insight svg { flex-shrink:0;margin-top:1px }
-.rv-insight.rv-good    { color:var(--green) }
-.rv-insight.rv-warn    { color:var(--amber) }
-.rv-insight.rv-bad     { color:var(--red) }
-.rv-insight.rv-neutral { color:var(--text-dim) }
-/* Key Findings strip */
-.rv-findings { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:18px }
-.rv-findings-hdr { font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:6px }
-.rv-findings-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px }
-.rv-finding { padding:10px 13px;border-radius:var(--rsm);border-left:3px solid;display:flex;flex-direction:column;gap:3px }
-.rv-finding.rv-good    { background:rgba(0,180,80,.07);border-left-color:var(--green) }
-.rv-finding.rv-warn    { background:rgba(240,160,0,.08);border-left-color:var(--amber) }
-.rv-finding.rv-bad     { background:rgba(220,50,50,.07);border-left-color:var(--red) }
-.rv-finding.rv-neutral { background:var(--surface2);border-left-color:var(--border) }
-.rv-finding-label { font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;opacity:.7 }
-.rv-finding-text  { font-size:12.5px;font-weight:500;line-height:1.4 }
-.rv-finding.rv-good .rv-finding-label, .rv-finding.rv-good .rv-finding-text { color:var(--green) }
-.rv-finding.rv-warn .rv-finding-label, .rv-finding.rv-warn .rv-finding-text { color:var(--amber) }
-.rv-finding.rv-bad .rv-finding-label,  .rv-finding.rv-bad .rv-finding-text  { color:var(--red) }
-.rv-finding.rv-neutral .rv-finding-label, .rv-finding.rv-neutral .rv-finding-text { color:var(--text-dim) }
-.rv-drawer { position:fixed;top:0;right:0;width:380px;max-width:100%;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:9999;box-shadow:-4px 0 20px rgba(0,0,0,.12);overflow-y:auto;display:flex;flex-direction:column }
-.rv-drawer-hdr { padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between }
-.rv-drawer-title { font-size:15px;font-weight:700;color:var(--text) }
-.rv-drawer-close { background:transparent;border:none;cursor:pointer;color:var(--text-dim);font-size:20px;line-height:1 }
-.rv-history-item { padding:12px 20px;border-bottom:1px solid var(--border);cursor:pointer }
-.rv-history-item:hover { background:var(--surface2) }
-.rv-history-item.active { background:var(--accent-dim) }
-.rv-annotation-form { padding:16px 20px;border-bottom:1px solid var(--border) }
-@@media(max-width:840px) {
-    .rv-block-half { width:100% }
-    .rv-drawer { width:100% }
+.rv-page { padding:0 0 80px }
+
+/* Header */
+.rv-back { display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-dim);text-decoration:none;margin-bottom:10px }
+.rv-back:hover { color:var(--accent) }
+.rv-header { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap }
+.rv-title  { font-size:22px;font-weight:800;color:var(--text);margin:0 0 4px }
+.rv-desc   { font-size:13px;color:var(--text-sub);margin:0 0 6px;max-width:720px }
+.rv-meta   { display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--text-dim) }
+.rv-pill   { display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap }
+.rv-actions { display:flex;gap:8px;align-items:center;flex-wrap:wrap }
+
+/* Buttons */
+.rv-btn { padding:8px 14px;border-radius:var(--rsm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);
+          transition:all var(--tr);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none }
+.rv-btn-primary { background:var(--accent);color:#fff;border:none;box-shadow:0 3px 10px rgba(59,111,212,.25) }
+.rv-btn-primary:hover { opacity:.88 }
+.rv-btn-ghost { background:var(--surface);color:var(--text-sub);border:1px solid var(--border) }
+.rv-btn-ghost:hover { background:var(--surface2);color:var(--text) }
+.rv-btn:disabled { opacity:.5;cursor:not-allowed }
+.rv-menu { position:relative }
+.rv-menu-list { position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:190px;background:var(--surface);
+                border-radius:var(--rsm);box-shadow:var(--shadow-card-hover);padding:6px }
+.rv-menu-item { display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;background:transparent;
+                border-radius:6px;font-size:13px;font-weight:500;color:var(--text-sub);cursor:pointer;font-family:var(--font);text-decoration:none;text-align:left }
+.rv-menu-item:hover { background:var(--surface2);color:var(--text) }
+.rv-menu-note { font-size:11px;color:var(--text-dim);padding:6px 10px 2px }
+
+/* Filters (§6.2) */
+.rv-filters { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);margin-bottom:16px;min-width:0;max-width:100% }
+.rv-presets { display:flex;gap:4px;overflow-x:auto;padding:10px 14px;border-bottom:1px solid var(--border);scrollbar-width:none;flex-wrap:nowrap;min-width:0 }
+.rv-presets::-webkit-scrollbar { display:none }
+.rv-preset { padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid transparent;background:transparent;
+             color:var(--text-dim);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all var(--tr);font-family:var(--font) }
+.rv-preset:hover  { background:var(--surface2);color:var(--text);border-color:var(--border) }
+.rv-preset.active { background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.12) }
+.rv-filter-row { display:flex;align-items:center;flex-wrap:wrap }
+.rv-seg { display:flex;align-items:center;gap:8px;padding:8px 14px;border-right:1px solid var(--border);min-width:0 }
+.rv-seg:last-child { border-right:none }
+.rv-seg-grow { flex:1 }
+.rv-seg-label { font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);flex-shrink:0 }
+.rv-date, .rv-select { padding:0;border:none;background:transparent;color:var(--text);font-size:13px;font-weight:600;
+                       font-family:var(--font);cursor:pointer;outline:none;min-width:0 }
+.rv-date { width:118px }
+.rv-date:focus, .rv-select:focus { color:var(--accent) }
+.rv-reset { font-size:12px;font-weight:600;color:var(--accent);background:none;border:none;cursor:pointer;font-family:var(--font);white-space:nowrap }
+.rv-phone-bar { display:none }
+
+/* Context line */
+.rv-context { display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-dim);margin:0 2px 16px }
+.rv-context strong { color:var(--text-sub);font-weight:700 }
+.rv-dot { width:3px;height:3px;border-radius:50%;background:var(--text-dim) }
+
+/* Loading */
+.rv-body { transition:opacity var(--tr) }
+.rv-busy { opacity:.45;pointer-events:none }
+.rv-skel { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);height:150px;position:relative;overflow:hidden }
+.rv-skel::after { content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--surface2),transparent);animation:rv-shine 1.2s infinite }
+@keyframes rv-shine { from { transform:translateX(-100%) } to { transform:translateX(100%) } }
+@keyframes rv-spin  { to { transform:rotate(360deg) } }
+.rv-spinning { animation:rv-spin 1s linear infinite }
+
+/* Key findings */
+.rv-findings { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);margin-bottom:20px }
+.rv-findings-head { padding:12px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text) }
+.rv-findings-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) }
+.rv-finding { padding:12px 18px 12px 15px;border-left:3px solid;border-bottom:1px solid var(--border) }
+.rv-finding-title { font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px }
+.rv-finding-text  { font-size:13px;color:var(--text-sub);line-height:1.45 }
+
+/* KPI cards: shared .ui-kpi (app.css); page bits only */
+.rv-kpi-status { width:8px;height:8px;border-radius:50%;flex-shrink:0 }
+.rv-kpi-info   { color:var(--text-dim);cursor:help;display:inline-flex;vertical-align:-2px;margin-left:4px }
+.rv-kpi-more   { align-self:flex-start;font-size:12px;font-weight:600;color:var(--accent);background:none;border:none;padding:0;cursor:pointer;font-family:var(--font) }
+.rv-kpi-more:hover { text-decoration:underline }
+.rv-kpi-error  { font-size:13px;color:var(--red) }
+
+/* Blocks */
+.rv-grid  { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px }
+.rv-full  { grid-column:1 / -1 }
+.rv-card  { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);min-width:0;display:flex;flex-direction:column }
+.rv-card-head  { padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px }
+.rv-card-title { font-size:14px;font-weight:700;color:var(--text);margin:0 }
+.rv-card-sub   { font-size:12px;color:var(--text-dim);margin-top:2px }
+.rv-card-total { font-family:var(--mono);font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;text-align:right }
+.rv-card-total small { display:block;font-family:var(--font);font-size:11px;font-weight:600;color:var(--text-dim);margin-top:2px }
+.rv-card-body  { padding:4px 0;flex:1;min-width:0 }
+.rv-card-foot  { padding:10px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px }
+.rv-insight { display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--text-sub);line-height:1.45 }
+.rv-insight-dot { width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0 }
+.rv-note { font-size:11.5px;color:var(--text-dim);line-height:1.45 }
+.rv-text { padding:16px 18px;font-size:14px;line-height:1.65;color:var(--text-sub);white-space:pre-wrap }
+.rv-error { margin:14px 18px;padding:10px 14px;border-left:3px solid var(--red);font-size:13px;color:var(--text-sub) }
+
+/* Tables */
+.rv-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch }
+.rv-table  { width:100%;border-collapse:collapse }
+.rv-table thead tr { border-bottom:2px solid var(--border) }
+.rv-table th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
+.rv-table td { padding:10px 16px;font-size:13px;color:var(--text-sub);white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis }
+.rv-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
+.rv-table tbody tr:last-child { border-bottom:none }
+.rv-table tbody tr:hover { background:var(--surface2) }
+.rv-table tfoot tr { border-top:2px solid var(--border) }
+.rv-table tfoot td { font-weight:700;color:var(--text) }
+.rv-table .rv-num { text-align:right;font-family:var(--mono);font-size:12.5px }
+.rv-table .rv-first { color:var(--text);font-weight:600 }
+.rv-table .rv-neg { color:var(--red) }
+.rv-empty { padding:28px 18px;text-align:center;font-size:13px;color:var(--text-dim) }
+
+/* Charts */
+.rv-chart { position:relative;height:260px;padding:12px 14px 8px }
+.rv-chart canvas { display:block }
+
+/* Placeholder (report with no blocks) */
+.rv-placeholder { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);padding:60px 20px;text-align:center }
+.rv-placeholder-title { font-size:15px;font-weight:700;color:var(--text-sub);margin-bottom:6px }
+.rv-placeholder-sub   { font-size:13px;color:var(--text-dim) }
+
+/* History drawer (§14) */
+.rv-overlay { position:fixed;inset:0;z-index:400;background:rgba(26,31,54,.45);backdrop-filter:blur(2px) }
+.rv-drawer  { position:fixed;top:0;right:0;bottom:0;z-index:401;width:460px;max-width:100vw;background:var(--surface);
+              border-left:1px solid var(--border);box-shadow:-8px 0 40px rgba(26,31,54,.14);display:flex;flex-direction:column }
+.rv-drawer-head  { display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0 }
+.rv-drawer-title { font-size:16px;font-weight:800;color:var(--text) }
+.rv-drawer-close { width:32px;height:32px;border-radius:8px;border:none;background:var(--surface2);color:var(--text-sub);cursor:pointer;display:flex;align-items:center;justify-content:center }
+.rv-drawer-body  { flex:1;overflow-y:auto;padding:8px 0 }
+.rv-run { display:block;width:100%;text-align:left;padding:14px 22px;border:none;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;font-family:var(--font) }
+.rv-run:hover { background:var(--surface2) }
+.rv-run-top { display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px }
+.rv-run-period { font-size:13px;font-weight:700;color:var(--text) }
+.rv-run-when   { font-size:11px;color:var(--text-dim);white-space:nowrap }
+.rv-run-meta   { font-size:12px;color:var(--text-dim) }
+.rv-run-figs   { display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px }
+.rv-run-fig    { font-size:12px;color:var(--text-sub) }
+.rv-run-fig b  { font-family:var(--mono);color:var(--text);font-weight:700 }
+
+/* Details sheet body */
+.rv-detail-section { margin-bottom:18px }
+.rv-detail-title { font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--accent);margin:0 0 6px }
+.rv-detail-kpi { font-size:13px;color:var(--text-sub);margin-bottom:14px;line-height:1.5 }
+
+@media (max-width:1100px) {
+    .rv-grid { grid-template-columns:1fr }
+}
+@media (max-width:768px) {
+    .rv-drawer { left:0;width:auto }
+    .rv-findings-grid { grid-template-columns:1fr }
+}
+@media (max-width:640px) {
+    .rv-title { font-size:var(--m-fs-title) }
+    .rv-header { margin-bottom:12px }
+    .rv-actions { width:100% }
+    .rv-actions > * { flex:1;justify-content:center }
+    .rv-phone-bar { display:flex;margin-bottom:12px }
+    .rv-phone-period { flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+    .rv-filters.m-filter-panel { margin-bottom:0 }
+    .rv-filter-row { flex-direction:column;align-items:stretch }
+    .rv-seg { border-right:none;border-bottom:1px solid var(--border);padding:10px 14px }
+    .rv-seg:last-child { border-bottom:none }
+    .rv-date { width:auto;flex:1 }
+    .rv-select { flex:1 }
+    .rv-context { margin-bottom:12px }
+    .rv-grid { gap:12px }
+    .rv-card-head { padding:12px 14px }
+    .rv-chart { height:220px }
 }
 </style>
 
-@php
-// Guarded: the view can render more than once per process (tests, queue
-// workers). Phase 3 of the Custom Reports rebuild moves these into metric classes.
-if (! function_exists('extractKpiValue')) {
-function extractKpiValue(string $metricId, array $data): string {
-    return match($metricId) {
-        'sales_revenue'           => number_format($data['total_revenue'] ?? 0) . ' RWF',
-        'sales_gross_profit'      => number_format($data['gross_profit'] ?? 0) . ' RWF',
-        'sales_transaction_count' => number_format($data['transactions_count'] ?? 0),
-        'sales_avg_basket'        => number_format($data['avg_basket'] ?? 0) . ' RWF',
-        'inventory_cost_value'    => number_format($data['purchase_value'] ?? 0) . ' RWF',
-        'inventory_retail_value'  => number_format($data['retail_value'] ?? 0) . ' RWF',
-        'inventory_fill_rate'     => round($data['fill_rate'] ?? 0, 1) . '%',
-        'inventory_dead_stock'    => ($data['dead_stock_count'] ?? 0) . ' products',
-        'loss_total'              => number_format(($data['total_refunds'] ?? 0) + ($data['damaged_loss'] ?? 0)) . ' RWF',
-        'loss_return_rate'        => round($data['return_rate'] ?? 0, 1) . '%',
-        'loss_damaged_value'      => number_format($data['damaged_loss'] ?? 0) . ' RWF',
-        'loss_shrinkage'          => round($data['shrinkage_pct'] ?? 0, 2) . '%',
-        'ops_stock_turnover'      => round($data['turnover_rate'] ?? 0, 2) . '×',
-        'ops_damaged_pending'     => ($data['count'] ?? 0) . ' items',
-        'ops_low_stock_count'     => ($data['low_stock_count'] ?? 0) . ' products',
-        'sales_voided'            => number_format($data['voided_count'] ?? 0) . ' transactions',
-        'replenishment_critical'  => count($data) . ' products',
-        'transfers_kpis'          => number_format($data['total_transfers'] ?? 0) . ' transfers',
-        'finance_expense_summary'    => number_format($data['total_expenses'] ?? 0) . ' RWF',
-        'finance_expense_trend'      => number_format(array_sum(array_column($data, 'total_expenses'))) . ' RWF',
-        'finance_withdrawal_summary' => number_format($data['total_withdrawals'] ?? 0) . ' RWF',
-        'finance_cash_variance'      => number_format($data['total_shortage'] ?? 0) . ' RWF',
-        'finance_net_operating'      => number_format($data['net_result'] ?? 0) . ' RWF',
-        default                   => (string) (collect($data)->first(fn($v) => is_numeric($v)) ?? '—'),
-    };
-}
+{{-- ═══ Header ═══════════════════════════════════════════════════════════ --}}
+<a href="{{ route('owner.reports.custom.library') }}" class="rv-back" wire:navigate>
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Custom reports
+</a>
 
-function extractKpiSub(string $metricId, array $data): string {
-    return match($metricId) {
-        'sales_revenue'           => 'Growth: ' . round($data['growth_percentage'] ?? 0, 1) . '%',
-        'sales_gross_profit'      => 'Margin: ' . round($data['margin_pct'] ?? 0, 1) . '%',
-        'sales_transaction_count' => 'Previous: ' . number_format($data['previous_transactions'] ?? 0),
-        'sales_avg_basket'        => 'Based on ' . number_format($data['transactions_count'] ?? 0) . ' transactions',
-        'inventory_cost_value'    => 'Potential profit: ' . number_format($data['potential_profit'] ?? 0) . ' RWF',
-        'inventory_retail_value'  => 'Cost: ' . number_format($data['purchase_value'] ?? 0) . ' RWF',
-        'inventory_fill_rate'     => 'Items vs box capacity',
-        'inventory_dead_stock'    => 'No sales in 90 days',
-        'loss_total'              => 'Refunds: ' . number_format($data['total_refunds'] ?? 0) . ' RWF',
-        'loss_return_rate'        => number_format($data['returns_count'] ?? 0) . ' returns',
-        'loss_shrinkage'          => number_format($data['items_damaged_90d'] ?? 0) . ' items damaged in 90 days',
-        'ops_stock_turnover'      => 'Annual COGS ÷ avg inventory',
-        'transfers_kpis'          => 'Discrepancy rate: ' . round($data['discrepancy_rate'] ?? 0, 1) . '%',
-        'finance_expense_summary'    => 'vs prior: ' . ($data['previous_total'] > 0 ? number_format($data['previous_total']) . ' RWF' : '—'),
-        'finance_withdrawal_summary' => 'Cash: ' . number_format($data['cash_withdrawals'] ?? 0) . ' · MoMo: ' . number_format($data['momo_withdrawals'] ?? 0),
-        'finance_cash_variance'      => ($data['sessions_with_shortage'] ?? 0) . ' session(s) with shortage',
-        'finance_net_operating'      => 'Margin: ' . ($data['net_margin_pct'] ?? 0) . '% · Gross: ' . number_format($data['gross_profit'] ?? 0) . ' RWF',
-        'finance_expense_trend'      => 'Daily average: ' . (count($data) > 0 ? number_format(array_sum(array_column($data, 'total_expenses')) / count($data)) : 0) . ' RWF',
-        default                   => '',
-    };
-}
-
-/**
- * Returns ['text' => string, 'tone' => good|warn|bad|neutral] or null.
- * Converts raw metric data into a plain-English sentence an owner can act on.
- */
-function generateInsight(string $metricId, array $data): ?array
-{
-    if (isset($data['error'])) return null;
-    $g = fn(string $s) => ['text' => $s, 'tone' => 'good'];
-    $w = fn(string $s) => ['text' => $s, 'tone' => 'warn'];
-    $b = fn(string $s) => ['text' => $s, 'tone' => 'bad'];
-    $n = fn(string $s) => ['text' => $s, 'tone' => 'neutral'];
-    $fmt = fn($v) => number_format((float)$v);
-
-    switch ($metricId) {
-
-        case 'sales_revenue': {
-            $growth = round($data['growth_percentage'] ?? 0, 1);
-            $margin = round($data['margin_pct'] ?? 0, 1);
-            $rev    = $fmt($data['total_revenue'] ?? 0);
-            if ($growth > 20) return $g("Revenue surged {$growth}% — your strongest growth in recent periods. Keep the momentum.");
-            if ($growth > 5)  return $g("Revenue grew {$growth}% with a {$margin}% gross margin. Solid performance.");
-            if ($growth >= 0) return $n("Revenue steady at {$rev} RWF with a {$margin}% margin. Consistent but room to grow.");
-            if ($growth > -10) return $w("Revenue dipped {$growth}% vs the prior period. Worth investigating the cause.");
-            return $b("Revenue fell {$growth}% — a significant decline. Review sales activity and pricing.");
-        }
-
-        case 'sales_gross_profit': {
-            $margin = round($data['margin_pct'] ?? 0, 1);
-            $gp     = $fmt($data['gross_profit'] ?? 0);
-            if ($margin >= 35) return $g("Excellent {$margin}% gross margin — your pricing and cost of goods are well calibrated.");
-            if ($margin >= 20) return $g("Healthy {$margin}% gross margin on {$gp} RWF gross profit.");
-            if ($margin >= 10) return $w("Thin {$margin}% margin — consider reviewing supplier costs or adjusting pricing.");
-            return $b("Very low {$margin}% gross margin. Urgent review of COGS and pricing is needed.");
-        }
-
-        case 'sales_transaction_count': {
-            $cnt  = (int)($data['transactions_count'] ?? 0);
-            $prev = (int)($data['previous_transactions'] ?? 0);
-            if ($prev > 0) {
-                $chg = round((($cnt - $prev) / $prev) * 100, 1);
-                if ($chg > 0) return $g("Transaction volume up {$chg}% — more customers making purchases.");
-                return $w("Transaction count dropped {$chg}% vs prior period. Fewer customers or larger orders?");
-            }
-            return $n(number_format($cnt) . " transactions processed this period.");
-        }
-
-        case 'sales_avg_basket': {
-            $avg = $fmt($data['avg_basket'] ?? 0);
-            $cnt = number_format($data['transactions_count'] ?? 0);
-            return $n("Each of the {$cnt} customers spent an average of {$avg} RWF per visit.");
-        }
-
-        case 'inventory_fill_rate': {
-            $rate = round($data['fill_rate'] ?? 0, 1);
-            if ($rate >= 90) return $g("Excellent {$rate}% fill rate — shelves are well stocked across all locations.");
-            if ($rate >= 70) return $w("{$rate}% fill rate — noticeable gaps in coverage. Plan transfers or restock.");
-            return $b("Low {$rate}% fill rate — shelves are significantly under-stocked. Urgent replenishment needed.");
-        }
-
-        case 'inventory_dead_stock':
-        case 'ops_low_stock_count': {
-            $dead = (int)($data['dead_stock_count'] ?? 0);
-            $low  = (int)($data['low_stock_count'] ?? 0);
-            if ($metricId === 'inventory_dead_stock') {
-                if ($dead === 0) return $g("No dead stock detected — all products are actively selling.");
-                if ($dead <= 3)  return $w("{$dead} product(s) haven't moved in 90+ days. Consider markdowns or transfers.");
-                return $b("{$dead} products are stagnant for 90+ days. Capital is locked — clear them out.");
-            }
-            if ($low === 0)  return $g("No products are running critically low right now.");
-            if ($low <= 5)   return $w("{$low} product(s) are running low — schedule restocking soon.");
-            return $b("{$low} products are low on stock — immediate action required before stock-outs occur.");
-        }
-
-        case 'inventory_cost_value': {
-            $cost   = $fmt($data['purchase_value'] ?? 0);
-            $profit = $fmt($data['potential_profit'] ?? 0);
-            return $n("Inventory at {$cost} RWF cost, with {$profit} RWF in potential gross profit if sold at full retail.");
-        }
-
-        case 'inventory_retail_value': {
-            $retail = $fmt($data['retail_value'] ?? 0);
-            $cost   = $fmt($data['purchase_value'] ?? 0);
-            return $n("Stock worth {$retail} RWF at retail price, sitting at {$cost} RWF cost.");
-        }
-
-        case 'loss_total': {
-            $total = ($data['total_refunds'] ?? 0) + ($data['damaged_loss'] ?? 0);
-            if ($total == 0) return $g("No losses this period — clean run with no returns or damaged goods.");
-            $fmtTotal = $fmt($total);
-            $returns  = $fmt($data['total_refunds'] ?? 0);
-            $damaged  = $fmt($data['damaged_loss'] ?? 0);
-            return $w("Losses of {$fmtTotal} RWF: {$returns} RWF in returns and {$damaged} RWF from damaged goods.");
-        }
-
-        case 'loss_return_rate': {
-            $rate = round($data['return_rate'] ?? 0, 1);
-            $cnt  = (int)($data['returns_count'] ?? 0);
-            if ($rate < 2)  return $g("Healthy {$rate}% return rate — customers are largely satisfied with what they receive.");
-            if ($rate < 5)  return $w("{$rate}% return rate ({$cnt} returns) — within range, but keep an eye on it.");
-            return $b("High {$rate}% return rate with {$cnt} returns. Investigate product quality or customer expectations.");
-        }
-
-        case 'loss_damaged_value': {
-            $v = $fmt($data['damaged_loss'] ?? 0);
-            if (($data['damaged_loss'] ?? 0) == 0) return $g("No damaged-goods losses recorded this period.");
-            return $w("{$v} RWF lost to damaged goods. Review handling and storage conditions.");
-        }
-
-        case 'loss_shrinkage': {
-            $s = round($data['shrinkage_pct'] ?? 0, 2);
-            $n = (int)($data['items_damaged_90d'] ?? 0);
-            if ($s < 0.5) return $g("Negligible {$s}% shrinkage — your inventory control is strong.");
-            if ($s < 2)   return $w("{$s}% shrinkage with {$n} items damaged in the last 90 days — review handling.");
-            return $b("High {$s}% shrinkage rate. Security, storage, and handling practices need immediate review.");
-        }
-
-        case 'replenishment_critical': {
-            $cnt = count($data);
-            if ($cnt === 0) return $g("No products at critical levels — all stock is adequately covered.");
-            if ($cnt === 1) return $b("1 product is critically low — a stock-out could happen any day. Order now.");
-            return $b("{$cnt} products are critically low. Immediate supplier orders are needed to avoid stock-outs.");
-        }
-
-        case 'replenishment_days_on_hand': {
-            $rows = collect($data)->map(fn($r) => is_array($r) ? $r : (array)$r);
-            $urgent = $rows->filter(fn($r) => ($r['days_on_hand'] ?? 999) < 7)->count();
-            if ($urgent === 0) return $g("All products have more than a week of stock remaining.");
-            $min  = $rows->sortBy('days_on_hand')->first() ?? [];
-            $name = $min['product_name'] ?? 'a product';
-            $days = $min['days_on_hand'] ?? 0;
-            return $b("{$urgent} product(s) have less than 7 days of stock. Most urgent: {$name} ({$days} days left).");
-        }
-
-        case 'ops_damaged_pending': {
-            $cnt = (int)($data['count'] ?? 0);
-            if ($cnt === 0) return $g("No damaged goods awaiting a decision — backlog is clear.");
-            return $w("{$cnt} damaged item(s) need a disposition decision. Resolve to free up space and write off losses.");
-        }
-
-        case 'transfers_kpis': {
-            $total = (int)($data['total_transfers'] ?? 0);
-            $dr    = round($data['discrepancy_rate'] ?? 0, 1);
-            if ($total === 0) return $n("No transfers completed this period.");
-            if ($dr < 2)  return $g(number_format($total) . " transfers with only {$dr}% discrepancy — excellent packing accuracy.");
-            if ($dr < 10) return $w("{$dr}% discrepancy rate on " . number_format($total) . " transfers — review packing procedures.");
-            return $b("High {$dr}% discrepancy rate — packing and shipping accuracy needs urgent attention.");
-        }
-
-        case 'transfers_discrepancies': {
-            $cnt = is_array($data) && isset($data[0]) ? count($data) : (int)($data['total_discrepancies'] ?? 0);
-            if ($cnt === 0) return $g("No discrepancies — all transfers reconciled perfectly.");
-            return $w("{$cnt} discrepancy/discrepancies detected. Investigate and reconcile before stock records drift.");
-        }
-
-        case 'finance_net_operating': {
-            $net = (float)($data['net_result'] ?? 0);
-            $m   = round($data['net_margin_pct'] ?? 0, 1);
-            $fmtNet = $fmt(abs($net));
-            if ($net > 0 && $m >= 15) return $g("Profitable period — {$fmtNet} RWF net result with a {$m}% net margin.");
-            if ($net > 0) return $w("Marginally profitable at {$fmtNet} RWF ({$m}% margin). Watch expenses to protect the bottom line.");
-            return $b("Operations ran at a loss of {$fmtNet} RWF — expenses exceeded net revenue this period.");
-        }
-
-        case 'finance_expense_summary': {
-            $cur  = $data['total_expenses'] ?? 0;
-            $prev = $data['previous_total'] ?? 0;
-            $fmtCur = $fmt($cur);
-            if ($prev > 0) {
-                $chg = round((($cur - $prev) / $prev) * 100, 1);
-                if ($chg > 20) return $b("Expenses jumped {$chg}% vs prior period at {$fmtCur} RWF — review cost drivers.");
-                if ($chg > 0)  return $w("Expenses up {$chg}% at {$fmtCur} RWF — slightly higher than before.");
-                return $g("Expenses down {$chg}% at {$fmtCur} RWF — cost discipline is working.");
-            }
-            return $n("Total expenses of {$fmtCur} RWF recorded this period.");
-        }
-
-        case 'finance_cash_variance': {
-            $shortage  = (float)($data['total_shortage'] ?? 0);
-            $sessions  = (int)($data['sessions_with_shortage'] ?? 0);
-            $totalSess = $data['total_sessions'] ?? 0;
-            if ($shortage == 0) return $g("All cash sessions balanced — no shortages recorded. Excellent cash discipline.");
-            $fmtS = $fmt($shortage);
-            if ($sessions === 1) return $w("1 of {$totalSess} sessions had a cash shortage of {$fmtS} RWF — investigate the gap.");
-            return $b("{$sessions} of {$totalSess} sessions had shortages totaling {$fmtS} RWF — review cash handling procedures.");
-        }
-
-        case 'finance_withdrawal_summary': {
-            $total = $fmt($data['total_withdrawals'] ?? 0);
-            $cash  = $fmt($data['cash_withdrawals'] ?? 0);
-            return $n("Owner withdrawals totaled {$total} RWF this period, with {$cash} RWF taken in cash.");
-        }
-
-        case 'sales_voided': {
-            $cnt = (int)($data['voided_count'] ?? 0);
-            if ($cnt === 0) return $g("No voided transactions — clean sales record.");
-            if ($cnt <= 3)  return $w("{$cnt} transaction(s) were voided. Review whether these were handled correctly.");
-            return $b("{$cnt} voided transactions — a high void rate may indicate pricing errors or staff issues.");
-        }
-
-        case 'sales_top_products': {
-            if (empty($data[0])) return null;
-            $top  = is_array($data[0]) ? $data[0] : (array)$data[0];
-            $name = $top['product_name'] ?? 'Top product';
-            $rev  = $fmt($top['revenue'] ?? 0);
-            return $n("Top seller: {$name} at {$rev} RWF. Keep it well stocked — demand is proven.");
-        }
-
-        case 'sales_by_shop': {
-            if (empty($data)) return null;
-            $rows  = collect($data)->map(fn($r) => is_array($r) ? $r : (array)$r);
-            $total = $rows->sum('revenue');
-            if ($total == 0) return null;
-            $top  = $rows->sortByDesc('revenue')->first() ?? [];
-            $name = $top['shop_name'] ?? 'Top shop';
-            $pct  = round(($top['revenue'] / $total) * 100);
-            return $n("{$name} is driving {$pct}% of total revenue — your strongest location this period.");
-        }
-
-        case 'inventory_abc_summary': {
-            $rows   = collect($data)->map(fn($r) => is_array($r) ? $r : (array)$r);
-            $aClass = $rows->filter(fn($r) => ($r['classification'] ?? '') === 'A')->count();
-            $total  = $rows->count();
-            if ($total === 0) return null;
-            return $n("{$aClass} of {$total} products are Class A — they generate the bulk of revenue. Never let them stock out.");
-        }
-
-        default: return null;
-    }
-}
-} // function_exists
-@endphp
-
-{{-- ══════════════════════════════════════════════════════════════════════════
-     PAGE HEADER
-══════════════════════════════════════════════════════════════════════════ --}}
-
-@if (session('success'))
-<div style="padding:10px 16px;background:var(--success-glow);border:1px solid var(--success);border-radius:var(--rsm);font-size:13px;color:var(--success);margin-bottom:14px">{{ session('success') }}</div>
-@endif
-@if (session('error'))
-<div style="padding:10px 16px;background:var(--danger-glow);border:1px solid var(--red-dim);border-radius:var(--rsm);font-size:13px;color:var(--red);margin-bottom:14px">{{ session('error') }}</div>
-@endif
-
-<div class="rv-hdr">
-    <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-            <a href="{{ route('owner.reports.custom.library') }}" class="rv-edit-btn" wire:navigate style="padding:5px 10px;font-size:12px">← Library</a>
-            <h1 class="rv-page-title">{{ $report->name }}</h1>
-            @if ($report->is_shared)
-            <span class="rv-chip" style="background:var(--accent-dim);color:var(--accent)">Shared</span>
-            @endif
-            @if ($report->pinned_to_dashboard)
-            <span class="rv-chip" style="background:var(--amber-dim,rgba(255,180,0,.12));color:var(--amber);display:inline-flex;align-items:center;gap:4px"><x-icon name="pin" size="11" /> Pinned</span>
-            @endif
-        </div>
+<div class="rv-header m-page-head">
+    <div style="min-width:0">
+        <h1 class="rv-title">{{ $report->name }}</h1>
         @if ($report->description)
-        <p class="rv-page-subtitle">{{ $report->description }}</p>
+            <p class="rv-desc">{{ $report->description }}</p>
         @endif
-        <div class="rv-hdr-meta">
-            @php
-                $cfg = $report->resolvedConfig();
-                $rangeLabels = ['today'=>'Today','week'=>'This week','month'=>'This month','quarter'=>'This quarter','year'=>'This year','custom'=>'Custom'];
-            @endphp
-            <span class="rv-chip">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                {{ $rangeLabels[$cfg['date_range']] ?? $cfg['date_range'] }}
-            </span>
-            <span class="rv-chip">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {{ $cfg['location_filter'] === 'all' ? 'All Locations' : $cfg['location_filter'] }}
-            </span>
-            @if (!empty($cfg['comparison_mode']) && $cfg['comparison_mode'] !== 'none')
-            <span class="rv-chip" style="background:var(--violet-dim,rgba(130,80,255,.1));color:var(--violet)">vs {{ $cfg['comparison_mode'] === 'prior_year' ? 'Prior Year' : 'Prior Period' }}</span>
+        <div class="rv-meta">
+            <span>By {{ $report->creator?->name ?? 'Unknown' }}</span>
+            <span class="rv-dot"></span>
+            <span>{{ $blockCount }} {{ Str::plural('block', $blockCount) }}</span>
+            @if ($report->is_shared)
+                <span class="rv-pill" style="background:var(--accent-dim);color:var(--accent)">Shared</span>
             @endif
-            <span class="rv-chip">{{ $report->blockCount() }} blocks</span>
-            @if ($report->hasFreshCache())
-            <span class="rv-cache-badge">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                Cached {{ $report->results_cached_at->diffForHumans() }}
-            </span>
-            @elseif ($report->last_run_at)
-            <span class="rv-chip">Last run {{ $report->last_run_at->diffForHumans() }} · {{ $report->run_count }}×</span>
+            @if ($report->schedule_cron)
+                <span class="rv-pill" style="background:var(--green-dim);color:var(--green)">Scheduled</span>
             @endif
-            <span class="rv-chip">By {{ $report->creator->name ?? 'Unknown' }}</span>
         </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap">
-        {{-- Export CSV --}}
-        @if ($hasRun)
-        <button class="rv-icon-btn" wire:click="exportCsv" title="Export CSV">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            CSV
+
+    <div class="rv-actions">
+        <button class="rv-btn rv-btn-ghost" wire:click="refresh" wire:loading.attr="disabled" wire:target="refresh" @disabled(! $ready) title="Run again with the latest data">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" wire:loading.class="rv-spinning" wire:target="refresh"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Refresh
         </button>
-        {{-- Print --}}
-        <a href="{{ route('owner.reports.custom.print', $report->id) }}" target="_blank" class="rv-icon-btn" title="Print / PDF">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            Print
-        </a>
-        @endif
-        {{-- History --}}
-        <button class="rv-icon-btn {{ $showHistory ? 'active' : '' }}" wire:click="toggleHistory" title="Run History">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <button class="rv-btn rv-btn-ghost" wire:click="toggleHistory">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             History
         </button>
-        {{-- Pin --}}
-        @if ($report->created_by === auth()->id())
-        <button class="rv-icon-btn {{ $report->pinned_to_dashboard ? 'active' : '' }}" wire:click="togglePin" title="{{ $report->pinned_to_dashboard ? 'Unpin from dashboard' : 'Pin to dashboard' }}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v8l3.5 3.5M8 9h8M12 2L8 6M12 2l4 4M12 22v-4"/></svg>
-            {{ $report->pinned_to_dashboard ? 'Unpin' : 'Pin' }}
-        </button>
-        @endif
-        {{-- Edit --}}
-        @if ($report->created_by === auth()->id())
-        <a href="{{ route('owner.reports.custom.edit', $report->id) }}" class="rv-icon-btn" wire:navigate>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Edit
-        </a>
-        @endif
-        {{-- Run --}}
-        <button class="rv-run-btn" wire:click="run" wire:loading.attr="disabled">
-            <span wire:loading.remove wire:target="run" style="display:inline">▶ Run Report</span>
-            <span wire:loading wire:target="run" style="display:none">Running…</span>
-        </button>
-    </div>
-</div>
-
-{{-- ══════════════════════════════════════════════════════════════════════════
-     HISTORY DRAWER
-══════════════════════════════════════════════════════════════════════════ --}}
-@if ($showHistory)
-<div class="rv-drawer">
-    <div class="rv-drawer-hdr">
-        <span class="rv-drawer-title">Run History</span>
-        <button class="rv-drawer-close" wire:click="toggleHistory">×</button>
-    </div>
-    <div style="flex:1;overflow-y:auto">
-        @forelse ($report->runHistory()->limit(12)->get() as $run)
-        <div class="rv-history-item {{ $viewingHistoryId === $run->id ? 'active' : '' }}"
-             wire:click="viewHistoryRun({{ $run->id }})">
-            <div style="font-size:13px;font-weight:600;color:var(--text)">
-                {{ local_time($run->run_at)->format('d M Y H:i') }}
-                @if ($run->was_scheduled) <span style="font-size:10px;color:var(--accent);font-weight:700;margin-left:4px">SCHEDULED</span> @endif
-            </div>
-            <div style="font-size:12px;color:var(--text-dim);margin-top:2px">
-                By {{ $run->runner->name ?? 'System' }} · {{ $run->duration_ms }}ms
+        <div class="rv-menu" x-data="{ open:false }" @click.outside="open = false" @keydown.escape.window="open = false">
+            <button class="rv-btn rv-btn-ghost" @click="open = !open" @disabled(! $ready)>
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="rv-menu-list" x-show="open" x-cloak x-transition.opacity.duration.100ms>
+                <a class="rv-menu-item" href="{{ $printUrl }}" target="_blank" @click="open = false">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Print
+                </a>
+                <button class="rv-menu-item" wire:click="exportCsv" @click="open = false">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    CSV spreadsheet
+                </button>
+                <div class="rv-menu-note">Exports use the period and location shown.</div>
             </div>
         </div>
-        @empty
-        <div style="padding:20px;text-align:center;font-size:13px;color:var(--text-dim)">No history yet</div>
-        @endforelse
+        @if ($canEdit)
+            <a href="{{ route('owner.reports.custom.edit', $report->id) }}" class="rv-btn rv-btn-primary" wire:navigate>
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit report
+            </a>
+        @endif
     </div>
 </div>
-@endif
 
-{{-- ══════════════════════════════════════════════════════════════════════════
-     ANNOTATION FORM MODAL
-══════════════════════════════════════════════════════════════════════════ --}}
-@if ($showAnnotationForm)
-<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:440px;max-width:90vw">
-        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px">Add Annotation</div>
-        <textarea wire:model="annotationText" rows="4"
-                  style="width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);font-size:13px;color:var(--text);resize:vertical;box-sizing:border-box"
-                  placeholder="Add a note for this block…"></textarea>
-        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
-            <button wire:click="$set('showAnnotationForm',false)" style="padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:var(--rsm);font-size:13px;cursor:pointer;color:var(--text-sub)">Cancel</button>
-            <button wire:click="saveAnnotation" style="padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);font-size:13px;font-weight:700;cursor:pointer">Save</button>
+{{-- ═══ Filters ══════════════════════════════════════════════════════════ --}}
+<div x-data="{ f:false }">
+    <div class="rv-phone-bar m-filter-bar">
+        <span class="rv-phone-period m-grow">{{ $periodLabel }} · {{ $locationLabel }}</span>
+        <button type="button" class="m-filter-toggle" @click="f = true">Filters</button>
+    </div>
+    <div class="m-sheet-overlay m-only" x-show="f" x-cloak @click="f = false"></div>
+
+    <div class="rv-filters m-filter-panel" :class="{ open: f }">
+        <div class="m-sheet-handle m-only"></div>
+        <div class="rv-presets">
+            @foreach ($presets as $key => $label)
+                <button class="rv-preset {{ $preset === $key ? 'active' : '' }}" wire:click="setPreset('{{ $key }}')">{{ $label }}</button>
+            @endforeach
+        </div>
+        <div class="rv-filter-row">
+            <div class="rv-seg">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--text-dim)"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
+                <input type="date" class="rv-date" wire:model.live="dateFrom" max="{{ $dateTo }}" aria-label="From">
+                <span style="font-size:13px;color:var(--text-dim)">→</span>
+                <input type="date" class="rv-date" wire:model.live="dateTo" min="{{ $dateFrom }}" aria-label="To">
+            </div>
+            <div class="rv-seg rv-seg-grow">
+                <span class="rv-seg-label">Location</span>
+                <select class="rv-select" wire:model.live="location">
+                    <option value="all">All locations</option>
+                    @if ($shops->isNotEmpty())
+                        <optgroup label="Shops">
+                            @foreach ($shops as $id => $name)
+                                <option value="shop:{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endif
+                    @if ($warehouses->isNotEmpty())
+                        <optgroup label="Warehouses">
+                            @foreach ($warehouses as $id => $name)
+                                <option value="warehouse:{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endif
+                </select>
+            </div>
+            <div class="rv-seg rv-seg-grow">
+                <span class="rv-seg-label">Compare</span>
+                <select class="rv-select" wire:model.live="comparison">
+                    @foreach (\App\Services\Reports\ReportPeriod::COMPARISONS as $key => $label)
+                        <option value="{{ $key }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @unless ($this->isDefaultView)
+                <div class="rv-seg">
+                    <button class="rv-reset" wire:click="resetFilters">Reset to saved view</button>
+                </div>
+            @endunless
+        </div>
+        <div class="m-sheet-foot m-only"><button type="button" class="rv-btn rv-btn-primary" style="flex:1;justify-content:center" @click="f = false">Done</button></div>
+    </div>
+</div>
+
+<div class="rv-context">
+    {{-- period and location are already in the phone filter bar --}}
+    <strong class="m-hide">{{ $periodLabel }}</strong>
+    <span class="rv-dot m-hide"></span>
+    <span class="m-hide">{{ $locationLabel }}</span>
+    @if ($comparisonLabel)
+        <span class="rv-dot m-hide"></span>
+        <span>Compared with {{ $comparisonLabel }}</span>
+    @endif
+    <span wire:loading.delay wire:target="setPreset,dateFrom,dateTo,location,comparison,refresh,resetFilters,applyHistoryRun,load" style="display:none;color:var(--accent);font-weight:600">· Updating…</span>
+</div>
+
+{{-- ═══ Results ══════════════════════════════════════════════════════════ --}}
+<div class="rv-body" wire:loading.class="rv-busy" wire:target="setPreset,dateFrom,dateTo,location,comparison,refresh,resetFilters,applyHistoryRun">
+
+@if (! $ready)
+    <div class="ui-kpis m-kpis">
+        @for ($i = 0; $i < 4; $i++) <div class="rv-skel"></div> @endfor
+    </div>
+    <div class="rv-grid">
+        <div class="rv-skel" style="height:260px"></div>
+        <div class="rv-skel" style="height:260px"></div>
+    </div>
+@elseif ($blockCount === 0)
+    <div class="rv-placeholder">
+        <div class="rv-placeholder-title">This report has no blocks yet</div>
+        <div class="rv-placeholder-sub">
+            @if ($canEdit)
+                <a href="{{ route('owner.reports.custom.edit', $report->id) }}" wire:navigate style="color:var(--accent);font-weight:600">Edit the report</a> to add figures, tables and charts.
+            @else
+                Ask {{ $report->creator?->name ?? 'its owner' }} to add some.
+            @endif
         </div>
     </div>
-</div>
-@endif
-
-{{-- ══════════════════════════════════════════════════════════════════════════
-     RESULTS
-══════════════════════════════════════════════════════════════════════════ --}}
-@if (! $hasRun)
-<div class="rv-placeholder">
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-         style="margin:0 auto 14px;display:block;color:var(--text-dim);opacity:.4">
-        <polygon points="5 3 19 12 5 21 5 3"/>
-    </svg>
-    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">Click Run Report to generate results</div>
-    <div style="font-size:13px;color:var(--text-dim)">This report has {{ $report->blockCount() }} metric {{ Str::plural('block', $report->blockCount()) }}</div>
-</div>
 @else
-@php
-    /* Pre-compute insights for the Key Findings strip */
-    $allInsights = [];
-    foreach ($results as $br) {
-        $ins = generateInsight($br['block']['metric_id'] ?? '', is_array($br['data'] ?? null) ? $br['data'] : []);
-        if ($ins) {
-            $allInsights[] = $ins + ['title' => $br['block']['title'] ?? ''];
-        }
-    }
-    $featured = array_slice(
-        array_merge(
-            array_values(array_filter($allInsights, fn($i) => $i['tone'] === 'bad')),
-            array_values(array_filter($allInsights, fn($i) => $i['tone'] === 'warn')),
-            array_values(array_filter($allInsights, fn($i) => $i['tone'] === 'good'))
-        ),
-        0, 4
-    );
-@endphp
 
-@if (count($featured) >= 2)
-<div class="rv-findings">
-    <div class="rv-findings-hdr">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Key Findings
-    </div>
-    <div class="rv-findings-grid">
-        @foreach ($featured as $finding)
-        <div class="rv-finding rv-{{ $finding['tone'] }}">
-            <span class="rv-finding-label">{{ $finding['title'] }}</span>
-            <span class="rv-finding-text">{{ $finding['text'] }}</span>
+    {{-- Key findings --}}
+    @if (count($findings) > 0)
+        <div class="rv-findings">
+            <div class="rv-findings-head">Key findings</div>
+            <div class="rv-findings-grid">
+                @foreach ($findings as $f)
+                    <div class="rv-finding" style="border-left-color:var(--{{ $toneColor[$f['tone']] }})">
+                        <div class="rv-finding-title">{{ $f['title'] }}</div>
+                        <div class="rv-finding-text">{{ $f['text'] }}</div>
+                    </div>
+                @endforeach
+            </div>
         </div>
-        @endforeach
-    </div>
-</div>
-@endif
+    @endif
 
-<div class="rv-results">
-    @foreach ($results as $blockResult)
-    @php
-        $block    = $blockResult['block'];
-        $meta     = $blockResult['meta'];
-        $data     = $blockResult['data'];
-        $viz      = $block['viz'];
-        $width    = $block['width'] ?? 'half';
-        $metricId = $block['metric_id'];
-        $wClass   = $width === 'full' ? 'rv-block-full' : 'rv-block-half';
+    {{-- Summary cards: every KPI block --}}
+    @if (count($kpis) > 0)
+        <div class="ui-kpis m-kpis rv-kpis">
+            @foreach ($kpis as $id => $entry)
+                @php
+                    $r      = $entry['result'];
+                    $meta   = $entry['meta'];
+                    [$col, $icon] = $domainIcon[$meta['domain'] ?? 'sales'] ?? $domainIcon['sales'];
+                    $h      = $r['headline'];
+                    $cmp    = $r['comparison'];
+                    $status = $r['status'] ?? null;
+                    $statusColor = ['ok' => 'green', 'warn' => 'amber', 'crit' => 'red'][$status] ?? null;
+                    $valueColor  = $h && is_numeric($h['value']) && $h['value'] < 0 ? 'var(--red)' : 'var(--text)';
+                    $hasDetails  = ! empty(app(\App\Services\Reports\MetricRegistry::class)->metric($meta['id'] ?? '')?->related());
+                @endphp
+                <div class="ui-kpi" wire:key="kpi-{{ $id }}">
+                    <div class="ui-kpi-row">
+                        <div class="ui-kpi-icon" style="background:var(--{{ $col }}-dim);color:var(--{{ $col }})">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icon !!}</svg>
+                        </div>
+                        <div class="ui-kpi-body">
+                            <div class="ui-kpi-label">
+                                {{ $entry['block']['title'] ?? $meta['label'] }}
+                                @if (! empty($r['notes']))
+                                    <span class="rv-kpi-info" title="{{ implode(' ', $r['notes']) }}">
+                                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="ui-kpi-sub">
+                                @if ($cmp && $cmp['value'] !== null)
+                                    {{ $cmp['period'] }}: {{ F::withUnit($cmp['value'], $h['type']) }}
+                                @else
+                                    {{ $h['label'] ?? '' }}
+                                @endif
+                            </div>
+                        </div>
+                        @if ($cmp && $cmp['pct'] !== null)
+                            @php $bc = $cmp['good'] === true ? 'green' : ($cmp['good'] === false ? 'red' : null); @endphp
+                            <span class="ui-kpi-badge" style="{{ $bc ? "background:var(--{$bc}-dim);color:var(--{$bc})" : 'background:var(--surface2);color:var(--text-dim)' }}">
+                                {{ $cmp['pct'] >= 0 ? '▲' : '▼' }} {{ number_format(abs($cmp['pct']), 1) }}%
+                            </span>
+                        @elseif ($statusColor)
+                            <span class="rv-kpi-status" style="background:var(--{{ $statusColor }})" title="{{ ['ok' => 'Within your threshold', 'warn' => 'Past your warning threshold', 'crit' => 'Past your critical threshold'][$status] }}"></span>
+                        @endif
+                    </div>
 
-        // Step 17: Conditional visibility — skip block if show_if_nonzero and all numeric values are zero
-        if (!empty($block['show_if_nonzero'])) {
-            $hasNonZero = collect($data)
-                ->filter(fn($v, $k) => !str_starts_with((string)$k, '_') && is_numeric($v) && $v != 0)
-                ->isNotEmpty();
-            if (!$hasNonZero) continue;
-        }
-    @endphp
-    <div class="{{ $wClass }}">
-        <div class="rv-block-card">
-            <div class="rv-block-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-                <span>{{ $block['title'] }}</span>
-                <div style="display:flex;align-items:center;gap:6px">
-                    {{-- Annotation button --}}
-                    <button class="rv-annotate-btn" wire:click="openAnnotation('{{ $block['id'] }}')" title="Add annotation">+ note</button>
-                    {{-- Threshold dot (Step 11) --}}
-                    @php
-                        $threshWarn = $block['threshold_warning'] ?? null;
-                        $threshCrit = $block['threshold_critical'] ?? null;
-                        if (($threshWarn || $threshCrit) && $viz === 'kpi_card' && !isset($data['error'])) {
-                            $numVal = collect($data)->filter(fn($v, $k) => !str_starts_with($k, '_') && is_numeric($v))->first();
-                            if ($numVal !== null) {
-                                if ($threshCrit !== null && $numVal >= $threshCrit) { $dotClass = 'crit'; }
-                                elseif ($threshWarn !== null && $numVal >= $threshWarn) { $dotClass = 'warn'; }
-                                else { $dotClass = 'ok'; }
-                            } else { $dotClass = null; }
-                        } else { $dotClass = null; }
-                    @endphp
-                    @if ($dotClass)
-                    <span class="rv-threshold-dot {{ $dotClass }}" title="Threshold status: {{ $dotClass }}"></span>
+                    @if ($r['error'])
+                        <div class="rv-kpi-error">{{ $r['error'] }}</div>
+                    @else
+                        @php
+                            $shown = F::value($h['value'], $h['type']);
+                        @endphp
+                        <div class="ui-kpi-val" style="color:{{ $statusColor && $status !== 'ok' ? "var(--{$statusColor})" : $valueColor }}">{{ $shown }}@if ($h['type'] === 'money')<span class="ui-kpi-unit">RWF</span>@endif</div>
+
+                        @if (! empty($r['stats']))
+                            <div class="ui-kpi-divider"></div>
+                            <div class="ui-kpi-footer">
+                                @foreach (array_slice($r['stats'], 0, 3) as $s)
+                                    <div class="ui-kpi-stat">
+                                        <span class="ui-kpi-stat-v">{{ F::withUnit($s['value'], $s['type']) }}</span>
+                                        <span class="ui-kpi-stat-l">{{ $s['label'] }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if ($hasDetails || ! empty($r['insight']))
+                            <button class="rv-kpi-more" wire:click="openDetails('{{ $id }}')">Details</button>
+                        @endif
                     @endif
                 </div>
-            </div>
-            <div class="rv-block-body">
+            @endforeach
+        </div>
+    @endif
 
-                {{-- ERROR --}}
-                @if (isset($data['error']))
-                <div class="rv-error-card">
-                    <strong>Block failed to run:</strong> {{ $data['error'] }}
-                </div>
-
-                {{-- TEXT BLOCK --}}
-                @elseif ($viz === 'text')
-                <div class="rv-text-block">{{ $block['content'] ?? '' }}</div>
-
-                {{-- KPI CARD --}}
-                @elseif ($viz === 'kpi_card')
+    {{-- Tables, charts and text --}}
+    @if (count($blocks) > 0)
+        <div class="rv-grid">
+            @foreach ($blocks as $id => $entry)
                 @php
-                    $kpiVal = extractKpiValue($metricId, $data);
-                    $kpiSub = extractKpiSub($metricId, $data);
-                    // Comparison delta
-                    $compData = $data['_comparison'] ?? null;
-                    $compPeriod = $data['_comparison_period'] ?? null;
-                    $delta = null;
-                    if ($compData && is_array($compData)) {
-                        $curNum = collect($data)->filter(fn($v,$k)=>!str_starts_with($k,'_')&&is_numeric($v))->first();
-                        $prevNum = collect($compData)->filter(fn($v,$k)=>!str_starts_with($k,'_')&&is_numeric($v))->first();
-                        if ($prevNum != 0 && $prevNum !== null && $curNum !== null) {
-                            $delta = round((($curNum - $prevNum) / abs($prevNum)) * 100, 1);
-                        }
-                    }
-                    // Up to 3 secondary numeric fields, mirroring the .iv-kpi/.sa-kpi
-                    // 3-stat footer — only rendered when the block's data actually has them.
-                    $footerStats = collect($data)
-                        ->filter(fn ($v, $k) => !str_starts_with((string) $k, '_') && is_numeric($v))
-                        ->skip(1)
-                        ->take(3)
-                        ->map(fn ($v, $k) => [
-                            'label' => str_replace('_', ' ', (string) $k),
-                            'value' => is_float($v) ? round($v, 1) : number_format((float) $v),
-                        ])
-                        ->values();
+                    $block = $entry['block'];
+                    $r     = $entry['result'];
+                    $viz   = $block['viz'] ?? 'table';
+                    $full  = ($block['width'] ?? 'half') === 'full';
+                    $isChart = in_array($viz, ['bar_chart', 'line_chart'], true) && ! empty($r['series']['labels']);
                 @endphp
-                <div class="rv-kpi-row">
-                    <div class="rv-kpi-icon"><x-icon name="bar-chart" size="16" /></div>
-                    <div class="rv-kpi-body">
-                        <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
-                            <p class="rv-kpi-value">{{ $kpiVal }}</p>
-                            @if ($delta !== null)
-                            <span class="rv-kpi-delta {{ $delta >= 0 ? 'up' : 'down' }}">
-                                {{ $delta >= 0 ? '▲' : '▼' }} {{ abs($delta) }}%
-                            </span>
+
+                @if (($block['metric_id'] ?? '') === 'text_block')
+                    @continue (trim($block['content'] ?? '') === '' && ($block['title'] ?? $defaultTextTitle) === $defaultTextTitle)
+                    <div class="rv-card rv-full" wire:key="blk-{{ $id }}">
+                        @if (($block['title'] ?? '') !== '' && $block['title'] !== $defaultTextTitle)
+                            <div class="rv-card-head"><h2 class="rv-card-title">{{ $block['title'] }}</h2></div>
+                        @endif
+                        <div class="rv-text">{{ $block['content'] ?? '' }}</div>
+                    </div>
+                    @continue
+                @endif
+
+                <div class="rv-card {{ $full ? 'rv-full' : '' }}" wire:key="blk-{{ $id }}">
+                    <div class="rv-card-head">
+                        <div style="min-width:0">
+                            <h2 class="rv-card-title">{{ $block['title'] ?? $entry['meta']['label'] }}</h2>
+                            @if (! empty($block['date_range_override']) || ! empty($block['location_filter_override']))
+                                <div class="rv-card-sub">Has its own
+                                    {{ collect([! empty($block['date_range_override']) ? 'period' : null, ! empty($block['location_filter_override']) ? 'location' : null])->filter()->join(' and ') }}
+                                </div>
+                            @else
+                                <div class="rv-card-sub">{{ $entry['meta']['description'] ?? '' }}</div>
                             @endif
                         </div>
-                        @if ($kpiSub) <p class="rv-kpi-sub">{{ $kpiSub }}</p> @endif
-                        @if ($compPeriod) <p class="rv-kpi-sub" style="margin-top:4px">vs {{ $compPeriod }}</p> @endif
-                    </div>
-                </div>
-                @if ($footerStats->isNotEmpty())
-                <div class="rv-kpi-divider"></div>
-                <div class="rv-kpi-footer">
-                    @foreach ($footerStats as $stat)
-                    <div class="rv-kpi-stat"><span class="rv-kpi-stat-v">{{ $stat['value'] }}</span><span class="rv-kpi-stat-l">{{ $stat['label'] }}</span></div>
-                    @endforeach
-                </div>
-                @endif
-
-                {{-- TABLE --}}
-                @elseif ($viz === 'table')
-                @php
-                    $rows = is_array($data) && isset($data[0]) ? $data : [$data];
-                    $keys = !empty($rows[0]) && is_array($rows[0]) ? array_filter(array_keys((array)$rows[0]), fn($k)=>!str_starts_with($k,'_') && !is_array($rows[0][$k])) : [];
-                @endphp
-                @if (empty($rows) || empty($keys))
-                <div style="font-size:13px;color:var(--text-dim);padding:8px 0">No data available</div>
-                @else
-                <div class="rv-table-scroll">
-                    <table class="rv-table">
-                        <thead>
-                            <tr>
-                                @foreach ($keys as $k)
-                                <th>{{ ucwords(str_replace('_',' ',$k)) }}</th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($rows as $row)
-                            <tr>
-                                @foreach ($keys as $k)
-                                <td>
-                                    @php $v = is_array($row) ? ($row[$k] ?? '—') : (is_object($row) ? ($row->$k ?? '—') : '—') @endphp
-                                    @if (is_array($v)) [{{ count($v) }} items]
-                                    @elseif (is_numeric($v) && !is_bool($v)) {{ number_format((float)$v) }}
-                                    @elseif (is_bool($v)) {{ $v ? 'Yes' : 'No' }}
-                                    @elseif (is_null($v)) —
-                                    @else {{ $v }}
+                        @if ($r && ! $r['error'] && $r['headline'] && ! empty($r['columns']))
+                            <div class="rv-card-total">
+                                {{ F::withUnit($r['headline']['value'], $r['headline']['type']) }}
+                                <small>
+                                    {{ $r['headline']['label'] }}
+                                    @if ($r['comparison'] && $r['comparison']['pct'] !== null)
+                                        @php $cc = $r['comparison']['good'] === true ? 'green' : ($r['comparison']['good'] === false ? 'red' : 'text-dim'); @endphp
+                                        · <span style="color:var(--{{ $cc }})">{{ $r['comparison']['pct'] >= 0 ? '▲' : '▼' }} {{ number_format(abs($r['comparison']['pct']), 1) }}%</span>
                                     @endif
-                                </td>
-                                @endforeach
-                            </tr>
+                                </small>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="rv-card-body">
+                        @if (! $r || $r['error'])
+                            <div class="rv-error">{{ $r['error'] ?? "Couldn't load this block." }}</div>
+                        @elseif ($isChart)
+                            <div class="rv-chart" wire:key="chart-{{ $id }}-{{ md5(json_encode($r['series'])) }}"
+                                 data-chart="{{ json_encode(['type' => $viz === 'line_chart' ? 'line' : 'bar', 'labels' => $r['series']['labels'], 'datasets' => $r['series']['datasets'], 'dateLabels' => ($r['columns'][0]['type'] ?? '') === 'date']) }}">
+                                <canvas wire:ignore></canvas>
+                            </div>
+                        @elseif (in_array($viz, ['bar_chart', 'line_chart'], true))
+                            <div class="rv-empty">Nothing to chart for this period.</div>
+                        @else
+                            @include('livewire.owner.reports.partials.result-table', ['r' => $r])
+                        @endif
+                    </div>
+
+                    @if ($r && ! $r['error'] && (! empty($r['insight']) || ! empty($r['notes'])))
+                        <div class="rv-card-foot">
+                            @if (! empty($r['insight']))
+                                <div class="rv-insight">
+                                    <span class="rv-insight-dot" style="background:var(--{{ $toneColor[$r['insight']['tone']] ?? 'accent' }})"></span>
+                                    <span>{{ $r['insight']['text'] }}</span>
+                                </div>
+                            @endif
+                            @foreach ($r['notes'] as $note)
+                                <div class="rv-note">{{ $note }}</div>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @endif
-
-                {{-- BAR CHART / LINE CHART --}}
-                @elseif (in_array($viz, ['bar_chart', 'line_chart']))
-                @php
-                    $chartId = 'chart_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $block['id']);
-                    $rows = is_array($data) && isset($data[0]) ? $data : [];
-
-                    // Determine labels and dataset based on metric_id
-                    if ($metricId === 'sales_revenue_trend') {
-                        $labels   = array_column($rows, 'date');
-                        $datasets = [['label'=>'Revenue','data'=>array_map(fn($r)=>$r['revenue']??0, $rows),'bg'=>'var(--accent)']];
-                    } elseif ($metricId === 'sales_by_shop') {
-                        $labels   = array_map(fn($r)=>is_array($r)?($r['shop_name']??''):(is_object($r)?$r->shop_name??'':''), $rows);
-                        $datasets = [['label'=>'Revenue','data'=>array_map(fn($r)=>is_array($r)?($r['revenue']??0):(is_object($r)?$r->revenue??0:0), $rows),'bg'=>'var(--accent)']];
-                    } elseif ($metricId === 'sales_top_products') {
-                        $labels   = array_map(fn($r)=>is_array($r)?($r['product_name']??''):(is_object($r)?$r->product_name??'':''), $rows);
-                        $datasets = [['label'=>'Revenue','data'=>array_map(fn($r)=>is_array($r)?($r['revenue']??0):(is_object($r)?$r->revenue??0:0), $rows),'bg'=>'var(--accent)']];
-                    } elseif ($metricId === 'sales_payment_methods') {
-                        $labels   = array_map(fn($r)=>is_array($r)?($r['label']??''):(is_object($r)?$r->label??'':''), $rows);
-                        $datasets = [['label'=>'Revenue','data'=>array_map(fn($r)=>is_array($r)?($r['revenue']??0):(is_object($r)?$r->revenue??0:0), $rows),'bg'=>'var(--accent)']];
-                    } elseif ($metricId === 'inventory_aging') {
-                        $labels   = array_map(fn($r)=>is_array($r)?($r['age_bracket']??''):(is_object($r)?$r->age_bracket??'':''), $rows);
-                        $datasets = [['label'=>'Boxes','data'=>array_map(fn($r)=>is_array($r)?($r['box_count']??0):(is_object($r)?$r->box_count??0:0), $rows),'bg'=>'var(--amber)']];
-                    } elseif ($metricId === 'inventory_category_concentration') {
-                        $labels   = array_map(fn($r)=>is_array($r)?($r['category_name']??''):(is_object($r)?$r->category_name??'':''), $rows);
-                        $datasets = [['label'=>'Cost Value','data'=>array_map(fn($r)=>is_array($r)?($r['cost_value']??0):(is_object($r)?$r->cost_value??0:0), $rows),'bg'=>'var(--violet)']];
-                    } elseif ($metricId === 'transfers_routes') {
-                        $labels   = array_map(fn($r)=>is_array($r)?($r['warehouse_name']??''.' → '.($r['shop_name']??'')):(is_object($r)?($r->warehouse_name??'').' → '.($r->shop_name??''):''), $rows);
-                        $datasets = [['label'=>'Transfers','data'=>array_map(fn($r)=>is_array($r)?($r['transfer_count']??0):(is_object($r)?$r->transfer_count??0:0), $rows),'bg'=>'var(--accent)']];
-                    } else {
-                        // Generic: use first string key as label, first numeric key as value
-                        $keys = !empty($rows[0]) ? array_keys((array)$rows[0]) : [];
-                        $labelKey = collect($keys)->first(fn($k)=>is_string(is_array($rows[0])?($rows[0][$k]??null):null)) ?? ($keys[0]??'label');
-                        $valKey   = collect($keys)->first(fn($k)=>is_numeric(is_array($rows[0])?($rows[0][$k]??null):null)) ?? ($keys[1]??'value');
-                        $labels   = array_map(fn($r)=>is_array($r)?($r[$labelKey]??''):'', $rows);
-                        $datasets = [['label'=>ucwords(str_replace('_',' ',$valKey)),'data'=>array_map(fn($r)=>is_array($r)?($r[$valKey]??0):0, $rows),'bg'=>'var(--accent)']];
-                    }
-                @endphp
-                <div class="rv-chart-wrap">
-                    <canvas id="{{ $chartId }}"
-                            data-type="{{ $viz === 'line_chart' ? 'line' : 'bar' }}"
-                            data-labels="{{ json_encode($labels) }}"
-                            data-datasets="{{ json_encode($datasets) }}"></canvas>
-                </div>
-                @endif
-
-                {{-- Breakdown toggle (KPI cards only) --}}
-                @if ($viz === 'kpi_card' && !isset($data['error']))
-                @php
-                    $bdOpen = $openBreakdownId === $block['id'];
-                    $bdData = $breakdowns[$block['id']] ?? null;
-                    $noBreakdown = ($bdData['type'] ?? '') === 'none';
-                @endphp
-                @if (!$noBreakdown)
-                <button class="rv-breakdown-toggle {{ $bdOpen ? 'open' : '' }}"
-                        wire:click="loadBreakdown('{{ $block['id'] }}')"
-                        wire:loading.attr="disabled"
-                        wire:loading.class="opacity-50"
-                        wire:target="loadBreakdown('{{ $block['id'] }}')">
-                    <span wire:loading.remove wire:target="loadBreakdown('{{ $block['id'] }}')">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                        {{ $bdOpen ? 'Collapse' : 'What\'s behind this?' }}
-                    </span>
-                    <span wire:loading wire:target="loadBreakdown('{{ $block['id'] }}')" style="display:none">Loading…</span>
-                </button>
-                @if ($bdOpen && $bdData)
-                <div class="rv-breakdown-panel">
-                    @include('livewire.owner.reports.partials.breakdown-panel', ['bd' => $bdData, 'metricId' => $metricId, 'blockData' => $data])
-                </div>
-                @endif
-                @endif
-                @endif
-
-                {{-- Insight sentence --}}
-                @if ($viz !== 'text')
-                @php $blockInsight = generateInsight($metricId, is_array($data) ? $data : []); @endphp
-                @if ($blockInsight)
-                <div class="rv-insight rv-{{ $blockInsight['tone'] }}">
-                    @if ($blockInsight['tone'] === 'good')
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    @elseif ($blockInsight['tone'] === 'bad')
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    @elseif ($blockInsight['tone'] === 'warn')
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    @else
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        </div>
                     @endif
-                    {{ $blockInsight['text'] }}
                 </div>
-                @endif
-                @endif
-
-            </div>{{-- /rv-block-body --}}
-        </div>{{-- /rv-block-card --}}
-    </div>
-    @endforeach
+            @endforeach
+        </div>
+    @endif
+@endif
 </div>
+
+{{-- ═══ Details sheet ════════════════════════════════════════════════════ --}}
+@if ($detailBlockId !== '' && isset($kpis[$detailBlockId]))
+    @php
+        $entry = $kpis[$detailBlockId];
+        $r = $entry['result'];
+    @endphp
+    <div class="m-sheet-overlay" wire:click="closeDetails"></div>
+    <div class="m-sheet" role="dialog" aria-modal="true" @keydown.escape.window="$wire.closeDetails()">
+        <div class="m-sheet-handle"></div>
+        <div class="m-sheet-head">
+            <h2 class="m-sheet-title">{{ $entry['block']['title'] ?? $entry['meta']['label'] }}</h2>
+            <button class="rv-drawer-close m-tap" wire:click="closeDetails" aria-label="Close">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="m-sheet-body">
+            <div class="rv-detail-kpi">
+                <strong style="font-family:var(--mono);font-size:18px;color:var(--text)">{{ F::withUnit($r['headline']['value'] ?? null, $r['headline']['type'] ?? 'count') }}</strong>
+                · {{ $periodLabel }} · {{ $locationLabel }}
+                @if (! empty($r['insight']))<br>{{ $r['insight']['text'] }}@endif
+                @foreach ($r['notes'] as $note)<br><span class="rv-note">{{ $note }}</span>@endforeach
+            </div>
+
+            <div class="rv-detail-section">
+                <div class="rv-detail-title">All figures</div>
+                @include('livewire.owner.reports.partials.result-table', ['r' => array_merge($r, ['columns' => [], 'rows' => []])])
+            </div>
+
+            @foreach ($this->details as $d)
+                <div class="rv-detail-section">
+                    <div class="rv-detail-title">{{ $d['title'] }}@if (count($d['result']['rows']) >= 5) · top 5 @endif</div>
+                    @if ($d['result']['error'])
+                        <div class="rv-error" style="margin:0">{{ $d['result']['error'] }}</div>
+                    @else
+                        @include('livewire.owner.reports.partials.result-table', ['r' => $d['result']])
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </div>
+@endif
+
+{{-- ═══ History drawer ═══════════════════════════════════════════════════ --}}
+@if ($showHistory)
+    <div class="rv-overlay" wire:click="toggleHistory"></div>
+    <div class="rv-drawer" role="dialog" aria-modal="true" @keydown.escape.window="$wire.toggleHistory()">
+        <div class="rv-drawer-head">
+            <div>
+                <div class="rv-drawer-title">Run history</div>
+                <div style="font-size:12px;color:var(--text-dim);margin-top:2px">The last 12 runs. Choose one to see that view again with today's data.</div>
+            </div>
+            <button class="rv-drawer-close" wire:click="toggleHistory" aria-label="Close">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="rv-drawer-body">
+            @forelse ($this->history as $run)
+                @php
+                    $cfg = $run->config_snapshot ?? [];
+                    [$hf, $ht] = \App\Services\Reports\ReportPeriod::resolve($cfg['date_range'] ?? 'month', $cfg['date_from'] ?? null, $cfg['date_to'] ?? null);
+                @endphp
+                <button class="rv-run" wire:click="applyHistoryRun({{ $run->id }})" wire:key="run-{{ $run->id }}">
+                    <div class="rv-run-top">
+                        <span class="rv-run-period">{{ \App\Services\Reports\ReportPeriod::label($hf, $ht) }}</span>
+                        <span class="rv-run-when">{{ local_time($run->run_at)->format('j M, H:i') }}</span>
+                    </div>
+                    <div class="rv-run-meta">
+                        {{ \App\Services\Reports\ReportContext::locationLabel($cfg['location_filter'] ?? 'all') }}
+                        · {{ $run->was_scheduled ? 'Scheduled run' : ($run->runner?->name ?? 'Unknown') }}
+                    </div>
+                    @if (! empty($run->summary))
+                        <div class="rv-run-figs">
+                            @foreach (array_slice($run->summary, 0, 3) as $fig)
+                                <span class="rv-run-fig">{{ $fig['title'] }}: <b>{{ F::withUnit($fig['value'], $fig['type']) }}</b></span>
+                            @endforeach
+                        </div>
+                    @endif
+                </button>
+            @empty
+                <div class="rv-empty">No runs yet.</div>
+            @endforelse
+        </div>
+    </div>
+@endif
 
 @script
 <script>
-(function() {
-    document.querySelectorAll('[data-labels]').forEach(function(canvas) {
-        var orphan = Chart.getChart(canvas);
-        if (orphan) orphan.destroy();
+(function () {
+    const css = () => getComputedStyle(document.documentElement);
+    const palette = () => ['--accent', '--violet', '--green', '--amber', '--red'].map(v => css().getPropertyValue(v).trim() || '#3b6fd4');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const shortDate = s => { const p = String(s).split('-'); return p.length === 3 ? (+p[2]) + ' ' + months[+p[1] - 1] : s; };
+    const compact = v => {
+        const a = Math.abs(v);
+        if (a >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+        if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (a >= 1e3) return (v / 1e3).toFixed(0) + 'k';
+        return String(Math.round(v * 10) / 10);
+    };
+    const full = (v, type) => {
+        if (type === 'percent') return Number(v).toFixed(1) + '%';
+        const n = Number(v).toLocaleString('en-US', { maximumFractionDigits: 1 });
+        return type === 'money' ? n + ' RWF' : n;
+    };
 
-        var type     = canvas.dataset.type || 'bar';
-        var labels   = JSON.parse(canvas.dataset.labels   || '[]');
-        var rawDs    = JSON.parse(canvas.dataset.datasets || '[]');
+    function draw(wrap) {
+        const canvas = wrap.querySelector('canvas');
+        if (!canvas || typeof Chart === 'undefined') return;
+        if (canvas._chart) { canvas._chart.destroy(); canvas._chart = null; }
 
-        var datasets = rawDs.map(function(d) {
-            var isLine = type === 'line';
-            return {
-                label: d.label,
-                data:  d.data,
-                backgroundColor:   isLine ? 'transparent' : d.bg,
-                borderColor:       d.bg,
-                borderWidth:       isLine ? 2 : 0,
-                borderRadius:      isLine ? 0 : 4,
-                fill:              false,
-                tension:           0.3,
-                pointRadius:       isLine ? 3 : 0,
-            };
-        });
+        const spec = JSON.parse(wrap.dataset.chart || '{}');
+        const labels = (spec.labels || []).map(l => spec.dateLabels ? shortDate(l) : l);
+        const colors = palette();
+        const isLine = spec.type === 'line';
+        // Long category lists read better as horizontal bars
+        const horizontal = !isLine && (labels.length > 6 || labels.some(l => String(l).length > 14));
+        const type = (spec.datasets[0] || {}).type || 'count';
 
-        canvas._chartInstance = new Chart(canvas, {
-            type: type,
-            data: { labels: labels, datasets: datasets },
+        const w = wrap.clientWidth - 28, h = horizontal ? Math.max(220, labels.length * 26 + 40) : wrap.clientHeight - 20;
+        if (horizontal) wrap.style.height = (h + 20) + 'px';
+        canvas.width = w; canvas.height = h;
+        canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+
+        const grid = css().getPropertyValue('--border').trim() || '#e2e6f3';
+        const dim = css().getPropertyValue('--text-dim').trim() || '#7a81a0';
+        const valueAxis = { beginAtZero: true, grid: { color: grid }, border: { display: false },
+                            ticks: { color: dim, font: { size: 11 }, callback: v => type === 'percent' ? v + '%' : compact(v) } };
+        const catAxis = { grid: { display: false }, border: { display: false },
+                          ticks: { color: dim, font: { size: 11 }, autoSkip: true, maxRotation: 0,
+                                   callback: function (v) { const l = String(this.getLabelForValue(v)); return l.length > 22 ? l.slice(0, 21) + '…' : l; } } };
+
+        canvas._chart = new Chart(canvas, {
+            type: isLine ? 'line' : 'bar',
+            data: {
+                labels,
+                datasets: spec.datasets.map((d, i) => ({
+                    label: d.label, data: d.data,
+                    backgroundColor: isLine ? colors[i % colors.length] + '1a' : colors[i % colors.length],
+                    borderColor: colors[i % colors.length],
+                    borderWidth: isLine ? 2 : 0, borderRadius: isLine ? 0 : 4, maxBarThickness: 36,
+                    fill: isLine, tension: .3, pointRadius: isLine && labels.length <= 31 ? 2.5 : 0,
+                })),
+            },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false, animation: false, indexAxis: horizontal ? 'y' : 'x',
                 plugins: {
-                    legend: { position: 'top', labels: { font: { size: 12 }, padding: 14, usePointStyle: true } },
-                    tooltip: { mode: 'index', intersect: false }
+                    legend: { display: spec.datasets.length > 1 },
+                    tooltip: { mode: 'index', intersect: false,
+                               callbacks: { label: c => ' ' + c.dataset.label + ': ' + full(c.raw, spec.datasets[c.datasetIndex].type) } },
                 },
-                scales: {
-                    x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45 } },
-                    y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,.08)' }, ticks: { font: { size: 11 } } }
-                }
-            }
+                scales: horizontal ? { x: valueAxis, y: catAxis } : { x: catAxis, y: valueAxis },
+            },
         });
+    }
+
+    let pending = false;
+    function drawAll() {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            pending = false;
+            $wire.$el.querySelectorAll('.rv-chart').forEach(draw);
+        }));
+    }
+
+    drawAll();
+    Livewire.hook('commit', ({ component, succeed }) => {
+        if (component.id !== $wire.$id) return;
+        succeed(drawAll);
     });
+    let resizeTimer;
+    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawAll, 200); });
 })();
 </script>
 @endscript
-@endif
-
 </div>

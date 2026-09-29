@@ -11,6 +11,7 @@ class TransfersKpis extends Metric
     protected string $label       = 'Transfer Performance KPIs';
     protected string $description = 'Number of transfers, time to complete and discrepancy rate';
     protected string $domain      = 'transfers';
+    protected array  $related     = ['transfers_routes', 'transfers_discrepancies'];
     protected string $locations   = 'none';
     protected string $good        = 'neutral';
 

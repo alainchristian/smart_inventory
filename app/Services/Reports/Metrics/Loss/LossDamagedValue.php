@@ -11,6 +11,7 @@ class LossDamagedValue extends Metric
     protected string $label       = 'Damaged Goods Loss';
     protected string $description = 'Estimated value of goods recorded as damaged';
     protected string $domain      = 'loss';
+    protected array  $related     = ['loss_by_product'];
     protected array  $viz         = ['kpi_card', 'table'];
     protected string $good        = 'down';
 

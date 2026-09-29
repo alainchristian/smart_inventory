@@ -11,6 +11,7 @@ class LossTotal extends Metric
     protected string $label       = 'Total Losses';
     protected string $description = 'Refunds on returns plus the value of damaged goods';
     protected string $domain      = 'loss';
+    protected array  $related     = ['loss_by_product'];
     protected string $good        = 'down';
 
     public function fetch(ReportContext $ctx): array

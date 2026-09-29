@@ -11,12 +11,13 @@ class ReportRunHistory extends Model
 
     protected $fillable = [
         'report_id', 'run_by', 'run_at', 'config_snapshot',
-        'results', 'duration_ms', 'was_scheduled',
+        'results', 'summary', 'duration_ms', 'was_scheduled',
     ];
 
     protected $casts = [
         'config_snapshot' => 'array',
         'results'         => 'array',
+        'summary'         => 'array',
         'run_at'          => 'datetime',
         'was_scheduled'   => 'boolean',
         'duration_ms'     => 'integer',

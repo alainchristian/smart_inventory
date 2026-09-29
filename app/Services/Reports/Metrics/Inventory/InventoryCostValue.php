@@ -11,6 +11,7 @@ class InventoryCostValue extends Metric
     protected string $label       = 'Inventory Cost Value';
     protected string $description = 'What the stock on hand cost you (capital tied up in stock)';
     protected string $domain      = 'inventory';
+    protected array  $related     = ['inventory_by_location', 'inventory_category_concentration'];
     protected bool   $usesDates   = false;
     protected string $locations   = 'any';
     protected string $good        = 'neutral';

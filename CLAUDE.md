@@ -1595,3 +1595,54 @@ Replaces `app/Services/Reports/CLAUDE.md`, which described the old
   warehouse and returned 0.
 
 Tests: `tests/Feature/Reports/CustomReports/{MetricContractTest,ReportRunnerTest}.php`.
+
+## Custom Reports rebuild — Phase 3: report page (2026-09-29)
+
+`ReportViewer` + `report-viewer.blade.php` (prefix `rv-`) rewritten.
+- **Filter bar:** period presets, dates, location, comparison. State lives
+  in the URL (`?period=&from=&to=&loc=&compare=`, validated; invalid values
+  fall back to the saved defaults). Changing a filter never changes the
+  saved report, and "Reset to saved view" restores the defaults. On phones
+  the filters are a bottom sheet (`m-filter-panel`).
+- **Results are never public Livewire state.** They come from `#[Computed]
+  results()`, which reads `Cache` keyed by report config + filters (5 min
+  if the period includes today, else 1 h). `wire:init="load"` paints the
+  page before running. A cache miss is a run and writes one history row;
+  Refresh forgets the cache.
+- **Layout:**
+  - key findings (bad → warn → good, max 4)
+  - every `kpi_card` block as shared `.ui-kpi` cards. The comparison badge
+    is coloured by the metric's `good` direction; threshold status shows as
+    a dot; notes are a tooltip.
+  - tables / charts / text in a 2-column grid. Tables go through
+    `partials/result-table.blade.php` (typed columns, totals, `m-scroll`).
+- **Charts:** Chart.js from the bundle, drawn from `data-chart` on the
+  wrapper, `wire:ignore` canvas, redrawn on commit. Colours come from CSS
+  tokens, so they're no longer black. Long category lists become
+  horizontal bars. Don't use `@json([...])` with a nested array in an
+  attribute: Blade mis-parses it, so use `{{ json_encode(...) }}`.
+- **Details sheet** (`m-sheet`) per KPI: all its figures plus the top 5 rows
+  of the metric's `$related` metrics. It replaces the old "What's behind
+  this?" panel, whose partial was deleted. Pin and notes buttons are gone.
+- **History drawer:** last 12 runs with period, location, who ran it and
+  headline figures. Choosing one re-applies its filters.
+- **Storage** (migration `2026_09_29_000001`): `report_run_history.summary`
+  (headlines only) replaces `results`, and `config_snapshot` drops
+  `blocks`. `saved_reports.last_results` is no longer written, because
+  `markRun()` only counts runs. Old copies were nulled. The scheduled
+  command uses `ReportRunner::recordRun(..., scheduled: true)`.
+- **Exports:** CSV is rebuilt from `MetricResult` (typed headers, totals,
+  notes, `csv_safe`). It used to crash with comparison on, because
+  `_comparison` keys were pushed into list-shaped data; the runner now adds
+  them only to keyed arrays. Print takes the viewer's filters from the
+  query string instead of the stored `last_results`.
+- **Top products** labels "(by box)" / "(loose)" when a product has both
+  kinds of rows. The sales service keeps them apart, so the same product
+  looked listed twice.
+- Checked in headless Chrome at 1440px and 390px as the owner, with the
+  temporary `?__as=` middleware and a temporary sample report (both
+  removed). The 390px wrapper must be served from the app's own origin: a
+  `file://` wrapper makes the iframe cross-site, the session cookie isn't
+  sent, and `wire:init` never loads.
+
+Tests: `tests/Feature/Reports/CustomReports/ReportViewerTest.php`.
