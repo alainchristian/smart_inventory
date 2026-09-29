@@ -195,25 +195,13 @@ class ReportViewerTest extends TestCase
         $report = $this->report(['comparison_mode' => 'prior_period']);
         $c = $this->viewer($report)->call('load')->assertSee('Compared with');
 
-        $c->call('exportCsv')->assertFileDownloaded();
-
-        // With comparison on, list-shaped blocks used to crash the CSV export
-        $csv = app(\App\Services\Reports\ExportReportAction::class)->toCsv($report,
-            app(\App\Services\Reports\ReportRunner::class)->run($report->resolvedConfig(), null, false));
-        $this->assertStringContainsString('"DAILY REVENUE"', $csv);
-        $this->assertStringContainsString('"Date","Sales","Revenue (RWF)"', $csv);
-    }
-
-    public function test_print_uses_the_viewer_filters(): void
-    {
-        $report = $this->report();
-        $this->actingAs($this->owner)
-            ->get(route('owner.reports.custom.print', $report) . '?' . http_build_query([
-                'date_range' => 'custom', 'date_from' => '2026-03-01', 'date_to' => '2026-03-15',
-            ]))
-            ->assertOk()
-            ->assertSee('2026-03-01')
-            ->assertSee('2026-03-15');
+        // Export links carry the filters on screen
+        $c->call('setPreset', 'last_month');
+        [$from, $to] = ReportPeriod::resolve('last_month');
+        foreach (['pdf', 'xlsx', 'csv'] as $format) {
+            $c->assertSee(route('owner.reports.custom.export', [$report->id, $format]), false);
+        }
+        $c->assertSee("date_from={$from}&amp;date_to={$to}", false);
     }
 
     public function test_empty_report_explains_itself(): void

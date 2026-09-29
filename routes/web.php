@@ -177,16 +177,9 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/custom/builder',    [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'builder'])->name('custom.builder');
         Route::get('/custom/{report}',   [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'view'])->name('custom.view');
         Route::get('/custom/{report}/edit', [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'edit'])->name('custom.edit');
-        Route::get('/custom/{report}/print', function (\App\Models\SavedReport $report) {
-            abort_unless($report->isVisibleTo(auth()->user()), 403);
-            // Same filters as the viewer (period / location / comparison in the query string)
-            $runner  = app(\App\Services\Reports\ReportRunner::class);
-            $filters = request()->only(['date_range', 'date_from', 'date_to', 'location_filter', 'comparison_mode']);
-            $config  = $runner->effectiveConfig($report->resolvedConfig(), $filters);
-            $results = $runner->run($report->resolvedConfig(), null, false, $filters);
-            $html = app(\App\Services\Reports\ExportReportAction::class)->toPrintHtml($report, $results, $config);
-            return response($html)->header('Content-Type', 'text/html');
-        })->name('custom.print');
+        Route::get('/custom/{report}/export/{format}', [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'export'])
+            ->whereIn('format', ['pdf', 'xlsx', 'csv'])->name('custom.export');
+        Route::get('/custom/{report}/print', [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'print'])->name('custom.print');
     });
 
     // Finance (Day Close)

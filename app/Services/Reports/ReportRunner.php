@@ -45,6 +45,35 @@ class ReportRunner
         return $config;
     }
 
+    /**
+     * A saved report's results for these filters, shared by the viewer and
+     * the exports. Cached on the config itself (never updated_at: a run
+     * used to bump it and invalidate its own cache). A miss is a run and is
+     * recorded in history; exports reuse what the viewer already ran.
+     */
+    public function cached(\App\Models\SavedReport $report, array $filters, bool $recordHistory = true): array
+    {
+        $config = $this->effectiveConfig($report->resolvedConfig(), $filters);
+        [, $to] = $this->resolveDates($config);
+        $ttl = $to >= business_today()->toDateString() ? 300 : 3600;   // today's numbers still move
+
+        return \Illuminate\Support\Facades\Cache::remember($this->cacheKey($report, $filters), $ttl,
+            fn () => $this->run($report->resolvedConfig(), $recordHistory ? $report->id : null, $recordHistory, $filters));
+    }
+
+    public function forget(\App\Models\SavedReport $report, array $filters): void
+    {
+        \Illuminate\Support\Facades\Cache::forget($this->cacheKey($report, $filters));
+    }
+
+    private function cacheKey(\App\Models\SavedReport $report, array $filters): string
+    {
+        $config = $this->effectiveConfig($report->resolvedConfig(), $filters);
+        unset($config['blocks']);
+
+        return 'custom_report:' . $report->id . ':' . md5(json_encode([$report->resolvedConfig()['blocks'], $config]));
+    }
+
     public function run(array $config, ?int $reportId = null, bool $writeHistory = true, array $filters = []): array
     {
         $startTime = microtime(true);

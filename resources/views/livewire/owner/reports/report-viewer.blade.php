@@ -226,14 +226,19 @@
                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="rv-menu-list" x-show="open" x-cloak x-transition.opacity.duration.100ms>
-                <a class="rv-menu-item" href="{{ $printUrl }}" target="_blank" @click="open = false">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    Print
+                {{-- Plain links: the browser downloads the file, no Livewire round trip --}}
+                <a class="rv-menu-item" href="{{ $exportUrls['pdf'] }}" @click="open = false">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+                    PDF (to print or send)
                 </a>
-                <button class="rv-menu-item" wire:click="exportCsv" @click="open = false">
+                <a class="rv-menu-item" href="{{ $exportUrls['xlsx'] }}" @click="open = false">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                    Excel workbook
+                </a>
+                <a class="rv-menu-item" href="{{ $exportUrls['csv'] }}" @click="open = false">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    CSV spreadsheet
-                </button>
+                    CSV file
+                </a>
                 <div class="rv-menu-note">Exports use the period and location shown.</div>
             </div>
         </div>

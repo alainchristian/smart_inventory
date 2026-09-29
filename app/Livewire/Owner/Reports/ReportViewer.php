@@ -173,21 +173,6 @@ class ReportViewer extends Component
 
     // ── Results ──────────────────────────────────────────────────────────
 
-    private function cacheKey(): string
-    {
-        $report = $this->report();
-
-        // Keyed on the config itself (not updated_at, which a run used to bump,
-        // so every request missed the cache and re-ran the whole report)
-        return 'custom_report:' . $report->id . ':' . md5(json_encode([$report->config, $this->filters()]));
-    }
-
-    /** Short cache while the period includes today, since today's numbers still move */
-    private function cacheTtl(): int
-    {
-        return $this->dateTo >= business_today()->toDateString() ? 300 : 3600;
-    }
-
     #[Computed]
     public function results(): array
     {
@@ -195,15 +180,13 @@ class ReportViewer extends Component
             return [];
         }
 
-        return Cache::remember($this->cacheKey(), $this->cacheTtl(), function () {
-            return app(ReportRunner::class)->run($this->report()->resolvedConfig(), $this->reportId, true, $this->filters());
-        });
+        return app(ReportRunner::class)->cached($this->report(), $this->filters());
     }
 
     /** Re-run now, skipping the cache */
     public function refresh(): void
     {
-        Cache::forget($this->cacheKey());
+        app(ReportRunner::class)->forget($this->report(), $this->filters());
         unset($this->results);
         ReportViewLog::create([
             'report_id' => $this->reportId,
@@ -237,7 +220,10 @@ class ReportViewer extends Component
 
         $block = $entry['block'];
 
-        return Cache::remember($this->cacheKey() . ':details:' . $this->detailBlockId, $this->cacheTtl(), function () use ($metric, $block) {
+        $key = 'custom_report_details:' . md5(json_encode([$block, $this->filters()]));
+        $ttl = $this->dateTo >= business_today()->toDateString() ? 300 : 3600;
+
+        return Cache::remember($key, $ttl, function () use ($metric, $block) {
             $registry = app(MetricRegistry::class);
             $runner   = app(ReportRunner::class);
             $out = [];
@@ -291,21 +277,6 @@ class ReportViewer extends Component
             ->limit(12)->get();
     }
 
-    // ── Export ───────────────────────────────────────────────────────────
-
-    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
-    {
-        $report = $this->report();
-        $config = app(ReportRunner::class)->effectiveConfig($report->resolvedConfig(), $this->filters());
-        $csv    = app(ExportReportAction::class)->toCsv($report, $this->results, $config);
-
-        return response()->streamDownload(function () use ($csv) {
-            echo $csv;
-        }, str($report->name)->slug() . '-' . $this->dateFrom . '-to-' . $this->dateTo . '.csv', [
-            'Content-Type' => 'text/csv',
-        ]);
-    }
-
     // ── Helpers ─────────────────────────────────────────────────────────
 
     private ?SavedReport $reportCache = null;
@@ -330,13 +301,8 @@ class ReportViewer extends Component
             }
         }
 
-        // Key findings: problems first, then good news; at most 4
-        $tones = ['bad' => 0, 'warn' => 1, 'good' => 2];
-        $findings = collect($results)
-            ->filter(fn ($e) => isset($e['result']['insight']['tone'], $tones[$e['result']['insight']['tone']]))
-            ->map(fn ($e) => ['title' => $e['block']['title'] ?? '', 'text' => $e['result']['insight']['text'], 'tone' => $e['result']['insight']['tone']])
-            ->sortBy(fn ($f) => $tones[$f['tone']])
-            ->take(4)->values()->all();
+        $findings = \App\Services\Reports\ReportDocument::findings($results);
+        $exportQuery = http_build_query($this->filters());
 
         $comparisonPeriod = $this->comparison !== 'none'
             ? ReportPeriod::prior($this->comparison, $this->dateFrom, $this->dateTo)
@@ -354,7 +320,11 @@ class ReportViewer extends Component
             'shops'            => Shop::orderBy('name')->pluck('name', 'id'),
             'warehouses'       => Warehouse::orderBy('name')->pluck('name', 'id'),
             'presets'          => array_diff_key(ReportPeriod::PRESETS, ['custom' => true]),
-            'printUrl'         => route('owner.reports.custom.print', $this->reportId) . '?' . http_build_query($this->filters()),
+            'exportUrls'       => [
+                'pdf'  => route('owner.reports.custom.export', [$this->reportId, 'pdf']) . '?' . $exportQuery,
+                'xlsx' => route('owner.reports.custom.export', [$this->reportId, 'xlsx']) . '?' . $exportQuery,
+                'csv'  => route('owner.reports.custom.export', [$this->reportId, 'csv']) . '?' . $exportQuery,
+            ],
             'canEdit'          => $this->report()->created_by === auth()->id(),
         ]);
     }
