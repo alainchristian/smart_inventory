@@ -6,6 +6,8 @@ use App\Models\Shop;
 use App\Models\Warehouse;
 use App\Services\Reports\MetricRegistry;
 use App\Services\Reports\ReportTemplates;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class ReportBuilder extends Component
@@ -31,7 +33,8 @@ class ReportBuilder extends Component
     public string  $catalogueSearch = '';
     public string  $catalogueDomain = 'all';
 
-    // Edit context
+    // Edit context (locked: a tampered id must not let one owner overwrite another's report)
+    #[Locked]
     public ?int    $editingReportId = null;
 
     // Schedule
@@ -93,7 +96,7 @@ class ReportBuilder extends Component
         if (! $meta) return;
 
         $block = [
-            'id'              => 'b' . now()->timestamp . '_' . count($this->canvas),
+            'id'              => 'b' . strtolower((string) Str::ulid()),
             'metric_id'       => $metricId,
             'title'           => $meta['label'],
             'width'           => 'half',
@@ -220,7 +223,7 @@ class ReportBuilder extends Component
             $meta = app(MetricRegistry::class)->find($blockDef['metric_id']);
             if (! $meta) continue;
             $this->canvas[] = array_merge([
-                'id'              => 'b' . now()->timestamp . '_' . count($this->canvas),
+                'id'              => 'b' . strtolower((string) Str::ulid()),
                 'title'           => $meta['label'],
                 'width'           => 'half',
                 'viz'             => $meta['default_viz'],
@@ -248,13 +251,14 @@ class ReportBuilder extends Component
             'date_to'         => $this->dateTo,
             'location_filter' => $this->locationFilter,
             'comparison_mode' => $this->comparisonMode,
-            'blocks'          => array_values($this->canvas),
+            'blocks'          => SavedReport::withUniqueBlockIds($this->canvas),
         ];
 
         $recipients = array_filter(array_map('trim', explode(',', $this->scheduleRecipients)));
 
         if ($this->editingReportId) {
             $report = SavedReport::findOrFail($this->editingReportId);
+            abort_unless($report->created_by === auth()->id(), 403);
             $report->update([
                 'name'                => trim($this->reportName),
                 'description'         => trim($this->reportDescription) ?: null,

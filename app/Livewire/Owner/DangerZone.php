@@ -35,7 +35,7 @@ class DangerZone extends Component
         $ownerId = auth()->id();
 
         $tables = [
-            'report_view_logs',
+            'report_view_log',
             'report_annotations',
             'report_run_history',
             'saved_reports',

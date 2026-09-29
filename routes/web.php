@@ -176,9 +176,9 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
         Route::get('/custom',            [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'library'])->name('custom.library');
         Route::get('/custom/builder',    [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'builder'])->name('custom.builder');
         Route::get('/custom/{report}',   [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'view'])->name('custom.view');
+        Route::get('/custom/{report}/edit', [\App\Http\Controllers\Owner\Reports\CustomReportController::class, 'edit'])->name('custom.edit');
         Route::get('/custom/{report}/print', function (\App\Models\SavedReport $report) {
-            $user = auth()->user();
-            if ($report->created_by !== $user->id && !$report->is_shared) abort(403);
+            abort_unless($report->isVisibleTo(auth()->user()), 403);
             $results = $report->last_results ?? [];
             $html = app(\App\Services\Reports\ExportReportAction::class)->toPrintHtml($report, $results);
             return response($html)->header('Content-Type', 'text/html');

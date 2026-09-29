@@ -36,6 +36,7 @@ class ReportLibrary extends Component
     public function duplicateReport(int $id): void
     {
         $source = SavedReport::findOrFail($id);
+        abort_unless($source->isVisibleTo(auth()->user()), 403);
         SavedReport::create([
             'name'        => $source->name . ' (copy)',
             'description' => $source->description,

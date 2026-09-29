@@ -20,21 +20,24 @@ class ReportRunner
 
     /**
      * Resolve dates from the config's date_range setting.
-     * Returns [$dateFrom, $dateTo] as Y-m-d strings.
+     * Returns [$dateFrom, $dateTo] as business-timezone Y-m-d strings,
+     * which is what the analytics services expect (UTC now() made
+     * "today" mean yesterday between 00:00 and 02:00 Kigali time).
      */
     public function resolveDates(array $config): array
     {
-        if ($config['date_range'] === 'custom' && $config['date_from'] && $config['date_to']) {
+        if (($config['date_range'] ?? null) === 'custom' && ! empty($config['date_from']) && ! empty($config['date_to'])) {
             return [$config['date_from'], $config['date_to']];
         }
-        $to = now()->toDateString();
-        $from = match ($config['date_range'] ?? 'month') {
-            'today'   => now()->toDateString(),
-            'week'    => now()->startOfWeek()->toDateString(),
-            'month'   => now()->startOfMonth()->toDateString(),
-            'quarter' => now()->startOfQuarter()->toDateString(),
-            'year'    => now()->startOfYear()->toDateString(),
-            default   => now()->startOfMonth()->toDateString(),
+        $today = business_today();
+        $to    = $today->toDateString();
+        $from  = match ($config['date_range'] ?? 'month') {
+            'today'   => $today->toDateString(),
+            'week'    => $today->copy()->startOfWeek()->toDateString(),
+            'month'   => $today->copy()->startOfMonth()->toDateString(),
+            'quarter' => $today->copy()->startOfQuarter()->toDateString(),
+            'year'    => $today->copy()->startOfYear()->toDateString(),
+            default   => $today->copy()->startOfMonth()->toDateString(),
         };
         return [$from, $to];
     }
@@ -241,12 +244,13 @@ class ReportRunner
         return $collection->values()->toArray();
     }
 
-    private function resolvePriorDates(array $config, string $currentFrom, string $currentTo): array
+    public function resolvePriorDates(array $config, string $currentFrom, string $currentTo): array
     {
         $mode = $config['comparison_mode'] ?? 'prior_period';
         $from = \Carbon\Carbon::parse($currentFrom);
         $to   = \Carbon\Carbon::parse($currentTo);
-        $days = max($from->diffInDays($to), 1);
+        // Inclusive length, so the prior period ends the day before this one starts
+        $days = (int) $from->diffInDays($to) + 1;
 
         return match ($mode) {
             'prior_year' => [

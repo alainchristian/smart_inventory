@@ -14,9 +14,9 @@ class ExportReportAction
         $config = $report->resolvedConfig();
         [$dateFrom, $dateTo] = app(ReportRunner::class)->resolveDates($config);
 
-        $lines[] = '"' . $report->name . '"';
-        $lines[] = '"Period: ' . $dateFrom . ' to ' . $dateTo . '"';
-        $lines[] = '"Generated: ' . now()->format('d M Y H:i') . '"';
+        $lines[] = self::csvRow([$report->name]);
+        $lines[] = self::csvRow(['Period: ' . $dateFrom . ' to ' . $dateTo]);
+        $lines[] = self::csvRow(['Generated: ' . business_now()->format('d M Y H:i')]);
         $lines[] = '';
 
         foreach ($results as $blockResult) {
@@ -27,25 +27,25 @@ class ExportReportAction
             $viz   = $block['viz'] ?? ($meta['default_viz'] ?? 'kpi_card');
             $title = $block['title'] ?? ($meta['label'] ?? '');
 
-            $lines[] = '"' . strtoupper($title) . '"';
+            $lines[] = self::csvRow([mb_strtoupper($title)]);
 
             if ($viz === 'kpi_card') {
                 foreach ($data as $key => $value) {
-                    if (str_starts_with($key, '_')) continue;
+                    if (str_starts_with((string) $key, '_')) continue;
                     if (is_numeric($value) || is_string($value)) {
-                        $lines[] = '"' . $key . '","' . $value . '"';
+                        $lines[] = self::csvRow([$key, $value]);
                     }
                 }
             } elseif ($viz === 'text') {
-                $lines[] = '"' . ($block['content'] ?? '') . '"';
+                $lines[] = self::csvRow([$block['content'] ?? '']);
             } else {
-                $rows = is_array($data) && isset($data[0]) ? $data : [];
+                $rows = is_array($data) && isset($data[0]) && is_array($data[0]) ? $data : [];
                 if (!empty($rows)) {
-                    $lines[] = implode(',', array_map(fn($k) => '"' . $k . '"', array_keys($rows[0])));
+                    $lines[] = self::csvRow(array_keys($rows[0]));
                     foreach ($rows as $row) {
-                        $lines[] = implode(',', array_map(
-                            fn($v) => '"' . str_replace('"', '""', (string)($v ?? '')) . '"',
-                            $row
+                        $lines[] = self::csvRow(array_map(
+                            fn ($v) => is_array($v) ? json_encode($v) : $v,
+                            array_values($row)
                         ));
                     }
                 }
@@ -53,7 +53,30 @@ class ExportReportAction
             $lines[] = '';
         }
 
-        return implode("\r\n", $lines);
+        return implode("
+", $lines);
+    }
+
+    /**
+     * One CSV line. Every cell is quoted with doubled inner quotes, and
+     * text cells go through csv_safe() so product/customer names or report
+     * text starting with = + - @ can't run as spreadsheet formulas.
+     * Numbers, including numeric strings, are left alone (a negative
+     * amount is data, not a formula).
+     */
+    private static function csvRow(array $cells): string
+    {
+        return implode(',', array_map(function ($v) {
+            $v = match (true) {
+                $v === null            => '',
+                is_bool($v)            => $v ? 'Yes' : 'No',
+                is_int($v), is_float($v) => (string) $v,
+                is_numeric($v)         => (string) $v,  // Postgres returns decimals as strings
+                default                => csv_safe((string) $v),
+            };
+
+            return '"' . str_replace('"', '""', $v) . '"';
+        }, $cells));
     }
 
     /**

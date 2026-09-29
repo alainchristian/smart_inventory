@@ -1507,3 +1507,41 @@ back. Livewire's follow-up requests then see no session and re-render the
 gate, so keep `--virtual-time-budget` short (~2.5s). A blank 390px frame
 usually means a follow-up Livewire request failed auth (Livewire's error
 overlay), so put `__as` in the URL so the referer carries it.
+
+---
+
+## Custom Reports rebuild — Phase 1: bug fixes (2026-09-29)
+
+Full plan (7 phases, agreed with the user): metric classes with one typed
+result shape, viewer filter bar + `ui-kpi` summary, rebuilt builder and
+library, PDF/Excel/CSV export, and a friendly schedule picker that emails
+the PDF. Pin-to-dashboard and block notes are being dropped from the UI.
+Phase 1 fixed the existing code only:
+
+- **Edit was broken.** Links went to `builder?reportId=X`, which Livewire
+  never read, so Edit opened an empty builder and Save made a copy. Now
+  `owner.reports.custom.edit` (`/owner/reports/custom/{report}/edit`); the
+  old query link redirects to it.
+- **Access:** `SavedReport::isVisibleTo()` (creator or shared) guards view,
+  print, the viewer's `mount()` and duplicate. Edit/save is creator-only
+  and re-checked in `save()`. `ReportBuilder::$editingReportId` and
+  `ReportViewer::$reportId` are `#[Locked]`.
+- **Dates:** `ReportRunner::resolveDates()` uses `business_today()` (UTC
+  `now()` made "Today" yesterday before 02:00 Kigali). The prior period
+  shifts by the inclusive length, so it no longer overlaps the current
+  period's first day. The breakdown panel now passes the block's custom
+  date override.
+- **Block ids** are `'b' . ulid`. Old reports could hold duplicate ids
+  (`'b'.timestamp.'_'.count` collided after remove + add), which made one
+  block's results overwrite another's. `resolvedConfig()` de-duplicates them
+  with a `_2` suffix via `SavedReport::withUniqueBlockIds()`.
+- **Wipe tools** (`WipeTransactionalData`, `DangerZone`, `SystemManager`)
+  named `report_run_histories` / `report_view_logs`. The tables are
+  `report_run_history` / `report_view_log`, and errors were swallowed.
+- **CSV:** every cell is quoted, and text goes through `csv_safe()`.
+  Numeric strings are left alone.
+- `report-viewer.blade.php` declares global functions inside the view.
+  They are now wrapped in `function_exists` (a second render in one process
+  was a fatal "cannot redeclare"). Phase 3 moves them into metric classes.
+
+Tests: `tests/Feature/Reports/CustomReports/CustomReportsPhase1Test.php`.

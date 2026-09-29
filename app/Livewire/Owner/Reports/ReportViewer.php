@@ -14,10 +14,12 @@ use App\Services\Analytics\SalesAnalyticsService;
 use App\Services\Analytics\TransferAnalyticsService;
 use App\Services\Reports\ReportRunner;
 use App\Services\Reports\ExportReportAction;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class ReportViewer extends Component
 {
+    #[Locked]
     public int   $reportId;
     public bool  $isRunning = false;
     public array $results   = [];
@@ -44,6 +46,7 @@ class ReportViewer extends Component
         if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized access.');
         }
+        abort_unless(SavedReport::findOrFail($reportId)->isVisibleTo(auth()->user()), 403);
 
         // Log page view
         ReportViewLog::create([
@@ -194,7 +197,11 @@ class ReportViewer extends Component
 
         [$from, $to] = $runner->resolveDates(
             ! empty($block['date_range_override'])
-                ? ['date_range' => $block['date_range_override'], 'date_from' => null, 'date_to' => null]
+                ? [
+                    'date_range' => $block['date_range_override'],
+                    'date_from'  => $block['date_from_override'] ?? null,
+                    'date_to'    => $block['date_to_override'] ?? null,
+                ]
                 : $config
         );
         $loc = $block['location_filter_override'] ?? $config['location_filter'] ?? 'all';

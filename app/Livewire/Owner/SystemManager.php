@@ -79,7 +79,7 @@ class SystemManager extends Component
         $sel     = array_flip($this->selected);
 
         $map = [
-            'reports'      => ['report_view_logs', 'report_annotations', 'report_run_history', 'saved_reports'],
+            'reports'      => ['report_view_log', 'report_annotations', 'report_run_history', 'saved_reports'],
             'logs'         => ['activity_logs', 'alerts', 'scanner_sessions'],
             'sessions'     => ['bank_deposits', 'owner_withdrawals', 'expense_requests', 'expenses', 'daily_sessions'],
             'sales'        => ['sale_payments', 'sale_items', 'held_sales', 'sales'],

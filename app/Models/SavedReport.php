@@ -36,16 +36,51 @@ class SavedReport extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function isVisibleTo(?User $user): bool
+    {
+        return $user !== null && ($this->created_by === $user->id || $this->is_shared);
+    }
+
     /** Returns config with safe defaults applied */
     public function resolvedConfig(): array
     {
-        return array_merge([
+        $config = array_merge([
             'date_range'      => 'month',
             'date_from'       => null,
             'date_to'         => null,
             'location_filter' => 'all',
             'blocks'          => [],
         ], $this->config ?? []);
+
+        $config['blocks'] = self::withUniqueBlockIds($config['blocks']);
+
+        return $config;
+    }
+
+    /**
+     * Results are keyed by block id, so two blocks sharing one would
+     * overwrite each other. Old block ids were 'b'.timestamp.'_'.count,
+     * which collided after a remove + add in the same second; those get
+     * a deterministic suffix here.
+     */
+    public static function withUniqueBlockIds(array $blocks): array
+    {
+        $seen = [];
+        foreach ($blocks as $i => $block) {
+            $id = (string) ($block['id'] ?? '');
+            if ($id === '') {
+                $id = 'b_' . $i;
+            }
+            $base = $id;
+            $n = 2;
+            while (isset($seen[$id])) {
+                $id = $base . '_' . $n++;
+            }
+            $seen[$id] = true;
+            $blocks[$i]['id'] = $id;
+        }
+
+        return array_values($blocks);
     }
 
     public function blockCount(): int

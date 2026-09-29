@@ -58,6 +58,7 @@ class Topbar extends Component
         'owner.reports.custom.library'       => 'Custom Reports',
         'owner.reports.custom.builder'       => 'Report Builder',
         'owner.reports.custom.view'          => 'Custom Report',
+        'owner.reports.custom.edit'          => 'Edit Report',
         'owner.settings'                     => 'Settings',
         'owner.system'                       => 'System',
         'owner.alerts.index'                 => 'Alerts',

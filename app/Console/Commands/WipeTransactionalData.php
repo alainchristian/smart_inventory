@@ -32,7 +32,7 @@ class WipeTransactionalData extends Command
         $this->line('  - daily_sessions, expenses, expense_requests, owner_withdrawals, bank_deposits');
         $this->line('  - credit_repayments, credit_writeoffs, customer_credit_accounts');
         $this->line('  - activity_logs, alerts, scanner_sessions');
-        $this->line('  - saved_reports, report_run_histories, report_annotations, report_view_logs');
+        $this->line('  - saved_reports, report_run_history, report_annotations, report_view_log');
         $this->newLine();
 
         if (! $this->option('force')) {
@@ -72,8 +72,8 @@ class WipeTransactionalData extends Command
         // ── 1. Report system ──────────────────────────────────────────────────
         $this->line('  [1/9] Report history & annotations...');
         $wipe('report_annotations');
-        $wipe('report_view_logs');
-        $wipe('report_run_histories');
+        $wipe('report_view_log');
+        $wipe('report_run_history');
         $wipe('saved_reports');
 
         // ── 2. Sales ─────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ class WipeTransactionalData extends Command
 
         // ── Reset sequences ──────────────────────────────────────────────────
         $sequences = [
-            'report_annotations', 'report_view_logs', 'report_run_histories', 'saved_reports',
+            'report_annotations', 'report_view_log', 'report_run_history', 'saved_reports',
             'sale_items', 'sale_payments', 'held_sales',
             'return_items', 'returns', 'sales',
             'transfer_items', 'transfer_boxes', 'transfers',
