@@ -1,20 +1,6 @@
 <div style="font-family:var(--font)">
 <style>
-/* ── KPI strip ───────────────────────────────────── */
-.bx-kpis {
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:12px;
-    margin-bottom:24px;
-}
-/* Extend .bkpi with amber + red variants */
-.bkpi.amber::after { background:linear-gradient(90deg,var(--amber),transparent) }
-.bkpi.red::after   { background:linear-gradient(90deg,var(--red),transparent) }
-.bkpi-icon.amber   { background:var(--amber-dim);color:var(--amber) }
-.bkpi-icon.red     { background:var(--red-dim);color:var(--red) }
-.bkpi-pct.amber    { background:var(--amber-dim);color:var(--amber) }
-.bkpi-pct.red      { background:var(--red-dim);color:var(--red) }
-.bkpi-pct.down     { background:var(--red-dim);color:var(--red) }
+/* KPI cards: shared .ui-kpi (app.css) */
 
 /* ── Filter panel ────────────────────────────────── */
 .bx-filter-panel {
@@ -197,7 +183,6 @@
 
 /* Responsive */
 @media(max-width:768px) {
-    .bx-kpis { grid-template-columns:1fr 1fr;gap:8px }
     .bx-table td,.bx-table th { padding:9px 10px }
 }
     .bx-view-btn { padding:4px 8px;font-size:11px }
@@ -219,158 +204,128 @@
     </div>
 </div>
 
-{{-- ── KPI strip ───────────────────────────────────────────────── --}}
+{{-- ── KPI strip (shared .ui-kpi cards, app.css) ───────────────── --}}
 @php
-  $sellable    = ($stats->full_count ?? 0) + ($stats->partial_count ?? 0);
-  $activeTotal = $sellable + ($stats->damaged_count ?? 0);   // non-empty boxes
+  $sellable     = ($stats->full_count ?? 0) + ($stats->partial_count ?? 0);
+  $activeTotal  = $sellable + ($stats->damaged_count ?? 0);   // non-empty boxes
+  $damagedRate  = $activeTotal > 0 ? round(($stats->damaged_count ?? 0) / $activeTotal * 100) : 0;
+  $fillRateColor = $fillRate === null ? 'var(--text-dim)'
+      : ($fillRate >= 70 ? 'var(--green)' : ($fillRate >= 40 ? 'var(--amber)' : 'var(--red)'));
 @endphp
-<div class="bx-kpis m-kpis">
+<div class="ui-kpis m-kpis">
 
     {{-- Card 1: Sellable Boxes --}}
-    <div class="bkpi blue">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="display:flex;align-items:center;gap:8px">
-                <div class="bkpi-icon blue">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                        <line x1="12" y1="22.08" x2="12" y2="12"/>
-                    </svg>
-                </div>
-                <span class="bkpi-name">Sellable Boxes</span>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
             </div>
-            <span class="bkpi-pct blue">{{ number_format($distinctProducts) }} products</span>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Sellable Boxes</div>
+                <div class="ui-kpi-sub">Full &amp; partial in stock</div>
+            </div>
         </div>
-        <div class="bkpi-value" style="color:var(--accent)">{{ number_format($sellable) }}</div>
-        <div class="bkpi-meta">Full &amp; partial in stock &middot; boxes</div>
-        <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--green);font-family:var(--mono)">{{ number_format($stats->full_count ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Full</div>
+        <div class="ui-kpi-val" style="color:var(--accent)">{{ number_format($sellable) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats->full_count ?? 0) }}</span>
+                <span class="ui-kpi-stat-l">Full</span>
             </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--amber);font-family:var(--mono)">{{ number_format($stats->partial_count ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Partial</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats->partial_count ?? 0) }}</span>
+                <span class="ui-kpi-stat-l">Partial</span>
             </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-dim);font-family:var(--mono)">{{ number_format($distinctProducts) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Products</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($distinctProducts) }}</span>
+                <span class="ui-kpi-stat-l">Products</span>
             </div>
         </div>
     </div>
 
     {{-- Card 2: Fill Rate --}}
-    @php
-        $fillRateColor    = $fillRate === null ? 'var(--text-dim)'
-            : ($fillRate >= 70 ? 'var(--green)' : ($fillRate >= 40 ? 'var(--amber)' : 'var(--red)'));
-        $fillRatePctClass = $fillRate !== null && $fillRate >= 70 ? 'green'
-            : ($fillRate !== null && $fillRate >= 40 ? 'amber' : 'down');
-    @endphp
-    <div class="bkpi green">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="display:flex;align-items:center;gap:8px">
-                <div class="bkpi-icon green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="20" x2="18" y2="10"/>
-                        <line x1="12" y1="20" x2="12" y2="4"/>
-                        <line x1="6" y1="20" x2="6" y2="14"/>
-                    </svg>
-                </div>
-                <span class="bkpi-name">Fill Rate</span>
+    <div class="ui-kpi">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:{{ $fillRate === null ? 'var(--surface2)' : ($fillRate >= 70 ? 'var(--green-dim)' : ($fillRate >= 40 ? 'var(--amber-dim)' : 'var(--red-dim)')) }};color:{{ $fillRateColor }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             </div>
-            <span class="bkpi-pct {{ $fillRatePctClass }}">{{ number_format($stats->total_items ?? 0) }} items left</span>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Fill Rate</div>
+                <div class="ui-kpi-sub">Avg. fill across sellable boxes</div>
+            </div>
         </div>
-        <div class="bkpi-value" style="color:{{ $fillRateColor }}">
-            @if($fillRate !== null){{ $fillRate }}%@else —@endif
-        </div>
-        <div class="bkpi-meta">Avg. fill across sellable boxes</div>
-        <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--green);font-family:var(--mono)">{{ number_format($stats->total_items ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Items left</div>
+        <div class="ui-kpi-val" style="color:{{ $fillRateColor }}">{{ $fillRate !== null ? $fillRate : '—' }}<span class="ui-kpi-unit">{{ $fillRate !== null ? '%' : '' }}</span></div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats->total_items ?? 0) }}</span>
+                <span class="ui-kpi-stat-l">Items left</span>
             </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ number_format($stats->total_capacity ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Max items</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats->total_capacity ?? 0) }}</span>
+                <span class="ui-kpi-stat-l">Max items</span>
             </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--accent);font-family:var(--mono)">{{ number_format($sellable) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Boxes</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($sellable) }}</span>
+                <span class="ui-kpi-stat-l">Boxes</span>
             </div>
         </div>
     </div>
 
     {{-- Card 3: Damaged (clickable → filter) --}}
-    @php
-        $damagedValColor  = ($stats->damaged_count ?? 0) > 0 ? 'var(--red)' : 'var(--green)';
-        $damagedPctClass  = ($stats->damaged_count ?? 0) > 0 ? 'down' : 'green';
-        $damagedRate      = $activeTotal > 0
-            ? round(($stats->damaged_count ?? 0) / $activeTotal * 100) : 0;
-    @endphp
-    <div class="bkpi red" style="cursor:pointer" wire:click="$set('status', 'damaged')">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="display:flex;align-items:center;gap:8px">
-                <div class="bkpi-icon red">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                        <line x1="12" y1="9" x2="12" y2="13"/>
-                        <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                </div>
-                <span class="bkpi-name">Damaged</span>
+    <div class="ui-kpi" style="cursor:pointer" wire:click="$set('status', 'damaged')">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:{{ ($stats->damaged_count ?? 0) > 0 ? 'var(--red-dim)' : 'var(--green-dim)' }};color:{{ ($stats->damaged_count ?? 0) > 0 ? 'var(--red)' : 'var(--green)' }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
-            <span class="bkpi-pct {{ $damagedPctClass }}">{{ $damagedRate }}%</span>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Damaged</div>
+                <div class="ui-kpi-sub">Awaiting disposition · click to filter</div>
+            </div>
         </div>
-        <div class="bkpi-value" style="color:{{ $damagedValColor }}">{{ number_format($stats->damaged_count ?? 0) }}</div>
-        <div class="bkpi-meta">Click to filter &middot; awaiting disposition</div>
-        <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:{{ ($stats->damaged_count ?? 0) > 0 ? 'var(--red)' : 'var(--text-dim)' }};font-family:var(--mono)">{{ number_format($stats->damaged_count ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Damaged</div>
+        <div class="ui-kpi-val" style="color:{{ ($stats->damaged_count ?? 0) > 0 ? 'var(--red)' : 'var(--green)' }}">{{ number_format($stats->damaged_count ?? 0) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format(max(0, $activeTotal - ($stats->damaged_count ?? 0))) }}</span>
+                <span class="ui-kpi-stat-l">Intact</span>
             </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--green);font-family:var(--mono)">{{ number_format(max(0, $activeTotal - ($stats->damaged_count ?? 0))) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Intact</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ $damagedRate }}%</span>
+                <span class="ui-kpi-stat-l">Damage rate</span>
             </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-dim);font-family:var(--mono)">{{ $damagedRate }}%</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Rate</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats->empty_count ?? 0) }}</span>
+                <span class="ui-kpi-stat-l">Used up</span>
             </div>
         </div>
     </div>
 
     {{-- Card 4: Expiring Soon (clickable → filter) --}}
-    @php
-        $expValColor  = ($stats->expiring_soon ?? 0) > 0 ? 'var(--amber)' : 'var(--green)';
-        $expPctClass  = ($stats->expiring_soon ?? 0) > 0 ? 'amber' : 'green';
-    @endphp
-    <div class="bkpi amber" style="cursor:pointer" wire:click="$set('expiringOnly', true)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="display:flex;align-items:center;gap:8px">
-                <div class="bkpi-icon amber">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                </div>
-                <span class="bkpi-name">Expiring Soon</span>
+    <div class="ui-kpi" style="cursor:pointer" wire:click="$set('expiringOnly', true)">
+        <div class="ui-kpi-row">
+            <div class="ui-kpi-icon" style="background:{{ ($stats->expiring_soon ?? 0) > 0 ? 'var(--amber-dim)' : 'var(--green-dim)' }};color:{{ ($stats->expiring_soon ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
-            <span class="bkpi-pct {{ $expPctClass }}">&le;30 days</span>
+            <div class="ui-kpi-body">
+                <div class="ui-kpi-label">Expiring Soon</div>
+                <div class="ui-kpi-sub">Within 30 days · click to filter</div>
+            </div>
         </div>
-        <div class="bkpi-value" style="color:{{ $expValColor }}">{{ number_format($stats->expiring_soon ?? 0) }}</div>
-        <div class="bkpi-meta">Click to filter &middot; within 30 days</div>
-        <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:{{ ($stats->expiring_soon ?? 0) > 0 ? 'var(--amber)' : 'var(--text-dim)' }};font-family:var(--mono)">{{ number_format($stats->expiring_soon ?? 0) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">&le;30 days</div>
+        <div class="ui-kpi-val" style="color:{{ ($stats->expiring_soon ?? 0) > 0 ? 'var(--amber)' : 'var(--green)' }}">{{ number_format($stats->expiring_soon ?? 0) }}</div>
+        <div class="ui-kpi-divider"></div>
+        <div class="ui-kpi-footer">
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v" style="{{ ($stats->expired_count ?? 0) > 0 ? 'color:var(--red)' : '' }}">{{ number_format($stats->expired_count ?? 0) }}</span>
+                <span class="ui-kpi-stat-l">Already expired</span>
             </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-sub);font-family:var(--mono)">{{ number_format(max(0, ($stats->total ?? 0) - ($stats->expiring_soon ?? 0))) }}</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Safe</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats->expiry_later ?? 0) }}</span>
+                <span class="ui-kpi-stat-l">Later than 30 days</span>
             </div>
-            <div style="text-align:center;flex:1">
-                <div style="font-size:11px;font-weight:700;color:var(--text-dim);font-family:var(--mono)">30d</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Window</div>
+            <div class="ui-kpi-stat">
+                <span class="ui-kpi-stat-v">{{ number_format($stats->no_expiry ?? 0) }}</span>
+                <span class="ui-kpi-stat-l">No expiry date</span>
             </div>
         </div>
     </div>

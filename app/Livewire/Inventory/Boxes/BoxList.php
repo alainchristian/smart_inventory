@@ -296,7 +296,14 @@ class BoxList extends Component
                      AND boxes.expiry_date IS NOT NULL
                      AND boxes.expiry_date <= NOW() + INTERVAL '30 days'
                      AND boxes.expiry_date >= NOW()
-                     THEN 1 ELSE 0 END)                                        AS expiring_soon
+                     THEN 1 ELSE 0 END)                                        AS expiring_soon,
+            SUM(CASE WHEN boxes.status != 'empty'
+                     AND boxes.expiry_date < NOW() THEN 1 ELSE 0 END)          AS expired_count,
+            SUM(CASE WHEN boxes.status != 'empty'
+                     AND boxes.expiry_date > NOW() + INTERVAL '30 days'
+                     THEN 1 ELSE 0 END)                                        AS expiry_later,
+            SUM(CASE WHEN boxes.status != 'empty'
+                     AND boxes.expiry_date IS NULL THEN 1 ELSE 0 END)          AS no_expiry
         ")->first();
 
         $fillableBases = (clone $statsQuery)

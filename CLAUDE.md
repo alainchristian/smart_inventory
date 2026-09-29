@@ -1430,10 +1430,17 @@ per-page copy of the card CSS.**
   (it hides footers).
 - **Already matching, untouched:** `fo-`, `iv-`, `sa-`, `la-`, `tp-`, `cc-`,
   `pm-`, `rv-`, `dc-`, `sh-`, `fq-`. Switch them to `ui-kpi` when next edited.
+- **Products and Boxes** (`ProductKpiRow`, `BoxList`, formerly `bkpi`) moved
+  to `ui-kpi` in a follow-up the same day. Filler footers replaced: Price
+  Overrides → lines changed / discounts / markups; Best Margin → product /
+  avg margin / priced below cost; Damaged → intact / damage rate / used up;
+  Expiring Soon → already expired / later than 30 days / no expiry date.
+  Damaged and Expiring Soon stay clickable filters. `.bkpi` CSS in app.css
+  is now unused (only a comment in inventory-valuation mentions it).
 - **Deliberately different, untouched (user decision):** owner dashboard
   `BusinessKpiRow` (`kpi5-`, sparklines), shop / warehouse dashboards
-  (`db-kpi`, sparklines), Sales History (`sli-kpi`, bars), products / box
-  list (`bkpi`), Credit Write-offs, Settings status strip.
+  (`db-kpi`, sparklines), Sales History (`sli-kpi`, bars), Credit
+  Write-offs, Settings status strip.
 - Footer figures come from one aggregate query per page where possible
   (`COUNT(*) FILTER (WHERE …)`), e.g. `UserList`, `ReturnList::getKpiStats()`,
   `DamagedGoodsList::getKpiStats()`, `CustomerList`. Month windows use

@@ -55,21 +55,38 @@ class ProductKpiRow extends Component
         $lowStockCount  = $allProducts->filter(fn ($p) => ($p->total_items ?? 0) <= $p->low_stock_threshold)->count();
         $zeroStockCount = $allProducts->filter(fn ($p) => ($p->total_items ?? 0) === 0)->count();
 
-        // 3. Price overrides: distinct products with modified price in period
-        $priceOverrideCount = SaleItem::where('price_was_modified', true)
+        // 3. Price overrides in the period: distinct products (card value) and
+        //    the changed lines split into discounts (below list) / markups (above)
+        $overrides = SaleItem::where('price_was_modified', true)
             ->whereHas('sale', fn ($q) => $q
                 ->whereNull('voided_at')
                 ->whereNull('deleted_at')
                 ->whereBetween('sale_date', [$start, $end])
             )
-            ->distinct('product_id')
-            ->count('product_id');
+            ->toBase()
+            ->selectRaw('
+                COUNT(DISTINCT product_id)                                      AS products,
+                COUNT(*)                                                        AS lines,
+                COUNT(*) FILTER (WHERE actual_unit_price < original_unit_price) AS discounts,
+                COUNT(*) FILTER (WHERE actual_unit_price > original_unit_price) AS markups
+            ')
+            ->first();
+        $priceOverrideCount = (int) $overrides->products;
 
         // 4. Best margin product (owner-only - purchase_price visible)
         $bestMarginProduct = Product::where('is_active', true)
             ->where('purchase_price', '>', 0)
             ->whereColumn('selling_price', '>', 'purchase_price')
             ->orderByRaw('(selling_price - purchase_price)::float / NULLIF(selling_price, 0) DESC')
+            ->first();
+
+        // Catalogue-wide margin figures for the Best Margin card footer
+        $margins = Product::where('is_active', true)->where('selling_price', '>', 0)
+            ->toBase()
+            ->selectRaw('
+                AVG((selling_price - purchase_price)::float / selling_price) FILTER (WHERE purchase_price > 0) AS avg_margin,
+                COUNT(*) FILTER (WHERE purchase_price > 0 AND selling_price <= purchase_price)                AS below_cost
+            ')
             ->first();
 
         $bestMarginPct  = null;
@@ -89,6 +106,11 @@ class ProductKpiRow extends Component
             'lowStockCount'      => $lowStockCount,
             'zeroStockCount'     => $zeroStockCount,
             'priceOverrideCount' => $priceOverrideCount,
+            'overrideLines'      => (int) $overrides->lines,
+            'overrideDiscounts'  => (int) $overrides->discounts,
+            'overrideMarkups'    => (int) $overrides->markups,
+            'avgMarginPct'       => $margins->avg_margin !== null ? round($margins->avg_margin * 100, 1) : null,
+            'belowCostCount'     => (int) $margins->below_cost,
             'bestMarginPct'      => $bestMarginPct,
             'bestMarginName'     => $bestMarginName,
             'periodLabel' => [
