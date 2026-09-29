@@ -14,7 +14,7 @@ class SavedReport extends Model
         'name', 'description', 'created_by',
         'is_shared', 'config', 'last_run_at', 'run_count',
         'last_results', 'results_cached_at', 'results_stale_at',
-        'schedule_cron', 'schedule_recipients', 'last_scheduled_run_at',
+        'schedule_cron', 'schedule', 'schedule_recipients', 'last_scheduled_run_at',
         'pinned_to_dashboard', 'dashboard_position',
     ];
 
@@ -26,10 +26,17 @@ class SavedReport extends Model
         'last_results'          => 'array',
         'results_cached_at'     => 'datetime',
         'results_stale_at'      => 'datetime',
+        'schedule'              => 'array',
         'schedule_recipients'   => 'array',
         'last_scheduled_run_at' => 'datetime',
         'pinned_to_dashboard'   => 'boolean',
     ];
+
+    /** The email schedule, or null when the report isn't emailed */
+    public function emailSchedule(): ?\App\Services\Reports\ReportSchedule
+    {
+        return empty($this->schedule_recipients) ? null : \App\Services\Reports\ReportSchedule::fromArray($this->schedule);
+    }
 
     public function creator(): BelongsTo
     {

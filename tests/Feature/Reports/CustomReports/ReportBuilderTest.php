@@ -157,9 +157,14 @@ class ReportBuilderTest extends TestCase
             ->set('scheduleRecipients', 'ok@example.com, not-an-email')->call('save')
             ->assertHasErrors('scheduleRecipients');
 
-        $this->builder()->set('reportName', 'Cron')->call('addBlock', 'sales_revenue')
-            ->set('scheduleCron', 'every monday')->call('save')
-            ->assertHasErrors('scheduleCron');
+        $this->builder()->set('reportName', 'No one')->call('addBlock', 'sales_revenue')
+            ->set('scheduleFrequency', 'weekly')->call('save')
+            ->assertHasErrors('scheduleRecipients');
+
+        $this->builder()->set('reportName', 'Bad time')->call('addBlock', 'sales_revenue')
+            ->set('scheduleFrequency', 'daily')->set('scheduleRecipients', 'a@example.com')
+            ->set('scheduleTime', '25:00')->call('save')
+            ->assertHasErrors('scheduleTime');
     }
 
     public function test_save_creates_and_edit_updates(): void

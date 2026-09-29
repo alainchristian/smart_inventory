@@ -42,8 +42,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         // Generate system alerts every 5 minutes
         $schedule->command('alerts:generate')->everyFiveMinutes();
-        // Run scheduled custom reports every hour
-        $schedule->command('reports:run-scheduled')->hourly();
+        // Email custom reports whose daily / weekly / monthly time has come round
+        $schedule->command('reports:run-scheduled')->everyFifteenMinutes()->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Redirect cleanly to login on session/CSRF expiry instead of showing 419

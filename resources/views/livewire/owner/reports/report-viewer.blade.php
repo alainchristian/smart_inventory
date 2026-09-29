@@ -204,8 +204,8 @@
             @if ($report->is_shared)
                 <span class="rv-pill" style="background:var(--accent-dim);color:var(--accent)">Shared</span>
             @endif
-            @if ($report->schedule_cron)
-                <span class="rv-pill" style="background:var(--green-dim);color:var(--green)">Scheduled</span>
+            @if ($sched = $report->emailSchedule())
+                <span class="rv-pill" style="background:var(--green-dim);color:var(--green)" title="Emailed to {{ implode(', ', $report->schedule_recipients) }}">Emailed · {{ $sched->label() }}</span>
             @endif
         </div>
     </div>

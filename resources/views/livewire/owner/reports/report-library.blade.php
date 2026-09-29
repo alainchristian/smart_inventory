@@ -218,8 +218,8 @@
                                 {{ $cfg['date_range'] === 'custom' && $cfg['date_from'] && $cfg['date_to']
                                     ? \App\Services\Reports\ReportPeriod::label($cfg['date_from'], $cfg['date_to'])
                                     : ($presets[$cfg['date_range']] ?? 'This month') }}
-                                @if ($r->schedule_cron)
-                                    <span class="rl-badge" style="background:var(--green-dim);color:var(--green);margin-left:4px">Emailed</span>
+                                @if ($sched = $r->emailSchedule())
+                                    <span class="rl-badge" style="background:var(--green-dim);color:var(--green);margin-left:4px" title="{{ $sched->label() }}">Emailed</span>
                                 @endif
                             </td>
                             <td>

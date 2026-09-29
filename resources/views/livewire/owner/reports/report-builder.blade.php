@@ -64,9 +64,8 @@
 .rb-toggle input:checked ~ .rb-toggle-track .rb-toggle-knob { transform:translateX(17px) }
 .rb-toggle-text { font-size:13px;color:var(--text-sub);line-height:1.3 }
 .rb-toggle-text b { display:block;color:var(--text);font-size:13px }
-.rb-schedule summary { font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;list-style:none }
-.rb-schedule summary::-webkit-details-marker { display:none }
-.rb-schedule[open] summary { margin-bottom:10px }
+.rb-sched { padding-top:14px;border-top:1px solid var(--border) }
+.rb-sched-head { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap }
 
 /* Layout */
 .rb-layout { display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start }
@@ -249,21 +248,68 @@
             <span class="rb-toggle-text"><b>Share with other owners</b>They can view it, not edit it.</span>
         </label>
     </div>
-    <details class="rb-schedule" @if($scheduleCron || $scheduleRecipients || $errors->has('scheduleCron') || $errors->has('scheduleRecipients')) open @endif>
-        <summary>Email schedule {{ $scheduleCron ? '· on' : '' }}</summary>
-        <div class="rb-row">
+    {{-- Email schedule --}}
+    <div class="rb-sched">
+        <div class="rb-sched-head">
             <div>
-                <label class="rb-label">When (cron)</label>
-                <input class="rb-input" wire:model.blur="scheduleCron" placeholder="0 8 * * 1  (Mondays at 08:00)">
-                @error('scheduleCron') <div class="rb-error">{{ $message }}</div> @enderror
+                <div class="rb-label" style="margin:0">Email this report</div>
+                <div class="rb-hint" style="margin:2px 0 0">
+                    @if ($scheduleFrequency !== '' && $this->nextSend)
+                        Next email {{ $this->nextSend }} (Kigali time), for the report's default period on that day.
+                    @else
+                        Sent automatically with the report attached. Off by default.
+                    @endif
+                </div>
             </div>
-            <div>
-                <label class="rb-label">Send to</label>
-                <input class="rb-input" wire:model.blur="scheduleRecipients" placeholder="name@example.com, other@example.com">
-                @error('scheduleRecipients') <div class="rb-error">{{ $message }}</div> @enderror
+            <div class="rb-seg">
+                <button type="button" class="rb-seg-btn {{ $scheduleFrequency === '' ? 'active' : '' }}" wire:click="$set('scheduleFrequency', '')">Off</button>
+                @foreach (['daily' => 'Daily', 'weekly' => 'Weekly', 'monthly' => 'Monthly'] as $k => $l)
+                    <button type="button" class="rb-seg-btn {{ $scheduleFrequency === $k ? 'active' : '' }}" wire:click="$set('scheduleFrequency', '{{ $k }}')">{{ $l }}</button>
+                @endforeach
             </div>
         </div>
-    </details>
+        @if ($scheduleFrequency !== '')
+            <div class="rb-row4" style="margin-top:14px">
+                @if ($scheduleFrequency === 'weekly')
+                    <div>
+                        <label class="rb-label">On</label>
+                        <select class="rb-select" wire:model.live="scheduleDay">
+                            @foreach (\App\Services\Reports\ReportSchedule::WEEKDAYS as $n => $d) <option value="{{ $n }}">{{ $d }}</option> @endforeach
+                        </select>
+                    </div>
+                @elseif ($scheduleFrequency === 'monthly')
+                    <div>
+                        <label class="rb-label">On day</label>
+                        <select class="rb-select" wire:model.live="scheduleDay">
+                            @for ($n = 1; $n <= \App\Services\Reports\ReportSchedule::MAX_MONTH_DAY; $n++)
+                                <option value="{{ $n }}">{{ \App\Services\Reports\ReportSchedule::ordinal($n) }}</option>
+                            @endfor
+                        </select>
+                        <div class="rb-hint">Up to the 28th, so every month has it.</div>
+                    </div>
+                @endif
+                <div>
+                    <label class="rb-label" for="rb-s-time">At</label>
+                    <input id="rb-s-time" type="time" step="900" class="rb-input" wire:model.live="scheduleTime">
+                    @error('scheduleTime') <div class="rb-error">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="rb-label">Attach as</label>
+                    <div class="rb-seg">
+                        @foreach (\App\Services\Reports\ReportSchedule::FORMATS as $k => $l)
+                            <button type="button" class="rb-seg-btn {{ $scheduleFormat === $k ? 'active' : '' }}" wire:click="$set('scheduleFormat', '{{ $k }}')">{{ $l }}</button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:14px">
+                <label class="rb-label" for="rb-s-to">Send to <span>*</span></label>
+                <input id="rb-s-to" class="rb-input" wire:model.blur="scheduleRecipients" placeholder="name@example.com, other@example.com" inputmode="email">
+                @error('scheduleRecipients') <div class="rb-error">{{ $message }}</div> @enderror
+                <div class="rb-hint">Separate addresses with commas. Up to 10. Anyone on the list gets the figures, including costs and profit.</div>
+            </div>
+        @endif
+    </div>
 </div>
 
 {{-- ═══ Catalogue + canvas ═══════════════════════════════════════════════ --}}

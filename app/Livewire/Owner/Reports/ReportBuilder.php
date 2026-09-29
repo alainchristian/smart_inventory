@@ -9,6 +9,7 @@ use App\Services\Reports\ReportContext;
 use App\Services\Reports\ReportFormat;
 use App\Services\Reports\ReportPeriod;
 use App\Services\Reports\ReportRunner;
+use App\Services\Reports\ReportSchedule;
 use App\Services\Reports\ReportTemplates;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -38,9 +39,15 @@ class ReportBuilder extends Component
     public string  $locationFilter    = 'all';
     public string  $comparisonMode    = 'none';
 
-    // Schedule (raw fields until the schedule picker, phase 7)
-    public string  $scheduleCron       = '';
+    // Email schedule ('' frequency = off); see ReportSchedule
+    public string  $scheduleFrequency  = '';
+    public int     $scheduleDay        = 1;
+    public string  $scheduleTime       = '08:00';
+    public string  $scheduleFormat     = 'pdf';
     public string  $scheduleRecipients = '';
+    /** The schedule as saved, to keep its "since" when only the format or recipients change */
+    #[Locked]
+    public ?array  $savedSchedule      = null;
 
     /** Ordered blocks */
     public array   $canvas = [];
@@ -80,8 +87,14 @@ class ReportBuilder extends Component
             $this->locationFilter     = ReportContext::normaliseLocation($config['location_filter']);
             $this->comparisonMode     = array_key_exists($config['comparison_mode'] ?? '', ReportPeriod::COMPARISONS) ? $config['comparison_mode'] : 'none';
             $this->canvas             = array_values(array_filter(array_map(fn ($b) => $this->sanitiseBlock($b), $config['blocks'])));
-            $this->scheduleCron       = $report->schedule_cron ?? '';
             $this->scheduleRecipients = implode(', ', $report->schedule_recipients ?? []);
+            if ($s = ReportSchedule::fromArray($report->schedule ?? ReportSchedule::fromCron($report->schedule_cron))) {
+                $this->scheduleFrequency = $s->frequency;
+                $this->scheduleDay       = max(1, $s->day);
+                $this->scheduleTime      = $s->time;
+                $this->scheduleFormat    = $s->format;
+                $this->savedSchedule     = $report->schedule ? $s->toArray() : null;
+            }
         } elseif ($key = request()->query('template')) {
             $this->loadTemplate((string) $key);
         }
@@ -275,12 +288,12 @@ class ReportBuilder extends Component
             'dateTo'            => 'nullable|required_if:dateRange,custom|date_format:Y-m-d|after_or_equal:dateFrom',
             'comparisonMode'    => 'required|in:' . implode(',', array_keys(ReportPeriod::COMPARISONS)),
             'canvas'            => 'array|min:1|max:' . self::MAX_BLOCKS,
-            'scheduleCron'      => ['nullable', 'string', 'max:100', function ($attr, $value, $fail) {
-                if (trim((string) $value) !== '' && ! \Cron\CronExpression::isValidExpression(trim($value))) {
-                    $fail('That schedule isn\'t a valid cron expression.');
-                }
-            }],
+            'scheduleFrequency' => 'nullable|in:' . implode(',', array_keys(ReportSchedule::FREQUENCIES)),
+            'scheduleDay'       => 'integer|min:1|max:' . ($this->scheduleFrequency === 'weekly' ? 7 : ReportSchedule::MAX_MONTH_DAY),
+            'scheduleTime'      => ['required', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
+            'scheduleFormat'    => 'in:' . implode(',', array_keys(ReportSchedule::FORMATS)),
         ], [
+            'scheduleTime.regex'    => 'Pick a time.',
             'reportName.required'   => 'Give the report a name.',
             'reportName.min'        => 'Give the report a name.',
             'canvas.min'            => 'Add at least one block before saving.',
@@ -289,12 +302,22 @@ class ReportBuilder extends Component
             'dateTo.after_or_equal' => 'The end date is before the start date.',
         ]);
 
-        $recipients = array_values(array_unique(array_filter(array_map('trim', preg_split('/[,;\s]+/', $this->scheduleRecipients)))));
+        $recipients = array_values(array_unique(array_filter(array_map(
+            fn ($e) => mb_strtolower(trim($e)), preg_split('/[,;\s]+/', $this->scheduleRecipients)
+        ))));
         foreach ($recipients as $email) {
             if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $this->addError('scheduleRecipients', "{$email} isn't a valid email address.");
                 return;
             }
+        }
+        if ($this->scheduleFrequency !== '' && $recipients === []) {
+            $this->addError('scheduleRecipients', 'Add at least one email address, or turn the schedule off.');
+            return;
+        }
+        if (count($recipients) > 10) {
+            $this->addError('scheduleRecipients', 'Up to 10 email addresses.');
+            return;
         }
 
         $blocks = SavedReport::withUniqueBlockIds(array_values(array_filter(array_map(fn ($b) => $this->sanitiseBlock((array) $b), $this->canvas))));
@@ -315,8 +338,9 @@ class ReportBuilder extends Component
                 'comparison_mode' => $this->comparisonMode,
                 'blocks'          => $blocks,
             ],
-            'schedule_cron'       => trim($this->scheduleCron) ?: null,
-            'schedule_recipients' => $recipients ?: null,
+            'schedule'            => $this->buildSchedule(),
+            'schedule_cron'       => null,   // replaced by `schedule`
+            'schedule_recipients' => $this->scheduleFrequency === '' ? null : $recipients,
         ];
 
         if ($this->editingReportId) {
@@ -329,6 +353,54 @@ class ReportBuilder extends Component
 
         session()->flash('success', 'Report saved.');
         $this->redirect(route('owner.reports.custom.view', $report->id), navigate: true);
+    }
+
+    // ── Schedule ─────────────────────────────────────────────────────────
+
+    /**
+     * The schedule to store. Changing when it runs starts it afresh (no
+     * email for a time that has already passed); changing only the format
+     * or recipients keeps the original start.
+     */
+    private function buildSchedule(): ?array
+    {
+        if ($this->scheduleFrequency === '') {
+            return null;
+        }
+
+        $new = ReportSchedule::fromArray([
+            'frequency' => $this->scheduleFrequency,
+            'day'       => $this->scheduleDay,
+            'time'      => $this->scheduleTime,
+            'format'    => $this->scheduleFormat,
+            'since'     => now()->utc()->toIso8601String(),
+        ])->toArray();
+
+        $old = $this->savedSchedule;
+        if ($old && [$old['frequency'], $old['day'], $old['time']] === [$new['frequency'], $new['day'], $new['time']]) {
+            $new['since'] = $old['since'];
+        }
+
+        return $new;
+    }
+
+    public function updatedScheduleFrequency(): void
+    {
+        if ($this->scheduleFrequency === 'weekly' && $this->scheduleDay > 7) {
+            $this->scheduleDay = 1;
+        }
+    }
+
+    /** "Mon 6 Oct at 08:00" for the picker */
+    #[Computed]
+    public function nextSend(): ?string
+    {
+        $s = ReportSchedule::fromArray([
+            'frequency' => $this->scheduleFrequency, 'day' => $this->scheduleDay,
+            'time' => $this->scheduleTime, 'format' => $this->scheduleFormat,
+        ]);
+
+        return $s?->nextOccurrence()->format('D j M \a\t H:i');
     }
 
     // ── Sanitising ───────────────────────────────────────────────────────

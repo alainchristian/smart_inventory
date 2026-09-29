@@ -1778,3 +1778,63 @@ Tests: `tests/Feature/Reports/CustomReports/ReportLibraryTest.php`.
 Tests: `tests/Feature/Reports/CustomReports/ReportExportTest.php` (the
 workbook is read back with PhpSpreadsheet; the PDF template is checked as
 HTML).
+
+## Custom Reports rebuild — Phase 7: emailed reports (2026-09-29)
+
+**What was broken:**
+- the schedule was a free-text cron field
+- the command ran hourly but `isDue('now')` only matched minute 0, so
+  most crons never fired, and one that had never run fired immediately
+- the email was plain text with only a link
+
+**Now:**
+- **`saved_reports.schedule`** (jsonb; migration `2026_09_29_000002`
+  converts crons that fit daily / weekly / monthly at a fixed time) holds
+  `{frequency, day, time, format: pdf|xlsx, since}`. `schedule_cron` is no
+  longer written or read (kept for reference); recipients stay in
+  `schedule_recipients`.
+- **`ReportSchedule`:** business-tz `latestOccurrence()` /
+  `nextOccurrence()`, `label()` ("Every Monday at 08:00 · PDF"),
+  `isDue($lastRunAt)` and `fromCron()`.
+  - Due when the latest scheduled moment is later than both the last send
+    and `since`. So saving a schedule never sends straight away, and a
+    missed run (server down) is sent once when it catches up, never
+    repeated.
+  - Monthly days are 1–28, so every month has them.
+  - Gotcha: `startOfMonth()` resets the time. `nextOccurrence()` for
+    monthly lost the hour until `setTime()` was added (caught by a test).
+- `SavedReport::emailSchedule()` returns null unless there are recipients
+  and a valid schedule; the library badge and viewer pill use it.
+- **Command `reports:run-scheduled`** (every 15 min, `withoutOverlapping`;
+  `--report=ID --force` to send one now):
+  - skips reports whose owner's account is inactive
+  - runs the saved defaults and records history via
+    `recordRun(..., scheduled: true)`, which doesn't bump `run_count`
+  - builds `ReportDocument` + `ReportExporter` file
+  - marks `last_scheduled_run_at` **before** mailing, so a mail failure
+    can't cause repeats
+  - emails each recipient separately; failures are logged per address
+- **`App\Mail\ScheduledReportMail`** + `emails/scheduled-report.blade.php`:
+  - body has the tenant, name, period / location / comparison, up to 8
+    headline figures with coloured change %, key findings, an "Open the
+    report" button, and a footer naming the schedule
+  - the file is attached. Inline hex styles (email clients ignore CSS
+    variables).
+  - Gotcha: a Mailable's public properties override view data of the same
+    name. `$format` hid the "a PDF" label, so the view variable is
+    `$attachedAs`.
+- **Builder:** "Email this report" row with an Off / Daily / Weekly /
+  Monthly segment, weekday or day-of-month select, time (15-min steps),
+  PDF / Excel, and recipients. Recipients are lower-cased, de-duplicated,
+  validated, max 10, and required when on. The row shows "Next email Mon
+  5 Oct at 07:30 (Kigali time)". Changing when it runs resets `since`;
+  changing only the format or recipients keeps it.
+- **Production:** real emails need the `MAIL_*` settings on Railway (local
+  `.env` uses `MAIL_MAILER=log`) and the scheduler service running
+  `schedule:run`.
+
+Tests: `tests/Feature/Reports/CustomReports/ScheduledReportsTest.php`.
+
+**The rebuild is complete** (phases 1–7, all agreed with the user). The
+whole suite is in `tests/Feature/Reports/CustomReports/`; run it on the
+test DB only.
