@@ -1,414 +1,122 @@
 <?php
 namespace App\Services\Reports;
 
+use App\Services\Reports\Metrics\Metric;
+use App\Services\Reports\Metrics\Finance;
+use App\Services\Reports\Metrics\Inventory;
+use App\Services\Reports\Metrics\Loss;
+use App\Services\Reports\Metrics\Operations;
+use App\Services\Reports\Metrics\Replenishment;
+use App\Services\Reports\Metrics\Sales;
+use App\Services\Reports\Metrics\Transfers;
+
+/**
+ * Every block a custom report can contain, in catalogue order. Metric
+ * ids are stored in saved_reports.config, so never rename one.
+ */
 class MetricRegistry
 {
-    /**
-     * Returns the full catalogue of available metric blocks.
-     *
-     * Each entry:
-     *   id          — unique string key, referenced in saved_reports.config
-     *   label       — display name in builder catalogue
-     *   description — one-line explanation shown in builder
-     *   domain      — grouping: sales | inventory | replenishment | loss | transfers | operations
-     *   viz_options — supported visualization types for this block
-     *   default_viz — which viz to select by default
-     *   needs_dates — true = block needs dateFrom/dateTo to run
-     *   needs_location — true = block accepts a locationFilter
-     */
+    public const METRICS = [
+        Sales\SalesRevenue::class,
+        Sales\SalesGrossProfit::class,
+        Sales\SalesTransactionCount::class,
+        Sales\SalesAvgBasket::class,
+        Sales\SalesByShop::class,
+        Sales\SalesTopProducts::class,
+        Sales\SalesPaymentMethods::class,
+        Sales\SalesRevenueTrend::class,
+        Sales\SalesVoided::class,
+
+        Inventory\InventoryCostValue::class,
+        Inventory\InventoryRetailValue::class,
+        Inventory\InventoryFillRate::class,
+        Inventory\InventoryAging::class,
+        Inventory\InventoryDeadStock::class,
+        Inventory\InventoryAbcSummary::class,
+        Inventory\InventoryTopByValue::class,
+        Inventory\InventoryCategoryConcentration::class,
+        Inventory\InventoryByLocation::class,
+
+        Replenishment\ReplenishmentCritical::class,
+        Replenishment\ReplenishmentDaysOnHand::class,
+
+        Loss\LossTotal::class,
+        Loss\LossReturnRate::class,
+        Loss\LossDamagedValue::class,
+        Loss\LossShrinkage::class,
+        Loss\LossByProduct::class,
+
+        Transfers\TransfersKpis::class,
+        Transfers\TransfersDiscrepancies::class,
+        Transfers\TransfersRoutes::class,
+
+        Operations\OpsLowStockCount::class,
+        Operations\OpsDamagedPending::class,
+        Operations\OpsStockTurnover::class,
+
+        Finance\FinanceExpenseSummary::class,
+        Finance\FinanceExpenseTrend::class,
+        Finance\FinanceWithdrawalSummary::class,
+        Finance\FinanceCashVariance::class,
+        Finance\FinanceNetOperating::class,
+    ];
+
+    /** Free text; not a Metric because it has no data */
+    public const TEXT_BLOCK = [
+        'id'             => 'text_block',
+        'label'          => 'Text / Narrative',
+        'description'    => 'Free text: add context, a heading or notes',
+        'domain'         => 'content',
+        'viz_options'    => ['text'],
+        'default_viz'    => 'text',
+        'needs_dates'    => false,
+        'needs_location' => false,
+        'locations'      => 'none',
+        'good'           => 'neutral',
+    ];
+
+    /** @var array<string, Metric>|null */
+    private ?array $metrics = null;
+
+    /** @return array<string, Metric> keyed by id */
+    public function metrics(): array
+    {
+        if ($this->metrics === null) {
+            $this->metrics = [];
+            foreach (self::METRICS as $class) {
+                $m = app($class);
+                $this->metrics[$m->id()] = $m;
+            }
+        }
+
+        return $this->metrics;
+    }
+
+    public function metric(string $id): ?Metric
+    {
+        return $this->metrics()[$id] ?? null;
+    }
+
+    /** Catalogue entries (meta arrays), text block last */
     public function catalogue(): array
     {
         return [
-            // ── SALES ──────────────────────────────────────────────────────
-            [
-                'id'             => 'sales_revenue',
-                'label'          => 'Total Revenue',
-                'description'    => 'Revenue for the selected period with growth vs prior period',
-                'domain'         => 'sales',
-                'viz_options'    => ['kpi_card', 'bar_chart'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'sales_gross_profit',
-                'label'          => 'Gross Profit & Margin',
-                'description'    => 'Gross profit RWF and margin % for the period',
-                'domain'         => 'sales',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'sales_transaction_count',
-                'label'          => 'Transaction Count',
-                'description'    => 'Number of completed sales transactions',
-                'domain'         => 'sales',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'sales_avg_basket',
-                'label'          => 'Average Basket Value',
-                'description'    => 'Average revenue per transaction',
-                'domain'         => 'sales',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'sales_by_shop',
-                'label'          => 'Revenue by Shop',
-                'description'    => 'Revenue breakdown per shop for the period',
-                'domain'         => 'sales',
-                'viz_options'    => ['bar_chart', 'table'],
-                'default_viz'    => 'bar_chart',
-                'needs_dates'    => true,
-                'needs_location' => false,
-            ],
-            [
-                'id'             => 'sales_top_products',
-                'label'          => 'Top Products by Revenue',
-                'description'    => 'Products ranked by revenue for the period',
-                'domain'         => 'sales',
-                'viz_options'    => ['table', 'bar_chart'],
-                'default_viz'    => 'table',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'sales_payment_methods',
-                'label'          => 'Payment Method Breakdown',
-                'description'    => 'Revenue split by payment method',
-                'domain'         => 'sales',
-                'viz_options'    => ['table', 'bar_chart'],
-                'default_viz'    => 'table',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'sales_revenue_trend',
-                'label'          => 'Revenue Trend',
-                'description'    => 'Daily or weekly revenue chart for the period',
-                'domain'         => 'sales',
-                'viz_options'    => ['line_chart', 'bar_chart'],
-                'default_viz'    => 'line_chart',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'sales_voided',
-                'label'          => 'Voided Sales',
-                'description'    => 'Count and value of voided transactions',
-                'domain'         => 'sales',
-                'viz_options'    => ['kpi_card', 'table'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            // ── INVENTORY ──────────────────────────────────────────────────
-            [
-                'id'             => 'inventory_cost_value',
-                'label'          => 'Inventory Cost Value',
-                'description'    => 'Total capital invested in current stock',
-                'domain'         => 'inventory',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'inventory_retail_value',
-                'label'          => 'Inventory Retail Value',
-                'description'    => 'Total stock valued at selling price',
-                'domain'         => 'inventory',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'inventory_fill_rate',
-                'label'          => 'Portfolio Fill Rate',
-                'description'    => 'Items remaining as % of total box capacity',
-                'domain'         => 'inventory',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'inventory_aging',
-                'label'          => 'Stock Aging Analysis',
-                'description'    => 'Boxes grouped by age bracket (0-30, 31-60, 61-90, 90+ days)',
-                'domain'         => 'inventory',
-                'viz_options'    => ['table', 'bar_chart'],
-                'default_viz'    => 'table',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'inventory_dead_stock',
-                'label'          => 'Dead Stock',
-                'description'    => 'Products with stock but no sales in 90 days',
-                'domain'         => 'inventory',
-                'viz_options'    => ['kpi_card', 'table'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'inventory_abc_summary',
-                'label'          => 'ABC Classification',
-                'description'    => 'Products classified as A/B/C/Dead movers by 90-day revenue',
-                'domain'         => 'inventory',
-                'viz_options'    => ['table', 'kpi_card'],
-                'default_viz'    => 'table',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'inventory_top_by_value',
-                'label'          => 'Top Products by Capital Value',
-                'description'    => 'Products ranked by capital locked in current stock',
-                'domain'         => 'inventory',
-                'viz_options'    => ['table'],
-                'default_viz'    => 'table',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'inventory_category_concentration',
-                'label'          => 'Inventory by Category',
-                'description'    => 'Stock value and % share per product category',
-                'domain'         => 'inventory',
-                'viz_options'    => ['table', 'bar_chart'],
-                'default_viz'    => 'table',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'inventory_by_location',
-                'label'          => 'Stock Value by Location',
-                'description'    => 'Inventory value split across all warehouses and shops',
-                'domain'         => 'inventory',
-                'viz_options'    => ['table', 'bar_chart'],
-                'default_viz'    => 'table',
-                'needs_dates'    => false,
-                'needs_location' => false,
-            ],
-            // ── REPLENISHMENT ──────────────────────────────────────────────
-            [
-                'id'             => 'replenishment_critical',
-                'label'          => 'Critical Stock (≤7 days)',
-                'description'    => 'Products with 7 or fewer days of stock at current velocity',
-                'domain'         => 'replenishment',
-                'viz_options'    => ['kpi_card', 'table'],
-                'default_viz'    => 'table',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'replenishment_days_on_hand',
-                'label'          => 'Days on Hand per Product',
-                'description'    => 'Estimated days of stock remaining based on 30-day sales velocity',
-                'domain'         => 'replenishment',
-                'viz_options'    => ['table'],
-                'default_viz'    => 'table',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            // ── LOSS ───────────────────────────────────────────────────────
-            [
-                'id'             => 'loss_total',
-                'label'          => 'Total Losses',
-                'description'    => 'Combined refunds and damaged goods loss for the period',
-                'domain'         => 'loss',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'loss_return_rate',
-                'label'          => 'Return Rate',
-                'description'    => 'Returns as a percentage of sales transactions',
-                'domain'         => 'loss',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'loss_damaged_value',
-                'label'          => 'Damaged Goods Loss',
-                'description'    => 'Estimated value of damaged goods recorded in the period',
-                'domain'         => 'loss',
-                'viz_options'    => ['kpi_card', 'table'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'loss_shrinkage',
-                'label'          => 'Shrinkage Rate',
-                'description'    => 'Damaged items as % of total items received in 90 days',
-                'domain'         => 'loss',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'loss_by_product',
-                'label'          => 'Problem Products (Returns + Damage)',
-                'description'    => 'Products with the most returns and damage events',
-                'domain'         => 'loss',
-                'viz_options'    => ['table'],
-                'default_viz'    => 'table',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            // ── TRANSFERS ──────────────────────────────────────────────────
-            [
-                'id'             => 'transfers_kpis',
-                'label'          => 'Transfer Performance KPIs',
-                'description'    => 'Count, avg completion time, and discrepancy rate',
-                'domain'         => 'transfers',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => false,
-            ],
-            [
-                'id'             => 'transfers_discrepancies',
-                'label'          => 'Transfer Discrepancies',
-                'description'    => 'Transfers received with quantity or damage discrepancies',
-                'domain'         => 'transfers',
-                'viz_options'    => ['kpi_card', 'table'],
-                'default_viz'    => 'table',
-                'needs_dates'    => true,
-                'needs_location' => false,
-            ],
-            [
-                'id'             => 'transfers_routes',
-                'label'          => 'Transfer Volume by Route',
-                'description'    => 'Volume of transfers per warehouse-to-shop route',
-                'domain'         => 'transfers',
-                'viz_options'    => ['table', 'bar_chart'],
-                'default_viz'    => 'table',
-                'needs_dates'    => true,
-                'needs_location' => false,
-            ],
-            // ── OPERATIONS ─────────────────────────────────────────────────
-            [
-                'id'             => 'ops_low_stock_count',
-                'label'          => 'Low Stock Products',
-                'description'    => 'Count of products below their reorder threshold',
-                'domain'         => 'operations',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'ops_damaged_pending',
-                'label'          => 'Damaged Goods — No Decision',
-                'description'    => 'Damaged goods records with no disposition decision',
-                'domain'         => 'operations',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => false,
-                'needs_location' => false,
-            ],
-            [
-                'id'             => 'ops_stock_turnover',
-                'label'          => 'Stock Turnover Ratio',
-                'description'    => 'Annual COGS divided by average inventory value',
-                'domain'         => 'operations',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => false,
-                'needs_location' => true,
-            ],
-            // ── FINANCE ────────────────────────────────────────────────────
-            [
-                'id'             => 'finance_expense_summary',
-                'label'          => 'Expense Breakdown by Category',
-                'description'    => 'Total operational expenses grouped by category with cash/MoMo split',
-                'domain'         => 'finance',
-                'viz_options'    => ['table', 'bar_chart', 'kpi_card'],
-                'default_viz'    => 'table',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'finance_expense_trend',
-                'label'          => 'Expense Trend Over Time',
-                'description'    => 'Daily operational expense totals for charting cost patterns',
-                'domain'         => 'finance',
-                'viz_options'    => ['line_chart', 'bar_chart'],
-                'default_viz'    => 'line_chart',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'finance_withdrawal_summary',
-                'label'          => 'Owner Withdrawals',
-                'description'    => 'Total owner withdrawals by shop and method (cash vs MoMo)',
-                'domain'         => 'finance',
-                'viz_options'    => ['kpi_card', 'table'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'finance_cash_variance',
-                'label'          => 'Cash Variance Summary',
-                'description'    => 'Shortage and surplus across all closed sessions for the period',
-                'domain'         => 'finance',
-                'viz_options'    => ['kpi_card', 'table'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            [
-                'id'             => 'finance_net_operating',
-                'label'          => 'Net Operating Result',
-                'description'    => 'True P&L: Revenue − Cost of Goods − Operating Expenses',
-                'domain'         => 'finance',
-                'viz_options'    => ['kpi_card'],
-                'default_viz'    => 'kpi_card',
-                'needs_dates'    => true,
-                'needs_location' => true,
-            ],
-            // ── CONTENT ────────────────────────────────────────────────────
-            [
-                'id'             => 'text_block',
-                'label'          => 'Text / Narrative',
-                'description'    => 'Free-form text block — add context, headings, or notes',
-                'domain'         => 'content',
-                'viz_options'    => ['text'],
-                'default_viz'    => 'text',
-                'needs_dates'    => false,
-                'needs_location' => false,
-            ],
+            ...array_values(array_map(fn (Metric $m) => $m->meta(), $this->metrics())),
+            self::TEXT_BLOCK,
         ];
     }
 
     public function find(string $id): ?array
     {
-        return collect($this->catalogue())->firstWhere('id', $id);
+        if ($id === 'text_block') {
+            return self::TEXT_BLOCK;
+        }
+
+        return $this->metric($id)?->meta();
     }
 
     public function byDomain(): array
     {
-        return collect($this->catalogue())
-            ->groupBy('domain')
-            ->toArray();
+        return collect($this->catalogue())->groupBy('domain')->toArray();
     }
 }

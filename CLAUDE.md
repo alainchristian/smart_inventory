@@ -1545,3 +1545,53 @@ Phase 1 fixed the existing code only:
   was a fatal "cannot redeclare"). Phase 3 moves them into metric classes.
 
 Tests: `tests/Feature/Reports/CustomReports/CustomReportsPhase1Test.php`.
+
+## Custom Reports rebuild — Phase 2: metric contract (2026-09-29)
+
+Replaces `app/Services/Reports/CLAUDE.md`, which described the old
+`ReportRunner::resolveBlock()` match.
+
+- **One class per metric** in `app/Services/Reports/Metrics/{Domain}/`,
+  extending `Metrics\Metric`. `fetch(ReportContext)` wraps an analytics
+  service call. `present($raw, $ctx)` returns a `MetricResult`:
+  - `headline` {value, type, label}, `stats[]`
+  - typed `columns[]` + `rows[]` (+ `totals`), chart `series`
+  - `notes[]`, `insight`, and runner-set `comparison` / `status` / `error`
+  - value types: money | count | percent | ratio | days | date | datetime | text | bool
+  Every renderer (screen, PDF, Excel, CSV) should read this, never the raw
+  service arrays. `ReportFormat` formats values for people.
+- Each metric declares:
+  - `$usesDates` (false = a snapshot; no comparison)
+  - `$locations`: none | shop | any. The runner falls back to all locations
+    and adds a note when a filter can't apply, e.g. a warehouse on a
+    shop-only sales figure. Before, it silently showed everything.
+  - `$good`: up | down | neutral. Colours the comparison, and sets which
+    way thresholds trip: 'up' trips at or below the threshold.
+  - `$periodNote`: what span a snapshot / rolling figure covers
+- **Add a metric:** write the class and list it in
+  `MetricRegistry::METRICS`. `MetricContractTest` then checks it on every
+  location kind. **Never rename an id**: `saved_reports.config` stores them,
+  and the test pins the list.
+- `ReportPeriod`: business-tz presets (today, yesterday, week, last_week,
+  month, last_month, last_30, quarter, year, custom), `prior()` and
+  `label()`. `last_month` was offered in the builder but never handled
+  (it ran as this month).
+- `ReportRunner::run($config, $reportId, $writeHistory, $filters)`.
+  `$filters` (period / location / comparison) override the saved defaults
+  for one run; that's for the phase-3 viewer filter bar. Each result entry
+  has `result` (MetricResult array) and still `data` (raw), because the
+  current viewer, CSV and print read `data` until phases 3 and 6. Errors are
+  logged, and the page gets a generic message (it used to show the
+  exception text).
+- **Bugs this fixed (old viewer rendered them wrong or empty):**
+  - `inventory_abc_summary` and `inventory_by_location` return grouped
+    objects, not row lists
+  - `finance_expense_summary` as a table showed the summary keys instead of
+    `by_category`
+  - the ABC insight read a non-existent `classification` key
+  - snapshot metrics were "compared" with themselves
+  - history pruning used `skip()->delete()`
+- `ops_stock_turnover` is shop-only: the service can't compute it per
+  warehouse and returned 0.
+
+Tests: `tests/Feature/Reports/CustomReports/{MetricContractTest,ReportRunnerTest}.php`.
