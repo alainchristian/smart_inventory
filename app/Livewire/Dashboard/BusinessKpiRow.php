@@ -55,10 +55,6 @@ class BusinessKpiRow extends Component
         [$start, $end]         = $this->periodRange();
         [$prevStart, $prevEnd] = $this->previousRange();
 
-        // Revenue for selected period and comparison period
-        $current  = Sale::notVoided()->whereBetween('sale_date', [$start, $end])->sum('total');
-        $previous = Sale::notVoided()->whereBetween('sale_date', [$prevStart, $prevEnd])->sum('total');
-
         // Always-visible sub-row reference points (not period-dependent)
         // Business-timezone day/week/month starts, as UTC bounds (sale_date is UTC)
         $bn         = business_now();
@@ -66,48 +62,43 @@ class BusinessKpiRow extends Component
         $dayStart   = $bn->copy()->startOfDay()->utc();
         $weekStart  = $bn->copy()->startOfWeek()->utc();
         $monthStart = $bn->copy()->startOfMonth()->utc();
-        $todayRev = Sale::notVoided()->whereBetween('sale_date', [$dayStart, $nowUtc])->sum('total');
-        $weekRev  = Sale::notVoided()->whereBetween('sale_date', [$weekStart, $nowUtc])->sum('total');
-        $monthRev = Sale::notVoided()->whereBetween('sale_date', [$monthStart, $nowUtc])->sum('total');
 
-        $this->sales = [
-            'today'   => $todayRev,
-            'week'    => $weekRev,
-            'month'   => $monthRev,
-            'current' => $current,
-            'growth'  => $previous > 0 ? round((($current - $previous) / $previous) * 100, 1) : 0.0,
-            'count'   => Sale::notVoided()->whereBetween('sale_date', [$start, $end])->count(),
+        // One query per metric: each window is a SUM(CASE WHEN … BETWEEN …),
+        // same bounds as a separate whereBetween()->sum() would use
+        $windows = [
+            'current'  => [$start, $end],
+            'previous' => [$prevStart, $prevEnd],
+            'today'    => [$dayStart, $nowUtc],
+            'week'     => [$weekStart, $nowUtc],
+            'month'    => [$monthStart, $nowUtc],
         ];
 
-        // Profit margin for the selected period
-        $margin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [$start, $end])
-            ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
-            ->value('margin') ?? 0);
+        $rev = $this->windowSums(Sale::notVoided(), 'sale_date', 'total', $windows, countKey: 'current');
+        $current  = $rev['current'];
+        $previous = $rev['previous'];
 
-        // Profit sub-row reference points
-        $todayMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [$dayStart, $nowUtc])
-            ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
-            ->value('margin') ?? 0);
+        $this->sales = [
+            'today'   => $rev['today'],
+            'week'    => $rev['week'],
+            'month'   => $rev['month'],
+            'current' => $current,
+            'growth'  => $previous > 0 ? round((($current - $previous) / $previous) * 100, 1) : 0.0,
+            'count'   => $rev['count'],
+        ];
 
-        $weekMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [$weekStart, $nowUtc])
-            ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
-            ->value('margin') ?? 0);
-
-        $monthMargin = (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereNull('sales.voided_at')
-            ->whereBetween('sales.sale_date', [$monthStart, $nowUtc])
-            ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as margin')
-            ->value('margin') ?? 0);
+        // Profit margin for the selected period + sub-row reference points
+        $marginWindows = $windows;
+        unset($marginWindows['previous']);
+        $margins = $this->windowSums(
+            $this->marginQuery(),
+            'sales.sale_date',
+            'sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)',
+            $marginWindows
+        );
+        $margin      = $margins['current'];
+        $todayMargin = $margins['today'];
+        $weekMargin  = $margins['week'];
+        $monthMargin = $margins['month'];
 
         $this->profit = [
             'today'        => $todayMargin,
@@ -120,41 +111,37 @@ class BusinessKpiRow extends Component
 
         // Inventory: Box::available() = status IN (full, partial) AND items_remaining > 0
         // This is the single source of truth used across all dashboard sections.
+        // Every product exists (restrictOnDelete FK), so the inner join to
+        // products never drops a box from the item/box counts below
         $inv = Box::available()
             ->join('products', 'boxes.product_id', '=', 'products.id')
-            ->selectRaw('
+            ->selectRaw("
                 SUM(boxes.items_remaining * products.purchase_price) AS cost_value,
-                SUM(boxes.items_remaining * products.selling_price)  AS retail_value
-            ')
+                SUM(boxes.items_remaining * products.selling_price)  AS retail_value,
+                SUM(CASE WHEN boxes.location_type = 'warehouse' THEN boxes.items_remaining * products.selling_price END) AS wh_retail,
+                SUM(CASE WHEN boxes.location_type = 'shop'      THEN boxes.items_remaining * products.selling_price END) AS shop_retail,
+                SUM(CASE WHEN boxes.location_type = 'warehouse' THEN boxes.items_remaining END) AS wh_items,
+                SUM(CASE WHEN boxes.location_type = 'shop'      THEN boxes.items_remaining END) AS shop_items,
+                COUNT(*) FILTER (WHERE boxes.location_type = 'warehouse') AS wh_boxes,
+                COUNT(*) FILTER (WHERE boxes.location_type = 'shop')      AS shop_boxes,
+                SUM(boxes.items_remaining) AS remaining,
+                SUM(boxes.items_total)     AS capacity
+            ")
             ->first();
 
         $cost   = ($inv->cost_value   ?? 0);
         $retail = ($inv->retail_value ?? 0);
 
-        $whRetail = (int) (Box::available()
-            ->where('boxes.location_type', 'warehouse')
-            ->join('products', 'boxes.product_id', '=', 'products.id')
-            ->selectRaw('SUM(boxes.items_remaining * products.selling_price) AS v')
-            ->value('v') ?? 0);
-
-        $shopRetail = (int) (Box::available()
-            ->where('boxes.location_type', 'shop')
-            ->join('products', 'boxes.product_id', '=', 'products.id')
-            ->selectRaw('SUM(boxes.items_remaining * products.selling_price) AS v')
-            ->value('v') ?? 0);
-
-        $whItems   = Box::available()->where('location_type', 'warehouse')->sum('items_remaining');
-        $shopItems = Box::available()->where('location_type', 'shop')->sum('items_remaining');
-
-        $whBoxes    = Box::available()->where('location_type', 'warehouse')->count();
-        $shopBoxes  = Box::available()->where('location_type', 'shop')->count();
+        $whRetail   = (int) ($inv->wh_retail ?? 0);
+        $shopRetail = (int) ($inv->shop_retail ?? 0);
+        $whItems    = $inv->wh_items ?? 0;
+        $shopItems  = $inv->shop_items ?? 0;
+        $whBoxes    = (int) ($inv->wh_boxes ?? 0);
+        $shopBoxes  = (int) ($inv->shop_boxes ?? 0);
         $totalBoxes = $whBoxes + $shopBoxes;
 
-        $fillStats = Box::available()
-            ->selectRaw('SUM(items_remaining) as remaining, SUM(items_total) as capacity')
-            ->first();
-        $fillRate = ($fillStats && $fillStats->capacity > 0)
-            ? round(($fillStats->remaining / $fillStats->capacity) * 100, 1)
+        $fillRate = ($inv && $inv->capacity > 0)
+            ? round(($inv->remaining / $inv->capacity) * 100, 1)
             : 0;
 
         $this->inventory = [
@@ -172,12 +159,15 @@ class BusinessKpiRow extends Component
             'fill_rate'    => $fillRate,
         ];
 
+        $wh   = Warehouse::selectRaw('COUNT(*) AS total, COUNT(*) FILTER (WHERE is_active) AS active')->first();
+        $shop = Shop::selectRaw('COUNT(*) AS total, COUNT(*) FILTER (WHERE is_active) AS active')->first();
+
         $this->locations = [
-            'warehouses'        => Warehouse::count(),
-            'shops'             => Shop::count(),
+            'warehouses'        => (int) $wh->total,
+            'shops'             => (int) $shop->total,
             'users'             => User::count(),
-            'active_warehouses' => Warehouse::where('is_active', true)->count(),
-            'active_shops'      => Shop::where('is_active', true)->count(),
+            'active_warehouses' => (int) $wh->active,
+            'active_shops'      => (int) $shop->active,
         ];
 
         // Expenses for selected period (daily_sessions.session_date is DATE)
@@ -187,17 +177,12 @@ class BusinessKpiRow extends Component
         $prevStart_date = $this->localDate($prevStart);
         $prevEnd_date   = $this->localDate($prevEnd);
 
-        $expCurrent = (int) Expense::whereNull('expenses.deleted_at')
-            ->where('expenses.is_system_generated', false)
-            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
-            ->whereBetween('daily_sessions.session_date', [$startDate, $endDate])
-            ->sum('expenses.amount');
-
-        $expPrevious = (int) Expense::whereNull('expenses.deleted_at')
-            ->where('expenses.is_system_generated', false)
-            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
-            ->whereBetween('daily_sessions.session_date', [$prevStart_date, $prevEnd_date])
-            ->sum('expenses.amount');
+        $exp = $this->windowSums($this->expenseQuery(), 'daily_sessions.session_date', 'expenses.amount', [
+            'current'  => [$startDate, $endDate],
+            'previous' => [$prevStart_date, $prevEnd_date],
+        ]);
+        $expCurrent  = (int) $exp['current'];
+        $expPrevious = (int) $exp['previous'];
 
         $this->expenses = [
             'current'   => $expCurrent,
@@ -206,9 +191,10 @@ class BusinessKpiRow extends Component
         ];
 
         // Credit Outstanding — always current balance (not period-dependent)
+        $cr = Customer::selectRaw('COALESCE(SUM(outstanding_balance), 0) AS outstanding, COUNT(*) FILTER (WHERE outstanding_balance > 0) AS owing')->first();
         $this->credit = [
-            'outstanding' => (int) Customer::sum('outstanding_balance'),
-            'count'       => (int) Customer::where('outstanding_balance', '>', 0)->count(),
+            'outstanding' => (int) $cr->outstanding,
+            'count'       => (int) $cr->owing,
         ];
 
         $this->salesSparkline   = $this->generateSalesSparkline($start, $end);
@@ -263,35 +249,31 @@ class BusinessKpiRow extends Component
 
     private function generateSalesSparkline(Carbon $start, Carbon $end): array
     {
-        $buckets = $this->sparkBuckets($start, $end);
-        return array_map(fn($b) =>
-            (float) Sale::notVoided()->whereBetween('sale_date', $b)->sum('total'),
-        $buckets);
+        return $this->floats($this->windowSums(
+            Sale::notVoided(), 'sale_date', 'total', $this->sparkBuckets($start, $end)
+        ));
     }
 
     private function generateProfitSparkline(Carbon $start, Carbon $end): array
     {
-        $buckets = $this->sparkBuckets($start, $end);
-        return array_map(fn($b) =>
-            (float) (SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
-                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-                ->whereNull('sales.voided_at')
-                ->whereBetween('sales.sale_date', $b)
-                ->selectRaw('SUM(sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)) as m')
-                ->value('m') ?? 0),
-        $buckets);
+        return $this->floats($this->windowSums(
+            $this->marginQuery(),
+            'sales.sale_date',
+            'sale_items.line_total - (products.purchase_price * sale_items.quantity_sold)',
+            $this->sparkBuckets($start, $end)
+        ));
     }
 
     private function generateExpenseSparkline(Carbon $start, Carbon $end): array
     {
-        $buckets = $this->sparkBuckets($start, $end);
-        return array_map(fn($b) =>
-            (float) Expense::whereNull('expenses.deleted_at')
-                ->where('expenses.is_system_generated', false)
-                ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id')
-                ->whereBetween('daily_sessions.session_date', [$this->localDate($b[0]), $this->localDate($b[1])])
-                ->sum('expenses.amount'),
-        $buckets);
+        $buckets = array_map(
+            fn ($b) => [$this->localDate($b[0]), $this->localDate($b[1])],
+            $this->sparkBuckets($start, $end)
+        );
+
+        return $this->floats($this->windowSums(
+            $this->expenseQuery(), 'daily_sessions.session_date', 'expenses.amount', $buckets
+        ));
     }
 
     // Receivables' KPI value is the current OUTSTANDING BALANCE (a stock), not
@@ -303,22 +285,14 @@ class BusinessKpiRow extends Component
     {
         $buckets = $this->sparkBuckets($start, $end);
 
-        $deltas = array_map(function ($b) {
-            $issued = (float) Sale::notVoided()
-                ->where('has_credit', true)
-                ->whereBetween('sale_date', $b)
-                ->sum('credit_amount');
+        $issued     = $this->windowSums(Sale::notVoided()->where('has_credit', true), 'sale_date', 'credit_amount', $buckets);
+        $repaid     = $this->windowSums(DB::table('credit_repayments'), 'repayment_date', 'amount', $buckets);
+        $writtenOff = $this->windowSums(DB::table('credit_writeoffs'), 'written_off_at', 'amount', $buckets);
 
-            $repaid = (float) DB::table('credit_repayments')
-                ->whereBetween('repayment_date', $b)
-                ->sum('amount');
-
-            $writtenOff = (float) DB::table('credit_writeoffs')
-                ->whereBetween('written_off_at', $b)
-                ->sum('amount');
-
-            return $issued - $repaid - $writtenOff;
-        }, $buckets);
+        $deltas = array_map(
+            fn ($i) => (float) $issued[$i] - (float) $repaid[$i] - (float) $writtenOff[$i],
+            array_keys($buckets)
+        );
 
         $running = [];
         $sum = 0.0;
@@ -332,6 +306,71 @@ class BusinessKpiRow extends Component
         $offset       = $target - $lastRunning;
 
         return array_map(fn ($v) => max($v + $offset, 0), $running);
+    }
+
+    /**
+     * SUM($expr) for each [from, to] window (inclusive, like whereBetween) in
+     * ONE query instead of one query per window. Keys of $windows are kept;
+     * $countKey also returns COUNT(*) for that window under 'count'.
+     * $column / $expr are code constants, never user input.
+     */
+    private function windowSums($query, string $column, string $expr, array $windows, ?string $countKey = null): array
+    {
+        if (empty($windows)) {
+            return [];
+        }
+
+        $selects  = [];
+        $bindings = [];
+        $aliases  = [];
+        foreach (array_keys($windows) as $n => $key) {
+            $aliases[$key] = "w{$n}";
+            $selects[]     = "COALESCE(SUM(CASE WHEN {$column} BETWEEN ? AND ? THEN {$expr} END), 0) AS w{$n}";
+            array_push($bindings, $windows[$key][0], $windows[$key][1]);
+        }
+        if ($countKey !== null) {
+            $selects[] = "COUNT(*) FILTER (WHERE {$column} BETWEEN ? AND ?) AS wcount";
+            array_push($bindings, $windows[$countKey][0], $windows[$countKey][1]);
+        }
+
+        // Only scan rows inside some window (keeps the date index usable)
+        $row = $query
+            ->where(function ($q) use ($column, $windows) {
+                foreach ($windows as [$from, $to]) {
+                    $q->orWhereBetween($column, [$from, $to]);
+                }
+            })
+            ->selectRaw(implode(', ', $selects), $bindings)
+            ->first();
+
+        $out = [];
+        foreach ($aliases as $key => $alias) {
+            $out[$key] = $row->{$alias} ?? 0;
+        }
+        if ($countKey !== null) {
+            $out['count'] = (int) ($row->wcount ?? 0);
+        }
+
+        return $out;
+    }
+
+    private function floats(array $values): array
+    {
+        return array_map(fn ($v) => (float) $v, array_values($values));
+    }
+
+    private function marginQuery()
+    {
+        return SaleItem::join('products', 'sale_items.product_id', '=', 'products.id')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->whereNull('sales.voided_at');
+    }
+
+    private function expenseQuery()
+    {
+        return Expense::whereNull('expenses.deleted_at')
+            ->where('expenses.is_system_generated', false)
+            ->join('daily_sessions', 'expenses.daily_session_id', '=', 'daily_sessions.id');
     }
 
     private function periodRange(): array

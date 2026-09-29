@@ -76,6 +76,31 @@ class DashboardWidgetsRenderTest extends TestCase
     }
 
     /**
+     * BusinessKpiRow used to run one query per sparkline bucket per series
+     * (39–105 per refresh, polled every 25s), about 1s of DB time on the
+     * production dashboard. It must stay a fixed, small number of queries
+     * whatever the period length.
+     */
+    public function test_kpi_row_query_count_does_not_grow_with_period(): void
+    {
+        $owner = User::forceCreate([
+            'name' => 'Query Owner', 'email' => 'qo' . uniqid() . '@example.test',
+            'password' => bcrypt('x'), 'role' => 'owner', 'is_active' => true,
+        ]);
+        $today = business_today();
+        $kpi   = Livewire::actingAs($owner)->test(BusinessKpiRow::class);
+
+        foreach ([0, 6, 29, 90] as $days) {
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $kpi->dispatch('time-filter-changed', period: 'custom',
+                from: $today->copy()->subDays($days)->toDateString(), to: $today->toDateString());
+            $this->assertLessThanOrEqual(15, count(DB::getQueryLog()), "{$days}-day period");
+            DB::disableQueryLog();
+        }
+    }
+
+    /**
      * The owner saw "yesterday: no sales but 150,000 spent" while the Daily
      * Report showed no expenses: session_date was compared with the UTC
      * bound's date (00:00 Kigali = 22:00 UTC the day before), pulling in the
