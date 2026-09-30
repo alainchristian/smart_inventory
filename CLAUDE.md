@@ -1941,3 +1941,20 @@ One commit per phase.
 - Tests: `tests/Feature/Transfers/TransferFixesTest.php`.
 - Note: the receive screen already had Mark damaged / Remove per scanned
   box (they only appear after a scan).
+
+### Phase 2 — shared parts (`resources/views/components/transfers/`)
+- `<x-transfers.header title sub back mono dupTitle>` (+ `actions` / `meta`
+  slots), `<x-transfers.status :status>`, `<x-transfers.route from to>`,
+  `<x-transfers.timeline :transfer>`. All include `<x-transfers.styles />`,
+  which prints the shared `tf-` CSS once per page (`@once`): header,
+  `tf-btn*`, badges, route, timeline. Page-specific CSS stays in each page.
+- `TransferStatus::tone()` → token name (pending amber, approved accent,
+  in transit violet, delivered pink, received green, rejected red,
+  cancelled text-dim); `cssColor()` now derives from it (the delivered hex
+  is gone). The old Tailwind `color()` is left for unconverted callers.
+- `Transfer::timeline()` → steps with done / current / todo / stopped, who
+  and when. "Packed" is done only once shipped (`packed_at` = packing
+  started). Rejected / cancelled end in a red stopped step.
+- Wrapper views lose their copied CSS in the phase that rebuilds their
+  page, so each commit stays shippable.
+- Tests: `tests/Feature/Transfers/TransferComponentsTest.php`.

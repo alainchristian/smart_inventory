@@ -122,4 +122,59 @@ class Transfer extends Model
     {
         return $query->where('created_at', '>=', now()->subDays($days));
     }
+
+    /**
+     * Progress steps for <x-transfers.timeline>: each is
+     * ['key', 'label', 'state' => done|current|todo|stopped, 'who', 'at' (UTC)].
+     * A rejected or cancelled transfer ends in a red "stopped" step after the
+     * last step it reached.
+     */
+    public function timeline(): array
+    {
+        $status  = $this->status;
+        $shipped = in_array($status, [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED, TransferStatus::RECEIVED], true);
+
+        $steps = [
+            ['key' => 'requested', 'label' => 'Requested', 'done' => true, 'who' => $this->requestedBy?->name, 'at' => $this->requested_at],
+            ['key' => 'approved', 'label' => 'Approved', 'done' => $this->reviewed_at !== null && $status !== TransferStatus::REJECTED,
+                'who' => $this->reviewedBy?->name, 'at' => $this->reviewed_at],
+            // packed_at is when packing started; the step is done once it ships.
+            ['key' => 'packed', 'label' => 'Packed', 'done' => $shipped || $this->shipped_at !== null,
+                'who' => $this->packedBy?->name, 'at' => $this->packed_at],
+            ['key' => 'shipped', 'label' => 'Shipped', 'done' => $this->shipped_at !== null,
+                'who' => $this->transporter?->name, 'at' => $this->shipped_at],
+            ['key' => 'delivered', 'label' => 'Delivered', 'done' => $this->delivered_at !== null, 'who' => null, 'at' => $this->delivered_at],
+            ['key' => 'received', 'label' => 'Received', 'done' => $this->received_at !== null,
+                'who' => $this->receivedBy?->name, 'at' => $this->received_at],
+        ];
+
+        if (in_array($status, [TransferStatus::REJECTED, TransferStatus::CANCELLED], true)) {
+            $reached = array_values(array_filter($steps, fn ($s) => $s['done']));
+            $reached[] = [
+                'key' => $status->value, 'label' => $status->label(), 'done' => false, 'stopped' => true,
+                'who' => $status === TransferStatus::REJECTED ? $this->reviewedBy?->name : null,
+                'at'  => $status === TransferStatus::REJECTED ? $this->reviewed_at : $this->updated_at,
+            ];
+            $steps = $reached;
+        }
+
+        $currentSet = false;
+        foreach ($steps as $i => $step) {
+            $state = match (true) {
+                ! empty($step['stopped']) => 'stopped',
+                $step['done']             => 'done',
+                ! $currentSet             => 'current',
+                default                   => 'todo',
+            };
+            $currentSet = $currentSet || $state === 'current';
+            // A step not reached yet shows no stale "who" (e.g. packer while only approved).
+            $steps[$i] = [
+                'key' => $step['key'], 'label' => $step['label'], 'state' => $state,
+                'who' => in_array($state, ['done', 'stopped'], true) || ($state === 'current' && $step['at']) ? $step['who'] : null,
+                'at'  => in_array($state, ['done', 'stopped'], true) || ($state === 'current' && $step['at']) ? $step['at'] : null,
+            ];
+        }
+
+        return $steps;
+    }
 }

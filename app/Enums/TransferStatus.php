@@ -38,16 +38,22 @@ enum TransferStatus: string
         };
     }
 
-    public function cssColor(): string
+    /** Design-token colour name: badge = var(--{tone}) on var(--{tone}-dim). */
+    public function tone(): string
     {
         return match($this) {
-            self::PENDING    => 'var(--amber)',
-            self::APPROVED   => 'var(--accent)',
-            self::REJECTED   => 'var(--red)',
-            self::IN_TRANSIT => 'var(--violet)',
-            self::DELIVERED  => '#0ea5e9',
-            self::RECEIVED   => 'var(--green)',
-            self::CANCELLED  => 'var(--text-dim)',
+            self::PENDING    => 'amber',
+            self::APPROVED   => 'accent',
+            self::REJECTED   => 'red',
+            self::IN_TRANSIT => 'violet',
+            self::DELIVERED  => 'pink',
+            self::RECEIVED   => 'green',
+            self::CANCELLED  => 'text-dim',
         };
+    }
+
+    public function cssColor(): string
+    {
+        return 'var(--' . $this->tone() . ')';
     }
 }
