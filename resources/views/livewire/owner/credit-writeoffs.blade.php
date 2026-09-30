@@ -206,9 +206,7 @@
                                                             Amount to write off (RWF) <span style="color:var(--red)">*</span>
                                                         </label>
                                                         <div style="display:flex;gap:8px;align-items:center;">
-                                                            <input type="number" wire:model="writeoffAmount"
-                                                                   min="1" max="{{ $this->selectedCustomer->outstanding_balance }}"
-                                                                   class="cw-form-input">
+                                                            <x-money-input wire:model="writeoffAmount" class="cw-form-input" />
                                                             <button wire:click="fillFullBalance" type="button" class="cw-btn cw-btn-ghost" style="white-space:nowrap;">
                                                                 Full balance
                                                             </button>

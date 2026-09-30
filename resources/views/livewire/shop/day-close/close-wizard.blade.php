@@ -408,8 +408,7 @@
             <div class="cw-card-body">
                 <label class="cw-label" for="cw-counted">Cash counted</label>
                 <div class="cw-money">
-                    <input id="cw-counted" type="number" min="0" inputmode="numeric" class="cw-input" style="font-size:22px;padding-top:12px;padding-bottom:12px"
-                           wire:model.live.debounce.300ms="actualCashCounted" placeholder="0">
+                    <x-money-input id="cw-counted" class="cw-input" style="font-size:22px;padding-top:12px;padding-bottom:12px" wire:model.live.debounce.300ms="actualCashCounted" placeholder="0" />
                     <span class="cw-money-u">RWF</span>
                 </div>
                 @error('actualCashCounted') <div class="cw-error">Enter the cash you counted (0 or more).</div> @enderror
@@ -451,7 +450,7 @@
                 <div>
                     <label class="cw-label" for="cw-to-owner">Send to owner via MoMo <em>(optional)</em></label>
                     <div class="cw-money">
-                        <input id="cw-to-owner" type="number" min="0" inputmode="numeric" class="cw-input" wire:model.live.debounce.300ms="cashToOwnerMomo" placeholder="0">
+                        <x-money-input id="cw-to-owner" class="cw-input" wire:model.live.debounce.300ms="cashToOwnerMomo" placeholder="0" />
                         <span class="cw-money-u">RWF</span>
                     </div>
                     @error('cashToOwnerMomo') <div class="cw-error">{{ $message }}</div> @enderror
@@ -488,7 +487,7 @@
                                     <span class="cw-row-l"><span class="cw-dot" style="background:{{ $nColor }}"></span><span style="color:var(--text);font-weight:600">{{ $nLabel }}</span></span>
                                 </td>
                                 <td style="text-align:right" class="cw-row-v">{{ number_format($nTotal) }}</td>
-                                <td><input type="number" min="0" class="cw-num" wire:model.blur="{{ $nField }}" aria-label="{{ $nLabel }} settled"></td>
+                                <td><x-money-input class="cw-num" wire:model.blur="{{ $nField }}" aria-label="{{ $nLabel }} settled" /></td>
                                 @php $nDiff = $settleDiffs[$nField] ?? 0; @endphp
                                 <td style="text-align:right" class="cw-row-v">
                                     @if ($nDiff === 0)
@@ -613,7 +612,7 @@
                         <div style="display:contents">
                             <span class="cw-den-v" x-text="fmt(d)"></span>
                             <span class="cw-den-x">×</span>
-                            <input type="number" min="0" inputmode="numeric" class="cw-num" placeholder="0" x-model="c[d]" :aria-label="fmt(d) + ' RWF notes'">
+                            <x-number-input class="cw-num" placeholder="0" x-model="c[d]" x-bind:aria-label="fmt(d) + ' RWF notes'" />
                             <span class="cw-den-s" x-text="fmt(d * (parseInt(c[d]) || 0))"></span>
                         </div>
                     </template>
@@ -622,7 +621,7 @@
                         <div style="display:contents">
                             <span class="cw-den-v" x-text="fmt(d)"></span>
                             <span class="cw-den-x">×</span>
-                            <input type="number" min="0" inputmode="numeric" class="cw-num" placeholder="0" x-model="c[d]" :aria-label="fmt(d) + ' RWF coins'">
+                            <x-number-input class="cw-num" placeholder="0" x-model="c[d]" x-bind:aria-label="fmt(d) + ' RWF coins'" />
                             <span class="cw-den-s" x-text="fmt(d * (parseInt(c[d]) || 0))"></span>
                         </div>
                     </template>

@@ -394,8 +394,7 @@
             <form class="dc-modal-body" wire:submit="openRegister" id="dc-open-form">
                 <label class="dc-label" for="dc-opening">Opening cash</label>
                 <div class="dc-money">
-                    <input id="dc-opening" type="number" min="0" inputmode="numeric" wire:model="openingBalance" placeholder="0"
-                           x-effect="if (openModal) $nextTick(() => $el.focus())">
+                    <x-money-input id="dc-opening" wire:model="openingBalance" placeholder="0" x-effect="if (openModal) $nextTick(() => $el.focus())" />
                     <span>RWF</span>
                 </div>
                 @error('openingBalance') <div class="dc-error">{{ $message }}</div> @enderror

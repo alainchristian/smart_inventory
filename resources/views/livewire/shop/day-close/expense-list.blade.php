@@ -62,7 +62,7 @@
                                     @endforeach
                                 </select>
                                 <input wire:model="editDescription" type="text" placeholder="Description" class="el-in" style="flex:1;min-width:140px">
-                                <input wire:model="editAmount" type="number" min="1" placeholder="Amount" class="el-in" style="width:120px;font-family:var(--mono);text-align:right">
+                                <x-money-input wire:model="editAmount" placeholder="Amount" class="el-in" style="width:120px;font-family:var(--mono);text-align:right" />
                                 <select wire:model="editPaymentMethod" class="el-in">
                                     <option value="cash">Cash</option>
                                     <option value="mobile_money">MoMo</option>

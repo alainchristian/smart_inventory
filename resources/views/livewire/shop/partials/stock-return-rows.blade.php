@@ -18,8 +18,7 @@
                 <td class="num sr-hide-mob sr-mono">{{ number_format($row->items) }}</td>
                 <td class="num">
                     <span class="sr-qty">
-                        <input type="number" min="0" max="{{ $row->boxes }}" class="sr-num" wire:model.live.debounce.300ms="send.{{ $row->product_id }}"
-                               placeholder="0" aria-label="Boxes of {{ $row->name }} to send back">
+                        <x-number-input max="{{ $row->boxes }}" class="sr-num" wire:model.live.debounce.300ms="send.{{ $row->product_id }}" placeholder="0" aria-label="Boxes of {{ $row->name }} to send back" />
                         <button type="button" class="sr-link" wire:click="sendAll({{ $row->product_id }})">All {{ $row->boxes }}</button>
                     </span>
                     @error('send.' . $row->product_id) <div class="sr-error">{{ $message }}</div> @enderror

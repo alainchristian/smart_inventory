@@ -984,8 +984,7 @@
         <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);padding:0 0 14px">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Lead time:
-            <input type="number" wire:model.live="leadTimeDays" min="1" max="365"
-                   style="width:52px;text-align:center;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:13px;font-weight:600;font-family:var(--mono);background:var(--surface);color:var(--text)">
+            <x-number-input wire:model.live="leadTimeDays" max="365" style="width:52px;text-align:center;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:13px;font-weight:600;font-family:var(--mono);background:var(--surface);color:var(--text)" />
             days &middot; Reorder date = days on hand &minus; lead time
         </div>
 

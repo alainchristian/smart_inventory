@@ -448,7 +448,7 @@
                     <div class="cr-pay-label-row">
                         <label class="cr-pay-label">{{ __('Cash') }}</label>
                     </div>
-                    <input class="cr-pay-input" type="number" x-model="cash" min="0" placeholder="0">
+                    <x-money-input class="cr-pay-input" x-model="cash" placeholder="0" />
                 </div>
 
                 {{-- Mobile Money --}}
@@ -456,7 +456,7 @@
                     <div class="cr-pay-label-row">
                         <label class="cr-pay-label">{{ __('Mobile Money') }}</label>
                     </div>
-                    <input class="cr-pay-input" type="number" x-model="momo" min="0" placeholder="0">
+                    <x-money-input class="cr-pay-input" x-model="momo" placeholder="0" />
                 </div>
 
                 @if($settingAllowCardPayment)
@@ -465,7 +465,7 @@
                     <div class="cr-pay-label-row">
                         <label class="cr-pay-label">{{ __('Card') }}</label>
                     </div>
-                    <input class="cr-pay-input" type="number" x-model="card" min="0" placeholder="0">
+                    <x-money-input class="cr-pay-input" x-model="card" placeholder="0" />
                     <div class="cr-pay-ref">
                         <input class="cr-pay-input" type="text" wire:model="payRef_card" placeholder="{{ __('Card reference') }}" style="font-size:11px">
                     </div>
@@ -478,7 +478,7 @@
                     <div class="cr-pay-label-row">
                         <label class="cr-pay-label">{{ __('Bank Transfer') }}</label>
                     </div>
-                    <input class="cr-pay-input" type="number" x-model="bank" min="0" placeholder="0">
+                    <x-money-input class="cr-pay-input" x-model="bank" placeholder="0" />
                     <div class="cr-pay-ref">
                         <input class="cr-pay-input" type="text" wire:model="payRef_bank_transfer" placeholder="{{ __('Transfer reference') }}" style="font-size:11px">
                     </div>

@@ -546,11 +546,11 @@
                     <div class="rb-row" style="margin-bottom:18px">
                         <div>
                             <label class="rb-label">Warning (amber)</label>
-                            <input type="number" step="any" class="rb-input" wire:model.live.debounce.500ms="edit.threshold_warning">
+                            <x-number-input class="rb-input" wire:model.live.debounce.500ms="edit.threshold_warning" decimals="2" signed />
                         </div>
                         <div>
                             <label class="rb-label">Critical (red)</label>
-                            <input type="number" step="any" class="rb-input" wire:model.live.debounce.500ms="edit.threshold_critical">
+                            <x-number-input class="rb-input" wire:model.live.debounce.500ms="edit.threshold_critical" decimals="2" signed />
                         </div>
                     </div>
                 @endif

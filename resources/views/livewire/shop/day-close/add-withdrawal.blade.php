@@ -34,7 +34,7 @@
         <div>
             <label class="aw-label" for="aw-cash-{{ $this->getId() }}">From cash</label>
             <div class="aw-money">
-                <input id="aw-cash-{{ $this->getId() }}" type="number" min="0" inputmode="numeric" wire:model.live.debounce.400ms="cashAmount" placeholder="0" class="aw-input">
+                <x-money-input id="aw-cash-{{ $this->getId() }}" wire:model.live.debounce.400ms="cashAmount" placeholder="0" class="aw-input" />
                 <span class="aw-money-u">RWF</span>
             </div>
             <div class="aw-hint">{{ number_format($summary['expected_cash']) }} in drawer</div>
@@ -43,7 +43,7 @@
         <div>
             <label class="aw-label" for="aw-momo-{{ $this->getId() }}">From MoMo</label>
             <div class="aw-money">
-                <input id="aw-momo-{{ $this->getId() }}" type="number" min="0" inputmode="numeric" wire:model.live.debounce.400ms="momoAmount" placeholder="0" class="aw-input">
+                <x-money-input id="aw-momo-{{ $this->getId() }}" wire:model.live.debounce.400ms="momoAmount" placeholder="0" class="aw-input" />
                 <span class="aw-money-u">RWF</span>
             </div>
             <div class="aw-hint">{{ number_format($summary['momo_available']) }} available</div>

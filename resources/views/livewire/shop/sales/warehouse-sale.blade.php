@@ -931,7 +931,7 @@
             <div class="whs-pay-label">Mobile Money</div>
           </div>
           <div class="whs-pay-amount-wrap">
-            <input x-model.number="momo" type="number" min="0" placeholder="0" class="whs-pay-amount">
+            <x-money-input x-model.number="momo" placeholder="0" class="whs-pay-amount" />
             <span class="whs-pay-amount-unit">RWF</span>
           </div>
         </div>
@@ -948,7 +948,7 @@
             <div class="whs-pay-label">Bank Transfer</div>
           </div>
           <div class="whs-pay-amount-wrap">
-            <input x-model.number="bank" type="number" min="0" placeholder="0" class="whs-pay-amount">
+            <x-money-input x-model.number="bank" placeholder="0" class="whs-pay-amount" />
             <span class="whs-pay-amount-unit">RWF</span>
           </div>
         </div>
@@ -966,7 +966,7 @@
             <div class="whs-pay-label">Card</div>
           </div>
           <div class="whs-pay-amount-wrap">
-            <input x-model.number="card" type="number" min="0" placeholder="0" class="whs-pay-amount">
+            <x-money-input x-model.number="card" placeholder="0" class="whs-pay-amount" />
             <span class="whs-pay-amount-unit">RWF</span>
           </div>
         </div>
@@ -994,10 +994,7 @@
             </div>
           </div>
           <div class="whs-pay-amount-wrap">
-            <input x-model.number="credit" type="number" min="0" placeholder="0"
-                   class="whs-pay-amount"
-                   :disabled="{{ $settingCreditRequiresCustomer ? 'true' : 'false' }} && !$wire.customerId"
-                   :style="cr > 0 ? 'border-color:var(--amber)' : ''">
+            <x-money-input x-model.number="credit" placeholder="0" class="whs-pay-amount" x-bind:disabled="{{ $settingCreditRequiresCustomer ? 'true' : 'false' }} && !$wire.customerId" x-bind:style="cr > 0 ? 'border-color:var(--amber)' : ''" />
             <span class="whs-pay-amount-unit">RWF</span>
           </div>
         </div>
@@ -1382,8 +1379,8 @@
             <div class="whs-sm-price-wrap">
               <span class="whs-sm-price-prefix">RWF</span>
               {{-- wire:model.lazy: syncs on blur only, prevents per-keystroke re-renders --}}
-              <input wire:model.lazy="stagingBoxPrice" type="number" min="1"
-                     class="whs-sm-price-input {{ $stagingPriceModified ? 'modified' : '' }}">
+              <x-money-input wire:model.lazy="stagingBoxPrice"
+                             class="whs-sm-price-input {{ $stagingPriceModified ? 'modified' : '' }}" />
             </div>
             {{-- Reason field: always in DOM, CSS transitions in/out --}}
             <div class="whs-sm-reason-wrap {{ $stagingPriceModified ? 'visible' : '' }}">
@@ -1410,9 +1407,7 @@
               <button type="button" class="whs-sm-step-btn"
                       wire:click="decrementStagingBoxes">&minus;</button>
               {{-- wire:model.lazy syncs only on blur — prevents per-keystroke re-renders --}}
-              <input wire:model.lazy="stagingBoxes" type="number"
-                     min="1" max="{{ $stagingProduct->box_count }}"
-                     class="whs-sm-qty-input">
+              <x-number-input wire:model.lazy="stagingBoxes" max="{{ $stagingProduct->box_count }}" class="whs-sm-qty-input" />
               <button type="button" class="whs-sm-step-btn"
                       wire:click="incrementStagingBoxes">+</button>
             </div>

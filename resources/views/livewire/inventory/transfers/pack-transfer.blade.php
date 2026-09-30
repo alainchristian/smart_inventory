@@ -308,12 +308,7 @@
                 {{ $pendingAlreadyAssigned }} already assigned &nbsp;·&nbsp;
                 <strong style="color:var(--text)">{{ $pendingMaxQty }} box{{ $pendingMaxQty === 1 ? '' : 'es' }} needed</strong>
             </div>
-            <input wire:model.live="pendingQty"
-                   wire:keydown.enter="confirmScannedQuantity"
-                   x-on:keydown.escape.stop="$wire.closeQuantityPanel()"
-                   type="number" min="1" max="{{ $pendingMaxQty }}"
-                   x-init="$nextTick(() => $el.select())"
-                   class="pt-qty-input">
+            <x-number-input wire:model.live="pendingQty" wire:keydown.enter="confirmScannedQuantity" x-on:keydown.escape.stop="$wire.closeQuantityPanel()" max="{{ $pendingMaxQty }}" x-init="$nextTick(() => $el.select())" class="pt-qty-input" />
             @error('pendingQty')
                 <div style="font-size:13px;color:var(--red);margin-top:6px;text-align:center">{{ $message }}</div>
             @enderror

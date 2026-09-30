@@ -1838,3 +1838,67 @@ Tests: `tests/Feature/Reports/CustomReports/ScheduledReportsTest.php`.
 **The rebuild is complete** (phases 1–7, all agreed with the user). The
 whole suite is in `tests/Feature/Reports/CustomReports/`; run it on the
 test DB only.
+
+---
+
+## Number inputs: `<x-number-input>` / `<x-money-input>` (2026-09-30)
+
+User request: every money input fills from the right and adds thousand
+separators automatically; then the same for every other numeric field.
+**No live view uses `<input type="number">` any more**: money fields use
+`<x-money-input>`, everything else `<x-number-input>`. `NumberInputTest`
+fails on any `type="number"` outside the orphaned pages.
+
+- `components/number-input.blade.php` is the implementation. It renders
+  `<input type="text" inputmode="numeric|decimal" x-data="numberInput({...})"
+  x-modelable="numValue">`. `money-input` forwards to it and only adds the
+  `money-input` class, so money fields are easy to find. The binding stays
+  on the tag (`wire:model…`, `x-model…`); `type` / `min` / `step` are
+  dropped.
+- Options:
+  - `decimals="2"`: report alert levels
+  - `signed`: allow a leading "-"
+  - `max`: clamped while typing (return and stock quantities). `min` is
+    left to validation, because typing 12 passes through 1.
+  - `align="center"`: steppers
+- **Debounce:** x-modelable bypasses x-model's own debounce. So
+  `wire:model.live.debounce.Nms` is rendered as a plain `wire:model`, and
+  the input calls `$wire.$commit()` once typing pauses: one request per
+  burst, not per key. The value is on `$wire` immediately, so a Save
+  clicked meanwhile still sends it. Plain `.live` keeps Livewire's own
+  150 ms.
+- `Alpine.data('numberInput')` in `resources/js/app.js`:
+  - The box shows "12,500"; the model receives the **string** "12500"
+    ('' when empty). That is the same value a number input sent, so no PHP
+    rules or casts changed. "12500.00" from decimal casts shows as "12,500"
+    in integer fields. Max 12 integer digits.
+  - The caret keeps the same number of digits to its right. On blur a
+    half-typed "12." tidies to "12".
+  - It overrides `el._x_forceModelUpdate`. Otherwise x-model writes the raw
+    "12500" back into the box on every model change, and re-formatting it
+    threw the caret to the end.
+  - It fires `change` on blur itself. Browsers skip the native `change`
+    once a script has rewritten the value, which broke `wire:model.lazy`.
+  - A lone "0" (int properties default to it) is selected on focus, so
+    typing replaces it.
+  - Without a model (`value="…"` + `x-on:change`), it starts from the
+    markup's value. **JS reading `$event.target.value` gets "1,200"**:
+    strip commas (see review-transfer).
+- CSS: `input.num-input[type="text"][inputmode]` in `app.css`
+  (right-aligned, mono, tabular digits), specific enough to beat a page's
+  `.xx-input` without `!important`. `.num-center` centres; an inline
+  `text-align` still wins.
+- **Blade on component tags:** a bare `:attr` is PHP, so Alpine bindings
+  are `x-bind:attr` and `x-on:event`. `@if … disabled @endif` inside a tag
+  doesn't work; use `:disabled="$phpBool"`.
+- Converted:
+  - 37 money fields: POS, warehouse sale, credit repayments, write-offs,
+    register / record drawer / close wizard, product and pack prices,
+    receive stock, damaged goods, expense request, Settings
+  - 31 other numbers: quantities, steppers, scan quantities, items per
+    box, stock thresholds, denominations, days, override %, lead time,
+    report alert levels
+- Tested in Chrome on scratch pages covering every binding style
+  (`.live` / `.live.debounce` / `.blur` / `.lazy` / Alpine `x-model` /
+  no model, decimals, signed, max) and on real pages as owner and shop
+  manager at 1440px and 390px. Test: `tests/Feature/Ui/NumberInputTest.php`.

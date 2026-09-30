@@ -48,7 +48,7 @@
     <div class="ad-field">
         <label class="ad-label" for="ad-amt-{{ $this->getId() }}">Amount <span>*</span></label>
         <div class="ad-money">
-            <input id="ad-amt-{{ $this->getId() }}" type="number" min="1" inputmode="numeric" wire:model="amount" placeholder="0" class="ad-input">
+            <x-money-input id="ad-amt-{{ $this->getId() }}" wire:model="amount" placeholder="0" class="ad-input" />
             <span class="ad-money-u">RWF</span>
         </div>
         @error('amount') <div class="ad-error">{{ $message }}</div> @enderror

@@ -495,9 +495,7 @@
                 <div class="rf-qty-row">
                   <div class="rf-qty-ctrl">
                     <button type="button" class="rf-qty-btn" wire:click="decrementItem({{ $index }})">−</button>
-                    <input class="rf-qty-input {{ $over ? 'over' : '' }}" type="number" min="1"
-                           wire:model.live="items.{{ $index }}.boxes_requested"
-                           style="text-align:center;width:52px;">
+                    <x-number-input class="rf-qty-input {{ $over ? 'over' : '' }}" wire:model.live="items.{{ $index }}.boxes_requested" style="text-align:center;width:52px;" />
                     <button type="button" class="rf-qty-btn" wire:click="incrementItem({{ $index }})">+</button>
                     <span class="rf-qty-label">boxes</span>
                   </div>

@@ -474,10 +474,7 @@
         <label style="display:block;font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">
             How many boxes to add now?
         </label>
-        <input wire:model.live="pendingQty"
-               wire:keydown.enter="confirmScannedQuantity"
-               type="number" min="1" max="{{ $pendingMaxQty }}"
-               class="pt-qty-input">
+        <x-number-input wire:model.live="pendingQty" wire:keydown.enter="confirmScannedQuantity" max="{{ $pendingMaxQty }}" class="pt-qty-input" />
         @error('pendingQty')
             <div style="font-size:13px;color:var(--red);margin-top:4px">{{ $message }}</div>
         @enderror

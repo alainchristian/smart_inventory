@@ -81,12 +81,9 @@
           <label style="display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px">
             Number of Boxes <span style="color:var(--red)">*</span>
           </label>
-          <input wire:model.live="numberOfBoxes" type="number" min="1" max="100"
-                 style="width:160px;padding:9px 12px;border:1px solid var(--border);
+          <x-number-input wire:model.live="numberOfBoxes" max="100" style="width:160px;padding:9px 12px;border:1px solid var(--border);
                         border-radius:var(--rx);font-size:14px;font-family:var(--mono);
-                        background:var(--surface);color:var(--text);outline:none;box-sizing:border-box"
-                 onfocus="this.style.borderColor='var(--accent)'"
-                 onblur="this.style.borderColor='var(--border)'">
+                        background:var(--surface);color:var(--text);outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
           @error('numberOfBoxes')
             <div style="color:var(--red);font-size:11px;margin-top:4px">{{ $message }}</div>
           @enderror

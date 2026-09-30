@@ -26,10 +26,7 @@
 
             <div>
                 <label class="block text-xs font-medium mb-1" style="color:var(--text-dim);">Amount (RWF)</label>
-                <input type="number" wire:model="amount" min="1"
-                       class="w-full px-3 py-2 rounded-lg text-sm"
-                       style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);"
-                       placeholder="0">
+                <x-money-input wire:model="amount" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);" placeholder="0" />
                 @error('amount') <div class="text-xs mt-1" style="color:var(--red);">{{ $message }}</div> @enderror
             </div>
 

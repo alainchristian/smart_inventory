@@ -2867,3 +2867,14 @@ main,
 @media (max-width: 640px) {
   .rtx-list > :nth-child(n+6) { display: none; }
 }
+
+/* Numeric inputs (<x-number-input> / <x-money-input>): filled from the
+   right, "12,500" while typing. Element + two attributes so it beats a
+   page's own `.xx-input` text-align / font rules without !important;
+   steppers pass align="center". An inline style still wins. */
+input.num-input[type="text"][inputmode] {
+  text-align: right;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+input.num-input.num-center[type="text"][inputmode] { text-align: center; }

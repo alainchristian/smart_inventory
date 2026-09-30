@@ -49,7 +49,7 @@
     <div class="ae-field">
         <label class="ae-label" for="ae-amt-{{ $this->getId() }}">Amount <span>*</span></label>
         <div class="ae-money">
-            <input id="ae-amt-{{ $this->getId() }}" type="number" min="1" inputmode="numeric" wire:model="amount" placeholder="0" class="ae-input">
+            <x-money-input id="ae-amt-{{ $this->getId() }}" wire:model="amount" placeholder="0" class="ae-input" />
             <span class="ae-money-u">RWF</span>
         </div>
         @error('amount') <div class="ae-error">{{ $message }}</div> @enderror

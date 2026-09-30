@@ -611,8 +611,7 @@
         </div>
         <div>
             <div class="st-input-wrap">
-                <input wire:model="returnApprovalThreshold"
-                       type="number" min="0" class="st-input" placeholder="100000">
+                <x-money-input wire:model="returnApprovalThreshold" class="st-input" placeholder="100000" />
                 <span class="st-input-unit">RWF</span>
             </div>
             @error('returnApprovalThreshold')
@@ -631,8 +630,7 @@
         </div>
         <div>
             <div class="st-input-wrap">
-                <input wire:model="maxReturnDays"
-                       type="number" min="0" class="st-input" placeholder="30">
+                <x-number-input wire:model="maxReturnDays" class="st-input" placeholder="30" />
                 <span class="st-input-unit">days</span>
             </div>
             @error('maxReturnDays')
@@ -700,10 +698,8 @@
         </div>
         <div>
             <div class="st-input-wrap">
-                <input wire:model="maxCreditPerCustomer"
-                       type="number" min="0" class="st-input"
-                       placeholder="0 = unlimited"
-                       {{ !$allowCreditSales ? 'disabled' : '' }}>
+                <x-money-input wire:model="maxCreditPerCustomer" class="st-input"
+                               placeholder="0 = unlimited" :disabled="!$allowCreditSales" />
                 <span class="st-input-unit">RWF</span>
             </div>
             @error('maxCreditPerCustomer')
@@ -722,10 +718,8 @@
         </div>
         <div>
             <div class="st-input-wrap">
-                <input wire:model="overdueCreditDays"
-                       type="number" min="0" max="365" class="st-input"
-                       placeholder="14"
-                       {{ !$allowCreditSales ? 'disabled' : '' }}>
+                <x-number-input wire:model="overdueCreditDays" max="365" class="st-input"
+                                placeholder="14" :disabled="!$allowCreditSales" />
                 <span class="st-input-unit">days</span>
             </div>
             @error('overdueCreditDays')
@@ -778,10 +772,8 @@
         </div>
         <div>
             <div class="st-input-wrap">
-                <input wire:model="priceOverrideThreshold"
-                       type="number" min="1" max="100" class="st-input"
-                       placeholder="20"
-                       {{ !$allowPriceOverride ? 'disabled' : '' }}>
+                <x-number-input wire:model="priceOverrideThreshold" max="100" class="st-input"
+                                placeholder="20" :disabled="!$allowPriceOverride" />
                 <span class="st-input-unit">%</span>
             </div>
             @error('priceOverrideThreshold')
@@ -819,8 +811,7 @@
         </div>
         <div>
             <div class="st-input-wrap">
-                <input wire:model="lowStockBoxesShop"
-                       type="number" min="1" class="st-input" placeholder="2">
+                <x-number-input wire:model="lowStockBoxesShop" class="st-input" placeholder="2" />
                 <span class="st-input-unit">boxes</span>
             </div>
             @error('lowStockBoxesShop')
@@ -839,8 +830,7 @@
         </div>
         <div>
             <div class="st-input-wrap">
-                <input wire:model="lowStockBoxesWarehouse"
-                       type="number" min="1" class="st-input" placeholder="5">
+                <x-number-input wire:model="lowStockBoxesWarehouse" class="st-input" placeholder="5" />
                 <span class="st-input-unit">boxes</span>
             </div>
             @error('lowStockBoxesWarehouse')

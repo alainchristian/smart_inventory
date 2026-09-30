@@ -530,17 +530,17 @@
                             </div>
                             <div>
                                 <label class="rb-label">Items / Box</label>
-                                <input type="number" wire:model="editableProductItemsPerBox.{{ $rowNum }}" min="1" class="rb-input">
+                                <x-number-input wire:model="editableProductItemsPerBox.{{ $rowNum }}" class="rb-input" />
                             </div>
                         </div>
                         <div class="rb-grid-2">
                             <div>
                                 <label class="rb-label">Box Purchase Price (RWF)</label>
-                                <input type="number" wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}" min="0" class="rb-input">
+                                <x-money-input wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}" class="rb-input" />
                             </div>
                             <div>
                                 <label class="rb-label">Box Selling Price (RWF)</label>
-                                <input type="number" wire:model="editableProductBoxSellingPrices.{{ $rowNum }}" min="0" class="rb-input">
+                                <x-money-input wire:model="editableProductBoxSellingPrices.{{ $rowNum }}" class="rb-input" />
                             </div>
                         </div>
                     </div>
@@ -650,17 +650,17 @@
                             </div>
                             <div>
                                 <label class="rb-label">Items / Box</label>
-                                <input type="number" wire:model="editableProductItemsPerBox.{{ $rowNum }}" class="rb-input">
+                                <x-number-input wire:model="editableProductItemsPerBox.{{ $rowNum }}" class="rb-input" />
                             </div>
                         </div>
                         <div class="rb-grid-2">
                             <div>
                                 <label class="rb-label">Box Purchase Price (RWF)</label>
-                                <input type="number" wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}" min="0" class="rb-input">
+                                <x-money-input wire:model="editableProductBoxPurchasePrices.{{ $rowNum }}" class="rb-input" />
                             </div>
                             <div>
                                 <label class="rb-label">Box Selling Price (RWF)</label>
-                                <input type="number" wire:model="editableProductBoxSellingPrices.{{ $rowNum }}" min="0" class="rb-input">
+                                <x-money-input wire:model="editableProductBoxSellingPrices.{{ $rowNum }}" class="rb-input" />
                             </div>
                         </div>
                     </div>
@@ -1095,12 +1095,12 @@
             <div class="rb-grid-2">
                 <div>
                     <label class="rb-label">Items per Box <span>*</span></label>
-                    <input type="number" wire:model="newProductItemsPerBox" min="1" placeholder="e.g., 24" class="rb-input">
+                    <x-number-input wire:model="newProductItemsPerBox" placeholder="e.g., 24" class="rb-input" />
                     @error('newProductItemsPerBox') <p class="rb-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="rb-label">Selling Price (RWF) <span>*</span></label>
-                    <input type="number" wire:model="newProductSellingPrice" min="0" step="1" placeholder="e.g., 500" class="rb-input">
+                    <x-money-input wire:model="newProductSellingPrice" placeholder="e.g., 500" class="rb-input" />
                     @error('newProductSellingPrice') <p class="rb-error">{{ $message }}</p> @enderror
                 </div>
             </div>
@@ -1113,7 +1113,7 @@
 
             <div class="rb-field">
                 <label class="rb-label">Number of Boxes <span>*</span></label>
-                <input type="number" wire:model="numberOfBoxes" min="1" max="100" class="rb-input">
+                <x-number-input wire:model="numberOfBoxes" max="100" class="rb-input" />
                 @if($product)
                 <p class="rb-hint">≈ {{ $numberOfBoxes * $product->items_per_box }} items total</p>
                 @endif

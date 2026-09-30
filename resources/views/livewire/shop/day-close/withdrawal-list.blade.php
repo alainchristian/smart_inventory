@@ -55,7 +55,7 @@
                         <td colspan="4" style="padding:12px 16px">
                             <div class="wl-edit">
                                 <input wire:model="editReason" type="text" placeholder="Reason" class="wl-in" style="flex:1;min-width:140px">
-                                <input wire:model="editAmount" type="number" min="1" placeholder="Amount" class="wl-in" style="width:120px;font-family:var(--mono);text-align:right">
+                                <x-money-input wire:model="editAmount" placeholder="Amount" class="wl-in" style="width:120px;font-family:var(--mono);text-align:right" />
                                 <select wire:model.live="editMethod" class="wl-in">
                                     <option value="cash">Cash</option>
                                     <option value="mobile_money">MoMo</option>

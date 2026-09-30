@@ -343,15 +343,10 @@
                 {{ $pendingAlreadyScanned }} already scanned &nbsp;·&nbsp;
                 <strong style="color:var(--text)">{{ $pendingMaxQty }} box{{ $pendingMaxQty === 1 ? '' : 'es' }} remaining</strong>
             </div>
-            <input wire:model.live="pendingQty"
-                   wire:keydown.enter="confirmScannedQuantity"
-                   x-on:keydown.escape.stop="$wire.closeQuantityPanel()"
-                   type="number" min="1" max="{{ $pendingMaxQty }}"
-                   x-init="$nextTick(() => $el.select())"
-                   style="width:100%;padding:12px;border:2px solid var(--accent);
+            <x-number-input wire:model.live="pendingQty" wire:keydown.enter="confirmScannedQuantity" x-on:keydown.escape.stop="$wire.closeQuantityPanel()" max="{{ $pendingMaxQty }}" x-init="$nextTick(() => $el.select())" style="width:100%;padding:12px;border:2px solid var(--accent);
                           border-radius:10px;font-size:34px;font-weight:800;text-align:center;
                           background:var(--surface);color:var(--text);font-family:var(--mono);
-                          outline:none;box-sizing:border-box;display:block">
+                          outline:none;box-sizing:border-box;display:block" />
             @error('pendingQty')
                 <div style="font-size:13px;color:var(--red);margin-top:6px;text-align:center">{{ $message }}</div>
             @enderror

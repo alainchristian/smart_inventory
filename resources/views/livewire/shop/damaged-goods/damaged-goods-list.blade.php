@@ -645,12 +645,12 @@
                 <div class="dg-form-2col">
                     <div class="dg-form-row">
                         <div class="dg-form-lbl">Quantity Damaged <span style="color:var(--red)">*</span></div>
-                        <input type="number" wire:model="recordQuantity" min="1" placeholder="0" class="dg-form-inp">
+                        <x-number-input wire:model="recordQuantity" placeholder="0" class="dg-form-inp" />
                         @error('recordQuantity') <div class="dg-err">{{ $message }}</div> @enderror
                     </div>
                     <div class="dg-form-row">
                         <div class="dg-form-lbl">Estimated Loss (RWF) <span style="color:var(--red)">*</span></div>
-                        <input type="number" wire:model="recordEstimatedLoss" min="0" placeholder="0" class="dg-form-inp">
+                        <x-money-input wire:model="recordEstimatedLoss" placeholder="0" class="dg-form-inp" />
                         @error('recordEstimatedLoss') <div class="dg-err">{{ $message }}</div> @enderror
                     </div>
                 </div>

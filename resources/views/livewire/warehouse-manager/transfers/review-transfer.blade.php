@@ -417,11 +417,7 @@
                         <div class="rt-stat">
                             <label class="rt-stat-label">Boxes Requested</label>
                             @if($transfer->status === TransferStatus::PENDING)
-                                <input type="number"
-                                       value="{{ $item['boxes_requested'] }}"
-                                       min="1"
-                                       @change="$wire.set('items.{{ $index }}.boxes_requested', parseInt($event.target.value) || 1)"
-                                       class="rt-input {{ $exceedsStock ? 'rt-input-error' : '' }}">
+                                <x-number-input value="{{ $item['boxes_requested'] }}" x-on:change="$wire.set('items.{{ $index }}.boxes_requested', parseInt($event.target.value.replace(/,/g, '')) || 1)" class="rt-input {{ $exceedsStock ? 'rt-input-error' : '' }}" />
                                 @error("items.{$index}.boxes_requested")
                                     <span class="rt-field-error">{{ $message }}</span>
                                 @enderror

@@ -432,10 +432,7 @@
                                                         <button type="button" class="pr-qty-btn"
                                                                 wire:click="$set('items.{{ $selectedIndex }}.qty_returned', max(1, {{ $selQtyRet }} - 1))"
                                                                 @click.stop>−</button>
-                                                        <input type="number" class="pr-qty-in"
-                                                               wire:model.live="items.{{ $selectedIndex }}.qty_returned"
-                                                               min="1" max="{{ $selMaxQty }}"
-                                                               @click.stop>
+                                                        <x-number-input class="pr-qty-in" wire:model.live="items.{{ $selectedIndex }}.qty_returned" max="{{ $selMaxQty }}" x-on:click.stop align="center" />
                                                         <button type="button" class="pr-qty-btn"
                                                                 wire:click="$set('items.{{ $selectedIndex }}.qty_returned', min({{ $selMaxQty }}, {{ $selQtyRet }} + 1))"
                                                                 @click.stop>+</button>
@@ -494,10 +491,7 @@
                                                     </div>
                                                     <div class="pr-split-side">
                                                         <div class="pr-split-lbl">Damaged → Flag</div>
-                                                        <input type="number" class="pr-dmg-inp"
-                                                               wire:model.live="items.{{ $selectedIndex }}.qty_damaged"
-                                                               min="1" max="{{ $selQtyRet - 1 }}"
-                                                               @click.stop>
+                                                        <x-number-input class="pr-dmg-inp" wire:model.live="items.{{ $selectedIndex }}.qty_damaged" max="{{ $selQtyRet - 1 }}" x-on:click.stop align="center" />
                                                         <div class="pr-split-unit">{{ $selUnitLabel }}(s)</div>
                                                     </div>
                                                 </div>

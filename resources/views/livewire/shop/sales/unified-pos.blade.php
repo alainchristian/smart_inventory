@@ -653,7 +653,7 @@
                 <label class="upos-label">{{ $stagingMode === 'box' ? __('Number of Boxes') : ($unitName ? __('How many :unit', ['unit' => $unitName]) : __('Number of Items')) }}</label>
                 <div class="upos-stepper">
                     <button type="button" class="upos-stepper-btn" @click="if(qty > 1) qty--">−</button>
-                    <input class="upos-stepper-val" type="number" x-model.number="qty" min="1" style="border-left:1px solid var(--border);border-right:1px solid var(--border)">
+                    <x-number-input class="upos-stepper-val" x-model.number="qty" style="border-left:1px solid var(--border);border-right:1px solid var(--border)" align="center" />
                     <button type="button" class="upos-stepper-btn" @click="qty++">+</button>
                 </div>
                 <div x-show="isOverStock" style="display:none; color:var(--amber); font-size:12px; margin-top:4px; font-weight:600; padding:6px 10px; background:var(--amber-dim); border-radius:var(--rsm);"
@@ -666,7 +666,7 @@
                 <label class="upos-label">{{ $stagingMode === 'box' ? __('Box Price (RWF)') : ($unitName ? __('Price per :unit (RWF)', ['unit' => $unitName]) : __('Item Price (RWF)')) }}</label>
                 @if($settingAllowPriceOverride)
                 <div class="upos-price-row">
-                    <input class="upos-input" type="number" x-model.number="price" min="0">
+                    <x-money-input class="upos-input" x-model.number="price" />
                     <span class="upos-price-modified-badge" x-show="isModified" style="display:none">{{ __('Modified') }}</span>
                 </div>
                 <div class="upos-field" style="margin-top:6px" x-show="isModified" style="display:none">
@@ -902,7 +902,7 @@
                     <div class="upos-pay-label-row">
                         <label class="upos-pay-label">{{ __('Mobile Money') }}</label>
                     </div>
-                    <input class="upos-pay-input" type="number" x-model="momo" min="0" placeholder="0">
+                    <x-money-input class="upos-pay-input" x-model="momo" placeholder="0" />
                 </div>
 
                 @if($settingAllowCardPayment)
@@ -911,7 +911,7 @@
                     <div class="upos-pay-label-row">
                         <label class="upos-pay-label">{{ __('Card') }}</label>
                     </div>
-                    <input class="upos-pay-input" type="number" x-model="card" min="0" placeholder="0">
+                    <x-money-input class="upos-pay-input" x-model="card" placeholder="0" />
                     <div class="upos-pay-ref">
                         <input class="upos-pay-input" type="text" wire:model="payRef_card" placeholder="{{ __('Card reference') }}" style="font-size:11px">
                     </div>
@@ -924,7 +924,7 @@
                     <div class="upos-pay-label-row">
                         <label class="upos-pay-label">{{ __('Bank Transfer') }}</label>
                     </div>
-                    <input class="upos-pay-input" type="number" x-model="bank" min="0" placeholder="0">
+                    <x-money-input class="upos-pay-input" x-model="bank" placeholder="0" />
                     <div class="upos-pay-ref">
                         <input class="upos-pay-input" type="text" wire:model="payRef_bank_transfer" placeholder="{{ __('Transfer reference') }}" style="font-size:11px">
                     </div>
@@ -940,9 +940,9 @@
                         <span style="font-size:10px;color:var(--amber)">{{ __('Select customer first') }}</span>
                         @endif
                     </div>
-                    <input class="upos-pay-input" type="number" x-model="credit" min="0" placeholder="0"
-                        @blur="$wire.set('payAmt_credit', parseInt(credit)||0)"
-                        @if($settingCreditRequiresCustomer && !$selectedCustomerId) disabled @endif>
+                    <x-money-input class="upos-pay-input" x-model="credit" placeholder="0"
+                        x-on:blur="$wire.set('payAmt_credit', parseInt(credit)||0)"
+                        :disabled="$settingCreditRequiresCustomer && !$selectedCustomerId" />
                 </div>
                 @endif
 

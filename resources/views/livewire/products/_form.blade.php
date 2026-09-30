@@ -91,8 +91,7 @@
       {{-- Items per Box (first — needed to compute per-item hints) --}}
       <div style="margin-bottom:16px">
         <label class="pf-label">Items per Box <span style="color:var(--red)">*</span></label>
-        <input wire:model.live="itemsPerBox" type="number" min="1"
-               class="pf-input pf-mono" style="width:180px">
+        <x-number-input wire:model.live="itemsPerBox" class="pf-input pf-mono" style="width:180px" />
         @error('itemsPerBox')
           <div class="pf-error">{{ $message }}</div>
         @enderror
@@ -105,8 +104,7 @@
           <label class="pf-label">Box Purchase Price <span style="color:var(--red)">*</span></label>
           <div class="pf-price-wrap">
             <span class="pf-price-prefix">RWF</span>
-            <input wire:model.live="boxPurchasePrice" type="number" min="0" step="100"
-                   placeholder="0" class="pf-input pf-mono pf-price">
+            <x-money-input wire:model.live="boxPurchasePrice" placeholder="0" class="pf-input pf-mono pf-price" />
           </div>
           @error('boxPurchasePrice')
             <div class="pf-error">{{ $message }}</div>
@@ -125,8 +123,7 @@
           <label class="pf-label">Box Selling Price <span style="color:var(--red)">*</span></label>
           <div class="pf-price-wrap">
             <span class="pf-price-prefix">RWF</span>
-            <input wire:model.live="boxSellingPrice" type="number" min="0" step="100"
-                   placeholder="0" class="pf-input pf-mono pf-price">
+            <x-money-input wire:model.live="boxSellingPrice" placeholder="0" class="pf-input pf-mono pf-price" />
           </div>
           @error('boxSellingPrice')
             <div class="pf-error">{{ $message }}</div>
@@ -156,21 +153,18 @@
         {{-- Items per Box confirmation (hidden on phones: same field is in Pricing) --}}
         <div class="pf-dup-ipb">
           <label class="pf-label">Items per Box <span style="color:var(--text-dim);font-size:10px">(confirmation)</span></label>
-          <input wire:model.live="itemsPerBox" type="number" min="1"
-                 class="pf-input pf-mono pf-readonly">
+          <x-number-input wire:model.live="itemsPerBox" class="pf-input pf-mono pf-readonly" />
         </div>
 
         <div>
           <label class="pf-label">Low Stock Alert At</label>
-          <input wire:model="lowStockThreshold" type="number" min="0"
-                 class="pf-input pf-mono">
+          <x-number-input wire:model="lowStockThreshold" class="pf-input pf-mono" />
           <div class="pf-hint">items remaining</div>
         </div>
 
         <div>
           <label class="pf-label">Reorder Point</label>
-          <input wire:model="reorderPoint" type="number" min="0"
-                 class="pf-input pf-mono">
+          <x-number-input wire:model="reorderPoint" class="pf-input pf-mono" />
         </div>
 
       </div>
@@ -250,10 +244,10 @@
         <div wire:key="su-{{ $i }}">
           <div class="pf-su-row">
             <input type="text" wire:model.blur="sellUnits.{{ $i }}.name" class="pf-input" placeholder="e.g. Dozen" aria-label="Pack name">
-            <input type="number" min="2" wire:model.live.debounce.400ms="sellUnits.{{ $i }}.size" class="pf-input pf-mono" aria-label="Pieces in the pack">
+            <x-number-input wire:model.live.debounce.400ms="sellUnits.{{ $i }}.size" class="pf-input pf-mono" aria-label="Pieces in the pack" />
             <div class="pf-price-wrap">
               <span class="pf-price-prefix">RWF</span>
-              <input type="number" min="1" step="50" wire:model.live.debounce.400ms="sellUnits.{{ $i }}.price" class="pf-input pf-mono pf-price" aria-label="Pack price">
+              <x-money-input wire:model.live.debounce.400ms="sellUnits.{{ $i }}.price" class="pf-input pf-mono pf-price" aria-label="Pack price" />
             </div>
             <button type="button" class="pf-su-remove" wire:click="removeSellUnit({{ $i }})" title="Remove this pack" aria-label="Remove {{ $unit['name'] ?: 'pack' }}">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
