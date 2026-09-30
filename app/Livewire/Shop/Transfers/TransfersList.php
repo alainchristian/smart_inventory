@@ -2,71 +2,34 @@
 
 namespace App\Livewire\Shop\Transfers;
 
-use App\Enums\TransferStatus;
-use App\Models\Transfer;
+use App\Livewire\Transfers\Concerns\ListsTransfers;
+use Illuminate\Database\Eloquent\Builder;
+use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\WithPagination;
 
+/** Shop manager: transfers coming to their shop. */
 class TransfersList extends Component
 {
-    use WithPagination;
+    use ListsTransfers;
 
-    public $statusFilter = 'all';
-
-    protected $listeners = [
-        'transfer-updated' => '$refresh',
-    ];
-
-    public function mount()
+    public function mount(): void
     {
-        $user = auth()->user();
-
-        // Verify user is a shop manager
-        if (!$user->isShopManager()) {
-            abort(403, 'Only shop managers can access this page.');
-        }
+        abort_unless(auth()->user()->isShopManager(), 403, 'Only shop managers can access this page.');
     }
 
-    public function render()
+    #[On('transfer-updated')]
+    public function refreshList(): void
     {
-        $user = auth()->user();
-        $shopId = $user->location_id;
+        // re-render
+    }
 
-        // Build query for transfers to this shop
-        $query = Transfer::with(['fromWarehouse', 'requestedBy', 'items.product'])
-            ->where('to_shop_id', $shopId)
-            ->orderBy('created_at', 'desc');
+    protected function role(): string
+    {
+        return 'shop';
+    }
 
-        // Apply status filter
-        if ($this->statusFilter !== 'all') {
-            $query->where('status', $this->statusFilter);
-        }
-
-        $transfers = $query->paginate(20);
-
-        // Get counts for badges
-        $pendingCount = Transfer::where('to_shop_id', $shopId)
-            ->where('status', TransferStatus::PENDING)
-            ->count();
-
-        $approvedCount = Transfer::where('to_shop_id', $shopId)
-            ->where('status', TransferStatus::APPROVED)
-            ->count();
-
-        $inTransitCount = Transfer::where('to_shop_id', $shopId)
-            ->where('status', TransferStatus::IN_TRANSIT)
-            ->count();
-
-        $deliveredCount = Transfer::where('to_shop_id', $shopId)
-            ->where('status', TransferStatus::DELIVERED)
-            ->count();
-
-        return view('livewire.shop.transfers.transfers-list', [
-            'transfers' => $transfers,
-            'pendingCount' => $pendingCount,
-            'approvedCount' => $approvedCount,
-            'inTransitCount' => $inTransitCount,
-            'deliveredCount' => $deliveredCount,
-        ]);
+    protected function scope(Builder $query): Builder
+    {
+        return $query->where('to_shop_id', auth()->user()->location_id);
     }
 }

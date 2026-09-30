@@ -123,6 +123,28 @@ class Transfer extends Model
         return $query->where('created_at', '>=', now()->subDays($days));
     }
 
+    /** The latest thing that happened, for list rows: ['label' => 'Shipped', 'at' => UTC Carbon]. */
+    public function lastEvent(): array
+    {
+        if ($this->status === TransferStatus::CANCELLED) {
+            return ['label' => 'Cancelled', 'at' => $this->updated_at];
+        }
+
+        foreach ([
+            'received_at'  => 'Received',
+            'delivered_at' => 'Delivered',
+            'shipped_at'   => 'Shipped',
+            'packed_at'    => 'Packing started',
+            'reviewed_at'  => $this->status === TransferStatus::REJECTED ? 'Rejected' : 'Approved',
+        ] as $column => $label) {
+            if ($this->{$column}) {
+                return ['label' => $label, 'at' => $this->{$column}];
+            }
+        }
+
+        return ['label' => 'Requested', 'at' => $this->requested_at];
+    }
+
     /**
      * Progress steps for <x-transfers.timeline>: each is
      * ['key', 'label', 'state' => done|current|todo|stopped, 'who', 'at' (UTC)].

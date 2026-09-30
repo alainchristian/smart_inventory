@@ -1958,3 +1958,27 @@ One commit per phase.
 - Wrapper views lose their copied CSS in the phase that rebuilds their
   page, so each commit stays shippable.
 - Tests: `tests/Feature/Transfers/TransferComponentsTest.php`.
+
+### Phase 3 — one list for all three roles
+- `App\Livewire\Transfers\Concerns\ListsTransfers` + view
+  `livewire/transfers/transfers-list.blade.php` (prefix `tfl-`, row partial
+  `partials/list-row`). `Owner|Shop|WarehouseManager\Transfers\TransfersList`
+  only supply `role()` (owner | shop | warehouse) and `scope()`. The three
+  old list views were deleted; the index wrappers are just the component tag.
+- URL filters: `?status=` (owner dashboard links `pending` / `discrepancy`
+  still work), `?q=` (transfer #, shop, product name / SKU / barcode; LIKE
+  wildcards escaped), `?period=` (on requested_at, business tz), `?shop=`.
+- Tab counts come from one `count(*) filter (where …)` query and follow the
+  search / period / shop filters; tabs run in flow order (pending →
+  received, then rejected, cancelled; owner and warehouse also get
+  Discrepancies). Summary cards (`ui-kpi`) always cover all of the role's
+  transfers: owner 4 (awaiting approval, on the road, received this month,
+  discrepancies), warehouse 3 (to approve, to pack, on the road), shop 3
+  (awaiting approval, arriving, received this month).
+- Warehouse: a "Needs you" table (pending → Review, approved → Pack /
+  Continue packing, oldest first) above "Other transfers" when no filter is
+  set; the main table then leaves those out.
+- Rows: the shop is the main line (owner sees "from <warehouse>" under it);
+  on phones the status badge rides in the frozen first column.
+- `Transfer::lastEvent()` gives the "Last update" label + time.
+- Tests: `tests/Feature/Transfers/TransferListTest.php`.
