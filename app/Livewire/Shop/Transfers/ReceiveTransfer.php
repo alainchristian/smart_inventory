@@ -35,6 +35,9 @@ class ReceiveTransfer extends Component
     public int     $pendingMaxQty          = 0;
     public int     $pendingAlreadyScanned  = 0;
 
+    /** Completion summary sheet (received / damaged / missing). */
+    public bool $confirmComplete = false;
+
     protected $listeners = [
         'barcode-scanned' => 'handleBarcodeScan',
     ];
@@ -53,17 +56,11 @@ class ReceiveTransfer extends Component
             abort(403, 'Only shop managers can access this page.');
         }
 
-        // Verify this transfer is for this shop
-        if ($transfer->to_shop_id !== $user->location_id) {
-            session()->flash('error', 'This transfer is not for your shop.');
-            redirect()->route('shop.transfers.index')->dispatch();
-            return;
-        }
+        abort_if($transfer->to_shop_id !== $user->location_id, 403, 'This transfer is not for your shop.');
 
-        // Only in-transit or delivered transfers can be received
+        // Nothing to receive (not shipped yet, or already received): show the transfer.
         if (!in_array($transfer->status, [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED])) {
-            session()->flash('error', 'Only in-transit or delivered transfers can be received.');
-            redirect()->route('shop.transfers.index')->dispatch();
+            $this->redirectRoute('shop.transfers.show', $transfer);
             return;
         }
 
@@ -278,6 +275,22 @@ class ReceiveTransfer extends Component
         session()->flash('info', 'Box removed from scanned list');
     }
 
+    /** Check the scan and open the completion summary. */
+    public function openComplete(): void
+    {
+        if (empty($this->scannedBoxes)) {
+            session()->flash('scan_error', 'Scan at least one box first.');
+            return;
+        }
+        foreach ($this->scannedBoxes as $box) {
+            if ($box['is_damaged'] && trim((string) $box['damage_notes']) === '') {
+                session()->flash('scan_error', "Describe the damage on {$box['box_code']}.");
+                return;
+            }
+        }
+        $this->confirmComplete = true;
+    }
+
     public function completeReceipt()
     {
         if (empty($this->scannedBoxes)) {
@@ -345,7 +358,7 @@ class ReceiveTransfer extends Component
 
             session()->flash('success', 'Transfer received successfully');
 
-            return redirect()->route('shop.transfers.index');
+            return redirect()->route('shop.transfers.show', $this->transfer);
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
         }

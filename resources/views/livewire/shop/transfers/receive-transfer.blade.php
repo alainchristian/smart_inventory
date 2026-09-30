@@ -1,4 +1,7 @@
-@php use App\Enums\TransferStatus; @endphp
+{{--
+    Receive a shipped transfer (Shop\Transfers\ReceiveTransfer). Shares the
+    scan layout with Pack: <x-transfers.scanner>, tfs- styles, sticky bar.
+--}}
 <div>
 @if($sessionBlocked)
     <x-session-gate-blocked
@@ -7,582 +10,225 @@
         :session-id="$blockedSessionId"
     />
 @else
-<style>
-/* ── Receive Transfer ───────────────────────────────────── */
-.rf-wrap { display:flex; flex-direction:column; gap:16px; }
+<div class="tfs-page" style="font-family:var(--font)">
+<x-transfers.styles />
+<x-transfers.scan-styles />
 
-/* Cards */
-.rf-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
-.rf-card-head {
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:10px 14px; border-bottom:1px solid var(--border);
-    background:var(--surface2); flex-wrap:wrap;
-}
-.rf-card-title { font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-dim); }
-.rf-card-body  { padding:16px; }
+@php
+    $summary = collect($receivingSummary)->sortBy('complete')->values();
+    $okCount = $scannedCount - $damagedCount;
+@endphp
 
-/* Flash */
-.rf-flash {
-    display:flex; align-items:flex-start; gap:10px;
-    padding:10px 14px; border-radius:10px; font-size:14px; border:1px solid; line-height:1.5;
-}
-.rf-flash.ok   { background:var(--green-dim);  border-color:rgba(16,185,129,.25); color:var(--green); }
-.rf-flash.err  { background:var(--red-dim);    border-color:rgba(225,29,72,.25);  color:var(--red); }
-.rf-flash.info { background:var(--accent-dim); border-color:rgba(99,102,241,.25); color:var(--accent); }
+<x-transfers.header :title="'Receive ' . $transfer->transfer_number" mono :back="route('shop.transfers.show', $transfer)">
+    <x-slot:meta>
+        <span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <x-transfers.status :status="$transfer->status" />
+            <x-transfers.route :from="$transfer->fromWarehouse?->name ?? '—'" :to="$transfer->toShop?->name ?? '—'" />
+        </span>
+    </x-slot:meta>
+</x-transfers.header>
 
-/* Transfer header */
-.rf-num  { font-size:17px; font-weight:800; color:var(--text); font-family:var(--mono); letter-spacing:-.3px; }
-.rf-pill {
-    display:inline-flex; align-items:center; gap:5px;
-    padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.3px;
-    background:var(--accent-dim); color:var(--accent); border:1px solid rgba(99,102,241,.2);
-}
+<x-transfers.scanner action="scanBox" label="Scan a box code or product barcode" placeholder="Scan or type, then Enter" button="Receive" />
 
-/* Route strip */
-.rf-route {
-    display:flex; align-items:center; gap:0;
-    background:var(--surface2); border-radius:10px;
-    padding:12px 14px; border:1px solid var(--border);
-}
-.rf-route-node  { flex:1; }
-.rf-route-label { font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); }
-.rf-route-name  { font-size:16px; font-weight:700; color:var(--text); margin-top:2px; }
-.rf-route-arrow {
-    width:28px; height:28px; border-radius:50%;
-    background:var(--accent-dim); color:var(--accent);
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
-}
-
-/* Scan strip */
-.rf-scan-strip {
-    background:var(--surface2); border:1px solid var(--border);
-    border-radius:12px; padding:14px; border-left:3px solid var(--accent);
-}
-.rf-scan-label { font-size:12px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
-.rf-scan-row   { display:flex; gap:8px; }
-.rf-scan-input {
-    flex:1; min-width:0; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
-    font-size:17px; font-weight:700; font-family:var(--mono);
-    background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
-}
-.rf-scan-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,.1); }
-.rf-scan-btn {
-    padding:10px 20px; background:var(--accent); color:#fff;
-    border:none; border-radius:8px; font-size:14px; font-weight:700;
-    cursor:pointer; white-space:nowrap; transition:opacity .15s;
-}
-.rf-scan-btn:hover { opacity:.88; }
-
-/* Quantity panel (modal) */
-.rf-qty-overlay {
-    position:fixed; inset:0; z-index:9999; background:rgba(10,14,26,.6);
-    backdrop-filter:blur(4px); display:flex; align-items:center;
-    justify-content:center; padding:20px; animation:rfFadeIn .15s ease;
-}
-@keyframes rfFadeIn { from{opacity:0} to{opacity:1} }
-.rf-qty-modal {
-    background:var(--surface); border:1px solid var(--border); border-radius:16px;
-    width:100%; max-width:340px; padding:24px;
-    box-shadow:0 24px 60px rgba(0,0,0,.15); animation:rfSlideUp .2s ease;
-}
-@keyframes rfSlideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-
-/* Product rows */
-.rf-prod-row { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
-.rf-prod-row.complete { border-color:var(--green); }
-.rf-prod-head {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--border); gap:8px; flex-wrap:wrap;
-}
-.rf-prod-name   { font-size:16px; font-weight:700; color:var(--text); }
-.rf-prod-body   { padding:12px 14px; }
-.rf-prog-info   { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
-.rf-prog-text   { font-size:14px; color:var(--text-dim); }
-.rf-prog-nums   { font-size:14px; font-weight:700; color:var(--text); font-family:var(--mono); }
-.rf-prog-bar-wrap { height:5px; background:var(--surface2); border-radius:4px; overflow:hidden; }
-.rf-prog-bar    { height:100%; border-radius:4px; transition:width .3s; }
-.rf-prog-bar.partial  { background:var(--amber); }
-.rf-prog-bar.done     { background:var(--green); }
-.rf-prog-bar.empty    { background:var(--surface2); }
-
-/* Box rows */
-.rf-box-row {
-    display:flex; align-items:center; gap:10px;
-    padding:9px 14px; border-bottom:1px solid var(--border);
-    font-size:14px;
-}
-.rf-box-row:last-child { border-bottom:none; }
-.rf-box-row.scanned { background:var(--green-dim); }
-.rf-box-row.damaged { background:var(--red-dim); }
-.rf-box-code  { font-family:var(--mono); font-weight:700; font-size:14px; color:var(--accent);
-                background:var(--accent-dim); padding:2px 8px; border-radius:5px; white-space:nowrap;
-                border:1px solid rgba(99,102,241,.15); }
-.rf-box-product { flex:1; min-width:0; color:var(--text); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.rf-box-items   { font-family:var(--mono); font-size:13px; color:var(--text-dim); white-space:nowrap; }
-
-/* Damage controls */
-.rf-damage-btn {
-    padding:3px 9px; border-radius:5px; font-size:13px; font-weight:600;
-    border:none; cursor:pointer; transition:all .15s; white-space:nowrap;
-    background:var(--surface2); color:var(--text-dim); border:1px solid var(--border);
-}
-.rf-damage-btn.active { background:var(--red-dim); color:var(--red); border-color:rgba(225,29,72,.3); }
-.rf-damage-btn.active:hover { background:var(--red); color:#fff; }
-.rf-damage-input {
-    flex:1; padding:5px 9px; border:1.5px solid rgba(225,29,72,.4); border-radius:6px;
-    font-size:13px; outline:none; background:var(--surface); color:var(--text);
-    min-width:0;
-}
-.rf-damage-input:focus { border-color:var(--red); }
-.rf-remove-btn {
-    padding:3px 9px; border-radius:5px; font-size:13px; font-weight:600;
-    background:none; color:var(--red); border:none; cursor:pointer; transition:color .15s;
-}
-.rf-remove-btn:hover { color:var(--red); opacity:.7; }
-
-/* Summary strip */
-.rf-summary { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
-.rf-sum-box  { text-align:center; padding:12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border); }
-.rf-sum-v    { font-size:24px; font-weight:800; color:var(--text); font-family:var(--mono); line-height:1.1; }
-.rf-sum-l    { font-size:12px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); margin-top:2px; }
-
-/* Complete button */
-.rf-complete-btn {
-    width:100%; padding:11px; background:var(--green); color:#fff;
-    border:none; border-radius:9px; font-size:16px; font-weight:700;
-    cursor:pointer; display:flex; align-items:center; justify-content:center;
-    gap:8px; transition:opacity .15s;
-}
-.rf-complete-btn:hover:not(:disabled) { opacity:.88; }
-.rf-complete-btn:disabled { opacity:.4; cursor:not-allowed; }
-
-/* Divider between unscanned / scanned sections */
-.rf-section-label {
-    font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
-    color:var(--text-dim); padding:6px 14px;
-    background:var(--surface2); border-bottom:1px solid var(--border);
-}
-
-/* Responsive */
-@media(max-width:640px) {
-    .rf-summary { grid-template-columns:1fr; }
-    .rf-route   { flex-direction:column; gap:10px; }
-    .rf-route-node:last-child { text-align:left; }
-    .rf-route-arrow { transform:rotate(90deg); }
-}
-
-/* Responsive 2B — Request Transfer Form */
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
-@media(max-width:600px) {
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-
-/* Responsive 2C — General Rules */
-@media(max-width:600px) {
-    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
-    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
-    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
-}
-
-
-/* Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
-}
-@media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
-}
-@media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
-    .tl-step-sub  { display:none; }
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    .tl-route-dash-line { width:20px; }
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
-
-</style>
-
-<div class="rf-wrap">
-
-    {{-- Flash messages --}}
-    @if(session()->has('success'))
-    <div class="rf-flash ok">
-        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <span>{{ session('success') }}</span>
+{{-- ═══ Progress per product ═══════════════════════════════════════ --}}
+<div class="tfs-card">
+    <div class="tfs-card-head">
+        <div>
+            <h2 class="tfs-card-title">Shipped to you</h2>
+            <div class="tfs-card-sub">Unfinished products first</div>
+        </div>
+        <span class="tfs-pill">{{ $scannedCount }} / {{ $expectedBoxes }} boxes</span>
     </div>
-    @endif
-    @foreach(['scan_success','scan_error','error','info'] as $fk)
-        @if(session()->has($fk))
-        <div class="rf-flash {{ str_contains($fk,'error') ? 'err' : (str_contains($fk,'info') ? 'info' : 'ok') }}">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;margin-top:1px">
-                @if(str_contains($fk,'error'))
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                @elseif(str_contains($fk,'info'))
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                @else
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                @endif
-            </svg>
-            <span>{{ session($fk) }}</span>
-        </div>
-        @endif
-    @endforeach
-
-    {{-- Transfer header --}}
-    <div class="rf-card">
-        <div class="rf-card-head">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <span class="rf-num">{{ $transfer->transfer_number }}</span>
-                <span class="rf-pill">
-                    <span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>
-                    {{ $transfer->status->label() }}
-                </span>
-            </div>
-            <span style="font-size:13px;color:var(--text-dim)">{{ $transfer->shipped_at?->format('d M Y') }}</span>
-        </div>
-        <div class="rf-card-body">
-            <div class="rf-route">
-                <div class="rf-route-node">
-                    <div class="rf-route-label">From Warehouse</div>
-                    <div class="rf-route-name">{{ $transfer->fromWarehouse->name }}</div>
-                </div>
-                <div class="rf-route-arrow">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                </div>
-                <div class="rf-route-node" style="text-align:right">
-                    <div class="rf-route-label">To Shop</div>
-                    <div class="rf-route-name">{{ $transfer->toShop->name }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Scan strip --}}
-    <div class="rf-scan-strip">
-        <div class="rf-scan-label">Scan box code or product barcode</div>
-        <div class="rf-scan-row">
-            <input type="text"
-                   wire:model="scanInput"
-                   wire:keydown.enter="scanBox"
-                   placeholder="Box code or product barcode — press Enter"
-                   class="rf-scan-input"
-                   autofocus>
-            <button type="button" @click="$wire.scanBox()" class="rf-scan-btn">
-                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                Receive
-            </button>
-        </div>
-    </div>
-
-    {{-- Quantity panel --}}
-    @if($showQuantityPanel)
-    <div class="rf-qty-overlay"
-         x-data
-         x-on:keydown.escape.window="$wire.closeQuantityPanel()">
-        <div class="rf-qty-modal" @click.stop>
-            <div style="font-size:18px;font-weight:800;color:var(--text);text-align:center;margin-bottom:3px">
-                {{ $pendingProductName }}
-            </div>
-            <div style="font-size:14px;color:var(--text-dim);text-align:center;margin-bottom:16px">
-                {{ $pendingAlreadyScanned }} already scanned &nbsp;·&nbsp;
-                <strong style="color:var(--text)">{{ $pendingMaxQty }} box{{ $pendingMaxQty === 1 ? '' : 'es' }} remaining</strong>
-            </div>
-            <x-number-input wire:model.live="pendingQty" wire:keydown.enter="confirmScannedQuantity" x-on:keydown.escape.stop="$wire.closeQuantityPanel()" max="{{ $pendingMaxQty }}" x-init="$nextTick(() => $el.select())" style="width:100%;padding:12px;border:2px solid var(--accent);
-                          border-radius:10px;font-size:34px;font-weight:800;text-align:center;
-                          background:var(--surface);color:var(--text);font-family:var(--mono);
-                          outline:none;box-sizing:border-box;display:block" />
-            @error('pendingQty')
-                <div style="font-size:13px;color:var(--red);margin-top:6px;text-align:center">{{ $message }}</div>
-            @enderror
-            @php $afterAdd = max(0, $pendingMaxQty - (int) $pendingQty); @endphp
-            <div style="font-size:13px;color:var(--text-dim);text-align:center;margin-top:8px">
-                After confirming: <strong style="color:{{ $afterAdd === 0 ? 'var(--green)' : 'var(--text)' }}">{{ $afterAdd }} box{{ $afterAdd === 1 ? '' : 'es' }} still needed</strong>
-            </div>
-            <div style="font-size:13px;color:var(--text-dim);text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-                Press <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:13px">Enter</kbd>
-                to confirm &nbsp;·&nbsp;
-                <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:13px">Esc</kbd>
-                to cancel
-            </div>
-            <div style="display:flex;gap:8px;margin-top:14px">
-                <button @click="$wire.closeQuantityPanel()"
-                        style="flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);
-                               background:var(--surface);font-size:14px;font-weight:700;cursor:pointer;color:var(--text)">
-                    Cancel
-                </button>
-                <button @click="$wire.confirmScannedQuantity()"
-                        wire:loading.attr="disabled" wire:target="confirmScannedQuantity"
-                        style="flex:2;padding:9px;border-radius:9px;border:none;
-                               background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer">
-                    <span wire:loading.remove wire:target="confirmScannedQuantity">Confirm {{ $pendingQty }} Box{{ (int) $pendingQty === 1 ? '' : 'es' }}</span>
-                    <span wire:loading wire:target="confirmScannedQuantity" style="display:none">Confirming…</span>
-                </button>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    {{-- Receiving progress per product --}}
-    @if(isset($receivingSummary) && count($receivingSummary) > 0)
-    <div class="rf-card">
-        <div class="rf-card-head">
-            <span class="rf-card-title">Receiving Progress</span>
-            @php
-                $totalReceived  = collect($receivingSummary)->sum('boxes_received');
-                $totalShipped   = collect($receivingSummary)->sum('boxes_shipped');
-                $totalRemaining = $totalShipped - $totalReceived;
-            @endphp
-            <span style="font-size:13px;font-weight:700;font-family:var(--mono);
-                         padding:3px 10px;border-radius:6px;border:1px solid;display:inline-flex;align-items:center;gap:5px;
-                         {{ $totalRemaining > 0
-                             ? 'background:var(--amber-dim);color:var(--amber);border-color:rgba(217,119,6,.2)'
-                             : 'background:var(--green-dim);color:var(--green);border-color:rgba(16,185,129,.2)' }}">
-                @if($totalRemaining > 0)
-                    {{ $totalRemaining }} remaining
-                @else
-                    <x-icon name="check" size="12" /> Complete
-                @endif
-            </span>
-        </div>
-        <div class="rf-card-body" style="display:flex;flex-direction:column;gap:10px">
-            @foreach($receivingSummary as $summary)
-                @php
-                    $pct       = $summary['boxes_shipped'] > 0 ? min(100, round($summary['boxes_received'] / $summary['boxes_shipped'] * 100)) : 0;
-                    $remaining = $summary['boxes_shipped'] - $summary['boxes_received'];
-                    $barClass  = $summary['complete'] ? 'done' : ($summary['boxes_received'] > 0 ? 'partial' : 'empty');
-                @endphp
-                <div class="rf-prod-row {{ $summary['complete'] ? 'complete' : '' }}">
-                    <div class="rf-prod-head">
-                        <div style="display:flex;align-items:center;gap:8px">
-                            <span class="rf-prod-name">{{ $summary['product_name'] }}</span>
-                            @if($summary['complete'])
-                                <span style="padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;background:var(--green-dim);color:var(--green)">Complete</span>
+    <div class="m-scroll">
+        <table class="tfs-table m-sticky-first" style="min-width:600px">
+            <thead><tr><th>Product</th><th class="tfs-r">Scanned</th><th>Progress</th><th></th><th>Barcode</th></tr></thead>
+            <tbody>
+                @foreach($summary as $row)
+                    @php $pct = $row['boxes_shipped'] > 0 ? min(100, round($row['boxes_received'] / $row['boxes_shipped'] * 100)) : 0; @endphp
+                    <tr class="{{ $row['complete'] ? 'done' : '' }}" wire:key="ship-{{ $row['product_id'] }}">
+                        <td><span class="tfs-prod">{{ $row['product_name'] }}</span></td>
+                        <td class="tfs-r"><span class="tfs-n">{{ $row['boxes_received'] }}</span> <span class="tfs-mono">/ {{ $row['boxes_shipped'] }}</span></td>
+                        <td style="width:30%"><div class="tfs-bar {{ $row['complete'] ? 'full' : '' }}"><span style="width:{{ $pct }}%"></span></div></td>
+                        <td class="tfs-r">
+                            @if($row['complete'])
+                                <span class="tfs-state" style="background:var(--green-dim);color:var(--green)">Done</span>
                             @else
-                                <span style="padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;background:var(--amber-dim);color:var(--amber)">{{ $remaining }} left</span>
+                                <span class="tfs-state" style="background:var(--amber-dim);color:var(--amber)">{{ $row['boxes_shipped'] - $row['boxes_received'] }} to scan</span>
                             @endif
-                        </div>
-                        <span style="font-size:13px;font-family:var(--mono);color:var(--text-dim);background:var(--surface2);padding:2px 8px;border-radius:5px">
-                            {{ $summary['barcode'] }}
-                        </span>
-                    </div>
-                    <div class="rf-prod-body">
-                        <div class="rf-prog-info">
-                            <span class="rf-prog-text">Progress</span>
-                            <span class="rf-prog-nums" style="{{ $summary['complete'] ? 'color:var(--green)' : '' }}">
-                                {{ $summary['boxes_received'] }} / {{ $summary['boxes_shipped'] }} boxes
-                            </span>
-                        </div>
-                        <div class="rf-prog-bar-wrap">
-                            <div class="rf-prog-bar {{ $barClass }}" style="width:{{ $pct }}%"></div>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
+                        </td>
+                        <td><span class="tfs-mono">{{ $row['barcode'] }}</span></td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
-    @endif
-
-    {{-- Boxes: pending on top, scanned this session in middle, previously received at bottom --}}
-    @if((isset($pendingBoxes) && count($pendingBoxes) > 0) || (isset($sessionBoxes) && count($sessionBoxes) > 0) || (isset($receivedBoxes) && count($receivedBoxes) > 0))
-    <div class="rf-card">
-        <div class="rf-card-head">
-            <span class="rf-card-title">Boxes</span>
-            <div style="display:flex;gap:6px;align-items:center">
-                @if(isset($pendingBoxes) && count($pendingBoxes) > 0)
-                <span style="font-size:13px;font-weight:700;font-family:var(--mono);
-                             background:var(--amber-dim);color:var(--amber);
-                             padding:3px 8px;border-radius:6px">
-                    {{ count($pendingBoxes) }} pending
-                </span>
-                @endif
-                @php $doneCount = (isset($sessionBoxes) ? count($sessionBoxes) : 0) + (isset($receivedBoxes) ? count($receivedBoxes) : 0); @endphp
-                @if($doneCount > 0)
-                <span style="font-size:13px;font-weight:700;font-family:var(--mono);
-                             background:var(--green-dim);color:var(--green);
-                             padding:3px 8px;border-radius:6px">
-                    {{ $doneCount }} received
-                </span>
-                @endif
-            </div>
-        </div>
-
-        {{-- 1. Pending (unscanned) — top --}}
-        @if(isset($pendingBoxes) && count($pendingBoxes) > 0)
-        <div class="rf-section-label">Pending — {{ count($pendingBoxes) }} box{{ count($pendingBoxes) === 1 ? '' : 'es' }}</div>
-        @foreach($pendingBoxes as $box)
-        <div class="rf-box-row">
-            <span class="rf-box-code">{{ $box['box_code'] }}</span>
-            <span class="rf-box-product">{{ $box['product_name'] }}</span>
-            <span class="rf-box-items">{{ $box['items'] }} items</span>
-        </div>
-        @endforeach
-        @endif
-
-        {{-- 2. Scanned this session — middle, with damage controls --}}
-        @if(isset($sessionBoxes) && count($sessionBoxes) > 0)
-        <div class="rf-section-label" style="background:var(--green-dim);color:var(--green)">
-            Scanned this session — {{ count($sessionBoxes) }} box{{ count($sessionBoxes) === 1 ? '' : 'es' }}
-        </div>
-        @foreach($sessionBoxes as $box)
-        <div class="rf-box-row scanned {{ $box['is_damaged'] ? 'damaged' : '' }}" style="flex-wrap:wrap">
-            <span class="rf-box-code">{{ $box['box_code'] }}</span>
-            <span class="rf-box-product">{{ $box['product_name'] }}</span>
-            <span class="rf-box-items">{{ $box['items'] }} items</span>
-            <div style="display:flex;align-items:center;gap:6px;width:100%;margin-top:5px;padding-top:5px;border-top:1px solid rgba(0,0,0,.06)">
-                <button type="button"
-                        @click="$wire.markAsDamaged({{ $box['box_id'] }}, {{ $box['is_damaged'] ? 'false' : 'true' }})"
-                        class="rf-damage-btn {{ $box['is_damaged'] ? 'active' : '' }}"
-                        style="display:inline-flex;align-items:center;gap:4px">
-                    @if($box['is_damaged'])
-                        <x-icon name="check" size="12" /> Damaged
-                    @else
-                        Mark Damaged
-                    @endif
-                </button>
-                @if($box['is_damaged'])
-                <input type="text"
-                       @change="$wire.updateDamageNotes({{ $box['box_id'] }}, $event.target.value)"
-                       value="{{ $box['damage_notes'] }}"
-                       placeholder="Describe the damage…"
-                       class="rf-damage-input">
-                @endif
-                <button type="button"
-                        @click="$wire.removeScannedBox({{ $box['box_id'] }})"
-                        class="rf-remove-btn" style="margin-left:auto">
-                    Remove
-                </button>
-            </div>
-        </div>
-        @endforeach
-        @endif
-
-        {{-- 3. Previously received (committed to DB) — bottom --}}
-        @if(isset($receivedBoxes) && count($receivedBoxes) > 0)
-        <div class="rf-section-label" style="background:var(--surface2);color:var(--text-dim)">
-            Previously received — {{ count($receivedBoxes) }} box{{ count($receivedBoxes) === 1 ? '' : 'es' }}
-        </div>
-        @foreach($receivedBoxes as $box)
-        <div class="rf-box-row" style="opacity:.7">
-            <span class="rf-box-code">{{ $box['box_code'] }}</span>
-            <span class="rf-box-product">{{ $box['product_name'] }}</span>
-            <span class="rf-box-items">{{ $box['items'] }} items</span>
-            @if($box['is_damaged'])
-                <span style="padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;background:var(--red-dim);color:var(--red)">Damaged</span>
-            @else
-                <svg width="13" height="13" fill="none" stroke="var(--green)" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-            @endif
-        </div>
-        @endforeach
-        @endif
-
-    </div>
-    @endif
-
-    {{-- Summary + Complete --}}
-    <div class="rf-card">
-        <div class="rf-card-head">
-            <span class="rf-card-title">Complete Receiving</span>
-        </div>
-        <div class="rf-card-body" style="display:flex;flex-direction:column;gap:14px">
-            <div class="rf-summary">
-                <div class="rf-sum-box">
-                    <div class="rf-sum-v">{{ $expectedBoxes }}</div>
-                    <div class="rf-sum-l">Expected</div>
-                </div>
-                <div class="rf-sum-box">
-                    <div class="rf-sum-v" style="{{ $scannedCount > 0 ? 'color:var(--green)' : '' }}">{{ $scannedCount }}</div>
-                    <div class="rf-sum-l">Scanned</div>
-                </div>
-                <div class="rf-sum-box">
-                    <div class="rf-sum-v" style="{{ $remainingCount > 0 ? 'color:var(--amber)' : 'color:var(--green)' }}">{{ $remainingCount }}</div>
-                    <div class="rf-sum-l">Remaining</div>
-                </div>
-            </div>
-
-            <button type="button"
-                    @click="$wire.completeReceipt()"
-                    @if(empty($scannedBoxes)) disabled @endif
-                    class="rf-complete-btn"
-                    wire:loading.attr="disabled" wire:target="completeReceipt">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"
-                     wire:loading.remove wire:target="completeReceipt">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span wire:loading.remove wire:target="completeReceipt">Complete Receiving</span>
-                <span wire:loading wire:target="completeReceipt" style="display:none">Processing…</span>
-            </button>
-            <p style="font-size:13px;color:var(--text-dim);text-align:center;margin-top:-6px">
-                Partial deliveries allowed. Missing or damaged boxes will be flagged.
-            </p>
-        </div>
-    </div>
-
 </div>
 
-<script>
-window.addEventListener('quantity-confirmed', () => {
-    setTimeout(() => {
-        const input = document.querySelector('.rf-scan-input');
-        if (input) { input.focus(); input.select(); }
-    }, 80);
-});
-</script>
+{{-- ═══ Scanned this session ═══════════════════════════════════════ --}}
+<div class="tfs-card">
+    <div class="tfs-card-head">
+        <div>
+            <h2 class="tfs-card-title">Scanned</h2>
+            <div class="tfs-card-sub">Mark a box damaged and say what's wrong; remove one scanned by mistake</div>
+        </div>
+        <span class="tfs-pill">{{ count($sessionBoxes) }}</span>
+    </div>
+    @if(empty($sessionBoxes))
+        <div class="tfs-empty">Nothing scanned yet. Scan a box label or a product barcode above.</div>
+    @else
+        <div class="m-scroll">
+            <table class="tfs-table m-sticky-first" style="min-width:720px">
+                <thead><tr><th>Box</th><th>Product</th><th class="tfs-r">Items</th><th>Condition</th><th></th></tr></thead>
+                <tbody>
+                    @foreach(array_reverse($sessionBoxes) as $box)
+                        <tr class="{{ $box['is_damaged'] ? 'flag' : '' }}" wire:key="scanned-{{ $box['box_id'] }}">
+                            <td><span class="tfs-code">{{ $box['box_code'] }}</span></td>
+                            <td>{{ $box['product_name'] }}</td>
+                            <td class="tfs-r"><span class="tfs-n">{{ number_format($box['items']) }}</span></td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <button type="button" class="tfs-act {{ $box['is_damaged'] ? 'on' : '' }}"
+                                            wire:click="markAsDamaged({{ $box['box_id'] }}, {{ $box['is_damaged'] ? 'false' : 'true' }})">
+                                        {{ $box['is_damaged'] ? 'Damaged ✓' : 'Mark damaged' }}
+                                    </button>
+                                    @if($box['is_damaged'])
+                                        <input type="text" class="tfs-note-input" value="{{ $box['damage_notes'] }}" placeholder="What's wrong? (required)"
+                                               x-on:change="$wire.updateDamageNotes({{ $box['box_id'] }}, $event.target.value)" aria-label="Damage on {{ $box['box_code'] }}">
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="tfs-r"><button type="button" class="tfs-act danger" wire:click="removeScannedBox({{ $box['box_id'] }})">Remove</button></td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</div>
 
+{{-- ═══ Still to scan ══════════════════════════════════════════════ --}}
+@if(!empty($pendingBoxes))
+    <div class="tfs-card">
+        <div class="tfs-card-head">
+            <div>
+                <h2 class="tfs-card-title">Still to scan</h2>
+                <div class="tfs-card-sub">Boxes not scanned when you complete are recorded as missing</div>
+            </div>
+            <span class="tfs-pill">{{ count($pendingBoxes) }}</span>
+        </div>
+        <div class="m-scroll">
+            <table class="tfs-table m-sticky-first" style="min-width:480px">
+                <thead><tr><th>Box</th><th>Product</th><th class="tfs-r">Items</th></tr></thead>
+                <tbody>
+                    @foreach($pendingBoxes as $box)
+                        <tr wire:key="pending-{{ $box['box_id'] }}">
+                            <td><span class="tfs-code">{{ $box['box_code'] }}</span></td>
+                            <td>{{ $box['product_name'] }}</td>
+                            <td class="tfs-r"><span class="tfs-n">{{ number_format($box['items']) }}</span></td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endif
+
+@if(!empty($receivedBoxes))
+    <div class="tfs-card">
+        <div class="tfs-card-head"><h2 class="tfs-card-title">Received earlier</h2><span class="tfs-pill">{{ count($receivedBoxes) }}</span></div>
+        <div class="m-scroll">
+            <table class="tfs-table m-sticky-first" style="min-width:480px">
+                <thead><tr><th>Box</th><th>Product</th><th class="tfs-r">Items</th><th>Condition</th></tr></thead>
+                <tbody>
+                    @foreach($receivedBoxes as $box)
+                        <tr class="done" wire:key="received-{{ $box['box_id'] }}">
+                            <td><span class="tfs-code">{{ $box['box_code'] }}</span></td>
+                            <td>{{ $box['product_name'] }}</td>
+                            <td class="tfs-r"><span class="tfs-n">{{ number_format($box['items']) }}</span></td>
+                            <td>{{ $box['is_damaged'] ? 'Damaged' : 'Good' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endif
+
+{{-- ═══ Sticky action bar ══════════════════════════════════════════ --}}
+<div class="tfs-actionbar">
+    <div class="tfs-stats">
+        <div><div class="tfs-stat-v">{{ $scannedCount }}<span style="font-size:12px;color:var(--text-dim)"> / {{ $expectedBoxes }}</span></div><div class="tfs-stat-l">Boxes scanned</div></div>
+        <div><div class="tfs-stat-v" style="{{ $damagedCount ? 'color:var(--red)' : '' }}">{{ $damagedCount }}</div><div class="tfs-stat-l">Damaged</div></div>
+        <div><div class="tfs-stat-v" style="{{ $remainingCount ? 'color:var(--amber)' : '' }}">{{ $remainingCount }}</div><div class="tfs-stat-l">Not scanned</div></div>
+    </div>
+    <div class="tfs-actionbar-go">
+        <button type="button" class="tf-btn tf-btn-primary" wire:click="openComplete" @disabled(empty($sessionBoxes))>
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Complete receiving
+        </button>
+    </div>
+</div>
+
+{{-- ═══ Quantity prompt ════════════════════════════════════════════ --}}
+@if($showQuantityPanel)
+    <div class="m-sheet-overlay" wire:click="closeQuantityPanel"></div>
+    <div class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="tfs-qty-title" x-data x-on:keydown.escape.window="$wire.closeQuantityPanel()">
+        <div class="m-sheet-handle"></div>
+        <div class="m-sheet-head">
+            <h2 class="m-sheet-title" id="tfs-qty-title">{{ $pendingProductName }}</h2>
+            <button type="button" class="tfs-x m-tap" wire:click="closeQuantityPanel" aria-label="Close">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+        <div class="m-sheet-body">
+            <p class="tfs-sheet-lead">How many boxes arrived? {{ $pendingAlreadyScanned }} scanned so far, <strong style="color:var(--text)">{{ $pendingMaxQty }} left to scan</strong>.</p>
+            <x-number-input wire:model.live="pendingQty" wire:keydown.enter="confirmScannedQuantity" max="{{ $pendingMaxQty }}"
+                            x-init="$nextTick(() => $el.select())" class="tfs-qty" align="center" aria-label="Boxes received" />
+            @error('pendingQty')<div class="tfs-err" style="text-align:center">{{ $message }}</div>@enderror
+            <p class="tfs-sheet-lead" style="text-align:center;margin:12px 0 0"><kbd class="tfs-kbd">Enter</kbd> to confirm · <kbd class="tfs-kbd">Esc</kbd> to cancel</p>
+        </div>
+        <div class="m-sheet-foot">
+            <button type="button" class="tf-btn tf-btn-ghost" wire:click="closeQuantityPanel">Cancel</button>
+            <button type="button" class="tf-btn tf-btn-primary" wire:click="confirmScannedQuantity">Confirm {{ (int) $pendingQty }} {{ Str::plural('box', (int) $pendingQty) }}</button>
+        </div>
+    </div>
+@endif
+
+{{-- ═══ Completion summary ═════════════════════════════════════════ --}}
+@if($confirmComplete)
+    <div class="m-sheet-overlay" wire:click="$set('confirmComplete', false)"></div>
+    <div class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="tfs-done-title">
+        <div class="m-sheet-handle"></div>
+        <div class="m-sheet-head">
+            <h2 class="m-sheet-title" id="tfs-done-title">Complete receiving?</h2>
+            <button type="button" class="tfs-x m-tap" wire:click="$set('confirmComplete', false)" aria-label="Close">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+        <div class="m-sheet-body">
+            <div class="tfs-sum">
+                <div><div class="tfs-stat-v" style="color:var(--green)">{{ $okCount }}</div><div class="tfs-stat-l">Into your stock</div></div>
+                <div><div class="tfs-stat-v" style="{{ $damagedCount ? 'color:var(--red)' : '' }}">{{ $damagedCount }}</div><div class="tfs-stat-l">Damaged</div></div>
+                <div><div class="tfs-stat-v" style="{{ $remainingCount ? 'color:var(--red)' : '' }}">{{ $remainingCount }}</div><div class="tfs-stat-l">Missing</div></div>
+            </div>
+            @if($damagedCount || $remainingCount)
+                <p class="tfs-sheet-lead" style="margin:0">
+                    @if($remainingCount){{ $remainingCount }} {{ Str::plural('box', $remainingCount) }} you didn't scan will be recorded as <strong>missing</strong>. @endif
+                    The warehouse is told about the discrepancy.
+                </p>
+            @else
+                <p class="tfs-sheet-lead" style="margin:0">Everything that was shipped arrived in good condition.</p>
+            @endif
+        </div>
+        <div class="m-sheet-foot">
+            <button type="button" class="tf-btn tf-btn-ghost" wire:click="$set('confirmComplete', false)">Keep scanning</button>
+            <button type="button" class="tf-btn tf-btn-primary" wire:click="completeReceipt" wire:loading.attr="disabled" wire:target="completeReceipt">
+                <span wire:loading.remove wire:target="completeReceipt">Complete receiving</span>
+                <span wire:loading wire:target="completeReceipt" style="display:none">Saving…</span>
+            </button>
+        </div>
+    </div>
+@endif
+</div>
 @endif
 </div>

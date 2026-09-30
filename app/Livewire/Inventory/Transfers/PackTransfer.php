@@ -32,6 +32,9 @@ class PackTransfer extends Component
     public int  $pendingMaxQty          = 0;
     public int  $pendingAlreadyAssigned = 0;
 
+    /** Ship confirmation sheet (lists products packed short). */
+    public bool $confirmShip = false;
+
     protected $listeners = [
         'barcode-scanned' => 'handleBarcodeScan',
     ];
@@ -45,8 +48,8 @@ class PackTransfer extends Component
         }
 
         if ($transfer->status !== \App\Enums\TransferStatus::APPROVED) {
-            session()->flash('error', "Transfer {$transfer->transfer_number} is {$transfer->status->label()} and cannot be packed.");
-            redirect()->route('warehouse.transfers.index')->dispatch();
+            // Nothing to pack: show the transfer instead.
+            $this->redirectRoute('warehouse.transfers.show', $transfer);
             return;
         }
 
@@ -190,6 +193,34 @@ class PackTransfer extends Component
     }
 
 
+    /** Take a wrongly packed box off the transfer (back on sale at the warehouse). */
+    public function removeBox(int $boxId): void
+    {
+        try {
+            app(TransferService::class)->unpackBox($this->transfer->fresh(), $boxId);
+            $this->transfer->refresh();
+            $this->refreshPackedBoxes();
+            session()->flash('scan_success', 'Box removed. It is back in warehouse stock.');
+        } catch (\Throwable $e) {
+            session()->flash('scan_error', $e->getMessage());
+        }
+    }
+
+    /** Check the transporter and open the ship confirmation. */
+    public function openShip(): void
+    {
+        if (empty($this->packedBoxes)) {
+            session()->flash('scan_error', 'Pack at least one box before shipping.');
+            return;
+        }
+        if (trim($this->transporterInput) === '') {
+            $this->addError('transporterInput', 'Choose or type the transporter.');
+            return;
+        }
+        $this->resetErrorBag('transporterInput');
+        $this->confirmShip = true;
+    }
+
     /**
      * After boxes are packed, ship the transfer (allows partial shipments).
      */
@@ -243,7 +274,7 @@ class PackTransfer extends Component
 
             session()->flash('success', $message);
 
-            return redirect()->route('warehouse.transfers.index');
+            return redirect()->route('warehouse.transfers.show', $this->transfer);
         } catch (\Exception $e) {
             session()->flash('scan_error', $e->getMessage());
         }

@@ -2008,3 +2008,29 @@ One commit per phase.
   manual errors (`approve()` validates the note first, then quantities).
 - Shop: "Receive boxes" (primary) and "Mark as arrived" (in transit).
 - Tests: `tests/Feature/Transfers/TransferDetailTest.php`.
+
+### Phase 5 — one scan layout for pack and receive
+- Both views rebuilt on shared parts: `<x-transfers.scanner action label
+  placeholder button>` (Enter / button → the component's scan method,
+  refocus on `quantity-confirmed`, inline feedback from the
+  `scan_success` / `scan_error` / `error` / `info` flashes) and
+  `<x-transfers.scan-styles />` (`tfs-`). Layout: header → scanner →
+  per-product progress table (unfinished first; count in the 2nd column
+  for phones) → boxes tables → sticky action bar with counts. Quantity
+  prompt and confirmations are `m-sheet`s. PHP scan logic unchanged; the
+  pack / receive wrappers are just the component tag (the receive wrapper's
+  190-line style block is gone).
+- **Pack:** new `TransferService::unpackBox($transfer, $boxId)` (approved
+  only): releases the box hold, lowers `quantity_shipped`, deletes the
+  TransferBox, clears `packed_at` when nothing is left, logs
+  `transfer_box_unpacked`. `PackTransfer::removeBox()` calls it.
+  `openShip()` checks transporter + at least one box, then a sheet lists
+  products packed short ("Ship anyway"). Ship lands on the detail page.
+- **Receive:** `openComplete()` checks at least one scan and a note on
+  every damaged box, then a summary sheet (into stock / damaged / missing:
+  unscanned boxes are recorded missing). Completing lands on the detail page.
+- Bug fixed: both mounts used `redirect()->route(...)->dispatch()`, which
+  doesn't exist on Livewire's redirector — opening pack for a shipped
+  transfer (or receive for a finished one) crashed. Now `$this->redirectRoute()`
+  to the transfer's detail page.
+- Tests: `tests/Feature/Transfers/TransferScanTest.php`.

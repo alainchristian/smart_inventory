@@ -548,6 +548,44 @@ class TransferService
     }
 
     /**
+     * Take a wrongly packed box off an approved transfer: the box goes back on
+     * sale at the warehouse (releaseBox), quantity_shipped drops by its items,
+     * and packed_at is cleared again when nothing is left packed.
+     */
+    public function unpackBox(Transfer $transfer, int $boxId): void
+    {
+        if ($transfer->status !== TransferStatus::APPROVED) {
+            throw new \Exception('Boxes can only be removed before the transfer ships');
+        }
+
+        DB::transaction(function () use ($transfer, $boxId) {
+            $tb = TransferBox::where('transfer_id', $transfer->id)->where('box_id', $boxId)->lockForUpdate()->firstOrFail();
+            $box = Box::lockForUpdate()->findOrFail($boxId);
+
+            $this->releaseBox($tb, $box);
+            $transfer->items()->where('product_id', $box->product_id)->first()
+                ?->decrement('quantity_shipped', $box->items_remaining);
+            $tb->delete();
+
+            if (! TransferBox::where('transfer_id', $transfer->id)->exists()) {
+                $transfer->update(['packed_by' => null, 'packed_at' => null]);
+            }
+
+            ActivityLog::create([
+                'user_id'           => auth()->id(),
+                'user_name'         => auth()->user()?->name,
+                'action'            => 'transfer_box_unpacked',
+                'entity_type'       => 'Transfer',
+                'entity_id'         => $transfer->id,
+                'entity_identifier' => $transfer->transfer_number,
+                'details'           => ['box_code' => $box->box_code],
+                'ip_address'        => request()->ip(),
+                'user_agent'        => request()->header('User-Agent'),
+            ]);
+        });
+    }
+
+    /**
      * Pack a specific box by its box code.
      * This allows warehouse staff to scan individual box codes.
      *
