@@ -213,8 +213,14 @@
                 @endif
                 @if($transfer->notes)
                 <div class="ots-meta-item" style="grid-column:1/-1">
-                    <span class="ots-meta-label">Notes</span>
-                    <span class="ots-meta-value" style="font-weight:400;font-size:14px;color:var(--text-dim)">{{ $transfer->notes }}</span>
+                    <span class="ots-meta-label">Shop's note</span>
+                    <span class="ots-meta-value" style="font-weight:400;font-size:14px;color:var(--text-sub)">{{ $transfer->notes }}</span>
+                </div>
+                @endif
+                @if($transfer->review_notes)
+                <div class="ots-meta-item" style="grid-column:1/-1">
+                    <span class="ots-meta-label">{{ match($transfer->status) { TransferStatus::REJECTED => 'Rejection reason', TransferStatus::CANCELLED => 'Cancellation reason', default => 'Approval note' } }}</span>
+                    <span class="ots-meta-value" style="font-weight:400;font-size:14px;color:var(--text-sub)">{{ $transfer->review_notes }}</span>
                 </div>
                 @endif
             </div>
@@ -223,8 +229,11 @@
 
     {{-- Items --}}
     @php
+        // Received < shipped is only a discrepancy once the shop has received
+        // the transfer; before that the boxes are simply still on the road.
+        $isReceived = $transfer->status === TransferStatus::RECEIVED;
         $hasAnyDiscrepancy = false;
-        foreach ($transfer->items as $item) {
+        foreach ($isReceived ? $transfer->items : [] as $item) {
             $ipb = max(1, (int) ($item->product->items_per_box ?? 1));
             $bxShipped  = $item->quantity_shipped  ? (int) round($item->quantity_shipped  / $ipb) : 0;
             $bxReceived = $item->quantity_received ? (int) round($item->quantity_received / $ipb) : 0;
@@ -267,7 +276,7 @@
                         $bxReceived = $item->quantity_received ? (int) round($item->quantity_received / $ipb) : 0;
                         $shipPct    = $bxReq    > 0 ? min(100, round($bxShipped  / $bxReq    * 100)) : 0;
                         $recvPct    = $bxShipped > 0 ? min(100, round($bxReceived / $bxShipped * 100)) : 0;
-                        $missing    = $bxShipped > 0 ? max(0, $bxShipped - $bxReceived) : 0;
+                        $missing    = $isReceived && $bxShipped > 0 ? max(0, $bxShipped - $bxReceived) : 0;
                     @endphp
                     <tr>
                         <td>
@@ -352,6 +361,9 @@
                         <td>
                             @if($tb->is_damaged)
                                 <span style="padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;background:var(--red-dim);color:var(--red)">Damaged</span>
+                                @if($tb->damage_notes)
+                                    <div style="font-size:12px;color:var(--text-sub);margin-top:4px;white-space:nowrap">{{ $tb->damage_notes }}</div>
+                                @endif
                             @elseif($tb->is_received)
                                 <span style="padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;background:var(--green-dim);color:var(--green)">Received</span>
                             @else

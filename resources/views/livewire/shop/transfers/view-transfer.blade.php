@@ -565,7 +565,13 @@
             @endif
           </div>
           @if($transfer->notes)
-            <div class="td-notes">{{ $transfer->notes }}</div>
+            <div class="td-notes"><strong style="font-style:normal">Your note:</strong> {{ $transfer->notes }}</div>
+          @endif
+          @if($transfer->review_notes)
+            <div class="td-notes">
+              <strong style="font-style:normal">{{ match($transfer->status) { \App\Enums\TransferStatus::REJECTED => 'Rejected:', \App\Enums\TransferStatus::CANCELLED => 'Cancelled:', default => 'Warehouse note:' } }}</strong>
+              {{ $transfer->review_notes }}
+            </div>
           @endif
         </div>
       </div>

@@ -31,7 +31,8 @@ class Transfer extends Model
         'received_at',
         'has_discrepancy',
         'discrepancy_notes',
-        'notes',
+        'notes',          // the shop's request note
+        'review_notes',   // approval note, rejection or cancellation reason
     ];
 
     protected $casts = [

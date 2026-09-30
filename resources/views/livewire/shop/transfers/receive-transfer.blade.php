@@ -61,7 +61,7 @@
 .rf-scan-label { font-size:12px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
 .rf-scan-row   { display:flex; gap:8px; }
 .rf-scan-input {
-    flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
+    flex:1; min-width:0; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
     font-size:17px; font-weight:700; font-family:var(--mono);
     background:var(--surface); color:var(--text); outline:none; transition:border-color .15s;
 }
@@ -117,7 +117,7 @@
 .rf-box-code  { font-family:var(--mono); font-weight:700; font-size:14px; color:var(--accent);
                 background:var(--accent-dim); padding:2px 8px; border-radius:5px; white-space:nowrap;
                 border:1px solid rgba(99,102,241,.15); }
-.rf-box-product { flex:1; color:var(--text); font-weight:600; }
+.rf-box-product { flex:1; min-width:0; color:var(--text); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rf-box-items   { font-family:var(--mono); font-size:13px; color:var(--text-dim); white-space:nowrap; }
 
 /* Damage controls */

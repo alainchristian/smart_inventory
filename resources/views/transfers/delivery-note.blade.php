@@ -297,7 +297,11 @@
         'items.product',
     ]);
     $totalBoxes = $transfer->boxes->count();
-    $totalItems = $transfer->boxes->sum(fn($tb) => $tb->box?->items_remaining ?? 0);
+    // Damaged boxes arrived but aren't delivered stock.
+    $totalItems = $transfer->boxes->reject(fn ($tb) => $tb->is_damaged)->sum(fn ($tb) => $tb->box?->items_remaining ?? 0);
+    $damagedBoxes = $transfer->boxes->where('is_damaged', true)->count();
+    // Shipped per product, counted in boxes from the manifest (quantity_shipped is in items).
+    $boxesByProduct = $transfer->boxes->groupBy(fn ($tb) => $tb->box?->product_id);
 @endphp
 
 <div class="page">
@@ -319,12 +323,12 @@
     <div class="meta-row">
         <div class="meta-item">
             <div class="meta-label">Date Shipped</div>
-            <div class="meta-value">{{ $transfer->shipped_at ? $transfer->shipped_at->format('d M Y, H:i') : '—' }}</div>
+            <div class="meta-value">{{ $transfer->shipped_at ? local_time($transfer->shipped_at)->format('d M Y, H:i') : '—' }}</div>
         </div>
         @if ($transfer->packed_at)
         <div class="meta-item">
             <div class="meta-label">Date Packed</div>
-            <div class="meta-value">{{ $transfer->packed_at->format('d M Y, H:i') }}</div>
+            <div class="meta-value">{{ local_time($transfer->packed_at)->format('d M Y, H:i') }}</div>
         </div>
         @endif
         <div class="meta-item">
@@ -338,12 +342,12 @@
         @if($transfer->received_at)
         <div class="meta-item">
             <div class="meta-label">Date Received</div>
-            <div class="meta-value">{{ $transfer->received_at->format('d M Y, H:i') }}</div>
+            <div class="meta-value">{{ local_time($transfer->received_at)->format('d M Y, H:i') }}</div>
         </div>
         @endif
         <div class="meta-item">
             <div class="meta-label">Printed</div>
-            <div class="meta-value">{{ now()->format('d M Y, H:i') }}</div>
+            <div class="meta-value">{{ local_time(now())->format('d M Y, H:i') }}</div>
         </div>
     </div>
 
@@ -434,10 +438,16 @@
                 <td style="font-family:monospace;font-weight:600;">{{ $box?->box_code ?? '—' }}</td>
                 <td>{{ $box?->product?->name ?? '—' }}</td>
                 <td>
-                    @if ($box)
-                        @php $s = $box->status->value; @endphp
-                        <span class="status-{{ $s }}">{{ ucfirst($s) }}</span>
-                    @else —
+                    {{-- The box's state on this transfer, not its current stock status --}}
+                    @if ($tb->is_damaged)
+                        <span class="status-damaged">Damaged</span>
+                        @if ($tb->damage_notes)<div style="font-size:12px;color:#666;margin-top:2px">{{ $tb->damage_notes }}</div>@endif
+                    @elseif ($tb->is_received)
+                        <span class="status-full">Received</span>
+                    @elseif ($transfer->shipped_at)
+                        <span class="status-partial">In transit</span>
+                    @else
+                        <span>Packed</span>
                     @endif
                 </td>
                 <td>{{ $box ? number_format($box->items_remaining) : '—' }}</td>
@@ -451,7 +461,7 @@
         @if ($totalBoxes > 0)
         <tfoot>
             <tr>
-                <td colspan="4">Total</td>
+                <td colspan="4">Total{{ $damagedBoxes ? ' (excluding ' . $damagedBoxes . ' damaged ' . Str::plural('box', $damagedBoxes) . ')' : '' }}</td>
                 <td>{{ number_format($totalItems) }} items</td>
             </tr>
         </tfoot>
@@ -465,15 +475,18 @@
         <thead>
             <tr>
                 <th>Product</th>
-                <th style="text-align:right">Qty Requested</th>
-                <th style="text-align:right">Qty Shipped</th>
+                <th style="text-align:right">Boxes requested</th>
+                <th style="text-align:right">Boxes shipped</th>
+                <th style="text-align:right">Items shipped</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($transfer->items as $item)
             <tr>
                 <td>{{ $item->product?->name ?? '—' }}</td>
+                @php $shippedBoxes = ($boxesByProduct[$item->product_id] ?? collect())->count(); @endphp
                 <td style="text-align:right;font-family:monospace">{{ number_format($item->quantity_requested) }}</td>
+                <td style="text-align:right;font-family:monospace">{{ $shippedBoxes ?: '—' }}</td>
                 <td style="text-align:right;font-family:monospace">{{ $item->quantity_shipped !== null ? number_format($item->quantity_shipped) : '—' }}</td>
             </tr>
             @endforeach
@@ -483,8 +496,13 @@
 
     {{-- ── Notes ── --}}
     <div class="section-heading">Notes</div>
-    <div class="notes-box {{ $transfer->notes ? '' : 'empty' }}">
-        {{ $transfer->notes ?: 'No notes recorded for this transfer.' }}
+    <div class="notes-box {{ $transfer->notes || $transfer->review_notes ? '' : 'empty' }}">
+        @if ($transfer->notes || $transfer->review_notes)
+            @if ($transfer->notes)<div><strong>Shop's request:</strong> {{ $transfer->notes }}</div>@endif
+            @if ($transfer->review_notes)<div @if ($transfer->notes) style="margin-top:6px" @endif><strong>Approval note:</strong> {{ $transfer->review_notes }}</div>@endif
+        @else
+            No notes recorded for this transfer.
+        @endif
     </div>
 
     {{-- ── Signatures ── --}}

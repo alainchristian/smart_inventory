@@ -1902,3 +1902,42 @@ fails on any `type="number"` outside the orphaned pages.
   (`.live` / `.live.debounce` / `.blur` / `.lazy` / Alpine `x-model` /
   no model, decimals, signed, max) and on real pages as owner and shop
   manager at 1440px and 390px. Test: `tests/Feature/Ui/NumberInputTest.php`.
+
+---
+
+## Transfer module redesign (2026-09-30)
+
+Review of all 12 transfer screens (owner / shop / warehouse, 1440px and
+390px). Plan agreed with the user: 1 bug fixes → 2 shared foundation →
+3 lists as tables → 4 one detail layout (+ owner approve / reject) →
+5 one scan screen for pack and receive → 6 request form + delivery note.
+One commit per phase.
+
+### Phase 1 — bug fixes
+- **Request notes were being overwritten.** `approveTransfer($t, $note)`,
+  `rejectTransfer()` and `cancelTransfer()` wrote into `transfers.notes`,
+  destroying the shop's request note. They now write the new
+  `transfers.review_notes` (approval note, rejection or cancellation
+  reason); `notes` is only ever the shop's request. Migration
+  `2026_09_30_000001` backfills rejected rows (notes → review_notes) and
+  splits cancelled "…\n\nCancelled: reason" rows; its `backfill()` is
+  idempotent. Approved rows can't be recovered. Readers updated: review
+  page, shop view, owner detail, delivery note.
+- Owner detail flagged every in-transit transfer as a discrepancy
+  (received < shipped before anything was received). Only counts once
+  the transfer is `received`. Damage notes now show on the boxes table.
+- Warehouse "View Details" opened `ReviewTransfer`, which redirected away
+  for any non-pending transfer. `mount()` now allows every status;
+  approve / reject re-check the status.
+- Warehouse list clipped the destination shop mid-word (ellipsis doesn't
+  work on text inside a flex node).
+- Receive on phones: the scan input needed `min-width:0` (the Receive
+  button was pushed off-screen); box rows no longer wrap word by word.
+- Delivery note: dates were raw UTC (now `local_time()`); product summary
+  compared boxes requested with *items* shipped (now boxes requested /
+  boxes shipped / items shipped); box status is the box's state on this
+  transfer (packed / in transit / received / damaged + note), not its
+  current stock status; damaged boxes are excluded from the item total.
+- Tests: `tests/Feature/Transfers/TransferFixesTest.php`.
+- Note: the receive screen already had Mark damaged / Remove per scanned
+  box (they only appear after a scan).

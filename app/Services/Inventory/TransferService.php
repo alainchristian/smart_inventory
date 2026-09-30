@@ -91,7 +91,8 @@ class TransferService
                 'status' => TransferStatus::APPROVED,
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
-                'notes' => $notes ?? $transfer->notes,
+                // The shop's request note stays in `notes`.
+                'review_notes' => $notes ?: $transfer->review_notes,
             ]);
 
             ActivityLog::create([
@@ -139,7 +140,7 @@ class TransferService
                 'status' => TransferStatus::REJECTED,
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
-                'notes' => $reason,
+                'review_notes' => $reason,
             ]);
 
             ActivityLog::create([
@@ -721,7 +722,7 @@ class TransferService
         return DB::transaction(function () use ($transfer, $reason) {
             $transfer->update([
                 'status' => TransferStatus::CANCELLED,
-                'notes' => ($transfer->notes ? $transfer->notes . "\n\n" : '') . "Cancelled: {$reason}",
+                'review_notes' => $reason,
             ]);
 
             // Unassign packed boxes, putting any that hadn't reached the shop

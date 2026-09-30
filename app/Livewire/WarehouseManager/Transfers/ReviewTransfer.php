@@ -31,13 +31,9 @@ class ReviewTransfer extends Component
             return;
         }
 
-        // Only pending transfers can be reviewed
-        if ($transfer->status !== TransferStatus::PENDING) {
-            session()->flash('error', "Transfer {$transfer->transfer_number} is already {$transfer->status->label()} and cannot be reviewed.");
-            redirect()->route('warehouse.transfers.index')->dispatch();
-            return;
-        }
-
+        // Any status can be viewed ("View Details" in the list links here);
+        // only a pending transfer shows the approve / reject controls, and
+        // approve() / reject() re-check the status themselves.
         $this->transfer = $transfer;
 
         // quantity_requested stores boxes directly

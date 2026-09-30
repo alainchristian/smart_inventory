@@ -81,11 +81,10 @@
 }
 
 /* Route */
-.wtl-route { display:flex; align-items:center; gap:7px; font-size:16px; }
+.wtl-route { display:flex; align-items:center; gap:7px; font-size:16px; flex-wrap:wrap; }
 .wtl-route-node {
     display:inline-flex; align-items:center; gap:4px;
-    font-weight:600; color:var(--text); max-width:160px;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-weight:600; color:var(--text); white-space:nowrap;
 }
 .wtl-route-node svg { color:var(--text-dim); flex-shrink:0; }
 .wtl-route-arrow { color:var(--text-faint); flex-shrink:0; }
@@ -169,7 +168,7 @@
 }
 @media(max-width:520px) {
     .wtl-stat-v { font-size:22px; }
-    .wtl-route-node { max-width:110px; }
+    .wtl-route-node { max-width:none; }
 }
 
 /* Responsive 2A — Transfer List Pages */
