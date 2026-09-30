@@ -76,6 +76,8 @@
     .tf-title       { font-size:var(--m-fs-title) }
     .tf-head-actions{ width:100% }
     .tf-head-actions > * { flex:1;justify-content:center }
+    .tf-route       { flex-wrap:wrap;white-space:normal;row-gap:2px }
+    .tf-route-node  { white-space:nowrap }
     /* Timeline turns vertical: dot on the left, text beside it */
     .tf-steps       { grid-template-columns:1fr }
     .tf-step        { text-align:left;padding:0 0 14px 34px }

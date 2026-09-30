@@ -1982,3 +1982,29 @@ One commit per phase.
   on phones the status badge rides in the frozen first column.
 - `Transfer::lastEvent()` gives the "Last update" label + time.
 - Tests: `tests/Feature/Transfers/TransferListTest.php`.
+
+### Phase 4 — one detail page (+ owner approve / reject)
+- `App\Livewire\Transfers\TransferDetail` + `livewire/transfers/transfer-detail.blade.php`
+  (prefix `tfd-`) serve `owner|shop|warehouse.transfers.show`; the three
+  wrappers are just the component tag. Deleted: the owner's plain-Blade
+  show page, `Shop\Transfers\ViewTransfer`, `WarehouseManager\Transfers\ReviewTransfer`
+  (+ views).
+- Role comes from the user (owner/admin → owner; warehouse manager must own
+  the source warehouse; shop manager must own the destination shop → 403).
+- Layout: header (number, status, route, one primary action per role +
+  delivery note), an alert only when useful (rejected / cancelled reason,
+  discrepancy counts, waiting for approval, arrived-to-scan), progress
+  timeline, items table (+ Damaged column after a discrepant receipt),
+  boxes table with per-box state and damage notes, side cards for notes
+  (request + approval note, labelled) and transporter.
+- **Owners can now approve / reject** (before, only warehouse managers
+  could; the owner's page had no actions). Pending + owner/warehouse: the
+  items table becomes "Review quantities" with warehouse stock and an
+  editable box count (`<x-number-input max=stock>`), an optional note for
+  the shop (→ `review_notes`), Reject opens an `m-sheet` asking the reason
+  (required). After approval the page stays and shows the next step
+  (warehouse: Pack transfer).
+- Gotcha: `validate()` clears the error bag, so run it before adding
+  manual errors (`approve()` validates the note first, then quantities).
+- Shop: "Receive boxes" (primary) and "Mark as arrived" (in transit).
+- Tests: `tests/Feature/Transfers/TransferDetailTest.php`.

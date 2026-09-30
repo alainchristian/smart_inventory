@@ -131,7 +131,7 @@ class TransferFixesTest extends TestCase
         $this->actingAs($this->owner)->get(route('owner.transfers.show', $t))
             ->assertOk()
             ->assertDontSee('<th>Discrepancy</th>', false)
-            ->assertSee("Shop's note", false)
+            ->assertSee("Shop's request")
             ->assertSee('Weekend restock');
     }
 
