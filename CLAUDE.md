@@ -2034,3 +2034,30 @@ One commit per phase.
   transfer (or receive for a finished one) crashed. Now `$this->redirectRoute()`
   to the transfer's detail page.
 - Tests: `tests/Feature/Transfers/TransferScanTest.php`.
+
+### Phase 6 — request form + delivery note
+- Request form (`request-transfer.blade.php`, prefix `rf-`, wrapper is the
+  component tag): products are a table (name · SKU · category · items/box,
+  "In warehouse" as "N sealed · M opened", new **"In your shop"** column
+  from one grouped `boxes` query → `shopStock`, Add). One sticky "Your
+  request" card: from / to, basket with steppers (`<x-number-input
+  align=center>`), totals (products / boxes / items), note, Send. After
+  sending it opens the new transfer's detail page (was the list).
+- Blade trap: `word@if(...)` is not a directive (Blade reads it like an
+  email address), so its `@endif` closes nothing and the view 500s. Keep a
+  space before `@`, or use an inline `{{ cond ? … : '' }}`.
+- Delivery note: one print scale (13px body, 22px brand, 11px labels, light
+  table heads instead of black bars), copied list-page CSS removed, narrow
+  screens stack and scroll the manifest; brand and footer use
+  `config('tenant.name')` (was hard-coded "New Shoes Ltd"); footer
+  "Printed" time is local.
+- Tests: `tests/Feature/Transfers/TransferRequestTest.php`.
+
+**The transfer redesign is complete** (phases 1–6). Suite:
+`tests/Feature/Transfers/` (35 tests). Every transfer screen was checked as
+owner / shop manager / warehouse manager at 1440px and 390px through a
+temporary local-only route that builds sample transfers in a rolled-back
+transaction (removed after each phase). Left alone: the orphaned
+`WarehouseManager\Transfers\PackTransfer` (+ its CLAUDE.md), the
+`components/inventory/transfers/⚡*` files, and the Transfer Performance
+report and stock-return pages (out of scope).

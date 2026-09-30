@@ -1,587 +1,269 @@
-<div>
+{{--
+    New stock request (Inventory\Transfers\RequestTransfer). Prefix rf-;
+    shared transfer parts from <x-transfers.*> (tf-).
+--}}
+<div class="rf-page" style="font-family:var(--font)">
+<x-transfers.styles />
 <style>
-/* ── Layout ─────────────────────────────────────────────── */
-.rf-layout {
-    display: grid;
-    grid-template-columns: minmax(0,1fr) 290px;
-    gap: 16px;
-    align-items: start;
-}
+.rf-page { padding:0 0 80px }
+.rf-layout { display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start }
+.rf-card { background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-card);min-width:0;margin-bottom:16px }
+.rf-card-head { padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap }
+.rf-card-title { font-size:13px;font-weight:700;color:var(--text);margin:0 }
+.rf-card-sub { font-size:12px;color:var(--text-dim);margin-top:2px }
+.rf-card-body { padding:16px 18px }
 
-/* ── Card ───────────────────────────────────────────────── */
-.rf-card {
-    background: var(--surface);
-    border: none;
-    border-radius: var(--r);
-    box-shadow: var(--shadow-card);
-    overflow: hidden;
-    margin-bottom: 14px;
-    transition: box-shadow var(--tr);
-}
-.rf-card:hover { box-shadow: var(--shadow-card-hover); }
-.rf-card-head {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 16px 16px 0;
-}
-.rf-card-icon {
-    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--icon-bg, rgba(99,102,241,.12));
-    color: var(--icon-c, var(--accent));
-}
-.rf-card-head h3 { font-size:17px; font-weight: 700; color: var(--text); margin: 0; }
-.rf-card-body    { padding: 16px; }
+.rf-search-wrap { position:relative;flex:1;min-width:220px;max-width:360px }
+.rf-search-ico { position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none }
+.rf-search { width:100%;padding:9px 11px 9px 34px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface);
+             color:var(--text);outline:none;box-sizing:border-box;font-family:var(--font) }
+.rf-search:focus, .rf-select:focus, .rf-textarea:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim) }
 
-/* ── Form fields ────────────────────────────────────────── */
-.rf-row2  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.rf-field { display: flex; flex-direction: column; gap: 4px; }
-.rf-label { font-size:12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-dim); }
-.rf-select, .rf-input, .rf-textarea {
-    padding: 8px 10px; border-radius: 8px;
-    border: 1px solid var(--border); background: #fff;
-    color: var(--text); font-size:16px; outline: none;
-    transition: border-color .15s; font-family: inherit;
-    width: 100%; box-sizing: border-box;
-}
-.rf-select:focus, .rf-input:focus, .rf-textarea:focus { border-color: var(--accent); }
-.rf-textarea { min-height: 64px; resize: vertical; }
-.rf-error    { font-size:13px; color: var(--red); margin-top: 2px; }
+.rf-table { width:100%;border-collapse:collapse }
+.rf-table thead tr { border-bottom:2px solid var(--border) }
+.rf-table th { padding:10px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap }
+.rf-table td { padding:11px 16px;font-size:13px;color:var(--text-sub);vertical-align:middle;white-space:nowrap }
+.rf-table tbody tr { border-bottom:1px solid var(--border);transition:background var(--tr) }
+.rf-table tbody tr:last-child { border-bottom:none }
+.rf-table tbody tr:hover { background:var(--surface2) }
+.rf-table tr.out td { color:var(--text-dim) }
+.rf-table tr.added { background:var(--accent-dim) }
+.rf-r { text-align:right !important }
+.rf-prod { font-weight:600;color:var(--text);max-width:280px;overflow:hidden;text-overflow:ellipsis }
+.rf-sub { font-size:12px;color:var(--text-dim);margin-top:2px }
+.rf-n { font:700 13px var(--mono);color:var(--text) }
+.rf-n.low { color:var(--amber) }
+.rf-n.none { color:var(--red) }
+.rf-add { padding:5px 12px;border-radius:7px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);
+          font:600 12px var(--font);cursor:pointer;white-space:nowrap;transition:all var(--tr) }
+.rf-add:hover { background:var(--accent);color:#fff }
+.rf-add:disabled { border-color:var(--border);color:var(--text-dim);background:transparent;cursor:default }
+.rf-empty { padding:40px 18px;text-align:center;font-size:13px;color:var(--text-dim) }
 
-/* ── Search ─────────────────────────────────────────────── */
-.rf-search-wrap { position: relative; margin-bottom: 8px; }
-.rf-search-wrap input {
-    width: 100%; padding: 9px 10px 9px 32px; border-radius: 8px;
-    border: 1px solid var(--border); background: #fff;
-    color: var(--text); font-size:16px; outline: none;
-    transition: border-color .15s; box-sizing: border-box;
-}
-.rf-search-wrap input:focus { border-color: var(--accent); }
-.rf-search-ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
+/* Request panel */
+.rf-panel { position:sticky;top:calc(var(--topbar-height) + 16px) }
+.rf-field { margin-bottom:14px }
+.rf-label { display:block;font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px }
+.rf-select, .rf-textarea { width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;background:var(--surface);
+                           color:var(--text);outline:none;box-sizing:border-box;font-family:var(--font) }
+.rf-textarea { resize:vertical;min-height:64px }
+.rf-static { font-size:14px;font-weight:600;color:var(--text) }
+.rf-error { font-size:11px;color:var(--red);margin-top:4px }
+.rf-basket { border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:0 -18px;padding:4px 18px }
+.rf-line { padding:10px 0;border-bottom:1px solid var(--border) }
+.rf-line:last-child { border-bottom:none }
+.rf-line-top { display:flex;justify-content:space-between;gap:10px;align-items:flex-start }
+.rf-line-name { font-size:13px;font-weight:600;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.rf-rm { width:24px;height:24px;flex-shrink:0;border:none;border-radius:6px;background:transparent;color:var(--text-dim);cursor:pointer;font-size:16px;line-height:1 }
+.rf-rm:hover { background:var(--red-dim);color:var(--red) }
+.rf-line-qty { display:flex;align-items:center;gap:8px;margin-top:6px }
+.rf-step { display:inline-flex;align-items:center;border-radius:8px;box-shadow:0 0 0 1.5px var(--border) }
+.rf-step button { width:30px;height:30px;border:none;background:transparent;color:var(--text-sub);font-size:16px;cursor:pointer }
+.rf-step button:hover { color:var(--accent) }
+.rf-qty { width:48px;height:30px;border:none;border-left:1.5px solid var(--border);border-right:1.5px solid var(--border);
+          font:700 14px var(--mono);color:var(--text);background:var(--surface);outline:none;padding:0 4px }
+.rf-qty.over { color:var(--red) }
+.rf-line-meta { font-size:12px;color:var(--text-dim) }
+.rf-warn { font-size:11px;color:var(--red);margin-top:5px }
+.rf-totals { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 }
+.rf-totals > div { text-align:center;padding:8px 4px;border-radius:9px;box-shadow:0 0 0 1px var(--border) }
+.rf-total-v { font:800 17px var(--mono);color:var(--text);line-height:1.1 }
+.rf-total-l { font-size:11px;color:var(--text-dim);margin-top:2px }
+.rf-submit { width:100%;justify-content:center;padding:11px 16px;font-size:14px }
+.rf-flash { font-size:12px;margin-top:10px;line-height:1.5 }
+.rf-basket-empty { padding:18px 0;text-align:center;font-size:13px;color:var(--text-dim) }
 
-/* ── Product list ───────────────────────────────────────── */
-.rf-products { max-height: 440px; overflow-y: auto; }
-.rf-prod-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 2px;
-    border-bottom: 1px solid var(--border);
-    transition: background .12s;
-    min-height: 48px;
+@media (max-width:1000px) {
+    .rf-layout { grid-template-columns:1fr }
+    .rf-panel { position:static }
 }
-.rf-prod-row:last-child { border-bottom: none; }
-.rf-prod-row:hover      { background: var(--surface2); border-radius: 6px; margin: 0 -4px; padding: 10px 6px; }
-.rf-prod-row.is-added   { background: rgba(16,185,129,.04); border-radius: 6px; margin: 0 -4px; padding: 10px 6px; border-bottom-color: transparent; }
-.rf-prod-row.is-added + .rf-prod-row { border-top: 1px solid var(--border); }
-.rf-prod-row.no-stock   { opacity: .4; }
-
-.rf-prod-info { flex: 1; min-width: 0; }
-.rf-prod-name { font-size:16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rf-prod-meta { display: flex; align-items: center; gap: 5px; margin-top: 2px; flex-wrap: wrap; }
-.rf-prod-sku  { font-size:12px; color: var(--text-dim); font-family: var(--mono); }
-.rf-prod-cat  { font-size:12px; color: var(--text-dim); background: var(--surface2); padding: 1px 5px; border-radius: 4px; }
-
-/* ── Stock pill ─────────────────────────────────────────── */
-.rf-stock      { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex-shrink: 0; }
-.rf-stock-pill { font-size:12px; font-weight: 700; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
-.rf-stock-sub  { font-size:12px; color: var(--text-dim); }
-
-/* ── Add button ─────────────────────────────────────────── */
-.rf-add-btn {
-    min-width: 32px; min-height: 32px;
-    padding: 5px 11px; border-radius: 7px;
-    font-size:13px; font-weight: 700;
-    border: 1.5px solid var(--accent); color: var(--accent); background: transparent;
-    cursor: pointer; flex-shrink: 0;
-    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-    transition: all .15s;
+@media (max-width:640px) {
+    .rf-card-head, .rf-card-body { padding-left:12px;padding-right:12px }
+    .rf-basket { margin:0 -12px;padding:4px 12px }
+    .rf-search-wrap { max-width:none }
+    .rf-search, .rf-select, .rf-textarea { font-size:16px }
 }
-.rf-add-btn:hover   { background: var(--accent); color: #fff; }
-.rf-add-btn.added   { border-color: var(--green); background: rgba(16,185,129,.08); color: var(--green); cursor: default; }
-.rf-add-btn.blocked { border-color: var(--border); color: var(--text-dim); cursor: not-allowed; }
-/* Hide text label on narrow screens — show only icon */
-.rf-add-text { display: inline; }
-
-/* ── Summary items ──────────────────────────────────────── */
-.rf-summary  { position: sticky; top: 16px; }
-.rf-items-list { display: flex; flex-direction: column; gap: 0; margin-bottom: 12px; }
-.rf-item-row {
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-}
-.rf-item-row:last-child { border-bottom: none; }
-.rf-item-top  { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.rf-item-name { font-size:14px; font-weight: 600; color: var(--text); }
-.rf-item-sub  { font-size:12px; color: var(--text-dim); margin-top: 1px; }
-.rf-item-rm   { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size:17px; line-height: 1; padding: 2px 4px; transition: color .12s; flex-shrink: 0; }
-.rf-item-rm:hover { color: var(--red); }
-.rf-qty-row   { display: flex; align-items: center; justify-content: space-between; }
-.rf-qty-ctrl  { display: flex; align-items: center; gap: 6px; }
-.rf-qty-input {
-    width: 54px; text-align: center; padding: 6px; border-radius: 6px;
-    border: 1px solid var(--border); background: #fff;
-    color: var(--text); font-size:16px; font-weight: 700;
-    font-family: var(--mono); outline: none;
-}
-.rf-qty-input:focus { border-color: var(--accent); }
-.rf-qty-input.over  { border-color: var(--red); color: var(--red); }
-.rf-qty-label { font-size:13px; color: var(--text-dim); }
-.rf-qty-avail { font-size:12px; color: var(--text-dim); }
-.rf-qty-btn {
-    width: 28px; height: 28px; border-radius: 6px;
-    border: 1px solid var(--border); background: var(--surface2);
-    color: var(--text); font-size:19px; font-weight: 700;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: background .12s, border-color .12s;
-    line-height: 1; padding: 0;
-}
-.rf-qty-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
-.rf-static {
-    padding: 8px 10px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--surface2);
-    color: var(--text); font-size:16px; font-weight: 600;
-}
-.rf-overstock-warn { font-size:13px; font-weight: 600; color: var(--red); display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-
-/* ── Totals ─────────────────────────────────────────────── */
-.rf-totals { border-top: 1px solid var(--border); padding: 10px 0; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
-.rf-total-row   { display: flex; justify-content: space-between; align-items: center; }
-.rf-total-row .l { font-size:14px; color: var(--text-dim); }
-.rf-total-row .v { font-size:14px; font-weight: 700; color: var(--text); }
-.rf-total-row.big .v { font-size:19px; font-weight: 800; color: var(--accent); }
-
-/* ── Route ──────────────────────────────────────────────── */
-.rf-route { display: flex; align-items: center; gap: 7px; padding: 8px 0; margin-bottom: 10px; }
-.rf-route-name { font-size:14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
-.rf-route-line { flex: 1; border-top: 1.5px dashed var(--border); min-width: 8px; }
-
-/* ── Submit ─────────────────────────────────────────────── */
-.rf-submit {
-    width: 100%; padding: 11px 14px; border-radius: 10px; border: none; cursor: pointer;
-    background: var(--accent); color: #fff; font-size:16px; font-weight: 700;
-    transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 7px;
-    min-height: 44px;
-}
-.rf-submit:hover    { opacity: .88; }
-.rf-submit:disabled { opacity: .4; cursor: not-allowed; }
-
-/* ── Notices ────────────────────────────────────────────── */
-.rf-no-wh { text-align: center; padding: 28px 16px; color: var(--text-dim); font-size:14px; }
-.rf-empty-cart { text-align: center; padding: 22px 12px; color: var(--text-dim); }
-.rf-empty-cart p { font-size:14px; margin: 8px 0 0; }
-.rf-flash-ok  { padding: 8px 12px; border-radius: 8px; font-size:14px; font-weight: 600; background: var(--green-dim); color: var(--green); margin-top: 10px; }
-.rf-flash-err { padding: 8px 12px; border-radius: 8px; font-size:14px; font-weight: 600; background: var(--red-dim);   color: var(--red);   margin-top: 10px; }
-
-/* ── Loading ────────────────────────────────────────────── */
-[wire\:loading] { display: none !important; }
-@keyframes rf-spin { to { transform: rotate(360deg); } }
-.rf-spin { animation: rf-spin .8s linear infinite; }
-
-/* ── Responsive ─────────────────────────────────────────── */
-@media (max-width: 860px) {
-    .rf-layout  { grid-template-columns: 1fr; }
-    .rf-summary { position: static; order: 3; }
-}
-@media (max-width: 640px) {
-    .rf-row2     { grid-template-columns: 1fr; }
-    .rf-products { max-height: 360px; }
-}
-/* On narrow phones: stack name above, stock+button below */
-@media (max-width: 520px) {
-    .rf-prod-row  { flex-wrap: wrap; row-gap: 6px; }
-    .rf-prod-info { width: 100%; }
-    .rf-stock     { flex-direction: row; align-items: center; gap: 8px; }
-    .rf-add-btn   { margin-left: auto; }
-    .rf-add-text  { display: none; }   /* icon only */
-}
-
-/* Responsive 2B — Request Transfer Form */
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
-@media(max-width:600px) {
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-
-/* Responsive 2C — General Rules */
-@media(max-width:600px) {
-    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
-    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
-    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
-}
-
-
-/* Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
-}
-@media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
-}
-@media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:20px; }
-    .tl-step-sub  { display:none; }
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border); margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    .tl-route-dash-line { width:20px; }
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:20px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
-/* Product rows on phones — final word over the duplicated blocks above,
-   which capped names at 140px ("Adidas Ultraboo…") and stretched the
-   add button into a thin full-width bar. Name gets its own line; stock
-   pills sit left and the add button right on the line below. */
-/* (.rf-prod-row-scoped selectors so they also beat the copy of the old
-   rules in the shop/transfers wrapper views, which load after this block) */
-@media(max-width:600px) {
-    .rf-prod-row .rf-prod-info { width:100%; flex-basis:100%; }
-    .rf-prod-row .rf-prod-name { max-width:none; }
-    .rf-prod-row .rf-stock     { flex-direction:row; align-items:center; gap:8px; }
-    .rf-prod-row .rf-add-btn   { width:auto; margin-left:auto; }
-}
-
+@keyframes rf-spin { to { transform:rotate(360deg) } }
 </style>
 
-<form wire:submit.prevent="submit">
-<div class="rf-layout">
+<x-transfers.header title="New stock request" sub="Ask the warehouse for boxes. It checks stock and may adjust the quantities." :back="route('shop.transfers.index')" dup-title />
 
-  {{-- ── LEFT ───────────────────────────────────── --}}
-  <div>
+@php
+    $isShopManager = auth()->user()->isShopManager();
+    $inBasket = collect($items)->pluck('product_id')->map(fn ($id) => (int) $id)->all();
+    $productsById = $products->keyBy('id');
+    $lineProduct = fn ($id) => $productsById[$id] ?? \App\Models\Product::find($id);
+    $totalBoxes = 0; $totalItems = 0;
+    foreach ($items as $i) {
+        $bx = (int) ($i['boxes_requested'] ?? 0);
+        $totalBoxes += $bx;
+        $totalItems += $bx * (int) ($lineProduct($i['product_id'])?->items_per_box ?? 0);
+    }
+@endphp
 
-    {{-- Details card --}}
+<form wire:submit.prevent="submit" class="rf-layout">
+    {{-- ═══ Products ═════════════════════════════════════════════ --}}
     <div class="rf-card">
-      <div class="rf-card-head">
-        <div class="rf-card-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-        </div>
-        <h3>Transfer Details</h3>
-      </div>
-      <div class="rf-card-body">
-        <div class="rf-row2">
-          <div class="rf-field">
-            <label class="rf-label">From Warehouse</label>
-            <select wire:model.live="fromWarehouseId" class="rf-select">
-              <option value="">Select warehouse…</option>
-              @foreach($this->warehouses as $wh)
-                <option value="{{ $wh->id }}">{{ $wh->name }}</option>
-              @endforeach
-            </select>
-            @error('fromWarehouseId')<span class="rf-error">{{ $message }}</span>@enderror
-          </div>
-          <div class="rf-field">
-            <label class="rf-label">To Shop</label>
-            @if(auth()->user()->isShopManager())
-              <div class="rf-static">{{ $this->shops->firstWhere('id', $toShopId)?->name ?? '—' }}</div>
-              <input type="hidden" wire:model="toShopId">
-            @else
-              <select wire:model.live="toShopId" class="rf-select">
-                <option value="">Select shop…</option>
-                @foreach($this->shops as $sh)
-                  <option value="{{ $sh->id }}">{{ $sh->name }}</option>
-                @endforeach
-              </select>
-            @endif
-            @error('toShopId')<span class="rf-error">{{ $message }}</span>@enderror
-          </div>
-        </div>
-        <div class="rf-field" style="margin-top:10px;">
-          <label class="rf-label">Notes <span style="text-transform:none;letter-spacing:0;font-weight:400;">(optional)</span></label>
-          <textarea wire:model="notes" class="rf-textarea" placeholder="Special instructions…"></textarea>
-        </div>
-      </div>
-    </div>
-
-    {{-- Products card --}}
-    <div class="rf-card">
-      <div class="rf-card-head" style="--icon-bg:rgba(16,185,129,.12);--icon-c:var(--green);">
-        <div class="rf-card-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-          </svg>
-        </div>
-        <h3>Products</h3>
-      </div>
-      <div class="rf-card-body">
-
-        @if($isSpecialised)
-          <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">
-            Showing only what this shop sells: <strong style="color:var(--text-sub)">{{ $sellsLabel }}</strong>
-          </div>
-        @endif
-
-        <div class="rf-search-wrap">
-          <svg class="rf-search-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search name, SKU or category…">
+        <div class="rf-card-head">
+            <div>
+                <h2 class="rf-card-title">Products</h2>
+                <div class="rf-card-sub">
+                    @if($isSpecialised)
+                        Only what this shop sells: {{ $sellsLabel }}
+                    @else
+                        Boxes available in the warehouse, and what your shop already holds
+                    @endif
+                </div>
+            </div>
+            <div class="rf-search-wrap">
+                <svg class="rf-search-ico" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+                <input class="rf-search" type="text" wire:model.live.debounce.300ms="search" placeholder="Search name, SKU or category…" aria-label="Search products">
+            </div>
         </div>
 
         @if(!$fromWarehouseId)
-          <div class="rf-no-wh">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                 style="display:block;margin:0 auto 8px;opacity:.3;">
-              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            Select a warehouse to see stock
-          </div>
+            <div class="rf-empty">Choose the warehouse on the right to see its stock.</div>
+        @elseif($products->isEmpty())
+            <div class="rf-empty">No products match "{{ $search }}".</div>
         @else
-          <div class="rf-products">
-            @forelse($products as $product)
-              @php
-                $stock    = $stockLevels[$product->id] ?? ['full_boxes'=>0,'partial_boxes'=>0,'total_boxes'=>0];
-                $hasStock = $stock['total_boxes'] > 0;
-                $isAdded  = false;
-                foreach($items as $itm){ if($itm['product_id'] == $product->id){ $isAdded = true; break; } }
-                if($stock['total_boxes'] > 5)     { $spBg='var(--green-dim)'; $spC='var(--green)'; }
-                elseif($stock['total_boxes'] > 0) { $spBg='var(--amber-dim)'; $spC='var(--amber)'; }
-                else                              { $spBg='var(--red-dim)';   $spC='var(--red)'; }
-              @endphp
-              <div class="rf-prod-row {{ $isAdded ? 'is-added' : '' }} {{ !$hasStock ? 'no-stock' : '' }}">
-
-                <div class="rf-prod-info">
-                  <div class="rf-prod-name" title="{{ $product->name }}">{{ $product->name }}</div>
-                  <div class="rf-prod-meta">
-                    @if($product->sku ?? null)
-                      <span class="rf-prod-sku">{{ $product->sku }}</span>
-                    @endif
-                    @if(isset($product->category) && $product->category)
-                      <span class="rf-prod-cat">{{ $product->category->name }}</span>
-                    @endif
-                  </div>
-                </div>
-
-                <div class="rf-stock">
-                  <span class="rf-stock-pill" style="background:{{ $spBg }};color:{{ $spC }};">
-                    {{ $hasStock ? $stock['total_boxes'].' '.Str::plural('box',$stock['total_boxes']) : 'Out of stock' }}
-                  </span>
-                  @if($hasStock)
-                    <span class="rf-stock-sub">{{ $stock['full_boxes'] }}F · {{ $stock['partial_boxes'] }}P</span>
-                  @endif
-                </div>
-
-                @if($isAdded)
-                  <button class="rf-add-btn added" type="button" disabled>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span class="rf-add-text">Added</span>
-                  </button>
-                @elseif(!$hasStock)
-                  <button class="rf-add-btn blocked" type="button" disabled>—</button>
-                @else
-                  <button class="rf-add-btn" type="button"
-                          wire:click="addProductToCart({{ $product->id }})"
-                          wire:loading.attr="disabled"
-                          wire:target="addProductToCart({{ $product->id }})">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    <span wire:loading.remove wire:target="addProductToCart({{ $product->id }})" class="rf-add-text">Add</span>
-                    <span wire:loading        wire:target="addProductToCart({{ $product->id }})" style="display:none;">…</span>
-                  </button>
-                @endif
-
-              </div>
-            @empty
-              <div style="text-align:center;padding:24px;font-size:14px;color:var(--text-dim);">
-                No products match your search.
-              </div>
-            @endforelse
-          </div>
+            <div class="m-scroll">
+                <table class="rf-table m-sticky-first" style="min-width:640px">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="rf-r">In warehouse</th>
+                            <th class="rf-r">In your shop</th>
+                            <th class="rf-r"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($products as $product)
+                            @php
+                                $wh = $stockLevels[$product->id] ?? ['full_boxes' => 0, 'partial_boxes' => 0, 'total_boxes' => 0];
+                                $here = $shopStock[$product->id] ?? null;
+                                $added = in_array($product->id, $inBasket, true);
+                                $has = $wh['total_boxes'] > 0;
+                            @endphp
+                            <tr class="{{ $added ? 'added' : '' }} {{ $has ? '' : 'out' }}" wire:key="rp-{{ $product->id }}">
+                                <td>
+                                    <div class="rf-prod" title="{{ $product->name }}">{{ $product->name }}</div>
+                                    <div class="rf-sub">{{ collect([$product->sku, $product->category?->name, $product->items_per_box . '/box'])->filter()->implode(' · ') }}</div>
+                                </td>
+                                <td class="rf-r">
+                                    @if($has)
+                                        <span class="rf-n {{ $wh['total_boxes'] <= 5 ? 'low' : '' }}">{{ $wh['total_boxes'] }}</span> <span class="rf-sub">{{ Str::plural('box', $wh['total_boxes']) }}</span>
+                                        <div class="rf-sub">{{ $wh['full_boxes'] }} sealed{{ $wh['partial_boxes'] ? ' · ' . $wh['partial_boxes'] . ' opened' : '' }}</div>
+                                    @else
+                                        <span class="rf-n none">Out of stock</span>
+                                    @endif
+                                </td>
+                                <td class="rf-r">
+                                    @if($here)
+                                        <span class="rf-n">{{ $here['boxes'] }}</span> <span class="rf-sub">{{ Str::plural('box', $here['boxes']) }}</span>
+                                        <div class="rf-sub">{{ number_format($here['items']) }} items</div>
+                                    @else
+                                        <span class="rf-n none">None</span>
+                                    @endif
+                                </td>
+                                <td class="rf-r">
+                                    <button type="button" class="rf-add" wire:click="addProductToCart({{ $product->id }})"
+                                            @disabled($added || ! $has) wire:loading.attr="disabled" wire:target="addProductToCart({{ $product->id }})">
+                                        {{ $added ? 'Added' : ($has ? 'Add' : '—') }}
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         @endif
-
-      </div>
     </div>
 
-  </div>
+    {{-- ═══ The request ═════════════════════════════════════════ --}}
+    <div class="rf-panel">
+        <div class="rf-card">
+            <div class="rf-card-head"><h2 class="rf-card-title">Your request</h2></div>
+            <div class="rf-card-body">
+                <div class="rf-field">
+                    <label class="rf-label" for="rf-from">From</label>
+                    <select id="rf-from" wire:model.live="fromWarehouseId" class="rf-select">
+                        <option value="">Choose a warehouse…</option>
+                        @foreach($this->warehouses as $wh)
+                            <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('fromWarehouseId')<div class="rf-error">{{ $message }}</div>@enderror
+                </div>
+                <div class="rf-field">
+                    <label class="rf-label" for="rf-to">To</label>
+                    @if($isShopManager)
+                        <div class="rf-static">{{ $this->shops->firstWhere('id', $toShopId)?->name ?? '—' }}</div>
+                    @else
+                        <select id="rf-to" wire:model.live="toShopId" class="rf-select">
+                            <option value="">Choose a shop…</option>
+                            @foreach($this->shops as $sh)
+                                <option value="{{ $sh->id }}">{{ $sh->name }}</option>
+                            @endforeach
+                        </select>
+                    @endif
+                    @error('toShopId')<div class="rf-error">{{ $message }}</div>@enderror
+                </div>
 
-  {{-- ── RIGHT: Summary ──────────────────────── --}}
-  <div class="rf-summary">
-    <div class="rf-card">
-      <div class="rf-card-head" style="--icon-bg:rgba(139,92,246,.12);--icon-c:#8b5cf6;">
-        <div class="rf-card-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 01-8 0"/>
-          </svg>
+                <div class="rf-basket">
+                    @forelse($items as $index => $item)
+                        @php
+                            $p = $lineProduct($item['product_id']);
+                            $boxes = (int) ($item['boxes_requested'] ?? 0);
+                            $avail = $stockLevels[$item['product_id']]['total_boxes'] ?? 0;
+                            $over = $boxes > $avail && $boxes > 0;
+                        @endphp
+                        @if($p)
+                            <div class="rf-line" wire:key="rl-{{ $item['product_id'] }}">
+                                <div class="rf-line-top">
+                                    <div class="rf-line-name" title="{{ $p->name }}">{{ $p->name }}</div>
+                                    <button type="button" class="rf-rm m-tap" wire:click="removeItem({{ $index }})" aria-label="Remove {{ $p->name }}">×</button>
+                                </div>
+                                <div class="rf-line-qty">
+                                    <div class="rf-step">
+                                        <button type="button" wire:click="decrementItem({{ $index }})" aria-label="One box less">−</button>
+                                        <x-number-input class="rf-qty {{ $over ? 'over' : '' }}" align="center" wire:model.live.debounce.300ms="items.{{ $index }}.boxes_requested" aria-label="Boxes of {{ $p->name }}" />
+                                        <button type="button" wire:click="incrementItem({{ $index }})" aria-label="One box more">+</button>
+                                    </div>
+                                    <span class="rf-line-meta">{{ Str::plural('box', $boxes) }} · {{ number_format($boxes * (int) $p->items_per_box) }} items</span>
+                                </div>
+                                @if($over)
+                                    <div class="rf-warn">Only {{ $avail }} in the warehouse.</div>
+                                @endif
+                                @error("items.{$index}.boxes_requested")<div class="rf-warn">{{ $message }}</div>@enderror
+                            </div>
+                        @endif
+                    @empty
+                        <div class="rf-basket-empty">Add products from the list.</div>
+                    @endforelse
+                </div>
+
+                <div class="rf-totals">
+                    <div><div class="rf-total-v">{{ count($items) }}</div><div class="rf-total-l">Products</div></div>
+                    <div><div class="rf-total-v">{{ number_format($totalBoxes) }}</div><div class="rf-total-l">Boxes</div></div>
+                    <div><div class="rf-total-v">{{ number_format($totalItems) }}</div><div class="rf-total-l">Items</div></div>
+                </div>
+
+                <div class="rf-field">
+                    <label class="rf-label" for="rf-notes">Note for the warehouse <span style="font-weight:500;color:var(--text-dim)">(optional)</span></label>
+                    <textarea id="rf-notes" wire:model="notes" class="rf-textarea" maxlength="1000" placeholder="e.g. For the weekend promotion"></textarea>
+                </div>
+
+                <button type="submit" class="tf-btn tf-btn-primary rf-submit" wire:loading.attr="disabled" wire:target="submit"
+                        @disabled(empty($items) || ! $fromWarehouseId || ! $toShopId)>
+                    <span wire:loading.remove wire:target="submit">Send request</span>
+                    <span wire:loading wire:target="submit" style="display:none;align-items:center;gap:6px">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:rf-spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                        Sending…
+                    </span>
+                </button>
+                @if(session('error'))<div class="rf-flash" style="color:var(--red)">{{ session('error') }}</div>@endif
+            </div>
         </div>
-        <h3>Summary&ensp;<span style="font-weight:400;color:var(--text-dim);font-size:13px;">{{ count($items) > 0 ? count($items).' item'.(count($items)===1?'':'s') : '' }}</span></h3>
-      </div>
-      <div class="rf-card-body">
-
-        @if(empty($items))
-          <div class="rf-empty-cart">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                 style="display:block;margin:0 auto;opacity:.2;">
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 01-8 0"/>
-            </svg>
-            <p>Add products from the list</p>
-          </div>
-        @else
-
-          <div class="rf-items-list">
-            @foreach($items as $index => $item)
-              @php
-                $p     = $products->firstWhere('id', $item['product_id']) ?? \App\Models\Product::find($item['product_id']);
-                $boxes = (int)($item['boxes_requested'] ?? 0);
-                $avail = $stockLevels[$item['product_id']]['total_boxes'] ?? 0;
-                $over  = $boxes > $avail && $boxes > 0;
-              @endphp
-              @if($p)
-              <div wire:key="si-{{ $item['product_id'] }}" class="rf-item-row">
-                <div class="rf-item-top">
-                  <div style="min-width:0;">
-                    <div class="rf-item-name">{{ Str::limit($p->name, 28) }}</div>
-                    <div class="rf-item-sub">{{ $p->items_per_box ?? 0 }} items/box</div>
-                  </div>
-                  <button class="rf-item-rm" type="button" wire:click="removeItem({{ $index }})" title="Remove">×</button>
-                </div>
-                <div class="rf-qty-row">
-                  <div class="rf-qty-ctrl">
-                    <button type="button" class="rf-qty-btn" wire:click="decrementItem({{ $index }})">−</button>
-                    <x-number-input class="rf-qty-input {{ $over ? 'over' : '' }}" wire:model.live="items.{{ $index }}.boxes_requested" style="text-align:center;width:52px;" />
-                    <button type="button" class="rf-qty-btn" wire:click="incrementItem({{ $index }})">+</button>
-                    <span class="rf-qty-label">boxes</span>
-                  </div>
-                  <span class="rf-qty-avail">{{ $avail }} avail.</span>
-                </div>
-                @if($over)
-                  <div class="rf-overstock-warn">
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm1 13h-2v-5h2v5zm0 3h-2v-2h2v2z"/></svg>
-                    Exceeds stock by {{ $boxes - $avail }}
-                  </div>
-                @endif
-                @error("items.{$index}.boxes_requested")
-                  <div class="rf-overstock-warn">{{ $message }}</div>
-                @enderror
-              </div>
-              @endif
-            @endforeach
-          </div>
-
-          @php
-            $totalBoxes = 0; $estItems = 0;
-            foreach($items as $i){
-              $bx = (int)($i['boxes_requested'] ?? 0);
-              $totalBoxes += $bx;
-              $pr = $products->firstWhere('id', $i['product_id']) ?? \App\Models\Product::find($i['product_id']);
-              if($pr) $estItems += $bx * ($pr->items_per_box ?? 0);
-            }
-          @endphp
-          <div class="rf-totals">
-            <div class="rf-total-row">
-              <span class="l">Products</span><span class="v">{{ count($items) }}</span>
-            </div>
-            <div class="rf-total-row">
-              <span class="l">Boxes requested</span><span class="v">{{ $totalBoxes }}</span>
-            </div>
-            <div class="rf-total-row big">
-              <span class="l" style="font-size:14px;color:var(--text);font-weight:600;">Est. items</span>
-              <span class="v">~{{ number_format($estItems) }}</span>
-            </div>
-          </div>
-        @endif
-
-        {{-- Route preview --}}
-        @php
-          $selWh = $fromWarehouseId ? $this->warehouses->firstWhere('id', $fromWarehouseId) : null;
-          $selSh = $toShopId        ? $this->shops->firstWhere('id', $toShopId)             : null;
-        @endphp
-        @if($selWh && $selSh)
-          <div class="rf-route">
-            <span class="rf-route-name">{{ $selWh->name }}</span>
-            <div class="rf-route-line"></div>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--accent)" style="flex-shrink:0;">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <span class="rf-route-name">{{ $selSh->name }}</span>
-          </div>
-        @endif
-
-        <button class="rf-submit" type="submit"
-                wire:loading.attr="disabled"
-                @if(empty($items) || !$fromWarehouseId || !$toShopId) disabled @endif>
-          <span wire:loading.remove wire:target="submit" style="display:inline-flex;align-items:center;gap:7px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-            Submit Request
-          </span>
-          <span wire:loading wire:target="submit" style="display:none;align-items:center;gap:7px;">
-            <svg class="rf-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 2a10 10 0 0110 10"/>
-            </svg>
-            Submitting…
-          </span>
-        </button>
-
-        @if(session('success'))
-          <div class="rf-flash-ok" style="display:flex;align-items:center;gap:6px"><x-icon name="check" size="14" /> {{ session('success') }}</div>
-        @endif
-        @if(session('error'))
-          <div class="rf-flash-err">{{ session('error') }}</div>
-        @endif
-
-      </div>
     </div>
-  </div>
-
-</div>
 </form>
 </div>

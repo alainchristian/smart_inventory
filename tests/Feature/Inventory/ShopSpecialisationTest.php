@@ -107,7 +107,7 @@ class ShopSpecialisationTest extends TestCase
     {
         Livewire::actingAs($this->shoeMgr)->test(RequestTransfer::class)
             ->assertViewHas('products', fn ($p) => $p->pluck('id')->contains($this->shoe) && ! $p->pluck('id')->contains($this->soap))
-            ->assertSee('Showing only what this shop sells');
+            ->assertSee('Only what this shop sells');
 
         // Owner requesting for the shoe shop: same rule, no override
         $this->actingAs($this->owner);

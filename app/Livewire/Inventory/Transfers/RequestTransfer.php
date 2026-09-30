@@ -262,7 +262,8 @@ class RequestTransfer extends Component
 
             session()->flash('success', "Transfer request {$transfer->transfer_number} created successfully.");
 
-            return redirect()->route('shop.transfers.index');
+            // Straight to the new transfer: its progress shows what happens next.
+            return redirect()->route(auth()->user()->isShopManager() ? 'shop.transfers.show' : 'owner.transfers.show', $transfer);
         } catch (\Exception $e) {
             session()->flash('error', 'Error creating transfer: ' . $e->getMessage());
         }
@@ -340,9 +341,25 @@ class RequestTransfer extends Component
             ])->toArray();
         }
 
+        // What the destination shop already holds, so a manager asks for what's missing.
+        $shopStock = [];
+        if ($this->toShopId) {
+            $shopStock = DB::table('boxes')
+                ->select('product_id', DB::raw('COUNT(*) AS boxes'), DB::raw('SUM(items_remaining) AS items'))
+                ->where('location_type', 'shop')
+                ->where('location_id', $this->toShopId)
+                ->whereIn('status', ['full', 'partial'])
+                ->where('items_remaining', '>', 0)
+                ->groupBy('product_id')
+                ->get()
+                ->mapWithKeys(fn ($r) => [$r->product_id => ['boxes' => (int) $r->boxes, 'items' => (int) $r->items]])
+                ->all();
+        }
+
         return view('livewire.inventory.transfers.request-transfer', [
             'products'    => $products,
             'stockLevels' => $stockLevels,
+            'shopStock'   => $shopStock,
             'sellsLabel'  => $destShop?->sellsLabel(),
             'isSpecialised' => $sellableCatIds !== null,
         ]);

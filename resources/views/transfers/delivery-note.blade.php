@@ -5,285 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Note — {{ $transfer->transfer_number }}</title>
     <style>
+        /* Print document: its own palette (no app CSS variables here). */
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 1.45; color: #1a1f36; background: #fff; }
+        .page { max-width: 800px; margin: 0 auto; padding: 32px 36px; }
 
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size:19px;
-            color: #1a1a2e;
-            background: #fff;
-            padding: 0;
-        }
-
-        .page {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 32px 36px;
-        }
-
-        /* ── Header ── */
-        .doc-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 3px solid #1a1a2e;
-            padding-bottom: 18px;
-            margin-bottom: 20px;
-        }
-        .doc-header .brand { font-size:31px; font-weight: 800; letter-spacing: -0.5px; }
+        /* Header */
+        .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+                      border-bottom: 2px solid #1a1f36; padding-bottom: 14px; margin-bottom: 18px; }
+        .doc-header .brand { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+        .doc-header .brand-sub { font-size: 12px; color: #7a81a0; margin-top: 2px; }
         .doc-header .doc-type { text-align: right; }
-        .doc-header .doc-type .title { font-size:29px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .doc-header .doc-type .number { font-size:19px; color: #555; margin-top: 3px; font-family: monospace; }
-        .doc-header .doc-type .status-badge {
-            display: inline-block;
-            margin-top: 6px;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size:16px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #a5d6a7;
-        }
+        .doc-header .doc-type .title { font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .doc-header .doc-type .number { font-size: 14px; color: #4a5372; margin-top: 2px; font-family: Consolas, monospace; font-weight: 700; }
+        .doc-header .doc-type .status-badge { display: inline-block; margin-top: 6px; padding: 2px 9px; border-radius: 6px; font-size: 11px;
+                      font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; background: #e7f6f3; color: #0e9e86; }
 
-        /* ── Info grid ── */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-        .info-card {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .info-card .card-head {
-            background: #f5f5f5;
-            padding: 8px 14px;
-            font-size:14px;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            color: #555;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .info-card .card-body { padding: 12px 14px; }
-        .info-card .location-name { font-size:22px; font-weight: 700; margin-bottom: 3px; }
-        .info-card .location-detail { font-size:17px; color: #555; line-height: 1.5; }
+        /* Meta row */
+        .meta-row { display: flex; gap: 22px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid #e2e6f3; border-radius: 8px; margin-bottom: 16px; }
+        .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #7a81a0; }
+        .meta-value { font-size: 13px; font-weight: 600; margin-top: 2px; }
 
-        /* ── Transporter card ── */
-        .transporter-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
+        /* Cards */
+        .info-grid, .transporter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+        .info-card { border: 1px solid #e2e6f3; border-radius: 8px; }
+        .info-card .card-head { padding: 7px 12px; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase;
+                                color: #7a81a0; border-bottom: 1px solid #e2e6f3; }
+        .info-card .card-body { padding: 10px 12px; }
+        .info-card .location-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+        .info-card .location-detail { font-size: 12px; color: #4a5372; }
 
-        /* ── Meta row ── */
-        .meta-row {
-            display: flex;
-            gap: 24px;
-            flex-wrap: wrap;
-            padding: 12px 16px;
-            background: #f8f8f8;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #e0e0e0;
-        }
-        .meta-item { }
-        .meta-label { font-size:14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #888; }
-        .meta-value { font-size:19px; font-weight: 600; color: #1a1a2e; margin-top: 2px; }
-
-        /* ── Section heading ── */
-        .section-heading {
-            font-size:16px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 6px;
-            margin-bottom: 10px;
-        }
-
-        /* ── Table ── */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12.5px;
-            margin-bottom: 20px;
-        }
-        thead th {
-            background: #1a1a2e;
-            color: #fff;
-            padding: 9px 12px;
-            text-align: left;
-            font-size:16px;
-            font-weight: 600;
-            letter-spacing: 0.4px;
-        }
+        /* Sections + tables */
+        .section-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #4a5372;
+                           padding-bottom: 6px; margin: 4px 0 8px; border-bottom: 1px solid #e2e6f3; }
+        table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 18px; }
+        thead th { padding: 7px 10px; text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+                   color: #7a81a0; border-bottom: 2px solid #1a1f36; }
         thead th:last-child { text-align: right; }
-        tbody tr:nth-child(even) { background: #fafafa; }
-        tbody td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
-        }
+        tbody td { padding: 7px 10px; border-bottom: 1px solid #eceff7; vertical-align: top; }
         tbody td:last-child { text-align: right; }
-        tfoot td {
-            padding: 9px 12px;
-            font-weight: 700;
-            border-top: 2px solid #1a1a2e;
-            background: #f0f0f0;
-        }
+        tfoot td { padding: 8px 10px; font-weight: 700; border-top: 2px solid #1a1f36; }
         tfoot td:last-child { text-align: right; }
+        .status-full    { color: #0e9e86; font-weight: 600; }
+        .status-partial { color: #7c3aed; font-weight: 600; }
+        .status-damaged { color: #e11d48; font-weight: 600; }
 
-        .status-full    { color: #2e7d32; font-weight: 600; }
-        .status-partial { color: #e65100; font-weight: 600; }
-        .status-damaged { color: #b71c1c; font-weight: 600; }
+        /* Notes */
+        .notes-box { border: 1px solid #e2e6f3; border-radius: 8px; padding: 10px 12px; min-height: 48px; font-size: 12.5px; color: #1a1f36; margin-bottom: 18px; }
+        .notes-box.empty { color: #7a81a0; font-style: italic; }
 
-        /* ── Notes ── */
-        .notes-box {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 12px 14px;
-            min-height: 56px;
-            font-size: 12.5px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .notes-box.empty { color: #999; font-style: italic; }
+        /* Signatures */
+        .sig-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 22px; }
+        .sig-line { border-bottom: 1.5px solid #1a1f36; height: 40px; margin-bottom: 6px; }
+        .sig-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #4a5372; }
+        .sig-name  { font-size: 12px; color: #7a81a0; margin-top: 2px; }
 
-        /* ── Signatures ── */
-        .sig-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-            margin-top: 24px;
-        }
-        .sig-block { }
-        .sig-line {
-            border-bottom: 1.5px solid #333;
-            height: 44px;
-            margin-bottom: 8px;
-        }
-        .sig-label { font-size:16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #444; }
-        .sig-name  { font-size:17px; color: #666; margin-top: 3px; }
-
-        /* ── Footer ── */
-        .doc-footer {
-            margin-top: 28px;
-            padding-top: 12px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size:16px;
-            color: #999;
-        }
-
-        /* ── Print button (screen only) ── */
-        .print-btn {
-            display: block;
-            margin: 20px auto 0;
-            padding: 10px 28px;
-            background: #1a1a2e;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size:17px;
-            font-weight: 600;
-            cursor: pointer;
-            letter-spacing: 0.3px;
-        }
-        .print-btn:hover { background: #2d2d4e; }
+        /* Footer + print button */
+        .doc-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e2e6f3; text-align: center; font-size: 11px; color: #7a81a0; }
+        .print-btn { display: block; margin: 18px auto 0; padding: 9px 22px; background: #3b6fd4; color: #fff; border: none; border-radius: 8px;
+                     font-size: 13px; font-weight: 600; cursor: pointer; }
+        .print-btn:hover { opacity: .88; }
 
         @media print {
-            body { padding: 0; }
-            .page { padding: 18px 22px; }
+            .page { padding: 0; }
             .no-print { display: none !important; }
-            thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            tfoot td  { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
-    
-/* Responsive base — applied to all transfer pages */
-@media(max-width:600px) {
-    /* Cards */
-    .tl-card, .rf-card {
-        border-radius:var(--rsm, 8px);
-    }
-    /* Tables inside cards — make them scroll horizontally */
-    table {
-        display:block;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        white-space:nowrap;
-    }
-    /* Prevent text overflow on narrow screens */
-    .tl-num, .rf-prod-name, .tl-route-node {
-        max-width:140px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-    }
-    /* Badges wrap instead of overflow */
-    .tl-card-meta, .tl-dates {
-        flex-wrap:wrap;
-        gap:4px;
-    }
-}
-
-/* Responsive 2A — Transfer List Pages */
-@media(max-width:900px) {
-    .tl-pipeline { grid-template-columns: repeat(3, 1fr); }
-}
-@media(max-width:600px) {
-    .tl-pipeline { grid-template-columns: repeat(2, 1fr); gap:0; }
-    .tl-pipeline-step { padding:10px 12px; }
-    .tl-step-num  { font-size:24px; }
-    .tl-step-sub  { display:none; }
-    .tl-card-top    { flex-direction:column; padding:0 14px; }
-    .tl-card-stats  { border-left:none; border-top:1px solid var(--border);
-                      margin:0 0 8px; flex-wrap:wrap; }
-    .tl-stat        { padding:8px 14px; flex:1; min-width:80px; }
-    .tl-bar         { gap:4px; padding:8px 10px; }
-    .tl-chip        { padding:4px 10px; font-size:11px; }
-    .tl-search      { width:100%; margin-left:0; margin-top:6px; }
-    .tl-search input{ width:100%; }
-    .tl-route-dash-line { width:20px; }
-    .tl-card-foot   { flex-wrap:wrap; gap:6px; }
-    .tl-action      { flex:1; justify-content:center; }
-    .tl-foot-time   { width:100%; text-align:center; margin-left:0; }
-    .tl-page-header         { flex-direction:column; align-items:flex-start; }
-    .tl-page-header-left h1 { font-size:24px; }
-    .tl-new-btn             { width:100%; justify-content:center; }
-}
-
-/* Responsive 2B — Request Transfer Form */
-@media(max-width:860px) {
-    .rf-layout { grid-template-columns:1fr; }
-    .rf-summary { position:static; }
-}
-@media(max-width:600px) {
-    .rf-row2 { grid-template-columns:1fr; }
-    .rf-prod-row    { flex-wrap:wrap; gap:8px; }
-    .rf-prod-info   { width:100%; }
-    .rf-stock       { align-items:flex-start; }
-    .rf-add-btn     { width:100%; justify-content:center; }
-    .rf-item-top    { flex-wrap:wrap; }
-    .rf-qty-ctrl    { width:100%; justify-content:space-between; }
-}
-
-/* Responsive 2C — General Rules */
-@media(max-width:600px) {
-    .tl-card, .rf-card, .td-card { border-radius:var(--rsm, 8px); }
-    table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
-    .tl-num, .rf-prod-name, .tl-route-node { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .tl-card-meta, .tl-dates { flex-wrap:wrap; gap:4px; }
-}
-
-</style>
+        @media (max-width: 600px) {
+            .page { padding: 16px; }
+            .doc-header { flex-direction: column; }
+            .doc-header .doc-type { text-align: left; }
+            .info-grid, .transporter-row, .sig-row { grid-template-columns: 1fr; }
+            .table-scroll { overflow-x: auto; }
+            .table-scroll table { min-width: 520px; }
+        }
+    </style>
 </head>
 <body>
 @php
@@ -309,8 +104,8 @@
     {{-- ── Document header ── --}}
     <div class="doc-header">
         <div>
-            <div class="brand">New Shoes Ltd</div>
-            <div style="font-size:17px;color:#666;margin-top:4px;">Warehouse Management System</div>
+            <div class="brand">{{ config('tenant.name') }}</div>
+            <div class="brand-sub">Stock transfer</div>
         </div>
         <div class="doc-type">
             <div class="title">Delivery Note</div>
@@ -420,7 +215,7 @@
 
     {{-- ── Box list ── --}}
     <div class="section-heading">Box Manifest ({{ $totalBoxes }} {{ Str::plural('box', $totalBoxes) }})</div>
-    <table>
+    <div class="table-scroll"><table>
         <thead>
             <tr>
                 <th style="width:28px">#</th>
@@ -434,7 +229,7 @@
             @forelse ($transfer->boxes as $i => $tb)
             @php $box = $tb->box; @endphp
             <tr>
-                <td style="color:#999;font-size:16px">{{ $i + 1 }}</td>
+                <td style="color:#7a81a0">{{ $i + 1 }}</td>
                 <td style="font-family:monospace;font-weight:600;">{{ $box?->box_code ?? '—' }}</td>
                 <td>{{ $box?->product?->name ?? '—' }}</td>
                 <td>
@@ -466,7 +261,7 @@
             </tr>
         </tfoot>
         @endif
-    </table>
+    </table></div>
 
     {{-- ── Product summary ── --}}
     @if ($transfer->items->isNotEmpty())
@@ -527,7 +322,7 @@
 
     {{-- ── Footer ── --}}
     <div class="doc-footer">
-        This delivery note is generated by New Shoes Ltd · {{ $transfer->transfer_number }} · Printed {{ now()->format('d M Y H:i') }}
+        {{ config('tenant.name') }} · {{ $transfer->transfer_number }} · Printed {{ local_time(now())->format('d M Y, H:i') }}
     </div>
 
     {{-- ── Print button (hidden when printing) ── --}}
@@ -535,7 +330,7 @@
         <button class="print-btn" onclick="window.print()">
             Print / Save as PDF
         </button>
-        <div style="margin-top:10px;font-size:17px;color:#999">Use your browser's Print function to save as PDF</div>
+        <div style="margin-top:8px;font-size:11px;color:#7a81a0">Or use your browser's Print to save it as a PDF</div>
     </div>
 
 </div>
