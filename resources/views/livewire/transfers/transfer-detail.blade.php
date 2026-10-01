@@ -532,20 +532,28 @@
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
         </div>
-        <div class="m-sheet-body">
+        <div class="m-sheet-body" x-data x-on:tfd-invalid.window="setTimeout(() => $el.querySelector('.tfd-err')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)">
             <p style="font-size:13px;color:var(--text-sub);margin:0 0 14px;line-height:1.5">
                 {{ $t->boxes->count() }} {{ Str::plural('box', $t->boxes->count()) }} for {{ $t->toShop?->name }}. The shop is told it's on the way.
             </p>
             <div class="tfd-field">
                 <label class="tfd-label" for="tfd-tr">Transporter <span style="color:var(--red)">*</span></label>
-                <input id="tfd-tr" class="tfd-input" wire:model="transporterName" list="tfd-transporters" placeholder="Choose or type a company / driver" autocomplete="off">
-                <datalist id="tfd-transporters">
-                    @foreach($transporters as $tr)<option value="{{ $tr->name }}">{{ $tr->vehicle_number }}</option>@endforeach
-                </datalist>
+                <select id="tfd-tr" class="tfd-input" wire:model.live="transporterChoice">
+                    <option value="">Choose the transporter…</option>
+                    @foreach($transporters as $tr)
+                        <option value="{{ $tr->id }}">{{ $tr->name }}{{ $tr->vehicle_number ? ' · ' . $tr->vehicle_number : '' }}{{ $tr->company_name ? ' · ' . $tr->company_name : '' }}</option>
+                    @endforeach
+                    <option value="new">Not in the list — type a name</option>
+                </select>
+                @if($transporterChoice === 'new')
+                    <input class="tfd-input" style="margin-top:8px" wire:model="transporterName" maxlength="120" placeholder="Transporter or company name" autocomplete="off">
+                @endif
+                @error('transporterChoice')<div class="tfd-err">{{ $message }}</div>@enderror
                 @error('transporterName')<div class="tfd-err">{{ $message }}</div>@enderror
             </div>
             <div class="tfd-field">
                 <label class="tfd-label" for="tfd-driver">Handed to (driver's name) <span style="color:var(--red)">*</span></label>
+                <div style="font-size:11px;color:var(--text-dim);margin:-2px 0 6px">Filled from the transporter; change it if someone else takes the boxes.</div>
                 <input id="tfd-driver" class="tfd-input" wire:model="handedToName" maxlength="120" placeholder="Who is taking the boxes">
                 @error('handedToName')<div class="tfd-err">{{ $message }}</div>@enderror
             </div>

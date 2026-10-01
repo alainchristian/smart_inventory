@@ -40,6 +40,8 @@ class TransferDetail extends Component
 
     // Dispatch sheet (ready → in transit)
     public bool $showDispatch = false;
+    /** Registered transporter id, 'new' (type a name), or '' (not chosen yet). */
+    public string $transporterChoice = '';
     public string $transporterName = '';
     public string $handedToName = '';
     public string $instructions = '';
@@ -195,31 +197,54 @@ class TransferDetail extends Component
     {
         $t = $this->transfer;
         $this->resetErrorBag();
-        $this->transporterName = $t->transporter?->name ?? '';
-        $this->handedToName = '';
+        $this->transporterChoice = $t->transporter_id ? (string) $t->transporter_id : '';
+        $this->transporterName = '';
+        $this->handedToName = $t->transporter?->name ?? '';
         $this->instructions = $t->transporter_instructions ?? '';
         $this->expectedArrival = local_time(now()->addHours(4))->format('Y-m-d\TH:i');
         $this->handoverSignature = '';
         $this->showDispatch = true;
     }
 
+    /** Picking a registered transporter fills "Handed to" with its name (still editable). */
+    public function updatedTransporterChoice(string $value): void
+    {
+        $this->resetErrorBag('transporterName');
+        if (ctype_digit($value) && ($tr = Transporter::find((int) $value))) {
+            $previous = Transporter::where('name', $this->handedToName)->exists();
+            if ($this->handedToName === '' || $previous) {
+                $this->handedToName = $tr->name;
+            }
+        }
+    }
+
     public function dispatchTransfer(): void
     {
         $t = $this->transfer;
         $needsSignature = app(SettingsService::class)->transferRequireSignature();
-        $this->validate([
-            'transporterName'   => 'required|string|max:120',
-            'handedToName'      => 'required|string|min:2|max:120',
-            'instructions'      => 'nullable|string|max:1000',
-            'expectedArrival'   => 'nullable|date_format:Y-m-d\TH:i',
-            'handoverSignature' => $needsSignature ? 'required|string|starts_with:data:image/png' : 'nullable|string|starts_with:data:image/png',
-        ], [
-            'transporterName.required'   => 'Choose or type the transporter.',
-            'handedToName.required'      => 'Who is taking the boxes?',
-            'handoverSignature.required' => 'The driver signs here before leaving.',
-        ]);
+        try {
+            $this->validate([
+                'transporterChoice' => ctype_digit($this->transporterChoice) ? 'exists:transporters,id' : 'nullable|in:new',
+                'transporterName'   => ctype_digit($this->transporterChoice) ? 'nullable' : 'required|string|max:120',
+                'handedToName'      => 'required|string|min:2|max:120',
+                'instructions'      => 'nullable|string|max:1000',
+                'expectedArrival'   => 'nullable|date_format:Y-m-d\TH:i',
+                'handoverSignature' => $needsSignature ? 'required|string|starts_with:data:image/png' : 'nullable|string|starts_with:data:image/png',
+            ], [
+                'transporterChoice.exists'   => 'That transporter no longer exists — choose another.',
+                'transporterName.required'   => 'Choose the transporter, or pick "Not in the list" and type a name.',
+                'handedToName.required'      => 'Who is taking the boxes?',
+                'handoverSignature.required' => 'The driver signs here before leaving.',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->dispatch('tfd-invalid');   // the sheet scrolls to the first message
+            throw $e;
+        }
 
-        $transporter = Transporter::firstOrCreate(['name' => trim($this->transporterName)], ['is_active' => true, 'phone' => '']);
+        $transporter = ctype_digit($this->transporterChoice)
+            ? Transporter::find((int) $this->transporterChoice)
+            : null;
+        $transporter ??= Transporter::firstOrCreate(['name' => trim($this->transporterName)], ['is_active' => true, 'phone' => '']);
         $eta = $this->expectedArrival
             ? Carbon::createFromFormat('Y-m-d\TH:i', $this->expectedArrival, config('tenant.timezone'))->utc()
             : null;
@@ -342,7 +367,7 @@ class TransferDetail extends Component
             'canResolve' => app(TransferService::class)->can('resolve', $t),
             'openIssues' => $received ? $t->boxes->filter(fn ($tb) => ! $tb->is_received && ! $tb->resolution)->values() : collect(),
             'resolutions' => TransferService::RESOLUTIONS,
-            'transporters' => $this->showDispatch ? Transporter::active()->orderBy('name')->get(['id', 'name', 'vehicle_number']) : collect(),
+            'transporters' => $this->showDispatch ? Transporter::active()->orderBy('name')->get(['id', 'name', 'vehicle_number', 'company_name']) : collect(),
             'needsSignature' => app(SettingsService::class)->transferRequireSignature(),
             'received'  => $received,
             'issues'    => $issues,

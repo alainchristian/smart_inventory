@@ -2273,3 +2273,12 @@ bulk. Now:
 - Receive: box labels already worked; unfinished rows get a **Receive**
   button (`ReceiveTransfer::receiveProduct($id)` → `openReceiveFor()`).
 - Barcode columns and the picking list say "No barcode" instead of blank.
+
+### Dispatch sheet: transporter is a dropdown (2026-10-01)
+The transporter was a free-text field with a hidden datalist, so people
+typed the driver into "Handed to" and left Transporter empty (the error
+then sat above the visible part of the sheet). Now `transporterChoice`
+is a select of active transporters (name · vehicle · company) plus "Not in
+the list — type a name" (`'new'` → `transporterName`, created on dispatch).
+Choosing one fills "Handed to" with its name (editable). A failed dispatch
+dispatches `tfd-invalid` and the sheet scrolls to the first error.

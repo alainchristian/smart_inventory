@@ -126,6 +126,27 @@ class TransferDispatchTest extends TestCase
         $this->assertSame(TransferStatus::IN_TRANSIT, $t->fresh()->status);
     }
 
+    public function test_choosing_a_registered_transporter_fills_the_driver(): void
+    {
+        app(SettingsService::class)->set('transfer_require_signature', false);
+        $t = $this->ready();
+        $tr = \App\Models\Transporter::create(['name' => 'Theo ' . uniqid(), 'phone' => '', 'vehicle_number' => 'RAE 117 B', 'is_active' => true]);
+
+        Livewire::actingAs($this->whMgr)->test(TransferDetail::class, ['transfer' => $t])
+            ->call('openDispatch')
+            ->assertSee('RAE 117 B')
+            ->call('dispatchTransfer')
+            ->assertHasErrors(['transporterName', 'handedToName'])
+            ->assertDispatched('tfd-invalid')
+            ->set('transporterChoice', (string) $tr->id)
+            ->assertSet('handedToName', $tr->name)
+            ->call('dispatchTransfer')
+            ->assertHasNoErrors();
+
+        $this->assertSame($tr->id, $t->fresh()->transporter_id);
+        $this->assertSame($tr->name, $t->fresh()->handed_to_name);
+    }
+
     public function test_the_shop_cannot_dispatch(): void
     {
         $t = $this->ready();
