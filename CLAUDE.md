@@ -2061,3 +2061,58 @@ transaction (removed after each phase). Left alone: the orphaned
 `WarehouseManager\Transfers\PackTransfer` (+ its CLAUDE.md), the
 `components/inventory/transfers/⚡*` files, and the Transfer Performance
 report and stock-return pages (out of scope).
+
+---
+
+## Transfer process (2026-10-01) — the rules every transfer follows
+
+Agreed with the user after the redesign: CLAUDE.md had no end-to-end
+process, steps had no actor, the shop's numbers were overwritten, lost
+boxes went back on sale. **This section is the process; keep it current.**
+
+```
+pending → approved → (packing) → ready → in_transit → delivered → received → closed
+   ↘ rejected     ↘ cancelled (any time before dispatch)       ↘ discrepancy → resolved → closed
+```
+
+| Step (service method) | Who (relative to the transfer) | From | Records |
+|---|---|---|---|
+| request `createTransferRequest` | shop (or owner) | — | requested_by/at, needed_by, notes |
+| approve `approveTransfer($t, $note, [item_id => boxes])` | owner, warehouse | pending | reviewed_by/at, review_notes, **quantity_approved** (quantity_requested never changes; 0 drops a product) |
+| reject `rejectTransfer` | owner, warehouse | pending | reviewed_by/at, review_notes |
+| pack (boxes) `packBoxesByProductBarcode` / `unpackBox` | owner, warehouse | approved | packed_by/at = packing *started*; never more than approved |
+| finish packing `finishPacking($t, [item_id => reason])` | owner, warehouse | approved → **ready** | packing_done_by/at; `short_reason` required for every product packed short |
+| reopen packing `reopenPacking` | owner, warehouse | ready → approved | clears packing_done + short reasons |
+| dispatch `dispatch($t, $transporterId, $handover)` | owner, warehouse | ready (approved = finishes packing on the way) | shipped_by/at, transporter, handed_to_name, handover_signature, transporter_instructions, expected_arrival_at |
+| arrive `markAsDelivered` | **shop** | in_transit | delivered_by/at |
+| receive `receiveTransfer($t, $boxes, $receipt)` | shop | delivered (in_transit = arrives first) | received_by/at, received_by_name, receipt_signature; closed_at when nothing is missing / damaged |
+| cancel `cancelTransfer` | owner, warehouse (pending / approved / ready); shop only its own pending | | cancelled_by/at, review_notes |
+
+- **One rules layer:** `TransferService::STEPS` (step → allowed statuses,
+  roles). `roleFor($user, $t)` = owner/admin → owner, warehouse manager of
+  the source warehouse → warehouse, shop manager of the destination shop →
+  shop. `can($step, $t, $user)` drives which buttons a screen shows;
+  `assertCan()` guards every method (throws `DomainException`). Never
+  change a transfer's status anywhere else.
+- **History:** every step calls `record()` → `transfer_events` (action,
+  from/to status, user, note, meta). `Transfer::events()` is the trail.
+  Migration `2026_10_01_000001` backfilled events from old timestamps.
+- `TransferItem::boxesToSend()` = approved ?? requested — packing, lists
+  and dashboards count this.
+- Status `ready` (migration `2026_10_01_000002`, `ALTER TYPE … ADD VALUE`
+  outside a transaction).
+
+### Phase 1 (data model + rules) — done
+- Columns: transfers needed_by, packing_done_at/by, shipped_by,
+  handed_to_name, handover_signature, transporter_instructions,
+  expected_arrival_at, delivered_by, received_by_name, receipt_signature,
+  cancelled_at/by, closed_at; transfer_items quantity_approved,
+  short_reason; transfer_boxes resolution, resolved_by/at,
+  resolution_notes (used in phase 5). Signatures are `$hidden` on Transfer.
+- Bugs fixed on the way: `packBoxByBoxCode()` compared items to boxes;
+  `markAsShipped()` didn't check the status; shipping and arrival weren't
+  logged; `roleFor` must compare location ids as ints (users.location_id
+  isn't cast).
+- Tests that took steps as the wrong person were corrected (the warehouse
+  can't confirm a shop's arrival any more). Tests:
+  `tests/Feature/Transfers/TransferProcessTest.php`.

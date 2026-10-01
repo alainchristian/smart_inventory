@@ -106,7 +106,7 @@ class PackTransfer extends Component
             ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
             ->count();
 
-        $totalBoxesRequested = (int) $transferItem->quantity_requested;
+        $totalBoxesRequested = $transferItem->boxesToSend();
         $remaining = max(0, $totalBoxesRequested - $alreadyPacked);
 
         if ($remaining <= 0) {
@@ -255,7 +255,7 @@ class PackTransfer extends Component
                     ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
                     ->count();
 
-                $boxesNeeded = (int) $item->quantity_requested;
+                $boxesNeeded = $item->boxesToSend();
 
                 if ($boxesAssigned < $boxesNeeded) {
                     $remaining = $boxesNeeded - $boxesAssigned;
@@ -385,7 +385,7 @@ class PackTransfer extends Component
         $packingSummary = [];
         foreach ($this->transfer->items as $item) {
             $product = $item->product;
-            $boxesNeeded = (int) $item->quantity_requested;
+            $boxesNeeded = $item->boxesToSend();
             $boxesPacked = TransferBox::where('transfer_id', $this->transfer->id)
                 ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
                 ->count();

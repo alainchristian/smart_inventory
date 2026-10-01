@@ -33,6 +33,13 @@ class Transfer extends Model
         'discrepancy_notes',
         'notes',          // the shop's request note
         'review_notes',   // approval note, rejection or cancellation reason
+        'needed_by',
+        'packing_done_at', 'packing_done_by',
+        'shipped_by', 'handed_to_name', 'handover_signature', 'transporter_instructions', 'expected_arrival_at',
+        'delivered_by',
+        'received_by_name', 'receipt_signature',
+        'cancelled_at', 'cancelled_by',
+        'closed_at',
     ];
 
     protected $casts = [
@@ -44,7 +51,15 @@ class Transfer extends Model
         'delivered_at' => 'datetime',
         'received_at' => 'datetime',
         'has_discrepancy' => 'boolean',
+        'needed_by' => 'date',
+        'packing_done_at' => 'datetime',
+        'expected_arrival_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'closed_at' => 'datetime',
     ];
+
+    /** Signatures are data URLs; keep them out of arrays / JSON (Livewire state, logs). */
+    protected $hidden = ['handover_signature', 'receipt_signature'];
 
     // Relationships
     public function fromWarehouse(): BelongsTo
@@ -80,6 +95,40 @@ class Transfer extends Model
     public function transporter(): BelongsTo
     {
         return $this->belongsTo(Transporter::class);
+    }
+
+    public function packingDoneBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'packing_done_by');
+    }
+
+    public function shippedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shipped_by');
+    }
+
+    public function deliveredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'delivered_by');
+    }
+
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    /** Every step, oldest first (written by TransferService::record()). */
+    public function events(): HasMany
+    {
+        return $this->hasMany(TransferEvent::class)->orderBy('created_at')->orderBy('id');
+    }
+
+    /** Boxes missing or damaged on receipt that nobody has resolved yet. */
+    public function openIssues(): HasMany
+    {
+        return $this->hasMany(TransferBox::class)
+            ->whereNull('resolution')
+            ->where(fn ($q) => $q->where('is_received', false)->orWhere('is_damaged', true));
     }
 
     public function items(): HasMany

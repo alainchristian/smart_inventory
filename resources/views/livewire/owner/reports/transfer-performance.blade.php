@@ -413,13 +413,14 @@
         $statusColors = [
             'pending'    => ['bg' => 'var(--amber-dim)',  'c' => 'var(--amber)'],
             'approved'   => ['bg' => 'var(--accent-dim)', 'c' => 'var(--accent)'],
+            'ready'      => ['bg' => 'var(--accent-dim)', 'c' => 'var(--accent)'],
             'in_transit' => ['bg' => 'var(--violet-dim)', 'c' => 'var(--violet)'],
             'delivered'  => ['bg' => 'var(--green-dim)',  'c' => 'var(--green)'],
             'received'   => ['bg' => 'var(--green-dim)',  'c' => 'var(--green)'],
             'rejected'   => ['bg' => 'var(--red-dim)',    'c' => 'var(--red)'],
             'cancelled'  => ['bg' => 'var(--surface2)',   'c' => 'var(--text-dim)'],
         ];
-        $stagesOrdered = ['pending', 'approved', 'in_transit', 'delivered', 'received'];
+        $stagesOrdered = ['pending', 'approved', 'ready', 'in_transit', 'delivered', 'received'];
         $sideStatuses  = ['rejected', 'cancelled'];
         $compTime      = $this->completionTimeDistribution;
         $compBucketsOrdered = ['0-24 hours', '24-48 hours', '48-72 hours', '72+ hours'];

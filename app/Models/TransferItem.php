@@ -13,7 +13,9 @@ class TransferItem extends Model
     protected $fillable = [
         'transfer_id',
         'product_id',
-        'quantity_requested',
+        'quantity_requested',   // boxes the shop asked for (never changed after the request)
+        'quantity_approved',    // boxes approved to send (null until approved)
+        'short_reason',         // why fewer boxes were packed than approved
         'quantity_shipped',
         'quantity_received',
         'discrepancy_quantity',
@@ -22,6 +24,7 @@ class TransferItem extends Model
 
     protected $casts = [
         'quantity_requested' => 'integer',
+        'quantity_approved' => 'integer',
         'quantity_shipped' => 'integer',
         'quantity_received' => 'integer',
         'discrepancy_quantity' => 'integer',
@@ -36,6 +39,12 @@ class TransferItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** Boxes to pack and send: the approved number, or the request before approval. */
+    public function boxesToSend(): int
+    {
+        return (int) ($this->quantity_approved ?? $this->quantity_requested);
     }
 
     // Helper methods

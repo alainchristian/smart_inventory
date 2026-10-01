@@ -71,7 +71,7 @@ trait ListsTransfers
     {
         // In the order a transfer moves through; the dead ends last.
         $tabs = collect(['all' => 'All'])->merge(collect([
-            TransferStatus::PENDING, TransferStatus::APPROVED, TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED,
+            TransferStatus::PENDING, TransferStatus::APPROVED, TransferStatus::READY, TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED,
             TransferStatus::RECEIVED, TransferStatus::REJECTED, TransferStatus::CANCELLED,
         ])->mapWithKeys(fn ($s) => [$s->value => $s->label()]));
 
@@ -154,7 +154,7 @@ trait ListsTransfers
         return $this->filteredQuery()
             ->with(['toShop:id,name', 'fromWarehouse:id,name', 'requestedBy:id,name'])
             ->withCount('items')
-            ->withSum('items as boxes_requested', 'quantity_requested');
+            ->addSelect(['boxes_requested' => DB::table('transfer_items')->selectRaw('COALESCE(SUM(COALESCE(quantity_approved, quantity_requested)), 0)')->whereColumn('transfer_id', 'transfers.id')]);
     }
 
     /** Shops the filter offers (owner: all; warehouse: shops it has sent to). */
@@ -175,7 +175,7 @@ trait ListsTransfers
             ->whereIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED])
             ->with(['toShop:id,name', 'requestedBy:id,name'])
             ->withCount('items')
-            ->withSum('items as boxes_requested', 'quantity_requested')
+            ->addSelect(['boxes_requested' => DB::table('transfer_items')->selectRaw('COALESCE(SUM(COALESCE(quantity_approved, quantity_requested)), 0)')->whereColumn('transfer_id', 'transfers.id')])
             ->orderBy('requested_at')
             ->get();
     }
@@ -204,7 +204,7 @@ trait ListsTransfers
     {
         return (int) DB::table('transfer_items')
             ->whereIn('transfer_id', $this->baseQuery()->whereIn('status', $statuses)->select('id'))
-            ->sum('quantity_requested');
+            ->sum(DB::raw('COALESCE(quantity_approved, quantity_requested)'));
     }
 
     /** Received this month: count, boxes received, damaged boxes, average days from request to receipt. */

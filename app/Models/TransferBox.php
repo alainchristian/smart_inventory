@@ -21,6 +21,10 @@ class TransferBox extends Model
         'is_received',
         'is_damaged',
         'damage_notes',
+        'resolution',        // found | lost | received_late (missing / damaged boxes after receipt)
+        'resolved_by',
+        'resolved_at',
+        'resolution_notes',
     ];
 
     protected $casts = [
@@ -28,6 +32,7 @@ class TransferBox extends Model
         'scanned_in_at' => 'datetime',
         'is_received' => 'boolean',
         'is_damaged' => 'boolean',
+        'resolved_at' => 'datetime',
     ];
 
     // Relationships

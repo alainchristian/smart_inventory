@@ -96,12 +96,14 @@ class TransferFixesTest extends TestCase
 
     public function test_reject_and_cancel_keep_the_shops_note(): void
     {
+        $toReject = $this->requested();
+        $toCancel = $this->requested();
         $this->actingAs($this->whMgr);
-        $rejected = $this->svc->rejectTransfer($this->requested(), 'Out of stock this week');
+        $rejected = $this->svc->rejectTransfer($toReject, 'Out of stock this week');
         $this->assertSame('Weekend restock', $rejected->fresh()->notes);
         $this->assertSame('Out of stock this week', $rejected->fresh()->review_notes);
 
-        $cancelled = $this->svc->cancelTransfer($this->requested(), 'Duplicate request');
+        $cancelled = $this->svc->cancelTransfer($toCancel, 'Duplicate request');
         $this->assertSame('Weekend restock', $cancelled->fresh()->notes);
         $this->assertSame('Duplicate request', $cancelled->fresh()->review_notes);
     }
@@ -138,7 +140,7 @@ class TransferFixesTest extends TestCase
     public function test_owner_detail_shows_damage_notes_after_receiving(): void
     {
         $t = $this->shipped();
-        $this->actingAs($this->whMgr);
+        $this->actingAs($this->shopMgr);
         $this->svc->markAsDelivered($t);
         $boxIds = TransferBox::where('transfer_id', $t->id)->pluck('box_id');
         $this->actingAs($this->shopMgr);

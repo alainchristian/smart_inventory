@@ -91,8 +91,8 @@ class TransferDetail extends Component
         foreach ($t->items as $item) {
             $n = (int) ($this->qty[$item->id] ?? 0);
             $available = $stock[$item->product_id]['boxes'] ?? 0;
-            if ($n < 1) {
-                $this->addError("qty.{$item->id}", 'At least 1 box.');
+            if ($n < 0) {
+                $this->addError("qty.{$item->id}", 'Use 0 to leave it out.');
             } elseif ($n > $available) {
                 $this->addError("qty.{$item->id}", "Only {$available} in the warehouse.");
             }
@@ -102,10 +102,12 @@ class TransferDetail extends Component
         }
 
         try {
-            foreach ($t->items as $item) {
-                $item->update(['quantity_requested' => (int) $this->qty[$item->id]]);
-            }
-            app(TransferService::class)->approveTransfer($t->fresh(), trim($this->approveNote) ?: null);
+            // The shop's request stays as it was; the approved numbers go to quantity_approved.
+            $approved = $t->items->mapWithKeys(fn ($item) => [$item->id => (int) ($this->qty[$item->id] ?? 0)])->all();
+            app(TransferService::class)->approveTransfer($t, trim($this->approveNote) ?: null, $approved);
+        } catch (\DomainException $e) {
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
+            return;
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('notification', ['type' => 'error', 'message' => 'Could not approve: ' . $e->getMessage()]);
@@ -170,6 +172,8 @@ class TransferDetail extends Component
                 'item'     => $item,
                 'product'  => $item->product,
                 'requested'=> (int) $item->quantity_requested,
+                'approved' => $item->quantity_approved,     // null until approved
+                'short'    => $item->short_reason,
                 'packed'   => $boxes->count(),
                 'received' => $boxes->where('is_received', true)->where('is_damaged', false)->count(),
                 'damaged'  => $boxes->where('is_damaged', true)->count(),

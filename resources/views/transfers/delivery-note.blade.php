@@ -270,7 +270,8 @@
         <thead>
             <tr>
                 <th>Product</th>
-                <th style="text-align:right">Boxes requested</th>
+                <th style="text-align:right">Requested</th>
+                <th style="text-align:right">Approved</th>
                 <th style="text-align:right">Boxes shipped</th>
                 <th style="text-align:right">Items shipped</th>
             </tr>
@@ -281,6 +282,7 @@
                 <td>{{ $item->product?->name ?? '—' }}</td>
                 @php $shippedBoxes = ($boxesByProduct[$item->product_id] ?? collect())->count(); @endphp
                 <td style="text-align:right;font-family:monospace">{{ number_format($item->quantity_requested) }}</td>
+                <td style="text-align:right;font-family:monospace">{{ $item->quantity_approved !== null ? number_format($item->quantity_approved) : '—' }}</td>
                 <td style="text-align:right;font-family:monospace">{{ $shippedBoxes ?: '—' }}</td>
                 <td style="text-align:right;font-family:monospace">{{ $item->quantity_shipped !== null ? number_format($item->quantity_shipped) : '—' }}</td>
             </tr>

@@ -6,6 +6,7 @@ enum TransferStatus: string
 {
     case PENDING = 'pending';
     case APPROVED = 'approved';
+    case READY = 'ready';           // packed, waiting for the transporter
     case REJECTED = 'rejected';
     case IN_TRANSIT = 'in_transit';
     case DELIVERED = 'delivered';
@@ -17,6 +18,7 @@ enum TransferStatus: string
         return match($this) {
             self::PENDING => 'Pending',
             self::APPROVED => 'Approved',
+            self::READY => 'Ready to dispatch',
             self::REJECTED => 'Rejected',
             self::IN_TRANSIT => 'In Transit',
             self::DELIVERED => 'Delivered',
@@ -30,6 +32,7 @@ enum TransferStatus: string
         return match($this) {
             self::PENDING    => 'bg-amber-100 text-amber-800 border border-amber-200',
             self::APPROVED   => 'bg-blue-100 text-blue-800 border border-blue-200',
+            self::READY      => 'bg-blue-100 text-blue-800 border border-blue-200',
             self::REJECTED   => 'bg-red-100 text-red-800 border border-red-200',
             self::IN_TRANSIT => 'bg-violet-100 text-violet-800 border border-violet-200',
             self::DELIVERED  => 'bg-indigo-100 text-indigo-800 border border-indigo-200',
@@ -44,6 +47,7 @@ enum TransferStatus: string
         return match($this) {
             self::PENDING    => 'amber',
             self::APPROVED   => 'accent',
+            self::READY      => 'accent',
             self::REJECTED   => 'red',
             self::IN_TRANSIT => 'violet',
             self::DELIVERED  => 'pink',

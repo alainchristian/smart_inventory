@@ -139,7 +139,7 @@ class Dashboard extends Component
             ->where('transfers.from_warehouse_id', $wId)
             ->whereBetween('transfers.shipped_at', [$from, $to])
             ->whereNull('transfers.deleted_at')
-            ->sum('transfer_items.quantity_requested');
+            ->sum(DB::raw('COALESCE(transfer_items.quantity_approved, transfer_items.quantity_requested)'));
 
         $outboundItems = (int) DB::table('transfer_items')
             ->join('transfers', 'transfer_items.transfer_id', '=', 'transfers.id')
@@ -147,7 +147,7 @@ class Dashboard extends Component
             ->where('transfers.from_warehouse_id', $wId)
             ->whereBetween('transfers.shipped_at', [$from, $to])
             ->whereNull('transfers.deleted_at')
-            ->selectRaw('COALESCE(SUM(transfer_items.quantity_requested::numeric * products.items_per_box::numeric), 0) as total')
+            ->selectRaw('COALESCE(SUM(COALESCE(transfer_items.quantity_approved, transfer_items.quantity_requested)::numeric * products.items_per_box::numeric), 0) as total')
             ->value('total') ?? 0;
 
         $prevOutboundBoxes = (int) DB::table('transfer_items')
@@ -155,7 +155,7 @@ class Dashboard extends Component
             ->where('transfers.from_warehouse_id', $wId)
             ->whereBetween('transfers.shipped_at', [$prevFrom, $prevTo])
             ->whereNull('transfers.deleted_at')
-            ->sum('transfer_items.quantity_requested');
+            ->sum(DB::raw('COALESCE(transfer_items.quantity_approved, transfer_items.quantity_requested)'));
         $outboundBoxesChange = $prevOutboundBoxes > 0
             ? round(($outboundBoxes - $prevOutboundBoxes) / $prevOutboundBoxes * 100, 1)
             : ($outboundBoxes > 0 ? 100 : 0);
@@ -271,7 +271,7 @@ class Dashboard extends Component
                 ->whereIn('transfer_items.product_id', $lowStockProductIds)
                 ->whereBetween('transfers.shipped_at', [$s, $e])
                 ->whereNull('transfers.deleted_at')
-                ->sum('transfer_items.quantity_requested');
+                ->sum(DB::raw('COALESCE(transfer_items.quantity_approved, transfer_items.quantity_requested)'));
         };
 
         if ($diffDays === 0) {

@@ -11,10 +11,96 @@ use App\Models\Box;
 use App\Models\Product;
 use App\Models\Transfer;
 use App\Models\TransferBox;
+use App\Models\TransferEvent;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * The transfer process (see CLAUDE.md "Transfer process"):
+ * requested → approved → (packing) → ready → in_transit → delivered → received → closed,
+ * with rejected (from pending) and cancelled (before dispatch) as dead ends.
+ * Every step goes through assertCan() (status + role) and record() (history).
+ */
 class TransferService
 {
+    /** step => [statuses it may start from, roles allowed]. Roles are relative to the transfer. */
+    public const STEPS = [
+        'approve'        => [['pending'], ['owner', 'warehouse']],
+        'reject'         => [['pending'], ['owner', 'warehouse']],
+        'pack'           => [['approved'], ['owner', 'warehouse']],
+        'finish_packing' => [['approved'], ['owner', 'warehouse']],
+        'reopen_packing' => [['ready'], ['owner', 'warehouse']],
+        // Dispatching straight from approved finishes packing on the way.
+        'dispatch'       => [['ready', 'approved'], ['owner', 'warehouse']],
+        'arrive'         => [['in_transit'], ['shop']],
+        'receive'        => [['delivered', 'in_transit'], ['shop']],
+        // The shop may only withdraw its own request before it is approved.
+        'cancel'         => [['pending', 'approved', 'ready'], ['owner', 'warehouse', 'shop']],
+        'resolve'        => [['received'], ['owner', 'warehouse']],
+    ];
+
+    /** owner | warehouse | shop | null — the user's part in this transfer. */
+    public function roleFor(?User $user, Transfer $transfer): ?string
+    {
+        return match (true) {
+            ! $user                                                                    => null,
+            $user->isOwner() || $user->isAdmin()                                       => 'owner',
+            $user->isWarehouseManager() && (int) $user->location_id === (int) $transfer->from_warehouse_id => 'warehouse',
+            $user->isShopManager() && (int) $user->location_id === (int) $transfer->to_shop_id => 'shop',
+            default                                                                    => null,
+        };
+    }
+
+    /** Whether $user (default: the signed-in user) may take $step on $transfer now. */
+    public function can(string $step, Transfer $transfer, ?User $user = null): bool
+    {
+        [$from, $roles] = self::STEPS[$step];
+        $role = $this->roleFor($user ?? auth()->user(), $transfer);
+
+        if (! in_array($transfer->status->value, $from, true) || ! in_array($role, $roles, true)) {
+            return false;
+        }
+
+        return ! ($step === 'cancel' && $role === 'shop' && $transfer->status !== TransferStatus::PENDING);
+    }
+
+    public function assertCan(string $step, Transfer $transfer): void
+    {
+        if ($this->can($step, $transfer)) {
+            return;
+        }
+        $role = $this->roleFor(auth()->user(), $transfer);
+        [$from, $roles] = self::STEPS[$step];
+
+        $done = [
+            'approve' => 'approved', 'reject' => 'rejected', 'pack' => 'packed', 'finish_packing' => 'marked as packed',
+            'reopen_packing' => 'reopened for packing', 'dispatch' => 'dispatched', 'arrive' => 'marked as arrived',
+            'receive' => 'received', 'cancel' => 'cancelled', 'resolve' => 'resolved',
+        ][$step];
+
+        throw new \DomainException(in_array($role, $roles, true)
+            ? "{$transfer->transfer_number} is {$transfer->status->label()}, so it can't be {$done} now."
+            : "You can't do this on {$transfer->transfer_number}.");
+    }
+
+    /** Append one step to the transfer's history. */
+    public function record(Transfer $transfer, string $action, ?TransferStatus $from = null, ?TransferStatus $to = null, ?string $note = null, array $meta = []): TransferEvent
+    {
+        $user = auth()->user();
+
+        return TransferEvent::create([
+            'transfer_id' => $transfer->id,
+            'action'      => $action,
+            'from_status' => $from?->value,
+            'to_status'   => $to?->value,
+            'user_id'     => $user?->id,
+            'user_name'   => $user?->name,
+            'note'        => $note,
+            'meta'        => $meta ?: null,
+            'created_at'  => now(),
+        ]);
+    }
+
     public function generateTransferNumber(): string
     {
         $yearMonth = now()->format('Y-m');
@@ -50,6 +136,7 @@ class TransferService
                 'status' => TransferStatus::PENDING,
                 'requested_by' => auth()->id(),
                 'requested_at' => now(),
+                'needed_by' => $data['needed_by'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
 
@@ -76,17 +163,33 @@ class TransferService
                 'user_agent' => request()->header('User-Agent'),
             ]);
 
+            $this->record($transfer, 'requested', null, TransferStatus::PENDING, $transfer->notes,
+                array_filter(['needed_by' => $transfer->needed_by?->toDateString()]));
+
             return $transfer;
         });
     }
 
-    public function approveTransfer(Transfer $transfer, ?string $notes = null): Transfer
+    /**
+     * @param array<int,int> $approved  boxes to send per transfer_item id (default: as requested);
+     *                                  0 drops a product, at least one box must remain.
+     */
+    public function approveTransfer(Transfer $transfer, ?string $notes = null, array $approved = []): Transfer
     {
-        if ($transfer->status !== TransferStatus::PENDING) {
-            throw new \Exception('Only pending transfers can be approved');
+        $this->assertCan('approve', $transfer);
+
+        $quantities = $transfer->items->mapWithKeys(fn ($item) => [
+            $item->id => max(0, (int) ($approved[$item->id] ?? $item->quantity_requested)),
+        ]);
+        if ($quantities->sum() < 1) {
+            throw new \DomainException('Approve at least one box, or reject the request.');
         }
 
-        return DB::transaction(function () use ($transfer, $notes) {
+        return DB::transaction(function () use ($transfer, $notes, $quantities) {
+            foreach ($transfer->items as $item) {
+                $item->update(['quantity_approved' => $quantities[$item->id]]);
+            }
+
             $transfer->update([
                 'status' => TransferStatus::APPROVED,
                 'reviewed_by' => auth()->id(),
@@ -125,15 +228,18 @@ class TransferService
                     $alert->markAsResolved();
                 });
 
+            $changed = $transfer->items->filter(fn ($i) => $quantities[$i->id] !== (int) $i->quantity_requested)
+                ->map(fn ($i) => ['product_id' => $i->product_id, 'requested' => (int) $i->quantity_requested, 'approved' => $quantities[$i->id]])
+                ->values()->all();
+            $this->record($transfer, 'approved', TransferStatus::PENDING, TransferStatus::APPROVED, $notes, array_filter(['changed' => $changed]));
+
             return $transfer;
         });
     }
 
     public function rejectTransfer(Transfer $transfer, string $reason): Transfer
     {
-        if ($transfer->status !== TransferStatus::PENDING) {
-            throw new \Exception('Only pending transfers can be rejected');
-        }
+        $this->assertCan('reject', $transfer);
 
         return DB::transaction(function () use ($transfer, $reason) {
             $transfer->update([
@@ -171,15 +277,15 @@ class TransferService
                     $alert->markAsResolved();
                 });
 
+            $this->record($transfer, 'rejected', TransferStatus::PENDING, TransferStatus::REJECTED, $reason);
+
             return $transfer;
         });
     }
 
     public function assignBoxesToTransfer(Transfer $transfer, array $boxAssignments): Transfer
     {
-        if ($transfer->status !== TransferStatus::APPROVED) {
-            throw new \Exception('Only approved transfers can have boxes assigned');
-        }
+        $this->assertCan('pack', $transfer);
 
         return DB::transaction(function () use ($transfer, $boxAssignments) {
             // Validate boxes exist and are available
@@ -215,10 +321,7 @@ class TransferService
                 }
             }
 
-            $transfer->update([
-                'packed_by' => auth()->id(),
-                'packed_at' => now(),
-            ]);
+            $this->markPackingStarted($transfer, count($boxAssignments));
 
             return $transfer;
         });
@@ -268,47 +371,143 @@ class TransferService
         });
     }
 
-    public function markAsShipped(Transfer $transfer, ?int $transporterId = null): Transfer
+    /**
+     * Packing is done: the transfer waits for the transporter (approved → ready).
+     *
+     * @param array<int,string> $shortReasons  reason per transfer_item id packed short (required for each)
+     */
+    public function finishPacking(Transfer $transfer, array $shortReasons = []): Transfer
     {
-        // Verify all boxes are scanned out
-        $unscannedCount = $transfer->boxes()->whereNull('scanned_out_at')->count();
+        $this->assertCan('finish_packing', $transfer);
 
-        if ($unscannedCount > 0) {
-            throw new \Exception("{$unscannedCount} boxes have not been scanned out");
+        if (! $transfer->boxes()->exists()) {
+            throw new \DomainException('Pack at least one box first.');
         }
 
-        return DB::transaction(function () use ($transfer, $transporterId) {
+        $short = $transfer->items->map(fn ($item) => [
+            'item' => $item, 'packed' => $this->packedCount($transfer, $item->product_id), 'approved' => $item->boxesToSend(),
+        ])->filter(fn ($r) => $r['packed'] < $r['approved']);
+
+        foreach ($short as $r) {
+            if (trim((string) ($shortReasons[$r['item']->id] ?? '')) === '') {
+                throw new \DomainException("Say why {$r['item']->product?->name} is short ({$r['packed']} of {$r['approved']} boxes).");
+            }
+        }
+
+        return DB::transaction(function () use ($transfer, $short, $shortReasons) {
+            foreach ($short as $r) {
+                $r['item']->update(['short_reason' => trim($shortReasons[$r['item']->id])]);
+            }
             $transfer->update([
-                'status' => TransferStatus::IN_TRANSIT,
-                'transporter_id' => $transporterId,
-                'shipped_at' => now(),
+                'status'          => TransferStatus::READY,
+                'packing_done_at' => now(),
+                'packing_done_by' => auth()->id(),
             ]);
+            $this->record($transfer, 'packing_done', TransferStatus::APPROVED, TransferStatus::READY, null, array_filter([
+                'boxes' => $transfer->boxes()->count(),
+                'short' => $short->map(fn ($r) => ['product_id' => $r['item']->product_id, 'packed' => $r['packed'],
+                    'approved' => $r['approved'], 'reason' => trim($shortReasons[$r['item']->id])])->values()->all(),
+            ]));
 
             return $transfer;
         });
     }
 
-    public function markAsDelivered(Transfer $transfer): Transfer
+    /** Back to packing from ready (e.g. a box must be swapped before dispatch). */
+    public function reopenPacking(Transfer $transfer, ?string $reason = null): Transfer
     {
-        if ($transfer->status !== TransferStatus::IN_TRANSIT) {
-            throw new \Exception('Only in-transit transfers can be marked as delivered');
-        }
+        $this->assertCan('reopen_packing', $transfer);
 
-        $transfer->update([
-            'status' => TransferStatus::DELIVERED,
-            'delivered_at' => now(),
-        ]);
+        $transfer->update(['status' => TransferStatus::APPROVED, 'packing_done_at' => null, 'packing_done_by' => null]);
+        $transfer->items()->update(['short_reason' => null]);
+        $this->record($transfer, 'packing_reopened', TransferStatus::READY, TransferStatus::APPROVED, $reason);
 
         return $transfer;
     }
 
-    public function receiveTransfer(Transfer $transfer, array $receivedBoxes): Transfer
+    /**
+     * Hand the boxes to the transporter (ready → in_transit).
+     *
+     * @param array $handover  handed_to_name, handover_signature (data URL), transporter_instructions,
+     *                         expected_arrival_at (Carbon|string, UTC), short_reasons (when dispatching
+     *                         straight from approved)
+     */
+    public function dispatch(Transfer $transfer, ?int $transporterId, array $handover = []): Transfer
     {
-        if ($transfer->status !== TransferStatus::DELIVERED) {
-            throw new \Exception('Only delivered transfers can be received');
+        $this->assertCan('dispatch', $transfer);
+
+        if ($transfer->status === TransferStatus::APPROVED) {
+            // One-step flow (pack → ship): finish packing on the way, recording
+            // any short product as "not packed" unless a reason is given.
+            $reasons = $handover['short_reasons'] ?? [];
+            foreach ($transfer->items as $item) {
+                $reasons[$item->id] ??= 'Not packed before dispatch';
+            }
+            $this->finishPacking($transfer, $reasons);
+            $transfer->refresh();
         }
 
-        return DB::transaction(function () use ($transfer, $receivedBoxes) {
+        $unscanned = $transfer->boxes()->whereNull('scanned_out_at')->count();
+        if ($unscanned > 0) {
+            throw new \DomainException("{$unscanned} boxes have not been scanned out");
+        }
+
+        return DB::transaction(function () use ($transfer, $transporterId, $handover) {
+            $transfer->update([
+                'status'                   => TransferStatus::IN_TRANSIT,
+                'transporter_id'           => $transporterId,
+                'shipped_at'               => now(),
+                'shipped_by'               => auth()->id(),
+                'handed_to_name'           => $handover['handed_to_name'] ?? null,
+                'handover_signature'       => $handover['handover_signature'] ?? null,
+                'transporter_instructions' => $handover['transporter_instructions'] ?? null,
+                'expected_arrival_at'      => $handover['expected_arrival_at'] ?? null,
+            ]);
+            $this->record($transfer, 'dispatched', TransferStatus::READY, TransferStatus::IN_TRANSIT, $transfer->transporter_instructions, array_filter([
+                'transporter_id'      => $transporterId,
+                'handed_to'           => $transfer->handed_to_name,
+                'signed'              => $transfer->handover_signature ? true : null,
+                'expected_arrival_at' => $transfer->expected_arrival_at?->toIso8601String(),
+                'boxes'               => $transfer->boxes()->count(),
+            ]));
+
+            return $transfer;
+        });
+    }
+
+    /** @deprecated use dispatch(); kept for callers of the old name. */
+    public function markAsShipped(Transfer $transfer, ?int $transporterId = null, array $handover = []): Transfer
+    {
+        return $this->dispatch($transfer, $transporterId, $handover);
+    }
+
+    /** The boxes reached the shop (in_transit → delivered); the shop scans them in next. */
+    public function markAsDelivered(Transfer $transfer): Transfer
+    {
+        $this->assertCan('arrive', $transfer);
+
+        $transfer->update([
+            'status'       => TransferStatus::DELIVERED,
+            'delivered_at' => now(),
+            'delivered_by' => auth()->id(),
+        ]);
+        $this->record($transfer, 'arrived', TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED);
+
+        return $transfer;
+    }
+
+    /**
+     * @param array $receivedBoxes  [['box_id', 'is_damaged', 'damage_notes'], …] — boxes not listed are missing
+     * @param array $receipt        received_by_name, receipt_signature (data URL)
+     */
+    public function receiveTransfer(Transfer $transfer, array $receivedBoxes, array $receipt = []): Transfer
+    {
+        $this->assertCan('receive', $transfer);
+        if ($transfer->status === TransferStatus::IN_TRANSIT) {
+            $this->markAsDelivered($transfer);
+        }
+
+        return DB::transaction(function () use ($transfer, $receivedBoxes, $receipt) {
             $hasDiscrepancy = false;
 
             foreach ($receivedBoxes as $received) {
@@ -385,8 +584,21 @@ class TransferService
                 'status' => TransferStatus::RECEIVED,
                 'received_by' => auth()->id(),
                 'received_at' => now(),
+                'received_by_name' => $receipt['received_by_name'] ?? null,
+                'receipt_signature' => $receipt['receipt_signature'] ?? null,
                 'has_discrepancy' => $hasDiscrepancy,
+                // Nothing to resolve: the transfer is complete.
+                'closed_at' => $hasDiscrepancy ? null : now(),
             ]);
+            $this->record($transfer, 'received', TransferStatus::DELIVERED, TransferStatus::RECEIVED, null, array_filter([
+                'received' => count($receivedBoxes),
+                'damaged'  => collect($receivedBoxes)->where('is_damaged', true)->count(),
+                'missing'  => $transfer->boxes()->count() - count($receivedBoxes),
+                'signed'   => ! empty($receipt['receipt_signature']) ? true : null,
+            ]));
+            if (! $hasDiscrepancy) {
+                $this->record($transfer, 'closed');
+            }
 
             // Log the receipt
             ActivityLog::create([
@@ -466,9 +678,7 @@ class TransferService
      */
     public function packBoxesByProductBarcode(Transfer $transfer, string $barcode, int $quantity): array
     {
-        if ($transfer->status !== TransferStatus::APPROVED) {
-            throw new \Exception('Only approved transfers can be packed');
-        }
+        $this->assertCan('pack', $transfer);
 
         return DB::transaction(function () use ($transfer, $barcode, $quantity) {
             $product = $this->resolveProductByBarcode($barcode);
@@ -481,6 +691,8 @@ class TransferService
             if (!$transferItem) {
                 throw new \Exception("Product {$product->name} is not part of this transfer request");
             }
+
+            $this->assertRoomFor($transfer, $transferItem, $quantity);
 
             // Find available boxes at the source warehouse, excluding any already assigned to this transfer
             $alreadyAssignedBoxIds = TransferBox::where('transfer_id', $transfer->id)
@@ -518,30 +730,7 @@ class TransferService
                 $transferItem->increment('quantity_shipped', $box->items_remaining);
             }
 
-            // Mark transfer as packed if not already
-            $wasFirstPack = !$transfer->packed_at;
-            if ($wasFirstPack) {
-                $transfer->update([
-                    'packed_by' => auth()->id(),
-                    'packed_at' => now(),
-                ]);
-
-                ActivityLog::create([
-                    'user_id'           => auth()->id(),
-                    'user_name'         => auth()->user()?->name,
-                    'action'            => 'transfer_packed',
-                    'entity_type'       => 'Transfer',
-                    'entity_id'         => $transfer->id,
-                    'entity_identifier' => $transfer->transfer_number,
-                    'details' => [
-                        'box_count'      => count($createdTransferBoxes),
-                        'warehouse_name' => $transfer->fromWarehouse?->name,
-                        'shop_name'      => $transfer->toShop?->name,
-                    ],
-                    'ip_address' => request()->ip(),
-                    'user_agent' => request()->header('User-Agent'),
-                ]);
-            }
+            $this->markPackingStarted($transfer, count($createdTransferBoxes));
 
             return $createdTransferBoxes;
         });
@@ -552,11 +741,51 @@ class TransferService
      * sale at the warehouse (releaseBox), quantity_shipped drops by its items,
      * and packed_at is cleared again when nothing is left packed.
      */
+    /** Boxes of a product already packed on this transfer. */
+    public function packedCount(Transfer $transfer, int $productId): int
+    {
+        return TransferBox::where('transfer_id', $transfer->id)
+            ->whereHas('box', fn ($q) => $q->where('product_id', $productId))
+            ->count();
+    }
+
+    /** Packing never goes beyond the approved number of boxes. */
+    private function assertRoomFor(Transfer $transfer, $transferItem, int $adding): void
+    {
+        $left = $transferItem->boxesToSend() - $this->packedCount($transfer, $transferItem->product_id);
+        if ($adding > $left) {
+            $name = $transferItem->product?->name ?? 'this product';
+            throw new \DomainException($left > 0
+                ? "Only {$left} more " . \Illuminate\Support\Str::plural('box', $left) . " of {$name} " . ($left === 1 ? 'is' : 'are') . ' approved.'
+                : "All approved boxes of {$name} are already packed.");
+        }
+    }
+
+    /** First box packed: packing has started (who, when). */
+    private function markPackingStarted(Transfer $transfer, int $boxCount): void
+    {
+        if ($transfer->packed_at) {
+            return;
+        }
+        $transfer->update(['packed_by' => auth()->id(), 'packed_at' => now()]);
+
+        ActivityLog::create([
+            'user_id'           => auth()->id(),
+            'user_name'         => auth()->user()?->name,
+            'action'            => 'transfer_packed',
+            'entity_type'       => 'Transfer',
+            'entity_id'         => $transfer->id,
+            'entity_identifier' => $transfer->transfer_number,
+            'details'           => ['box_count' => $boxCount, 'warehouse_name' => $transfer->fromWarehouse?->name, 'shop_name' => $transfer->toShop?->name],
+            'ip_address'        => request()->ip(),
+            'user_agent'        => request()->header('User-Agent'),
+        ]);
+        $this->record($transfer, 'packing_started');
+    }
+
     public function unpackBox(Transfer $transfer, int $boxId): void
     {
-        if ($transfer->status !== TransferStatus::APPROVED) {
-            throw new \Exception('Boxes can only be removed before the transfer ships');
-        }
+        $this->assertCan('pack', $transfer);
 
         DB::transaction(function () use ($transfer, $boxId) {
             $tb = TransferBox::where('transfer_id', $transfer->id)->where('box_id', $boxId)->lockForUpdate()->firstOrFail();
@@ -582,6 +811,7 @@ class TransferService
                 'ip_address'        => request()->ip(),
                 'user_agent'        => request()->header('User-Agent'),
             ]);
+            $this->record($transfer, 'box_unpacked', null, null, null, ['box_code' => $box->box_code]);
         });
     }
 
@@ -597,9 +827,7 @@ class TransferService
      */
     public function packBoxByBoxCode(Transfer $transfer, string $boxCode, int $quantity = 1): TransferBox
     {
-        if ($transfer->status !== TransferStatus::APPROVED) {
-            throw new \Exception('Only approved transfers can be packed');
-        }
+        $this->assertCan('pack', $transfer);
 
         return DB::transaction(function () use ($transfer, $boxCode, $quantity) {
             // Find the box by code
@@ -629,17 +857,7 @@ class TransferService
                 throw new \Exception("Box contains {$box->product->name}, which is not in this transfer request");
             }
 
-            // Check if packing this box would exceed the requested quantity for this product
-            $alreadyShipped = $transferItem->quantity_shipped ?? 0;
-            $requestedQty = $transferItem->quantity_requested;
-
-            if (($alreadyShipped + $box->items_remaining) > $requestedQty) {
-                $remaining = $requestedQty - $alreadyShipped;
-                throw new \Exception(
-                    "Cannot pack box '{$boxCode}'. This would exceed requested quantity for {$box->product->name}. " .
-                    "Remaining: {$remaining} items, Box has: {$box->items_remaining} items"
-                );
-            }
+            $this->assertRoomFor($transfer, $transferItem, 1);
 
             // Create the transfer box record
             $tb = TransferBox::create([
@@ -653,30 +871,7 @@ class TransferService
             // Increment quantity_shipped on the TransferItem
             $transferItem->increment('quantity_shipped', $box->items_remaining);
 
-            // Mark transfer as packed if not already
-            $wasFirstPack = !$transfer->packed_at;
-            if ($wasFirstPack) {
-                $transfer->update([
-                    'packed_by' => auth()->id(),
-                    'packed_at' => now(),
-                ]);
-
-                ActivityLog::create([
-                    'user_id'           => auth()->id(),
-                    'user_name'         => auth()->user()?->name,
-                    'action'            => 'transfer_packed',
-                    'entity_type'       => 'Transfer',
-                    'entity_id'         => $transfer->id,
-                    'entity_identifier' => $transfer->transfer_number,
-                    'details' => [
-                        'box_count'      => 1,
-                        'warehouse_name' => $transfer->fromWarehouse?->name,
-                        'shop_name'      => $transfer->toShop?->name,
-                    ],
-                    'ip_address' => request()->ip(),
-                    'user_agent' => request()->header('User-Agent'),
-                ]);
-            }
+            $this->markPackingStarted($transfer, 1);
 
             return $tb;
         });
@@ -696,9 +891,7 @@ class TransferService
      */
     public function receiveBoxesByProductBarcode(Transfer $transfer, string $barcode, int $quantity): array
     {
-        if (!in_array($transfer->status, [TransferStatus::DELIVERED, TransferStatus::IN_TRANSIT])) {
-            throw new \Exception('Only delivered or in-transit transfers can be received');
-        }
+        $this->assertCan('receive', $transfer);
 
         return DB::transaction(function () use ($transfer, $barcode, $quantity) {
             $product = $this->resolveProductByBarcode($barcode);
@@ -753,15 +946,17 @@ class TransferService
 
     public function cancelTransfer(Transfer $transfer, string $reason): Transfer
     {
-        if (in_array($transfer->status, [TransferStatus::RECEIVED, TransferStatus::CANCELLED])) {
-            throw new \Exception('Cannot cancel a received or already cancelled transfer');
-        }
+        $this->assertCan('cancel', $transfer);
+        $from = $transfer->status;
 
-        return DB::transaction(function () use ($transfer, $reason) {
+        return DB::transaction(function () use ($transfer, $reason, $from) {
             $transfer->update([
                 'status' => TransferStatus::CANCELLED,
                 'review_notes' => $reason,
+                'cancelled_at' => now(),
+                'cancelled_by' => auth()->id(),
             ]);
+            $this->record($transfer, 'cancelled', $from, TransferStatus::CANCELLED, $reason);
 
             // Unassign packed boxes, putting any that hadn't reached the shop
             // back on sale. (This used to test $transfer->status right after

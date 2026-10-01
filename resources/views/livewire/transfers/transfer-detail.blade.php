@@ -179,7 +179,8 @@
                                 <th>Approve</th>
                                 <th class="tfd-r">Items</th>
                             @else
-                                <th class="tfd-r">{{ $status === S::PENDING ? 'Requested' : 'Approved' }}</th>
+                                <th class="tfd-r">Requested</th>
+                                @if($lines->contains(fn ($l) => $l['approved'] !== null))<th class="tfd-r">Approved</th>@endif
                                 <th class="tfd-r">Packed</th>
                                 <th class="tfd-r">Received</th>
                                 @if($received && ($issues['damaged'] || $issues['missing']))<th class="tfd-r">Damaged</th>@endif
@@ -215,11 +216,20 @@
                                     </td>
                                     <td class="tfd-r"><span class="tfd-n">{{ number_format($want * $ipb) }}</span></td>
                                 @else
-                                    @php $allIn = $line['packed'] > 0 && $line['packed'] >= $line['requested']; @endphp
+                                    @php
+                                        $toSend = $line['approved'] ?? $line['requested'];
+                                        $allIn = $line['packed'] > 0 && $line['packed'] >= $toSend;
+                                    @endphp
                                     <td class="tfd-r"><span class="tfd-n">{{ $line['requested'] }}</span></td>
+                                    @if($lines->contains(fn ($l) => $l['approved'] !== null))
+                                        <td class="tfd-r">
+                                            <span class="tfd-n {{ $line['approved'] !== null && $line['approved'] < $line['requested'] ? 'warn' : '' }}">{{ $line['approved'] ?? '—' }}</span>
+                                        </td>
+                                    @endif
                                     <td class="tfd-r">
                                         @if($line['packed'] || $shipped)
                                             <span class="tfd-n {{ $allIn ? 'ok' : 'warn' }}">{{ $line['packed'] }}</span>
+                                            @if($line['short'])<div class="tfd-sub" style="font-family:var(--font);color:var(--amber)" title="{{ $line['short'] }}">Short: {{ Str::limit($line['short'], 28) }}</div>@endif
                                         @else
                                             <span class="tfd-dash">—</span>
                                         @endif

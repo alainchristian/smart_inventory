@@ -87,7 +87,10 @@ class TransferDetailTest extends TestCase
         $this->assertSame($this->owner->id, $t->reviewed_by);
         $this->assertSame('For the weekend', $t->notes);
         $this->assertSame('Two now, one next week', $t->review_notes);
-        $this->assertSame(2, (int) $t->items()->value('quantity_requested'));
+        // The shop's request is kept; the approved number is stored beside it.
+        $this->assertSame(3, (int) $t->items()->value('quantity_requested'));
+        $this->assertSame(2, (int) $t->items()->value('quantity_approved'));
+        $this->assertSame(['changed'], array_keys($t->events()->where('action', 'approved')->first()->meta));
     }
 
     public function test_approval_is_limited_to_warehouse_stock(): void
@@ -99,9 +102,11 @@ class TransferDetailTest extends TestCase
             ->set("qty.$itemId", '9')
             ->call('approve')
             ->assertHasErrors("qty.$itemId")
+            // 0 leaves a product out; approving nothing at all is refused.
             ->set("qty.$itemId", '0')
             ->call('approve')
-            ->assertHasErrors("qty.$itemId");
+            ->assertHasNoErrors()
+            ->assertDispatched('notification', fn ($n, $p) => str_contains($p[0]['message'] ?? '', 'at least one box'));
 
         $this->assertSame(TransferStatus::PENDING, $t->fresh()->status);
     }

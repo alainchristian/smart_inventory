@@ -114,10 +114,10 @@ class TransferHoldTest extends TestCase
 
         $this->actingAs($this->whMgr);
         $this->svc->markAsShipped($t);
-        $this->svc->markAsDelivered($t->fresh());
 
         // Shop only finds the opened box; both sealed ones never arrived
         $this->actingAs($this->shopMgr);
+        $this->svc->markAsDelivered($t->fresh());   // arrival is confirmed by the shop
         $this->svc->receiveTransfer($t->fresh(), [['box_id' => $opened]]);
 
         $boxA = Box::find($opened);
@@ -137,8 +137,8 @@ class TransferHoldTest extends TestCase
         $t = $this->packed(1);
         $this->actingAs($this->whMgr);
         $this->svc->markAsShipped($t);
-        $this->svc->markAsDelivered($t->fresh());
         $this->actingAs($this->shopMgr);
+        $this->svc->markAsDelivered($t->fresh());   // arrival is confirmed by the shop
         $this->svc->receiveTransfer($t->fresh(), [['box_id' => $box, 'is_damaged' => true]]);
 
         $this->assertSame('damaged', $this->boxStatus($box));
