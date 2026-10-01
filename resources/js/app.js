@@ -152,6 +152,54 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // <x-signature-pad model="prop">: draw with a finger / mouse; the PNG data
+    // URL goes to the Livewire property (cleared → ''). The canvas sits in a
+    // wire:ignore block so re-renders don't wipe the drawing.
+    Alpine.data('signaturePad', (model) => ({
+        empty: true,
+        drawing: false,
+        last: null,
+
+        init() {
+            const c = this.$refs.canvas;
+            const ctx = c.getContext('2d');
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#1a1f36';
+            this.ctx = ctx;
+        },
+        pos(e) {
+            const r = this.$refs.canvas.getBoundingClientRect();
+            return { x: (e.clientX - r.left) * (this.$refs.canvas.width / r.width), y: (e.clientY - r.top) * (this.$refs.canvas.height / r.height) };
+        },
+        start(e) {
+            this.drawing = true;
+            this.last = this.pos(e);
+            this.$refs.canvas.setPointerCapture(e.pointerId);
+        },
+        move(e) {
+            if (!this.drawing) return;
+            const p = this.pos(e);
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.last.x, this.last.y);
+            this.ctx.lineTo(p.x, p.y);
+            this.ctx.stroke();
+            this.last = p;
+            this.empty = false;
+        },
+        end() {
+            if (!this.drawing) return;
+            this.drawing = false;
+            if (!this.empty) this.$wire.set(model, this.$refs.canvas.toDataURL('image/png'));
+        },
+        clear() {
+            this.ctx.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height);
+            this.empty = true;
+            this.$wire.set(model, '');
+        },
+    }));
+
     // Set light theme on page load
     document.documentElement.setAttribute('data-theme', 'light');
     localStorage.setItem('theme', 'light');

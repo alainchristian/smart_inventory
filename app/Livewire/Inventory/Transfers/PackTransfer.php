@@ -19,8 +19,6 @@ class PackTransfer extends Component
     public ?int $pendingAvailableCount = null;
     public array $packedBoxes = [];
     public bool $enableScanner = true;
-    public ?int $transporter_id = null;
-    public string $transporterInput = '';
     public ?ScannerSession $scannerSession = null;
     public bool $showScannerQR = false;
     public bool $phoneConnected = false;
@@ -32,8 +30,9 @@ class PackTransfer extends Component
     public int  $pendingMaxQty          = 0;
     public int  $pendingAlreadyAssigned = 0;
 
-    /** Ship confirmation sheet (lists products packed short). */
-    public bool $confirmShip = false;
+    /** "Packing done" sheet; reasons for products packed short, keyed by transfer_item id. */
+    public bool $confirmFinish = false;
+    public array $shortReasons = [];
 
     protected $listeners = [
         'barcode-scanned' => 'handleBarcodeScan',
@@ -206,78 +205,47 @@ class PackTransfer extends Component
         }
     }
 
-    /** Check the transporter and open the ship confirmation. */
-    public function openShip(): void
+    /** Open the "packing done" sheet (asks a reason for every product packed short). */
+    public function openFinish(): void
     {
         if (empty($this->packedBoxes)) {
-            session()->flash('scan_error', 'Pack at least one box before shipping.');
+            session()->flash('scan_error', 'Pack at least one box first.');
             return;
         }
-        if (trim($this->transporterInput) === '') {
-            $this->addError('transporterInput', 'Choose or type the transporter.');
-            return;
-        }
-        $this->resetErrorBag('transporterInput');
-        $this->confirmShip = true;
+        $this->resetErrorBag();
+        $this->confirmFinish = true;
     }
 
     /**
-     * After boxes are packed, ship the transfer (allows partial shipments).
+     * Packing is done: approved → ready. The transfer then waits for the
+     * transporter; dispatch (hand-over, signature, instructions) happens on
+     * the transfer page.
      */
-    public function shipTransfer()
+    public function finishPacking()
     {
-        // Require at least one box to be packed
-        if (empty($this->packedBoxes)) {
-            session()->flash('scan_error', 'Please pack at least one box before shipping');
+        $this->resetErrorBag();
+        $this->transfer->refresh();
+        foreach ($this->transfer->items as $item) {
+            $short = $item->boxesToSend() - app(TransferService::class)->packedCount($this->transfer, $item->product_id);
+            if ($short > 0 && trim((string) ($this->shortReasons[$item->id] ?? '')) === '') {
+                $this->addError("shortReasons.{$item->id}", 'Say why it is short.');
+            }
+        }
+        if ($this->getErrorBag()->isNotEmpty()) {
             return;
         }
-
-        // Resolve transporter: find existing by name or create new with defaults
-        $name = trim($this->transporterInput);
-        if (empty($name)) {
-            $this->addError('transporterInput', 'Please select or enter a transporter name.');
-            return;
-        }
-        $transporter = \App\Models\Transporter::firstOrCreate(
-            ['name' => $name],
-            ['is_active' => true, 'phone' => '']
-        );
-        $this->transporter_id = $transporter->id;
 
         try {
-            $transferService = app(TransferService::class);
-
-            // Check for discrepancies (products with fewer boxes than requested)
-            $discrepancies = [];
-            foreach ($this->transfer->items as $item) {
-                $product = $item->product;
-                $boxesAssigned = TransferBox::where('transfer_id', $this->transfer->id)
-                    ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
-                    ->count();
-
-                $boxesNeeded = $item->boxesToSend();
-
-                if ($boxesAssigned < $boxesNeeded) {
-                    $remaining = $boxesNeeded - $boxesAssigned;
-                    $discrepancies[] = "{$product->name}: {$remaining} box(es) short";
-                }
-            }
-
-            // Mark as shipped — pass transporter ID directly so markAsShipped doesn't null it out
-            $transferService->markAsShipped($this->transfer, $this->transporter_id);
-            $this->transfer->refresh();
-
-            $message = "Transfer {$this->transfer->transfer_number} shipped successfully";
-            if (!empty($discrepancies)) {
-                $message .= " with discrepancies: " . implode(', ', $discrepancies);
-            }
-
-            session()->flash('success', $message);
-
-            return redirect()->route('warehouse.transfers.show', $this->transfer);
-        } catch (\Exception $e) {
+            app(TransferService::class)->finishPacking($this->transfer, $this->shortReasons);
+        } catch (\DomainException $e) {
             session()->flash('scan_error', $e->getMessage());
+            $this->confirmFinish = false;
+            return;
         }
+
+        session()->flash('success', "{$this->transfer->transfer_number} is packed and ready to dispatch.");
+
+        return redirect()->route('warehouse.transfers.show', $this->transfer);
     }
 
     private function refreshPackedBoxes(): void
@@ -391,6 +359,7 @@ class PackTransfer extends Component
                 ->count();
 
             $packingSummary[] = [
+                'item_id'      => $item->id,
                 'product_id'   => $product->id,
                 'product_name' => $product->name,
                 'barcode'      => $product->barcode,
@@ -400,12 +369,9 @@ class PackTransfer extends Component
             ];
         }
 
-        // Get active transporters
-        $transporters = \App\Models\Transporter::active()->orderBy('name')->get();
 
         return view('livewire.inventory.transfers.pack-transfer', [
             'packingSummary' => $packingSummary,
-            'transporters' => $transporters,
         ]);
     }
 }

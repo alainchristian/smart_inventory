@@ -38,6 +38,7 @@ class Settings extends Component
     // Fulfillment
     public string $fulfillmentDispatchMethod = 'queue';
     public bool   $fulfillmentRequireSignature = true;
+    public bool   $transferRequireSignature    = true;
 
     // Localization
     public bool   $multilingualEnabled = false;
@@ -66,6 +67,7 @@ class Settings extends Component
         $this->lowStockBoxesWarehouse    = $svc->lowStockBoxesWarehouse();
         $this->fulfillmentDispatchMethod = $svc->fulfillmentDispatchMethod();
         $this->fulfillmentRequireSignature = $svc->fulfillmentRequireSignature();
+        $this->transferRequireSignature    = $svc->transferRequireSignature();
         $this->multilingualEnabled       = $svc->multilingualEnabled();
         $this->defaultLocale             = $svc->defaultLocale();
     }
@@ -103,6 +105,7 @@ class Settings extends Component
         $svc->set('low_stock_boxes_warehouse',    $this->lowStockBoxesWarehouse);
         $svc->set('fulfillment_dispatch_method',  $this->fulfillmentDispatchMethod);
         $svc->set('fulfillment_require_signature', $this->fulfillmentRequireSignature);
+        $svc->set('transfer_require_signature',   $this->transferRequireSignature);
         $svc->set('multilingual_enabled',         $this->multilingualEnabled);
         $svc->set('default_locale',               $this->defaultLocale);
 

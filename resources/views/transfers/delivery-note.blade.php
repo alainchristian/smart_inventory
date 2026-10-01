@@ -4,81 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Note — {{ $transfer->transfer_number }}</title>
-    <style>
-        /* Print document: its own palette (no app CSS variables here). */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 1.45; color: #1a1f36; background: #fff; }
-        .page { max-width: 800px; margin: 0 auto; padding: 32px 36px; }
-
-        /* Header */
-        .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-                      border-bottom: 2px solid #1a1f36; padding-bottom: 14px; margin-bottom: 18px; }
-        .doc-header .brand { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
-        .doc-header .brand-sub { font-size: 12px; color: #7a81a0; margin-top: 2px; }
-        .doc-header .doc-type { text-align: right; }
-        .doc-header .doc-type .title { font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .doc-header .doc-type .number { font-size: 14px; color: #4a5372; margin-top: 2px; font-family: Consolas, monospace; font-weight: 700; }
-        .doc-header .doc-type .status-badge { display: inline-block; margin-top: 6px; padding: 2px 9px; border-radius: 6px; font-size: 11px;
-                      font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; background: #e7f6f3; color: #0e9e86; }
-
-        /* Meta row */
-        .meta-row { display: flex; gap: 22px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid #e2e6f3; border-radius: 8px; margin-bottom: 16px; }
-        .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #7a81a0; }
-        .meta-value { font-size: 13px; font-weight: 600; margin-top: 2px; }
-
-        /* Cards */
-        .info-grid, .transporter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
-        .info-card { border: 1px solid #e2e6f3; border-radius: 8px; }
-        .info-card .card-head { padding: 7px 12px; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase;
-                                color: #7a81a0; border-bottom: 1px solid #e2e6f3; }
-        .info-card .card-body { padding: 10px 12px; }
-        .info-card .location-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-        .info-card .location-detail { font-size: 12px; color: #4a5372; }
-
-        /* Sections + tables */
-        .section-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #4a5372;
-                           padding-bottom: 6px; margin: 4px 0 8px; border-bottom: 1px solid #e2e6f3; }
-        table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 18px; }
-        thead th { padding: 7px 10px; text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-                   color: #7a81a0; border-bottom: 2px solid #1a1f36; }
-        thead th:last-child { text-align: right; }
-        tbody td { padding: 7px 10px; border-bottom: 1px solid #eceff7; vertical-align: top; }
-        tbody td:last-child { text-align: right; }
-        tfoot td { padding: 8px 10px; font-weight: 700; border-top: 2px solid #1a1f36; }
-        tfoot td:last-child { text-align: right; }
-        .status-full    { color: #0e9e86; font-weight: 600; }
-        .status-partial { color: #7c3aed; font-weight: 600; }
-        .status-damaged { color: #e11d48; font-weight: 600; }
-
-        /* Notes */
-        .notes-box { border: 1px solid #e2e6f3; border-radius: 8px; padding: 10px 12px; min-height: 48px; font-size: 12.5px; color: #1a1f36; margin-bottom: 18px; }
-        .notes-box.empty { color: #7a81a0; font-style: italic; }
-
-        /* Signatures */
-        .sig-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 22px; }
-        .sig-line { border-bottom: 1.5px solid #1a1f36; height: 40px; margin-bottom: 6px; }
-        .sig-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #4a5372; }
-        .sig-name  { font-size: 12px; color: #7a81a0; margin-top: 2px; }
-
-        /* Footer + print button */
-        .doc-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e2e6f3; text-align: center; font-size: 11px; color: #7a81a0; }
-        .print-btn { display: block; margin: 18px auto 0; padding: 9px 22px; background: #3b6fd4; color: #fff; border: none; border-radius: 8px;
-                     font-size: 13px; font-weight: 600; cursor: pointer; }
-        .print-btn:hover { opacity: .88; }
-
-        @media print {
-            .page { padding: 0; }
-            .no-print { display: none !important; }
-        }
-        @media (max-width: 600px) {
-            .page { padding: 16px; }
-            .doc-header { flex-direction: column; }
-            .doc-header .doc-type { text-align: left; }
-            .info-grid, .transporter-row, .sig-row { grid-template-columns: 1fr; }
-            .table-scroll { overflow-x: auto; }
-            .table-scroll table { min-width: 520px; }
-        }
-    </style>
+    @include('transfers.partials.print-styles')
 </head>
 <body>
 @php
@@ -87,6 +13,11 @@
         'toShop',
         'transporter',
         'packedBy',
+        'packingDoneBy',
+        'shippedBy',
+        'reviewedBy',
+        'requestedBy',
+        'deliveredBy',
         'receivedBy',
         'boxes.box.product',
         'items.product',
@@ -114,35 +45,29 @@
         </div>
     </div>
 
-    {{-- ── Meta row: dates ── --}}
+    {{-- ── The dated trail: every step with who ── --}}
+    @php
+        $fmt = fn ($at) => $at ? local_time($at)->format('d M Y, H:i') : null;
+        $trail = array_filter([
+            'Requested'   => $fmt($transfer->requested_at) ? $fmt($transfer->requested_at) . ($transfer->requestedBy ? ' · ' . $transfer->requestedBy->name : '') : null,
+            'Approved'    => $fmt($transfer->reviewed_at) ? $fmt($transfer->reviewed_at) . ($transfer->reviewedBy ? ' · ' . $transfer->reviewedBy->name : '') : null,
+            'Packed'      => $fmt($transfer->packing_done_at ?? $transfer->packed_at) ? $fmt($transfer->packing_done_at ?? $transfer->packed_at) . (($transfer->packingDoneBy ?? $transfer->packedBy) ? ' · ' . ($transfer->packingDoneBy ?? $transfer->packedBy)->name : '') : null,
+            'Dispatched'  => $fmt($transfer->shipped_at) ? $fmt($transfer->shipped_at) . ($transfer->shippedBy ? ' · ' . $transfer->shippedBy->name : '') : null,
+            'Expected'    => $fmt($transfer->expected_arrival_at),
+            'Arrived'     => $fmt($transfer->delivered_at) ? $fmt($transfer->delivered_at) . ($transfer->deliveredBy ? ' · ' . $transfer->deliveredBy->name : '') : null,
+            'Received'    => $fmt($transfer->received_at) ? $fmt($transfer->received_at) . ($transfer->receivedBy ? ' · ' . $transfer->receivedBy->name : '') : null,
+        ]);
+    @endphp
     <div class="meta-row">
+        @foreach ($trail as $label => $value)
+            <div class="meta-item">
+                <div class="meta-label">{{ $label }}</div>
+                <div class="meta-value">{{ $value }}</div>
+            </div>
+        @endforeach
         <div class="meta-item">
-            <div class="meta-label">Date Shipped</div>
-            <div class="meta-value">{{ $transfer->shipped_at ? local_time($transfer->shipped_at)->format('d M Y, H:i') : '—' }}</div>
-        </div>
-        @if ($transfer->packed_at)
-        <div class="meta-item">
-            <div class="meta-label">Date Packed</div>
-            <div class="meta-value">{{ local_time($transfer->packed_at)->format('d M Y, H:i') }}</div>
-        </div>
-        @endif
-        <div class="meta-item">
-            <div class="meta-label">Total Boxes</div>
-            <div class="meta-value">{{ $totalBoxes }}</div>
-        </div>
-        <div class="meta-item">
-            <div class="meta-label">Total Items</div>
-            <div class="meta-value">{{ number_format($totalItems) }}</div>
-        </div>
-        @if($transfer->received_at)
-        <div class="meta-item">
-            <div class="meta-label">Date Received</div>
-            <div class="meta-value">{{ local_time($transfer->received_at)->format('d M Y, H:i') }}</div>
-        </div>
-        @endif
-        <div class="meta-item">
-            <div class="meta-label">Printed</div>
-            <div class="meta-value">{{ local_time(now())->format('d M Y, H:i') }}</div>
+            <div class="meta-label">Boxes · items</div>
+            <div class="meta-value">{{ $totalBoxes }} · {{ number_format($totalItems) }}</div>
         </div>
     </div>
 
@@ -175,6 +100,12 @@
                 @endif
                 @if ($transfer->toShop?->address)
                     <div class="location-detail">{{ $transfer->toShop->address }}</div>
+                @endif
+                @if ($transfer->toShop?->manager_name || $transfer->toShop?->phone)
+                    <div class="location-detail" style="margin-top:6px;">Receiver: <strong>{{ collect([$transfer->toShop->manager_name, $transfer->toShop->phone ? 'Tel: ' . $transfer->toShop->phone : null])->filter()->implode(' · ') }}</strong></div>
+                @endif
+                @if ($transfer->needed_by)
+                    <div class="location-detail">Needed by: <strong>{{ $transfer->needed_by->format('D d M Y') }}</strong></div>
                 @endif
             </div>
         </div>
@@ -210,6 +141,15 @@
                 @endif
             </div>
         </div>
+    </div>
+    @endif
+
+    @if ($transfer->transporter_instructions || $transfer->handed_to_name || $transfer->expected_arrival_at)
+    <div class="section-heading">For the transporter</div>
+    <div class="notes-box">
+        @if ($transfer->transporter_instructions)<div><strong>Instructions:</strong> {{ $transfer->transporter_instructions }}</div>@endif
+        @if ($transfer->expected_arrival_at)<div style="margin-top:4px"><strong>Expected at the shop:</strong> {{ local_time($transfer->expected_arrival_at)->format('D d M Y, H:i') }}</div>@endif
+        @if ($transfer->handed_to_name)<div style="margin-top:4px"><strong>Handed to:</strong> {{ $transfer->handed_to_name }}@if ($transfer->shipped_at) on {{ local_time($transfer->shipped_at)->format('d M Y, H:i') }}@endif</div>@endif
     </div>
     @endif
 
@@ -304,21 +244,30 @@
 
     {{-- ── Signatures ── --}}
     <div class="section-heading">Acknowledgement &amp; Signatures</div>
+    {{-- Captured signatures sit on the line; blank lines are for signing on paper. --}}
     <div class="sig-row">
         <div class="sig-block">
             <div class="sig-line"></div>
-            <div class="sig-label">Packed / Dispatched By</div>
-            <div class="sig-name">{{ $transfer->packedBy?->name ?? '' }}</div>
+            <div class="sig-label">Dispatched by</div>
+            <div class="sig-name">{{ ($transfer->shippedBy ?? $transfer->packingDoneBy ?? $transfer->packedBy)?->name ?? '' }}</div>
         </div>
         <div class="sig-block">
-            <div class="sig-line"></div>
+            @if ($transfer->handover_signature)
+                <div class="sig-line" style="height:auto;border-bottom-width:1.5px"><img src="{{ $transfer->handover_signature }}" alt="Transporter signature" style="height:40px;display:block"></div>
+            @else
+                <div class="sig-line"></div>
+            @endif
             <div class="sig-label">Transporter</div>
-            <div class="sig-name">{{ $transfer->transporter?->name ?? '' }}</div>
+            <div class="sig-name">{{ $transfer->handed_to_name ?? $transfer->transporter?->name ?? '' }}</div>
         </div>
         <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-label">Received By</div>
-            <div class="sig-name">{{ $transfer->receivedBy?->name ?? '' }}</div>
+            @if ($transfer->receipt_signature)
+                <div class="sig-line" style="height:auto;border-bottom-width:1.5px"><img src="{{ $transfer->receipt_signature }}" alt="Receiver signature" style="height:40px;display:block"></div>
+            @else
+                <div class="sig-line"></div>
+            @endif
+            <div class="sig-label">Received by</div>
+            <div class="sig-name">{{ $transfer->received_by_name ?? $transfer->receivedBy?->name ?? '' }}</div>
         </div>
     </div>
 

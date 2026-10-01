@@ -7,6 +7,7 @@ use App\Http\Controllers\Shop\DailyReportController;
 use App\Http\Controllers\Shop\ReceiptController;
 use App\Http\Controllers\ShopManager\DashboardController as ShopDashboardController;
 use App\Http\Controllers\WarehouseManager\DashboardController as WarehouseDashboardController;
+use App\Http\Controllers\Transfers\TransferDocumentController;
 use App\Http\Middleware\CheckLocation;
 use App\Http\Middleware\CheckRole;
 use App\Models\Sale;
@@ -121,9 +122,8 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     Route::prefix('transfers')->name('transfers.')->group(function () {
         Route::get('/', function () { return view('owner.transfers.index'); })->name('index');
         Route::get('/{transfer}', function (Transfer $transfer) { return view('owner.transfers.show', compact('transfer')); })->name('show');
-        Route::get('/{transfer}/delivery-note', function (Transfer $transfer) {
-            return view('transfers.delivery-note', compact('transfer'));
-        })->name('delivery-note');
+        Route::get('/{transfer}/delivery-note', [TransferDocumentController::class, 'deliveryNote'])->name('delivery-note');
+        Route::get('/{transfer}/picking-list', [TransferDocumentController::class, 'pickingList'])->name('picking-list');
     });
 
     // Sales
@@ -218,9 +218,8 @@ Route::middleware(['auth', CheckRole::class . ':warehouse_manager,owner', CheckL
             Route::get('/', function () { return view('warehouse.transfers.index'); })->name('index');
             Route::get('/{transfer}', function (\App\Models\Transfer $transfer) { return view('warehouse.transfers.show', compact('transfer')); })->name('show');
             Route::get('/{transfer}/pack', function (\App\Models\Transfer $transfer) { return view('warehouse.transfers.pack', compact('transfer')); })->name('pack');
-            Route::get('/{transfer}/delivery-note', function (Transfer $transfer) {
-                return view('transfers.delivery-note', compact('transfer'));
-            })->name('delivery-note');
+            Route::get('/{transfer}/delivery-note', [TransferDocumentController::class, 'deliveryNote'])->name('delivery-note');
+            Route::get('/{transfer}/picking-list', [TransferDocumentController::class, 'pickingList'])->name('picking-list');
         });
 
         // Expense Requests
@@ -277,6 +276,7 @@ Route::middleware(['auth', CheckRole::class . ':shop_manager,owner', CheckLocati
             Route::get('/returns', function () { return view('shop.stock-returns'); })->name('returns');
             Route::get('/{transfer}', function (\App\Models\Transfer $transfer) { return view('shop.transfers.show', compact('transfer')); })->name('show');
             Route::get('/{transfer}/receive', function (\App\Models\Transfer $transfer) { return view('shop.transfers.receive', compact('transfer')); })->name('receive');
+            Route::get('/{transfer}/delivery-note', [TransferDocumentController::class, 'deliveryNote'])->name('delivery-note');
         });
 
         // Returns

@@ -955,6 +955,20 @@
             <div class="st-toggle-track"><div class="st-toggle-knob"></div></div>
         </label>
     </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Require the driver's signature on transfers</div>
+            <div class="st-hint">
+                When on, whoever takes a stock transfer from the warehouse signs on screen before it can be dispatched.
+                When off, only their name is recorded.
+            </div>
+        </div>
+        <label class="st-toggle">
+            <input type="checkbox" wire:model.live="transferRequireSignature">
+            <div class="st-toggle-track"><div class="st-toggle-knob"></div></div>
+        </label>
+    </div>
 </div>
 
 {{-- ══════════════════════════════════════════

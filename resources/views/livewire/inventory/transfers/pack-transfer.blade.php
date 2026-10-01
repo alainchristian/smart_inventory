@@ -100,19 +100,10 @@
         <div><div class="tfs-stat-v">{{ $summary->where('complete', true)->count() }}<span style="font-size:12px;color:var(--text-dim)"> / {{ $summary->count() }}</span></div><div class="tfs-stat-l">Products done</div></div>
     </div>
     <div class="tfs-actionbar-go">
-        <div>
-            <label class="tfs-field-label" for="tfs-transporter">Transporter</label>
-            <input id="tfs-transporter" class="tfs-input" wire:model="transporterInput" list="tfs-transporters" placeholder="Choose or type a name" autocomplete="off">
-            <datalist id="tfs-transporters">
-                @foreach($transporters as $tr)
-                    <option value="{{ $tr->name }}">{{ $tr->vehicle_number }}</option>
-                @endforeach
-            </datalist>
-            @error('transporterInput')<div class="tfs-err">{{ $message }}</div>@enderror
-        </div>
-        <button type="button" class="tf-btn tf-btn-primary" wire:click="openShip" @disabled(empty($packedBoxes))>
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linejoin="round" d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            Ship transfer
+        <a href="{{ route('warehouse.transfers.picking-list', $transfer) }}" target="_blank" class="tf-btn tf-btn-ghost">Picking list</a>
+        <button type="button" class="tf-btn tf-btn-primary" wire:click="openFinish" @disabled(empty($packedBoxes))>
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Packing done
         </button>
     </div>
 </div>
@@ -142,33 +133,38 @@
     </div>
 @endif
 
-{{-- ═══ Ship confirmation ══════════════════════════════════════════ --}}
-@if($confirmShip)
-    <div class="m-sheet-overlay" wire:click="$set('confirmShip', false)"></div>
-    <div class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="tfs-ship-title">
+{{-- ═══ Packing done ═════════════════════════════════════════════ --}}
+@if($confirmFinish)
+    <div class="m-sheet-overlay" wire:click="$set('confirmFinish', false)"></div>
+    <div class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="tfs-done-title">
         <div class="m-sheet-handle"></div>
         <div class="m-sheet-head">
-            <h2 class="m-sheet-title" id="tfs-ship-title">Ship {{ $transfer->transfer_number }}?</h2>
-            <button type="button" class="tfs-x m-tap" wire:click="$set('confirmShip', false)" aria-label="Close">
+            <h2 class="m-sheet-title" id="tfs-done-title">Packing done?</h2>
+            <button type="button" class="tfs-x m-tap" wire:click="$set('confirmFinish', false)" aria-label="Close">
                 <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
         </div>
         <div class="m-sheet-body">
-            <p class="tfs-sheet-lead">{{ $packed }} {{ Str::plural('box', $packed) }} ({{ number_format($itemsPacked) }} items) leave with <strong style="color:var(--text)">{{ $transporterInput }}</strong> for {{ $transfer->toShop?->name }}. Packing can't be changed after this.</p>
+            <p class="tfs-sheet-lead">{{ $packed }} {{ Str::plural('box', $packed) }} ({{ number_format($itemsPacked) }} items) for {{ $transfer->toShop?->name }}. Next, dispatch it to the transporter from the transfer page.</p>
             @if($short->isNotEmpty())
-                <div class="tfs-feedback bad" style="margin:0 0 6px">Shipping short — the shop will see these as not sent:</div>
-                <ul class="tfs-list">
-                    @foreach($short as $row)
-                        <li><span>{{ $row['product_name'] }}</span><strong style="color:var(--red)">{{ $row['boxes_needed'] - $row['boxes_packed'] }} {{ Str::plural('box', $row['boxes_needed'] - $row['boxes_packed']) }} short</strong></li>
-                    @endforeach
-                </ul>
+                <div class="tfs-feedback bad" style="margin:0 0 8px">Packed short — tell the shop why:</div>
+                @foreach($short as $row)
+                    <div style="margin-bottom:10px">
+                        <label class="tfs-field-label" for="short-{{ $row['item_id'] }}">
+                            {{ $row['product_name'] }} · {{ $row['boxes_packed'] }} of {{ $row['boxes_needed'] }} boxes
+                        </label>
+                        <input id="short-{{ $row['item_id'] }}" class="tfs-input" style="width:100%" wire:model="shortReasons.{{ $row['item_id'] }}"
+                               maxlength="255" placeholder="e.g. Out of stock in the warehouse">
+                        @error('shortReasons.' . $row['item_id'])<div class="tfs-err">{{ $message }}</div>@enderror
+                    </div>
+                @endforeach
             @endif
         </div>
         <div class="m-sheet-foot">
-            <button type="button" class="tf-btn tf-btn-ghost" wire:click="$set('confirmShip', false)">Keep packing</button>
-            <button type="button" class="tf-btn tf-btn-primary" wire:click="shipTransfer" wire:loading.attr="disabled" wire:target="shipTransfer">
-                <span wire:loading.remove wire:target="shipTransfer">{{ $short->isNotEmpty() ? 'Ship anyway' : 'Ship now' }}</span>
-                <span wire:loading wire:target="shipTransfer" style="display:none">Shipping…</span>
+            <button type="button" class="tf-btn tf-btn-ghost" wire:click="$set('confirmFinish', false)">Keep packing</button>
+            <button type="button" class="tf-btn tf-btn-primary" wire:click="finishPacking" wire:loading.attr="disabled" wire:target="finishPacking">
+                <span wire:loading.remove wire:target="finishPacking">Ready to dispatch</span>
+                <span wire:loading wire:target="finishPacking" style="display:none">Saving…</span>
             </button>
         </div>
     </div>

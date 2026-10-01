@@ -107,7 +107,7 @@ class TransferScanTest extends TestCase
         $this->svc->unpackBox($t->fresh(), TransferBox::where('transfer_id', $t->id)->value('box_id'));
     }
 
-    public function test_pack_screen_packs_removes_and_confirms_before_shipping(): void
+    public function test_pack_screen_packs_removes_and_finishes_with_a_short_reason(): void
     {
         $t = $this->approved(3);
 
@@ -119,13 +119,16 @@ class TransferScanTest extends TestCase
 
         $pack->call('removeBox', $pack->get('packedBoxes')[0]['box_id'])->assertCount('packedBoxes', 1);
 
-        $pack->call('openShip')->assertHasErrors('transporterInput')->assertSet('confirmShip', false)
-            ->set('transporterInput', 'Test Driver')->call('openShip')->assertSet('confirmShip', true)
-            ->assertSee('Ship anyway')          // 2 of 3 boxes short
-            ->call('shipTransfer')
+        $itemId = $t->items()->value('id');
+        $pack->call('openFinish')->assertSet('confirmFinish', true)
+            ->assertSee('Packed short')                       // 1 of 3 boxes
+            ->call('finishPacking')->assertHasErrors("shortReasons.$itemId")
+            ->set("shortReasons.$itemId", 'Two boxes were wet')
+            ->call('finishPacking')
             ->assertRedirect(route('warehouse.transfers.show', $t));
 
-        $this->assertSame(TransferStatus::IN_TRANSIT, $t->fresh()->status);
+        $this->assertSame(TransferStatus::READY, $t->fresh()->status);
+        $this->assertSame('Two boxes were wet', $t->items()->value('short_reason'));
         $this->assertSame(1, TransferBox::where('transfer_id', $t->id)->count());
     }
 

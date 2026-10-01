@@ -5,7 +5,10 @@ namespace App\Livewire\Transfers;
 use App\Enums\TransferStatus;
 use App\Models\Product;
 use App\Models\Transfer;
+use App\Models\Transporter;
 use App\Services\Inventory\TransferService;
+use App\Services\SettingsService;
+use Carbon\Carbon;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -35,6 +38,15 @@ class TransferDetail extends Component
     public string $cancelReason = '';
     public bool $showCancel = false;
 
+    // Dispatch sheet (ready → in transit)
+    public bool $showDispatch = false;
+    public string $transporterName = '';
+    public string $handedToName = '';
+    public string $instructions = '';
+    public string $expectedArrival = '';   // Y-m-d\TH:i in business time
+    public string $handoverSignature = '';
+    public bool $justDispatched = false;
+
     public function mount(Transfer $transfer): void
     {
         $user = auth()->user();
@@ -61,6 +73,7 @@ class TransferDetail extends Component
             'boxes.box:id,box_code,product_id,items_remaining,items_total',
             'fromWarehouse:id,name', 'toShop:id,name',
             'requestedBy:id,name', 'reviewedBy:id,name', 'packedBy:id,name', 'receivedBy:id,name', 'transporter',
+            'packingDoneBy:id,name', 'shippedBy:id,name', 'deliveredBy:id,name', 'cancelledBy:id,name',
         ])->findOrFail($this->transferId);
     }
 
@@ -171,6 +184,70 @@ class TransferDetail extends Component
         $this->dispatch('notification', ['type' => 'success', 'message' => "{$t->transfer_number} cancelled."]);
     }
 
+    public function openDispatch(): void
+    {
+        $t = $this->transfer;
+        $this->resetErrorBag();
+        $this->transporterName = $t->transporter?->name ?? '';
+        $this->handedToName = '';
+        $this->instructions = $t->transporter_instructions ?? '';
+        $this->expectedArrival = local_time(now()->addHours(4))->format('Y-m-d\TH:i');
+        $this->handoverSignature = '';
+        $this->showDispatch = true;
+    }
+
+    public function dispatchTransfer(): void
+    {
+        $t = $this->transfer;
+        $needsSignature = app(SettingsService::class)->transferRequireSignature();
+        $this->validate([
+            'transporterName'   => 'required|string|max:120',
+            'handedToName'      => 'required|string|min:2|max:120',
+            'instructions'      => 'nullable|string|max:1000',
+            'expectedArrival'   => 'nullable|date_format:Y-m-d\TH:i',
+            'handoverSignature' => $needsSignature ? 'required|string|starts_with:data:image/png' : 'nullable|string|starts_with:data:image/png',
+        ], [
+            'transporterName.required'   => 'Choose or type the transporter.',
+            'handedToName.required'      => 'Who is taking the boxes?',
+            'handoverSignature.required' => 'The driver signs here before leaving.',
+        ]);
+
+        $transporter = Transporter::firstOrCreate(['name' => trim($this->transporterName)], ['is_active' => true, 'phone' => '']);
+        $eta = $this->expectedArrival
+            ? Carbon::createFromFormat('Y-m-d\TH:i', $this->expectedArrival, config('tenant.timezone'))->utc()
+            : null;
+
+        try {
+            app(TransferService::class)->dispatch($t, $transporter->id, [
+                'handed_to_name'           => trim($this->handedToName),
+                'handover_signature'       => $this->handoverSignature ?: null,
+                'transporter_instructions' => trim($this->instructions) ?: null,
+                'expected_arrival_at'      => $eta,
+            ]);
+        } catch (\DomainException $e) {
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
+            return;
+        }
+
+        $this->showDispatch = false;
+        $this->justDispatched = true;
+        $this->handoverSignature = '';
+        $url = route($this->role === 'owner' ? 'owner.transfers.delivery-note' : 'warehouse.transfers.delivery-note', $t);
+        $this->dispatch('transfer-dispatched', url: $url);
+        $this->dispatch('notification', ['type' => 'success', 'message' => "{$t->transfer_number} is on its way. {$t->toShop?->name} has been told."]);
+    }
+
+    public function reopenPacking(): void
+    {
+        try {
+            app(TransferService::class)->reopenPacking($this->transfer, 'Reopened from the transfer page');
+        } catch (\DomainException $e) {
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
+            return;
+        }
+        $this->redirectRoute('warehouse.transfers.pack', $this->transfer);
+    }
+
     public function markAsDelivered(): void
     {
         $t = $this->transfer;
@@ -222,6 +299,10 @@ class TransferDetail extends Component
             'stock'     => $canReview ? $this->stock($t) : [],
             'canReview' => $canReview,
             'canCancel' => app(TransferService::class)->can('cancel', $t),
+            'canDispatch' => app(TransferService::class)->can('dispatch', $t) && $t->status === TransferStatus::READY,
+            'canReopen' => app(TransferService::class)->can('reopen_packing', $t),
+            'transporters' => $this->showDispatch ? Transporter::active()->orderBy('name')->get(['id', 'name', 'vehicle_number']) : collect(),
+            'needsSignature' => app(SettingsService::class)->transferRequireSignature(),
             'received'  => $received,
             'issues'    => $issues,
             'backUrl'   => route(['owner' => 'owner.transfers.index', 'shop' => 'shop.transfers.index', 'warehouse' => 'warehouse.transfers.index'][$this->role]),

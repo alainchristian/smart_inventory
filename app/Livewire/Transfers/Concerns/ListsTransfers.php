@@ -172,7 +172,7 @@ trait ListsTransfers
     protected function needsAction()
     {
         return $this->baseQuery()
-            ->whereIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED])
+            ->whereIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED, TransferStatus::READY])
             ->with(['toShop:id,name', 'requestedBy:id,name'])
             ->withCount('items')
             ->addSelect(['boxes_requested' => DB::table('transfer_items')->selectRaw('COALESCE(SUM(COALESCE(quantity_approved, quantity_requested)), 0)')->whereColumn('transfer_id', 'transfers.id')])
@@ -259,7 +259,7 @@ trait ListsTransfers
         $rows = $this->applyStatus($this->rowsQuery(), $this->statusFilter);
         if ($showNeeds) {
             // "Needs you" lists these above; the table holds the rest.
-            $rows->whereNotIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED]);
+            $rows->whereNotIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED, TransferStatus::READY]);
         }
 
         return view('livewire.transfers.transfers-list', [

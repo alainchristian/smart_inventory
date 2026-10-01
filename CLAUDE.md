@@ -2130,3 +2130,35 @@ pending → approved → (packing) → ready → in_transit → delivered → re
   approval the items table has Requested and Approved columns, plus the
   short reason under Packed.
 - Tests: `tests/Feature/Transfers/TransferRequestApprovalTest.php`.
+
+### Phase 3 (packing + dispatch) — done
+- Pack screen ends with **"Packing done"** (`PackTransfer::openFinish` /
+  `finishPacking`): an `m-sheet` asks a reason for every product packed
+  short (`shortReasons[item_id]`), then the transfer is `ready` and the
+  page goes to the transfer. Shipping no longer happens on the pack screen.
+- **Dispatch** is on the detail page (warehouse / owner, status ready):
+  `TransferDetail::openDispatch` / `dispatchTransfer` — transporter (pick
+  or type; new names are created), "handed to" (required), expected
+  arrival (`datetime-local`, business tz → UTC), instructions, and the
+  driver's signature via the new **`<x-signature-pad model=…>`**
+  (`Alpine.data('signaturePad')` in app.js; PNG data URL). Required unless
+  owner Settings → "Require the driver's signature on transfers" is off
+  (`transfer_require_signature`, default on, migration `2026_10_01_000003`,
+  `SettingsService::transferRequireSignature()`). After dispatch the
+  delivery note opens in a new tab and a banner offers "Print delivery
+  note" (pop-ups may be blocked). "Back to packing" reopens a ready transfer.
+- Warehouse "Needs you" now also lists ready transfers (→ Dispatch).
+- Documents: `TransferDocumentController` (`deliveryNote`, `pickingList`),
+  allowed only for people on the transfer (`roleFor`; the old closures let
+  any warehouse manager open any delivery note). Routes:
+  owner/warehouse `…/delivery-note`, `…/picking-list`; shop
+  `shop.transfers.delivery-note` (new). Shared print CSS:
+  `transfers/partials/print-styles.blade.php`.
+- **Picking list** (`transfers/picking-list.blade.php`): approved / packed /
+  to pick per product and the oldest available box codes (the boxes
+  packing takes), checkboxes, notes, picked-by / checked-by lines.
+- **Delivery note**: dated trail with who (requested, approved, packed,
+  dispatched, expected, arrived, received), receiver contact (shop
+  manager_name + phone) and needed-by, "For the transporter" (instructions,
+  expected arrival, handed to), captured signatures on the signature lines.
+- Tests: `tests/Feature/Transfers/TransferDispatchTest.php`.

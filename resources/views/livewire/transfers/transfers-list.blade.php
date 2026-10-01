@@ -161,7 +161,7 @@
     <div class="tfl-card-head">
         <div>
             <h2 class="tfl-card-title">Needs you</h2>
-            <div class="tfl-card-sub">Requests to approve and approved transfers to pack, oldest first</div>
+            <div class="tfl-card-sub">Requests to approve, transfers to pack and packed transfers to dispatch, oldest first</div>
         </div>
         <span class="tfl-count">{{ $needs->count() }}</span>
     </div>

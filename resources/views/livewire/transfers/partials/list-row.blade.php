@@ -50,8 +50,8 @@
     </td>
     <td>
         @if($waiting)
-            @php $since = $t->status === S::APPROVED ? ($t->reviewed_at ?? $t->requested_at) : $t->requested_at; @endphp
-            <div class="tfl-date">{{ $t->status === S::APPROVED ? ($t->packed_at ? 'Packing started' : 'Waiting to pack') : 'Waiting for approval' }}</div>
+            @php $since = match ($t->status) { S::APPROVED => $t->reviewed_at ?? $t->requested_at, S::READY => $t->packing_done_at ?? $t->requested_at, default => $t->requested_at }; @endphp
+            <div class="tfl-date">{{ match ($t->status) { S::APPROVED => $t->packed_at ? 'Packing started' : 'Waiting to pack', S::READY => 'Waiting for transporter', default => 'Waiting for approval' } }}</div>
             <div class="tfl-sub">for {{ $since->diffForHumans(null, true) }}</div>
         @else
             <div class="tfl-date">{{ $event['label'] }}</div>
@@ -62,6 +62,8 @@
         <div class="tfl-acts">
             @if($role === 'warehouse' && $t->status === S::PENDING)
                 <a href="{{ $showRoute }}" wire:navigate class="tf-btn tf-btn-primary tf-btn-sm">Review</a>
+            @elseif($role === 'warehouse' && $t->status === S::READY)
+                <a href="{{ $showRoute }}" wire:navigate class="tf-btn tf-btn-primary tf-btn-sm">Dispatch</a>
             @elseif($role === 'warehouse' && $t->status === S::APPROVED)
                 <a href="{{ route('warehouse.transfers.pack', $t) }}" wire:navigate class="tf-btn tf-btn-primary tf-btn-sm">{{ $t->packed_at ? 'Continue packing' : 'Pack' }}</a>
             @elseif($role === 'shop' && in_array($t->status, [S::IN_TRANSIT, S::DELIVERED], true))

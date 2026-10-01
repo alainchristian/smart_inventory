@@ -61,6 +61,7 @@
 .tfd-dl dt { color:var(--text-dim) }
 .tfd-dl dd { margin:0;color:var(--text);font-weight:600;text-align:right;min-width:0;overflow-wrap:anywhere }
 .tfd-empty { font-size:13px;color:var(--text-dim) }
+.tfd-field { margin-bottom:14px }
 .tfd-x { width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:var(--surface2);color:var(--text-sub);cursor:pointer }
 .tfd-x:hover { background:var(--surface3) }
 
@@ -101,13 +102,25 @@
             </button>
         @endif
         @if($role === 'warehouse' && $status === S::APPROVED)
+            <a href="{{ route('warehouse.transfers.picking-list', $t) }}" target="_blank" class="tf-btn tf-btn-ghost">Picking list</a>
             <a href="{{ route('warehouse.transfers.pack', $t) }}" wire:navigate class="tf-btn tf-btn-primary">{{ $t->packed_at ? 'Continue packing' : 'Pack transfer' }}</a>
+        @elseif($canDispatch)
+            @if($canReopen && $role === 'warehouse')
+                <button type="button" class="tf-btn tf-btn-ghost" wire:click="reopenPacking">Back to packing</button>
+            @endif
+            <button type="button" class="tf-btn tf-btn-primary" wire:click="openDispatch">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linejoin="round" d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                Dispatch
+            </button>
         @elseif($role === 'shop' && in_array($status, [S::IN_TRANSIT, S::DELIVERED], true))
             @if($status === S::IN_TRANSIT)
                 <button type="button" class="tf-btn tf-btn-ghost" wire:click="markAsDelivered" wire:loading.attr="disabled" wire:target="markAsDelivered"
                         title="The boxes are here; you'll scan them in later">Mark as arrived</button>
             @endif
             <a href="{{ route('shop.transfers.receive', $t) }}" wire:navigate class="tf-btn tf-btn-primary">Receive boxes</a>
+        @endif
+        @if($role === 'shop' && $shipped)
+            <a href="{{ route('shop.transfers.delivery-note', $t) }}" target="_blank" class="tf-btn tf-btn-ghost">Delivery note</a>
         @endif
         @if($noteUrl && $shipped)
             <a href="{{ $noteUrl }}" target="_blank" class="tf-btn tf-btn-ghost">
@@ -119,6 +132,26 @@
 </x-transfers.header>
 
 {{-- ═══ Alerts (only when there's something to say) ══════════════════ --}}
+<div x-data x-on:transfer-dispatched.window="window.open($event.detail.url, '_blank')"></div>
+@if($justDispatched && $noteUrl)
+    <div class="tfd-alert" style="--tfd-tone:var(--green)">
+        <svg class="tfd-alert-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <div style="flex:1">
+            <div class="tfd-alert-title">Dispatched — give the delivery note to the driver</div>
+            <div class="tfd-alert-text">It lists every box, the instructions and where it goes. The shop scans the boxes in and signs on arrival.</div>
+        </div>
+        <a href="{{ $noteUrl }}" target="_blank" class="tf-btn tf-btn-primary" style="align-self:center">Print delivery note</a>
+    </div>
+@endif
+@if($status === S::READY && ! $canDispatch)
+    <div class="tfd-alert" style="--tfd-tone:var(--accent)">
+        <svg class="tfd-alert-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        <div>
+            <div class="tfd-alert-title">Packed — waiting for the transporter</div>
+            <div class="tfd-alert-text">Packed {{ local_time($t->packing_done_at)?->format('d M · H:i') }}{{ $t->packingDoneBy ? ' by ' . $t->packingDoneBy->name : '' }}. It leaves the warehouse once a driver signs for it.</div>
+        </div>
+    </div>
+@endif
 @if($status === S::REJECTED || $status === S::CANCELLED)
     <div class="tfd-alert" style="--tfd-tone:var(--red)">
         <svg class="tfd-alert-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M15 9l-6 6M9 9l6 6"/></svg>
@@ -360,6 +393,59 @@
         @endif
     </div>
 </div>
+
+{{-- ═══ Dispatch sheet ═══════════════════════════════════════════════ --}}
+@if($showDispatch)
+    <div class="m-sheet-overlay" wire:click="$set('showDispatch', false)"></div>
+    <div class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="tfd-dispatch-title">
+        <div class="m-sheet-handle"></div>
+        <div class="m-sheet-head">
+            <h2 class="m-sheet-title" id="tfd-dispatch-title">Dispatch {{ $t->transfer_number }}</h2>
+            <button type="button" class="tfd-x m-tap" wire:click="$set('showDispatch', false)" aria-label="Close">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+        <div class="m-sheet-body">
+            <p style="font-size:13px;color:var(--text-sub);margin:0 0 14px;line-height:1.5">
+                {{ $t->boxes->count() }} {{ Str::plural('box', $t->boxes->count()) }} for {{ $t->toShop?->name }}. The shop is told it's on the way.
+            </p>
+            <div class="tfd-field">
+                <label class="tfd-label" for="tfd-tr">Transporter <span style="color:var(--red)">*</span></label>
+                <input id="tfd-tr" class="tfd-input" wire:model="transporterName" list="tfd-transporters" placeholder="Choose or type a company / driver" autocomplete="off">
+                <datalist id="tfd-transporters">
+                    @foreach($transporters as $tr)<option value="{{ $tr->name }}">{{ $tr->vehicle_number }}</option>@endforeach
+                </datalist>
+                @error('transporterName')<div class="tfd-err">{{ $message }}</div>@enderror
+            </div>
+            <div class="tfd-field">
+                <label class="tfd-label" for="tfd-driver">Handed to (driver's name) <span style="color:var(--red)">*</span></label>
+                <input id="tfd-driver" class="tfd-input" wire:model="handedToName" maxlength="120" placeholder="Who is taking the boxes">
+                @error('handedToName')<div class="tfd-err">{{ $message }}</div>@enderror
+            </div>
+            <div class="tfd-field">
+                <label class="tfd-label" for="tfd-eta">Expected at the shop</label>
+                <input id="tfd-eta" type="datetime-local" class="tfd-input" wire:model="expectedArrival">
+                @error('expectedArrival')<div class="tfd-err">{{ $message }}</div>@enderror
+            </div>
+            <div class="tfd-field">
+                <label class="tfd-label" for="tfd-ins">Instructions for the transporter</label>
+                <textarea id="tfd-ins" class="tfd-input" rows="2" wire:model="instructions" maxlength="1000" placeholder="e.g. Keep dry, deliver before 10:00, call the shop on arrival"></textarea>
+            </div>
+            <div class="tfd-field" style="margin-bottom:0">
+                <label class="tfd-label">Driver's signature @if($needsSignature)<span style="color:var(--red)">*</span>@else<span style="font-weight:500;color:var(--text-dim)">(optional)</span>@endif</label>
+                <x-signature-pad model="handoverSignature" label="Driver signs here" wire:key="sig-dispatch-{{ $t->id }}" />
+                @error('handoverSignature')<div class="tfd-err">{{ $message }}</div>@enderror
+            </div>
+        </div>
+        <div class="m-sheet-foot">
+            <button type="button" class="tf-btn tf-btn-ghost" wire:click="$set('showDispatch', false)">Cancel</button>
+            <button type="button" class="tf-btn tf-btn-primary" wire:click="dispatchTransfer" wire:loading.attr="disabled" wire:target="dispatchTransfer">
+                <span wire:loading.remove wire:target="dispatchTransfer">Dispatch now</span>
+                <span wire:loading wire:target="dispatchTransfer" style="display:none">Dispatching…</span>
+            </button>
+        </div>
+    </div>
+@endif
 
 {{-- ═══ Cancel sheet ═════════════════════════════════════════════════ --}}
 @if($showCancel)

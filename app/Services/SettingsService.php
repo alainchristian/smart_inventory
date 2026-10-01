@@ -173,6 +173,11 @@ class SettingsService
         return (bool) $this->get('fulfillment_require_signature', true);
     }
 
+    public function transferRequireSignature(): bool
+    {
+        return (bool) $this->get('transfer_require_signature', true);
+    }
+
     public function defaultLocale(): string
     {
         return (string) $this->get('default_locale', 'en');
