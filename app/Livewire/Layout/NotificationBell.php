@@ -34,12 +34,25 @@ class NotificationBell extends Component
 
     // ── Notification feed ────────────────────────────────────────────────────
 
+    /**
+     * Who hears about which transfer step (each only for their own transfers;
+     * the owner sees every step done by someone else).
+     */
+    public const TRANSFER_AUDIENCE = [
+        'warehouse' => ['transfer_requested', 'transfer_approved', 'transfer_rejected', 'transfer_cancelled',
+                        'transfer_arrived', 'transfer_received', 'transfer_discrepancy'],
+        'shop'      => ['transfer_approved', 'transfer_rejected', 'transfer_ready', 'transfer_dispatched',
+                        'transfer_cancelled', 'transfer_issue_resolved', 'transfer_closed'],
+        'owner'     => ['transfer_requested', 'transfer_approved', 'transfer_rejected', 'transfer_packed', 'transfer_ready',
+                        'transfer_dispatched', 'transfer_arrived', 'transfer_received', 'transfer_discrepancy',
+                        'transfer_cancelled', 'transfer_issue_resolved', 'transfer_closed'],
+    ];
+
     private function notifiableActions(): array
     {
         return [
             'sale_created', 'mixed_sale_created', 'warehouse_direct_sale', 'sale_voided', 'price_modified',
-            'transfer_requested', 'transfer_approved', 'transfer_rejected',
-            'transfer_packed', 'transfer_received', 'transfer_discrepancy',
+            ...array_merge(...array_values(self::TRANSFER_AUDIENCE)),
             'daily_session_opened', 'daily_session_closed',
             'return', 'return_approved',
             'box_damaged', 'box_adjustment',
@@ -65,7 +78,7 @@ class NotificationBell extends Component
         if ($user->isOwner() || $user->isAdmin()) {
             $query->whereHas('user', fn($q) => $q->whereIn('role', ['shop_manager', 'warehouse_manager']));
         } elseif ($user->isWarehouseManager()) {
-            $query->where('action', 'transfer_requested')
+            $query->whereIn('action', self::TRANSFER_AUDIENCE['warehouse'])
                   ->where('entity_type', 'Transfer')
                   ->whereIn('entity_id', Transfer::where('from_warehouse_id', $user->location_id)->pluck('id'));
         } elseif ($user->isShopManager()) {
@@ -76,7 +89,7 @@ class NotificationBell extends Component
 
             $query->where(function ($q) use ($shopTransferIds, $ownHeldSaleIds) {
                 $q->where(function ($q2) use ($shopTransferIds) {
-                    $q2->whereIn('action', ['transfer_approved', 'transfer_rejected', 'transfer_packed'])
+                    $q2->whereIn('action', self::TRANSFER_AUDIENCE['shop'])
                        ->where('entity_type', 'Transfer')
                        ->whereIn('entity_id', $shopTransferIds);
                 })->orWhere(function ($q2) use ($ownHeldSaleIds) {

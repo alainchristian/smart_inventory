@@ -45,6 +45,7 @@ class GenerateSystemAlerts extends Command
 
         // Generate pending transfer alerts
         $alertsCreated += $this->generatePendingTransferAlerts();
+        $alertsCreated += $this->generateTransferDelayAlerts();
 
         // Generate pending warehouse fulfillment alerts
         $alertsCreated += $this->generatePendingFulfillmentAlerts();
@@ -178,7 +179,7 @@ class GenerateSystemAlerts extends Command
                     'severity' => AlertSeverity::WARNING,
                     'entity_type' => Transfer::class,
                     'entity_id' => $transfer->id,
-                    'action_url' => '#',
+                    'action_url' => route('owner.transfers.show', $transfer),
                     'action_label' => 'Review Transfer',
                 ]);
                 $count++;
@@ -186,6 +187,71 @@ class GenerateSystemAlerts extends Command
         }
 
         return $count;
+    }
+
+    /**
+     * Transfers stuck after approval (owner Settings → transfer alert hours):
+     * not packed, packed but not dispatched, overdue on the road (past the
+     * expected arrival, or the fallback hours), arrived but not scanned in.
+     * TransferService::record() resolves these when the transfer moves on.
+     */
+    private function generateTransferDelayAlerts(): int
+    {
+        $settings = app(\App\Services\SettingsService::class);
+        $pack = $settings->transferAlertPackHours();
+        $transit = $settings->transferAlertTransitHours();
+        $receive = $settings->transferAlertReceiveHours();
+
+        $checks = [
+            ['Transfer Not Packed', AlertSeverity::WARNING,
+                Transfer::where('status', TransferStatus::APPROVED)->where('reviewed_at', '<=', now()->subHours($pack)),
+                fn ($t) => "{$t->transfer_number} for {$t->toShop?->name} was approved " . $this->ago($t->reviewed_at) . ' and is not packed yet.'],
+            ['Transfer Waiting for Transporter', AlertSeverity::WARNING,
+                Transfer::where('status', TransferStatus::READY)->where('packing_done_at', '<=', now()->subHours($pack)),
+                fn ($t) => "{$t->transfer_number} for {$t->toShop?->name} has been packed for " . $this->ago($t->packing_done_at, false) . ' without being dispatched.'],
+            ['Transfer Overdue in Transit', AlertSeverity::CRITICAL,
+                Transfer::where('status', TransferStatus::IN_TRANSIT)->where(fn ($q) => $q
+                    ->where('expected_arrival_at', '<', now())
+                    ->orWhere(fn ($r) => $r->whereNull('expected_arrival_at')->where('shipped_at', '<=', now()->subHours($transit)))),
+                fn ($t) => "{$t->transfer_number} left " . $this->ago($t->shipped_at) . " with {$t->transporter?->name}"
+                    . ($t->expected_arrival_at ? ', expected ' . local_time($t->expected_arrival_at)->format('D H:i') : '')
+                    . ", and {$t->toShop?->name} hasn't confirmed arrival."],
+            ['Transfer Not Received', AlertSeverity::WARNING,
+                Transfer::where('status', TransferStatus::DELIVERED)->where('delivered_at', '<=', now()->subHours($receive)),
+                fn ($t) => "{$t->transfer_number} arrived at {$t->toShop?->name} " . $this->ago($t->delivered_at) . ' and its boxes are not scanned in yet.'],
+        ];
+
+        $count = 0;
+        foreach ($checks as [$title, $severity, $query, $message]) {
+            foreach ($query->with(['toShop', 'transporter'])->get() as $transfer) {
+                $exists = Alert::where('entity_type', Transfer::class)->where('entity_id', $transfer->id)
+                    ->where('title', $title)->unresolved()->exists();
+                if ($exists) {
+                    continue;
+                }
+                Alert::create([
+                    'title'        => $title,
+                    'message'      => $message($transfer),
+                    'severity'     => $severity,
+                    'entity_type'  => Transfer::class,
+                    'entity_id'    => $transfer->id,
+                    'action_url'   => route('owner.transfers.show', $transfer),
+                    'action_label' => 'Open transfer',
+                ]);
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /** "3 h ago" / "2 d ago" (or without "ago"). */
+    private function ago($at, bool $suffix = true): string
+    {
+        $hours = (int) abs(now()->diffInHours($at));
+        $text = $hours >= 48 ? intdiv($hours, 24) . ' d' : $hours . ' h';
+
+        return $suffix ? "{$text} ago" : $text;
     }
 
     /**

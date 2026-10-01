@@ -173,6 +173,24 @@ class SettingsService
         return (bool) $this->get('fulfillment_require_signature', true);
     }
 
+    /** Hours a transfer may wait to be packed / dispatched before an overdue alert. */
+    public function transferAlertPackHours(): int
+    {
+        return max(1, (int) $this->get('transfer_alert_pack_hours', 24));
+    }
+
+    /** Hours on the road (when no expected arrival was given) before an overdue alert. */
+    public function transferAlertTransitHours(): int
+    {
+        return max(1, (int) $this->get('transfer_alert_transit_hours', 48));
+    }
+
+    /** Hours between "arrived" and "received" before an overdue alert. */
+    public function transferAlertReceiveHours(): int
+    {
+        return max(1, (int) $this->get('transfer_alert_receive_hours', 12));
+    }
+
     public function transferRequireSignature(): bool
     {
         return (bool) $this->get('transfer_require_signature', true);

@@ -75,6 +75,7 @@
                                     'red'    => ['bg' => 'var(--red-dim)',    'ic' => 'var(--red)'],
                                     'green'  => ['bg' => 'var(--green-dim)', 'ic' => 'var(--green)'],
                                     'amber'  => ['bg' => 'var(--amber-dim)', 'ic' => 'var(--amber)'],
+                                    'violet' => ['bg' => 'var(--violet-dim)', 'ic' => 'var(--violet)'],
                                     default  => ['bg' => 'var(--accent-dim)','ic' => 'var(--accent)'],
                                 };
                             @endphp

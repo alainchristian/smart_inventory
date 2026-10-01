@@ -969,6 +969,39 @@
             <div class="st-toggle-track"><div class="st-toggle-knob"></div></div>
         </label>
     </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Transfer alert: packing and dispatch</div>
+            <div class="st-hint">Alert when an approved transfer is not packed, or a packed one not dispatched, after this many hours.</div>
+        </div>
+        <div class="st-input-wrap">
+            <x-number-input wire:model="transferAlertPackHours" max="720" class="st-input" />
+            <span class="st-input-unit">hours</span>
+        </div>
+    </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Transfer alert: on the road</div>
+            <div class="st-hint">Alert when a dispatched transfer passes its expected arrival — or after this many hours if no arrival time was given.</div>
+        </div>
+        <div class="st-input-wrap">
+            <x-number-input wire:model="transferAlertTransitHours" max="720" class="st-input" />
+            <span class="st-input-unit">hours</span>
+        </div>
+    </div>
+
+    <div class="st-row">
+        <div>
+            <div class="st-label">Transfer alert: scanning in</div>
+            <div class="st-hint">Alert when a transfer marked as arrived is not received after this many hours.</div>
+        </div>
+        <div class="st-input-wrap">
+            <x-number-input wire:model="transferAlertReceiveHours" max="720" class="st-input" />
+            <span class="st-input-unit">hours</span>
+        </div>
+    </div>
 </div>
 
 {{-- ══════════════════════════════════════════

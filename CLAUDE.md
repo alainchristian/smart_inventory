@@ -2210,3 +2210,31 @@ pending → approved → (packing) → ready → in_transit → delivered → re
 - Known, unrelated: `ReportExportTest::test_excel_workbook_has_summary_and_table_sheets`
   fails on the 1st of a month (the "this month" trend has one day and no
   Total row) — fails the same without these changes.
+
+### Phase 6 (notifications + overdue alerts) — done
+- `TransferService::record()` writes the ActivityLog entries for steps
+  nothing else logged (`LOGGED_STEPS`: transfer_ready, transfer_dispatched
+  — details carry expected_arrival_at, transfer_arrived,
+  transfer_cancelled, transfer_issue_resolved, transfer_closed), and any
+  status change resolves that transfer's overdue alerts (`DELAY_ALERTS`).
+- **Who hears what:** `NotificationBell::TRANSFER_AUDIENCE` — warehouse:
+  requested, approved, rejected, cancelled, arrived, received,
+  discrepancy (its own warehouse); shop: approved, rejected, ready,
+  **dispatched** (subtitle "expected Tue 14:00"), cancelled, resolved,
+  closed (its own shop); owner: every step by someone else. Never your
+  own actions. New ActivityLog labels / colours (violet for on-the-road
+  steps; the bell view knows `violet`).
+- Removed the dead "Transfer Received with Issues" alert in
+  ReceiveTransfer (`Warehouse` has no `manager` relation, so it never fired);
+  the bell's transfer_discrepancy replaces it.
+- **Overdue alerts** (`alerts:generate`, every 5 min,
+  `generateTransferDelayAlerts`): Transfer Not Packed (approved > pack
+  hours), Transfer Waiting for Transporter (ready > pack hours), Transfer
+  Overdue in Transit (critical: past expected_arrival_at, or > transit
+  hours without one), Transfer Not Received (arrived > receive hours). One
+  open alert per transfer + title, link to the owner's transfer page (the
+  old pending alert linked to `#`). Hours are owner settings
+  (`transfer_alert_pack_hours` 24, `transfer_alert_transit_hours` 48,
+  `transfer_alert_receive_hours` 12; migration `2026_10_01_000005`;
+  Settings page next to the signature toggle).
+- Tests: `tests/Feature/Transfers/TransferNotificationTest.php`.

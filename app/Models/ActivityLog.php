@@ -86,6 +86,13 @@ class ActivityLog extends Model
             'transfer_packed'        => 'Transfer Packed',
             'transfer_received'      => 'Transfer Received',
             'transfer_discrepancy'   => 'Transfer Discrepancy',
+            'transfer_ready'         => 'Transfer Packed, Ready to Dispatch',
+            'transfer_dispatched'    => 'Transfer On Its Way',
+            'transfer_arrived'       => 'Transfer Arrived at the Shop',
+            'transfer_cancelled'     => 'Transfer Cancelled',
+            'transfer_issue_resolved'=> 'Missing Box Resolved',
+            'transfer_closed'        => 'Transfer Closed',
+            'transfer_box_unpacked'  => 'Box Removed from Transfer',
             'daily_session_opened'   => 'Day Opened',
             'daily_session_closed'   => 'Day Closed',
             'return'                 => 'Return Submitted',
@@ -117,8 +124,9 @@ class ActivityLog extends Model
     public function colorKey(): string
     {
         return match($this->action) {
-            'transfer_rejected', 'sale_voided', 'transfer_discrepancy', 'box_damaged', 'held_sale_rejected' => 'red',
-            'transfer_approved', 'transfer_received', 'daily_session_closed', 'held_sale_approved', 'price_override_approved' => 'green',
+            'transfer_rejected', 'sale_voided', 'transfer_discrepancy', 'box_damaged', 'held_sale_rejected', 'transfer_cancelled' => 'red',
+            'transfer_approved', 'transfer_received', 'daily_session_closed', 'held_sale_approved', 'price_override_approved', 'transfer_closed' => 'green',
+            'transfer_dispatched', 'transfer_ready', 'transfer_arrived' => 'violet',
             'transfer_requested', 'return', 'price_modified'                           => 'amber',
             default                                                                     => 'accent',
         };
@@ -173,6 +181,11 @@ class ActivityLog extends Model
         $who = $this->user_name ?? 'Unknown';
 
         if ($this->entity_type === 'Transfer' && $this->entity_identifier) {
+            // On its way: when to expect it is what the shop needs.
+            if ($this->action === 'transfer_dispatched' && ! empty($this->details['expected_arrival_at'])) {
+                return "{$this->entity_identifier} · expected " . local_time($this->details['expected_arrival_at'])->format('D H:i');
+            }
+
             return "{$who} · {$this->entity_identifier}";
         }
 

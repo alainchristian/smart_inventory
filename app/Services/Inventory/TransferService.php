@@ -83,10 +83,57 @@ class TransferService
             : "You can't do this on {$transfer->transfer_number}.");
     }
 
+    /**
+     * Steps that reach the notification bell through ActivityLog here (the
+     * others — requested, approved, rejected, packing started, received,
+     * discrepancy — are logged where they happen). Who sees which action:
+     * NotificationBell::TRANSFER_AUDIENCE.
+     */
+    private const LOGGED_STEPS = [
+        'packing_done'   => 'transfer_ready',
+        'dispatched'     => 'transfer_dispatched',
+        'arrived'        => 'transfer_arrived',
+        'cancelled'      => 'transfer_cancelled',
+        'issue_resolved' => 'transfer_issue_resolved',
+        'closed'         => 'transfer_closed',
+    ];
+
+    /** Overdue alerts (alerts:generate) a step clears once the transfer moves on. */
+    public const DELAY_ALERTS = [
+        'Pending Transfer Approval', 'Transfer Not Packed', 'Transfer Waiting for Transporter',
+        'Transfer Overdue in Transit', 'Transfer Not Received',
+    ];
+
     /** Append one step to the transfer's history. */
     public function record(Transfer $transfer, string $action, ?TransferStatus $from = null, ?TransferStatus $to = null, ?string $note = null, array $meta = []): TransferEvent
     {
         $user = auth()->user();
+
+        if (isset(self::LOGGED_STEPS[$action])) {
+            ActivityLog::create([
+                'user_id'           => $user?->id,
+                'user_name'         => $user?->name,
+                'action'            => self::LOGGED_STEPS[$action],
+                'entity_type'       => 'Transfer',
+                'entity_id'         => $transfer->id,
+                'entity_identifier' => $transfer->transfer_number,
+                'details'           => array_filter([
+                    'shop_name'           => $transfer->toShop?->name,
+                    'warehouse_name'      => $transfer->fromWarehouse?->name,
+                    'expected_arrival_at' => $transfer->expected_arrival_at?->toIso8601String(),
+                    'note'                => $note,
+                ] + $meta),
+                'ip_address'        => request()->ip(),
+                'user_agent'        => request()->header('User-Agent'),
+            ]);
+        }
+
+        // Any status change ends the wait an overdue alert was about.
+        if ($to !== null || $action === 'closed') {
+            Alert::where('entity_type', Transfer::class)->where('entity_id', $transfer->id)
+                ->whereIn('title', self::DELAY_ALERTS)->whereNull('resolved_at')
+                ->each(fn ($alert) => $alert->markAsResolved());
+        }
 
         return TransferEvent::create([
             'transfer_id' => $transfer->id,

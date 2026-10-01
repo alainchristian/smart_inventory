@@ -329,42 +329,8 @@ class ReceiveTransfer extends Component
                 ['received_by_name' => trim($this->receivedByName), 'receipt_signature' => $this->receiptSignature ?: null]
             );
 
-            // Create alert for warehouse manager if there are discrepancies
-            $expectedCount = $this->transfer->boxes()->count();
-            $hasDiscrepancies = count($this->scannedBoxes) < $expectedCount;
-            $hasDamagedBoxes = collect($this->scannedBoxes)->contains('is_damaged', true);
-
-            if ($hasDiscrepancies || $hasDamagedBoxes) {
-                $warehouseManagerUser = $this->transfer->fromWarehouse->manager ?? null;
-
-                if ($warehouseManagerUser) {
-                    $message = "Transfer {$this->transfer->transfer_number} received with issues: ";
-                    $issues = [];
-
-                    if ($hasDiscrepancies) {
-                        $missing = $expectedCount - count($this->scannedBoxes);
-                        $issues[] = "{$missing} missing boxes";
-                    }
-
-                    if ($hasDamagedBoxes) {
-                        $damaged = collect($this->scannedBoxes)->where('is_damaged', true)->count();
-                        $issues[] = "{$damaged} damaged boxes";
-                    }
-
-                    $message .= implode(', ', $issues) . '.';
-
-                    Alert::create([
-                        'title' => 'Transfer Received with Issues',
-                        'message' => $message,
-                        'severity' => AlertSeverity::WARNING,
-                        'entity_type' => 'transfer',
-                        'entity_id' => $this->transfer->id,
-                        'user_id' => $warehouseManagerUser->id,
-                        'action_url' => route('warehouse.transfers.show', $this->transfer),
-                        'action_label' => 'View Transfer',
-                    ]);
-                }
-            }
+            // The warehouse and owner hear about discrepancies through the
+            // notification bell (transfer_discrepancy, logged by the service).
 
             session()->flash('success', 'Transfer received successfully');
 

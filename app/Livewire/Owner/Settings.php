@@ -39,6 +39,9 @@ class Settings extends Component
     public string $fulfillmentDispatchMethod = 'queue';
     public bool   $fulfillmentRequireSignature = true;
     public bool   $transferRequireSignature    = true;
+    public int    $transferAlertPackHours      = 24;
+    public int    $transferAlertTransitHours   = 48;
+    public int    $transferAlertReceiveHours   = 12;
 
     // Localization
     public bool   $multilingualEnabled = false;
@@ -68,6 +71,9 @@ class Settings extends Component
         $this->fulfillmentDispatchMethod = $svc->fulfillmentDispatchMethod();
         $this->fulfillmentRequireSignature = $svc->fulfillmentRequireSignature();
         $this->transferRequireSignature    = $svc->transferRequireSignature();
+        $this->transferAlertPackHours      = $svc->transferAlertPackHours();
+        $this->transferAlertTransitHours   = $svc->transferAlertTransitHours();
+        $this->transferAlertReceiveHours   = $svc->transferAlertReceiveHours();
         $this->multilingualEnabled       = $svc->multilingualEnabled();
         $this->defaultLocale             = $svc->defaultLocale();
     }
@@ -106,6 +112,9 @@ class Settings extends Component
         $svc->set('fulfillment_dispatch_method',  $this->fulfillmentDispatchMethod);
         $svc->set('fulfillment_require_signature', $this->fulfillmentRequireSignature);
         $svc->set('transfer_require_signature',   $this->transferRequireSignature);
+        $svc->set('transfer_alert_pack_hours',    max(1, min(720, (int) $this->transferAlertPackHours)));
+        $svc->set('transfer_alert_transit_hours', max(1, min(720, (int) $this->transferAlertTransitHours)));
+        $svc->set('transfer_alert_receive_hours', max(1, min(720, (int) $this->transferAlertReceiveHours)));
         $svc->set('multilingual_enabled',         $this->multilingualEnabled);
         $svc->set('default_locale',               $this->defaultLocale);
 
