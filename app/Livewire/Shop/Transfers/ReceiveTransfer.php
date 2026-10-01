@@ -37,6 +37,9 @@ class ReceiveTransfer extends Component
 
     /** Completion summary sheet (received / damaged / missing). */
     public bool $confirmComplete = false;
+    /** Who physically took delivery, and their signature (required when the transfer signature setting is on). */
+    public string $receivedByName = '';
+    public string $receiptSignature = '';
 
     protected $listeners = [
         'barcode-scanned' => 'handleBarcodeScan',
@@ -288,11 +291,21 @@ class ReceiveTransfer extends Component
                 return;
             }
         }
+        $this->receivedByName = $this->receivedByName ?: (string) auth()->user()?->name;
         $this->confirmComplete = true;
     }
 
     public function completeReceipt()
     {
+        $needsSignature = app(\App\Services\SettingsService::class)->transferRequireSignature();
+        $this->validate([
+            'receivedByName'   => 'required|string|min:2|max:120',
+            'receiptSignature' => $needsSignature ? 'required|string|starts_with:data:image/png' : 'nullable|string|starts_with:data:image/png',
+        ], [
+            'receivedByName.required'   => 'Who is receiving the boxes?',
+            'receiptSignature.required' => 'Sign to confirm what you received.',
+        ]);
+
         if (empty($this->scannedBoxes)) {
             session()->flash('error', 'Please scan at least one box');
             return;
@@ -309,14 +322,11 @@ class ReceiveTransfer extends Component
         try {
             $transferService = app(TransferService::class);
 
-            // First mark as delivered if not already
-            if ($this->transfer->status === TransferStatus::IN_TRANSIT) {
-                $transferService->markAsDelivered($this->transfer);
-            }
-
+            // receiveTransfer() records the arrival first when it's still in transit.
             $transferService->receiveTransfer(
                 $this->transfer,
-                array_values($this->scannedBoxes)
+                array_values($this->scannedBoxes),
+                ['received_by_name' => trim($this->receivedByName), 'receipt_signature' => $this->receiptSignature ?: null]
             );
 
             // Create alert for warehouse manager if there are discrepancies

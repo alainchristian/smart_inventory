@@ -20,6 +20,17 @@ class TransferDocumentController extends Controller
         return view('transfers.delivery-note', compact('transfer'));
     }
 
+    /** Goods received note: what arrived, damaged or missing, per box — after receipt only. */
+    public function receivedNote(Transfer $transfer)
+    {
+        abort_unless(app(TransferService::class)->roleFor(auth()->user(), $transfer), 403);
+        abort_unless($transfer->received_at, 404);
+
+        $transfer->loadMissing(['items.product', 'boxes.box.product', 'fromWarehouse', 'toShop', 'transporter', 'receivedBy', 'shippedBy', 'deliveredBy']);
+
+        return view('transfers.received-note', compact('transfer'));
+    }
+
     /** What to pick: approved boxes per product, oldest boxes first (the order packing takes them). */
     public function pickingList(Transfer $transfer)
     {

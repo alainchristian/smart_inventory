@@ -23,6 +23,8 @@ class TransferScanTest extends TestCase
 {
     use DatabaseTransactions;
 
+    private const SIG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
     private int $warehouseId;
     private Shop $shop;
     private int $productId;
@@ -161,7 +163,10 @@ class TransferScanTest extends TestCase
             ->call('openComplete')->assertSet('confirmComplete', false)   // no damage note yet
             ->call('updateDamageNotes', $damagedId, 'Wet carton')
             ->call('openComplete')->assertSet('confirmComplete', true)
+            ->assertSet('receivedByName', $this->shopMgr->name)
             ->assertSee('will be recorded as')
+            ->call('completeReceipt')->assertHasErrors('receiptSignature')   // signature setting is on by default
+            ->set('receiptSignature', self::SIG)
             ->call('completeReceipt')
             ->assertRedirect(route('shop.transfers.show', $t));
 
@@ -170,6 +175,13 @@ class TransferScanTest extends TestCase
         $this->assertTrue((bool) $t->has_discrepancy);
         $this->assertSame('Wet carton', TransferBox::where('transfer_id', $t->id)->where('box_id', $damagedId)->value('damage_notes'));
         $this->assertSame(1, TransferBox::where('transfer_id', $t->id)->where('is_received', false)->count());
+        $this->assertSame($this->shopMgr->name, $t->received_by_name);
+        $this->assertSame(self::SIG, $t->receipt_signature);
+
+        // Goods received note: everyone on the transfer can print it.
+        $this->actingAs($this->shopMgr)->get(route('shop.transfers.received-note', $t))->assertOk()
+            ->assertSee('Received with issues')->assertSee('Wet carton')->assertSee('Missing');
+        $this->actingAs($this->whMgr)->get(route('warehouse.transfers.received-note', $t))->assertOk();
     }
 
     public function test_scan_pages_render(): void

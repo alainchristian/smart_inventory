@@ -35,7 +35,7 @@ class TopbarTitleTest extends TestCase
     public function test_every_app_page_has_a_title(): void
     {
         // Printable / file / standalone pages don't render the topbar
-        $noTopbar = ['/print', '/pdf', '/export/', 'receipt', 'delivery-note', 'picking-slip', 'picking-list'];
+        $noTopbar = ['/print', '/pdf', '/export/', 'receipt', 'delivery-note', 'picking-slip', 'picking-list', 'received-note'];
 
         $missing = collect(Route::getRoutes()->getRoutes())
             ->filter(fn ($r) => in_array('GET', $r->methods(), true))

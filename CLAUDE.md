@@ -2162,3 +2162,19 @@ pending → approved → (packing) → ready → in_transit → delivered → re
   manager_name + phone) and needed-by, "For the transporter" (instructions,
   expected arrival, handed to), captured signatures on the signature lines.
 - Tests: `tests/Feature/Transfers/TransferDispatchTest.php`.
+
+### Phase 4 (arrival + receipt) — done
+- Arrival already records who (`delivered_by`, phase 1).
+- Receive completion sheet asks **"Received by"** (defaults to the
+  signed-in user) and a **signature** (`<x-signature-pad
+  model="receiptSignature">`, required while `transfer_require_signature`
+  is on — the same setting covers both hand-overs). Stored as
+  `received_by_name` / `receipt_signature` via `receiveTransfer(…, $receipt)`.
+- **Goods Received Note** (`transfers/received-note.blade.php`,
+  `TransferDocumentController::receivedNote`, routes
+  `owner|warehouse|shop.transfers.received-note`, 404 before receipt):
+  dispatched / arrived / received with who, counts (shipped, into stock,
+  damaged, missing), by product (approved, shipped, into stock, damaged,
+  missing + packed-short reason), every box's outcome (+ damage note,
+  resolution once phase 5 resolves it), transporter and receiver
+  signatures. Linked from the transfer page once received.

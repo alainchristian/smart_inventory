@@ -146,6 +146,8 @@ class TransferDispatchTest extends TestCase
         $this->actingAs($this->whMgr)->get(route('warehouse.transfers.picking-list', $t))->assertOk()->assertSee('Picking list')->assertSee($this->barcode);
         $this->actingAs($this->shopMgr)->get(route('shop.transfers.delivery-note', $t))->assertOk();
         $this->actingAs($this->otherShopMgr)->get(route('shop.transfers.delivery-note', $t))->assertForbidden();
+        // Nothing received yet: no goods received note.
+        $this->actingAs($this->shopMgr)->get(route('shop.transfers.received-note', $t))->assertNotFound();
     }
 
     public function test_the_delivery_note_carries_the_trail_the_instructions_and_the_receiver(): void

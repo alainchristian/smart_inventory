@@ -211,6 +211,18 @@
                 <div><div class="tfs-stat-v" style="{{ $damagedCount ? 'color:var(--red)' : '' }}">{{ $damagedCount }}</div><div class="tfs-stat-l">Damaged</div></div>
                 <div><div class="tfs-stat-v" style="{{ $remainingCount ? 'color:var(--red)' : '' }}">{{ $remainingCount }}</div><div class="tfs-stat-l">Missing</div></div>
             </div>
+            <div style="margin-bottom:12px">
+                <label class="tfs-field-label" for="tfs-receiver">Received by <span style="color:var(--red)">*</span></label>
+                <input id="tfs-receiver" class="tfs-input" style="width:100%" wire:model="receivedByName" maxlength="120">
+                @error('receivedByName')<div class="tfs-err">{{ $message }}</div>@enderror
+            </div>
+            <div style="margin-bottom:12px">
+                <label class="tfs-field-label">Signature
+                    @if(app(\App\Services\SettingsService::class)->transferRequireSignature())<span style="color:var(--red)">*</span>@else<span style="font-weight:500;color:var(--text-dim)">(optional)</span>@endif
+                </label>
+                <x-signature-pad model="receiptSignature" label="Sign to confirm" wire:key="sig-receipt-{{ $transfer->id }}" />
+                @error('receiptSignature')<div class="tfs-err">{{ $message }}</div>@enderror
+            </div>
             @if($damagedCount || $remainingCount)
                 <p class="tfs-sheet-lead" style="margin:0">
                     @if($remainingCount){{ $remainingCount }} {{ Str::plural('box', $remainingCount) }} you didn't scan will be recorded as <strong>missing</strong>. @endif
