@@ -105,7 +105,7 @@ class TransferHoldTest extends TestCase
         $this->packed(2);
     }
 
-    public function test_receipt_puts_boxes_on_sale_at_the_shop_and_returns_missing_ones(): void
+    public function test_receipt_puts_boxes_on_sale_at_the_shop_and_holds_missing_ones_until_resolved(): void
     {
         $opened = $this->box('partial', 4);
         $sealed = $this->box();
@@ -124,11 +124,22 @@ class TransferHoldTest extends TestCase
         $this->assertSame('shop', $boxA->location_type->value);
         $this->assertSame(BoxStatus::PARTIAL, $boxA->status, 'status before packing restored');
 
-        $boxB = Box::find($sealed);
-        $this->assertSame('warehouse', $boxB->location_type->value);
-        $this->assertSame(BoxStatus::FULL, $boxB->status, 'missing box goes back on sale at the warehouse');
-        $this->assertSame('full', $this->boxStatus($sealed2), 'every missing box, not just the first');
+        // Missing boxes stay on hold (not sellable anywhere) until someone resolves them.
+        $this->assertSame('in_transit', $this->boxStatus($sealed));
+        $this->assertSame('in_transit', $this->boxStatus($sealed2), 'every missing box, not just the first');
         $this->assertTrue($t->fresh()->has_discrepancy);
+        $this->assertNull($t->fresh()->closed_at);
+
+        // Found at the warehouse → back on sale there; lost → written off.
+        $this->actingAs($this->whMgr);
+        $this->svc->resolveBox($t->fresh(), $sealed, 'found', 'Was still on the loading bay');
+        $this->assertSame(BoxStatus::FULL, Box::find($sealed)->status);
+        $this->assertSame('warehouse', Box::find($sealed)->location_type->value);
+        $this->assertNull($t->fresh()->closed_at, 'one box still open');
+
+        $this->svc->resolveBox($t->fresh(), $sealed2, 'lost', 'Driver cannot account for it');
+        $this->assertSame('damaged', $this->boxStatus($sealed2));
+        $this->assertNotNull($t->fresh()->closed_at, 'all resolved: closed');
     }
 
     public function test_damaged_on_arrival_stays_off_sale(): void

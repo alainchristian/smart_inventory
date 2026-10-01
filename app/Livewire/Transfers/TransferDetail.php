@@ -47,6 +47,12 @@ class TransferDetail extends Component
     public string $handoverSignature = '';
     public bool $justDispatched = false;
 
+    // Resolving a box that didn't arrive
+    public bool $showResolve = false;
+    public ?int $resolveBoxId = null;
+    public string $resolveAs = '';
+    public string $resolveNote = '';
+
     public function mount(Transfer $transfer): void
     {
         $user = auth()->user();
@@ -248,6 +254,37 @@ class TransferDetail extends Component
         $this->redirectRoute('warehouse.transfers.pack', $this->transfer);
     }
 
+    public function openResolve(int $boxId, string $as): void
+    {
+        if (! array_key_exists($as, TransferService::RESOLUTIONS)) {
+            return;
+        }
+        $this->resetErrorBag();
+        $this->resolveBoxId = $boxId;
+        $this->resolveAs = $as;
+        $this->resolveNote = '';
+        $this->showResolve = true;
+    }
+
+    public function resolve(): void
+    {
+        $this->validate(['resolveNote' => 'required|string|min:3|max:500'], [
+            'resolveNote.required' => 'Say what happened.', 'resolveNote.min' => 'Say what happened.',
+        ]);
+
+        try {
+            app(TransferService::class)->resolveBox($this->transfer, (int) $this->resolveBoxId, $this->resolveAs, trim($this->resolveNote));
+        } catch (\DomainException|\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $this->showResolve = false;
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e instanceof \DomainException ? $e->getMessage() : 'That box is already resolved.']);
+            return;
+        }
+
+        $this->showResolve = false;
+        $closed = (bool) $this->transfer->closed_at;
+        $this->dispatch('notification', ['type' => 'success', 'message' => $closed ? 'All boxes accounted for — the transfer is closed.' : 'Box resolved.']);
+    }
+
     public function markAsDelivered(): void
     {
         $t = $this->transfer;
@@ -301,6 +338,9 @@ class TransferDetail extends Component
             'canCancel' => app(TransferService::class)->can('cancel', $t),
             'canDispatch' => app(TransferService::class)->can('dispatch', $t) && $t->status === TransferStatus::READY,
             'canReopen' => app(TransferService::class)->can('reopen_packing', $t),
+            'canResolve' => app(TransferService::class)->can('resolve', $t),
+            'openIssues' => $received ? $t->boxes->filter(fn ($tb) => ! $tb->is_received && ! $tb->resolution)->values() : collect(),
+            'resolutions' => TransferService::RESOLUTIONS,
             'transporters' => $this->showDispatch ? Transporter::active()->orderBy('name')->get(['id', 'name', 'vehicle_number']) : collect(),
             'needsSignature' => app(SettingsService::class)->transferRequireSignature(),
             'received'  => $received,

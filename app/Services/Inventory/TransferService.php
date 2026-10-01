@@ -527,7 +527,12 @@ class TransferService
                 $box = Box::find($received['box_id']);
 
                 if ($received['is_damaged'] ?? false) {
+                    // It arrived: it sits at the shop now, off sale, and goes to
+                    // Damaged Goods where the owner decides what happens to it.
+                    $box->moveTo(LocationType::SHOP, $transfer->to_shop_id, "Transfer received damaged: {$transfer->transfer_number}", $transfer->id, 'transfer');
                     $box->update(['status' => BoxStatus::DAMAGED]);
+                    $this->recordDamagedGood($transfer, $box, 'transfer', $received['damage_notes'] ?? 'Damaged on arrival', LocationType::SHOP, $transfer->to_shop_id);
+                    $transferBox->update(['resolution' => 'damaged_goods', 'resolved_by' => auth()->id(), 'resolved_at' => now()]);
                     $hasDiscrepancy = true;
                 } else {
                     $box->moveTo(
@@ -558,14 +563,10 @@ class TransferService
                 $hasDiscrepancy = true;
             }
 
-            // Boxes that never arrived go back on sale at the warehouse, as
-            // they were before packing put them on hold (the transfer keeps
-            // the discrepancy flag so the owner can follow up).
-            TransferBox::where('transfer_id', $transfer->id)
-                ->where('is_received', false)
-                ->with('box')
-                ->get()
-                ->each(function (TransferBox $tb) { if ($tb->box) { $this->releaseBox($tb, $tb->box); } });
+            // Boxes that never arrived stay on hold (in_transit, off sale
+            // everywhere) until the owner or warehouse resolves each one:
+            // found at the warehouse, lost, or arrived late (resolveBox()).
+            $missingCount = TransferBox::where('transfer_id', $transfer->id)->where('is_received', false)->count();
 
             // Calculate discrepancies per item
             foreach ($transfer->items as $item) {
@@ -587,8 +588,8 @@ class TransferService
                 'received_by_name' => $receipt['received_by_name'] ?? null,
                 'receipt_signature' => $receipt['receipt_signature'] ?? null,
                 'has_discrepancy' => $hasDiscrepancy,
-                // Nothing to resolve: the transfer is complete.
-                'closed_at' => $hasDiscrepancy ? null : now(),
+                // Complete unless boxes are missing (damaged ones went to Damaged Goods).
+                'closed_at' => $missingCount > 0 ? null : now(),
             ]);
             $this->record($transfer, 'received', TransferStatus::DELIVERED, TransferStatus::RECEIVED, null, array_filter([
                 'received' => count($receivedBoxes),
@@ -596,7 +597,7 @@ class TransferService
                 'missing'  => $transfer->boxes()->count() - count($receivedBoxes),
                 'signed'   => ! empty($receipt['receipt_signature']) ? true : null,
             ]));
-            if (! $hasDiscrepancy) {
+            if ($missingCount === 0) {
                 $this->record($transfer, 'closed');
             }
 
@@ -734,6 +735,99 @@ class TransferService
 
             return $createdTransferBoxes;
         });
+    }
+
+    public const RESOLUTIONS = [
+        'found'         => 'Found at the warehouse',
+        'lost'          => 'Lost in transit',
+        'received_late' => 'Arrived late',
+    ];
+
+    /**
+     * Settle one box that didn't arrive (owner / warehouse, transfer received):
+     * - found:         it never left — back on sale at the warehouse
+     * - lost:          written off (Damaged Goods, disposition write-off, transporter named)
+     * - received_late: it turned up at the shop — received into its stock now
+     * The transfer closes when no missing box is left.
+     */
+    public function resolveBox(Transfer $transfer, int $boxId, string $resolution, string $note): TransferBox
+    {
+        $this->assertCan('resolve', $transfer);
+        if (! isset(self::RESOLUTIONS[$resolution])) {
+            throw new \DomainException('Unknown resolution.');
+        }
+        if (trim($note) === '') {
+            throw new \DomainException('Add a note on what happened.');
+        }
+
+        return DB::transaction(function () use ($transfer, $boxId, $resolution, $note) {
+            $tb = TransferBox::where('transfer_id', $transfer->id)->where('box_id', $boxId)
+                ->where('is_received', false)->whereNull('resolution')->lockForUpdate()->firstOrFail();
+            $box = Box::lockForUpdate()->findOrFail($boxId);
+
+            match ($resolution) {
+                'found' => $this->releaseBox($tb, $box),
+                'lost'  => $this->writeOffLostBox($transfer, $box, $note),
+                'received_late' => $this->receiveLateBox($transfer, $tb, $box),
+            };
+
+            $tb->update([
+                'resolution' => $resolution, 'resolved_by' => auth()->id(), 'resolved_at' => now(), 'resolution_notes' => trim($note),
+            ] + ($resolution === 'received_late' ? ['is_received' => true, 'scanned_in_by' => auth()->id(), 'scanned_in_at' => now()] : []));
+
+            $this->record($transfer, 'issue_resolved', null, null, trim($note), ['box_code' => $box->box_code, 'resolution' => $resolution]);
+
+            if (! $transfer->openIssues()->exists()) {
+                $transfer->update(['closed_at' => now()]);
+                $this->record($transfer, 'closed');
+            }
+
+            return $tb;
+        });
+    }
+
+    private function writeOffLostBox(Transfer $transfer, Box $box, string $note): void
+    {
+        $box->update(['status' => BoxStatus::DAMAGED]);
+        $who = $transfer->transporter?->name ?? 'unknown transporter';
+        $this->recordDamagedGood($transfer, $box, 'transfer_lost', "Lost in transit ({$who}{$this->handedToSuffix($transfer)}): " . trim($note),
+            LocationType::WAREHOUSE, $transfer->from_warehouse_id, writeOff: true);
+    }
+
+    private function handedToSuffix(Transfer $transfer): string
+    {
+        return $transfer->handed_to_name ? ", driver {$transfer->handed_to_name}" : '';
+    }
+
+    private function receiveLateBox(Transfer $transfer, TransferBox $tb, Box $box): void
+    {
+        $box->moveTo(LocationType::SHOP, $transfer->to_shop_id, "Transfer box arrived late: {$transfer->transfer_number}", $transfer->id, 'transfer');
+        $this->releaseBox($tb, $box);
+        $transfer->items()->where('product_id', $box->product_id)->first()?->increment('quantity_received', $box->items_remaining);
+    }
+
+    /** A damaged or lost transfer box becomes a Damaged Goods record (counts in Loss Analysis). */
+    private function recordDamagedGood(Transfer $transfer, Box $box, string $source, string $description, LocationType $locType, int $locId, bool $writeOff = false): void
+    {
+        $price = (int) ($box->product?->selling_price ?? 0);
+        \App\Models\DamagedGood::create([
+            'damage_reference'       => ($source === 'transfer_lost' ? 'TR-LOST-' : 'TR-DMG-') . $box->box_code,
+            'source_type'            => $source,
+            'source_id'              => $transfer->id,
+            'product_id'             => $box->product_id,
+            'quantity_damaged'       => (int) $box->items_remaining,
+            'box_id'                 => $box->id,
+            'location_type'          => $locType,
+            'location_id'            => $locId,
+            'disposition'            => $writeOff ? \App\Enums\DispositionType::WRITE_OFF : \App\Enums\DispositionType::PENDING,
+            'disposition_decided_by' => $writeOff ? auth()->id() : null,
+            'disposition_decided_at' => $writeOff ? now() : null,
+            'disposition_notes'      => $writeOff ? "Written off from transfer {$transfer->transfer_number}" : null,
+            'damage_description'     => $description,
+            'estimated_loss'         => $price * (int) $box->items_remaining,
+            'recorded_by'            => auth()->id(),
+            'recorded_at'            => now(),
+        ]);
     }
 
     /**

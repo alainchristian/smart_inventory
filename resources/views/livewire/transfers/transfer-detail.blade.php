@@ -172,7 +172,12 @@
                 {{ collect([
                     $issues['damaged'] ? $issues['damaged'] . ' ' . Str::plural('box', $issues['damaged']) . ' arrived damaged' : null,
                     $issues['missing'] ? $issues['missing'] . ' ' . Str::plural('box', $issues['missing']) . ' never arrived' : null,
-                ])->filter()->implode(' · ') }}. Details are in the boxes table below.
+                ])->filter()->implode(' · ') }}.
+                @if($openIssues->isNotEmpty())
+                    {{ $openIssues->count() }} missing {{ Str::plural('box', $openIssues->count()) }} still to resolve — they stay off sale until then.
+                @elseif($t->closed_at)
+                    All boxes are accounted for; the transfer is closed.
+                @endif
             </div>
         </div>
     </div>
@@ -201,6 +206,46 @@
 
 <div class="tfd-grid">
     <div style="min-width:0">
+        @if($openIssues->isNotEmpty())
+            <div class="tfd-card" style="box-shadow:var(--shadow-card), inset 3px 0 0 var(--red)">
+                <div class="tfd-card-head">
+                    <div>
+                        <h2 class="tfd-card-title">To resolve</h2>
+                        <div class="tfd-card-sub">
+                            @if($canResolve)
+                                Shipped but not received. Find out what happened to each box.
+                            @else
+                                The warehouse is following up on these boxes.
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="m-scroll">
+                    <table class="tfd-table m-sticky-first" style="min-width:{{ $canResolve ? 760 : 420 }}px">
+                        <thead><tr><th>Box</th><th>Product</th><th class="tfd-r">Items</th>@if($canResolve)<th class="tfd-r">What happened?</th>@endif</tr></thead>
+                        <tbody>
+                            @foreach($openIssues as $tb)
+                                @php $product = $lines->firstWhere('product.id', $tb->box?->product_id)['product'] ?? null; @endphp
+                                <tr wire:key="issue-{{ $tb->id }}">
+                                    <td><span class="tfd-code">{{ $tb->box?->box_code }}</span></td>
+                                    <td>{{ $product?->name ?? '—' }}</td>
+                                    <td class="tfd-r"><span class="tfd-n">{{ number_format($tb->box?->items_remaining ?? 0) }}</span></td>
+                                    @if($canResolve)
+                                        <td class="tfd-r">
+                                            <div style="display:flex;gap:6px;justify-content:flex-end">
+                                                <button type="button" class="tf-btn tf-btn-ghost tf-btn-sm" wire:click="openResolve({{ $tb->box_id }}, 'found')">Found at warehouse</button>
+                                                <button type="button" class="tf-btn tf-btn-ghost tf-btn-sm" wire:click="openResolve({{ $tb->box_id }}, 'received_late')">Arrived late</button>
+                                                <button type="button" class="tf-btn tf-btn-danger tf-btn-sm" wire:click="openResolve({{ $tb->box_id }}, 'lost')">Lost</button>
+                                            </div>
+                                        </td>
+                                    @endif
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
         {{-- ═══ Items ════════════════════════════════════════════════ --}}
         <div class="tfd-card">
             <div class="tfd-card-head">
@@ -331,9 +376,12 @@
                             @foreach($t->boxes->sortBy(fn ($tb) => [$tb->is_damaged ? 0 : 1, $tb->box?->product_id]) as $tb)
                                 @php
                                     [$label, $tone] = match (true) {
-                                        (bool) $tb->is_damaged  => ['Damaged', 'red'],
+                                        (bool) $tb->is_damaged  => ['Damaged · to Damaged Goods', 'red'],
+                                        $tb->resolution === 'received_late' => ['Arrived late', 'green'],
                                         (bool) $tb->is_received => ['Received', 'green'],
-                                        $received               => ['Missing', 'red'],
+                                        $tb->resolution === 'found' => ['Missing · found at warehouse', 'amber'],
+                                        $tb->resolution === 'lost'  => ['Lost · written off', 'red'],
+                                        $received               => ['Missing · to resolve', 'red'],
                                         $shipped                => ['On the road', 'violet'],
                                         default                 => ['Packed', 'accent'],
                                     };
@@ -346,6 +394,7 @@
                                     <td>
                                         <span class="tfd-state" style="background:var(--{{ $tone }}-dim);color:var(--{{ $tone }})">{{ $label }}</span>
                                         @if($tb->damage_notes)<span style="margin-left:6px;color:var(--text-sub)">{{ $tb->damage_notes }}</span>@endif
+                                        @if($tb->resolution_notes && $tb->resolution !== 'damaged_goods')<span style="margin-left:6px;color:var(--text-sub)" title="Resolved {{ local_time($tb->resolved_at)?->format('d M H:i') }}">{{ $tb->resolution_notes }}</span>@endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -396,6 +445,37 @@
         @endif
     </div>
 </div>
+
+{{-- ═══ Resolve sheet ════════════════════════════════════════════════ --}}
+@if($showResolve)
+    @php $rb = $t->boxes->firstWhere('box_id', $resolveBoxId); @endphp
+    <div class="m-sheet-overlay" wire:click="$set('showResolve', false)"></div>
+    <div class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="tfd-resolve-title">
+        <div class="m-sheet-handle"></div>
+        <div class="m-sheet-head">
+            <h2 class="m-sheet-title" id="tfd-resolve-title">{{ $resolutions[$resolveAs] ?? 'Resolve' }}: {{ $rb?->box?->box_code }}</h2>
+            <button type="button" class="tfd-x m-tap" wire:click="$set('showResolve', false)" aria-label="Close">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+        <div class="m-sheet-body">
+            <p style="font-size:13px;color:var(--text-sub);margin:0 0 14px;line-height:1.5">
+                @switch($resolveAs)
+                    @case('found') The box goes back on sale at {{ $t->fromWarehouse?->name }}. @break
+                    @case('received_late') The box joins {{ $t->toShop?->name }}'s stock now. @break
+                    @case('lost') The box is written off as a loss in Damaged Goods, naming {{ $t->transporter?->name ?? 'the transporter' }}{{ $t->handed_to_name ? ' (' . $t->handed_to_name . ')' : '' }}. @break
+                @endswitch
+            </p>
+            <label class="tfd-label" for="tfd-resolve-note">What happened? <span style="color:var(--red)">*</span></label>
+            <textarea id="tfd-resolve-note" class="tfd-input" rows="3" wire:model="resolveNote" maxlength="500" placeholder="e.g. Left on the loading bay; driver confirmed only 8 boxes"></textarea>
+            @error('resolveNote')<div class="tfd-err">{{ $message }}</div>@enderror
+        </div>
+        <div class="m-sheet-foot">
+            <button type="button" class="tf-btn tf-btn-ghost" wire:click="$set('showResolve', false)">Cancel</button>
+            <button type="button" class="tf-btn {{ $resolveAs === 'lost' ? 'tf-btn-danger' : 'tf-btn-primary' }}" wire:click="resolve" wire:loading.attr="disabled" wire:target="resolve">Confirm</button>
+        </div>
+    </div>
+@endif
 
 {{-- ═══ Dispatch sheet ═══════════════════════════════════════════════ --}}
 @if($showDispatch)

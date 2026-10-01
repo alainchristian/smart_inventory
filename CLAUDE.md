@@ -2178,3 +2178,35 @@ pending → approved → (packing) → ready → in_transit → delivered → re
   missing + packed-short reason), every box's outcome (+ damage note,
   resolution once phase 5 resolves it), transporter and receiver
   signatures. Linked from the transfer page once received.
+
+### Phase 5 (discrepancies) — done
+- **Damaged on arrival:** the box moves to the shop, status `damaged`, and
+  becomes a `DamagedGood` (`source_type = transfer`, `source_id` = transfer,
+  box, items × selling price, disposition pending → the owner decides in
+  Damaged Goods). The transfer box gets `resolution = damaged_goods`.
+- **Missing on arrival:** the box **stays held** (`in_transit`, off sale
+  everywhere — it used to go straight back on sale at the warehouse, i.e.
+  phantom stock). The transfer stays open (`closed_at` null) until each one
+  is resolved by owner / warehouse with a note —
+  `TransferService::resolveBox($t, $boxId, found|lost|received_late, $note)`:
+  - found → `releaseBox` (back on sale at the warehouse)
+  - lost → box `damaged` + `DamagedGood` (`source_type = transfer_lost`,
+    disposition write_off decided now, description names the transporter
+    and driver) — counts in Loss Analysis (it includes every non-return source)
+  - received_late → moved into the shop's stock, marked received,
+    `quantity_received` updated
+  Each writes an `issue_resolved` event; the last one closes the transfer
+  (`closed` event). `Transfer::openIssues()` = unresolved missing / damaged boxes.
+- UI: transfer page "To resolve" card (Found at warehouse / Arrived late /
+  Lost → `m-sheet` with a required note; read-only for the shop); box
+  states show the resolution and its note. Lists: "To resolve" tab
+  (received and not closed) for owner / warehouse, rows show "To resolve"
+  + a Resolve button, and the warehouse "Needs you" includes them.
+- Migration `2026_10_01_000004` marks pre-existing received transfers'
+  missing boxes `found` (they were already put back on sale) and damaged
+  ones `damaged_goods`, and closes those transfers.
+- Tests: `tests/Feature/Transfers/TransferDiscrepancyTest.php`;
+  `TransferHoldTest` updated to the new hold-until-resolved rule.
+- Known, unrelated: `ReportExportTest::test_excel_workbook_has_summary_and_table_sheets`
+  fails on the 1st of a month (the "this month" trend has one day and no
+  Total row) — fails the same without these changes.

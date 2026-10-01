@@ -35,7 +35,9 @@
     <td class="tfl-num-cell"><span class="tfl-mono">{{ number_format($boxes) }}</span> <span class="tfl-unit">{{ Str::plural('box', $boxes) }}</span></td>
     <td>
         <x-transfers.status :status="$t->status" />
-        @if($t->has_discrepancy)
+        @if($t->status === S::RECEIVED && ! $t->closed_at)
+            <div class="tfl-sub" style="color:var(--red);font-weight:600" title="Missing boxes to resolve">To resolve</div>
+        @elseif($t->has_discrepancy)
             <div class="tfl-sub" style="color:var(--red);font-weight:600" title="Missing or damaged boxes on delivery">Discrepancy</div>
         @endif
     </td>
@@ -50,8 +52,8 @@
     </td>
     <td>
         @if($waiting)
-            @php $since = match ($t->status) { S::APPROVED => $t->reviewed_at ?? $t->requested_at, S::READY => $t->packing_done_at ?? $t->requested_at, default => $t->requested_at }; @endphp
-            <div class="tfl-date">{{ match ($t->status) { S::APPROVED => $t->packed_at ? 'Packing started' : 'Waiting to pack', S::READY => 'Waiting for transporter', default => 'Waiting for approval' } }}</div>
+            @php $since = match ($t->status) { S::APPROVED => $t->reviewed_at ?? $t->requested_at, S::READY => $t->packing_done_at ?? $t->requested_at, S::RECEIVED => $t->received_at ?? $t->requested_at, default => $t->requested_at }; @endphp
+            <div class="tfl-date">{{ match ($t->status) { S::APPROVED => $t->packed_at ? 'Packing started' : 'Waiting to pack', S::READY => 'Waiting for transporter', S::RECEIVED => 'Missing boxes to resolve', default => 'Waiting for approval' } }}</div>
             <div class="tfl-sub">for {{ $since->diffForHumans(null, true) }}</div>
         @else
             <div class="tfl-date">{{ $event['label'] }}</div>
@@ -62,6 +64,8 @@
         <div class="tfl-acts">
             @if($role === 'warehouse' && $t->status === S::PENDING)
                 <a href="{{ $showRoute }}" wire:navigate class="tf-btn tf-btn-primary tf-btn-sm">Review</a>
+            @elseif($role !== 'shop' && $t->status === S::RECEIVED && ! $t->closed_at)
+                <a href="{{ $showRoute }}" wire:navigate class="tf-btn tf-btn-danger tf-btn-sm">Resolve</a>
             @elseif($role === 'warehouse' && $t->status === S::READY)
                 <a href="{{ $showRoute }}" wire:navigate class="tf-btn tf-btn-primary tf-btn-sm">Dispatch</a>
             @elseif($role === 'warehouse' && $t->status === S::APPROVED)

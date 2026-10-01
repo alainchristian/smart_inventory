@@ -75,7 +75,7 @@ trait ListsTransfers
             TransferStatus::RECEIVED, TransferStatus::REJECTED, TransferStatus::CANCELLED,
         ])->mapWithKeys(fn ($s) => [$s->value => $s->label()]));
 
-        return $this->role() === 'shop' ? $tabs : $tabs->put('discrepancy', 'Discrepancies');
+        return $this->role() === 'shop' ? $tabs : $tabs->put('to_resolve', 'To resolve')->put('discrepancy', 'Discrepancies');
     }
 
     protected function baseQuery(): Builder
@@ -132,6 +132,8 @@ trait ListsTransfers
         return match ($status) {
             'all'         => $query,
             'discrepancy' => $query->where('has_discrepancy', true),
+            // Received but not closed: missing boxes nobody has resolved yet.
+            'to_resolve'  => $query->where('status', TransferStatus::RECEIVED)->whereNull('closed_at'),
             default       => $query->where('status', $status),
         };
     }
@@ -141,6 +143,7 @@ trait ListsTransfers
     {
         $row = $this->filteredQuery()->toBase()->selectRaw(
             'count(*) as "all", count(*) filter (where has_discrepancy) as discrepancy, '
+            . "count(*) filter (where status = 'received' and closed_at is null) as to_resolve, "
             . collect(TransferStatus::cases())
                 ->map(fn ($s) => "count(*) filter (where status = '{$s->value}') as \"{$s->value}\"")
                 ->implode(', ')
@@ -168,11 +171,12 @@ trait ListsTransfers
             ->orderBy('name')->pluck('name', 'id');
     }
 
-    /** Transfers the warehouse must act on: pending (approve) and approved (pack), oldest first. */
+    /** Transfers the warehouse must act on: approve, pack, dispatch, resolve — oldest first. */
     protected function needsAction()
     {
         return $this->baseQuery()
-            ->whereIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED, TransferStatus::READY])
+            ->where(fn ($q) => $q->whereIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED, TransferStatus::READY])
+                ->orWhere(fn ($r) => $r->where('status', TransferStatus::RECEIVED)->whereNull('closed_at')))
             ->with(['toShop:id,name', 'requestedBy:id,name'])
             ->withCount('items')
             ->addSelect(['boxes_requested' => DB::table('transfer_items')->selectRaw('COALESCE(SUM(COALESCE(quantity_approved, quantity_requested)), 0)')->whereColumn('transfer_id', 'transfers.id')])
@@ -259,7 +263,8 @@ trait ListsTransfers
         $rows = $this->applyStatus($this->rowsQuery(), $this->statusFilter);
         if ($showNeeds) {
             // "Needs you" lists these above; the table holds the rest.
-            $rows->whereNotIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED, TransferStatus::READY]);
+            $rows->whereNotIn('status', [TransferStatus::PENDING, TransferStatus::APPROVED, TransferStatus::READY])
+                ->where(fn ($q) => $q->where('status', '!=', TransferStatus::RECEIVED)->orWhereNotNull('closed_at'));
         }
 
         return view('livewire.transfers.transfers-list', [
