@@ -62,6 +62,13 @@
 .tfd-dl dd { margin:0;color:var(--text);font-weight:600;text-align:right;min-width:0;overflow-wrap:anywhere }
 .tfd-empty { font-size:13px;color:var(--text-dim) }
 .tfd-field { margin-bottom:14px }
+.tfd-hist { list-style:none;margin:0;padding:0 }
+.tfd-hist li { position:relative;padding:0 0 12px 16px;border-left:2px solid var(--border);margin-left:4px }
+.tfd-hist li:last-child { padding-bottom:0;border-left-color:transparent }
+.tfd-hist li::before { content:'';position:absolute;left:-5px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--accent) }
+.tfd-hist-what { font-size:13px;font-weight:600;color:var(--text);line-height:1.3 }
+.tfd-hist-meta { font-size:11px;color:var(--text-dim);margin-top:2px;font-family:var(--mono) }
+.tfd-hist-note { font-size:12px;color:var(--text-sub);margin-top:3px;line-height:1.4 }
 .tfd-x { width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:var(--surface2);color:var(--text-sub);cursor:pointer }
 .tfd-x:hover { background:var(--surface3) }
 
@@ -428,6 +435,43 @@
                 @endif
             </div>
         </div>
+
+        {{-- ═══ History: every recorded step ═══════════════════════════ --}}
+        @if($t->events->isNotEmpty())
+            @php
+                $label = fn ($e) => match ($e->action) {
+                    'requested' => 'Requested',
+                    'approved' => 'Approved' . (! empty($e->meta['changed']) ? ' (quantities changed)' : ''),
+                    'rejected' => 'Rejected',
+                    'packing_started' => 'Packing started',
+                    'box_unpacked' => 'Box removed: ' . ($e->meta['box_code'] ?? ''),
+                    'packing_done' => 'Packed' . (! empty($e->meta['short']) ? ' — short' : ''),
+                    'packing_reopened' => 'Back to packing',
+                    'dispatched' => 'Dispatched' . (! empty($e->meta['handed_to']) ? ' to ' . $e->meta['handed_to'] : ''),
+                    'arrived' => 'Arrived at the shop',
+                    'received' => 'Received' . (! empty($e->meta['missing']) || ! empty($e->meta['damaged'])
+                        ? ' (' . collect([! empty($e->meta['damaged']) ? $e->meta['damaged'] . ' damaged' : null, ! empty($e->meta['missing']) ? $e->meta['missing'] . ' missing' : null])->filter()->implode(', ') . ')' : ''),
+                    'issue_resolved' => ($e->meta['box_code'] ?? 'Box') . ': ' . strtolower(\App\Services\Inventory\TransferService::RESOLUTIONS[$e->meta['resolution'] ?? ''] ?? 'resolved'),
+                    'closed' => 'Closed — all boxes accounted for',
+                    'cancelled' => 'Cancelled',
+                    default => ucfirst(str_replace('_', ' ', $e->action)),
+                };
+            @endphp
+            <div class="tfd-card">
+                <div class="tfd-card-head"><h2 class="tfd-card-title">History</h2></div>
+                <div class="tfd-card-body">
+                    <ol class="tfd-hist">
+                        @foreach($t->events as $e)
+                            <li>
+                                <div class="tfd-hist-what">{{ $label($e) }}</div>
+                                <div class="tfd-hist-meta">{{ local_time($e->created_at)->format('d M · H:i') }}{{ $e->user_name ? ' · ' . $e->user_name : '' }}</div>
+                                @if($e->note && ! in_array($e->action, ['requested'], true))<div class="tfd-hist-note">{{ Str::limit($e->note, 140) }}</div>@endif
+                            </li>
+                        @endforeach
+                    </ol>
+                </div>
+            </div>
+        @endif
 
         {{-- ═══ Transporter ══════════════════════════════════════════ --}}
         @if($t->transporter)

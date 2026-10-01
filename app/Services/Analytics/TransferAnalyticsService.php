@@ -265,6 +265,68 @@ class TransferAnalyticsService
     /**
      * Get transfer efficiency by warehouse
      */
+    /**
+     * Transfers dispatched in the period, per transporter: time on the road,
+     * on time vs the expected arrival, damaged and lost boxes. Plus the
+     * overall lead times (request → receipt, dispatch → arrival).
+     */
+    public function getTransporterPerformance(string $dateFrom, string $dateTo): array
+    {
+        $cacheKey = "analytics_transporter_performance_{$dateFrom}_{$dateTo}";
+
+        return Cache::remember($cacheKey, 900, function () use ($dateFrom, $dateTo) {
+            $range = $this->parseDateRange($dateFrom, $dateTo);
+            $boxes = DB::table('transfer_boxes')
+                ->selectRaw("transfer_id, COUNT(*) AS boxes,
+                    COUNT(*) FILTER (WHERE is_damaged) AS damaged,
+                    COUNT(*) FILTER (WHERE resolution = 'lost') AS lost")
+                ->groupBy('transfer_id');
+
+            $rows = DB::table('transfers')
+                ->leftJoin('transporters', 'transporters.id', '=', 'transfers.transporter_id')
+                ->leftJoinSub($boxes, 'tb', 'tb.transfer_id', '=', 'transfers.id')
+                ->whereBetween('transfers.shipped_at', $range)
+                ->whereNull('transfers.deleted_at')
+                ->selectRaw("COALESCE(transporters.name, 'Not recorded') AS name,
+                    COUNT(*) AS transfers,
+                    COALESCE(SUM(tb.boxes), 0) AS boxes,
+                    AVG(EXTRACT(EPOCH FROM (transfers.delivered_at - transfers.shipped_at)) / 3600) AS road_hours,
+                    COUNT(*) FILTER (WHERE transfers.expected_arrival_at IS NOT NULL AND transfers.delivered_at IS NOT NULL) AS with_eta,
+                    COUNT(*) FILTER (WHERE transfers.delivered_at <= transfers.expected_arrival_at) AS on_time,
+                    COALESCE(SUM(tb.damaged), 0) AS damaged,
+                    COALESCE(SUM(tb.lost), 0) AS lost")
+                ->groupBy(DB::raw("COALESCE(transporters.name, 'Not recorded')"))
+                ->orderByDesc('transfers')
+                ->get()
+                ->map(fn ($r) => [
+                    'name'         => $r->name,
+                    'transfers'    => (int) $r->transfers,
+                    'boxes'        => (int) $r->boxes,
+                    'road_hours'   => $r->road_hours !== null ? round((float) $r->road_hours, 1) : null,
+                    'on_time_pct'  => $r->with_eta > 0 ? round($r->on_time / $r->with_eta * 100) : null,
+                    'damaged'      => (int) $r->damaged,
+                    'lost'         => (int) $r->lost,
+                    'loss_pct'     => $r->boxes > 0 ? round(($r->damaged + $r->lost) / $r->boxes * 100, 1) : 0,
+                ])->all();
+
+            $lead = DB::table('transfers')->whereNull('deleted_at')
+                ->selectRaw("
+                    AVG(EXTRACT(EPOCH FROM (received_at - requested_at)) / 3600) FILTER (WHERE received_at BETWEEN ? AND ?) AS request_to_receive,
+                    AVG(EXTRACT(EPOCH FROM (delivered_at - shipped_at)) / 3600) FILTER (WHERE shipped_at BETWEEN ? AND ?) AS dispatch_to_arrival,
+                    COUNT(*) FILTER (WHERE shipped_at BETWEEN ? AND ? AND expected_arrival_at IS NOT NULL AND delivered_at IS NOT NULL) AS with_eta,
+                    COUNT(*) FILTER (WHERE shipped_at BETWEEN ? AND ? AND delivered_at <= expected_arrival_at) AS on_time",
+                    [...$range, ...$range, ...$range, ...$range])
+                ->first();
+
+            return [
+                'transporters'        => $rows,
+                'request_to_receive'  => $lead->request_to_receive !== null ? round((float) $lead->request_to_receive, 1) : null,
+                'dispatch_to_arrival' => $lead->dispatch_to_arrival !== null ? round((float) $lead->dispatch_to_arrival, 1) : null,
+                'on_time_pct'         => $lead->with_eta > 0 ? round($lead->on_time / $lead->with_eta * 100) : null,
+            ];
+        });
+    }
+
     public function getWarehouseEfficiency(string $dateFrom, string $dateTo): array
     {
         $cacheKey = "analytics_warehouse_efficiency_{$dateFrom}_{$dateTo}";

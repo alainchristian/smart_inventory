@@ -16,7 +16,7 @@
 /* KPI cards: shared .ui-kpi (app.css) */
 
 /* Tabs */
-.tp-tabs         { display:grid;grid-template-columns:repeat(4,1fr);
+.tp-tabs         { display:grid;grid-template-columns:repeat(5,1fr);
                    background:var(--surface);box-shadow:var(--shadow-card);
                    border-radius:var(--r);margin-bottom:20px;overflow:hidden }
 .tp-tab          { display:flex;align-items:center;justify-content:center;gap:6px;
@@ -351,7 +351,79 @@
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path stroke-linecap="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
         <span>Products &amp; Issues</span>
     </button>
+    <button class="tp-tab {{ $activeTab === 'transporters' ? 'active' : '' }}" wire:click="setTab('transporters')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linejoin="round" d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        <span>Transporters</span>
+    </button>
 </div>
+
+{{-- ═══ TAB: TRANSPORTERS ═══ --}}
+@if($activeTab === 'transporters')
+    @php
+        $tp = $this->transporterPerformance;
+        $fmtH = fn ($h) => match (true) { $h === null => '—', $h < 1 => '< 1 h', $h >= 48 => round($h / 24, 1) . ' d', default => $h . ' h' };
+    @endphp
+    <div class="ui-kpis m-kpis" style="--kpi-cols:3;margin-bottom:16px">
+        @foreach([
+            ['Request → received', $fmtH($tp['request_to_receive']), 'Average, transfers received in the period', 'accent'],
+            ['On the road', $fmtH($tp['dispatch_to_arrival']), 'Dispatch to arrival at the shop', 'violet'],
+            ['On time', $tp['on_time_pct'] === null ? '—' : $tp['on_time_pct'] . '%', 'Arrived by the expected time', 'green'],
+        ] as [$label, $value, $sub, $tone])
+            <div class="ui-kpi">
+                <div class="ui-kpi-row">
+                    <div class="ui-kpi-icon" style="background:var(--{{ $tone }}-dim);color:var(--{{ $tone }})">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg>
+                    </div>
+                    <div class="ui-kpi-body"><div class="ui-kpi-label">{{ $label }}</div><div class="ui-kpi-sub">{{ $sub }}</div></div>
+                </div>
+                <div class="ui-kpi-val" style="color:var(--{{ $tone }})">{{ $value }}</div>
+            </div>
+        @endforeach
+    </div>
+
+    <div class="tp-card">
+        <div class="tp-card-head">
+            <div>
+                <div class="tp-card-title">Transporters</div>
+                <div class="tp-card-sub">Transfers dispatched in the period · damaged boxes arrived broken, lost boxes never arrived and were written off</div>
+            </div>
+        </div>
+        @if(empty($tp['transporters']))
+            <div style="padding:40px 20px;text-align:center;font-size:13px;color:var(--text-dim)">No transfers were dispatched in this period.</div>
+        @else
+            <div class="m-scroll">
+                <table class="tp-tbl m-sticky-first" style="min-width:820px">
+                    <thead>
+                        <tr>
+                            <th>Transporter</th>
+                            <th style="text-align:right">Transfers</th>
+                            <th style="text-align:right">Boxes</th>
+                            <th style="text-align:right">Avg on the road</th>
+                            <th style="text-align:right">On time</th>
+                            <th style="text-align:right">Damaged</th>
+                            <th style="text-align:right">Lost</th>
+                            <th style="text-align:right">Loss rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($tp['transporters'] as $r)
+                            <tr>
+                                <td style="font-weight:600;color:var(--text)">{{ $r['name'] }}</td>
+                                <td style="text-align:right;font-family:var(--mono)">{{ $r['transfers'] }}</td>
+                                <td style="text-align:right;font-family:var(--mono)">{{ number_format($r['boxes']) }}</td>
+                                <td style="text-align:right;font-family:var(--mono)">{{ $fmtH($r['road_hours']) }}</td>
+                                <td style="text-align:right;font-family:var(--mono)">{{ $r['on_time_pct'] === null ? '—' : $r['on_time_pct'] . '%' }}</td>
+                                <td style="text-align:right;font-family:var(--mono);{{ $r['damaged'] ? 'color:var(--amber)' : '' }}">{{ $r['damaged'] }}</td>
+                                <td style="text-align:right;font-family:var(--mono);{{ $r['lost'] ? 'color:var(--red)' : '' }}">{{ $r['lost'] }}</td>
+                                <td style="text-align:right;font-family:var(--mono);font-weight:700;{{ $r['loss_pct'] > 0 ? 'color:var(--red)' : '' }}">{{ $r['loss_pct'] }}%</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+@endif
 
 {{-- ═══ TAB: TRENDS ═══ --}}
 @if($activeTab === 'overview')

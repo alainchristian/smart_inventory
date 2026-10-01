@@ -89,6 +89,11 @@ class TransferPerformance extends Component
         return app(TransferAnalyticsService::class)->getWarehouseEfficiency($this->dateFrom, $this->dateTo);
     }
 
+    public function getTransporterPerformanceProperty(): array
+    {
+        return app(TransferAnalyticsService::class)->getTransporterPerformance($this->dateFrom, $this->dateTo);
+    }
+
     public function getTransferStatusesProperty()
     {
         return TransferStatus::cases();

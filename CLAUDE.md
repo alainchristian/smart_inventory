@@ -2238,3 +2238,25 @@ pending → approved → (packing) → ready → in_transit → delivered → re
   `transfer_alert_receive_hours` 12; migration `2026_10_01_000005`;
   Settings page next to the signature toggle).
 - Tests: `tests/Feature/Transfers/TransferNotificationTest.php`.
+
+### Phase 7 (timeline, report, docs) — done
+- `Transfer::timeline()` has 7 steps: Requested → Approved → Packed (who
+  finished packing; while packing, who started) → Dispatched ("To
+  <driver>") → Arrived (who confirmed; while on the road, the expected
+  time) → Received (received_by_name) → **Closed** ("Missing boxes to
+  resolve" until then).
+- Transfer page **History** card: every `transfer_events` row (label from
+  the action + meta: quantities changed, box removed, packed short,
+  dispatched to …, received (n damaged, n missing), box: resolution,
+  closed), with who, when and the note.
+- Transfer Performance report: new **Transporters** tab
+  (`TransferAnalyticsService::getTransporterPerformance`, cached 15 min):
+  KPIs request → received, on the road (dispatch → arrival), on time (vs
+  expected_arrival_at); per transporter: transfers, boxes, avg time on the
+  road, on time %, damaged, lost, loss rate.
+- Tests: `tests/Feature/Transfers/TransferReportTest.php`.
+
+**The transfer process is complete** (phases 1–7, agreed with the user).
+Suite: `tests/Feature/Transfers/` — run on the test DB only. Any new
+transfer behaviour goes through `TransferService` (STEPS / assertCan /
+record) and belongs in the table at the top of this section.

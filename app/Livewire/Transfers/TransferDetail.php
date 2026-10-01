@@ -80,6 +80,7 @@ class TransferDetail extends Component
             'fromWarehouse:id,name', 'toShop:id,name',
             'requestedBy:id,name', 'reviewedBy:id,name', 'packedBy:id,name', 'receivedBy:id,name', 'transporter',
             'packingDoneBy:id,name', 'shippedBy:id,name', 'deliveredBy:id,name', 'cancelledBy:id,name',
+            'events',
         ])->findOrFail($this->transferId);
     }
 

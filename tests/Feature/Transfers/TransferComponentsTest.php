@@ -19,7 +19,7 @@ class TransferComponentsTest extends TestCase
         }
         $t->updated_at = now();
         // No relations loaded: "who" resolves to null without queries.
-        foreach (['requestedBy', 'reviewedBy', 'packedBy', 'receivedBy', 'transporter'] as $rel) {
+        foreach (['requestedBy', 'reviewedBy', 'packedBy', 'receivedBy', 'transporter', 'packingDoneBy', 'shippedBy', 'deliveredBy'] as $rel) {
             $t->setRelation($rel, null);
         }
 
@@ -34,22 +34,22 @@ class TransferComponentsTest extends TestCase
     public function test_timeline_states_follow_the_transfer(): void
     {
         $this->assertSame(
-            ['requested' => 'done', 'approved' => 'current', 'packed' => 'todo', 'shipped' => 'todo', 'delivered' => 'todo', 'received' => 'todo'],
+            ['requested' => 'done', 'approved' => 'current', 'packed' => 'todo', 'shipped' => 'todo', 'delivered' => 'todo', 'received' => 'todo', 'closed' => 'todo'],
             $this->states($this->transfer(TransferStatus::PENDING))
         );
 
         // Approved and packing started: packing is the current step, not done.
         $this->assertSame(
-            ['requested' => 'done', 'approved' => 'done', 'packed' => 'current', 'shipped' => 'todo', 'delivered' => 'todo', 'received' => 'todo'],
+            ['requested' => 'done', 'approved' => 'done', 'packed' => 'current', 'shipped' => 'todo', 'delivered' => 'todo', 'received' => 'todo', 'closed' => 'todo'],
             $this->states($this->transfer(TransferStatus::APPROVED, ['reviewed_at', 'packed_at']))
         );
 
         $this->assertSame(
-            ['requested' => 'done', 'approved' => 'done', 'packed' => 'done', 'shipped' => 'done', 'delivered' => 'current', 'received' => 'todo'],
+            ['requested' => 'done', 'approved' => 'done', 'packed' => 'done', 'shipped' => 'done', 'delivered' => 'current', 'received' => 'todo', 'closed' => 'todo'],
             $this->states($this->transfer(TransferStatus::IN_TRANSIT, ['reviewed_at', 'packed_at', 'shipped_at']))
         );
 
-        $received = $this->states($this->transfer(TransferStatus::RECEIVED, ['reviewed_at', 'packed_at', 'shipped_at', 'delivered_at', 'received_at']));
+        $received = $this->states($this->transfer(TransferStatus::RECEIVED, ['reviewed_at', 'packed_at', 'shipped_at', 'delivered_at', 'received_at', 'closed_at']));
         $this->assertSame(['done'], array_values(array_unique($received)));
     }
 
@@ -91,7 +91,7 @@ class TransferComponentsTest extends TestCase
         $this->assertStringContainsString('tf-badge tf-tone-pink', $html);
         $this->assertStringContainsString('Remera Shop', $html);
         $this->assertStringContainsString('aria-current="step"', $html);
-        $this->assertSame(6, substr_count($html, 'class="tf-step '));
+        $this->assertSame(7, substr_count($html, 'class="tf-step '));
     }
 
     public function test_every_status_has_a_design_token_tone(): void

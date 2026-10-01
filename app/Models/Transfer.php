@@ -202,21 +202,28 @@ class Transfer extends Model
      */
     public function timeline(): array
     {
-        $status  = $this->status;
-        $shipped = in_array($status, [TransferStatus::IN_TRANSIT, TransferStatus::DELIVERED, TransferStatus::RECEIVED], true);
+        $status = $this->status;
+        $packedDone = $this->packing_done_at !== null || $this->shipped_at !== null;
 
         $steps = [
             ['key' => 'requested', 'label' => 'Requested', 'done' => true, 'who' => $this->requestedBy?->name, 'at' => $this->requested_at],
             ['key' => 'approved', 'label' => 'Approved', 'done' => $this->reviewed_at !== null && $status !== TransferStatus::REJECTED,
                 'who' => $this->reviewedBy?->name, 'at' => $this->reviewed_at],
-            // packed_at is when packing started; the step is done once it ships.
-            ['key' => 'packed', 'label' => 'Packed', 'done' => $shipped || $this->shipped_at !== null,
-                'who' => $this->packedBy?->name, 'at' => $this->packed_at],
-            ['key' => 'shipped', 'label' => 'Shipped', 'done' => $this->shipped_at !== null,
-                'who' => $this->transporter?->name, 'at' => $this->shipped_at],
-            ['key' => 'delivered', 'label' => 'Delivered', 'done' => $this->delivered_at !== null, 'who' => null, 'at' => $this->delivered_at],
+            // packed_at = packing started (shown while it's the current step); packing_done_at = finished.
+            ['key' => 'packed', 'label' => 'Packed', 'done' => $packedDone,
+                'who' => ($packedDone ? ($this->packingDoneBy ?? $this->packedBy) : $this->packedBy)?->name,
+                'at'  => $packedDone ? ($this->packing_done_at ?? $this->packed_at) : $this->packed_at],
+            ['key' => 'shipped', 'label' => 'Dispatched', 'done' => $this->shipped_at !== null,
+                'who' => $this->handed_to_name ? "To {$this->handed_to_name}" : ($this->transporter?->name ?? $this->shippedBy?->name),
+                'at'  => $this->shipped_at],
+            ['key' => 'delivered', 'label' => 'Arrived', 'done' => $this->delivered_at !== null,
+                // Still on the road: show when it's expected instead.
+                'who' => $this->delivered_at ? $this->deliveredBy?->name : ($this->expected_arrival_at ? 'Expected' : null),
+                'at'  => $this->delivered_at ?? $this->expected_arrival_at],
             ['key' => 'received', 'label' => 'Received', 'done' => $this->received_at !== null,
-                'who' => $this->receivedBy?->name, 'at' => $this->received_at],
+                'who' => $this->received_by_name ?? $this->receivedBy?->name, 'at' => $this->received_at],
+            ['key' => 'closed', 'label' => 'Closed', 'done' => $this->closed_at !== null,
+                'who' => $this->received_at && ! $this->closed_at ? 'Missing boxes to resolve' : null, 'at' => $this->closed_at],
         ];
 
         if (in_array($status, [TransferStatus::REJECTED, TransferStatus::CANCELLED], true)) {
