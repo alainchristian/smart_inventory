@@ -17,6 +17,8 @@ class RequestTransfer extends Component
     public ?int $toShopId = null;
     public array $items = [];
     public ?string $notes = null;
+    /** Optional date the shop needs the stock by (Y-m-d, business calendar). */
+    public ?string $neededBy = null;
     public string $search = '';
     public bool $dropdownOpen = false;
 
@@ -26,6 +28,7 @@ class RequestTransfer extends Component
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.boxes_requested' => 'required|integer|min:1',
         'notes' => 'nullable|string|max:1000',
+        'neededBy' => 'nullable|date_format:Y-m-d',
     ];
 
     protected $messages = [
@@ -192,6 +195,10 @@ class RequestTransfer extends Component
     {
         // First validate form structure
         $this->validate();
+        if ($this->neededBy && $this->neededBy < business_today()->toDateString()) {
+            $this->addError('neededBy', 'Pick today or a later date.');
+            return;
+        }
 
         if (empty($this->items)) {
             session()->flash('error', 'Please add at least one item to the transfer.');
@@ -258,6 +265,7 @@ class RequestTransfer extends Component
                 'to_shop_id' => $this->toShopId,
                 'items' => $itemsWithQuantities,
                 'notes' => $this->notes,
+                'needed_by' => $this->neededBy ?: null,
             ]);
 
             session()->flash('success', "Transfer request {$transfer->transfer_number} created successfully.");

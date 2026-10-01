@@ -2116,3 +2116,17 @@ pending → approved → (packing) → ready → in_transit → delivered → re
 - Tests that took steps as the wrong person were corrected (the warehouse
   can't confirm a shop's arrival any more). Tests:
   `tests/Feature/Transfers/TransferProcessTest.php`.
+
+### Phase 2 (request + approval) — done
+- Request form: optional "Needed by" date (`RequestTransfer::$neededBy`,
+  not in the past; recorded on the `requested` event). Shown in the detail
+  header ("overdue" in red once past and not received) and in the list's
+  Requested column ("late").
+- Detail: approve / reject / arrive visibility comes from
+  `TransferService::can()`; a Cancel button ("Withdraw request" for the
+  shop, only while pending) opens an `m-sheet` asking the reason; packed
+  boxes go back into warehouse stock (cancelTransfer releases them).
+- Requested vs approved: the review table already shows both; after
+  approval the items table has Requested and Approved columns, plus the
+  short reason under Packed.
+- Tests: `tests/Feature/Transfers/TransferRequestApprovalTest.php`.

@@ -32,6 +32,9 @@ class TransferDetail extends Component
     public string $rejectReason = '';
     public bool $showReject = false;
 
+    public string $cancelReason = '';
+    public bool $showCancel = false;
+
     public function mount(Transfer $transfer): void
     {
         $user = auth()->user();
@@ -61,9 +64,10 @@ class TransferDetail extends Component
         ])->findOrFail($this->transferId);
     }
 
+    /** Approve / reject controls: TransferService decides (status + role). */
     protected function canReview(Transfer $t): bool
     {
-        return $t->status === TransferStatus::PENDING && in_array($this->role, ['owner', 'warehouse'], true);
+        return app(TransferService::class)->can('approve', $t);
     }
 
     /** Warehouse stock per product: ['boxes' => full + opened boxes, 'full', 'partial']. */
@@ -141,10 +145,36 @@ class TransferDetail extends Component
         $this->dispatch('notification', ['type' => 'success', 'message' => "{$t->transfer_number} rejected. The shop can see your reason."]);
     }
 
+    public function openCancel(): void
+    {
+        $this->resetErrorBag();
+        $this->cancelReason = '';
+        $this->showCancel = true;
+    }
+
+    public function cancelTransfer(): void
+    {
+        $t = $this->transfer;
+        $this->validate(['cancelReason' => 'required|string|min:3|max:500'], [
+            'cancelReason.required' => 'Say why it is cancelled.', 'cancelReason.min' => 'Say why it is cancelled.',
+        ]);
+
+        try {
+            app(TransferService::class)->cancelTransfer($t, trim($this->cancelReason));
+        } catch (\DomainException $e) {
+            $this->showCancel = false;
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
+            return;
+        }
+
+        $this->showCancel = false;
+        $this->dispatch('notification', ['type' => 'success', 'message' => "{$t->transfer_number} cancelled."]);
+    }
+
     public function markAsDelivered(): void
     {
         $t = $this->transfer;
-        if ($this->role !== 'shop' || $t->status !== TransferStatus::IN_TRANSIT) {
+        if (! app(TransferService::class)->can('arrive', $t)) {
             return;
         }
         app(TransferService::class)->markAsDelivered($t);
@@ -191,6 +221,7 @@ class TransferDetail extends Component
             'lines'     => $lines,
             'stock'     => $canReview ? $this->stock($t) : [],
             'canReview' => $canReview,
+            'canCancel' => app(TransferService::class)->can('cancel', $t),
             'received'  => $received,
             'issues'    => $issues,
             'backUrl'   => route(['owner' => 'owner.transfers.index', 'shop' => 'shop.transfers.index', 'warehouse' => 'warehouse.transfers.index'][$this->role]),

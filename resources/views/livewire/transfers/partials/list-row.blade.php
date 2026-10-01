@@ -41,7 +41,12 @@
     </td>
     <td>
         <div class="tfl-date">{{ local_time($t->requested_at)?->format('d M · H:i') }}</div>
-        <div class="tfl-sub">{{ $t->requestedBy?->name ?? '—' }}</div>
+        @if($t->needed_by && ! $t->received_at && ! in_array($t->status, [S::REJECTED, S::CANCELLED], true))
+            @php $late = $t->needed_by->lt(business_today()); @endphp
+            <div class="tfl-sub" style="{{ $late ? 'color:var(--red);font-weight:600' : '' }}">Needed {{ $t->needed_by->format('d M') }}{{ $late ? ' · late' : '' }}</div>
+        @else
+            <div class="tfl-sub">{{ $t->requestedBy?->name ?? '—' }}</div>
+        @endif
     </td>
     <td>
         @if($waiting)

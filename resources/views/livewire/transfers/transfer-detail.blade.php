@@ -86,9 +86,20 @@
         <span class="tfd-meta">
             <x-transfers.status :status="$status" />
             <x-transfers.route :from="$t->fromWarehouse?->name ?? '—'" :to="$t->toShop?->name ?? '—'" />
+            @if($t->needed_by)
+                @php $late = ! $t->received_at && $t->needed_by->lt(business_today()); @endphp
+                <span style="font-size:12px;font-weight:600;color:{{ $late ? 'var(--red)' : 'var(--text-sub)' }}">
+                    Needed by {{ $t->needed_by->format('D d M') }}{{ $late ? ' · overdue' : '' }}
+                </span>
+            @endif
         </span>
     </x-slot:meta>
     <x-slot:actions>
+        @if($canCancel)
+            <button type="button" class="tf-btn tf-btn-ghost" wire:click="openCancel">
+                {{ $role === 'shop' ? 'Withdraw request' : 'Cancel transfer' }}
+            </button>
+        @endif
         @if($role === 'warehouse' && $status === S::APPROVED)
             <a href="{{ route('warehouse.transfers.pack', $t) }}" wire:navigate class="tf-btn tf-btn-primary">{{ $t->packed_at ? 'Continue packing' : 'Pack transfer' }}</a>
         @elseif($role === 'shop' && in_array($status, [S::IN_TRANSIT, S::DELIVERED], true))
@@ -349,6 +360,37 @@
         @endif
     </div>
 </div>
+
+{{-- ═══ Cancel sheet ═════════════════════════════════════════════════ --}}
+@if($showCancel)
+    <div class="m-sheet-overlay" wire:click="$set('showCancel', false)"></div>
+    <div class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="tfd-cancel-title">
+        <div class="m-sheet-handle"></div>
+        <div class="m-sheet-head">
+            <h2 class="m-sheet-title" id="tfd-cancel-title">{{ $role === 'shop' ? 'Withdraw' : 'Cancel' }} {{ $t->transfer_number }}?</h2>
+            <button type="button" class="tfd-x m-tap" wire:click="$set('showCancel', false)" aria-label="Close">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+        <div class="m-sheet-body">
+            <p style="font-size:13px;color:var(--text-sub);margin:0 0 14px;line-height:1.5">
+                @if($t->boxes->isNotEmpty())
+                    The {{ $t->boxes->count() }} packed {{ Str::plural('box', $t->boxes->count()) }} go back into warehouse stock.
+                @endif
+                {{ $role === 'shop' ? 'The warehouse' : $t->toShop?->name }} will see your reason.
+            </p>
+            <label class="tfd-label" for="tfd-cancel-reason">Reason <span style="color:var(--red)">*</span></label>
+            <textarea id="tfd-cancel-reason" class="tfd-input" rows="3" wire:model="cancelReason" maxlength="500" placeholder="e.g. Ordered twice by mistake"></textarea>
+            @error('cancelReason')<div class="tfd-err">{{ $message }}</div>@enderror
+        </div>
+        <div class="m-sheet-foot">
+            <button type="button" class="tf-btn tf-btn-ghost" wire:click="$set('showCancel', false)">Keep it</button>
+            <button type="button" class="tf-btn tf-btn-danger" wire:click="cancelTransfer" wire:loading.attr="disabled" wire:target="cancelTransfer">
+                {{ $role === 'shop' ? 'Withdraw request' : 'Cancel transfer' }}
+            </button>
+        </div>
+    </div>
+@endif
 
 {{-- ═══ Reject sheet ═════════════════════════════════════════════════ --}}
 @if($showReject)

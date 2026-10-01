@@ -249,6 +249,12 @@
                 </div>
 
                 <div class="rf-field">
+                    <label class="rf-label" for="rf-needed">Needed by <span style="font-weight:500;color:var(--text-dim)">(optional)</span></label>
+                    <input id="rf-needed" type="date" class="rf-select" wire:model="neededBy" min="{{ business_today()->toDateString() }}">
+                    @error('neededBy')<div class="rf-error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="rf-field">
                     <label class="rf-label" for="rf-notes">Note for the warehouse <span style="font-weight:500;color:var(--text-dim)">(optional)</span></label>
                     <textarea id="rf-notes" wire:model="notes" class="rf-textarea" maxlength="1000" placeholder="e.g. For the weekend promotion"></textarea>
                 </div>
