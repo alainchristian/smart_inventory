@@ -68,7 +68,7 @@
                 <tr>
                     <td><span class="check-box"></span></td>
                     <td style="min-width:150px"><strong>{{ $line['product']?->name }}</strong><div style="font-size:11px;color:#7a81a0">{{ $line['product']?->sku }} · {{ $line['product']?->items_per_box }}/box</div></td>
-                    <td style="font-family:Consolas, monospace">{{ $line['product']?->barcode }}</td>
+                    <td style="font-family:Consolas, monospace">{{ $line['product']?->barcode ?: 'No barcode — use box labels' }}</td>
                     <td style="text-align:right">{{ $line['approved'] }}</td>
                     <td style="text-align:right">{{ $line['packed'] }}</td>
                     <td style="text-align:right"><strong>{{ $line['to_pick'] }}</strong></td>

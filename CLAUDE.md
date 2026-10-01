@@ -2260,3 +2260,16 @@ pending → approved → (packing) → ready → in_transit → delivered → re
 Suite: `tests/Feature/Transfers/` — run on the test DB only. Any new
 transfer behaviour goes through `TransferService` (STEPS / assertCan /
 record) and belongs in the table at the top of this section.
+
+### Products without a barcode (2026-10-01)
+Many products have no barcode, so they couldn't be packed or received in
+bulk. Now:
+- Pack: the scanner also accepts a **box label** (box code → packs that
+  exact box via `packBoxByBoxCode`), and every unfinished product row has a
+  **Pack** button (`PackTransfer::packProduct($id)` → same quantity
+  prompt). `TransferService::packBoxesForProduct($t, $productId, $qty)` is
+  the real method; `packBoxesByProductBarcode()` resolves the barcode and
+  calls it.
+- Receive: box labels already worked; unfinished rows get a **Receive**
+  button (`ReceiveTransfer::receiveProduct($id)` → `openReceiveFor()`).
+- Barcode columns and the picking list say "No barcode" instead of blank.

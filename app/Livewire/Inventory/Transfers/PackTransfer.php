@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Inventory\Transfers;
 
+use App\Models\Box;
 use App\Models\Product;
 use App\Models\ScannerSession;
 use App\Models\Transfer;
@@ -14,7 +15,7 @@ class PackTransfer extends Component
     public Transfer $transfer;
     public string $scanInput = '';
     public int $scanQuantity = 1;
-    public ?string $pendingBarcode = null;
+    public ?int $pendingProductId = null;
     public ?string $pendingProductName = null;
     public ?int $pendingAvailableCount = null;
     public array $packedBoxes = [];
@@ -73,55 +74,72 @@ class PackTransfer extends Component
         $this->scanProduct();
     }
 
+    /**
+     * Scan: a product barcode opens the quantity prompt; otherwise the text is
+     * tried as a box label (box code), which packs that exact box. Products
+     * without a barcode can also be packed with the row's "Pack" button.
+     */
     public function scanProduct(): void
     {
         $input = trim($this->scanInput);
+        $this->scanInput = '';
 
-        if (empty($input)) {
-            session()->flash('scan_error', 'Please enter a barcode.');
+        if ($input === '') {
+            session()->flash('scan_error', 'Scan a product barcode or a box label.');
             return;
         }
 
-        // Try as product barcode
-        $product = Product::where('barcode', $input)->first();
+        if ($product = Product::where('barcode', $input)->first()) {
+            $this->openPackFor($product);
+            return;
+        }
 
-        if (!$product) {
-            session()->flash('scan_error', "No product found with barcode: {$input}");
+        $box = Box::where('box_code', $input)->first();
+        if (! $box) {
+            session()->flash('scan_error', "Nothing found for {$input} — not a product barcode or a box label.");
             $this->dispatch('scan-error', message: "Not found: {$input}");
-            $this->scanInput = '';
             return;
         }
 
-        // Verify product is in this transfer's items
+        try {
+            app(TransferService::class)->packBoxByBoxCode($this->transfer, $input);
+            $this->refreshPackedBoxes();
+            session()->flash('scan_success', "Packed box {$box->box_code} ({$box->product?->name}).");
+            $this->dispatch('quantity-confirmed');
+        } catch (\Exception $e) {
+            session()->flash('scan_error', $e->getMessage());
+        }
+    }
+
+    /** The row's "Pack" button: same prompt as a barcode scan. */
+    public function packProduct(int $productId): void
+    {
+        if ($product = Product::find($productId)) {
+            $this->openPackFor($product);
+        }
+    }
+
+    protected function openPackFor(Product $product): void
+    {
         $transferItem = $this->transfer->items()->where('product_id', $product->id)->first();
-        if (!$transferItem) {
-            session()->flash('scan_error', "{$product->name} is not requested in this transfer");
-            $this->scanInput = '';
+        if (! $transferItem) {
+            session()->flash('scan_error', "{$product->name} is not on this transfer.");
             return;
         }
 
-        // Count already packed boxes for this product
-        $alreadyPacked = TransferBox::where('transfer_id', $this->transfer->id)
-            ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
-            ->count();
-
-        $totalBoxesRequested = $transferItem->boxesToSend();
-        $remaining = max(0, $totalBoxesRequested - $alreadyPacked);
-
+        $alreadyPacked = app(TransferService::class)->packedCount($this->transfer, $product->id);
+        $remaining = max(0, $transferItem->boxesToSend() - $alreadyPacked);
         if ($remaining <= 0) {
-            session()->flash('scan_error', "All requested boxes for {$product->name} have already been packed");
-            $this->scanInput = '';
+            session()->flash('scan_error', "All approved boxes of {$product->name} are already packed.");
             return;
         }
 
-        // Open quantity panel
-        $this->pendingBarcode         = $input;
+        $this->pendingProductId       = $product->id;
         $this->pendingProductName     = $product->name;
         $this->pendingAlreadyAssigned = $alreadyPacked;
         $this->pendingMaxQty          = $remaining;
         $this->pendingQty             = 1;
         $this->showQuantityPanel      = true;
-        $this->scanInput              = '';
         $this->resetErrorBag();
     }
 
@@ -139,16 +157,16 @@ class PackTransfer extends Component
             return;
         }
 
-        $barcode = $this->pendingBarcode;
+        $productId = $this->pendingProductId;
         $this->closeQuantityPanel();
-        $this->packProductBoxes($barcode, $qty);
+        $this->packProductBoxes($productId, $qty);
         $this->dispatch('quantity-confirmed');
     }
 
     public function closeQuantityPanel(): void
     {
         $this->showQuantityPanel      = false;
-        $this->pendingBarcode         = null;
+        $this->pendingProductId       = null;
         $this->pendingProductName     = null;
         $this->pendingQty             = 1;
         $this->pendingMaxQty          = 0;
@@ -167,30 +185,21 @@ class PackTransfer extends Component
         }
     }
 
-    protected function packProductBoxes(string $barcode, int $quantity)
+    protected function packProductBoxes(int $productId, int $quantity): void
     {
         try {
-            $transferService = app(TransferService::class);
-            $transferService->packBoxesByProductBarcode(
-                $this->transfer,
-                $barcode,
-                $quantity
-            );
-
+            app(TransferService::class)->packBoxesForProduct($this->transfer, $productId, $quantity);
             $this->refreshPackedBoxes();
 
-            $product = Product::where('barcode', $barcode)->first();
-            session()->flash('scan_success', "Packed {$quantity} box(es) of {$product->name}");
-            $this->dispatch('scan-success', message: "Packed: {$quantity}x {$product->name}");
-
-            // Dispatch event to notify shop manager of updates
+            $name = Product::find($productId)?->name;
+            session()->flash('scan_success', "Packed {$quantity} " . \Illuminate\Support\Str::plural('box', $quantity) . " of {$name}.");
+            $this->dispatch('scan-success', message: "Packed: {$quantity}x {$name}");
             $this->dispatch('transfer-updated', transferId: $this->transfer->id);
         } catch (\Exception $e) {
             session()->flash('scan_error', $e->getMessage());
             $this->dispatch('scan-error', message: $e->getMessage());
         }
     }
-
 
     /** Take a wrongly packed box off the transfer (back on sale at the warehouse). */
     public function removeBox(int $boxId): void

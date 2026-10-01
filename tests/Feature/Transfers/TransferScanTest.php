@@ -189,4 +189,31 @@ class TransferScanTest extends TestCase
         $t = $this->approved(2);
         $this->actingAs($this->whMgr)->get(route('warehouse.transfers.pack', $t))->assertOk()->assertSee('Scan a product barcode');
     }
+
+    public function test_products_without_a_barcode_can_be_packed_and_received(): void
+    {
+        DB::table('products')->where('id', $this->productId)->update(['barcode' => null]);
+        $t = $this->approved(3);
+        $label = DB::table('boxes')->where('product_id', $this->productId)->where('status', 'full')->orderByDesc('id')->value('box_code');
+
+        // Pack 2 from the list, then the third by scanning its box label.
+        Livewire::actingAs($this->whMgr)->test(PackTransfer::class, ['transfer' => $t])
+            ->assertSee('No barcode')
+            ->call('packProduct', $this->productId)->assertSet('showQuantityPanel', true)
+            ->set('pendingQty', 2)->call('confirmScannedQuantity')
+            ->assertCount('packedBoxes', 2)
+            ->set('scanInput', $label)->call('scanProduct')
+            ->assertCount('packedBoxes', 3);
+        $this->assertTrue(TransferBox::where('transfer_id', $t->id)->whereHas('box', fn ($q) => $q->where('box_code', $label))->exists());
+
+        $this->actingAs($this->whMgr);
+        $this->svc->finishPacking($t->fresh());
+        $this->svc->dispatch($t->fresh(), null, ['handed_to_name' => 'Driver']);
+        app(DailySessionService::class)->openSession($this->shopMgr, $this->shop->id, 0, business_today()->toDateString());
+
+        Livewire::actingAs($this->shopMgr)->test(ReceiveTransfer::class, ['transfer' => $t->fresh()])
+            ->call('receiveProduct', $this->productId)->assertSet('showQuantityPanel', true)->assertSet('pendingMaxQty', 3)
+            ->set('pendingQty', 3)->call('confirmScannedQuantity')
+            ->assertCount('scannedBoxes', 3);
+    }
 }

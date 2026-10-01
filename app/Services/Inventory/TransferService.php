@@ -726,13 +726,25 @@ class TransferService
      */
     public function packBoxesByProductBarcode(Transfer $transfer, string $barcode, int $quantity): array
     {
+        $product = $this->resolveProductByBarcode($barcode);
+        if (! $product) {
+            throw new \DomainException("No product found with barcode: {$barcode}");
+        }
+
+        return $this->packBoxesForProduct($transfer, $product->id, $quantity);
+    }
+
+    /**
+     * Pack $quantity boxes of a product (oldest available first). Used by
+     * barcode scans and by the pack screen's per-product "Pack" button —
+     * many products have no barcode.
+     */
+    public function packBoxesForProduct(Transfer $transfer, int $productId, int $quantity): array
+    {
         $this->assertCan('pack', $transfer);
 
-        return DB::transaction(function () use ($transfer, $barcode, $quantity) {
-            $product = $this->resolveProductByBarcode($barcode);
-            if (!$product) {
-                throw new \Exception("No product found with barcode: {$barcode}");
-            }
+        return DB::transaction(function () use ($transfer, $productId, $quantity) {
+            $product = Product::findOrFail($productId);
 
             // Verify this product is actually in the transfer request
             $transferItem = $transfer->items()->where('product_id', $product->id)->first();

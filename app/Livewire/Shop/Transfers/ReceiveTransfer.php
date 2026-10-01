@@ -133,34 +133,9 @@ class ReceiveTransfer extends Component
         }
 
         // --- Try as product barcode ---
-        $product = \App\Models\Product::where('barcode', $input)->first();
-
-        if ($product) {
-            $available = $this->transfer->boxes()
-                ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
-                ->where('is_received', false)
-                ->whereNotIn('box_id', $alreadyScannedBoxIds)
-                ->count();
-
-            if ($available === 0) {
-                session()->flash('scan_error', "All boxes of {$product->name} already scanned.");
-                $this->scanInput = '';
-                return;
-            }
-
-            $alreadyScanned = collect($this->scannedBoxes)
-                ->where('product_id', $product->id)
-                ->count();
-
-            $this->pendingBoxCode        = $input;
-            $this->pendingProductId      = $product->id;
-            $this->pendingProductName    = $product->name;
-            $this->pendingAlreadyScanned = $alreadyScanned;
-            $this->pendingMaxQty         = $available;
-            $this->pendingQty            = 1;
-            $this->showQuantityPanel     = true;
-            $this->scanInput             = '';
-            $this->resetErrorBag();
+        if ($product = \App\Models\Product::where('barcode', $input)->first()) {
+            $this->scanInput = '';
+            $this->openReceiveFor($product);
             return;
         }
 
@@ -178,6 +153,38 @@ class ReceiveTransfer extends Component
         } elseif ($qty > $this->pendingMaxQty) {
             $this->pendingQty = $this->pendingMaxQty;
         }
+    }
+
+    /** The row's "Receive" button: count boxes of a product in without a barcode. */
+    public function receiveProduct(int $productId): void
+    {
+        if ($product = \App\Models\Product::find($productId)) {
+            $this->openReceiveFor($product);
+        }
+    }
+
+    protected function openReceiveFor(\App\Models\Product $product): void
+    {
+        $alreadyScannedBoxIds = array_keys($this->scannedBoxes);
+        $available = $this->transfer->boxes()
+            ->whereHas('box', fn ($q) => $q->where('product_id', $product->id))
+            ->where('is_received', false)
+            ->whereNotIn('box_id', $alreadyScannedBoxIds)
+            ->count();
+
+        if ($available === 0) {
+            session()->flash('scan_error', "All boxes of {$product->name} are already scanned.");
+            return;
+        }
+
+        $this->pendingBoxCode        = null;
+        $this->pendingProductId      = $product->id;
+        $this->pendingProductName    = $product->name;
+        $this->pendingAlreadyScanned = collect($this->scannedBoxes)->where('product_id', $product->id)->count();
+        $this->pendingMaxQty         = $available;
+        $this->pendingQty            = 1;
+        $this->showQuantityPanel     = true;
+        $this->resetErrorBag();
     }
 
     public function confirmScannedQuantity(): void

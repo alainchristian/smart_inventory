@@ -28,7 +28,7 @@
     </x-slot:meta>
 </x-transfers.header>
 
-<x-transfers.scanner action="scanBox" label="Scan a box code or product barcode" placeholder="Scan or type, then Enter" button="Receive" />
+<x-transfers.scanner action="scanBox" label="Scan a box code or product barcode" placeholder="Scan or type, then Enter — or use Receive on a product below" button="Receive" />
 
 {{-- ═══ Progress per product ═══════════════════════════════════════ --}}
 <div class="tfs-card">
@@ -53,10 +53,14 @@
                             @if($row['complete'])
                                 <span class="tfs-state" style="background:var(--green-dim);color:var(--green)">Done</span>
                             @else
-                                <span class="tfs-state" style="background:var(--amber-dim);color:var(--amber)">{{ $row['boxes_shipped'] - $row['boxes_received'] }} to scan</span>
+                                <span style="display:inline-flex;align-items:center;gap:8px">
+                                    <span class="tfs-state" style="background:var(--amber-dim);color:var(--amber)">{{ $row['boxes_shipped'] - $row['boxes_received'] }} to scan</span>
+                                    {{-- No barcode needed: count boxes in from the list --}}
+                                    <button type="button" class="tfs-act" wire:click="receiveProduct({{ $row['product_id'] }})">Receive</button>
+                                </span>
                             @endif
                         </td>
-                        <td><span class="tfs-mono">{{ $row['barcode'] }}</span></td>
+                        <td><span class="tfs-mono">{{ $row['barcode'] ?: 'No barcode' }}</span></td>
                     </tr>
                 @endforeach
             </tbody>
