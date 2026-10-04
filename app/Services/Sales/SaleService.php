@@ -143,15 +143,8 @@ class SaleService
                     $hasPriceOverride = true;
                 }
 
-                // Auto-select boxes FIFO
-                $boxes = Box::where('product_id', $product->id)
-                    ->where('location_type', 'shop')
-                    ->where('location_id', $data['shop_id'])
-                    ->whereIn('status', ['full', 'partial'])
-                    ->where('items_remaining', '>', 0)
-                    ->orderBy('received_at', 'asc')
-                    ->orderBy('id', 'asc')
-                    ->get();
+                // Box lines: whole sealed boxes; loose: opened boxes first
+                $boxes = $this->shopBoxesForSale($product->id, (int) $data['shop_id'], $isFullBox);
 
                 $remaining = $itemsToSell;
 
@@ -638,20 +631,26 @@ class SaleService
                     $hasPriceOverride = true;
                 }
 
-                $boxes = Box::where('product_id', $product->id)
-                    ->where('location_type', 'shop')
-                    ->where('location_id', $data['shop_id'])
-                    ->whereIn('status', ['full', 'partial'])
-                    ->where('items_remaining', '>', 0)
-                    ->orderBy('received_at', 'asc')
-                    ->orderBy('id', 'asc')
-                    ->get();
+                // Box lines take whole SEALED boxes only (an opened box is never
+                // sold at the box price); loose lines empty opened boxes first.
+                $boxes = $this->shopBoxesForSale($product->id, (int) $data['shop_id'], $isFullBox);
+                if ($isFullBox && $boxes->count() < (int) $itemData['qty']) {
+                    throw new \Exception(
+                        "Insufficient shop stock for {$product->name}. " .
+                        "Needed {$itemData['qty']} sealed boxes, only {$boxes->count()} available."
+                    );
+                }
+                if ($isFullBox) {
+                    // One row per whole box, whatever that box's own size
+                    $boxes       = $boxes->take((int) $itemData['qty']);
+                    $itemsToSell = (int) $boxes->sum('items_remaining');
+                }
 
                 $remaining = $itemsToSell;
 
                 foreach ($boxes as $box) {
                     if ($remaining <= 0) break;
-                    $consume   = min($remaining, $box->items_remaining);
+                    $consume = min($remaining, $box->items_remaining);
                     if ($isFullBox) {
                         $lineTotal = $finalPrice;
                     } else {
@@ -933,6 +932,32 @@ class SaleService
         }
 
         return $lineSum;
+    }
+
+    /**
+     * Shop boxes a sale line draws from, locked for the transaction.
+     * Box lines: sealed boxes only, oldest first — an opened box is never sold
+     * at the box price. Loose lines: opened boxes first, then the oldest
+     * sealed one, so the shop opens as few boxes as possible.
+     */
+    private function shopBoxesForSale(int $productId, int $shopId, bool $sealedOnly): \Illuminate\Support\Collection
+    {
+        $query = Box::where('product_id', $productId)
+            ->where('location_type', 'shop')
+            ->where('location_id', $shopId)
+            ->where('items_remaining', '>', 0);
+
+        if ($sealedOnly) {
+            $query->where('status', 'full');
+        } else {
+            $query->whereIn('status', ['full', 'partial'])
+                ->orderByRaw("CASE WHEN status = 'partial' THEN 0 ELSE 1 END");
+        }
+
+        return $query->orderBy('received_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->lockForUpdate()
+            ->get();
     }
 
     /**

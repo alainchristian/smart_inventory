@@ -289,7 +289,7 @@ class UnifiedPos extends Component
                 $stock = [
                     'full_boxes'    => $s['full_boxes'],
                     'partial_boxes' => $s['partial_boxes'],
-                    'total_items'   => $s['total_items'],
+                    'total_items'   => $s['sellable_items'],   // not damaged / in-transit boxes
                 ];
                 return [
                     'id'            => $product->id,
@@ -404,7 +404,7 @@ class UnifiedPos extends Component
         }
 
         // Check shop stock first; fall back to warehouse
-        $shopStock = $product->getCurrentStock('shop', $this->shopId);
+        $shopStock = $this->sellableShopStock($product);
         if ($shopStock['total_items'] > 0) {
             $this->openProductModal($product->id, 'shop');
             $this->dispatch('notification', ['type' => 'info', 'message' => __('Scanned: :name', ['name' => $product->name])]);
@@ -491,7 +491,7 @@ class UnifiedPos extends Component
 
         if ($source === 'shop') {
             $product = Product::with('category')->findOrFail($productId);
-            $stock   = $product->getCurrentStock('shop', $this->shopId);
+            $stock   = $this->sellableShopStock($product);
 
             if ($stock['total_items'] === 0) {
                 $this->dispatch('notification', ['type' => 'error', 'message' => __('Product is out of stock at shop')]);
@@ -604,6 +604,18 @@ class UnifiedPos extends Component
         }
 
         $this->showAddModal = true;
+    }
+
+    /**
+     * Shop stock as the POS sells it: total_items counts only full + opened
+     * boxes, so damaged or in-transit pieces are never offered loose.
+     */
+    private function sellableShopStock(Product $product): array
+    {
+        $stock = $product->getCurrentStock('shop', $this->shopId);
+        $stock['total_items'] = $stock['sellable_items'];
+
+        return $stock;
     }
 
     /**
@@ -735,7 +747,7 @@ class UnifiedPos extends Component
 
         if ($source === 'shop') {
             $product = Product::with('category')->findOrFail($item['product_id']);
-            $stock   = $product->getCurrentStock('shop', $this->shopId);
+            $stock   = $this->sellableShopStock($product);
             $loose   = $this->looseOptions($product->id);
 
             $this->stagingProduct = [

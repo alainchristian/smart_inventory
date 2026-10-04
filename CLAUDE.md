@@ -1123,6 +1123,50 @@ rewrites the rows wholesale; unit ids are never referenced.
 
 Tests: `tests/Feature/Sales/SellUnitsTest.php`.
 
+### Review fixes (2026-10-04)
+- **Shop box lines took opened boxes (money bug).** `createMixedSale()` /
+  `createSale()` drew box lines from full + partial boxes FIFO. With an older
+  opened box, 1 box sold at 11,000 became 2 rows (5 + 19 pieces) each at the
+  box price, a 22,000 total. Now `SaleService::shopBoxesForSale()`: box lines
+  take whole **sealed** boxes only (refused if too few); loose lines take
+  opened boxes first, like the warehouse path. Both lock rows. Dev data had
+  no rows hit by it; production wasn't checked.
+- **Returns of loose / pack lines defaulted to "Full Box(es)".** That was
+  1 box = 72 soaps for a 1-dozen sale. `ProcessReturn` now defaults to the
+  way the line was sold. `boxes_sold = intdiv(pieces, ipb)`, so it can be 0,
+  and "Full Box(es)" is disabled then. The line reads "1 Dozen (12 pieces)
+  sold". Piece refunds are a share of `line_total`
+  (`ProcessReturn::itemRefund()`), so a whole dozen refunds exactly its
+  price, not 417 × 12.
+- **POS loose stock** used `total_items`, which counts every status
+  (damaged, in transit). `getCurrentStock()` / `stockSummaryFor()` gained
+  `sellable_items` (full + partial); the POS uses it
+  (`UnifiedPos::sellableShopStock()`).
+- **Single-piece price is its own field** (`ManagesSellUnits::$singlePiecePrice`).
+  Before, the form always saved `selling_price = box ÷ ipb`, so a piece
+  premium was wiped on every save. Blank = the box rate. It may not be
+  below the box rate.
+- **Price ladder (blocking):** per piece, a pack costs ≥ the box rate and
+  ≤ the single-piece price (never below the exact box rate × size, so
+  rounding can't forbid it). One implementation:
+  `ProductSellUnit::problemFor()`, used by the form and the bulk tool.
+  Existing packs that break it still sell; the form refuses to save until
+  re-priced. On 2026-10-04 that was Dinner Plate Dozen (16,500 < 17,000) and
+  Drinking Glass Dozen (8,800 < 9,000).
+- **Half box preset** (`ProductSellUnit::presetSize()`): half of the
+  product's own box, only for even boxes; not offered twice when it equals
+  another preset's size.
+- **Bulk "Apply packs"** (owner, Products list): tick rows, then a drawer
+  with preset chips + one custom pack, price "pieces × piece price" or "%
+  off" (clamped to the ladder), keep / replace a pack of the same size, and
+  the single-pieces switch. The preview lists each product's adds / skips
+  with the reason. `App\Services\Products\SellUnitBulkApplier`
+  (`preview()` / `apply()`): one transaction, one `sell_units_bulk_applied`
+  audit entry, owner / admin only. Products in box-only categories are
+  updated but flagged ("Box-only category"), like the form allows.
+Tests: `SellUnitsTest.php` (box lines, opened-first, damaged stock, returns,
+ladder, Half box), `tests/Feature/Products/SellUnitBulkApplierTest.php`.
+
 ---
 
 ## Responsiveness pass (2026-09-26)

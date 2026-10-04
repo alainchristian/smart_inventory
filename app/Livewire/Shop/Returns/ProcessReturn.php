@@ -305,11 +305,15 @@ class ProcessReturn extends Component
                     $itemPrice = $saleItem->isPackLine()
                         ? (int) round($saleItem->pricePerPiece())
                         : ($saleItem->actual_unit_price ?? 0);
-                    $boxesSold = max(1, (int) round($itemsSold / $ipb));
+                    // Whole boxes only — a dozen out of a box of 72 is 0 boxes,
+                    // so the line can only be returned by the piece.
+                    $boxesSold = intdiv($itemsSold, $ipb);
                     $boxPrice  = $itemPrice * $ipb;
                 }
 
-                // Default: return full boxes, good condition
+                // Default: return the line the way it was sold, good condition
+                $type = $saleItem->is_full_box ? 'box' : 'item';
+                $qty  = $type === 'box' ? $boxesSold : $itemsSold;
                 $this->items[] = [
                     'product_id'             => $saleItem->product_id,
                     'product_name'           => $product->name,
@@ -319,14 +323,15 @@ class ProcessReturn extends Component
                     'items_sold'             => $itemsSold,
                     'box_price'              => $boxPrice,
                     'item_price'             => $itemPrice,
-                    'return_type'            => 'box',
+                    'line_total'             => (int) $saleItem->line_total,
+                    'return_type'            => $type,
                     'condition'              => 'good',
-                    'qty_returned'           => $boxesSold,
+                    'qty_returned'           => $qty,
                     'qty_damaged'            => 0,
                     // Always in items for DB
-                    'quantity_returned'      => $boxesSold * $ipb,
+                    'quantity_returned'      => $type === 'box' ? $qty * $ipb : $qty,
                     'quantity_damaged'       => 0,
-                    'quantity_good'          => $boxesSold * $ipb,
+                    'quantity_good'          => $type === 'box' ? $qty * $ipb : $qty,
                     'unit_price'             => $itemPrice,
                     'condition_notes'        => '',
                     'is_replacement'         => false,
@@ -340,6 +345,11 @@ class ProcessReturn extends Component
     public function setReturnType(int $index, string $type): void
     {
         if (!isset($this->items[$index])) return;
+
+        // A line with no whole box in it can only be returned by the piece
+        if ($type === 'box' && (int) ($this->items[$index]['boxes_sold'] ?? 0) < 1) {
+            return;
+        }
 
         $this->items[$index]['return_type'] = $type;
         $defaultQty = $type === 'box'
@@ -397,6 +407,9 @@ class ProcessReturn extends Component
         $ipb       = max(1, (int) ($this->items[$index]['items_per_box'] ?? 1));
         $boxesSold = max(1, (int) ($this->items[$index]['boxes_sold'] ?? 1));
         $itemsSold = max(1, (int) ($this->items[$index]['items_sold'] ?? $ipb));
+        if ($type === 'box' && (int) ($this->items[$index]['boxes_sold'] ?? 0) < 1) {
+            $type = $this->items[$index]['return_type'] = 'item';
+        }
 
         $maxQty = $type === 'box' ? $boxesSold : $itemsSold;
         $qr = max(1, min((int) ($this->items[$index]['qty_returned'] ?? 1), $maxQty));
@@ -577,10 +590,26 @@ class ProcessReturn extends Component
             if (($item['return_type'] ?? 'box') === 'box') {
                 $total += ($item['box_price'] ?? 0) * ($item['qty_returned'] ?? 0);
             } else {
-                $total += ($item['item_price'] ?? 0) * ($item['qty_returned'] ?? 0);
+                $total += self::itemRefund($item);
             }
         }
         return $total;
+    }
+
+    /**
+     * Refund for pieces of a line: their share of what the line actually cost,
+     * so returning a whole dozen refunds exactly the dozen price (rounding the
+     * piece price first gave 417 × 12 = 5,004 for a 5,000 dozen).
+     */
+    public static function itemRefund(array $item): int
+    {
+        $qty  = (int) ($item['qty_returned'] ?? 0);
+        $sold = (int) ($item['items_sold'] ?? 0);
+        if (isset($item['line_total']) && $sold > 0) {
+            return (int) round($item['line_total'] * min($qty, $sold) / $sold);
+        }
+
+        return (int) ($item['item_price'] ?? 0) * $qty;
     }
 
     public function getSaleAgeDays()

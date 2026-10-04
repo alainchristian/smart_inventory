@@ -114,7 +114,7 @@ class EditProduct extends Component
                 'description'        => $this->description ?: null,
                 'items_per_box'      => $this->itemsPerBox,
                 'purchase_price'     => (int) round((float) $this->boxPurchasePrice / $this->itemsPerBox),
-                'selling_price'      => (int) round((float) $this->boxSellingPrice / $this->itemsPerBox),
+                'selling_price'      => $this->sellingPriceToSave(),   // single piece (blank = box rate)
                 'box_selling_price'  => (int) $this->boxSellingPrice,
                 'low_stock_threshold'=> $this->lowStockThreshold,
                 'reorder_point'      => $this->reorderPoint,

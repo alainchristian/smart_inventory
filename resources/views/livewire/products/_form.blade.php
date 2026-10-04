@@ -230,6 +230,19 @@
         </span>
       </label>
 
+      <div class="pf-su-piece">
+        <label class="pf-label" for="pf-piece-price">Single piece price</label>
+        <div class="pf-price-wrap">
+          <span class="pf-price-prefix">RWF</span>
+          <x-money-input id="pf-piece-price" wire:model.live.debounce.400ms="singlePiecePrice" class="pf-input pf-mono pf-price"
+                         placeholder="{{ number_format($this->boxRate) }}" />
+        </div>
+        <div class="pf-hint">
+          Blank = the box rate ({{ number_format($this->boxRate) }} RWF a piece). Packs are priced between the box rate and this.
+        </div>
+        @error('singlePiecePrice') <div class="pf-error">{{ $message }}</div> @enderror
+      </div>
+
       @if(count($sellUnits))
         <div class="pf-su-head" aria-hidden="true">
           <span>Pack name</span><span>Pieces</span><span>Price (RWF)</span><span></span>
@@ -412,6 +425,8 @@
 .pf-su-switch input:checked + .pf-su-track { background:var(--green) }
 .pf-su-switch input:checked + .pf-su-track .pf-su-knob { transform:translateX(18px) }
 .pf-su-switch input:focus-visible + .pf-su-track { box-shadow:0 0 0 3px var(--accent-dim) }
+.pf-su-piece  { max-width:260px;margin-bottom:18px }
+.pf-su-piece .pf-hint { margin-top:6px }
 .pf-su-head   { display:grid;grid-template-columns:minmax(0,1.3fr) 90px minmax(0,1fr) 34px;gap:8px;margin-bottom:6px;
                 font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim) }
 .pf-su-row    { display:grid;grid-template-columns:minmax(0,1.3fr) 90px minmax(0,1fr) 34px;gap:8px;align-items:center;margin-bottom:8px }

@@ -7,13 +7,16 @@ use App\Models\ProductSellUnit;
 use App\Services\SettingsService;
 
 /**
- * "Selling in packs" section of the product form (CreateProduct / EditProduct).
+ * "Selling loose" section of the product form (CreateProduct / EditProduct):
+ * the single-piece price, the single-piece switch and the packs.
  * Rows are ['id' => ?int, 'name' => string, 'size' => int, 'price' => int].
  */
 trait ManagesSellUnits
 {
-    public array $sellUnits        = [];
-    public bool  $sellSinglePieces = true;
+    public array  $sellUnits        = [];
+    public bool   $sellSinglePieces = true;
+    /** Single-piece price; blank = the box rate (box price ÷ items per box). */
+    public string $singlePiecePrice = '';
 
     protected function loadSellUnits(Product $product): void
     {
@@ -21,23 +24,47 @@ trait ManagesSellUnits
         $this->sellUnits = $product->sellUnits()->get()
             ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'size' => $u->size, 'price' => $u->price])
             ->all();
+
+        // Only show a piece price the owner actually set above the box rate
+        $boxRate = $product->items_per_box > 0 && $product->box_selling_price
+            ? (int) round($product->box_selling_price / $product->items_per_box)
+            : 0;
+        $this->singlePiecePrice = $product->selling_price > 0 && (int) $product->selling_price !== $boxRate
+            ? (string) $product->selling_price
+            : '';
     }
 
-    /** Single-piece selling price implied by the box price entered in the form. */
-    public function getPiecePriceProperty(): int
+    /** Box price per piece, as entered in the form. */
+    public function getBoxRateProperty(): int
     {
         return $this->itemsPerBox > 0 ? (int) round((float) $this->boxSellingPrice / $this->itemsPerBox) : 0;
     }
 
-    /** Presets that still make sense: not already added, and smaller than a box. */
+    /** Single-piece selling price: the owner's figure, or the box rate when left blank. */
+    public function getPiecePriceProperty(): int
+    {
+        return (int) $this->singlePiecePrice > 0 ? (int) $this->singlePiecePrice : $this->boxRate;
+    }
+
+    /** What products.selling_price is saved as. */
+    protected function sellingPriceToSave(): int
+    {
+        return $this->piecePrice;
+    }
+
+    /** Presets that still make sense: they fit in the box and aren't already added. key => [name, size]. */
     public function getSellUnitPresetsProperty(): array
     {
         $taken = array_map('intval', array_column($this->sellUnits, 'size'));
+        $out   = [];
+        foreach (ProductSellUnit::PRESETS as $key => [$name]) {
+            $size = ProductSellUnit::presetSize($key, (int) $this->itemsPerBox);
+            if ($size !== null && ! in_array($size, $taken, true) && ! in_array($size, array_column($out, 1), true)) {
+                $out[$key] = [$name, $size];
+            }
+        }
 
-        return array_filter(
-            ProductSellUnit::PRESETS,
-            fn ($p) => $p[1] < $this->itemsPerBox && ! in_array($p[1], $taken, true)
-        );
+        return $out;
     }
 
     /** Is the chosen category allowed to sell loose at all (owner Settings → Sales)? */
@@ -49,7 +76,8 @@ trait ManagesSellUnits
 
     public function addSellUnit(string $preset): void
     {
-        [$name, $size] = ProductSellUnit::PRESETS[$preset] ?? ['Pack', null];
+        $size = ProductSellUnit::presetSize($preset, (int) $this->itemsPerBox);
+        $name = $size !== null ? ProductSellUnit::PRESETS[$preset][0] : 'Pack';
         $size ??= min(10, max(2, $this->itemsPerBox - 1));
 
         $this->sellUnits[] = [
@@ -70,6 +98,11 @@ trait ManagesSellUnits
     protected function sellUnitRules(): array
     {
         return [
+            'singlePiecePrice'   => ['nullable', 'integer', 'min:0', function ($attr, $value, $fail) {
+                if ((int) $value > 0 && (int) $value < (int) floor(ProductSellUnit::boxRate((int) $this->boxSellingPrice, (int) $this->itemsPerBox))) {
+                    $fail('A single piece can\'t cost less than its share of the box (' . number_format($this->boxRate) . ' RWF).');
+                }
+            }],
             'sellSinglePieces'   => 'boolean',
             'sellUnits'          => 'array|max:8',
             'sellUnits.*.name'   => 'required|string|max:40|distinct:ignore_case',
@@ -78,7 +111,19 @@ trait ManagesSellUnits
                     $fail("A pack must hold fewer pieces than a box ({$this->itemsPerBox}).");
                 }
             }],
-            'sellUnits.*.price'  => 'required|integer|min:1',
+            'sellUnits.*.price'  => ['required', 'integer', 'min:1', function ($attr, $value, $fail) {
+                $row = $this->sellUnits[(int) explode('.', $attr)[1]] ?? null;
+                if (! $row || (int) ($row['size'] ?? 0) < 2 || (int) $row['size'] >= (int) $this->itemsPerBox) {
+                    return;   // the size rule reports that one
+                }
+                $problem = ProductSellUnit::problemFor(
+                    (string) ($row['name'] ?? ''), (int) $row['size'], (int) $value,
+                    $this->piecePrice, (int) $this->boxSellingPrice, (int) $this->itemsPerBox,
+                );
+                if ($problem) {
+                    $fail($problem);
+                }
+            }],
         ];
     }
 
@@ -92,6 +137,7 @@ trait ManagesSellUnits
             'sellUnits.*.size.distinct'  => 'Two packs have the same size.',
             'sellUnits.*.price.required' => 'Set a price.',
             'sellUnits.*.price.min'      => 'Set a price.',
+            'singlePiecePrice.integer'   => 'Enter a whole amount.',
         ];
     }
 

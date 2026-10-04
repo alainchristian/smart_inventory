@@ -104,8 +104,9 @@ class SellUnitsTest extends TestCase
             ->assertSee('Selling Loose')
             ->call('addSellUnit', 'dozen')
             ->assertSet('sellUnits.0.size', 12)
-            ->assertSet('sellUnits.0.price', 12 * 458)             // 11,000 / 24 ≈ 458 a piece
-            ->set('sellUnits.0.price', 5000)
+            ->assertSet('singlePiecePrice', '500')                 // kept: above the 458 box rate
+            ->assertSet('sellUnits.0.price', 12 * 500)             // pre-filled at the piece price
+            ->set('sellUnits.0.price', 5500)                       // 11,000 / 24 × 12 = 5,500: the box rate
             ->call('addSellUnit', 'half_dozen')
             ->set('sellSinglePieces', false)
             ->call('update')
@@ -114,7 +115,50 @@ class SellUnitsTest extends TestCase
         $this->plates->refresh();
         $this->assertFalse($this->plates->sell_single_pieces);
         $this->assertSame([[6, 'Half-dozen'], [12, 'Dozen']], $this->plates->sellUnits->map(fn ($x) => [$x->size, $x->name])->all());
-        $this->assertSame(5000, $this->plates->sellUnits->firstWhere('size', 12)->price);
+        $this->assertSame(5500, $this->plates->sellUnits->firstWhere('size', 12)->price);
+        $this->assertSame(500, (int) $this->plates->selling_price, 'saving keeps the single-piece price');
+    }
+
+    public function test_pack_prices_sit_between_the_box_rate_and_the_piece_price(): void
+    {
+        $form = Livewire::actingAs($this->owner)->test(EditProduct::class, ['product' => $this->plates]);   // Dozen 5,000 in setUp
+
+        // 5,000 a dozen = 417 a piece, cheaper than the box (458 a piece)
+        $form->call('update')->assertHasErrors('sellUnits.0.price');
+        $this->assertStringContainsString('less per piece than a full box', $form->errors()->first('sellUnits.0.price'));
+
+        // 6,100 a dozen = 508 a piece, dearer than single pieces (500)
+        $form->set('sellUnits.0.price', 6100)->call('update')->assertHasErrors('sellUnits.0.price');
+
+        $form->set('sellUnits.0.price', 5800)->call('update')->assertHasNoErrors();
+    }
+
+    public function test_single_piece_price_blank_means_box_rate_and_cannot_undercut_it(): void
+    {
+        $form = Livewire::actingAs($this->owner)->test(EditProduct::class, ['product' => $this->plates])
+            ->set('sellUnits.0.price', 5500)
+            ->set('singlePiecePrice', '400')
+            ->call('update')
+            ->assertHasErrors('singlePiecePrice')
+            ->set('singlePiecePrice', '')
+            ->call('update')
+            ->assertHasNoErrors();
+
+        $this->assertSame(458, (int) $this->plates->refresh()->selling_price);
+    }
+
+    public function test_half_box_is_offered_only_for_even_boxes(): void
+    {
+        $form = Livewire::actingAs($this->owner)->test(EditProduct::class, ['product' => $this->plates]);
+        // setUp's Dozen is already 12 pieces = half of 24, so Half box isn't offered twice
+        $this->assertArrayNotHasKey('half_box', $form->instance()->sellUnitPresets);
+
+        $form->set('itemsPerBox', 36);
+        $this->assertSame(['Half box', 18], $form->instance()->sellUnitPresets['half_box'] ?? null);
+        $form->call('addSellUnit', 'half_box')->assertSet('sellUnits.1.size', 18)->assertSet('sellUnits.1.name', 'Half box');
+
+        $form->set('itemsPerBox', 15);
+        $this->assertArrayNotHasKey('half_box', $form->instance()->sellUnitPresets);
     }
 
     public function test_a_pack_must_be_smaller_than_a_box(): void
@@ -249,5 +293,87 @@ class SellUnitsTest extends TestCase
             ->assertSet('stagingPrice', 5000)
             ->set('stagingUnitSize', 1)                                  // tampered: falls back to the pack
             ->assertSet('stagingUnitSize', 12);
+    }
+
+    // ── Which boxes a sale draws from ────────────────────────────────────
+
+    public function test_a_box_line_takes_a_sealed_box_even_when_an_older_opened_box_exists(): void
+    {
+        $opened = $this->box('shop', $this->shopId, 5, '2026-01-01');
+        $sealed = $this->box('shop', $this->shopId, 24, '2026-02-01');
+        $this->box('shop', $this->shopId, 24, '2026-03-01');
+
+        $sale = $this->sell(['qty' => 1, 'mode' => 'box', 'price' => 11000]);
+
+        // Used to charge 22,000: 5 pieces of the opened box + 19 of a sealed one, each at the box price
+        $this->assertSame(11000, (int) $sale->total);
+        $rows = $sale->items()->get();
+        $this->assertCount(1, $rows);
+        $this->assertSame($sealed, (int) $rows[0]->box_id);
+        $this->assertSame(24, (int) $rows[0]->quantity_sold);
+        $this->assertTrue((bool) $rows[0]->is_full_box);
+        $this->assertSame(5, (int) DB::table('boxes')->where('id', $opened)->value('items_remaining'));
+    }
+
+    public function test_a_box_line_is_refused_when_only_opened_boxes_are_left(): void
+    {
+        $this->box('shop', $this->shopId, 20);
+        $this->box('shop', $this->shopId, 20);
+
+        $this->expectExceptionMessage('sealed boxes');
+        $this->sell(['qty' => 1, 'mode' => 'box', 'price' => 11000]);
+    }
+
+    public function test_loose_lines_empty_opened_boxes_first(): void
+    {
+        $sealed = $this->box('shop', $this->shopId, 24, '2026-01-01');   // older, still sealed
+        $opened = $this->box('shop', $this->shopId, 12, '2026-02-01');
+
+        $this->sell(['qty' => 1, 'unit_size' => 12, 'price' => 5000]);
+
+        $this->assertSame(0, (int) DB::table('boxes')->where('id', $opened)->value('items_remaining'));
+        $this->assertSame(24, (int) DB::table('boxes')->where('id', $sealed)->value('items_remaining'));
+        $this->assertSame('full', DB::table('boxes')->where('id', $sealed)->value('status'));
+    }
+
+    public function test_pos_does_not_offer_pieces_from_damaged_boxes(): void
+    {
+        $this->box('shop', $this->shopId, 5);
+        $damaged = $this->box('shop', $this->shopId, 24);
+        DB::table('boxes')->where('id', $damaged)->update(['status' => 'damaged']);
+
+        $summary = Product::stockSummaryFor('shop', $this->shopId, [$this->plates->id])[$this->plates->id];
+        $this->assertSame(29, $summary['total_items']);
+        $this->assertSame(5, $summary['sellable_items']);
+
+        Livewire::actingAs($this->seller)->test(UnifiedPos::class)
+            ->call('selectProduct', $this->plates->id, 'shop')
+            ->assertSet('stagingStock.total_items', 5)
+            ->set('stagingMode', 'item')->set('stagingUnitSize', 12)->set('stagingQty', 1)
+            ->call('confirmAddToCart')
+            ->assertCount('cart', 0);
+    }
+
+    // ── Returns ──────────────────────────────────────────────────────────
+
+    public function test_returning_a_dozen_defaults_to_its_12_pieces_not_a_box(): void
+    {
+        $this->box('shop', $this->shopId, 24);
+        $sale = $this->sell(['qty' => 1, 'unit_size' => 12, 'price' => 5000]);
+        $line = $sale->items()->first();
+
+        $c = Livewire::actingAs($this->seller)->test(\App\Livewire\Shop\Returns\ProcessReturn::class)
+            ->call('selectSale', $sale->id)
+            ->call('toggleItem', $line->id)
+            ->assertSet('items.0.return_type', 'item')
+            ->assertSet('items.0.boxes_sold', 0)
+            ->assertSet('items.0.qty_returned', 12)
+            ->assertSet('items.0.quantity_returned', 12)
+            ->assertSee('1 Dozen (12 pieces) sold')
+            // "Full Box(es)" can't be chosen for a line sold loose
+            ->call('setReturnType', 0, 'box')
+            ->assertSet('items.0.return_type', 'item');
+
+        $this->assertSame(5000, $c->instance()->getEstimatedRefund());
     }
 }

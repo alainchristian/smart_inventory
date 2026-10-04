@@ -23,6 +23,17 @@ class ProductList extends Component
     public string  $sortBy        = 'name';
     public string  $sortDirection = 'asc';
 
+    // "Apply packs" (owner): ticked product ids + the drawer's choices
+    public array   $selected      = [];
+    public bool    $showPacks     = false;
+    public array   $packKeys      = [];          // preset keys (dozen, half_box…)
+    public string  $customName    = '';
+    public string  $customSize    = '';
+    public string  $packPrice     = 'piece';     // piece | discount
+    public string  $packDiscount  = '';
+    public string  $packExisting  = 'skip';      // skip | replace
+    public string  $packSingle    = 'keep';      // keep | on | off
+
     public string  $period = 'today'; // matches TimeFilter's default preset
     public ?string $from   = null;
     public ?string $to     = null;
@@ -124,6 +135,111 @@ class ProductList extends Component
         // Re-fetch to get updated value
         $product->refresh();
         session()->flash('success', $product->is_active ? 'Product activated.' : 'Product deactivated.');
+    }
+
+    // ── Apply packs to many products ────────────────────────────────────
+
+    private function assertCanManagePacks(): bool
+    {
+        $user = auth()->user();
+        if ($user->isOwner() || $user->isAdmin()) {
+            return true;
+        }
+        $this->dispatch('notification', ['type' => 'error', 'message' => 'Only the owner can change how products are sold.']);
+
+        return false;
+    }
+
+    /** Header checkbox: tick every product on this page, or untick them if all are ticked. */
+    public function toggleSelectPage(array $ids): void
+    {
+        // Strings, like the values wire:model puts in $selected from the row checkboxes
+        $ids = array_map('strval', $ids);
+        $sel = array_map('strval', $this->selected);
+        $this->selected = array_values(array_diff($ids, $sel) === []
+            ? array_diff($sel, $ids)
+            : array_unique(array_merge($sel, $ids)));
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected = [];
+    }
+
+    public function openPacks(): void
+    {
+        if (! $this->assertCanManagePacks() || ! $this->selected) {
+            return;
+        }
+        $this->resetValidation();
+        $this->showPacks = true;
+    }
+
+    public function closePacks(): void
+    {
+        $this->showPacks = false;
+    }
+
+    /** The drawer's pack choices in SellUnitBulkApplier's shape. */
+    private function packChoices(): array
+    {
+        $packs = collect($this->packKeys)
+            ->filter(fn ($k) => isset(\App\Models\ProductSellUnit::PRESETS[$k]))
+            ->map(fn ($k) => ['key' => $k])->values()->all();
+        if ((int) $this->customSize >= 2) {
+            $packs[] = ['key' => 'custom', 'size' => (int) $this->customSize,
+                        'name' => trim($this->customName) !== '' ? trim($this->customName) : 'Pack of ' . (int) $this->customSize];
+        }
+
+        return $packs;
+    }
+
+    private function packOptions(): array
+    {
+        return [
+            'price'    => $this->packPrice === 'discount' ? 'discount' : 'piece',
+            'discount' => (float) $this->packDiscount,
+            'existing' => $this->packExisting === 'replace' ? 'replace' : 'skip',
+            'single'   => in_array($this->packSingle, ['on', 'off'], true) ? $this->packSingle : 'keep',
+        ];
+    }
+
+    public function getPackPreviewProperty(): array
+    {
+        if (! $this->showPacks || ! $this->selected || ! $this->packChoices()) {
+            return [];
+        }
+
+        return app(\App\Services\Products\SellUnitBulkApplier::class)
+            ->preview(array_map('intval', $this->selected), $this->packChoices(), $this->packOptions());
+    }
+
+    public function applyPacks(): void
+    {
+        if (! $this->assertCanManagePacks()) {
+            return;
+        }
+        $this->validate([
+            'selected'     => 'required|array|min:1',
+            'customName'   => 'nullable|string|max:40',
+            'customSize'   => 'nullable|integer|min:2|max:9999',
+            'packDiscount' => 'nullable|numeric|min:0|max:100',
+        ], ['selected.required' => 'Tick at least one product.']);
+
+        if (! $this->packChoices() && $this->packSingle === 'keep') {
+            $this->addError('packKeys', 'Choose at least one pack.');
+            return;
+        }
+
+        $done = app(\App\Services\Products\SellUnitBulkApplier::class)
+            ->apply(array_map('intval', $this->selected), $this->packChoices(), $this->packOptions());
+
+        $this->showPacks = false;
+        $this->selected  = [];
+        $this->reset(['packKeys', 'customName', 'customSize', 'packDiscount']);
+        $this->dispatch('notification', ['type' => 'success', 'message' => $done['products']
+            ? "Updated {$done['products']} " . ($done['products'] === 1 ? 'product' : 'products') . " ({$done['packs']} packs)."
+            : 'Nothing to change — every pack was skipped.']);
     }
 
     private function periodRange(): array

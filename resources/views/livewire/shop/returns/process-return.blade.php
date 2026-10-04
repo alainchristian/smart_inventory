@@ -357,11 +357,17 @@
                                         $_bprice = $saleItem->actual_unit_price ?? 0;
                                         $_iprice = $_ipb > 0 ? (int) round($_bprice / $_ipb) : $_bprice;
                                     } else {
-                                        $_iprice = $saleItem->actual_unit_price ?? 0;
-                                        $_bsold  = max(1, (int) round($saleItem->quantity_sold / $_ipb));
+                                        // Loose / pack line: per-piece price from the line itself
+                                        $_iprice = $saleItem->isPackLine() ? (int) round($saleItem->pricePerPiece()) : ($saleItem->actual_unit_price ?? 0);
+                                        $_bsold  = intdiv((int) $saleItem->quantity_sold, $_ipb);
                                         $_bprice = $_iprice * $_ipb;
                                     }
                                     $_isold = $saleItem->quantity_sold;
+                                    $_soldAs = $saleItem->is_full_box
+                                        ? $_bsold . ' ' . ($_bsold === 1 ? 'box' : 'boxes') . ' sold · ' . number_format($_bprice) . ' RWF/box'
+                                        : ($saleItem->isPackLine()
+                                            ? \App\Models\ProductSellUnit::quantityLabel(intdiv($_isold, max(1, (int) $saleItem->sell_unit_size)), false, $saleItem->sell_unit_name) . ' (' . $_isold . ' pieces) sold'
+                                            : $_isold . ' ' . ($_isold === 1 ? 'piece' : 'pieces') . ' sold') . ' · ' . number_format($_iprice) . ' RWF/piece';
                                 @endphp
 
                                 <div class="pr-item {{ $isSelected ? 'selected' : '' }}"
@@ -377,14 +383,12 @@
                                             <div>
                                                 <div style="font-size:13px;font-weight:700">{{ $saleItem->product->name ?? 'Unknown' }}</div>
                                                 <div style="font-size:11px;color:var(--text-dim);margin-top:2px">
-                                                    {{ $_bsold }} {{ $_bsold === 1 ? 'box' : 'boxes' }} sold ·
-                                                    <span style="font-family:var(--mono);font-weight:600">{{ number_format($_bprice) }} RWF/box</span>
-                                                    · {{ number_format($_iprice) }} RWF/item · {{ $_ipb }} items/box
+                                                    {{ $_soldAs }} · {{ $_ipb }} items/box
                                                 </div>
                                             </div>
                                         </div>
                                         @if(!$isSelected)
-                                            <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-dim);flex-shrink:0;white-space:nowrap">{{ number_format($_bprice * $_bsold) }} <span style="font-size:10px;font-weight:400">RWF</span></span>
+                                            <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-dim);flex-shrink:0;white-space:nowrap">{{ number_format((int) $saleItem->line_total) }} <span style="font-size:10px;font-weight:400">RWF</span></span>
                                         @endif
                                     </div>
 
@@ -403,7 +407,7 @@
                                             $selMaxQty    = $selType === 'box' ? $selBoxesSold : $selItemsSold;
                                             $selUnitLabel = $selType === 'box' ? 'box' : 'item';
                                             $selUnitPrice = $selType === 'box' ? $selBoxPrice : $selItemPrice;
-                                            $selLineRefund = $selUnitPrice * $selQtyRet;
+                                            $selLineRefund = $selType === 'box' ? $selUnitPrice * $selQtyRet : \App\Livewire\Shop\Returns\ProcessReturn::itemRefund($item);
                                             $selGoodItems  = $selType === 'box' ? $selQtyGood * $selIpb : $selQtyGood;
                                             $selDmgItems   = $selType === 'box' ? $selQtyDmg  * $selIpb : $selQtyDmg;
                                         @endphp
@@ -415,6 +419,7 @@
                                                 <div class="pr-sec-lbl">What is being returned?</div>
                                                 <div class="pr-seg">
                                                     <button class="pr-seg-btn {{ $selType === 'box' ? 'on' : '' }}"
+                                                            @if($selBoxesSold < 1) disabled title="Sold loose — no whole box to return" style="opacity:.45;cursor:not-allowed" @endif
                                                             wire:click="setReturnType({{ $selectedIndex }}, 'box')">Full Box(es)</button>
                                                     <button class="pr-seg-btn {{ $selType === 'item' ? 'on' : '' }}"
                                                             wire:click="setReturnType({{ $selectedIndex }}, 'item')">Individual Items</button>
@@ -686,7 +691,7 @@
                                 $retType = $itm['return_type'] ?? 'box';
                                 $sumRefund += ($retType === 'box')
                                     ? (($itm['box_price']  ?? 0) * ($itm['qty_returned'] ?? 0))
-                                    : (($itm['item_price'] ?? 0) * ($itm['qty_returned'] ?? 0));
+                                    : \App\Livewire\Shop\Returns\ProcessReturn::itemRefund($itm);
                             }
                         }
                         // Unit labels — derive from actual return types

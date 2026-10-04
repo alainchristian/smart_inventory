@@ -155,6 +155,12 @@ class Product extends Model
                 ->where('location_type', $locationType)
                 ->where('location_id', $locationId)
                 ->sum('items_remaining'),
+            // Pieces that can actually be sold (full + opened boxes; not damaged / in transit)
+            'sellable_items' => (int) $this->boxes()
+                ->where('location_type', $locationType)
+                ->where('location_id', $locationId)
+                ->whereIn('status', ['full', 'partial'])
+                ->sum('items_remaining'),
         ];
     }
 
@@ -164,6 +170,7 @@ class Product extends Model
      * Same rules as the per-product methods:
      *   full_boxes / partial_boxes: status full / partial
      *   total_items:  items_remaining over ALL statuses at the location
+     *   sellable_items: items_remaining in full + partial boxes (what can be sold)
      *   stocked_boxes: status != empty AND items_remaining > 0 (isLowStock)
      */
     public static function stockSummaryFor(string $locationType, int $locationId, iterable $productIds): array
@@ -183,6 +190,7 @@ class Product extends Model
                 COUNT(*) FILTER (WHERE status = 'full')    AS full_boxes,
                 COUNT(*) FILTER (WHERE status = 'partial') AS partial_boxes,
                 COALESCE(SUM(items_remaining), 0)          AS total_items,
+                COALESCE(SUM(items_remaining) FILTER (WHERE status IN ('full', 'partial')), 0) AS sellable_items,
                 COUNT(*) FILTER (WHERE status::text != 'empty' AND items_remaining > 0) AS stocked_boxes
             ")
             ->get()
@@ -192,6 +200,7 @@ class Product extends Model
             'full_boxes'    => (int) ($rows[$id]->full_boxes ?? 0),
             'partial_boxes' => (int) ($rows[$id]->partial_boxes ?? 0),
             'total_items'   => (int) ($rows[$id]->total_items ?? 0),
+            'sellable_items' => (int) ($rows[$id]->sellable_items ?? 0),
             'stocked_boxes' => (int) ($rows[$id]->stocked_boxes ?? 0),
         ]])->all();
     }
