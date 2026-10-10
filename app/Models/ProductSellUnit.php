@@ -66,8 +66,9 @@ class ProductSellUnit extends Model
             return "A pack must hold fewer pieces than a box ({$itemsPerBox}).";
         }
         if ($boxPrice > 0 && $price < self::minPrice($size, $boxPrice, $itemsPerBox)) {
+            $rate = self::boxRate($boxPrice, $itemsPerBox);
             return "A {$name} can't cost less per piece than a full box ("
-                . number_format(self::boxRate($boxPrice, $itemsPerBox)) . ' a piece, so at least '
+                . number_format($rate, $rate == floor($rate) ? 0 : 2) . ' a piece, so at least '
                 . number_format(self::minPrice($size, $boxPrice, $itemsPerBox)) . ' RWF).';
         }
         // Never below the exact box rate: a 458.33 box rate rounds the piece

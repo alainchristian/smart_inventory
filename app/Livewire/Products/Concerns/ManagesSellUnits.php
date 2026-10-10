@@ -84,7 +84,12 @@ trait ManagesSellUnits
             'id'    => null,
             'name'  => $name,
             'size'  => $size,
-            'price' => $this->piecePrice * $size,
+            // size × piece price, but never under the box rate: 80,000 / 60 = 1,333.33
+            // a piece rounds to 1,333, and 6 × 1,333 = 7,998 is below the 8,000 minimum
+            'price' => max(
+                $this->piecePrice * $size,
+                ProductSellUnit::minPrice($size, (int) $this->boxSellingPrice, (int) $this->itemsPerBox)
+            ),
         ];
     }
 

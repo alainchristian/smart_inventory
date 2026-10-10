@@ -376,4 +376,27 @@ class SellUnitsTest extends TestCase
 
         $this->assertSame(5000, $c->instance()->getEstimatedRefund());
     }
+
+    public function test_suggested_pack_prices_respect_a_fractional_box_rate(): void
+    {
+        // 80,000 for 60 = 1,333.33 a piece: the piece price rounds to 1,333, and
+        // 6 × 1,333 = 7,998 used to be pre-filled although the minimum is 8,000.
+        $this->plates->update(['items_per_box' => 60, 'box_selling_price' => 80000, 'selling_price' => 1333]);
+        $this->plates->sellUnits()->delete();
+
+        Livewire::actingAs($this->owner)->test(EditProduct::class, ['product' => $this->plates->fresh()])
+            ->call('addSellUnit', 'pair')
+            ->call('addSellUnit', 'half_dozen')
+            ->call('addSellUnit', 'dozen')
+            ->call('addSellUnit', 'half_box')
+            ->assertSet('sellUnits.0.price', 2666)
+            ->assertSet('sellUnits.1.price', 8000)
+            ->assertSet('sellUnits.2.price', 16000)
+            ->assertSet('sellUnits.3.price', 40000)
+            ->call('update')
+            ->assertHasNoErrors();
+
+        $this->assertStringContainsString('1,333.33 a piece',
+            \App\Models\ProductSellUnit::problemFor('Dozen', 12, 15996, 1333, 80000, 60));
+    }
 }
