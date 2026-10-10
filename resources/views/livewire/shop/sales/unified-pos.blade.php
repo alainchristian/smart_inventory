@@ -270,6 +270,9 @@
 
 /* ── Receipt modal ───────────────────────────────────────────────────────── */
 .upos-rc-card { max-width:480px }
+/* Only the middle scrolls: the green banner and the action buttons stay in place */
+.upos-modal-card.upos-rc-card { overflow:hidden }
+.upos-rc-banner, .upos-rc-foot { flex-shrink:0 }
 .upos-rc-banner { background:var(--green); padding:20px 24px 16px; display:flex; align-items:center; gap:12px; position:relative }
 .upos-rc-close { position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:8px; border:none; cursor:pointer;
                  background:rgba(255,255,255,.18); color:#fff; display:flex; align-items:center; justify-content:center; transition:background var(--tr) }
@@ -278,7 +281,7 @@
 .upos-rc-banner-icon { width:40px; height:40px; background:rgba(255,255,255,.2); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0 }
 .upos-rc-banner-title { font-size:18px; font-weight:800; color:#fff; margin:0 0 3px }
 .upos-rc-banner-sub { font-size:12px; color:rgba(255,255,255,.8); margin:0 }
-.upos-rc-body { padding:20px 24px; display:flex; flex-direction:column; gap:14px }
+.upos-rc-body { padding:20px 24px; display:flex; flex-direction:column; gap:14px; flex:1 1 auto; min-height:0; overflow-y:auto }
 .upos-rc-meta { display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim) }
 .upos-rc-items { background:var(--bg); border-radius:var(--rsm); padding:10px }
 .upos-rc-item { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); gap:8px }
