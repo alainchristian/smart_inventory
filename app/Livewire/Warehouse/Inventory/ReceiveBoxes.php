@@ -229,12 +229,16 @@ class ReceiveBoxes extends Component
 
         $products = Product::with('category')
             ->where('is_active', true)
+            // Name, SKU, barcode or category ("ladies" finds every LADIES SHOES product)
             ->when($term !== '', fn ($q) => $q->where(function ($qq) use ($term) {
                 $qq->where('name', 'ILIKE', "%{$term}%")
-                   ->orWhere('sku', 'ILIKE', "%{$term}%");
+                   ->orWhere('sku', 'ILIKE', "%{$term}%")
+                   ->orWhere('barcode', 'ILIKE', "%{$term}%")
+                   ->orWhereHas('category', fn ($c) => $c->where('name', 'ILIKE', "%{$term}%"));
             }))
             ->orderBy('name')
-            ->limit(8)
+            // The list scrolls; 8 let a handful of products hide the rest of the catalogue
+            ->limit(30)
             ->get();
 
         $boxCounts = \Illuminate\Support\Facades\DB::table('boxes')

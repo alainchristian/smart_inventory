@@ -111,4 +111,31 @@ class ExcelImportTest extends TestCase
         $this->assertSame([null, null], $products->pluck('barcode')->all());
         $this->assertSame(5, DB::table('boxes')->whereIn('product_id', $products->pluck('id'))->count());
     }
+
+    public function test_product_search_finds_products_by_category_and_lists_more_than_eight(): void
+    {
+        $u   = substr(uniqid(), -6);
+        $cat = DB::table('categories')->insertGetId(['name' => "LADIES SHOES $u", 'code' => "LS$u", 'created_at' => now(), 'updated_at' => now()]);
+        $shoe = Product::forceCreate([
+            'sku' => "ZZ-PUMP-$u", 'name' => "Zz Pump $u", 'category_id' => $cat, 'items_per_box' => 12,
+            'purchase_price' => 1, 'selling_price' => 2, 'box_selling_price' => 24, 'is_active' => true,
+            'low_stock_threshold' => 1, 'reorder_point' => 1,
+        ]);
+
+        $c = Livewire::actingAs($this->owner)->test(ReceiveBoxes::class)
+            ->set('productSearch', "ladies shoes $u")
+            ->call('performProductSearch');
+        $this->assertSame([$shoe->id], array_column($c->get('searchResults'), 'id'), 'found by its category name');
+
+        // Browse list (empty search) isn't cut to 8 products any more
+        for ($i = 0; $i < 10; $i++) {
+            Product::forceCreate([
+                'sku' => "AA-$i-$u", 'name' => "Aa Item $i $u", 'category_id' => $cat, 'items_per_box' => 12,
+                'purchase_price' => 1, 'selling_price' => 2, 'box_selling_price' => 24, 'is_active' => true,
+                'low_stock_threshold' => 1, 'reorder_point' => 1,
+            ]);
+        }
+        $c->set('productSearch', '')->call('performProductSearch');
+        $this->assertGreaterThan(8, count($c->get('searchResults')));
+    }
 }
