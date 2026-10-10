@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\DB;
  *   Kitchenware    plates, glasses, teaspoons (dozen only)
  *   Stationery     exercise books (pack of 10), pens (dozen / gross)
  *   Personal Care  bar soap (half-dozen / dozen), toothpaste (pack of 3)
- *   Footwear       cotton socks, counted in pairs (pack of 3)
+ *
+ * Footwear is deliberately left box-only (never ticked for loose sales).
  *
  * Also ticks these categories for loose sales (Settings → Sales), lets
  * Nyamirambo sell Kitchenware + Personal Care, and puts stock in the
@@ -49,19 +50,17 @@ class SellUnitsDemoSeeder extends Seeder
         $kitchen    = Category::firstOrCreate(['code' => 'KITCHEN'], ['name' => 'Kitchenware', 'is_active' => true]);
         $stationery = Category::firstOrCreate(['code' => 'STATIONERY'], ['name' => 'Stationery', 'is_active' => true]);
         $care       = Category::firstOrCreate(['code' => 'PERSONAL-CARE'], ['name' => 'Personal Care', 'is_active' => true]);
-        $footwear   = Category::firstOrCreate(['name' => 'Footwear'], ['code' => 'Footwear', 'is_active' => true]);
 
         // ── Products + packs ──────────────────────────────────────────────
         //  [sku, name, category, per box, piece price, box price, unit, single pieces?, packs [name, size, price]]
         $catalog = [
-            ['KIT-PLATE-DIN', 'Dinner Plate (white)',      $kitchen,    24,  1500, 34000, 'piece', true,  [['Half-dozen', 6, 8500], ['Dozen', 12, 16500]]],
-            ['KIT-GLASS-300', 'Drinking Glass 300ml',      $kitchen,    36,   800, 27000, 'piece', true,  [['Half-dozen', 6, 4500], ['Dozen', 12, 8800]]],
+            ['KIT-PLATE-DIN', 'Dinner Plate (white)',      $kitchen,    24,  1500, 34000, 'piece', true,  [['Half-dozen', 6, 8500], ['Dozen', 12, 17000]]],
+            ['KIT-GLASS-300', 'Drinking Glass 300ml',      $kitchen,    36,   800, 27000, 'piece', true,  [['Half-dozen', 6, 4500], ['Dozen', 12, 9000]]],
             ['KIT-SPOON-TEA', 'Teaspoon (stainless)',      $kitchen,   144,   200, 26000, 'piece', false, [['Dozen', 12, 2200]]],
             ['STA-BOOK-96',   'Exercise Book 96 pages',    $stationery, 100,  500, 45000, 'piece', true,  [['Pack of 10', 10, 4700]]],
             ['STA-PEN-BLUE',  'Ballpoint Pen (blue)',      $stationery, 240,  200, 40000, 'piece', true,  [['Dozen', 12, 2000], ['Gross', 144, 24000]]],
             ['CAR-SOAP-200',  'Bar Soap 200g',             $care,       72,   900, 60000, 'piece', true,  [['Half-dozen', 6, 5200], ['Dozen', 12, 10000]]],
             ['CAR-PASTE-100', 'Toothpaste 100ml',          $care,       48,  1800, 80000, 'piece', true,  [['Pack of 3', 3, 5100]]],
-            ['FW-SOCK-COT',   'Cotton Socks (pair)',       $footwear,   60,  1500, 80000, 'pair',  true,  [['Pack of 3', 3, 4000]]],
         ];
 
         $products = [];
@@ -86,7 +85,7 @@ class SellUnitsDemoSeeder extends Seeder
         $settings->set('allow_individual_item_sales', true);
         $settings->set('individual_sale_category_ids', array_values(array_unique(array_map('intval', array_merge(
             $settings->individualSaleCategoryIds(),
-            [$kitchen->id, $stationery->id, $care->id, $footwear->id]
+            [$kitchen->id, $stationery->id, $care->id]
         )))));
 
         // ── Nyamirambo also sells kitchen + personal care (if it's specialised) ─
@@ -113,8 +112,7 @@ class SellUnitsDemoSeeder extends Seeder
                 'nyamirambo' => ['KIT-PLATE-DIN' => [2, 10], 'KIT-GLASS-300' => [1, 20], 'KIT-SPOON-TEA' => [1, null],
                                  'CAR-SOAP-200' => [2, 30], 'CAR-PASTE-100' => [1, 12]],
                 'kimironko'  => ['KIT-PLATE-DIN' => [1, null], 'STA-BOOK-96' => [2, 45], 'STA-PEN-BLUE' => [1, 100],
-                                 'CAR-SOAP-200' => [1, null], 'FW-SOCK-COT' => [1, 25]],
-                'remera'     => ['FW-SOCK-COT' => [2, 20]],
+                                 'CAR-SOAP-200' => [1, null]],
             ];
             foreach ($shopStock as $key => $lines) {
                 $shop = $shops[$key] ?? null;
@@ -134,7 +132,7 @@ class SellUnitsDemoSeeder extends Seeder
             }
         });
 
-        $this->command->info('Seeded 8 products with packs in Kitchenware, Stationery, Personal Care and Footwear; stock at the warehouse, Nyamirambo, Kimironko and Remera.');
+        $this->command->info('Seeded 7 products with packs in Kitchenware, Stationery and Personal Care; stock at the warehouse, Nyamirambo and Kimironko.');
     }
 
     private function boxes(Product $p, string $locType, int $locId, int $count, User $by, ?int $remaining = null): void
