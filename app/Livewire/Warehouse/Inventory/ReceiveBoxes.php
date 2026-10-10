@@ -925,7 +925,9 @@ class ReceiveBoxes extends Component
                     // Create new product (data from Excel)
                     $productName = $this->editableProductNames[$rowNum];
                     $sku = $this->editableProductSkus[$rowNum];
-                    $barcode = $this->editableProductBarcodes[$rowNum];
+                    // No barcode = NULL, never '' — products.barcode is unique, so a
+                    // second barcode-less product would fail on a duplicate ''.
+                    $barcode = trim((string) ($this->editableProductBarcodes[$rowNum] ?? '')) ?: null;
                     $categoryId = $this->editableProductCategories[$rowNum];
                     $itemsPerBox = (int) max(1, $this->editableProductItemsPerBox[$rowNum]);
                     $boxPurchasePrice = (float) $this->editableProductBoxPurchasePrices[$rowNum];

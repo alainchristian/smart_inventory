@@ -24,6 +24,7 @@ class ExcelImportTest extends TestCase
     private User $owner;
     private int $warehouseId;
     private Product $known;
+    private string $catName;
 
     protected function setUp(): void
     {
@@ -34,7 +35,8 @@ class ExcelImportTest extends TestCase
             'role' => 'owner', 'is_active' => true, 'must_change_password' => false,
         ]);
         $this->warehouseId = DB::table('warehouses')->insertGetId(['name' => "WH $u", 'code' => "W$u", 'created_at' => now(), 'updated_at' => now()]);
-        $cat = DB::table('categories')->insertGetId(['name' => "Cat $u", 'code' => "C$u", 'created_at' => now(), 'updated_at' => now()]);
+        $this->catName = "Cat $u";
+        $cat = DB::table('categories')->insertGetId(['name' => $this->catName, 'code' => "C$u", 'created_at' => now(), 'updated_at' => now()]);
         $this->known = Product::forceCreate([
             'sku' => "KNOWN-$u", 'name' => "Known Shoe $u", 'barcode' => '77' . random_int(10000000000, 99999999999),
             'category_id' => $cat, 'items_per_box' => 12, 'purchase_price' => 800, 'selling_price' => 1000,
@@ -82,5 +84,31 @@ class ExcelImportTest extends TestCase
         $this->assertCount(1, $unknown, "$ext: new product offered for creation");
         $this->assertSame('Brand New Sandal', $unknown[0]['product_name']);
         $this->assertSame([], $c->get('excelErrors'));
+    }
+
+    public function test_several_new_products_without_a_barcode_import_together(): void
+    {
+        // Used to fail on the second row: an empty barcode was saved as '' and
+        // products.barcode is unique ("Key (barcode)=() already exists").
+        $sheet = new Spreadsheet();
+        $sheet->getActiveSheet()->fromArray([
+            ['barcode', 'product_name', 'sku', 'category', 'items_per_box', 'box_purchase_price', 'box_selling_price', 'boxes', 'batch_number', 'expiry_date'],
+            ['', 'Plate ' . $this->catName, 'PL-' . substr(md5($this->catName), 0, 8), $this->catName, '24', '28000', '34000', '2', '', ''],
+            ['', 'Glass ' . $this->catName, 'GL-' . substr(md5($this->catName), 0, 8), $this->catName, '36', '20160', '27000', '3', '', ''],
+        ], null, 'A1', true);
+        $path = tempnam(sys_get_temp_dir(), 'xl') . '.xlsx';
+        IOFactory::createWriter($sheet, 'Xlsx')->save($path);
+
+        Livewire::actingAs($this->owner)->test(ReceiveBoxes::class)
+            ->set('warehouseId', $this->warehouseId)
+            ->set('excelFile', UploadedFile::fake()->createWithContent('stock.xlsx', file_get_contents($path)))
+            ->call('processExcelFile')
+            ->assertSet('showExcelPreview', true)
+            ->call('confirmExcelImport');
+
+        $products = Product::whereIn('name', ['Plate ' . $this->catName, 'Glass ' . $this->catName])->get();
+        $this->assertCount(2, $products);
+        $this->assertSame([null, null], $products->pluck('barcode')->all());
+        $this->assertSame(5, DB::table('boxes')->whereIn('product_id', $products->pluck('id'))->count());
     }
 }
