@@ -42,7 +42,7 @@
             </div>
             <div class="text-sm font-semibold mb-2" style="color:var(--text);">No Active Session</div>
             <div class="text-xs mb-4" style="color:var(--text-dim);">Open today's session before recording withdrawals.</div>
-            <a href="{{ route('shop.session.open') }}"
+            <a href="{{ route('shop.session.open', array_filter(['return' => current_return_path()])) }}"
                class="inline-block px-4 py-2 rounded-lg text-sm font-semibold"
                style="background:var(--accent);color:white;">
                 Open Today's Session

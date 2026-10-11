@@ -54,3 +54,46 @@ if (! function_exists('csv_safe')) {
         return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
     }
 }
+
+if (! function_exists('safe_return_path')) {
+    /**
+     * A "go back here afterwards" address, or null. Only a path inside this
+     * app is accepted ("/shop/pos?x=1"), never another site: no scheme, no
+     * "//host", no backslashes, and never Livewire's own request endpoint.
+     */
+    function safe_return_path(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '' || strlen($value) > 500
+            || ! str_starts_with($value, '/') || str_starts_with($value, '//')
+            || str_contains($value, "\\") || preg_match('/[\x00-\x1F]/', $value)
+            || str_starts_with($value, '/livewire')) {
+            return null;
+        }
+
+        return $value;
+    }
+}
+
+if (! function_exists('current_return_path')) {
+    /**
+     * The page the user is looking at, as a safe return path. During a
+     * Livewire update the request is /livewire/update, so the page comes
+     * from the Referer instead.
+     */
+    function current_return_path(): ?string
+    {
+        $request = request();
+        if (! $request->is('livewire/*')) {
+            return safe_return_path($request->getRequestUri());
+        }
+        $referer = (string) $request->headers->get('referer');
+        if ($referer === '' || parse_url($referer, PHP_URL_HOST) !== $request->getHost()) {
+            return null;
+        }
+        $path  = parse_url($referer, PHP_URL_PATH) ?: '';
+        $query = parse_url($referer, PHP_URL_QUERY);
+
+        return safe_return_path($path . ($query ? '?' . $query : ''));
+    }
+}

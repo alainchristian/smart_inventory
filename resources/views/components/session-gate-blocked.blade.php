@@ -1,4 +1,8 @@
 @props(['reason', 'sessionDate' => null, 'sessionId' => null])
+@php
+    // Come back to this page once the register is open (see Register::returnTo)
+    $returnHere = current_return_path();
+@endphp
 
 <div class="flex justify-center py-8">
     <div class="w-full rounded-xl p-6" style="max-width:480px;background:var(--surface2);border:1px solid var(--border);">
@@ -19,7 +23,7 @@
             <p class="text-sm mb-5" style="color:var(--text-dim);">
                 {{ __("Open today's session before recording any activity. Sales, returns, transfers and expenses are all unavailable until the day is opened.") }}
             </p>
-            <a href="{{ route('shop.session.open') }}"
+            <a href="{{ route('shop.session.open', array_filter(['return' => $returnHere])) }}"
                class="block w-full text-center px-4 py-2 rounded-lg text-sm font-semibold"
                style="background:var(--accent);color:white;">
                 {{ __("Open Today's Session") }}
@@ -41,7 +45,7 @@
             <p class="text-sm mb-5" style="color:var(--text-dim);">
                 {{ __('The session for :date is still open. You must close it before starting a new day.', ['date' => $sessionDate]) }}
             </p>
-            <a href="{{ route('shop.session.close', ['session' => $sessionId]) }}"
+            <a href="{{ route('shop.session.close', array_filter(['session' => $sessionId, 'then' => 'open', 'return' => $returnHere])) }}"
                class="block w-full text-center px-4 py-2 rounded-lg text-sm font-semibold"
                style="background:var(--amber);color:#1a1a1a;">
                 {{ __('Close :date Session', ['date' => $sessionDate]) }}

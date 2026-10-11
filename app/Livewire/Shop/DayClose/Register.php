@@ -7,6 +7,7 @@ use App\Models\ExpenseRequest;
 use App\Models\Shop;
 use App\Services\DayClose\DailySessionService;
 use App\Services\SettingsService;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -22,12 +23,17 @@ class Register extends Component
     public ?int   $suggestedBalance = null;
     public string $suggestedFrom    = '';
 
+    /** Page that sent the user here to open the register (POS, Returns…); back there once open. */
+    #[Locked]
+    public string $returnTo = '';
+
     public function mount(): void
     {
         $user = auth()->user();
         if (! $user->isShopManager()) {
             abort(403);
         }
+        $this->returnTo = safe_return_path(request()->query('return')) ?? '';
 
         $lastClosed = DailySession::forShop($user->location_id)
             ->whereIn('status', ['closed', 'locked'])
@@ -38,6 +44,14 @@ class Register extends Component
             $this->suggestedBalance = (int) $lastClosed->cash_retained;
             $this->suggestedFrom    = $lastClosed->session_date->format('d M Y');
             $this->openingBalance   = (string) $this->suggestedBalance;
+        }
+
+        // Back from closing an older day to open today (?open=1): show the open
+        // form right away — unless today is already open or another day still blocks
+        if (request()->boolean('open')) {
+            $today = business_today()->toDateString();
+            $this->showOpenModal = ! DailySession::forShop($user->location_id)->forDate($today)->exists()
+                && ! DailySession::forShop($user->location_id)->open()->where('session_date', '<', $today)->exists();
         }
     }
 
@@ -58,6 +72,13 @@ class Register extends Component
                 (int) $this->openingBalance,
                 business_today()->toDateString()
             );
+
+            if ($this->returnTo !== '') {
+                // Opened to be able to use another page: straight back to it
+                session()->flash('success', 'Register opened.');
+                $this->redirect($this->returnTo);
+                return;
+            }
 
             $this->showOpenModal = false;
             $this->dispatch('session-opened');

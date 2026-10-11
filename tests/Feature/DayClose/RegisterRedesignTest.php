@@ -208,4 +208,91 @@ class RegisterRedesignTest extends TestCase
             ->call('cancelPay')
             ->assertSet('payingId', null);
     }
+
+    public function test_closing_an_old_day_from_the_register_returns_to_opening_today(): void
+    {
+        $yesterday = DailySession::forceCreate([
+            'shop_id' => $this->shopId, 'session_date' => business_today()->subDay()->toDateString(), 'status' => 'open',
+            'opening_balance' => 20000, 'opened_by' => $this->manager->id, 'opened_at' => now()->subDay(),
+        ]);
+
+        // Register links "Close <date> first" with the intent to open afterwards
+        Livewire::actingAs($this->manager)->test(Register::class)
+            ->assertSee(route('shop.session.close', ['session' => $yesterday->id, 'then' => 'open']), false);
+
+        // ?open=1 while that day is still open: the form must not pop up
+        Livewire::withQueryParams(['open' => 1])->actingAs($this->manager)->test(Register::class)
+            ->assertSet('showOpenModal', false);
+
+        $wizard = Livewire::withQueryParams(['then' => 'open'])->actingAs($this->manager)
+            ->test(CloseWizard::class, ['dailySessionId' => $yesterday->id])
+            ->assertSet('thenOpen', true);
+        $wizard->call('nextStep')->call('nextStep')
+            ->set('actualCashCounted', '20000')->call('nextStep')->assertSet('currentStep', 4)
+            ->call('openConfirm')->assertSet('showConfirm', true)
+            ->call('submitClose')
+            ->assertRedirect(route('shop.session.open', ['open' => 1]));
+
+        // Back on the Register: the open form is up, pre-filled with the cash kept yesterday
+        Livewire::withQueryParams(['open' => 1])->actingAs($this->manager)->test(Register::class)
+            ->assertSet('showOpenModal', true)
+            ->assertSet('openingBalance', (string) (int) $yesterday->fresh()->cash_retained);
+    }
+
+    public function test_opening_from_another_page_goes_back_to_it(): void
+    {
+        // The POS gate button carries the POS address
+        $this->manager->forceFill(['is_active' => true, 'must_change_password' => false])->save();
+        $this->actingAs($this->manager)->get(route('shop.pos'))
+            ->assertOk()
+            ->assertSee(e(route('shop.session.open', ['return' => '/shop/pos'])), false);
+
+        Livewire::withQueryParams(['return' => '/shop/pos'])->actingAs($this->manager)->test(Register::class)
+            ->assertSet('returnTo', '/shop/pos')
+            ->set('openingBalance', '10000')
+            ->call('openRegister')
+            ->assertHasNoErrors()
+            ->assertRedirect('/shop/pos');
+    }
+
+    public function test_a_return_address_outside_the_app_is_ignored(): void
+    {
+        foreach (['https://evil.example/x', '//evil.example', '/livewire/update'] as $bad) {
+            Livewire::withQueryParams(['return' => $bad])->actingAs($this->manager)->test(Register::class)
+                ->assertSet('returnTo', '');
+        }
+
+        Livewire::withQueryParams(['return' => 'https://evil.example/x'])->actingAs($this->manager)->test(Register::class)
+            ->set('openingBalance', '10000')
+            ->call('openRegister')
+            ->assertNoRedirect()
+            ->assertDispatched('session-opened');
+    }
+
+    public function test_pos_close_old_day_open_today_then_back_to_pos(): void
+    {
+        $yesterday = DailySession::forceCreate([
+            'shop_id' => $this->shopId, 'session_date' => business_today()->subDay()->toDateString(), 'status' => 'open',
+            'opening_balance' => 15000, 'opened_by' => $this->manager->id, 'opened_at' => now()->subDay(),
+        ]);
+
+        // Register (reached from POS) keeps the address on its "Close … first" link
+        Livewire::withQueryParams(['return' => '/shop/pos'])->actingAs($this->manager)->test(Register::class)
+            ->assertSee(e(route('shop.session.close', ['session' => $yesterday->id, 'then' => 'open', 'return' => '/shop/pos'])), false);
+
+        Livewire::withQueryParams(['then' => 'open', 'return' => '/shop/pos'])->actingAs($this->manager)
+            ->test(CloseWizard::class, ['dailySessionId' => $yesterday->id])
+            ->call('nextStep')->call('nextStep')
+            ->set('actualCashCounted', '15000')->call('nextStep')
+            ->call('openConfirm')
+            ->call('submitClose')
+            ->assertRedirect(route('shop.session.open', ['open' => 1, 'return' => '/shop/pos']));
+
+        Livewire::withQueryParams(['open' => 1, 'return' => '/shop/pos'])->actingAs($this->manager)->test(Register::class)
+            ->assertSet('showOpenModal', true)
+            ->call('openRegister')
+            ->assertRedirect('/shop/pos');
+
+        $this->assertTrue(DailySession::forShop($this->shopId)->forDate(business_today()->toDateString())->firstOrFail()->isOpen());
+    }
 }

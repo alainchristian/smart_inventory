@@ -1363,6 +1363,22 @@ Tests: `tests/Feature/Reports/MobilePhase0FixesTest.php`.
 - **Rule (user decision):** `DailySessionService::openSession()` refuses while an
   earlier day for the shop is still open; the Register shows "Close {date} first"
   instead of Open register (was a warning only).
+  Those "Close … first" links (Register, `x-session-gate-blocked`) carry
+  `?then=open`; `CloseWizard::$thenOpen` then redirects to
+  `shop.session.open?open=1` instead of the dashboard, and the Register opens
+  its Open-register modal on `?open=1` (only if today isn't open and no other
+  earlier day still blocks). Test: `RegisterRedesignTest::test_closing_an_old_day_…`.
+  **Back to the page that needed the register:** the "Open Today's Session"
+  button on every gated page (`x-session-gate-blocked`: POS, Warehouse Sale,
+  Receive Transfer, Returns, Damaged Goods, Credit Repayments; plus the
+  expense / withdrawal / bank-deposit pages) adds `?return=<that page>`
+  (`current_return_path()`, which uses the Referer during Livewire updates).
+  `Register::$returnTo` and `CloseWizard::$returnTo` (both `#[Locked]`) carry
+  it through the close-then-open chain, and opening redirects there.
+  Every value goes through `safe_return_path()` (app/helpers.php): local
+  paths only, never `//host`, a scheme, backslashes or `/livewire/*`.
+  Note: the gate's `previous_open` branch is never triggered —
+  `RequiresOpenSession::checkSession()` only sets no_session / session_closed.
 - **Inventory snapshot** (owner + shop Daily Report, print pages, PDF):
   `InventoryAnalyticsService::getStockSnapshot($shopId, $withCost)`. Same
   valuation as the Inventory report (items_remaining × per-item price over

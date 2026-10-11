@@ -5,6 +5,7 @@ namespace App\Livewire\Shop\DayClose;
 use App\Models\DailySession;
 use App\Services\DayClose\DailySessionService;
 use App\Services\SettingsService;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -43,9 +44,19 @@ class CloseWizard extends Component
     // Final confirmation modal
     public bool $showConfirm = false;
 
+    /** Came from "Close {date} first" while opening today: go back to opening after the close. */
+    #[Locked]
+    public bool $thenOpen = false;
+
+    /** Where to go once today is open (the page that asked for the register). */
+    #[Locked]
+    public string $returnTo = '';
+
     public function mount(?int $dailySessionId = null): void
     {
         $user = auth()->user();
+        $this->thenOpen = request()->query('then') === 'open';
+        $this->returnTo = safe_return_path(request()->query('return')) ?? '';
 
         if ($dailySessionId) {
             $session = DailySession::findOrFail($dailySessionId);
@@ -205,6 +216,13 @@ class CloseWizard extends Component
                 'bank_transfer_settled_ref' => $this->bankTransferSettledRef,
                 'notes'                     => $this->notes,
             ], auth()->user());
+
+            if ($this->thenOpen) {
+                // Closed an older day to be able to open today: straight back to opening
+                session()->flash('success', "Day closed. Count the drawer and open today's register.");
+                $this->redirect(route('shop.session.open', array_filter(['open' => 1, 'return' => $this->returnTo])));
+                return;
+            }
 
             session()->flash('success', 'Day closed successfully.');
             $this->redirect(route('shop.dashboard'));

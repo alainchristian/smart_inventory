@@ -192,7 +192,7 @@
             <a href="{{ route('shop.reports.daily') }}" class="dc-btn dc-btn-primary">Daily report</a>
         @elseif ($blocker)
             {{-- An earlier day is still open: it must be closed first so its cash count carries over --}}
-            <a href="{{ route('shop.session.close', ['session' => $blocker->id]) }}" class="dc-btn dc-btn-primary">
+            <a href="{{ route('shop.session.close', array_filter(['session' => $blocker->id, 'then' => 'open', 'return' => $returnTo])) }}" class="dc-btn dc-btn-primary">
                 Close {{ $blocker->session_date->format('d M') }} first
             </a>
         @else
@@ -216,7 +216,7 @@
     <div class="dc-notice">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--amber);flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
         <span>The register for <b style="color:var(--text)">{{ $blocker->session_date->format('d M Y') }}</b> was never closed.</span>
-        <a href="{{ route('shop.session.close', ['session' => $blocker->id]) }}">Close it now →</a>
+        <a href="{{ route('shop.session.close', array_filter(['session' => $blocker->id, 'then' => 'open', 'return' => $returnTo])) }}">Close it now →</a>
     </div>
 @endif
 
@@ -367,7 +367,7 @@
             <div class="dc-empty-title">The register isn't open yet</div>
             @if ($blocker)
                 <p class="dc-empty-sub">Close the {{ $blocker->session_date->format('d M Y') }} register first — its cash count becomes today's opening balance.</p>
-                <a href="{{ route('shop.session.close', ['session' => $blocker->id]) }}" class="dc-btn dc-btn-primary">Close {{ $blocker->session_date->format('d M') }} first</a>
+                <a href="{{ route('shop.session.close', array_filter(['session' => $blocker->id, 'then' => 'open', 'return' => $returnTo])) }}" class="dc-btn dc-btn-primary">Close {{ $blocker->session_date->format('d M') }} first</a>
             @else
                 <p class="dc-empty-sub">Count the cash in the drawer and open the register to start recording today's sales, expenses and cash movements.</p>
                 <button type="button" class="dc-btn dc-btn-primary" @click="openModal = true">Open register</button>
