@@ -38,18 +38,15 @@
 - `animation: false` set on all Chart.js instances
 
 ### Sales Trend chart + sparklines (reworked 2026-10-12)
-- **Single day (today/yesterday/custom one day):** a RUNNING TOTAL per local
-  (Kigali) hour, from 06:00 (earlier if something happened earlier) to the
-  current hour for today, or 23:00 for a past day — never a drop to zero for
-  hours still to come. Each point is the total sold BY that time: the line
-  starts at the first hour with 0, then one point per hour END ("7 AM" =
-  everything up to 6:59), and today's last point is "now" ("6:55 PM"); a past
-  day ends at "11:59 PM". (Labelling a bucket by its start hour made a 6:40
-  sale show at "6 PM" and looked like UTC.) The dashed line is the previous day's running total
-  at the same hours. The four KPI sparklines use the same running totals, so
-  the card line and the big chart tell one story and end on the card figure.
-  (Before: the chart plotted each sale as its own point and the sparklines
-  summed 7 fixed 3-hour blocks — they looked unrelated.)
+- **Single day (today/yesterday/custom one day):**
+  - The Sales Trend CHART shows each sale as its own point at its local time
+    (`local_time()`, "6:50 PM"), no previous-period line — owner's choice
+    (2026-10-12), after briefly being a running total.
+  - The four KPI SPARKLINES are running totals per local (Kigali) hour: start
+    at the first hour with 0 (06:00 or earlier), one point per hour end, up
+    to now for today / 23:59 for a past day — they build up to the card
+    figure and never drop to zero for hours still to come. (Before: 7 fixed
+    3-hour blocks summed, which dropped to 0 for the evening.)
 - **Multi-day:** one point per local day (weekly buckets > 60 days),
   previous-period dashed overlay. Grouped with
   `DATE(col AT TIME ZONE 'UTC' AT TIME ZONE tz)` and iterated over the local
@@ -59,7 +56,8 @@
 - `getPrevDateRange()` counts LOCAL days; it used to count one Kigali day as
   two, so "Today" compared with the day before yesterday.
 - Trend chart curves use `cubicInterpolationMode: 'monotone'` (no overshoot).
-- Test: `tests/Feature/Shop/DashboardTrendTest.php`.
+- Test: `tests/Feature/Shop/DashboardTrendTest.php`. Its test clock is a UTC
+  instant: with a Kigali-zoned `Carbon::setTestNow()` Carbon reads DB times as Kigali.
 
 ### Cash Flow donut
 - Replaced the SVG bracket flow diagram with a Chart.js doughnut

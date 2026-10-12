@@ -285,6 +285,24 @@ class Dashboard extends Component
                     default                      => Carbon::createFromTime($h + 1)->format('g A'),
                 });
             }
+
+            // The Sales Trend chart itself shows each SALE as its own point, at its
+            // local time (owner's choice) — the running totals above stay for the
+            // KPI sparklines, which build up to the card figure.
+            $trendLabels = $trendCurrent = $trendPrev = [];
+            $daySales = Sale::notVoided()
+                ->where('shop_id', $shopId)
+                ->whereBetween('sale_date', [$from, $to])
+                ->orderBy('sale_date')
+                ->get(['sale_date', 'total']);
+            foreach ($daySales as $sale) {
+                $trendLabels[]  = local_time($sale->sale_date)->format('g:i A');
+                $trendCurrent[] = (float) $sale->total;
+            }
+            if (! $trendLabels) {
+                $trendLabels  = [$localFrom->format('M j')];
+                $trendCurrent = [0];
+            }
         } else {
             // Multi-day: aggregate by LOCAL calendar day in bulk queries (no N+1 sampling)
             $salesByDay = DB::table('sales')
