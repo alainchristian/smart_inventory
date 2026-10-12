@@ -94,8 +94,11 @@ class Dashboard extends Component
 
     protected function getPrevDateRange(): array
     {
+        // Same number of LOCAL days just before. Diffing the UTC boundaries counted
+        // one Kigali day (22:00 → 21:59 UTC) as two, so "Today" compared itself
+        // with the day before yesterday.
         [$from, $to] = $this->getDateRange();
-        $days = (int) $from->copy()->startOfDay()->diffInDays($to->copy()->startOfDay()) + 1;
+        $days = (int) Carbon::parse($this->dateFrom)->diffInDays(Carbon::parse($this->dateTo)) + 1;
         return [$from->copy()->subDays($days), $to->copy()->subDays($days)];
     }
 
@@ -202,77 +205,92 @@ class Dashboard extends Component
             ->orderByDesc('revenue')->limit(5)->get();
 
         // ── Sparklines + Trend ────────────────────────────────────────
-        // Use the LOCAL calendar-day span, not $from/$to — those are already
-        // UTC-shifted for querying, and in a non-UTC business timezone (e.g.
-        // Africa/Kigali, UTC+2) a single local day straddles two UTC calendar
-        // dates. Diffing the UTC-shifted boundaries made "Today"/"Yesterday"
-        // miscount as a 1-day span and fall into the multi-day branch below,
-        // which then only ever produced a single (wrongly-dated) data point.
-        $diffDays = (int) Carbon::parse($this->dateFrom)->diffInDays(Carbon::parse($this->dateTo));
+        // Built on LOCAL (business-timezone) days and hours — $from/$to are
+        // UTC query boundaries, and a Kigali day runs 22:00–21:59 UTC.
+        $tz          = config('tenant.timezone');
+        $localDayOf  = fn (string $col) => "DATE({$col} AT TIME ZONE 'UTC' AT TIME ZONE '{$tz}')";
+        $localHourOf = fn (string $col) => "EXTRACT(HOUR FROM {$col} AT TIME ZONE 'UTC' AT TIME ZONE '{$tz}')";
+        $localFrom   = Carbon::parse($this->dateFrom);
+        $diffDays    = (int) $localFrom->diffInDays(Carbon::parse($this->dateTo));
         $isSingleDay = $diffDays === 0;
+        $prevLocalFrom = $localFrom->copy()->subDays($diffDays + 1);
         $sparklineSales = $sparklineTxns = $sparklineReturns = $sparklineStock = [];
         $trendLabels = $trendCurrent = $trendPrev = [];
 
         if ($isSingleDay) {
-            // Local-timezone anchor for building hour-slot boundaries below —
-            // setHour() on $from (UTC) would silently apply to the wrong day.
-            $localDay = Carbon::parse($this->dateFrom, config('tenant.timezone'));
+            // One day: a running total per hour, so the trend line climbs with every
+            // sale and ends on the Total Sales figure. The previous day's running
+            // total at the same hours is the dashed comparison. The cards'
+            // sparklines use the same running totals, so both lines tell one story.
+            $hourly = fn ($rows) => $rows->mapWithKeys(fn ($r) => [(int) $r->h => $r])->all();
+            $salesH = $hourly(DB::table('sales')->whereNull('voided_at')->whereNull('deleted_at')
+                ->where('shop_id', $shopId)->whereBetween('sale_date', [$from, $to])
+                ->selectRaw($localHourOf('sale_date') . ' as h, SUM(total) as revenue, COUNT(*) as txns')
+                ->groupByRaw('1')->get());
+            $prevH = $hourly(DB::table('sales')->whereNull('voided_at')->whereNull('deleted_at')
+                ->where('shop_id', $shopId)->whereBetween('sale_date', [$prevFrom, $prevTo])
+                ->selectRaw($localHourOf('sale_date') . ' as h, SUM(total) as revenue')
+                ->groupByRaw('1')->get());
+            $retH = $hourly(DB::table('returns')->where('shop_id', $shopId)
+                ->whereBetween('created_at', [$from, $to])
+                ->selectRaw($localHourOf('created_at') . ' as h, SUM(refund_amount) as total')
+                ->groupByRaw('1')->get());
+            // Boxes received into this shop (Box::moveTo() logs a 'transfer' movement to this location)
+            $stkH = $hourly(DB::table('box_movements')->where('movement_type', 'transfer')
+                ->where('to_location_type', 'shop')->where('to_location_id', $shopId)
+                ->whereBetween('moved_at', [$from, $to])
+                ->selectRaw($localHourOf('moved_at') . ' as h, COUNT(*) as boxes')
+                ->groupByRaw('1')->get());
 
-            // Sparklines: 7 buckets covering the full 24h (tiny canvas, buckets are fine)
-            $hourSlots = [[0,3],[4,7],[8,10],[11,13],[14,16],[17,19],[20,23]];
-            foreach ($hourSlots as [$startH, $endH]) {
-                $slotS = $localDay->copy()->setTime($startH, 0, 0)->utc();
-                $slotE = $localDay->copy()->setTime($endH, 59, 59)->utc();
-                $sparklineSales[]   = (float) Sale::notVoided()->where('shop_id',$shopId)->whereBetween('sale_date',[$slotS,$slotE])->sum('total');
-                $sparklineTxns[]    = (int)   Sale::notVoided()->where('shop_id',$shopId)->whereBetween('sale_date',[$slotS,$slotE])->count();
-                $sparklineReturns[] = (float) ReturnModel::where('shop_id',$shopId)->whereBetween('created_at',[$slotS,$slotE])->sum('refund_amount');
-                // Boxes received into this shop (Box::moveTo() logs a 'transfer' movement to this location)
-                $sparklineStock[]   = (int) DB::table('box_movements')
-                    ->where('movement_type', 'transfer')
-                    ->where('to_location_type', 'shop')->where('to_location_id', $shopId)
-                    ->whereBetween('moved_at', [$slotS, $slotE])->count();
+            // From 06:00 (earlier if something happened earlier) to now for today,
+            // or to 23:00 for a past day — never a fake drop to zero for hours to come.
+            $busy      = array_keys($salesH + $retH + $stkH);
+            $firstHour = min(6, $busy ? min($busy) : 6);
+            $lastHour  = $localFrom->isSameDay(business_today()) ? business_now()->hour : 23;
+            $lastHour  = max($lastHour, $firstHour);
+            if ($lastHour === $firstHour && $firstHour > 0) {
+                $firstHour--;   // a line needs two points
             }
 
-            // Trend chart: one data point per individual sale at its exact time
-            $daySales = Sale::notVoided()
-                ->where('shop_id', $shopId)
-                ->whereBetween('sale_date', [$from, $to])
-                ->orderBy('sale_date')
-                ->get(['sale_date', 'total']);
+            $rev = $txns = $rets = $stk = $prev = 0;
+            for ($h = $firstHour; $h <= $lastHour; $h++) {
+                $rev  += (float) ($salesH[$h]->revenue ?? 0);
+                $txns += (int)   ($salesH[$h]->txns    ?? 0);
+                $prev += (float) ($prevH[$h]->revenue  ?? 0);
+                $rets += (float) ($retH[$h]->total     ?? 0);
+                $stk  += (int)   ($stkH[$h]->boxes     ?? 0);
 
-            foreach ($daySales as $sale) {
-                $trendLabels[]  = local_time($sale->sale_date)->format('g:i A');
-                $trendCurrent[] = (float) $sale->total;
+                $trendLabels[]      = Carbon::createFromTime($h)->format('g A');
+                $trendCurrent[]     = $rev;
+                $trendPrev[]        = $prev;
+                $sparklineSales[]   = $rev;
+                $sparklineTxns[]    = $txns;
+                $sparklineReturns[] = $rets;
+                $sparklineStock[]   = $stk;
             }
-
-            if (empty($trendLabels)) {
-                $trendLabels  = [$localDay->format('M j')];
-                $trendCurrent = [0];
-            }
-            $trendPrev = []; // No previous-period overlay for per-sale bar chart
         } else {
-            // Multi-day: aggregate by calendar day in two bulk queries (no N+1 sampling)
+            // Multi-day: aggregate by LOCAL calendar day in bulk queries (no N+1 sampling)
             $salesByDay = DB::table('sales')
                 ->whereNull('voided_at')->whereNull('deleted_at')
                 ->where('shop_id', $shopId)
                 ->whereBetween('sale_date', [$from, $to])
-                ->selectRaw("DATE(sale_date) as d, SUM(total) as revenue, COUNT(*) as txns")
-                ->groupByRaw("DATE(sale_date)")
+                ->selectRaw($localDayOf('sale_date') . ' as d, SUM(total) as revenue, COUNT(*) as txns')
+                ->groupByRaw('1')
                 ->get()->keyBy('d');
 
             $prevSalesByDay = DB::table('sales')
                 ->whereNull('voided_at')->whereNull('deleted_at')
                 ->where('shop_id', $shopId)
                 ->whereBetween('sale_date', [$prevFrom, $prevTo])
-                ->selectRaw("DATE(sale_date) as d, SUM(total) as revenue")
-                ->groupByRaw("DATE(sale_date)")
+                ->selectRaw($localDayOf('sale_date') . ' as d, SUM(total) as revenue')
+                ->groupByRaw('1')
                 ->get()->keyBy('d');
 
             $returnsByDay = DB::table('returns')
                 ->where('shop_id', $shopId)
                 ->whereBetween('created_at', [$from, $to])
-                ->selectRaw("DATE(created_at) as d, SUM(refund_amount) as total")
-                ->groupByRaw("DATE(created_at)")
+                ->selectRaw($localDayOf('created_at') . ' as d, SUM(refund_amount) as total')
+                ->groupByRaw('1')
                 ->get()->keyBy('d');
 
             // Boxes received into this shop, per day (Box::moveTo() logs a 'transfer'
@@ -281,22 +299,21 @@ class Dashboard extends Component
                 ->where('movement_type', 'transfer')
                 ->where('to_location_type', 'shop')->where('to_location_id', $shopId)
                 ->whereBetween('moved_at', [$from, $to])
-                ->selectRaw("DATE(moved_at) as d, COUNT(*) as boxes")
-                ->groupByRaw("DATE(moved_at)")
+                ->selectRaw($localDayOf('moved_at') . ' as d, COUNT(*) as boxes')
+                ->groupByRaw('1')
                 ->get()->keyBy('d');
 
-            // Sparklines: 7 equal-width buckets — sum all days in each bucket so
-            // sparse data (few transactions spread across a month) still shows variation
+            // Sparklines: 7 equal-width buckets of local days — sum all days in each
+            // bucket so sparse data (few transactions over a month) still shows variation
             $totalDays  = $diffDays + 1;
             $bucketSize = max(1, (int) ceil($totalDays / 7));
             for ($i = 0; $i < 7; $i++) {
-                $bStart = $from->copy()->addDays($i * $bucketSize);
-                if ($bStart->gt($to)) break;
-                $bEnd = $from->copy()->addDays(($i + 1) * $bucketSize - 1);
-                if ($bEnd->gt($to)) $bEnd = $to->copy();
+                $first = $i * $bucketSize;
+                if ($first > $diffDays) break;
+                $last = min($diffDays, ($i + 1) * $bucketSize - 1);
                 $rev = 0.0; $txns = 0; $rets = 0.0; $stk = 0;
-                for ($cursor = $bStart->copy(); $cursor->lte($bEnd); $cursor->addDay()) {
-                    $dk    = $cursor->format('Y-m-d');
+                for ($n = $first; $n <= $last; $n++) {
+                    $dk    = $localFrom->copy()->addDays($n)->format('Y-m-d');
                     $rev  += (float) ($salesByDay[$dk]->revenue   ?? 0);
                     $txns += (int)   ($salesByDay[$dk]->txns      ?? 0);
                     $rets += (float) ($returnsByDay[$dk]->total    ?? 0);
@@ -311,10 +328,9 @@ class Dashboard extends Component
             // Trend chart: every day when ≤ 60 days, weekly buckets for longer periods
             if ($diffDays <= 60) {
                 for ($i = 0; $i <= $diffDays; $i++) {
-                    $day = $from->copy()->addDays($i);
-                    if ($day->gt($to)) break;
-                    $d  = $day->format('Y-m-d');
-                    $pd = $prevFrom->copy()->addDays($i)->format('Y-m-d');
+                    $day = $localFrom->copy()->addDays($i);
+                    $d   = $day->format('Y-m-d');
+                    $pd  = $prevLocalFrom->copy()->addDays($i)->format('Y-m-d');
                     $trendLabels[]  = $day->format('M j');
                     $trendCurrent[] = (float) ($salesByDay[$d]->revenue    ?? 0);
                     $trendPrev[]    = (float) ($prevSalesByDay[$pd]->revenue ?? 0);
@@ -322,16 +338,14 @@ class Dashboard extends Component
             } else {
                 // Weekly buckets for > 60 day periods
                 for ($i = 0; $i <= $diffDays; $i += 7) {
-                    $weekStart = $from->copy()->addDays($i);
-                    if ($weekStart->gt($to)) break;
                     $weekRev = $pWeekRev = 0.0;
                     for ($j = 0; $j < 7 && ($i + $j) <= $diffDays; $j++) {
-                        $d  = $from->copy()->addDays($i + $j)->format('Y-m-d');
-                        $pd = $prevFrom->copy()->addDays($i + $j)->format('Y-m-d');
+                        $d  = $localFrom->copy()->addDays($i + $j)->format('Y-m-d');
+                        $pd = $prevLocalFrom->copy()->addDays($i + $j)->format('Y-m-d');
                         $weekRev  += (float) ($salesByDay[$d]->revenue    ?? 0);
                         $pWeekRev += (float) ($prevSalesByDay[$pd]->revenue ?? 0);
                     }
-                    $trendLabels[]  = $weekStart->format('M j');
+                    $trendLabels[]  = $localFrom->copy()->addDays($i)->format('M j');
                     $trendCurrent[] = $weekRev;
                     $trendPrev[]    = $pWeekRev;
                 }

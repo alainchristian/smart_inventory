@@ -37,15 +37,25 @@
 - Sparklines use `canvas.classList.remove/add('db-spark-refresh')` for a brief pop-in on each redraw
 - `animation: false` set on all Chart.js instances
 
-### Sales Trend chart
-- **Single-day (today/yesterday):** queries individual sales at exact timestamps → one point per sale, line chart, no previous-period overlay, `tension: 0.3`
-- **Multi-day:** time-bucketed points (one per day or evenly-spaced), line chart with previous-period dashed overlay
-- `$isSingleDay` must be in `compact()` and passed via `data-is-single-day` on the data div (currently unused in JS but kept for future use)
-
-### Sparklines (KPI cards)
-- Always bucket-based (7 slots for single-day, one per day for multi-day)
-- Single-day hourly slots cover **full 24h with no gaps**: `[[0,3],[4,7],[8,10],[11,13],[14,16],[17,19],[20,23]]`
-- Use `sale_date` (not `created_at`) for all sale queries
+### Sales Trend chart + sparklines (reworked 2026-10-12)
+- **Single day (today/yesterday/custom one day):** a RUNNING TOTAL per local
+  (Kigali) hour, from 06:00 (earlier if something happened earlier) to the
+  current hour for today, or 23:00 for a past day — never a drop to zero for
+  hours still to come. The dashed line is the previous day's running total
+  at the same hours. The four KPI sparklines use the same running totals, so
+  the card line and the big chart tell one story and end on the card figure.
+  (Before: the chart plotted each sale as its own point and the sparklines
+  summed 7 fixed 3-hour blocks — they looked unrelated.)
+- **Multi-day:** one point per local day (weekly buckets > 60 days),
+  previous-period dashed overlay. Grouped with
+  `DATE(col AT TIME ZONE 'UTC' AT TIME ZONE tz)` and iterated over the local
+  dateFrom/dateTo — it used to group by UTC date and iterate the UTC
+  boundaries, so labels started a day early and the last day's sales were
+  missing. Sparklines: 7 buckets of local days.
+- `getPrevDateRange()` counts LOCAL days; it used to count one Kigali day as
+  two, so "Today" compared with the day before yesterday.
+- Trend chart curves use `cubicInterpolationMode: 'monotone'` (no overshoot).
+- Test: `tests/Feature/Shop/DashboardTrendTest.php`.
 
 ### Cash Flow donut
 - Replaced the SVG bracket flow diagram with a Chart.js doughnut

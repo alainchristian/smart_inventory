@@ -802,6 +802,7 @@ Alpine.data('dbShopDashboard', () => ({
                         pointHoverRadius: 6,
                         pointBackgroundColor: '#3b6bd4',
                         tension: 0.3,
+                        cubicInterpolationMode: 'monotone',   // no overshoot: a running total never dips
                         fill: true,
                     },
                     {
@@ -813,6 +814,7 @@ Alpine.data('dbShopDashboard', () => ({
                         borderWidth: 1.5,
                         pointRadius: 2,
                         tension: 0.3,
+                        cubicInterpolationMode: 'monotone',
                         fill: false,
                     },
                 ],
