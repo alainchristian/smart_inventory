@@ -18,7 +18,9 @@
 .upos-page ::-webkit-scrollbar-thumb:hover, .upos-overlay ::-webkit-scrollbar-thumb:hover, .upos-cart-drawer ::-webkit-scrollbar-thumb:hover { background:var(--text-dim) }
 
 /* ── Layout ────────────────────────────────────────────────────────────── */
-.upos-page { padding:0 0 80px; overflow-x:hidden }
+/* clip, not hidden: overflow-x:hidden makes .upos-page a scroll container, and the
+   sticky cart (.upos-cart-panel) then sticks to it instead of the window — it never stuck */
+.upos-page { padding:0 0 80px; overflow-x:clip }
 .upos-layout { display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:16px; align-items:start }
 
 /* ── Page header ────────────────────────────────────────────────────────── */
