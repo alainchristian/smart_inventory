@@ -41,7 +41,11 @@
 - **Single day (today/yesterday/custom one day):** a RUNNING TOTAL per local
   (Kigali) hour, from 06:00 (earlier if something happened earlier) to the
   current hour for today, or 23:00 for a past day — never a drop to zero for
-  hours still to come. The dashed line is the previous day's running total
+  hours still to come. Each point is the total sold BY that time: the line
+  starts at the first hour with 0, then one point per hour END ("7 AM" =
+  everything up to 6:59), and today's last point is "now" ("6:55 PM"); a past
+  day ends at "11:59 PM". (Labelling a bucket by its start hour made a 6:40
+  sale show at "6 PM" and looked like UTC.) The dashed line is the previous day's running total
   at the same hours. The four KPI sparklines use the same running totals, so
   the card line and the big chart tell one story and end on the card figure.
   (Before: the chart plotted each sale as its own point and the sparklines

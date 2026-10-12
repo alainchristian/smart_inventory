@@ -246,13 +246,32 @@ class Dashboard extends Component
             // or to 23:00 for a past day — never a fake drop to zero for hours to come.
             $busy      = array_keys($salesH + $retH + $stkH);
             $firstHour = min(6, $busy ? min($busy) : 6);
-            $lastHour  = $localFrom->isSameDay(business_today()) ? business_now()->hour : 23;
-            $lastHour  = max($lastHour, $firstHour);
-            if ($lastHour === $firstHour && $firstHour > 0) {
-                $firstHour--;   // a line needs two points
-            }
+            $isToday   = $localFrom->isSameDay(business_today());
+            $lastHour  = max($isToday ? business_now()->hour : 23, $firstHour);
 
-            $rev = $txns = $rets = $stk = $prev = 0;
+            // Each point is the total sold BY that time: the line starts at
+            // firstHour:00, then one point at the end of every hour, and today's
+            // last point is "now" (e.g. 6:55 PM). Labelling an hour by its start
+            // made a 6:40 sale appear at "6 PM" and the line stop before the clock.
+            $rev = $txns = $rets = $stk = 0;
+            $prev = 0.0;
+            foreach ($prevH as $h => $row) {            // the day before, up to the same start time
+                if ($h < $firstHour) {
+                    $prev += (float) $row->revenue;
+                }
+            }
+            $push = function (string $label) use (&$trendLabels, &$trendCurrent, &$trendPrev, &$sparklineSales,
+                &$sparklineTxns, &$sparklineReturns, &$sparklineStock, &$rev, &$txns, &$rets, &$stk, &$prev) {
+                $trendLabels[]      = $label;
+                $trendCurrent[]     = $rev;
+                $trendPrev[]        = $prev;
+                $sparklineSales[]   = $rev;
+                $sparklineTxns[]    = $txns;
+                $sparklineReturns[] = $rets;
+                $sparklineStock[]   = $stk;
+            };
+
+            $push(Carbon::createFromTime($firstHour)->format('g A'));
             for ($h = $firstHour; $h <= $lastHour; $h++) {
                 $rev  += (float) ($salesH[$h]->revenue ?? 0);
                 $txns += (int)   ($salesH[$h]->txns    ?? 0);
@@ -260,13 +279,11 @@ class Dashboard extends Component
                 $rets += (float) ($retH[$h]->total     ?? 0);
                 $stk  += (int)   ($stkH[$h]->boxes     ?? 0);
 
-                $trendLabels[]      = Carbon::createFromTime($h)->format('g A');
-                $trendCurrent[]     = $rev;
-                $trendPrev[]        = $prev;
-                $sparklineSales[]   = $rev;
-                $sparklineTxns[]    = $txns;
-                $sparklineReturns[] = $rets;
-                $sparklineStock[]   = $stk;
+                $push(match (true) {
+                    $isToday && $h === $lastHour => business_now()->format('g:i A'),
+                    $h === 23                    => '11:59 PM',
+                    default                      => Carbon::createFromTime($h + 1)->format('g A'),
+                });
             }
         } else {
             // Multi-day: aggregate by LOCAL calendar day in bulk queries (no N+1 sampling)

@@ -72,13 +72,18 @@ class DashboardTrendTest extends TestCase
         $current = $c->viewData('trendCurrent');
         $prev    = $c->viewData('trendPrev');
 
-        // 00:00 (a sale at 00:30) up to the current hour, 18:00 — nothing after now
+        // Points are "total sold by": from 00:00 (a sale at 00:30), every hour's
+        // end, and the last point is now (18:30) — nothing after now
         $this->assertSame('12 AM', $labels[0]);
-        $this->assertSame('6 PM', end($labels));
-        $this->assertCount(19, $labels);
+        $this->assertSame('1 AM', $labels[1]);
+        $this->assertSame('6 PM', $labels[18]);
+        $this->assertSame('6:30 PM', end($labels));
+        $this->assertCount(20, $labels);
 
-        // Running total: never goes down, ends on the day's total
-        $this->assertEquals(1000, $current[0]);
+        // Running total: starts at 0, never goes down, ends on the day's total
+        $this->assertEquals(0, $current[0]);
+        $this->assertEquals(1000, $current[1]);           // the 00:30 sale, by 1 AM
+        $this->assertEquals(3000, $current[10]);          // + the 09:15 sale, by 10 AM
         $this->assertEquals(1903000, end($current));
         $this->assertSame($current, array_values(collect($current)->sort()->all()));
 
