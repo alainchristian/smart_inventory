@@ -218,78 +218,9 @@ class Dashboard extends Component
         $trendLabels = $trendCurrent = $trendPrev = [];
 
         if ($isSingleDay) {
-            // One day: a running total per hour, so the trend line climbs with every
-            // sale and ends on the Total Sales figure. The previous day's running
-            // total at the same hours is the dashed comparison. The cards'
-            // sparklines use the same running totals, so both lines tell one story.
-            $hourly = fn ($rows) => $rows->mapWithKeys(fn ($r) => [(int) $r->h => $r])->all();
-            $salesH = $hourly(DB::table('sales')->whereNull('voided_at')->whereNull('deleted_at')
-                ->where('shop_id', $shopId)->whereBetween('sale_date', [$from, $to])
-                ->selectRaw($localHourOf('sale_date') . ' as h, SUM(total) as revenue, COUNT(*) as txns')
-                ->groupByRaw('1')->get());
-            $prevH = $hourly(DB::table('sales')->whereNull('voided_at')->whereNull('deleted_at')
-                ->where('shop_id', $shopId)->whereBetween('sale_date', [$prevFrom, $prevTo])
-                ->selectRaw($localHourOf('sale_date') . ' as h, SUM(total) as revenue')
-                ->groupByRaw('1')->get());
-            $retH = $hourly(DB::table('returns')->where('shop_id', $shopId)
-                ->whereBetween('created_at', [$from, $to])
-                ->selectRaw($localHourOf('created_at') . ' as h, SUM(refund_amount) as total')
-                ->groupByRaw('1')->get());
-            // Boxes received into this shop (Box::moveTo() logs a 'transfer' movement to this location)
-            $stkH = $hourly(DB::table('box_movements')->where('movement_type', 'transfer')
-                ->where('to_location_type', 'shop')->where('to_location_id', $shopId)
-                ->whereBetween('moved_at', [$from, $to])
-                ->selectRaw($localHourOf('moved_at') . ' as h, COUNT(*) as boxes')
-                ->groupByRaw('1')->get());
-
-            // From 06:00 (earlier if something happened earlier) to now for today,
-            // or to 23:00 for a past day — never a fake drop to zero for hours to come.
-            $busy      = array_keys($salesH + $retH + $stkH);
-            $firstHour = min(6, $busy ? min($busy) : 6);
-            $isToday   = $localFrom->isSameDay(business_today());
-            $lastHour  = max($isToday ? business_now()->hour : 23, $firstHour);
-
-            // Each point is the total sold BY that time: the line starts at
-            // firstHour:00, then one point at the end of every hour, and today's
-            // last point is "now" (e.g. 6:55 PM). Labelling an hour by its start
-            // made a 6:40 sale appear at "6 PM" and the line stop before the clock.
-            $rev = $txns = $rets = $stk = 0;
-            $prev = 0.0;
-            foreach ($prevH as $h => $row) {            // the day before, up to the same start time
-                if ($h < $firstHour) {
-                    $prev += (float) $row->revenue;
-                }
-            }
-            $push = function (string $label) use (&$trendLabels, &$trendCurrent, &$trendPrev, &$sparklineSales,
-                &$sparklineTxns, &$sparklineReturns, &$sparklineStock, &$rev, &$txns, &$rets, &$stk, &$prev) {
-                $trendLabels[]      = $label;
-                $trendCurrent[]     = $rev;
-                $trendPrev[]        = $prev;
-                $sparklineSales[]   = $rev;
-                $sparklineTxns[]    = $txns;
-                $sparklineReturns[] = $rets;
-                $sparklineStock[]   = $stk;
-            };
-
-            $push(Carbon::createFromTime($firstHour)->format('g A'));
-            for ($h = $firstHour; $h <= $lastHour; $h++) {
-                $rev  += (float) ($salesH[$h]->revenue ?? 0);
-                $txns += (int)   ($salesH[$h]->txns    ?? 0);
-                $prev += (float) ($prevH[$h]->revenue  ?? 0);
-                $rets += (float) ($retH[$h]->total     ?? 0);
-                $stk  += (int)   ($stkH[$h]->boxes     ?? 0);
-
-                $push(match (true) {
-                    $isToday && $h === $lastHour => business_now()->format('g:i A'),
-                    $h === 23                    => '11:59 PM',
-                    default                      => Carbon::createFromTime($h + 1)->format('g A'),
-                });
-            }
-
-            // The Sales Trend chart itself shows each SALE as its own point, at its
-            // local time (owner's choice) — the running totals above stay for the
-            // KPI sparklines, which build up to the card figure.
-            $trendLabels = $trendCurrent = $trendPrev = [];
+            // One day: the Sales Trend chart and the Total Sales sparkline show each
+            // SALE as its own point, at its local time (owner's choice) — not a
+            // running total. No previous-day line: sale times don't pair up.
             $daySales = Sale::notVoided()
                 ->where('shop_id', $shopId)
                 ->whereBetween('sale_date', [$from, $to])
@@ -302,6 +233,36 @@ class Dashboard extends Component
             if (! $trendLabels) {
                 $trendLabels  = [$localFrom->format('M j')];
                 $trendCurrent = [0];
+            }
+            $sparklineSales = $trendCurrent;
+
+            // The other cards count events, so their sparklines are per HOUR (what
+            // happened in that hour, not a running total), from 06:00 (earlier if
+            // something happened earlier) to now for today, or 23:00 for a past day.
+            $hourly = fn ($rows) => $rows->mapWithKeys(fn ($r) => [(int) $r->h => $r])->all();
+            $txnH = $hourly(DB::table('sales')->whereNull('voided_at')->whereNull('deleted_at')
+                ->where('shop_id', $shopId)->whereBetween('sale_date', [$from, $to])
+                ->selectRaw($localHourOf('sale_date') . ' as h, COUNT(*) as txns')
+                ->groupByRaw('1')->get());
+            $retH = $hourly(DB::table('returns')->where('shop_id', $shopId)
+                ->whereBetween('created_at', [$from, $to])
+                ->selectRaw($localHourOf('created_at') . ' as h, SUM(refund_amount) as total')
+                ->groupByRaw('1')->get());
+            // Boxes received into this shop (Box::moveTo() logs a 'transfer' movement to this location)
+            $stkH = $hourly(DB::table('box_movements')->where('movement_type', 'transfer')
+                ->where('to_location_type', 'shop')->where('to_location_id', $shopId)
+                ->whereBetween('moved_at', [$from, $to])
+                ->selectRaw($localHourOf('moved_at') . ' as h, COUNT(*) as boxes')
+                ->groupByRaw('1')->get());
+
+            $busy      = array_keys($txnH + $retH + $stkH);
+            $firstHour = min(6, $busy ? min($busy) : 6);
+            $isToday   = $localFrom->isSameDay(business_today());
+            $lastHour  = max($isToday ? business_now()->hour : 23, $firstHour);
+            for ($h = $firstHour; $h <= $lastHour; $h++) {
+                $sparklineTxns[]    = (int)   ($txnH[$h]->txns  ?? 0);
+                $sparklineReturns[] = (float) ($retH[$h]->total ?? 0);
+                $sparklineStock[]   = (int)   ($stkH[$h]->boxes ?? 0);
             }
         } else {
             // Multi-day: aggregate by LOCAL calendar day in bulk queries (no N+1 sampling)

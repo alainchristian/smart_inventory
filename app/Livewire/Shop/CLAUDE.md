@@ -42,11 +42,11 @@
   - The Sales Trend CHART shows each sale as its own point at its local time
     (`local_time()`, "6:50 PM"), no previous-period line — owner's choice
     (2026-10-12), after briefly being a running total.
-  - The four KPI SPARKLINES are running totals per local (Kigali) hour: start
-    at the first hour with 0 (06:00 or earlier), one point per hour end, up
-    to now for today / 23:59 for a past day — they build up to the card
-    figure and never drop to zero for hours still to come. (Before: 7 fixed
-    3-hour blocks summed, which dropped to 0 for the evening.)
+  - KPI SPARKLINES are never running totals either (owner, 2026-10-12):
+    Total Sales = the same per-sale points as the chart; Transactions,
+    Returns and Stock Received = what happened in each local (Kigali) hour,
+    from 06:00 (or the first busy hour) to now for today / 23:00 for a past
+    day — no fake zeros for hours still to come.
 - **Multi-day:** one point per local day (weekly buckets > 60 days),
   previous-period dashed overlay. Grouped with
   `DATE(col AT TIME ZONE 'UTC' AT TIME ZONE tz)` and iterated over the local

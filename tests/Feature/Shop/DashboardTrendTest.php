@@ -75,23 +75,21 @@ class DashboardTrendTest extends TestCase
         $this->assertSame([], $c->viewData('trendPrev'));
     }
 
-    public function test_single_day_sparklines_build_up_to_the_card_total(): void
+    public function test_single_day_sparklines_are_not_running_totals(): void
     {
         $c = Livewire::actingAs($this->manager)->test(Dashboard::class)
             ->set('dateFrom', '2021-06-10')->set('dateTo', '2021-06-10');
 
-        // Running total by the end of each hour, from 00:00 to now (18:30): starts at 0,
-        // never goes down, ends on the Total Sales figure — nothing after now
-        $sales = $c->viewData('sparklineSales');
-        $this->assertCount(20, $sales);
-        $this->assertEquals(0, $sales[0]);
-        $this->assertEquals(1000, $sales[1]);             // the 00:30 sale, by 1 AM
-        $this->assertEquals(3000, $sales[10]);            // + the 09:15 sale, by 10 AM
-        $this->assertEquals(1903000, end($sales));
-        $this->assertSame($sales, array_values(collect($sales)->sort()->all()));
+        // Total Sales: one point per sale, like the chart
+        $this->assertEquals([1000, 2000, 1900000], $c->viewData('sparklineSales'));
 
+        // Transactions: sales in each hour, 00:00 to now (18:30) — not cumulative
         $txns = $c->viewData('sparklineTxns');
-        $this->assertEquals(3, end($txns));
+        $this->assertCount(19, $txns);
+        $this->assertSame(1, $txns[0]);     // 00:30
+        $this->assertSame(1, $txns[9]);     // 09:15
+        $this->assertSame(1, $txns[16]);    // 16:25
+        $this->assertSame(3, array_sum($txns));
     }
 
     public function test_several_days_are_grouped_by_kigali_day(): void
