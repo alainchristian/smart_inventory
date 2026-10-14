@@ -6,61 +6,64 @@
 <title>{{ $hideAmounts ? 'Dispatch Slip' : 'Receipt' }} {{ $sale->sale_number }}</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body { font-family:'Courier New', Courier, monospace; font-size:12px; color:#000; background:#fff; width:76mm; }
+{{-- Thermal printers are 1-bit. Thin regular-weight glyphs (Courier New at
+     9-12px) have 1px anti-aliased strokes that the driver breaks into
+     scattered dots, so EVERYTHING is bold, in a sturdy face, at >= 11px. --}}
+html, body { font-family:Consolas, 'Lucida Console', 'DejaVu Sans Mono', Arial, sans-serif; font-weight:700; font-size:13px; color:#000; background:#fff; width:76mm; -webkit-font-smoothing:none; text-rendering:optimizeSpeed; }
+body { padding-top:4mm; padding-bottom:8mm; }
 @page { size:80mm auto; margin:2mm; }
 
 .center  { text-align:center; }
 .right   { text-align:right; }
 .bold    { font-weight:bold; }
-.small   { font-size:10px; }
-.xsmall  { font-size:9px; }
+.small   { font-size:11px; }
+.xsmall  { font-size:11px; }
 .large   { font-size:15px; }
 .xlarge  { font-size:18px; }
 
-.shop-name { font-size:16px; font-weight:bold; text-align:center; margin-bottom:2px; }
-.shop-sub  { font-size:10px; text-align:center; color:#000; }
+.shop-name { font-size:17px; font-weight:bold; text-align:center; margin-bottom:2px; }
+.shop-sub  { font-size:12px; text-align:center; color:#000; }
 
-{{-- Thermal/receipt printers are effectively 1-bit (black or nothing) —
-     mid/light greys (#444-#999) that look fine on a screen or laser printer
-     dither away to near-invisible on that hardware. Everything text/border
-     here is solid black; visual hierarchy comes from font-size/weight only. --}}
-hr.dashed  { border:none; border-top:1px dashed #333; margin:6px 0; }
-hr.solid   { border:none; border-top:1px solid #000; margin:6px 0; }
+{{-- Solid black only (greys dither away), 2px separators (1px dashes print
+     as faint dots), no background fills or rounded corners. Hierarchy comes
+     from size, since every line is already bold. --}}
+hr.dashed  { border:none; border-top:2px dashed #000; margin:6px 0; }
+hr.solid   { border:none; border-top:2px solid #000; margin:6px 0; }
 
 /* Items table */
 .items { width:100%; border-collapse:collapse; margin:4px 0; }
 .items td { padding:2px 0; vertical-align:top; }
-.items .name { width:60%; font-size:11px; }
-.items .qty  { width:15%; text-align:right; font-size:11px; color:#000; }
-.items .amt  { width:25%; text-align:right; font-size:11px; font-weight:bold; }
-.items .sub  { font-size:9px; color:#000; padding-left:0; }
-.items .mod  { font-size:9px; color:#000; }
-.wh-tag { font-size:8px; color:#000; font-style:italic; }
+.items .name { width:55%; font-size:13px; }
+.items .qty  { width:17%; text-align:right; font-size:12px; color:#000; }
+.items .amt  { width:28%; text-align:right; font-size:13px; font-weight:bold; }
+.items .sub  { font-size:11px; color:#000; padding-left:0; }
+.items .mod  { font-size:11px; color:#000; }
+.wh-tag { font-size:11px; color:#000; }
 
 /* Total */
 .total-row  { display:flex; justify-content:space-between; align-items:baseline; margin:4px 0; }
-.total-label{ font-size:13px; font-weight:bold; }
-.total-amt  { font-size:17px; font-weight:bold; }
+.total-label{ font-size:14px; font-weight:bold; }
+.total-amt  { font-size:18px; font-weight:bold; }
 
 /* Payments */
-.pay-row    { display:flex; justify-content:space-between; font-size:11px; padding:1px 0; }
+.pay-row    { display:flex; justify-content:space-between; font-size:12px; padding:1px 0; }
 .pay-label  { color:#000; }
-.pay-ref    { font-size:9px; color:#000; margin-left:4px; }
+.pay-ref    { font-size:11px; color:#000; margin-left:4px; }
 
 /* Credit badge */
-.credit-box { border:1px solid #000; border-radius:4px; padding:5px 7px; margin:6px 0; background:#fef3c7; }
-.credit-lbl { font-size:10px; font-weight:bold; color:#000; }
-.credit-amt { font-size:12px; font-weight:bold; color:#000; }
+.credit-box { border:2px solid #000; padding:5px 7px; margin:6px 0; }
+.credit-lbl { font-size:12px; font-weight:bold; color:#000; }
+.credit-amt { font-size:13px; font-weight:bold; color:#000; }
 
 /* Customer / meta */
-.info-row   { font-size:10px; color:#000; margin:2px 0; }
-.footer     { text-align:center; font-size:9px; color:#000; margin-top:6px; }
+.info-row   { font-size:12px; color:#000; margin:2px 0; }
+.footer     { text-align:center; font-size:11px; color:#000; margin-top:6px; }
 
 /* Barcode */
 .barcode-wrap  { text-align:center; margin:8px 0 4px; }
-.barcode-label { font-size:9px; font-weight:bold; text-transform:uppercase; letter-spacing:.5px; color:#000; margin-bottom:3px; }
+.barcode-label { font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:.5px; color:#000; margin-bottom:3px; }
 .barcode-wrap img { max-width:100%; height:auto; }
-.barcode-code  { font-size:11px; font-weight:bold; letter-spacing:1.5px; text-align:center; margin-top:3px; }
+.barcode-code  { font-size:12px; font-weight:bold; letter-spacing:1.5px; text-align:center; margin-top:3px; }
 </style>
 </head>
 <body>
