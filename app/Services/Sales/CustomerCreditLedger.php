@@ -20,19 +20,28 @@ use Illuminate\Support\Facades\DB;
  */
 class CustomerCreditLedger
 {
-    /** Credit extended on a sale at $shopId. */
+    /**
+     * Credit extended at $shopId: on a sale, or old credit from before the
+     * system (OpeningCreditService, with $at in the past). last_credit_at only
+     * ever moves forward, so back-dated old credit can't hide a newer sale.
+     */
     public function extend(Customer $customer, int $shopId, int $amount, ?CarbonInterface $at = null): CustomerShopBalance
     {
         $this->assertPositive($amount);
 
         return DB::transaction(function () use ($customer, $shopId, $amount, $at) {
+            $at  = $at ?? now();
             $row = $this->lockRow($customer->id, $shopId, create: true);
             $row->total_credit_given  += $amount;
             $row->outstanding_balance += $amount;
-            $row->last_credit_at       = $at ?? now();
+            if (! $row->last_credit_at || $row->last_credit_at->lt($at)) {
+                $row->last_credit_at = $at;
+            }
             $row->save();
 
-            $this->syncCustomer($customer, ['last_credit_at' => $row->last_credit_at]);
+            $latest = $customer->last_credit_at && $customer->last_credit_at->gt($row->last_credit_at)
+                ? $customer->last_credit_at : $row->last_credit_at;
+            $this->syncCustomer($customer, ['last_credit_at' => $latest]);
 
             return $row;
         });

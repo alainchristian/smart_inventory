@@ -321,6 +321,23 @@
 
         {{-- Credit Sales History --}}
         <div style="padding:24px;max-height:500px;overflow-y:auto">
+            @if($this->customerOpeningCredits->isNotEmpty())
+                <h4 style="font-size:14px;font-weight:700;color:var(--text);margin:0 0 16px;text-transform:uppercase;letter-spacing:0.5px">
+                    Old credit (before the system)
+                </h4>
+                @foreach($this->customerOpeningCredits as $oc)
+                    <div style="padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:8px;margin-bottom:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                        <div>
+                            <div style="font-size:13px;font-weight:700;color:var(--text)">Taken {{ $oc->taken_on->format('M d, Y') }}</div>
+                            <div style="font-size:11px;color:var(--text-sub);margin-top:2px">
+                                {{ $oc->shop?->name }}@if($oc->reference) · {{ $oc->reference }}@endif
+                            </div>
+                        </div>
+                        <div style="font-size:16px;font-weight:800;color:var(--amber);font-family:var(--mono)">{{ number_format($oc->amount, 0) }} RWF</div>
+                    </div>
+                @endforeach
+                <div style="height:8px"></div>
+            @endif
             <h4 style="font-size:14px;font-weight:700;color:var(--text);margin:0 0 16px;text-transform:uppercase;letter-spacing:0.5px">
                 Sales with Credit
             </h4>

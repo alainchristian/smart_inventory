@@ -85,7 +85,7 @@ class SystemManager extends Component
             'sales'        => ['sale_payments', 'sale_items', 'held_sales', 'sales'],
             'returns'      => ['return_items', 'returns'],
             'transfers'    => ['transfer_boxes', 'transfer_items', 'transfers'],
-            'credit'       => ['credit_repayments', 'credit_writeoffs'],
+            'credit'       => ['credit_repayments', 'credit_writeoffs', 'opening_credits'],
             'boxes'        => ['box_movements', 'boxes', 'damaged_goods', 'inventory_snapshots', 'product_barcodes'],
             'customers'    => ['customer_credit_accounts', 'customers'],
             'transporters' => ['transporters'],

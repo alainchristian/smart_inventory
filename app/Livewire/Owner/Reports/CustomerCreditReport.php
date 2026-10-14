@@ -177,6 +177,19 @@ class CustomerCreditReport extends Component
             ->get();
     }
 
+    /** Old credit entered for this customer (debts from before the system). */
+    public function getCustomerOpeningCreditsProperty()
+    {
+        if (! $this->selectedCustomerId) {
+            return collect();
+        }
+
+        return \App\Models\OpeningCredit::active()->with('shop:id,name')
+            ->where('customer_id', $this->selectedCustomerId)
+            ->orderByDesc('taken_on')
+            ->get();
+    }
+
     public function render()
     {
         return view('livewire.owner.reports.customer-credit-report');

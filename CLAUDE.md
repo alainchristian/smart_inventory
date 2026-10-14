@@ -803,6 +803,46 @@ only at Remera, and the cash landed in the wrong register.
 Tests: `tests/Feature/Credit/PerShopCreditTest.php` (incl. re-running the
 backfill migration against legacy-shaped history).
 
+### Old credit — debts from before the system (2026-10-14)
+For launch: the owner enters what customers already owed, typed one by one
+or uploaded from Excel. Page `owner.credit.opening` (`/owner/credit/old`,
+Finance → Old Credit, `Owner\Credit\OpeningCredits`, prefix `oc-`).
+- **Rules (user):** each debt belongs to the shop that gave it. A customer
+  is matched by phone. If there's no match, they're registered from phone +
+  name, with `customers.shop_id` = the lending shop.
+- **One write path:** `App\Services\Sales\OpeningCreditService`
+  (`check` / `record` / `import` / `remove`; owner / admin only).
+  - Every entry is an `opening_credits` row plus
+    `CustomerCreditLedger::extend()` at that shop, dated noon (Kigali) on
+    the day it was taken. Overdue alerts count from that date.
+  - There is no sale behind it. It is never sales or "credit given" on a
+    day (Daily Report / dashboards read sale payments). It is in every
+    outstanding figure and is repaid / written off like any credit.
+- `extend()` now only moves `last_credit_at` forward, so back-dated old
+  credit can't hide a newer credit sale from the overdue check.
+- **Input parsing:**
+  - Phones are normalised to `07XXXXXXXX`; +250 / 250 / a lost leading 0
+    are all fine.
+  - Amounts take "12,500 RWF".
+  - Dates are day/month/year, or an Excel date number. Blank = today.
+  - Shops are matched by name, code or the short name after "—".
+- **Excel:** "Download template" (sheets: Old credit, Shops, Example).
+  - Columns are matched by heading text.
+  - Upload shows a preview with Ready / problem per row. Only Ready rows are
+    added, in one transaction with one `opening_credits_imported` audit row.
+  - The same debt twice in a sheet, or one already entered (same customer,
+    shop, amount, date), is flagged and never added twice. So a fixed
+    sheet can be re-uploaded safely.
+  - Max 2,000 rows per upload.
+- **Remove** (mistakes): inline confirm with a required reason, through
+  `ledger->reverse()`. Refused once the shop is owed less than the entry,
+  i.e. part was repaid; then use a write-off. Entries are kept, struck
+  through. Audit actions: `opening_credit_recorded`, `_removed`.
+- Customer Credit report → customer history lists their old credit.
+- The wipe tools (SystemManager credit group, DangerZone,
+  `WipeTransactionalData`) include `opening_credits`.
+Tests: `tests/Feature/Credit/OpeningCreditTest.php`.
+
 ---
 
 ## Warehouse Fulfillment redesign (2026-09-25)

@@ -45,6 +45,7 @@ class Topbar extends Component
         'owner.returns.index'                => 'Returns',
         'owner.damaged-goods.index'          => 'Damaged Goods',
         'owner.credit.writeoffs'             => 'Credit Write-offs',
+        'owner.credit.opening'               => 'Old Credit',
         'owner.finance.overview'             => 'Finance Overview',
         'owner.finance.daily'                => 'Daily Finance',
         'owner.finance.income-statement'     => 'Income Statement',

@@ -193,6 +193,7 @@ Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name(
     // Credit write-offs
     Route::prefix('credit')->name('credit.')->group(function () {
         Route::get('/writeoffs', function () { return view('owner.credit.writeoffs'); })->name('writeoffs');
+        Route::get('/old', function () { return view('owner.credit.opening'); })->name('opening');
     });
 
     // System settings

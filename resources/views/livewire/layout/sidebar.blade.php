@@ -230,6 +230,11 @@
                                   {{ request()->routeIs('owner.credit.writeoffs') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                             {{ __('Credit Write-offs') }}
                         </a>
+                        <a href="{{ route('owner.credit.opening') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.credit.opening') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            {{ __('Old Credit') }}
+                        </a>
                     </div>
                 </div>
 
@@ -451,6 +456,11 @@
                            class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
                                   {{ request()->routeIs('owner.credit.writeoffs') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
                             {{ __('Credit Write-offs') }}
+                        </a>
+                        <a href="{{ route('owner.credit.opening') }}" wire:navigate
+                           class="block px-4 py-1.5 text-[13px] rounded-lg transition-colors
+                                  {{ request()->routeIs('owner.credit.opening') ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'text-[var(--text-dim)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                            {{ __('Old Credit') }}
                         </a>
                     </div>
                 </div>

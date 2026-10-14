@@ -49,6 +49,7 @@ class DangerZone extends Component
             'transfers',
             'credit_repayments',
             'credit_writeoffs',
+            'opening_credits',
             'damaged_goods',
             'box_movements',
             'boxes',

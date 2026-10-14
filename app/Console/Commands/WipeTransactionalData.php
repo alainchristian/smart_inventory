@@ -30,7 +30,7 @@ class WipeTransactionalData extends Command
         $this->line('  - returns, return_items');
         $this->line('  - damaged_goods');
         $this->line('  - daily_sessions, expenses, expense_requests, owner_withdrawals, bank_deposits');
-        $this->line('  - credit_repayments, credit_writeoffs, customer_credit_accounts');
+        $this->line('  - credit_repayments, credit_writeoffs, opening_credits, customer_credit_accounts');
         $this->line('  - activity_logs, alerts, scanner_sessions');
         $this->line('  - saved_reports, report_run_history, report_annotations, report_view_log');
         $this->newLine();
@@ -117,6 +117,7 @@ class WipeTransactionalData extends Command
         // ── 8. Credit ────────────────────────────────────────────────────────
         $this->line('  [8/9] Credit records...');
         $wipe('credit_writeoffs');
+        $wipe('opening_credits');
         $wipe('credit_repayments');
         $wipe('customer_credit_accounts');
 
@@ -143,7 +144,7 @@ class WipeTransactionalData extends Command
             'damaged_goods', 'box_movements', 'boxes', 'inventory_snapshots',
             'product_barcodes', 'products',
             'bank_deposits', 'owner_withdrawals', 'expense_requests', 'expenses', 'daily_sessions',
-            'credit_writeoffs', 'credit_repayments',
+            'credit_writeoffs', 'credit_repayments', 'opening_credits',
             'alerts', 'activity_logs', 'scanner_sessions',
         ];
 
