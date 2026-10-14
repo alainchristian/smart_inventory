@@ -834,11 +834,22 @@ Finance → Old Credit, `Owner\Credit\OpeningCredits`, prefix `oc-`).
     shop, amount, date), is flagged and never added twice. So a fixed
     sheet can be re-uploaded safely.
   - Max 2,000 rows per upload.
+- **Form customer field** works like the POS checkout picker: a searchable
+  list (name or phone; +250 is fine) that the owner picks from. "+ New"
+  switches to phone + name. Typed digits prefill the phone, typed words the
+  name. A phone that turns out to be registered offers "Use this customer".
 - **Remove** (mistakes): inline confirm with a required reason, through
   `ledger->reverse()`. Refused once the shop is owed less than the entry,
   i.e. part was repaid; then use a write-off. Entries are kept, struck
   through. Audit actions: `opening_credit_recorded`, `_removed`.
 - Customer Credit report → customer history lists their old credit.
+- **Business Position** (owner + shop Daily Report, both print pages):
+  under Outstanding Receivables, "of which from before the system" =
+  `computeRangeSummary()['old_credit_receivables']` =
+  `OpeningCreditService::stillOwed($shopId)`. Per customer × shop:
+  min(balance, old credit − repaid − written off), i.e. repayments clear
+  the oldest debt first. The row shows only when > 0. The Old Credit page's
+  "Still owed" card uses the same figure.
 - The wipe tools (SystemManager credit group, DangerZone,
   `WipeTransactionalData`) include `opening_credits`.
 Tests: `tests/Feature/Credit/OpeningCreditTest.php`.

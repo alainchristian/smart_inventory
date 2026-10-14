@@ -551,6 +551,8 @@ class DailySessionService
             $outstandingReceivables = (int) Customer::sum('outstanding_balance');
             $customersOwingCount    = (int) Customer::where('outstanding_balance', '>', 0)->count();
         }
+        // Part of it that is still old credit (owed before the system was in use)
+        $oldCreditReceivables = \App\Services\Sales\OpeningCreditService::stillOwed($shopId);
 
         // Cost of Goods Sold — what the sold stock cost the business, so the
         // report can show real gross/net profit instead of just top-line
@@ -608,6 +610,8 @@ class DailySessionService
             'bank_by_customer'         => $bankByCustomer,
             'outstanding_receivables'  => $outstandingReceivables,
             'customers_owing_count'    => $customersOwingCount,
+            // Of outstanding_receivables: still old credit (oldest repaid first)
+            'old_credit_receivables'   => $oldCreditReceivables,
             // Legacy credit that couldn't be attributed to any shop when the
             // per-shop ledger was introduced (customer total minus the sum of
             // shop balances). Normally 0. Single-shop figures exclude it, the

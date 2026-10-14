@@ -115,6 +115,50 @@ class OpeningCreditTest extends TestCase
         $this->assertTrue(ActivityLog::where('action', 'opening_credit_recorded')->where('entity_id', $customer->id)->exists());
     }
 
+    public function test_the_customer_is_picked_from_a_searchable_list_like_checkout(): void
+    {
+        $c = Livewire::actingAs($this->owner)->test(OpeningCredits::class)
+            ->call('openForm')
+            ->set('customerSearch', 'mugenzi');
+        $this->assertContains($this->known->id, array_column($c->instance()->customerResults, 'id'));
+
+        // by phone too, even typed with +250
+        $c->set('customerSearch', '+250' . substr($this->known->phone, 1));
+        $this->assertSame([$this->known->id], array_column($c->instance()->customerResults, 'id'));
+
+        $c->call('selectCustomer', $this->known->id)
+            ->assertSet('customerId', $this->known->id)
+            ->set('shopId', (string) $this->shopA)
+            ->set('amount', '12000')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(12000, $this->known->fresh()->outstanding_balance);
+    }
+
+    public function test_a_customer_not_in_the_list_is_added_from_what_was_typed(): void
+    {
+        $phone = $this->phone();
+        Livewire::actingAs($this->owner)->test(OpeningCredits::class)
+            ->call('openForm')
+            ->set('customerSearch', $phone)
+            ->call('startNewCustomer')
+            ->assertSet('newCustomer', true)
+            ->assertSet('phone', $phone)
+            ->set('name', 'Grace Mukamana')
+            ->set('shopId', (string) $this->shopB)
+            ->set('amount', '8000')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(8000, app(CustomerCreditLedger::class)->balanceAt(Customer::where('phone', $phone)->first(), $this->shopB));
+
+        // Nothing chosen at all
+        Livewire::actingAs($this->owner)->test(OpeningCredits::class)
+            ->call('openForm')->set('shopId', (string) $this->shopA)->set('amount', '8000')
+            ->call('save')->assertHasErrors('phone');
+    }
+
     public function test_an_existing_customer_is_matched_by_phone_and_keeps_their_name(): void
     {
         $this->service()->record([
@@ -256,6 +300,30 @@ class OpeningCreditTest extends TestCase
             ->assertHasErrors('removeReason');
         $this->assertNull($second->fresh()->removed_at);
         $this->assertSame(25000, $this->known->fresh()->outstanding_balance);
+    }
+
+    public function test_business_position_shows_how_much_is_still_old_credit(): void
+    {
+        $ledger = app(CustomerCreditLedger::class);
+        $this->service()->record(['phone' => $this->known->phone, 'shop' => $this->shopA, 'amount' => 30000, 'taken_on' => '2026-01-10'], $this->owner);
+        $ledger->extend($this->known->fresh(), $this->shopA, 20000);          // a credit sale after launch
+
+        $summary = fn () => app(\App\Services\DayClose\DailySessionService::class)
+            ->computeRangeSummary($this->shopA, business_today()->toDateString(), business_today()->toDateString());
+
+        $this->assertSame(50000, $summary()['outstanding_receivables']);
+        $this->assertSame(30000, $summary()['old_credit_receivables']);
+
+        // Repayments clear the oldest debt first
+        $ledger->repay($this->known->fresh(), $this->shopA, 12000);
+        $this->assertSame(38000, $summary()['outstanding_receivables']);
+        $this->assertSame(18000, $summary()['old_credit_receivables']);
+        $this->assertSame(18000, OpeningCreditService::stillOwed($this->shopA));
+        $this->assertSame(0, OpeningCreditService::stillOwed($this->shopB));
+
+        $ledger->repay($this->known->fresh(), $this->shopA, 25000);
+        $this->assertSame(0, $summary()['old_credit_receivables']);
+        $this->assertSame(13000, $summary()['outstanding_receivables']);
     }
 
     public function test_only_the_owner_can_enter_old_credit(): void

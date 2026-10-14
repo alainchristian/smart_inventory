@@ -172,6 +172,12 @@ tfoot td:last-child { text-align:right; }
                     <td>Outstanding Receivables — Assumed Held</td>
                     <td style="text-align:right">{{ number_format($summary['outstanding_receivables']) }} RWF</td>
                 </tr>
+                @if(($summary['old_credit_receivables'] ?? 0) > 0)
+                <tr>
+                    <td style="padding-left:20px">of which from before the system (old credit)</td>
+                    <td style="text-align:right">{{ number_format($summary['old_credit_receivables']) }} RWF</td>
+                </tr>
+                @endif
             </tbody>
         </table>
     </div>

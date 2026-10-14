@@ -303,6 +303,12 @@
                 <td>Outstanding Receivables</td>
                 <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:700;color:var(--amber)">{{ number_format($summary['outstanding_receivables']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
             </tr>
+            @if(($summary['old_credit_receivables'] ?? 0) > 0)
+            <tr>
+                <td style="color:var(--text-dim);padding-left:28px">of which from before the system <span style="font-size:11px">(old credit)</span></td>
+                <td style="text-align:right;white-space:nowrap"><span style="font-family:var(--mono);font-weight:600;color:var(--text-sub)">{{ number_format($summary['old_credit_receivables']) }}</span> <span style="font-size:10px;color:var(--text-dim)">RWF</span></td>
+            </tr>
+            @endif
             @if(! $isAllShops && ($summary['unassigned_receivables'] ?? 0) > 0)
             <tr>
                 <td style="color:var(--text-dim)">Customers not tied to a shop <span style="font-size:11px">(not included above)</span></td>

@@ -7,7 +7,6 @@ use App\Models\OpeningCredit;
 use App\Models\Shop;
 use App\Services\Sales\CustomerCreditLedger;
 use App\Services\Sales\OpeningCreditService;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -35,6 +34,10 @@ class OpeningCredits extends Component
 
     // ── Add one ──────────────────────────────────────────────
     public bool $showForm = false;
+    /** Customer picker: search text, the picked customer, or "new customer" mode (phone + name) */
+    public string $customerSearch = '';
+    public ?int $customerId = null;
+    public bool $newCustomer = false;
     public string $phone = '';
     public string $name = '';
     public string $shopId = '';
@@ -70,7 +73,7 @@ class OpeningCredits extends Component
 
     public function openForm(): void
     {
-        $this->reset(['phone', 'name', 'amount', 'takenOn', 'reference', 'notes']);
+        $this->reset(['customerSearch', 'customerId', 'newCustomer', 'phone', 'name', 'amount', 'takenOn', 'reference', 'notes']);
         $this->shopId = $this->shopFilter;
         $this->resetValidation();
         $this->showImport = false;
@@ -83,25 +86,90 @@ class OpeningCredits extends Component
         $this->resetValidation();
     }
 
-    /** The registered customer for the typed phone, with what they owe each shop. */
+    /** Customers matching the search (name or phone), like the POS checkout picker. */
+    #[Computed]
+    public function customerResults(): array
+    {
+        $q    = trim($this->customerSearch);
+        $like = '%' . addcslashes($q, '%_\\') . '%';
+        $norm = OpeningCreditService::normalisePhone($q);
+
+        return Customer::query()
+            ->when($q !== '', fn ($w) => $w->where(fn ($w) => $w
+                ->where('name', 'ilike', $like)
+                ->orWhere('phone', 'like', $like)
+                ->when($norm, fn ($w) => $w->orWhere('phone', $norm))))
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'phone', 'outstanding_balance'])
+            ->toArray();
+    }
+
+    public function selectCustomer(int $id): void
+    {
+        $customer = Customer::find($id);
+        if (! $customer) {
+            return;
+        }
+        $this->customerId     = $customer->id;
+        $this->newCustomer    = false;
+        $this->customerSearch = '';
+        $this->phone          = $customer->phone;
+        $this->name           = '';
+        $this->resetValidation(['phone', 'name']);
+    }
+
+    public function clearCustomer(): void
+    {
+        $this->reset(['customerId', 'newCustomer', 'phone', 'name']);
+        $this->resetValidation(['phone', 'name']);
+    }
+
+    /** Not in the list: register them. Typed digits become the phone, typed words the name. */
+    public function startNewCustomer(): void
+    {
+        $typed = trim($this->customerSearch);
+        $this->customerId  = null;
+        $this->newCustomer = true;
+        if ($typed !== '' && preg_match('/^[\d\s+\-]+$/', $typed)) {
+            $this->phone = $typed;
+            $this->name  = '';
+        } else {
+            $this->phone = '';
+            $this->name  = $typed;
+        }
+        $this->customerSearch = '';
+    }
+
+    #[Computed]
+    public function selectedCustomer(): ?array
+    {
+        $customer = $this->customerId ? Customer::find($this->customerId) : null;
+
+        return $customer ? [
+            'name'  => $customer->name,
+            'phone' => $customer->phone,
+            'owes'  => app(CustomerCreditLedger::class)->describeOwed($customer, null),
+        ] : null;
+    }
+
+    /** New-customer mode: the phone typed belongs to someone already registered. */
     #[Computed]
     public function phoneMatch(): ?array
     {
         $phone = OpeningCreditService::normalisePhone($this->phone);
-        if (! $phone) {
-            return null;
-        }
-        $customer = Customer::where('phone', $phone)->first();
+        $customer = $phone ? Customer::where('phone', $phone)->first() : null;
 
-        return $customer ? [
-            'name' => $customer->name,
-            'owes' => app(CustomerCreditLedger::class)->describeOwed($customer, null),
-        ] : null;
+        return $customer ? ['id' => $customer->id, 'name' => $customer->name] : null;
     }
 
     public function save(OpeningCreditService $service): void
     {
         $this->resetValidation();
+        if (! $this->customerId && ! $this->newCustomer && trim($this->phone) === '') {
+            $this->addError('phone', 'Choose a customer, or add a new one.');
+            return;
+        }
         $c = $service->check($this->formInput(), $this->shops);
         if ($c['errors']) {
             foreach ($c['errors'] as $error) {
@@ -133,8 +201,11 @@ class OpeningCredits extends Component
 
     private function formInput(): array
     {
+        // A picked customer is identified by their stored phone
+        $phone = $this->customerId ? (string) Customer::whereKey($this->customerId)->value('phone') : $this->phone;
+
         return [
-            'phone' => $this->phone, 'name' => $this->name, 'shop' => $this->shopId,
+            'phone' => $phone, 'name' => $this->name, 'shop' => $this->shopId,
             'amount' => $this->amount, 'taken_on' => $this->takenOn,
             'reference' => $this->reference, 'notes' => $this->notes,
         ];
@@ -342,11 +413,8 @@ class OpeningCredits extends Component
                 COUNT(*) FILTER (WHERE source = \'excel\')       AS from_excel
             ')->first();
 
-        // What is still owed by the customers who have old credit, at the shops it was entered for
-        $owed = (int) DB::table('customer_shop_balances as b')
-            ->whereExists(fn ($q) => $q->from('opening_credits as o')->whereNull('o.removed_at')
-                ->whereColumn('o.customer_id', 'b.customer_id')->whereColumn('o.shop_id', 'b.shop_id'))
-            ->sum('b.outstanding_balance');
+        // Old credit not yet repaid (repayments clear the oldest debt first)
+        $owed = OpeningCreditService::stillOwed();
 
         return collect((array) $s)->map(fn ($v) => (int) $v)->all() + ['still_owed' => $owed];
     }

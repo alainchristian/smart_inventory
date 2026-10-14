@@ -205,6 +205,12 @@ tfoot td { padding:9px 14px; font-weight:700; border-top:2px solid var(--line); 
                     <td>Outstanding Receivables — Assumed Held</td>
                     <td style="font-weight:800;color:var(--amber)">{{ number_format($summary['outstanding_receivables']) }} RWF</td>
                 </tr>
+                @if(($summary['old_credit_receivables'] ?? 0) > 0)
+                <tr>
+                    <td style="padding-left:20px">of which from before the system (old credit)</td>
+                    <td>{{ number_format($summary['old_credit_receivables']) }} RWF</td>
+                </tr>
+                @endif
             </tbody>
         </table>
     </div>

@@ -105,6 +105,23 @@
 .oc-prev-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:var(--rsm) }
 .oc-prev .oc-err { color:var(--red);font-size:12px;white-space:normal;min-width:220px }
 
+.oc-picker { position:relative }
+.oc-picker-row { display:flex;gap:8px;align-items:center }
+.oc-dropdown { position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:10;background:var(--surface);border-radius:10px;
+               box-shadow:var(--shadow-card-hover);max-height:300px;overflow-y:auto;padding:4px 0 }
+.oc-drop-row { display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:9px 14px;border:none;background:transparent;
+               text-align:left;cursor:pointer;font-family:var(--font);transition:background var(--tr) }
+.oc-drop-row:hover { background:var(--surface2) }
+.oc-drop-name { font-size:13px;font-weight:600;color:var(--text) }
+.oc-drop-meta { font-size:11px;color:var(--text-dim);font-family:var(--mono) }
+.oc-drop-new  { border-top:1px solid var(--border);font-size:13px;font-weight:700;color:var(--accent) }
+.oc-drop-empty { padding:10px 14px;font-size:12px;color:var(--text-dim) }
+.oc-picked { display:flex;justify-content:space-between;align-items:center;gap:12px;border-left:3px solid var(--green);padding:8px 0 8px 12px }
+.oc-new { border-left:3px solid var(--accent);padding:4px 0 4px 12px }
+.oc-new-head { display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px }
+.oc-link { border:none;background:none;padding:0;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font) }
+.oc-link:hover { text-decoration:underline }
+
 @keyframes oc-spin { to { transform:rotate(360deg) } }
 
 @media(max-width:768px) {
@@ -187,7 +204,7 @@
                 </div>
                 <div class="ui-kpi-body">
                     <div class="ui-kpi-label">Still owed</div>
-                    <div class="ui-kpi-sub">by these customers, at these shops</div>
+                    <div class="ui-kpi-sub">old credit not yet repaid</div>
                 </div>
             </div>
             <div class="ui-kpi-val" style="color:var(--text)">{{ number_format($s['still_owed']) }}<span class="ui-kpi-unit">RWF</span></div>
@@ -310,26 +327,67 @@
     <div class="oc-drawer-body">
         @if($showForm)
         <div class="oc-field">
-            <label class="oc-label">Customer phone <span>*</span></label>
-            <input type="text" wire:model.live.debounce.400ms="phone" class="oc-input" placeholder="07XXXXXXXX" inputmode="tel" autocomplete="off" style="font-family:var(--mono)">
-            @error('phone')<div class="oc-error">{{ $message }}</div>@enderror
-            @if($m = $this->phoneMatch)
-                <div class="oc-match">
-                    <strong style="color:var(--text)">{{ $m['name'] }}</strong> is already registered — the credit is added to this customer.
-                    @if($m['owes'])<br>{{ $m['owes'] }}@endif
+            <label class="oc-label">Customer <span>*</span></label>
+            @if($sel = $this->selectedCustomer)
+                <div class="oc-picked">
+                    <div style="min-width:0">
+                        <div class="oc-main">{{ $sel['name'] }}</div>
+                        <div class="oc-sub" style="font-family:var(--mono)">{{ $sel['phone'] }}</div>
+                        <div class="oc-sub">{{ $sel['owes'] ?: 'Owes nothing today' }}</div>
+                    </div>
+                    <button type="button" wire:click="clearCustomer" class="oc-btn oc-btn-ghost" style="padding:6px 12px;font-size:12px">Change</button>
                 </div>
-            @elseif(\App\Services\Sales\OpeningCreditService::normalisePhone($phone))
-                <div class="oc-match new">New customer — they'll be registered with this phone and the name below.</div>
+            @elseif($newCustomer)
+                <div class="oc-new">
+                    <div class="oc-new-head">
+                        <span>New customer</span>
+                        <button type="button" wire:click="clearCustomer" class="oc-link">Search the list instead</button>
+                    </div>
+                    <div class="oc-field" style="margin-bottom:12px">
+                        <label class="oc-label">Phone <span>*</span></label>
+                        <input type="text" wire:model.live.debounce.400ms="phone" class="oc-input" placeholder="07XXXXXXXX" inputmode="tel" autocomplete="off" style="font-family:var(--mono)">
+                        @error('phone')<div class="oc-error">{{ $message }}</div>@enderror
+                        @if($m = $this->phoneMatch)
+                            <div class="oc-match">This phone belongs to <strong style="color:var(--text)">{{ $m['name'] }}</strong>.
+                                <button type="button" wire:click="selectCustomer({{ $m['id'] }})" class="oc-link">Use this customer</button></div>
+                        @endif
+                    </div>
+                    @if(! $this->phoneMatch)
+                    <div class="oc-field" style="margin-bottom:0">
+                        <label class="oc-label">Name <span>*</span></label>
+                        <input type="text" wire:model="name" class="oc-input" placeholder="e.g. Jean Mugisha" autocomplete="off">
+                        @error('name')<div class="oc-error">{{ $message }}</div>@enderror
+                    </div>
+                    @endif
+                    <div class="oc-hint" style="margin-top:8px">They're registered under the shop below.</div>
+                </div>
+            @else
+                <div class="oc-picker" x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
+                    <div class="oc-picker-row">
+                        <div style="position:relative;flex:1;min-width:0">
+                            <svg class="oc-search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.3-4.3"/></svg>
+                            <input type="text" wire:model.live.debounce.250ms="customerSearch" @focus="open = true" @input="open = true"
+                                   class="oc-input" style="padding-left:34px" placeholder="Search by name or phone…" autocomplete="off">
+                        </div>
+                        <button type="button" wire:click="startNewCustomer" class="oc-btn oc-btn-ghost" style="padding:9px 12px">+ New</button>
+                    </div>
+                    <div class="oc-dropdown" x-show="open" x-cloak>
+                        @forelse($this->customerResults as $cust)
+                            <button type="button" class="oc-drop-row" wire:key="cust-{{ $cust['id'] }}" wire:click="selectCustomer({{ $cust['id'] }})" @click="open = false">
+                                <span class="oc-drop-name">{{ $cust['name'] }}</span>
+                                <span class="oc-drop-meta">{{ $cust['phone'] }}@if($cust['outstanding_balance'] > 0) · <span style="color:var(--amber)">owes {{ number_format($cust['outstanding_balance']) }} RWF</span>@endif</span>
+                            </button>
+                        @empty
+                            <div class="oc-drop-empty">No customer matches "{{ $customerSearch }}".</div>
+                        @endforelse
+                        <button type="button" class="oc-drop-row oc-drop-new" wire:click="startNewCustomer" @click="open = false">
+                            + New customer{{ trim($customerSearch) !== '' ? ': ' . trim($customerSearch) : '' }}
+                        </button>
+                    </div>
+                    @error('phone')<div class="oc-error">{{ $message }}</div>@enderror
+                </div>
             @endif
         </div>
-
-        @if(! $this->phoneMatch)
-        <div class="oc-field">
-            <label class="oc-label">Customer name <span>*</span></label>
-            <input type="text" wire:model="name" class="oc-input" placeholder="e.g. Jean Mugisha" autocomplete="off">
-            @error('name')<div class="oc-error">{{ $message }}</div>@enderror
-        </div>
-        @endif
 
         <div class="oc-field">
             <label class="oc-label">Shop that gave the credit <span>*</span></label>

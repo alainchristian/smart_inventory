@@ -469,6 +469,6 @@ class DailyReportDataTest extends TestCase
         $count = count(DB::getQueryLog());
         DB::disableQueryLog();
 
-        $this->assertSame(20, $count, 'query count: 16 originally, +2 for EXT_01, +1 for unassigned_receivables, +1 for items_by_product');
+        $this->assertSame(21, $count, 'query count: 16 originally, +2 for EXT_01, +1 for unassigned_receivables, +1 for items_by_product, +1 for old_credit_receivables');
     }
 }

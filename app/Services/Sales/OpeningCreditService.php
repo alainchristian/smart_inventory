@@ -205,6 +205,24 @@ class OpeningCreditService
         ];
     }
 
+    /**
+     * How much of what customers owe today is still old credit — for one shop
+     * or all. Repayments and write-offs are taken as paying the oldest debt
+     * first, so per customer × shop: min(balance, old credit − repaid − written off).
+     */
+    public static function stillOwed(?int $shopId = null): int
+    {
+        $sql = 'select coalesce(sum(least(b.outstanding_balance,
+                       greatest(0, o.amt - b.total_repaid - b.total_written_off))), 0) as v
+                from customer_shop_balances b
+                join (select customer_id, shop_id, sum(amount) as amt from opening_credits
+                      where removed_at is null group by customer_id, shop_id) o
+                  on o.customer_id = b.customer_id and o.shop_id = b.shop_id'
+            . ($shopId !== null ? ' where b.shop_id = ?' : '');
+
+        return (int) DB::selectOne($sql, $shopId !== null ? [$shopId] : [])->v;
+    }
+
     /** Record one entry. Throws DomainException with the first problem. */
     public function record(array $input, User $by, string $source = 'manual'): OpeningCredit
     {
