@@ -40,7 +40,77 @@ class ActivityLog extends Model
         });
     }
 
+    /**
+     * Fill in what a caller didn't say, for EVERY write path (AuditLogger, the
+     * Auditable trait and the many direct ActivityLog::create calls):
+     *  - the actor's role at the time (was missing on ~30% of entries)
+     *  - where it happened: an explicit location, else a shop_id / warehouse_id
+     *    carried in the entry, else the actor's own assigned location.
+     * Never allowed to break the action being logged.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $log) {
+            try {
+                $actor = $log->user_id ? User::find($log->user_id) : null;
+
+                if ($log->actor_role_snapshot === null && $actor) {
+                    $log->actor_role_snapshot = $actor->role?->value;
+                }
+
+                if ($log->location_id === null) {
+                    [$type, $id] = self::locationFromEntry($log) ?? self::locationOf($actor) ?? [null, null];
+                    if ($type && $id) {
+                        $log->location_type = $type;
+                        $log->location_id   = $id;
+                    }
+                }
+
+                if ($log->location_id !== null && $log->location_name === null) {
+                    $log->location_name = match ($log->location_type) {
+                        'shop'      => \App\Models\Shop::whereKey($log->location_id)->value('name'),
+                        'warehouse' => \App\Models\Warehouse::whereKey($log->location_id)->value('name'),
+                        default     => null,
+                    };
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        });
+    }
+
+    /** A shop_id / warehouse_id carried in the entry's own values wins over the actor's assignment. */
+    private static function locationFromEntry(self $log): ?array
+    {
+        foreach ([$log->details, $log->new_values, $log->old_values] as $values) {
+            if (! is_array($values)) {
+                continue;
+            }
+            if (! empty($values['shop_id']) && is_numeric($values['shop_id'])) {
+                return ['shop', (int) $values['shop_id']];
+            }
+            if (! empty($values['warehouse_id']) && is_numeric($values['warehouse_id'])) {
+                return ['warehouse', (int) $values['warehouse_id']];
+            }
+        }
+
+        return null;
+    }
+
+    /** [type, id] of a user's assigned shop or warehouse (owners and support have none). */
+    public static function locationOf(?User $user): ?array
+    {
+        if (! $user || ! $user->location_id || ! $user->location_type) {
+            return null;
+        }
+
+        return [$user->location_type->value, (int) $user->location_id];
+    }
+
     protected $fillable = [
+        'location_type',
+        'location_id',
+        'location_name',
         'user_id',
         'user_name',
         'actor_type',

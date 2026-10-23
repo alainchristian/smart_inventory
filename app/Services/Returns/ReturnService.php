@@ -16,6 +16,7 @@ use App\Models\Product;
 use App\Models\ReturnModel;
 use App\Models\Sale;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 class ReturnService
@@ -169,28 +170,34 @@ class ReturnService
                 }
             }
 
-            // Log activity
-            ActivityLog::create([
-                'user_id' => $processedBy->id,
-                'user_name' => $processedBy->name,
-                'action' => 'processed',
-                'entity_type' => 'ReturnModel',
-                'entity_id' => $return->id,
+            // Log activity: who, how much, how it was paid out, which sale and which products
+            AuditLogger::log([
+                'actor'             => $processedBy,
+                'action'            => 'processed',
+                'module'            => 'returns',
+                'entity_type'       => 'ReturnModel',
+                'entity_id'         => $return->id,
                 'entity_identifier' => $return->return_number,
-                'old_values' => null,
-                'new_values' => [
+                'new_values'        => [
                     'return_number' => $return->return_number,
-                    'shop_id' => $return->shop_id,
-                    'reason' => $return->reason->value,
-                    'is_exchange' => $return->is_exchange,
+                    'shop_id'       => $return->shop_id,
+                    'reason'        => $return->reason->value,
+                    'is_exchange'   => $return->is_exchange,
                     'refund_amount' => $return->refund_amount,
                 ],
-                'details' => [
-                    'items_count' => count($data['items']),
+                'details'           => [
+                    'items_count'    => count($data['items']),
                     'total_quantity' => array_sum(array_column($data['items'], 'quantity_returned')),
+                    'sale_number'    => $return->sale_id ? Sale::whereKey($return->sale_id)->value('sale_number') : null,
+                    'customer'       => trim(($return->customer_name ?? '') . ($return->customer_phone ? ' · ' . $return->customer_phone : '')) ?: null,
+                    'refund_method'  => $return->refund_method,
+                    'products'       => $return->items()->with('product:id,name')->get()->map(fn ($i) => [
+                        'product'  => $i->product?->name,
+                        'returned' => $i->quantity_returned,
+                        'damaged'  => $i->quantity_damaged,
+                    ])->all(),
+                    'notes'          => $return->notes,
                 ],
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->header('User-Agent'),
             ]);
 
             // Note: Large return alerts are now handled in ProcessReturn component
@@ -231,28 +238,31 @@ class ReturnService
             }
 
             // Log activity
-            ActivityLog::create([
-                'user_id' => $approvedBy->id,
-                'user_name' => $approvedBy->name,
-                'action' => 'approved',
-                'entity_type' => 'ReturnModel',
-                'entity_id' => $return->id,
+            AuditLogger::log([
+                'actor'             => $approvedBy,
+                'action'            => 'approved',
+                'module'            => 'returns',
+                'entity_type'       => 'ReturnModel',
+                'entity_id'         => $return->id,
                 'entity_identifier' => $return->return_number,
-                'old_values' => [
+                'old_values'        => [
                     'approved_at' => null,
                     'approved_by' => null,
                 ],
-                'new_values' => [
+                'new_values'        => [
                     'approved_at' => $return->approved_at->toIso8601String(),
                     'approved_by' => $approvedBy->id,
                 ],
-                'details' => [
+                'details'           => [
+                    'shop_id'        => $return->shop_id,
+                    'sale_number'    => $return->sale_id ? Sale::whereKey($return->sale_id)->value('sale_number') : null,
+                    'customer'       => trim(($return->customer_name ?? '') . ($return->customer_phone ? ' · ' . $return->customer_phone : '')) ?: null,
                     'refund_amount'  => $return->refund_amount,
+                    'refund_method'  => $return->refund_method,
                     'is_exchange'    => $return->is_exchange,
                     'credit_reduced' => $creditReduced,
+                    'processed_by'   => $return->processed_by,
                 ],
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->header('User-Agent'),
             ]);
 
             // Create alert for shop manager

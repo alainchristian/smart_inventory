@@ -1084,9 +1084,12 @@ class SaleService
                 'entity_id'         => $sale->id,
                 'entity_identifier' => $sale->sale_number,
                 'details' => [
+                    'shop_id'         => $sale->shop_id,
                     'reason'          => $reason,
                     'total'           => $sale->total,
                     'shop_name'       => $shop?->name,
+                    'customer'        => $sale->customer?->name,
+                    'items_restocked' => (int) $sale->items->sum('quantity_sold'),
                     'credit_reversed' => $creditReversed,
                 ],
                 'ip_address' => request()->ip(),

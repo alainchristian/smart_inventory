@@ -2508,3 +2508,67 @@ failed sign-ins. They do **not** see its routine entries: `signed_in`,
 for owner / admin / super_admin) so support can read what every account did,
 its own actions included as "Platform support". Links inside log rows that
 point at owner-only pages won't open for support.
+
+---
+
+## Audit trail: readable detail, location, gaps filled (2026-10-24)
+
+User: "the activity log lacks details; opening a row doesn't give enough audit
+info". Built three things (asked for 1, 2 and 3 of a five-point plan).
+
+**Facts to keep in mind**
+- `activity_logs` is **append-only at the database level** (triggers refuse
+  UPDATE / DELETE) and hash-chained (`php artisan audit:verify`). So: existing
+  rows can never be back-filled, and new columns must stay outside the hash
+  (the hash covers action, entity, user, identifier, old/new values, status,
+  severity, created_at). The wipe tools list `activity_logs`, but their DELETE
+  is refused by the trigger: choosing the "logs" group makes the whole wipe
+  fail. The trail can't be erased; that is a bug in the wipe tools, not fixed.
+- Voids, returns and refunds were already logged (thinly). Customers weren't.
+
+**1. Readable detail panel** (`App\Support\ActivityPresenter`)
+- `summary($log)`: one sentence ("Jean voided sale S-1 (Wrong size) at
+  Remera"), shown at the top of the drawer, in the CSV, and the basis for any
+  future feed. Unknown actions fall back to "Actor: Label Reference".
+- `rows()` / `changes()` / `detailRows()`: names instead of ids (`shop_id`,
+  `customer_id`, `product_id`, any `*_by` user, …), money as "12,500 RWF"
+  (key-name based; counts and ids are excluded), Yes/No, dates in local time,
+  lists as "a; b", before→after shown the same way on both sides, bookkeeping
+  columns hidden. **`details` can be a plain sentence on older rows**
+  (`fulfillment_confirmed`); it shows as a "Note".
+- `recordLink()` → "Open sale / transfer / product / returns" for owner and
+  admin only; never for support (it uses View as).
+- To add a new id→name mapping, extend `ActivityPresenter::REFERENCES`.
+
+**2. Where it happened**
+- `activity_logs.location_type / location_id / location_name` (name is a
+  snapshot). Filled for EVERY write path by `ActivityLog::booted()` (the
+  `creating` hook): explicit `location_type`+`location_id` (AuditLogger
+  accepts them) → a `shop_id` / `warehouse_id` inside details / new / old
+  values → the actor's own assigned location. Owners and support have none.
+  The same hook now also fills `actor_role_snapshot` (missing on ~30% before).
+- Entries written before this have no location: the page falls back to the
+  person's CURRENT assigned location, marked "*" and "Assigned location".
+- Owner Activity Logs: Location column, Location filter (shops / warehouses),
+  chip, and Location + Summary in the CSV export.
+- **When logging an action that concerns a shop, put `shop_id` in `details` or
+  `new_values`** so an owner's action still lands on the right shop.
+
+**3. Gaps filled**
+- `customer_registered` (`CustomerService::create`, covers POS and owner) and
+  `customer_updated` (`CustomerList::save`, only changed fields; a phone change
+  is `warning`, because phone is how credit is matched to a person).
+- Returns (`ReturnService`): `processed` and `approved` now go through
+  `AuditLogger` (module `returns`, actor role, location) and record sale
+  number, customer, refund method, products (returned / damaged) and notes.
+  Action names and `entity_type = 'ReturnModel'` are unchanged.
+- Sale void: details now carry shop, customer, items restocked.
+- `daily_session_opened`: shop and opening balance. `fulfillment_confirmed`:
+  now key / value (warehouse, recipient, via, signed, total) instead of a sentence.
+
+**Not done:** grouping a multi-step action with `trace_id` (still 0 of 1,134
+rows use it), and keeping the log across the wipe tools.
+
+Tests: `tests/Feature/Audit/AuditDetailTest.php` (12). Return logging is
+tested with a `ReturnService` subclass that stubs only the two stock-moving
+methods, so the real return and its audit entry are exercised.

@@ -43,6 +43,9 @@ class AuditLogger
             'session_id'          => $data['session_id'] ?? (request()->hasSession() ? request()->session()->getId() : null),
             'device_fingerprint'  => $data['device_fingerprint'] ?? self::fingerprint(),
             'trace_id'            => $data['trace_id'] ?? null,
+            // Optional: pass when the place isn't the actor's own or in details (e.g. an owner acting on a shop)
+            'location_type'       => $data['location_type'] ?? null,
+            'location_id'         => $data['location_id'] ?? null,
             'ip_address'          => $data['ip_address'] ?? request()->ip(),
             'user_agent'          => $data['user_agent'] ?? request()->userAgent(),
         ]);

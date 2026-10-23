@@ -3,6 +3,7 @@
 namespace App\Services\Sales;
 
 use App\Models\Customer;
+use App\Services\AuditLogger;
 
 class CustomerService
 {
@@ -19,7 +20,7 @@ class CustomerService
      */
     public function create(array $data, ?int $shopId = null): Customer
     {
-        return Customer::create([
+        $customer = Customer::create([
             'name'          => $data['name'],
             'phone'         => $data['phone'],
             'email'         => $data['email'] ?? null,
@@ -27,6 +28,17 @@ class CustomerService
             'registered_by' => auth()->id(),
             'shop_id'       => $shopId,
         ]);
+
+        // Customers carry credit, so who registered one, and with which phone, is audit material
+        AuditLogger::log([
+            'action'            => 'customer_registered',
+            'module'            => 'customers',
+            'entity'            => $customer,
+            'entity_identifier' => $customer->name,
+            'new_values'        => ['name' => $customer->name, 'phone' => $customer->phone, 'email' => $customer->email, 'shop_id' => $shopId],
+        ]);
+
+        return $customer;
     }
 
     /**

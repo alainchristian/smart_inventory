@@ -76,6 +76,11 @@ class DailySessionService
                 'entity_type'       => 'daily_session',
                 'entity_id'         => $session->id,
                 'entity_identifier' => $session->session_date->format('Y-m-d'),
+                'details'           => [
+                    'shop_id'         => $shopId,
+                    'shop_name'       => \App\Models\Shop::whereKey($shopId)->value('name'),
+                    'opening_balance' => $openingBalance,
+                ],
             ]);
 
             return $session;

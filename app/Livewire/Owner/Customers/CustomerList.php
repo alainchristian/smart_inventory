@@ -117,6 +117,8 @@ class CustomerList extends Component
 
         if ($this->isEditing) {
             $customer = Customer::findOrFail($this->editingId);
+            $before   = $customer->only(['name', 'phone', 'email', 'notes', 'shop_id']);
+
             $customer->update([
                 'name'    => $data['form_name'],
                 'phone'   => $data['form_phone'],
@@ -124,6 +126,21 @@ class CustomerList extends Component
                 'notes'   => $data['form_notes'] ?: null,
                 'shop_id' => $data['form_shop_id'],
             ]);
+
+            // The phone number is how credit is matched to a person, so any change is on the record
+            $after   = $customer->only(['name', 'phone', 'email', 'notes', 'shop_id']);
+            $changed = array_keys(array_filter($after, fn ($v, $k) => (string) $v !== (string) $before[$k], ARRAY_FILTER_USE_BOTH));
+            if ($changed) {
+                \App\Services\AuditLogger::log([
+                    'action'            => 'customer_updated',
+                    'module'            => 'customers',
+                    'entity'            => $customer,
+                    'entity_identifier' => $customer->name,
+                    'old_values'        => array_intersect_key($before, array_flip($changed)),
+                    'new_values'        => array_intersect_key($after, array_flip($changed)),
+                    'severity'          => in_array('phone', $changed, true) ? 'warning' : 'info',
+                ]);
+            }
 
             $this->dispatch('notification', ['type' => 'success', 'message' => "Customer \"{$customer->name}\" updated."]);
         } else {

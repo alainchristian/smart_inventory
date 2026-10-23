@@ -19,6 +19,7 @@ class ActivityLogs extends Component
     public string $filterSeverity = '';
     public string $filterStatus   = '';
     public string $filterActionType = '';
+    public string $filterLocation = '';   // "shop:3" | "warehouse:2"
     public ?string $filterTraceId = null;
     public string $dateFrom       = '';
     public string $dateTo         = '';
@@ -41,6 +42,7 @@ class ActivityLogs extends Component
         'filterSeverity'   => ['except' => ''],
         'filterStatus'     => ['except' => ''],
         'filterActionType' => ['except' => ''],
+        'filterLocation'   => ['except' => ''],
         'dateFrom'         => ['except' => ''],
         'dateTo'           => ['except' => ''],
         'sortBy'           => ['except' => 'created_at'],
@@ -62,6 +64,7 @@ class ActivityLogs extends Component
     public function updatedFilterSeverity(): void { $this->resetPage(); }
     public function updatedFilterStatus(): void   { $this->resetPage(); }
     public function updatedFilterActionType(): void { $this->resetPage(); }
+    public function updatedFilterLocation(): void { $this->resetPage(); }
     public function updatedPerPage(): void        { $this->resetPage(); }
 
     public function updatedDateFrom(): void
@@ -141,6 +144,7 @@ class ActivityLogs extends Component
         $this->filterSeverity   = '';
         $this->filterStatus     = '';
         $this->filterActionType = '';
+        $this->filterLocation   = '';
         $this->filterTraceId    = null;
         $this->dateFrom         = '';
         $this->dateTo           = '';
@@ -392,9 +396,21 @@ class ActivityLogs extends Component
             || $this->filterSeverity !== ''
             || $this->filterStatus !== ''
             || $this->filterActionType !== ''
+            || $this->filterLocation !== ''
             || $this->filterTraceId !== null
             || $this->dateFrom !== ''
             || $this->dateTo !== '';
+    }
+
+    /** Shops and warehouses to filter by: [['value' => 'shop:3', 'label' => 'Remera', 'group' => 'Shops'], …] */
+    public function getLocationOptionsProperty(): array
+    {
+        $shops = \App\Models\Shop::orderBy('name')->get(['id', 'name'])
+            ->map(fn ($s) => ['value' => "shop:{$s->id}", 'label' => $s->name, 'group' => 'Shops']);
+        $warehouses = \App\Models\Warehouse::orderBy('name')->get(['id', 'name'])
+            ->map(fn ($w) => ['value' => "warehouse:{$w->id}", 'label' => $w->name, 'group' => 'Warehouses']);
+
+        return $shops->concat($warehouses)->all();
     }
 
     public function getSelectedLogProperty(): ?ActivityLog
@@ -456,6 +472,17 @@ class ActivityLogs extends Component
         if ($this->filterTraceId !== null) {
             $query->where('trace_id', $this->filterTraceId);
         }
+        if (preg_match('/^(shop|warehouse):(\d+)$/', $this->filterLocation, $m)) {
+            [, $type, $id] = $m;
+            // Stored location, or — for entries written before it was stored — where that person is assigned
+            $query->where(function ($q) use ($type, $id) {
+                $q->where(fn ($s) => $s->where('location_type', $type)->where('location_id', $id))
+                  ->orWhere(fn ($s) => $s->whereNull('location_id')->whereIn(
+                      'user_id',
+                      \App\Models\User::where('location_type', $type)->where('location_id', $id)->select('id')
+                  ));
+            });
+        }
         if ($this->dateFrom !== '') {
             $query->where('created_at', '>=', $this->dateFrom);
         }
@@ -468,16 +495,19 @@ class ActivityLogs extends Component
 
     public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $rows = $this->buildQuery()->get();
+        $rows = $this->buildQuery()->with('user')->get();
+        $presenter = new \App\Support\ActivityPresenter();
 
-        return response()->streamDownload(function () use ($rows) {
+        return response()->streamDownload(function () use ($rows, $presenter) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Time', 'User', 'Action', 'Module', 'Entity Type', 'Reference', 'Status', 'Severity', 'IP Address']);
+            fputcsv($out, ['Time', 'User', 'Summary', 'Location', 'Action', 'Module', 'Entity Type', 'Reference', 'Status', 'Severity', 'IP Address']);
 
             foreach ($rows as $row) {
                 fputcsv($out, [
                     $row->created_at->format('Y-m-d H:i:s'),
                     csv_safe($row->user_name) ?? 'System',
+                    csv_safe($presenter->summary($row)),
+                    csv_safe($presenter->location($row)['name'] ?? ''),
                     $row->action,
                     $row->module ?? $row->entity_type,
                     $row->entity_type,
@@ -494,7 +524,7 @@ class ActivityLogs extends Component
 
     public function render()
     {
-        $logs = $this->buildQuery()->paginate($this->perPage);
+        $logs = $this->buildQuery()->with('user')->paginate($this->perPage);
 
         return view('livewire.owner.activity-logs', ['logs' => $logs]);
     }

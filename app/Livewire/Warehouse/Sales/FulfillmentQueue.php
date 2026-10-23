@@ -374,9 +374,14 @@ class FulfillmentQueue extends Component
             'entity_type'       => 'Sale',
             'entity_id'         => $sale->id,
             'entity_identifier' => $sale->sale_number,
-            'details'           => ($recipientName
-                ? "Fulfillment confirmed at {$this->warehouseName} — handed to {$recipientName}"
-                : "Fulfillment confirmed at {$this->warehouseName}") . $viaLabel,
+            'details'           => [
+                'warehouse_id'   => $this->warehouseId,
+                'warehouse_name' => $this->warehouseName,
+                'recipient'      => $recipientName ?: null,
+                'via'            => $this->fulfillmentSource === 'queue' ? 'queue' : 'scan',
+                'signed'         => (bool) $signature,
+                'total'          => $sale->total,
+            ],
         ]);
 
         $this->confirmingFulfillmentId = null;

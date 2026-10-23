@@ -157,7 +157,7 @@
     .al-select, .al-date { width:100%;min-width:0;box-sizing:border-box }
     .al-export-btn, .al-clear-btn { justify-content:center;min-height:38px !important;padding:8px 14px !important }
     .al-preset-btn { min-height:32px !important;min-width:0 !important;padding:6px 14px !important }
-    .al-table { min-width:1100px }
+    .al-table { min-width:1240px }
 }
 </style>
 
@@ -171,7 +171,9 @@
 {{-- ── Controls ─────────────────────────────────────────────────── --}}
 @php
     // filters behind the phone "Filters" sheet (dates come from the presets above, not counted)
-    $alFilterCount = collect([$filterUser, $filterModule, $filterActionType, $filterAction, $filterSeverity, $filterStatus])->filter()->count();
+    $alFilterCount = collect([$filterUser, $filterLocation, $filterModule, $filterActionType, $filterAction, $filterSeverity, $filterStatus])->filter()->count();
+    $alPresenter   = new \App\Support\ActivityPresenter();
+    $alLocations   = collect($this->locationOptions)->groupBy('group');
 @endphp
 <div class="al-controls" x-data="{ f: false }">
     {{-- Search --}}
@@ -200,6 +202,18 @@
         <option value="">All users</option>
         @foreach($this->distinctUsers as $u)
             <option value="{{ $u['id'] }}">{{ $u['name'] }}</option>
+        @endforeach
+    </select>
+
+    {{-- Location filter: where it happened --}}
+    <select wire:model.live="filterLocation" class="al-select">
+        <option value="">All locations</option>
+        @foreach($alLocations as $group => $options)
+            <optgroup label="{{ $group }}">
+                @foreach($options as $o)
+                    <option value="{{ $o['value'] }}">{{ $o['label'] }}</option>
+                @endforeach
+            </optgroup>
         @endforeach
     </select>
 
@@ -276,6 +290,9 @@
     @if($filterUser !== '')
     <span class="al-chip">User: {{ collect($this->distinctUsers)->firstWhere('id', (int)$filterUser)['name'] ?? $filterUser }} <button class="al-chip-x" wire:click="$set('filterUser','')"><x-icon name="x" size="10" /></button></span>
     @endif
+    @if($filterLocation !== '')
+    <span class="al-chip">Location: {{ collect($this->locationOptions)->firstWhere('value', $filterLocation)['label'] ?? $filterLocation }} <button class="al-chip-x" wire:click="$set('filterLocation','')"><x-icon name="x" size="10" /></button></span>
+    @endif
     @if($filterModule !== '')
     <span class="al-chip">Module: {{ ucfirst(str_replace('_',' ',$filterModule)) }} <button class="al-chip-x" wire:click="$set('filterModule','')"><x-icon name="x" size="10" /></button></span>
     @endif
@@ -346,6 +363,7 @@
                         </svg>
                     </span>
                 </th>
+                <th style="width:140px">Location</th>
                 <th>Reference / Context</th>
                 <th class="al-col-module" style="width:110px">Module</th>
                 <th style="width:90px">Severity</th>
@@ -405,6 +423,16 @@
                         </span>
                     </td>
 
+                    {{-- Where it happened --}}
+                    <td>
+                        @php($loc = $alPresenter->location($log))
+                        @if($loc)
+                            <span class="al-module" title="{{ $loc['assigned'] ? 'Assigned location (this entry predates stored locations)' : ucfirst($loc['kind'] ?? '') }}">{{ $loc['name'] }}@if($loc['assigned'])<span style="color:var(--text-dim)"> *</span>@endif</span>
+                        @else
+                            <span style="font-size:11px;color:var(--text-dim)">—</span>
+                        @endif
+                    </td>
+
                     {{-- Reference / context --}}
                     <td>
                         @if($log->entity_identifier)
@@ -441,7 +469,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8">
+                    <td colspan="9">
                         <div class="al-empty">
                             <div class="al-empty-icon"><x-icon name="clipboard" size="28" /></div>
                             <div class="al-empty-title">No log entries found</div>
@@ -486,8 +514,12 @@
          that method reflects Eloquent's in-memory dirty-tracking for the
          current request, which is always empty for a model freshly loaded
          from a listing query. --}}
-    @php($changes = (!empty($log->old_values) && !empty($log->new_values)) ? $log->new_values : [])
-    @php($details = $log->details ?? [])
+    @php($changeRows = $alPresenter->changes($log))
+    @php($newRows    = is_array($log->new_values) ? $alPresenter->rows($log->new_values) : [])
+    @php($oldRows    = is_array($log->old_values) ? $alPresenter->rows($log->old_values) : [])
+    @php($detailRows = $alPresenter->detailRows($log))
+    @php($place      = $alPresenter->location($log))
+    @php($record     = $alPresenter->recordLink($log, auth()->user()))
 
     <div class="al-overlay" wire:click="closeDrawer"></div>
     <div class="al-drawer open">
@@ -503,6 +535,15 @@
 
         <div class="al-drawer-body">
 
+            {{-- What happened, in a sentence --}}
+            <div class="al-d-block" style="border-left:3px solid var(--accent)">
+                <div class="al-d-title">What happened</div>
+                <div style="font-size:14px;font-weight:600;color:var(--text);line-height:1.5">{{ $alPresenter->summary($log) }}</div>
+                @if($record)
+                    <a href="{{ $record['url'] }}" wire:navigate class="al-related-link" style="display:inline-block;margin-top:10px;text-decoration:none">{{ $record['label'] }} →</a>
+                @endif
+            </div>
+
             {{-- Status / severity --}}
             <div class="al-d-block" style="display:flex;gap:16px">
                 <span class="al-badge {{ $log->status === 'failed' ? 'red' : 'green' }}">{{ ucfirst($log->status) }}</span>
@@ -516,6 +557,9 @@
                 <div class="al-d-row"><span class="al-d-key">Actor type</span><span class="al-d-val">{{ ucfirst($log->actor_type) }}</span></div>
                 @if($log->actor_role_snapshot)
                 <div class="al-d-row"><span class="al-d-key">Role at time of action</span><span class="al-d-val">{{ ucfirst(str_replace('_',' ',$log->actor_role_snapshot)) }}</span></div>
+                @endif
+                @if($place)
+                <div class="al-d-row"><span class="al-d-key">{{ $place['assigned'] ? 'Assigned location' : 'Where' }}</span><span class="al-d-val">{{ $place['name'] }}@if($place['kind']) ({{ $place['kind'] }})@endif</span></div>
                 @endif
             </div>
 
@@ -537,52 +581,44 @@
             </div>
 
             {{-- Changes: side-by-side diff --}}
-            @if(!empty($changes))
+            @if(!empty($changeRows))
             <div class="al-d-block">
                 <div class="al-d-title">Changes</div>
-                @foreach($changes as $field => $new)
-                    @php($old = $log->old_values[$field] ?? null)
+                @foreach($changeRows as $row)
                     <div class="al-diff-row">
-                        <div class="al-diff-field">{{ ucfirst(str_replace('_',' ',$field)) }}</div>
+                        <div class="al-diff-field">{{ $row['label'] }}</div>
                         <div class="al-diff-cols">
-                            <div class="al-diff-old">{{ is_array($old) ? json_encode($old) : ($old ?? '—') }}</div>
+                            <div class="al-diff-old">{{ $row['old'] }}</div>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                            <div class="al-diff-new">{{ is_array($new) ? json_encode($new) : ($new ?? '—') }}</div>
+                            <div class="al-diff-new">{{ $row['new'] }}</div>
                         </div>
                     </div>
                 @endforeach
             </div>
-            @elseif(!empty($log->new_values))
+            @elseif(!empty($newRows))
             <div class="al-d-block">
-                <div class="al-d-title">New values</div>
-                @foreach($log->new_values as $k => $v)
-                <div class="al-d-row"><span class="al-d-key">{{ ucfirst(str_replace('_',' ',$k)) }}</span><span class="al-d-val">{{ is_array($v) ? json_encode($v) : $v }}</span></div>
+                <div class="al-d-title">Recorded values</div>
+                @foreach($newRows as $row)
+                <div class="al-d-row"><span class="al-d-key">{{ $row['label'] }}</span><span class="al-d-val">{{ $row['value'] }}</span></div>
                 @endforeach
             </div>
-            @elseif(!empty($log->old_values))
+            @elseif(!empty($oldRows))
             <div class="al-d-block">
                 <div class="al-d-title">{{ $log->action === 'deleted' ? 'Deleted record values' : 'Previous values' }}</div>
-                @foreach($log->old_values as $k => $v)
-                <div class="al-d-row"><span class="al-d-key">{{ ucfirst(str_replace('_',' ',$k)) }}</span><span class="al-d-val">{{ is_array($v) ? json_encode($v) : $v }}</span></div>
+                @foreach($oldRows as $row)
+                <div class="al-d-row"><span class="al-d-key">{{ $row['label'] }}</span><span class="al-d-val">{{ $row['value'] }}</span></div>
                 @endforeach
             </div>
             @endif
 
             {{-- Details --}}
-            @if(!empty($details))
+            @if(!empty($detailRows))
             <div class="al-d-block">
                 <div class="al-d-title">Details</div>
-                @foreach($details as $k => $v)
+                @foreach($detailRows as $row)
                 <div class="al-d-row">
-                    <span class="al-d-key">{{ ucfirst(str_replace('_',' ',$k)) }}</span>
-                    <span class="al-d-val">
-                        @if(is_array($v)){{ json_encode($v) }}
-                        @elseif(is_bool($v)){{ $v ? 'Yes' : 'No' }}
-                        @elseif(is_numeric($v) && (str_contains(strtolower($k),'total') || str_contains(strtolower($k),'amount') || str_contains(strtolower($k),'price')))
-                            {{ number_format($v) }} RWF
-                        @else{{ $v }}
-                        @endif
-                    </span>
+                    <span class="al-d-key">{{ $row['label'] }}</span>
+                    <span class="al-d-val" style="white-space:pre-line">{{ $row['value'] }}</span>
                 </div>
                 @endforeach
             </div>
