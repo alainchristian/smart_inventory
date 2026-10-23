@@ -2488,6 +2488,21 @@ test vectors; QR from the already-installed simple-qrcode).
 - Tests: `tests/Feature/Support/TwoFactorTest.php`. Other support tests sign
   in through their `asSupport()` helper, which sets the passed flag.
 
+### What the owner sees of support (2026-10-24, user chose "hide the routine noise")
+The owner sees everything support CHANGES, as "Platform support": account
+created / edited / role changed / password reset / (de)activated, 2FA events,
+failed sign-ins. They do **not** see its routine entries: `signed_in`,
+`signed_out`, `permission_denied`, `support_view_as_started / _stopped`
+(`ActivityLog::SUPPORT_ROUTINE_ACTIONS`). Support itself sees all of it.
+- One rule: `ActivityLog::visibleToViewer()` (scope; viewer defaults to the
+  signed-in user). Applied in the owner Activity Logs (list, filters, detail
+  drawer, related rows, CSV export) and both owner dashboard feeds.
+  **Any new business-facing read of `activity_logs` must use it**, and a new
+  routine support action belongs in that constant.
+- Deliberately kept visible, which the user may revisit: that support opened
+  View as is NOT shown to the owner, though what it changes is.
+- Tests: `tests/Feature/Support/ActivityVisibilityTest.php`.
+
 ### Support Activity Logs (2026-10-24)
 `support.activity-logs` reuses `Owner\ActivityLogs` (now has a `mount()` check
 for owner / admin / super_admin) so support can read what every account did,

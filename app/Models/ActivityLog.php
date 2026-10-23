@@ -11,6 +11,35 @@ class ActivityLog extends Model
 {
     use HasFactory;
 
+    /**
+     * Routine platform-support entries the business doesn't need in its feed.
+     * Everything support CHANGES (accounts, roles, passwords, 2FA, failed
+     * sign-ins) stays visible; only this day-to-day noise is hidden from them.
+     */
+    public const SUPPORT_ROUTINE_ACTIONS = [
+        'signed_in', 'signed_out', 'permission_denied',
+        'support_view_as_started', 'support_view_as_stopped',
+    ];
+
+    /**
+     * Rows the current viewer may see. Platform support sees everything; the
+     * business doesn't see support's routine entries. Use this on every
+     * business-facing read of the log.
+     */
+    public function scopeVisibleToViewer($query, ?User $viewer = null)
+    {
+        $viewer ??= auth()->user();
+
+        if ($viewer?->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->where(function ($q) {
+            $q->whereRaw("COALESCE(activity_logs.actor_role_snapshot, '') <> 'super_admin'")
+              ->orWhereNotIn('activity_logs.action', self::SUPPORT_ROUTINE_ACTIONS);
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'user_name',

@@ -338,7 +338,7 @@ class ActivityLogs extends Component
 
     public function getDistinctActionsProperty(): array
     {
-        return ActivityLog::select('action')
+        return ActivityLog::visibleToViewer()->select('action')
             ->distinct()
             ->orderBy('action')
             ->pluck('action')
@@ -351,7 +351,7 @@ class ActivityLogs extends Component
 
     public function getDistinctEntitiesProperty(): array
     {
-        return ActivityLog::select('entity_type')
+        return ActivityLog::visibleToViewer()->select('entity_type')
             ->whereNotNull('entity_type')
             ->distinct()
             ->orderBy('entity_type')
@@ -361,7 +361,7 @@ class ActivityLogs extends Component
 
     public function getDistinctModulesProperty(): array
     {
-        return ActivityLog::selectRaw('COALESCE(module, entity_type) as module_val')
+        return ActivityLog::visibleToViewer()->selectRaw('COALESCE(module, entity_type) as module_val')
             ->whereRaw('COALESCE(module, entity_type) IS NOT NULL')
             ->distinct()
             ->orderBy('module_val')
@@ -371,7 +371,7 @@ class ActivityLogs extends Component
 
     public function getDistinctUsersProperty(): array
     {
-        return ActivityLog::select('user_id', 'user_name')
+        return ActivityLog::visibleToViewer()->select('user_id', 'user_name')
             ->whereNotNull('user_id')
             ->distinct()
             ->orderBy('user_name')
@@ -399,7 +399,7 @@ class ActivityLogs extends Component
 
     public function getSelectedLogProperty(): ?ActivityLog
     {
-        return $this->selectedLogId ? ActivityLog::find($this->selectedLogId) : null;
+        return $this->selectedLogId ? ActivityLog::visibleToViewer()->find($this->selectedLogId) : null;
     }
 
     public function getRelatedLogsProperty(): \Illuminate\Support\Collection
@@ -408,7 +408,7 @@ class ActivityLogs extends Component
             return collect();
         }
 
-        return ActivityLog::where('trace_id', $this->selectedLog->trace_id)
+        return ActivityLog::visibleToViewer()->where('trace_id', $this->selectedLog->trace_id)
             ->where('id', '!=', $this->selectedLog->id)
             ->orderByDesc('created_at')
             ->get();
@@ -418,7 +418,7 @@ class ActivityLogs extends Component
 
     private function buildQuery(): Builder
     {
-        $query = ActivityLog::query();
+        $query = ActivityLog::visibleToViewer();
 
         if ($this->search !== '') {
             $query->where(function ($q) {

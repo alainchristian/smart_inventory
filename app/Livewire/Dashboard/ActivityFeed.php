@@ -163,7 +163,7 @@ class ActivityFeed extends Component
 
     public function render()
     {
-        $activities = ActivityLog::with('user')
+        $activities = ActivityLog::visibleToViewer()->with('user')
             ->orderBy('created_at', 'desc')
             ->limit(12)
             ->get();

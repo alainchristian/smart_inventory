@@ -181,7 +181,7 @@ class DashboardController extends Controller
         });
 
         // ─── Recent Activities ────────────────────────────────────────────────
-        $recentActivities = ActivityLog::with('user')
+        $recentActivities = ActivityLog::visibleToViewer()->with('user')
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
