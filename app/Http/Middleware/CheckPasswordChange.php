@@ -13,6 +13,7 @@ class CheckPasswordChange
         if (
             auth()->check() &&
             auth()->user()->must_change_password &&
+            ! app(\App\Support\ViewAs::class)->active() &&
             !$request->routeIs('password.change') &&
             !$request->routeIs('logout') &&
             !$request->routeIs('livewire.*')

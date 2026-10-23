@@ -8,6 +8,7 @@ use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -19,7 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Per-request state for platform support's read-only "view as" mode
+        $this->app->scoped(\App\Support\ViewAs::class);
     }
 
     /**
@@ -41,6 +43,14 @@ class AppServiceProvider extends ServiceProvider
             'customer'         => \App\Models\Customer::class,
             'sale'             => \App\Models\Sale::class,
         ]);
+
+        // View-as is read-only: one chokepoint on every SQL statement (Eloquent,
+        // query builder and raw alike). The request is also rolled back.
+        DB::beforeExecuting(function (string $query) {
+            if (app(\App\Support\ViewAs::class)->active() && \App\Support\ViewAs::isBlockedWrite($query)) {
+                throw new \App\Exceptions\ViewOnlyException();
+            }
+        });
 
         // Force HTTPS for all URLs when behind ngrok or other proxy
         // This fixes Livewire file upload mixed content errors

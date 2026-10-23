@@ -96,6 +96,22 @@
 
     <livewire:transactions.live-feed />
 
+    @if(app(\App\Support\ViewAs::class)->active())
+        {{-- Platform support looking at another account: read-only. Exit is a plain POST
+             (support routes are never impersonated), so it can't be blocked. --}}
+        @php $viewAs = app(\App\Support\ViewAs::class)->target(); @endphp
+        <form method="POST" action="{{ route('support.view-as.stop') }}"
+              style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;align-items:center;gap:12px;
+                     max-width:calc(100vw - 32px);padding:10px 12px 10px 16px;background:var(--text);color:var(--surface);
+                     border-radius:12px;box-shadow:0 8px 28px rgba(26,31,54,.35);font-family:var(--font);font-size:13px">
+            @csrf
+            <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                Viewing as <strong>{{ $viewAs->name }}</strong> · {{ $viewAs->role->label() }} · read-only
+            </span>
+            <button type="submit" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:8px;background:var(--amber);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)">Exit</button>
+        </form>
+    @endif
+
     @livewireScripts
 
     @stack('scripts')
@@ -104,10 +120,17 @@
     // Redirect to login silently on session expiry (419) instead of showing error dialogs
     document.addEventListener('livewire:init', function () {
         Livewire.hook('request', ({ fail }) => {
-            fail(({ status, preventDefault }) => {
+            fail(({ status, content, preventDefault }) => {
                 if (status === 419) {
                     preventDefault();
                     window.location.href = '{{ route('login') }}';
+                }
+                // Platform support is viewing as someone else: a save was refused
+                if (status === 423) {
+                    preventDefault();
+                    let message = 'View only: nothing can be changed here.';
+                    try { message = JSON.parse(content).message || message; } catch (e) {}
+                    window.dispatchEvent(new CustomEvent('notification', { detail: { type: 'warning', message } }));
                 }
             });
         });

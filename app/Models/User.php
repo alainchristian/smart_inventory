@@ -220,6 +220,8 @@ class User extends Authenticatable
     // Update last login
     public function recordLogin(): void
     {
+        if (app(\App\Support\ViewAs::class)->active()) return;
+
         $this->update(['last_login_at' => now()]);
     }
 

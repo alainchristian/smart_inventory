@@ -139,6 +139,9 @@ class NotificationBell extends Component
     {
         if (!Auth::check()) return;
 
+        // Looking at someone's bell must not mark their notifications read
+        if (app(\App\Support\ViewAs::class)->active()) return;
+
         Auth::user()->update(['notifications_read_at' => now()]);
         unset($this->activityNotifications, $this->unreadActivityCount);
     }

@@ -24,6 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // production speed from DevTools; logs requests slower than 1s
         $middleware->prependToGroup('web', \App\Http\Middleware\ServerTiming::class);
 
+        // Platform support's read-only "view as": runs the request as the
+        // target account, rolled back. After the session starts, before the
+        // locale and password-change checks (which read the user).
+        $middleware->appendToGroup('web', \App\Http\Middleware\ViewAsMiddleware::class);
+
         // Resolve and set the request's locale before anything else runs
         // (flash messages, validation errors, etc. must already be in the right language)
         $middleware->appendToGroup('web', \App\Http\Middleware\SetLocale::class);
@@ -57,6 +62,18 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect()->route('login')->with('status', 'Your session has expired. Please sign in again.');
         });
 
+        // A save/delete attempted while platform support is viewing as someone else
+        $exceptions->dontReport(\App\Exceptions\ViewOnlyException::class);
+        $exceptions->render(function (
+            \App\Exceptions\ViewOnlyException $e,
+            \Illuminate\Http\Request $request
+        ) {
+            if ($request->expectsJson() || $request->hasHeader('X-Livewire')) {
+                return response()->json(['message' => $e->getMessage(), 'view_only' => true], 423);
+            }
+            return redirect()->back()->with('error', $e->getMessage());
+        });
+
         // Redirect authenticated users to their own dashboard on 403 instead of error page
         $exceptions->render(function (
             \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e,
@@ -69,6 +86,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if (auth()->check()) {
                 $user = auth()->user();
                 $route = match (true) {
+                    $user->isSuperAdmin()       => 'support.accounts',
                     $user->isOwner()            => 'owner.dashboard',
                     $user->isWarehouseManager() => 'warehouse.dashboard',
                     default                     => 'shop.dashboard',

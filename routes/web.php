@@ -66,6 +66,10 @@ Route::middleware(['auth'])->group(function () {
 // Platform support — account management only (see App\Livewire\Support\Accounts)
 Route::middleware(['auth', CheckRole::class . ':super_admin'])->prefix('support')->name('support.')->group(function () {
     Route::get('/accounts', function () { return view('support.accounts'); })->name('accounts');
+
+    // Read-only "view as": see another account's screens, change nothing
+    Route::post('/view-as/{user}', [\App\Http\Controllers\Support\ViewAsController::class, 'start'])->whereNumber('user')->name('view-as.start');
+    Route::post('/view-as-stop', [\App\Http\Controllers\Support\ViewAsController::class, 'stop'])->name('view-as.stop');
 });
 
 // Owner routes - Full system access

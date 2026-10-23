@@ -2422,7 +2422,36 @@ action is visible to the owner in Activity Logs as "Platform support".
 - **Audit:** `AuditLogger` writes `user_name = 'Platform support'` for this
   role. Actions: `support_user_created / _updated / _activated / _deactivated`,
   `support_password_reset`, `support_account_created / _removed`.
-- **Not built yet (phase 2):** the read-only "view as role" mode. It needs a
-  model-write guard plus a rolled-back request, because Livewire reads and
-  writes are all POSTs.
 - Tests: `tests/Feature/Support/SuperAdminTest.php`.
+
+### Read-only "view as" (2026-10-23)
+Support clicks **View as** on an account in the console and sees that
+person's real screens; nothing can be changed. Livewire reads and writes are
+all POSTs, so it can't be done by HTTP method. Three layers instead:
+- **Identity** (`ViewAsMiddleware`, in the `web` group after the session,
+  before the locale / password-change checks): for a signed-in support account
+  whose session holds `ViewAs::SESSION_KEY`, `Auth::setUser($target)` for that
+  request only. Nobody is logged in as them. `support.*` routes are never
+  impersonated (opening any of them leaves the mode; start / stop manage the
+  flag), so the console and Exit always act as the real support account.
+  Targets must be active business accounts, else the mode ends.
+- **Write block** (`DB::beforeExecuting` in `AppServiceProvider`): any
+  INSERT / UPDATE / DELETE / DDL throws `ViewOnlyException`, whether it came
+  from Eloquent, the query builder or raw SQL. Livewire / JSON callers get
+  **423**, which the layout's `Livewire.hook('request')` turns into a warning
+  toast; plain forms are redirected back with the message. Only `cache` /
+  `cache_locks` may be written (`ViewAs::WRITABLE_TABLES`).
+- **Safety net:** the request runs in a transaction that is always rolled back
+  (to the level it started at, never past it), `mail.default` = `array` and
+  `queue.default` = `null` for the request, restored afterwards.
+- Code that writes just because a page was *looked at* must skip when
+  `app(ViewAs::class)->active()`: `User::recordLogin()` and
+  `NotificationBell::markActivityRead()` do (viewing a bell must not mark the
+  person's notifications read). A test opens every simple owner / shop /
+  warehouse GET page as each role and fails on any 423, so a new read-time
+  write shows up there. It takes about two minutes.
+- Audit: `support_view_as_started` / `support_view_as_stopped` (written by the
+  start / stop routes, which are not rolled back). Page views are not logged.
+- Banner: fixed pill at the bottom of `layouts/app.blade.php` with an Exit
+  button (a plain POST form).
+- Tests: `tests/Feature/Support/ViewAsTest.php`.

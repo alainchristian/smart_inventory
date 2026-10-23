@@ -150,6 +150,12 @@
                             @endif
                         </td>
                         <td style="text-align:right">
+                            @if($u->is_active)
+                                <form method="POST" action="{{ route('support.view-as.start', $u->id) }}" style="display:inline">
+                                    @csrf
+                                    <button type="submit" class="sp-action" title="See this account's screens. Nothing can be changed.">View as</button>
+                                </form>
+                            @endif
                             <button type="button" class="sp-action" wire:click="openEdit({{ $u->id }})">Edit</button>
                             <button type="button" class="sp-action {{ $u->is_active ? 'danger' : 'restore' }}" wire:click="confirmToggle({{ $u->id }})">{{ $u->is_active ? 'Deactivate' : 'Activate' }}</button>
                         </td>
