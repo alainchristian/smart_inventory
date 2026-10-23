@@ -168,6 +168,22 @@ class SuperAdminTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'support@example.test']);
     }
 
+    public function test_command_can_read_the_password_from_the_environment_and_force_a_change(): void
+    {
+        putenv('SUPER_TEST_PW=correct-horse-battery');
+
+        $this->artisan('super:create', ['email' => 'env@example.test', '--password-env' => 'SUPER_TEST_PW', '--must-change' => true])
+            ->assertSuccessful();
+
+        $user = User::where('email', 'env@example.test')->firstOrFail();
+        $this->assertTrue($user->isSuperAdmin());
+        $this->assertTrue($user->must_change_password);
+        $this->assertTrue(password_verify('correct-horse-battery', $user->password));
+
+        putenv('SUPER_TEST_PW');
+        $this->artisan('super:create', ['email' => 'env2@example.test', '--password-env' => 'SUPER_TEST_PW'])->assertFailed();
+    }
+
     public function test_command_refuses_a_short_password_and_never_removes_other_roles(): void
     {
         $this->artisan('super:create', ['email' => 'short@example.test'])

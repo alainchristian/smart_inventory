@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Hash;
  */
 class CreateSuperAdmin extends Command
 {
-    protected $signature = 'super:create {email : Login email} {--name=Platform Support : Display name} {--remove : Delete the account instead}';
+    protected $signature = 'super:create {email : Login email} {--name=Platform Support : Display name} {--remove : Delete the account instead} {--must-change : Force a new password at first sign-in} {--password-env= : Read the password from this environment variable instead of asking}';
     protected $description = 'Create (or remove) a platform-support account that manages users but cannot operate the business';
 
     public function handle(): int
@@ -45,12 +45,17 @@ class CreateSuperAdmin extends Command
             return self::FAILURE;
         }
 
-        $password = $this->secret('Password (min 12 characters)');
+        if ($envName = $this->option('password-env')) {
+            // For terminals that can't prompt: the value never appears on the command line
+            $password = (string) getenv($envName);
+        } else {
+            $password = $this->secret('Password (min 12 characters)');
+        }
         if (strlen((string) $password) < 12) {
             $this->error('The password must be at least 12 characters.');
             return self::FAILURE;
         }
-        if ($password !== $this->secret('Repeat password')) {
+        if (! $this->option('password-env') && $password !== $this->secret('Repeat password')) {
             $this->error('The passwords do not match.');
             return self::FAILURE;
         }
@@ -61,7 +66,7 @@ class CreateSuperAdmin extends Command
             'password'             => Hash::make($password),
             'role'                 => UserRole::SUPER_ADMIN,
             'is_active'            => true,
-            'must_change_password' => false,
+            'must_change_password' => (bool) $this->option('must-change'),
         ]);
 
         AuditLogger::log([
