@@ -20,7 +20,12 @@
 
     <!-- Role/Location Badge -->
     <div class="px-4 py-2 border-b border-r border-[var(--border)]" style="background: var(--surface2); border-color: var(--border);">
-        @if(auth()->user()->isAdmin())
+        @if(auth()->user()->isSuperAdmin())
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded" style="background: var(--amber-dim); color: var(--amber);">{{ __('Support') }}</span>
+                <span class="text-xs" style="color: var(--text-sub);">{{ __('Accounts only') }}</span>
+            </div>
+        @elseif(auth()->user()->isAdmin())
             <div class="flex items-center space-x-2">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded" style="background: var(--red-dim); color: var(--red);">{{ __('Admin') }}</span>
                 <span class="text-xs" style="color: var(--text-sub);">{{ __('System Access') }}</span>
@@ -56,7 +61,21 @@
         openDayClose: {{ request()->routeIs('shop.day-close.*') ? 'true' : 'false' }},
         openMasterData: {{ request()->routeIs('owner.categories.*') || request()->routeIs('owner.expense-categories.*') || request()->routeIs('owner.transporters.*') || request()->routeIs('owner.customers.*') ? 'true' : 'false' }}
     }">
-        @if(auth()->user()->isAdmin())
+        @if(auth()->user()->isSuperAdmin())
+            <div class="space-y-1">
+                <a href="{{ route('support.accounts') }}" wire:navigate
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                          {{ request()->routeIs('support.accounts') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                    @if(request()->routeIs('support.accounts'))
+                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                    @endif
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <span class="text-[14px] font-medium">{{ __('Accounts') }}</span>
+                </a>
+            </div>
+        @elseif(auth()->user()->isAdmin())
             {{-- ADMIN MENU — full system access, unchanged --}}
             <!-- Overview Section -->
             <div>

@@ -72,7 +72,7 @@ class Dashboard extends Component
 
     public function getRecentUsers()
     {
-        return User::with('location')
+        return User::visibleToBusiness()->with('location')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();

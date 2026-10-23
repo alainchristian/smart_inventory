@@ -35,6 +35,7 @@ class Topbar extends Component
         'owner.inventory.receive'            => 'Receive Stock',
         'owner.customers.index'              => 'Customers',
         'owner.users.index'                  => 'Users',
+        'support.accounts'                   => 'Accounts',
         'owner.shops.index'                  => 'Shops',
         'owner.warehouses.index'             => 'Warehouses',
         'owner.transporters.index'           => 'Transporters',

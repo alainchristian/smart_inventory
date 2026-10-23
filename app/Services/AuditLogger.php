@@ -27,7 +27,7 @@ class AuditLogger
 
         return ActivityLog::create([
             'user_id'             => $data['actor_id'] ?? $user?->id,
-            'user_name'           => $data['actor_name'] ?? $user?->name ?? 'System',
+            'user_name'           => $data['actor_name'] ?? ($user?->isSuperAdmin() ? 'Platform support' : $user?->name) ?? 'System',
             'actor_type'          => $data['actor_type'] ?? ($user ? 'user' : 'system'),
             'actor_role_snapshot' => $data['actor_role_snapshot'] ?? $user?->effectiveRole()?->value,
             'action'              => $data['action'],

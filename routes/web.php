@@ -63,6 +63,11 @@ Route::middleware(['auth'])->group(function () {
     })->name('password.change');
 });
 
+// Platform support — account management only (see App\Livewire\Support\Accounts)
+Route::middleware(['auth', CheckRole::class . ':super_admin'])->prefix('support')->name('support.')->group(function () {
+    Route::get('/accounts', function () { return view('support.accounts'); })->name('accounts');
+});
+
 // Owner routes - Full system access
 Route::middleware(['auth', CheckRole::class . ':owner'])->prefix('owner')->name('owner.')->group(function () {
     Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');

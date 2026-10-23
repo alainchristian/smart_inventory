@@ -77,7 +77,7 @@ class BusinessSnapshot extends Component
             'shops'     => Shop::where('is_active', true)->count(),
             'customers' => Customer::count(),
             'products'  => Product::whereNull('deleted_at')->count(),
-            'users'     => User::where('is_active', true)->count(),
+            'users'     => User::visibleToBusiness()->where('is_active', true)->count(),
         ];
 
         // ── Warehouse Overview ────────────────────────────────────────────

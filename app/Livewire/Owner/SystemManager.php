@@ -103,7 +103,7 @@ class SystemManager extends Component
                     }
                 }
                 if (isset($sel['users'])) {
-                    DB::table('users')->where('id', '!=', $ownerId)->delete();
+                    DB::table('users')->where('id', '!=', $ownerId)->where('role', '!=', 'super_admin')->delete();
                 }
             });
 

@@ -134,6 +134,16 @@ class User extends Authenticatable
         return $this->role === UserRole::SHOP_MANAGER;
     }
 
+    /**
+     * Platform support: manages accounts, never operates the business.
+     * Fails every isOwner()/isAdmin()/manager check, so it has no access to
+     * sales, stock, money or reports unless a route lists 'super_admin'.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === UserRole::SUPER_ADMIN;
+    }
+
     /** Admin or Owner — both have full system access. */
     public function isSuperUser(): bool
     {
@@ -152,6 +162,11 @@ class User extends Authenticatable
     {
         // Nobody manages themselves through this (handled separately)
         if ($this->id === $target->id) return false;
+
+        // Support accounts are created and removed from the server only
+        if ($target->isSuperAdmin()) return false;
+
+        if ($this->isSuperAdmin()) return true;
 
         if ($this->isOwner()) {
             // Owner manages everyone except other owners
@@ -216,8 +231,15 @@ class User extends Authenticatable
             UserRole::OWNER => route('owner.dashboard'),
             UserRole::WAREHOUSE_MANAGER => route('warehouse.dashboard'),
             UserRole::SHOP_MANAGER => route('shop.dashboard'),
+            UserRole::SUPER_ADMIN => route('support.accounts'),
             default => route('login'),
         };
+    }
+
+    /** Everyone the business can see: leaves out platform-support accounts. */
+    public function scopeVisibleToBusiness($query)
+    {
+        return $query->where('users.role', '!=', UserRole::SUPER_ADMIN->value);
     }
 
     public function scopeActive($query)

@@ -8,6 +8,7 @@ enum UserRole: string
     case ADMIN             = 'admin';
     case WAREHOUSE_MANAGER = 'warehouse_manager';
     case SHOP_MANAGER      = 'shop_manager';
+    case SUPER_ADMIN       = 'super_admin';
 
     public function label(): string
     {
@@ -16,6 +17,7 @@ enum UserRole: string
             self::ADMIN             => 'Admin',
             self::WAREHOUSE_MANAGER => 'Warehouse Manager',
             self::SHOP_MANAGER      => 'Shop Manager',
+            self::SUPER_ADMIN       => 'Platform Support',
         };
     }
 
@@ -76,6 +78,10 @@ enum UserRole: string
                 'create_sales',
                 'process_returns',
                 'view_shop_reports',
+            ],
+            // Accounts only: no operational permission of any kind.
+            self::SUPER_ADMIN => [
+                'manage_users',
             ],
         };
     }

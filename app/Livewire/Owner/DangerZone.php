@@ -73,7 +73,7 @@ class DangerZone extends Component
                 DB::table($table)->delete();
             }
 
-            DB::table('users')->where('id', '!=', $ownerId)->delete();
+            DB::table('users')->where('id', '!=', $ownerId)->where('role', '!=', 'super_admin')->delete();
 
             DB::table('products')->delete();
             DB::table('categories')->delete();

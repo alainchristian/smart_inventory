@@ -2393,3 +2393,36 @@ is a select of active transporters (name · vehicle · company) plus "Not in
 the list — type a name" (`'new'` → `transporterName`, created on dispatch).
 Choosing one fills "Handed to" with its name (editable). A failed dispatch
 dispatches `tfd-invalid` and the sheet scrolls to the first error.
+
+---
+
+## Platform support role — `super_admin` (2026-10-23)
+
+A hidden account for the developer. It manages every business account
+(owners included) and can do **nothing else**: no sales, stock, money or
+reports. Decided with the user: hidden from the business's lists, but every
+action is visible to the owner in Activity Logs as "Platform support".
+
+- **Role:** `UserRole::SUPER_ADMIN` (migration `2026_10_23_000001`, outside a
+  transaction). `User::isSuperAdmin()` is a separate name from the older
+  `isSuperUser()`, which means owner-or-admin. The role fails every
+  `isOwner()` / `isAdmin()` / manager check, so a new page is closed to it
+  unless the route lists `super_admin` in `CheckRole`.
+- **Console:** `support.accounts` (`/support/accounts`,
+  `Livewire\Support\Accounts`, prefix `sp-`). Create, edit, reset password
+  (forces a change at next sign-in), activate / deactivate. It cannot assign
+  `super_admin`, and it refuses to deactivate or demote the last active owner.
+- **Created only from the server:** `php artisan super:create <email>`
+  (password ≥ 12 chars; `--remove` deletes one). There is no screen for it, so
+  no owner or admin can grant the role.
+- **Hidden:** `User::visibleToBusiness()` is applied in the owner Users list
+  (list, KPI counts, edit, toggle), dashboard user counts and recent users.
+  The System Manager and Danger Zone wipes skip `super_admin` rows.
+  **Any new query that lists or counts users for the business must use it.**
+- **Audit:** `AuditLogger` writes `user_name = 'Platform support'` for this
+  role. Actions: `support_user_created / _updated / _activated / _deactivated`,
+  `support_password_reset`, `support_account_created / _removed`.
+- **Not built yet (phase 2):** the read-only "view as role" mode. It needs a
+  model-write guard plus a rolled-back request, because Livewire reads and
+  writes are all POSTs.
+- Tests: `tests/Feature/Support/SuperAdminTest.php`.

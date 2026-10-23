@@ -165,7 +165,7 @@ class BusinessKpiRow extends Component
         $this->locations = [
             'warehouses'        => (int) $wh->total,
             'shops'             => (int) $shop->total,
-            'users'             => User::count(),
+            'users'             => User::visibleToBusiness()->count(),
             'active_warehouses' => (int) $wh->active,
             'active_shops'      => (int) $shop->active,
         ];

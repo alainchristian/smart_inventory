@@ -84,7 +84,7 @@ class UserList extends Component
 
     public function openEdit(int $userId): void
     {
-        $user = User::findOrFail($userId);
+        $user = User::visibleToBusiness()->findOrFail($userId);
 
         $this->resetForm();
         $this->isEditing  = true;
@@ -157,7 +157,7 @@ class UserList extends Component
 
         // Admin cannot edit Owner or Admin accounts
         if ($this->isEditing && $currentUser->isAdmin()) {
-            $target = User::find($this->editingId);
+            $target = User::visibleToBusiness()->find($this->editingId);
             if ($target && ($target->isOwner() || $target->isAdmin())) {
                 $this->dispatch('notification', [
                     'type'    => 'error',
@@ -193,7 +193,7 @@ class UserList extends Component
         }
 
         if ($this->isEditing) {
-            $user = User::findOrFail($this->editingId);
+            $user = User::visibleToBusiness()->findOrFail($this->editingId);
 
             // Prevent owner from deactivating themselves
             if ($user->id === auth()->id() && !$this->form_is_active) {
@@ -242,7 +242,7 @@ class UserList extends Component
 
     public function confirmToggle(int $userId): void
     {
-        $user        = User::findOrFail($userId);
+        $user        = User::visibleToBusiness()->findOrFail($userId);
         $currentUser = auth()->user();
 
         if ($user->id === auth()->id()) {
@@ -271,7 +271,7 @@ class UserList extends Component
     {
         if (!$this->confirmToggleId) return;
 
-        $user   = User::findOrFail($this->confirmToggleId);
+        $user   = User::visibleToBusiness()->findOrFail($this->confirmToggleId);
         $newState = !$user->is_active;
 
         $user->update(['is_active' => $newState]);
@@ -341,7 +341,7 @@ class UserList extends Component
 
     public function render()
     {
-        $users = User::query()
+        $users = User::visibleToBusiness()
             ->with('location')
             ->when($this->search, function ($q) {
                 $q->where(function ($q2) {
@@ -360,7 +360,7 @@ class UserList extends Component
             ->paginate(20);
 
         // One query for every KPI card and its footer
-        $c = User::query()->toBase()->selectRaw("
+        $c = User::visibleToBusiness()->toBase()->selectRaw("
                 COUNT(*)                                                                 AS total,
                 COUNT(*) FILTER (WHERE is_active)                                        AS active,
                 COUNT(*) FILTER (WHERE created_at >= ?)                                  AS added_this_month,
