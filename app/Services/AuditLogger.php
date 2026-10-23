@@ -64,7 +64,7 @@ class AuditLogger
      */
     protected static function redact(?array $values): ?array
     {
-        return $values ? Arr::except($values, ['password', 'remember_token']) : $values;
+        return $values ? Arr::except($values, ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes']) : $values;
     }
 
     /**

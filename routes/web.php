@@ -57,6 +57,17 @@ require __DIR__.'/auth.php';
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [LoginRedirectController::class, 'redirect'])->name('dashboard');
 
+    // Two-step sign-in for platform support (see RequireTwoFactor). Plain
+    // controller routes, never Livewire: the update endpoint stays shut until the code is passed.
+    Route::prefix('two-factor')->name('two-factor.')->controller(\App\Http\Controllers\Auth\TwoFactorController::class)->group(function () {
+        Route::get('/', 'challenge')->name('challenge');
+        Route::post('/', 'verify')->name('verify');
+        Route::get('/setup', 'setup')->name('setup');
+        Route::post('/setup', 'confirm')->name('confirm');
+        Route::get('/codes', 'codes')->name('codes');
+        Route::post('/codes', 'codesDone')->name('codes.done');
+    });
+
     // Forced password change (new users)
     Route::get('/change-password', function () {
         return view('auth.change-password');
@@ -66,6 +77,7 @@ Route::middleware(['auth'])->group(function () {
 // Platform support — account management only (see App\Livewire\Support\Accounts)
 Route::middleware(['auth', CheckRole::class . ':super_admin'])->prefix('support')->name('support.')->group(function () {
     Route::get('/accounts', function () { return view('support.accounts'); })->name('accounts');
+    Route::get('/activity-logs', function () { return view('support.activity-logs'); })->name('activity-logs');
 
     // Read-only "view as": see another account's screens, change nothing
     Route::post('/view-as/{user}', [\App\Http\Controllers\Support\ViewAsController::class, 'start'])->whereNumber('user')->name('view-as.start');

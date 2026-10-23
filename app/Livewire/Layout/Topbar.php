@@ -36,6 +36,7 @@ class Topbar extends Component
         'owner.customers.index'              => 'Customers',
         'owner.users.index'                  => 'Users',
         'support.accounts'                   => 'Accounts',
+        'support.activity-logs'              => 'Activity Logs',
         'owner.shops.index'                  => 'Shops',
         'owner.warehouses.index'             => 'Warehouses',
         'owner.transporters.index'           => 'Transporters',

@@ -24,21 +24,45 @@ class SuperAdminTest extends TestCase
         ], $extra));
     }
 
+    /** Signed in as support, past the two-step check (that has its own tests). */
+    private function asSupport(User $support): static
+    {
+        return $this->actingAs($support)->withSession([\App\Http\Middleware\RequireTwoFactor::SESSION_KEY => $support->id]);
+    }
+
     public function test_support_account_lands_on_accounts_and_nowhere_operational(): void
     {
         $support = $this->user('super_admin');
 
         $this->assertSame(route('support.accounts'), $support->getDashboardRoute());
-        $this->actingAs($support)->get(route('support.accounts'))->assertOk();
+        $this->asSupport($support)->get(route('support.accounts'))->assertOk();
 
         foreach (['owner.dashboard', 'owner.users.index', 'owner.settings', 'shop.dashboard', 'warehouse.dashboard'] as $route) {
-            $this->actingAs($support)->get(route($route))->assertForbidden();
+            $this->asSupport($support)->get(route($route))->assertForbidden();
         }
 
         $this->assertFalse($support->isOwner());
         $this->assertFalse($support->isAdmin());
         $this->assertFalse($support->canViewPurchasePrices());
         $this->assertFalse($support->canApprovePriceOverrides());
+    }
+
+    public function test_support_reads_everyones_activity_including_its_own(): void
+    {
+        $support = $this->user('super_admin');
+        $shop    = $this->user('shop_manager', ['name' => 'Seller Sam']);
+
+        \App\Services\AuditLogger::log(['actor' => $shop, 'action' => 'sale_completed', 'module' => 'sales', 'entity_type' => 'Sale', 'entity_identifier' => 'SALE-1']);
+        \App\Services\AuditLogger::log(['actor' => $support, 'action' => 'support_password_reset', 'module' => 'users', 'entity_type' => 'User', 'entity_identifier' => 'x@example.test']);
+
+        $this->asSupport($support)->get(route('support.activity-logs'))
+            ->assertOk()
+            ->assertSee('Seller Sam')
+            ->assertSee('Platform support');
+
+        // Still closed to the roles that were never meant to read it
+        $this->actingAs($shop)->get(route('support.activity-logs'))->assertForbidden();
+        $this->actingAs($shop)->get(route('owner.activity-logs.index'))->assertForbidden();
     }
 
     public function test_nobody_else_reaches_the_support_console(): void

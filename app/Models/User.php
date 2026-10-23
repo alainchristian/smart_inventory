@@ -34,6 +34,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected $casts = [
@@ -45,6 +47,9 @@ class User extends Authenticatable
         'location_type' => LocationType::class,
         'is_active' => 'boolean',
         'must_change_password' => 'boolean',
+        'two_factor_secret' => 'encrypted',
+        'two_factor_recovery_codes' => 'array',
+        'two_factor_confirmed_at' => 'datetime',
     ];
 
     // Relationships
@@ -142,6 +147,17 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->role === UserRole::SUPER_ADMIN;
+    }
+
+    /** Two-step sign-in is mandatory for platform support (it can reset an owner's password). */
+    public function requiresTwoFactor(): bool
+    {
+        return $this->isSuperAdmin();
+    }
+
+    public function hasTwoFactor(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && $this->two_factor_secret !== null;
     }
 
     /** Admin or Owner — both have full system access. */

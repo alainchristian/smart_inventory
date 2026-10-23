@@ -2455,3 +2455,33 @@ all POSTs, so it can't be done by HTTP method. Three layers instead:
 - Banner: fixed pill at the bottom of `layouts/app.blade.php` with an Exit
   button (a plain POST form).
 - Tests: `tests/Feature/Support/ViewAsTest.php`.
+
+### Two-step sign-in for platform support (2026-10-24)
+Mandatory for `super_admin` only (`User::requiresTwoFactor()`); owners and
+managers sign in as before. Authenticator app (TOTP, RFC 6238): free, no SMS
+or mail needed, no new package (`App\Support\Totp`, checked against the RFC
+test vectors; QR from the already-installed simple-qrcode).
+- **Gate:** `RequireTwoFactor` (web group, before `ViewAsMiddleware`). Until
+  the session holds `two_factor_passed_for = user id`, a support account can
+  reach only `two-factor.*` and `logout`; everything else redirects (JSON /
+  Livewire gets 401). The pages are plain controller routes
+  (`Auth\TwoFactorController`), never Livewire, so Livewire's update endpoint
+  stays shut. The flag lives in the session, so a "remember me" login asks again.
+- **Setup is forced** at first sign-in and can't be skipped: QR + typed key,
+  confirm with one code, then 8 recovery codes shown once (stored hashed).
+- **Rules:** one code works once (`users.two_factor_last_step`), ±1 step of
+  clock drift, 5 wrong tries → 15 min lock **per account** (not per IP: the
+  forwarded IP is spoofable). Failures, recovery-code use, setup and reset are
+  audited (`two_factor_failed / _recovery_used / _enabled / _reset`).
+- **Secret** is encrypted with APP_KEY. **Rotating APP_KEY makes it
+  unreadable**, so run `super:reset-2fa` afterwards.
+- **Lost phone and codes:** `php artisan super:reset-2fa <email>` (server
+  only; the account sets 2FA up again at next sign-in).
+- Tests: `tests/Feature/Support/TwoFactorTest.php`. Other support tests sign
+  in through their `asSupport()` helper, which sets the passed flag.
+
+### Support Activity Logs (2026-10-24)
+`support.activity-logs` reuses `Owner\ActivityLogs` (now has a `mount()` check
+for owner / admin / super_admin) so support can read what every account did,
+its own actions included as "Platform support". Links inside log rows that
+point at owner-only pages won't open for support.

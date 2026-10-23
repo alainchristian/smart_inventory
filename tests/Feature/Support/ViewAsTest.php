@@ -23,10 +23,16 @@ class ViewAsTest extends TestCase
         ], $extra));
     }
 
+    /** Signed in as support, past the two-step check (that has its own tests). */
+    private function asSupport(User $support): static
+    {
+        return $this->actingAs($support)->withSession([\App\Http\Middleware\RequireTwoFactor::SESSION_KEY => $support->id]);
+    }
+
     /** Signed in as support, with view-as pointed at $target. */
     private function viewing(User $support, User $target): static
     {
-        return $this->actingAs($support)->withSession([ViewAs::SESSION_KEY => $target->id]);
+        return $this->asSupport($support)->withSession([ViewAs::SESSION_KEY => $target->id]);
     }
 
     public function test_start_shows_the_targets_screens_with_a_banner(): void
@@ -34,7 +40,7 @@ class ViewAsTest extends TestCase
         $support = $this->user('super_admin');
         $owner   = $this->user('owner', ['name' => 'Olivia Owner']);
 
-        $this->actingAs($support)->post(route('support.view-as.start', $owner->id))
+        $this->asSupport($support)->post(route('support.view-as.start', $owner->id))
             ->assertRedirect($owner->getDashboardRoute());
         $this->assertSame($owner->id, session(ViewAs::SESSION_KEY));
         $this->assertDatabaseHas('activity_logs', ['action' => 'support_view_as_started', 'entity_id' => $owner->id]);
@@ -52,8 +58,8 @@ class ViewAsTest extends TestCase
         $inactive = $this->user('owner', ['is_active' => false]);
         $other    = $this->user('super_admin');
 
-        $this->actingAs($support)->post(route('support.view-as.start', $inactive->id))->assertNotFound();
-        $this->actingAs($support)->post(route('support.view-as.start', $other->id))->assertNotFound();
+        $this->asSupport($support)->post(route('support.view-as.start', $inactive->id))->assertNotFound();
+        $this->asSupport($support)->post(route('support.view-as.start', $other->id))->assertNotFound();
         $this->actingAs($this->user('owner'))->post(route('support.view-as.start', $inactive->id))->assertForbidden();
     }
 
@@ -136,7 +142,7 @@ class ViewAsTest extends TestCase
         $this->assertNull(session(ViewAs::SESSION_KEY));
 
         // Back on an operational page the support account is itself again: forbidden
-        $this->actingAs($support)->get(route('owner.dashboard'))->assertForbidden();
+        $this->asSupport($support)->get(route('owner.dashboard'))->assertForbidden();
     }
 
     public function test_exit_clears_the_mode_and_is_audited(): void

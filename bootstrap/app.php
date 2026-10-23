@@ -24,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // production speed from DevTools; logs requests slower than 1s
         $middleware->prependToGroup('web', \App\Http\Middleware\ServerTiming::class);
 
+        // Platform support must pass its second sign-in step before anything else
+        $middleware->appendToGroup('web', \App\Http\Middleware\RequireTwoFactor::class);
+
         // Platform support's read-only "view as": runs the request as the
         // target account, rolled back. After the session starts, before the
         // locale and password-change checks (which read the user).

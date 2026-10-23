@@ -74,6 +74,18 @@
                     </svg>
                     <span class="text-[14px] font-medium">{{ __('Accounts') }}</span>
                 </a>
+
+                <a href="{{ route('support.activity-logs') }}" wire:navigate
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
+                          {{ request()->routeIs('support.activity-logs') ? 'bg-[var(--accent-glow)] text-[var(--accent)]' : 'text-[var(--text-sub)] hover:bg-[var(--surface2)] hover:text-[var(--text)]' }}">
+                    @if(request()->routeIs('support.activity-logs'))
+                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] rounded-r"></div>
+                    @endif
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="text-[14px] font-medium">{{ __('Activity Logs') }}</span>
+                </a>
             </div>
         @elseif(auth()->user()->isAdmin())
             {{-- ADMIN MENU — full system access, unchanged --}}

@@ -47,6 +47,13 @@ class ActivityLogs extends Component
         'sortDir'          => ['except' => 'desc'],
     ];
 
+    /** The routes already gate this; this is the second lock. Platform support reads the same trail. */
+    public function mount(): void
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->isOwner() || $user->isAdmin() || $user->isSuperAdmin()), 403);
+    }
+
     public function updatedSearch(): void         { $this->resetPage(); }
     public function updatedFilterUser(): void     { $this->resetPage(); }
     public function updatedFilterAction(): void   { $this->resetPage(); }
