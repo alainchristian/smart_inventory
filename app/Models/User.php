@@ -149,10 +149,13 @@ class User extends Authenticatable
         return $this->role === UserRole::SUPER_ADMIN;
     }
 
-    /** Two-step sign-in is mandatory for platform support (it can reset an owner's password). */
+    /**
+     * Two-step sign-in for platform support (it can reset an owner's password).
+     * Switched on with SUPPORT_REQUIRE_2FA=true; off by default for now.
+     */
     public function requiresTwoFactor(): bool
     {
-        return $this->isSuperAdmin();
+        return $this->isSuperAdmin() && config('auth.support_two_factor');
     }
 
     public function hasTwoFactor(): bool

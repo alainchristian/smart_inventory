@@ -15,6 +15,22 @@ class TwoFactorTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['auth.support_two_factor' => true]);   // off by default; these tests are about it being on
+    }
+
+    public function test_it_is_off_by_default_and_nothing_is_asked_for(): void
+    {
+        config(['auth.support_two_factor' => false]);
+        [$user] = $this->enrolled();   // even with a set-up secret on file
+
+        $this->assertFalse($user->requiresTwoFactor());
+        $this->actingAs($user)->get(route('support.accounts'))->assertOk();
+        $this->actingAs($user)->get(route('two-factor.challenge'))->assertRedirect(route('dashboard'));
+    }
+
     private function user(string $role, array $extra = []): User
     {
         return User::forceCreate(array_merge([

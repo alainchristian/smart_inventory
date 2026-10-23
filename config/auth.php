@@ -112,4 +112,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Two-step sign-in for platform support
+    |--------------------------------------------------------------------------
+    |
+    | Off for now. Set SUPPORT_REQUIRE_2FA=true to make every platform-support
+    | account pass an authenticator-app code after its password (see
+    | App\Http\Middleware\RequireTwoFactor). Anything already set up is kept.
+    |
+    */
+
+    'support_two_factor' => (bool) env('SUPPORT_REQUIRE_2FA', false),
+
 ];

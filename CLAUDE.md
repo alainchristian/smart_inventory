@@ -2457,7 +2457,15 @@ all POSTs, so it can't be done by HTTP method. Three layers instead:
 - Tests: `tests/Feature/Support/ViewAsTest.php`.
 
 ### Two-step sign-in for platform support (2026-10-24)
-Mandatory for `super_admin` only (`User::requiresTwoFactor()`); owners and
+**Currently OFF (user decision, 2026-10-24: "disable for now, update later").**
+The switch is `config('auth.support_two_factor')`, env `SUPPORT_REQUIRE_2FA`
+(default false). To turn it on, set `SUPPORT_REQUIRE_2FA=true` on Railway
+(no code change); the account then sets up at its next sign-in. The user
+also asked about email / SMS codes: production has no `MAIL_*` or SMS
+settings, so those would need a provider first (email is the weaker second
+factor because it is the same mailbox as the login). Nothing below was removed.
+
+When on, it is for `super_admin` only (`User::requiresTwoFactor()`); owners and
 managers sign in as before. Authenticator app (TOTP, RFC 6238): free, no SMS
 or mail needed, no new package (`App\Support\Totp`, checked against the RFC
 test vectors; QR from the already-installed simple-qrcode).
