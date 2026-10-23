@@ -65,6 +65,25 @@ class SuperAdminTest extends TestCase
         $this->actingAs($shop)->get(route('owner.activity-logs.index'))->assertForbidden();
     }
 
+    public function test_each_account_row_links_to_that_persons_activity(): void
+    {
+        $support = $this->user('super_admin');
+        $sam     = $this->user('shop_manager', ['name' => 'Seller Sam']);
+        $zoe     = $this->user('shop_manager', ['name' => 'Seller Zoe']);
+
+        \App\Services\AuditLogger::log(['actor' => $sam, 'action' => 'sale_completed', 'module' => 'sales', 'entity_type' => 'Sale', 'entity_identifier' => 'SALE-SAM']);
+        \App\Services\AuditLogger::log(['actor' => $zoe, 'action' => 'sale_completed', 'module' => 'sales', 'entity_type' => 'Sale', 'entity_identifier' => 'SALE-ZOE']);
+
+        $link = route('support.activity-logs', ['filterUser' => $sam->id]);
+
+        Livewire::actingAs($support)->test(Accounts::class)->assertSeeHtml('href="' . $link . '"');
+
+        // The link opens the logs with only that person's rows
+        $this->asSupport($support)->get($link)->assertOk()
+            ->assertSee('SALE-SAM')
+            ->assertDontSee('SALE-ZOE');
+    }
+
     public function test_nobody_else_reaches_the_support_console(): void
     {
         foreach (['owner', 'admin', 'shop_manager', 'warehouse_manager'] as $role) {

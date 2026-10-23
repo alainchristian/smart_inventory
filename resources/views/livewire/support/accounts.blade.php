@@ -15,6 +15,7 @@
 .sp-btn-primary { display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--rsm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);box-shadow:0 3px 10px rgba(59,111,212,.25);transition:opacity var(--tr);white-space:nowrap }
 .sp-btn-primary:hover { opacity:.88 }
 .sp-action { padding:5px 11px;border-radius:7px;border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--text-sub);transition:all var(--tr);white-space:nowrap }
+a.sp-action { display:inline-block;text-decoration:none }
 .sp-action:hover { border-color:var(--accent);color:var(--accent) }
 .sp-action.danger:hover { border-color:var(--amber);color:var(--amber) }
 .sp-action.restore:hover { border-color:var(--green);color:var(--green) }
@@ -156,6 +157,7 @@
                                     <button type="submit" class="sp-action" title="See this account's screens. Nothing can be changed.">View as</button>
                                 </form>
                             @endif
+                            <a href="{{ route('support.activity-logs', ['filterUser' => $u->id]) }}" wire:navigate class="sp-action" title="Everything {{ $u->name }} has done">Activity</a>
                             <button type="button" class="sp-action" wire:click="openEdit({{ $u->id }})">Edit</button>
                             <button type="button" class="sp-action {{ $u->is_active ? 'danger' : 'restore' }}" wire:click="confirmToggle({{ $u->id }})">{{ $u->is_active ? 'Deactivate' : 'Activate' }}</button>
                         </td>
