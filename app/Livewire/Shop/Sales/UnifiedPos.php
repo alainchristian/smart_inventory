@@ -20,11 +20,13 @@ use Livewire\Component;
 
 class UnifiedPos extends Component
 {
+    use \App\Livewire\Concerns\PinsToOwnLocation;
     use \App\Livewire\Concerns\RequiresOpenSession;
 
     // ── Shop & Warehouse context ──────────────────────────────────────────────
     public $shopId;
     public string $shopName    = '';
+    #[\Livewire\Attributes\Locked]
     public ?int $warehouseId   = null;
     public string $warehouseName = '';
     public bool $isOwner       = false;

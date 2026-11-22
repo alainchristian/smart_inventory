@@ -9,6 +9,7 @@ use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Locked;
 
 class StockLevels extends Component
 {
@@ -16,6 +17,7 @@ class StockLevels extends Component
 
     public string $search        = '';
     public string $statusFilter  = 'in_stock'; // in_stock | low | previously_stocked
+    #[Locked]
     public int    $shopId;
 
     protected $queryString = [

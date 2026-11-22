@@ -6,9 +6,11 @@ use App\Models\Sale;
 use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 class SalesIndex extends Component
 {
+    #[Locked]
     public int    $shopId;
     public string $search         = '';
     public string $dateFilter     = 'today';

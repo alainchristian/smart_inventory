@@ -7,9 +7,11 @@ use App\Models\Sale;
 use App\Models\Warehouse;
 use App\Services\SettingsService;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 class FulfillmentQueue extends Component
 {
+    #[Locked]
     public int $warehouseId;
     public string $warehouseName = '';
     public string $dispatchMethod = 'queue';

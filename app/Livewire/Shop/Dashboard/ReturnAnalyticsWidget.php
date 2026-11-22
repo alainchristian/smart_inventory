@@ -7,9 +7,11 @@ use App\Models\Sale;
 use App\Models\Shop;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Locked;
 
 class ReturnAnalyticsWidget extends Component
 {
+    #[Locked]
     public $shopId;
     public $period = '30'; // days
 

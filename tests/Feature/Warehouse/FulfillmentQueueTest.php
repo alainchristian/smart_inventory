@@ -182,15 +182,14 @@ class FulfillmentQueueTest extends TestCase
     public function test_shop_manager_cannot_dispatch(): void
     {
         $sale = $this->pendingSale(1, ['cash' => 30000]);
-        $owner = User::forceCreate(['name' => 'Owner', 'email' => 'o' . uniqid() . '@example.test', 'password' => bcrypt('x'), 'role' => 'owner']);
         $shopManager = User::forceCreate([
             'name' => 'Shop Mgr', 'email' => 'sm' . uniqid() . '@example.test', 'password' => bcrypt('x'),
             'role' => 'shop_manager', 'location_type' => 'shop', 'location_id' => $this->shopId,
         ]);
 
-        // Mount as the owner (who can see a warehouse), then act as a shop manager
-        $c = Livewire::actingAs($owner)->test(FulfillmentQueue::class);
-        $c->set('warehouseId', $this->warehouseId);
+        // Mount legitimately as the warehouse's manager (warehouseId is #[Locked], so a
+        // test can't set it from the "browser"), then act as a shop manager.
+        $c = Livewire::actingAs($this->manager)->test(FulfillmentQueue::class);
         $this->actingAs($shopManager);
         $c->call('requestFulfillment', $sale->id)
             ->assertSet('confirmingFulfillmentId', null)

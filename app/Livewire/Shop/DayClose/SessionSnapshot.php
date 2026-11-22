@@ -7,9 +7,11 @@ use App\Services\DayClose\DailySessionService;
 use App\Services\SettingsService;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 class SessionSnapshot extends Component
 {
+    #[Locked]
     public int $sessionId;
 
     #[On('session-selected')]

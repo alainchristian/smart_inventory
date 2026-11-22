@@ -12,6 +12,7 @@ use Livewire\WithPagination;
 
 class StockLevels extends Component
 {
+    use \App\Livewire\Concerns\PinsToOwnLocation;
     use WithPagination;
 
     public ?int $warehouseId = null;

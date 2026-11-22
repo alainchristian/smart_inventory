@@ -6,9 +6,11 @@ use App\Models\Sale;
 use App\Models\Transfer;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 class Dashboard extends Component
 {
+    #[Locked]
     public $shopId;
     public $refreshInterval = 30000; // milliseconds (30 seconds for POS updates)
     public $selectedDate;

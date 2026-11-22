@@ -11,11 +11,13 @@ use App\Models\Alert;
 use App\Models\ReturnModel;
 use App\Services\Returns\ReturnService;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 class ProcessReturn extends Component
 {
     use \App\Livewire\Concerns\RequiresOpenSession;
     // Shop
+    #[Locked]
     public $shopId;
     public $shopName;
 

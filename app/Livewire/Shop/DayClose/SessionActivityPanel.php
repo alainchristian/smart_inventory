@@ -4,9 +4,11 @@ namespace App\Livewire\Shop\DayClose;
 
 use App\Models\DailySession;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 class SessionActivityPanel extends Component
 {
+    #[Locked]
     public int    $shopId           = 0;
     public ?int   $viewingSessionId = null;
     public string $search           = '';

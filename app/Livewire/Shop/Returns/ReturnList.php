@@ -7,12 +7,14 @@ use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Locked;
 
 class ReturnList extends Component
 {
     use WithPagination;
     use \App\Livewire\Concerns\RequiresOpenSession;
 
+    #[Locked]
     public $shopId;
     public $shopName;
     public $isOwner = false;

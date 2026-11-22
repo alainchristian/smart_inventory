@@ -11,9 +11,11 @@ use App\Services\SettingsService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 class Dashboard extends Component
 {
+    #[Locked]
     public int    $shopId;
     public string $preset       = 'today';
     public string $dateFrom     = '';

@@ -13,12 +13,15 @@ use App\Services\Sales\SaleService;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 class WarehouseSale extends Component
 {
     use RequiresOpenSession;
+    #[Locked]
     public int $shopId;
     public string $shopName = '';
+    #[Locked]
     public int $warehouseId;
     public string $warehouseName = '';
 

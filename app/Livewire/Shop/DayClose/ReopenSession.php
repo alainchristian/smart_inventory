@@ -5,6 +5,7 @@ namespace App\Livewire\Shop\DayClose;
 use App\Models\DailySession;
 use App\Services\DayClose\DailySessionService;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 
 /**
  * "Re-open" button + reason modal for a shop manager's own closed day.
@@ -13,6 +14,7 @@ use Livewire\Component;
  */
 class ReopenSession extends Component
 {
+    #[Locked]
     public int $sessionId;
     public string $reason = '';
     public bool $showModal = false;

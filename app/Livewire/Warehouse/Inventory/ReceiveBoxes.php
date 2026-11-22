@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ReceiveBoxes extends Component
 {
+    use \App\Livewire\Concerns\PinsToOwnLocation;
     use WithFileUploads;
 
     // Warehouse
