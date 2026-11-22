@@ -2572,3 +2572,19 @@ rows use it), and keeping the log across the wipe tools.
 Tests: `tests/Feature/Audit/AuditDetailTest.php` (12). Return logging is
 tested with a `ReturnService` subclass that stubs only the two stock-moving
 methods, so the real return and its audit entry are exercised.
+
+---
+
+## Security round 2 (2026-11-22)
+
+### Public sign-up removed
+On 2026-11-19 a stranger created a `shop_manager` account (user id 10)
+through the stock Breeze `/register` page, which was still routed in
+production. It wrote no audit entry (the page calls `User::create()` +
+`Auth::login()` directly) and the role came from the column default.
+Nothing in production was attributed to the account. Deactivated by hand
+on 2026-11-22.
+- `/register` and `pages/auth/register.blade.php` are gone. Accounts are
+  created only from Owner → Users or by platform support.
+- `RegistrationTest` now asserts 404 on GET/POST and no `register` route.
+  **Don't re-add a public registration route.**
