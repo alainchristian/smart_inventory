@@ -2633,3 +2633,20 @@ Found in the audit, each with a test that fails without the fix:
   sign-in. Trade-off accepted: someone can lock a named account for 15
   minutes by failing on purpose; the owner can wait it out or ask support.
 Tests: `tests/Feature/Auth/{PasswordPolicyTest,LoginThrottleTest}.php`.
+
+### Two-step sign-in for owners and admins (step 7b, 2026-11-22)
+Same authenticator-app flow, code and tests as platform support (see
+"Two-step sign-in for platform support" above), now also required of
+**owner and admin** accounts. Shop and warehouse managers are never asked.
+- `User::requiresTwoFactor()`: support → `SUPPORT_REQUIRE_2FA` (still off);
+  owner / admin → `auth.owner_two_factor`, env `OWNER_REQUIRE_2FA`,
+  **default ON**. `phpunit.xml` forces it off for every test; the tests
+  about it switch it on (`OwnerTwoFactorTest`).
+- First sign-in after deploy: an owner / admin with no setup is sent to
+  the setup page and can't open anything else, signed-in sessions included.
+- **Lost phone and codes:** `php artisan account:reset-2fa <email>`
+  (alias `super:reset-2fa`; works for support, owner, admin; server only,
+  audited). **If nobody can reach the server:** set `OWNER_REQUIRE_2FA=false`
+  on Railway and redeploy, then set it up again and turn it back on.
+- Support's "View as" is unaffected: the gate runs on the real signed-in
+  account before the identity swap.

@@ -125,4 +125,19 @@ return [
 
     'support_two_factor' => (bool) env('SUPPORT_REQUIRE_2FA', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Two-step sign-in for owners and admins
+    |--------------------------------------------------------------------------
+    |
+    | On by default: an owner or admin must pass an authenticator-app code after
+    | the password (same flow and code as platform support). Set
+    | OWNER_REQUIRE_2FA=false on the server to switch it off, e.g. if someone is
+    | locked out and you cannot reach the server to run `php artisan
+    | account:reset-2fa <email>`. Shop and warehouse managers are not affected.
+    |
+    */
+
+    'owner_two_factor' => (bool) env('OWNER_REQUIRE_2FA', true),
+
 ];

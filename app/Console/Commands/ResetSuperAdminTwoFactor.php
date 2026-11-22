@@ -13,16 +13,17 @@ use Illuminate\Console\Command;
  */
 class ResetSuperAdminTwoFactor extends Command
 {
-    protected $signature = 'super:reset-2fa {email : Email of the platform-support account}';
-    protected $description = 'Clear two-step verification for a platform-support account (it must be set up again at next sign-in)';
+    protected $signature = 'account:reset-2fa {email : Email of the account (platform support, owner or admin)}';
+    protected $aliases = ['super:reset-2fa'];
+    protected $description = 'Clear two-step verification for a support, owner or admin account (it must be set up again at next sign-in)';
 
     public function handle(): int
     {
         $user = User::where('email', strtolower(trim($this->argument('email'))))
-            ->where('role', UserRole::SUPER_ADMIN->value)->first();
+            ->whereIn('role', [UserRole::SUPER_ADMIN->value, UserRole::OWNER->value, UserRole::ADMIN->value])->first();
 
         if (! $user) {
-            $this->error('No platform-support account with that email.');
+            $this->error('No support, owner or admin account with that email.');
             return self::FAILURE;
         }
 
@@ -32,7 +33,7 @@ class ResetSuperAdminTwoFactor extends Command
         ])->save();
 
         AuditLogger::log([
-            'actor_name' => 'Platform support', 'action' => 'two_factor_reset', 'module' => 'auth',
+            'actor_name' => $user->isSuperAdmin() ? 'Platform support' : 'Server command', 'action' => 'two_factor_reset', 'module' => 'auth',
             'entity' => $user, 'entity_identifier' => $user->email, 'severity' => 'warning',
             'details' => ['by' => 'server command'],
         ]);

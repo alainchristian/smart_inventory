@@ -150,12 +150,18 @@ class User extends Authenticatable
     }
 
     /**
-     * Two-step sign-in for platform support (it can reset an owner's password).
-     * Switched on with SUPPORT_REQUIRE_2FA=true; off by default for now.
+     * Two-step sign-in (authenticator app).
+     *  - Platform support (it can reset an owner's password): SUPPORT_REQUIRE_2FA=true; off by default for now.
+     *  - Owners and admins (full system access): on unless OWNER_REQUIRE_2FA=false.
+     * Shop and warehouse managers never need it.
      */
     public function requiresTwoFactor(): bool
     {
-        return $this->isSuperAdmin() && config('auth.support_two_factor');
+        if ($this->isSuperAdmin()) {
+            return (bool) config('auth.support_two_factor');
+        }
+
+        return $this->isSuperUser() && (bool) config('auth.owner_two_factor');
     }
 
     public function hasTwoFactor(): bool

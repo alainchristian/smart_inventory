@@ -222,7 +222,8 @@ class TwoFactorTest extends TestCase
         $this->assertDatabaseHas('activity_logs', ['action' => 'two_factor_reset', 'entity_id' => $user->id]);
         $this->actingAs($user)->get(route('support.accounts'))->assertRedirect(route('two-factor.setup'));
 
-        $owner = $this->user('owner');
-        $this->artisan('super:reset-2fa', ['email' => $owner->email])->assertFailed();
+        // Shop and warehouse managers never have two-step sign-in, so there is nothing to reset.
+        $manager = $this->user('shop_manager');
+        $this->artisan('super:reset-2fa', ['email' => $manager->email])->assertFailed();
     }
 }
