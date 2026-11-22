@@ -21,6 +21,10 @@ class LoginForm extends Form
     #[Validate('boolean')]
     public bool $remember = false;
 
+    /** Failed attempts allowed per email (from any IP) before it is locked for a while. */
+    public const MAX_FAILS_PER_EMAIL = 10;
+    public const EMAIL_LOCK_SECONDS  = 900;
+
     /**
      * Attempt to authenticate the request's credentials.
      *
@@ -32,6 +36,7 @@ class LoginForm extends Form
 
         if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
             RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit(self::emailThrottleKey($this->email), self::EMAIL_LOCK_SECONDS);
 
             throw ValidationException::withMessages([
                 'form.email' => trans('auth.failed'),
@@ -39,6 +44,7 @@ class LoginForm extends Form
         }
 
         RateLimiter::clear($this->throttleKey());
+        RateLimiter::clear(self::emailThrottleKey($this->email));
     }
 
     /**
@@ -46,13 +52,22 @@ class LoginForm extends Form
      */
     protected function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        // Two limits: 5 tries a minute per email + IP, and a cap per email from ANY
+        // IP, so guessing one account's password from many addresses doesn't get
+        // 5 free tries per address.
+        $ipKeyLimited    = RateLimiter::tooManyAttempts($this->throttleKey(), 5);
+        $emailKeyLimited = RateLimiter::tooManyAttempts(self::emailThrottleKey($this->email), self::MAX_FAILS_PER_EMAIL);
+
+        if (! $ipKeyLimited && ! $emailKeyLimited) {
             return;
         }
 
         event(new Lockout(request()));
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $seconds = max(
+            $ipKeyLimited ? RateLimiter::availableIn($this->throttleKey()) : 0,
+            $emailKeyLimited ? RateLimiter::availableIn(self::emailThrottleKey($this->email)) : 0,
+        );
 
         throw ValidationException::withMessages([
             'form.email' => trans('auth.throttle', [
@@ -60,6 +75,12 @@ class LoginForm extends Form
                 'minutes' => ceil($seconds / 60),
             ]),
         ]);
+    }
+
+    /** Throttle key for an email on its own, whatever the IP. */
+    public static function emailThrottleKey(string $email): string
+    {
+        return 'login-email|' . Str::transliterate(Str::lower(trim($email)));
     }
 
     /**

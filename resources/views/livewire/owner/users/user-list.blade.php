@@ -605,7 +605,7 @@
                        type="{{ $form_show_password ? 'text' : 'password' }}"
                        class="um-field-input"
                        style="padding-right:38px"
-                       placeholder="{{ $isEditing ? 'Leave blank to keep current' : 'Min. 8 characters' }}"
+                       placeholder="{{ $isEditing ? 'Leave blank to keep current' : \App\Support\PasswordPolicy::hint() }}"
                        autocomplete="new-password">
                 <button type="button"
                         wire:click="$toggle('form_show_password')"

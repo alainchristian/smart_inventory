@@ -32,7 +32,7 @@
                               font-size:14px;background:var(--surface);color:var(--text);
                               outline:none;box-sizing:border-box;font-family:var(--font);
                               transition:border-color .15s"
-                       placeholder="Min. 8 characters"
+                       placeholder="{{ \App\Support\PasswordPolicy::hint() }}"
                        autocomplete="new-password">
                 <button type="button" wire:click="$toggle('show')"
                         style="position:absolute;right:10px;top:50%;transform:translateY(-50%);

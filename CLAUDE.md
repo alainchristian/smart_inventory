@@ -2620,3 +2620,16 @@ Found in the audit, each with a test that fails without the fix:
   shop's sales. It also let `?full=1` show prices to warehouse staff.
   Now: shop manager ↔ own shop, warehouse manager ↔ `source_warehouse_id`,
   and warehouse staff always get `hideAmounts` (`ReceiptAccessTest`).
+
+### Passwords: 12 characters, per-email login limit (step 7a, 2026-11-22)
+- `App\Support\PasswordPolicy::MIN_LENGTH = 12` is the one rule: Users
+  screen, support console, forced change-password page, and
+  `Password::defaults()` (reset + profile forms, set in AppServiceProvider).
+  Existing passwords are untouched until next changed. No "leaked password"
+  check (it calls an outside service).
+- `LoginForm` now has a second limit besides 5/min per email+IP: 10 failed
+  attempts per email from ANY address locks that email for 15 minutes
+  (`MAX_FAILS_PER_EMAIL`, `EMAIL_LOCK_SECONDS`), cleared by a successful
+  sign-in. Trade-off accepted: someone can lock a named account for 15
+  minutes by failing on purpose; the owner can wait it out or ask support.
+Tests: `tests/Feature/Auth/{PasswordPolicyTest,LoginThrottleTest}.php`.

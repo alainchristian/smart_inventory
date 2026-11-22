@@ -107,7 +107,7 @@ class Accounts extends Component
             'form_phone'     => 'nullable|string|max:20',
             'form_role'      => 'required|in:' . implode(',', self::ASSIGNABLE_ROLES),
             'form_is_active' => 'boolean',
-            'form_password'  => ($editing ? 'nullable' : 'required') . '|string|min:8',
+            'form_password'  => ($editing ? 'nullable' : 'required') . '|string|' . \App\Support\PasswordPolicy::rule(),
         ];
         $needsLocation = in_array($this->form_role, ['warehouse_manager', 'shop_manager'], true);
         if ($needsLocation) {

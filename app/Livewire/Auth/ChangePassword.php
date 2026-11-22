@@ -15,10 +15,10 @@ class ChangePassword extends Component
     public function save(): void
     {
         $this->validate([
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|' . \App\Support\PasswordPolicy::rule() . '|confirmed',
         ], [
             'password.confirmed' => 'Passwords do not match.',
-            'password.min'       => 'Password must be at least 8 characters.',
+            'password.min'       => \App\Support\PasswordPolicy::message(),
         ]);
 
         $user = auth()->user();

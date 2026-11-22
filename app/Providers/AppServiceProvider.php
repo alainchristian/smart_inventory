@@ -52,6 +52,9 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // One password rule app-wide (reset + profile forms use Password::defaults())
+        \Illuminate\Validation\Rules\Password::defaults(fn () => \Illuminate\Validation\Rules\Password::min(\App\Support\PasswordPolicy::MIN_LENGTH));
+
         // Livewire update calls don't re-run route middleware unless it is listed
         // here, so a role or location change would not apply to pages a user
         // already has open. Re-run the role and location checks on every update.

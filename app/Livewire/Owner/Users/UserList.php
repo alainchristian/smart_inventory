@@ -122,9 +122,9 @@ class UserList extends Component
         ];
 
         if (!$this->isEditing) {
-            $rules['form_password'] = 'required|string|min:8';
+            $rules['form_password'] = 'required|string|' . \App\Support\PasswordPolicy::rule();
         } else {
-            $rules['form_password'] = 'nullable|string|min:8';
+            $rules['form_password'] = 'nullable|string|' . \App\Support\PasswordPolicy::rule();
         }
 
         // Location required for non-owners and non-admins
@@ -137,7 +137,7 @@ class UserList extends Component
             'form_email.required'     => 'Email address is required.',
             'form_email.unique'       => 'This email is already in use.',
             'form_password.required'  => 'Password is required for new users.',
-            'form_password.min'       => 'Password must be at least 8 characters.',
+            'form_password.min'       => \App\Support\PasswordPolicy::message(),
             'form_location_id.required' => 'Please assign a location for this role.',
         ]);
 

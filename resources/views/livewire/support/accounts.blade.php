@@ -251,7 +251,7 @@ a.sp-action { display:inline-block;text-decoration:none }
 
         <div class="sp-field">
             <label class="sp-label">{{ $editingId ? 'Reset password' : 'Temporary password' }} @unless($editingId)<span>*</span>@endunless</label>
-            <input type="text" class="sp-input" wire:model="form_password" autocomplete="off" placeholder="{{ $editingId ? 'Leave empty to keep the current one' : 'At least 8 characters' }}">
+            <input type="text" class="sp-input" wire:model="form_password" autocomplete="off" placeholder="{{ $editingId ? 'Leave empty to keep the current one' : \App\Support\PasswordPolicy::hint() }}">
             <div class="sp-hint">The person must choose a new password the next time they sign in.</div>
             @error('form_password')<div class="sp-error">{{ $message }}</div>@enderror
         </div>
