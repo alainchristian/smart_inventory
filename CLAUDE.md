@@ -2588,3 +2588,35 @@ on 2026-11-22.
   created only from Owner → Users or by platform support.
 - `RegistrationTest` now asserts 404 on GET/POST and no `register` route.
   **Don't re-add a public registration route.**
+
+### Location ids can't be switched from the browser (steps 4–6, 2026-11-22)
+Found in the audit, each with a test that fails without the fix:
+- **Livewire public properties can be overwritten by the client.** A shop /
+  warehouse manager's `shopId` / `warehouseId` / `sessionId` are set in
+  `mount()`, so they are now `#[Locked]` (Shop Dashboard, ShopManager
+  Dashboard, StockLevels, SalesIndex, ReturnList, ProcessReturn,
+  FulfillmentQueue, WarehouseManager Dashboard, WarehouseSale, UnifiedPos
+  `warehouseId`, ReopenSession, …). The ones bound to an owner's `<select>`
+  can't be locked, so they use `App\Livewire\Concerns\PinsToOwnLocation`
+  (Livewire trait hook `updatingPinsToOwnLocation`): managers get a 403 if
+  they change it, owners are free. Confirmed real: a warehouse manager could
+  switch warehouse in `Warehouse\Inventory\ReceiveBoxes`.
+  **New components: lock the id, or use the trait.** `LocationTamperingTest`
+  scans every Livewire component and fails on an unlocked `shopId`,
+  `warehouseId`, `locationId`, `sessionId`; the allowlist there names the
+  orphaned components (no route or view) and the filters.
+  Tests can't `set()` a locked id: mount as the right user instead.
+- **Deactivated / demoted users kept working on open pages.** Livewire's
+  update calls don't re-run route middleware (its persistent list is only
+  auth-style middleware), so `CheckRole`'s `is_active` check never ran for
+  them. Now `EnsureUserIsActive` (web group, covers Livewire updates; 419 on
+  Livewire so the page reloads to sign-in) and `Livewire::addPersistentMiddleware`
+  for `CheckRole` + `CheckLocation` (AppServiceProvider), so a role or
+  location change applies to pages already open. `SessionRevocationTest`
+  goes through real HTTP (page, then `/livewire/update`).
+- **Receipts / picking slips:** `ReceiptController` compared `location_id`
+  to `shop_id` without the role, and shop 1 / warehouse 1 are different
+  sequences, so a warehouse manager whose id matched a shop could open that
+  shop's sales. It also let `?full=1` show prices to warehouse staff.
+  Now: shop manager ↔ own shop, warehouse manager ↔ `source_warehouse_id`,
+  and warehouse staff always get `hideAmounts` (`ReceiptAccessTest`).

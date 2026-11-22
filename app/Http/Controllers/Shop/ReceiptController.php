@@ -12,9 +12,14 @@ class ReceiptController extends Controller
     {
         $user = auth()->user();
 
-        $isWarehouseUser = $user->isWarehouseManager() && $sale->source_warehouse_id === $user->location_id;
+        // Shop and warehouse ids are separate sequences (shop 1 and warehouse 1 both
+        // exist), so a location id only means something together with the role.
+        $isWarehouseUser = $user->isWarehouseManager()
+            && $sale->source_warehouse_id !== null
+            && (int) $sale->source_warehouse_id === (int) $user->location_id;
+        $isShopUser = $user->isShopManager() && (int) $sale->shop_id === (int) $user->location_id;
 
-        if (! $user->isOwner() && $user->location_id !== $sale->shop_id && ! $isWarehouseUser) {
+        if (! $user->isOwner() && ! $isShopUser && ! $isWarehouseUser) {
             abort(403);
         }
 
@@ -31,6 +36,11 @@ class ReceiptController extends Controller
         $hideAmounts = ($isPickingSlip
                 || ($sale->fulfillment_method === 'transporter' && $sale->fulfillment_pickup_code))
             && ! $request->boolean('full');
+
+        // Warehouse staff never see prices or payments, whatever the URL says.
+        if ($user->isWarehouseManager()) {
+            $hideAmounts = true;
+        }
 
         return view('receipt.print', compact('sale', 'groupedItems', 'hideAmounts'));
     }
