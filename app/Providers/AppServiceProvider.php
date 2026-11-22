@@ -52,6 +52,14 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // Livewire update calls don't re-run route middleware unless it is listed
+        // here, so a role or location change would not apply to pages a user
+        // already has open. Re-run the role and location checks on every update.
+        \Livewire\Livewire::addPersistentMiddleware([
+            \App\Http\Middleware\CheckRole::class,
+            \App\Http\Middleware\CheckLocation::class,
+        ]);
+
         // Force HTTPS for all URLs when behind ngrok or other proxy
         // This fixes Livewire file upload mixed content errors
         if (request()->header('X-Forwarded-Proto') === 'https') {
