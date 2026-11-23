@@ -47,6 +47,7 @@ class Accounts extends Component
     public bool   $form_is_active     = true;
 
     public ?int $confirmToggleId = null;
+    public ?int $confirmResetId  = null;
 
     public function mount(): void
     {
@@ -223,6 +224,36 @@ class Accounts extends Component
 
         $this->toast($newState ? 'success' : 'warning', $user->name . ($newState ? ' is active again.' : ' has been deactivated.'));
         $this->cancelToggle();
+    }
+
+    public function confirmReset2fa(int $userId): void
+    {
+        $target = $this->account($userId);
+        abort_unless(\App\Services\TwoFactorReset::allowed(auth()->user(), $target), 403);
+
+        $this->confirmResetId = $target->id;
+    }
+
+    public function cancelReset2fa(): void
+    {
+        $this->confirmResetId = null;
+    }
+
+    public function executeReset2fa(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
+        $target = $this->account((int) $this->confirmResetId);
+        $this->confirmResetId = null;
+
+        try {
+            app(\App\Services\TwoFactorReset::class)->reset($target, auth()->user(), 'Platform support');
+        } catch (\DomainException $e) {
+            $this->toast('error', $e->getMessage());
+            return;
+        }
+
+        $this->toast('success', "Two-step sign-in reset for {$target->name}. They set it up again at next sign-in.");
     }
 
     public function getShopsProperty()

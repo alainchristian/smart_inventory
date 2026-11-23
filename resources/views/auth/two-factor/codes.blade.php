@@ -20,8 +20,12 @@
                 style="flex:1;padding:10px;border:1.5px solid #e2e6f3;border-radius:10px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#4a5372;font-family:inherit">{{ __('Print') }}</button>
     </div>
 
-    <form method="POST" action="{{ route('two-factor.codes.done') }}">
+    <form method="POST" action="{{ route('two-factor.codes.done') }}" x-data="{ saved: false }">
         @csrf
-        <button type="submit" class="btn-login">{{ __("I've saved them — continue") }}</button>
+        <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;font-size:13px;line-height:1.45;color:#4a5372;cursor:pointer">
+            <input type="checkbox" x-model="saved" style="margin-top:3px">
+            <span>{{ __('I saved these codes somewhere other than this phone, such as a password manager or on paper.') }}</span>
+        </label>
+        <button type="submit" class="btn-login" :disabled="!saved" :style="saved ? '' : 'opacity:.5;cursor:not-allowed'">{{ __('Continue') }}</button>
     </form>
 </div>

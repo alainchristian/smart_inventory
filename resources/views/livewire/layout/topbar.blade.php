@@ -155,6 +155,20 @@
                                 <span class="text-[14px] font-medium">{{ __('Profile Settings') }}</span>
                             </a>
 
+                            @if(auth()->user()->requiresTwoFactor() && auth()->user()->hasTwoFactor())
+                            <!-- Recovery codes (plain page, not wire:navigate) -->
+                            <a href="{{ route('two-factor.manage') }}"
+                               class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all"
+                               style="color: var(--text-sub);"
+                               onmouseover="this.style.background='var(--surface2)'; this.style.color='var(--text)';"
+                               onmouseout="this.style.background='transparent'; this.style.color='var(--text-sub)';">
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5l8-3z"/>
+                                </svg>
+                                <span class="text-[14px] font-medium">{{ __('Recovery codes') }}</span>
+                            </a>
+                            @endif
+
                             @if(auth()->user()->isRealOwner())
                             <!-- Switch between Owner and Admin view (real owners only) -->
                             <button type="button" wire:click="toggleAdminMode" wire:loading.attr="disabled" wire:target="toggleAdminMode"

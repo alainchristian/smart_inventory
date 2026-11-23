@@ -155,6 +155,60 @@ class TwoFactorController extends Controller
         return redirect()->route('dashboard');
     }
 
+    // ── New recovery codes (signed in, with a current code) ──────────────────
+
+    public function manage(Request $request)
+    {
+        $user = $request->user();
+        if (! $user->requiresTwoFactor() || ! $user->hasTwoFactor()) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('layouts.login', ['slot' => new HtmlString(view('auth.two-factor.manage', [
+            'user' => $user, 'left' => count($user->two_factor_recovery_codes ?? []),
+        ])->render())]);
+    }
+
+    public function regenerate(Request $request)
+    {
+        $user = $request->user();
+        if (! $user->requiresTwoFactor() || ! $user->hasTwoFactor()) {
+            return redirect()->route('dashboard');
+        }
+
+        $key = 'two-factor|' . $user->id;
+        if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
+            $minutes = (int) ceil(RateLimiter::availableIn($key) / 60);
+            return back()->withErrors(['code' => "Too many wrong codes. Try again in {$minutes} minute(s)."]);
+        }
+
+        $request->validate(['code' => 'required|string|max:16']);
+
+        // Only a current authenticator code counts here, not a recovery code
+        if (! $this->useAuthenticatorCode($user, (string) $request->input('code'))) {
+            RateLimiter::hit($key, self::LOCK_SECONDS);
+            AuditLogger::log([
+                'action' => 'two_factor_failed', 'module' => 'auth', 'entity' => $user,
+                'entity_identifier' => $user->email, 'status' => 'failed', 'severity' => 'warning',
+                'details' => ['method' => 'authenticator', 'for' => 'new_recovery_codes'],
+            ]);
+            return back()->withErrors(['code' => 'That code is not valid. Check the code in your app and try again.']);
+        }
+
+        RateLimiter::clear($key);
+
+        $codes = $this->newRecoveryCodes();
+        $user->forceFill(['two_factor_recovery_codes' => array_map(fn ($c) => Hash::make($c), $codes)])->save();
+        $request->session()->put(self::NEW_CODES, $codes);
+
+        AuditLogger::log([
+            'action' => 'two_factor_codes_regenerated', 'module' => 'auth', 'entity' => $user,
+            'entity_identifier' => $user->email, 'severity' => 'warning',
+        ]);
+
+        return redirect()->route('two-factor.codes');
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /** Wrong page for this account's state: send it where it belongs. */

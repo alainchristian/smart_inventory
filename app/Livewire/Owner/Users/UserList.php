@@ -42,6 +42,9 @@ class UserList extends Component
     public bool  $confirmToggleActive = false; // current state (about to be reversed)
     public string $confirmToggleName = '';
 
+    // Two-step sign-in reset (lost phone + recovery codes)
+    public ?int  $confirmResetId = null;
+
     protected $queryString = [
         'search'       => ['except' => ''],
         'roleFilter'   => ['except' => 'all'],
@@ -301,6 +304,41 @@ class UserList extends Component
     {
         $this->confirmToggleId   = null;
         $this->confirmToggleName = '';
+    }
+
+    // ── Reset two-step sign-in ────────────────────────────────────────────────
+
+    public function confirmReset2fa(int $userId): void
+    {
+        $target = User::visibleToBusiness()->findOrFail($userId);
+
+        if (! \App\Services\TwoFactorReset::allowed(auth()->user(), $target)) {
+            $this->dispatch('notification', ['type' => 'error', 'message' => 'You cannot reset two-step sign-in for this account.']);
+            return;
+        }
+
+        $this->confirmResetId = $target->id;
+    }
+
+    public function cancelReset2fa(): void
+    {
+        $this->confirmResetId = null;
+    }
+
+    public function executeReset2fa(): void
+    {
+        $target = User::visibleToBusiness()->findOrFail((int) $this->confirmResetId);
+
+        try {
+            app(\App\Services\TwoFactorReset::class)->reset($target, auth()->user(), 'Users screen');
+        } catch (\DomainException $e) {
+            $this->dispatch('notification', ['type' => 'error', 'message' => $e->getMessage()]);
+            $this->confirmResetId = null;
+            return;
+        }
+
+        $this->dispatch('notification', ['type' => 'success', 'message' => "Two-step sign-in reset for {$target->name}. They set it up again at their next sign-in."]);
+        $this->confirmResetId = null;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -158,10 +158,24 @@ a.sp-action { display:inline-block;text-decoration:none }
                                 </form>
                             @endif
                             <a href="{{ route('support.activity-logs', ['filterUser' => $u->id]) }}" wire:navigate class="sp-action" title="Everything {{ $u->name }} has done">Activity</a>
+                            @if(\App\Services\TwoFactorReset::allowed(auth()->user(), $u))
+                                <button type="button" class="sp-action" wire:click="confirmReset2fa({{ $u->id }})" title="Lost phone and recovery codes">Reset 2-step</button>
+                            @endif
                             <button type="button" class="sp-action" wire:click="openEdit({{ $u->id }})">Edit</button>
                             <button type="button" class="sp-action {{ $u->is_active ? 'danger' : 'restore' }}" wire:click="confirmToggle({{ $u->id }})">{{ $u->is_active ? 'Deactivate' : 'Activate' }}</button>
                         </td>
                     </tr>
+                    @if($confirmResetId === $u->id)
+                        <tr wire:key="sp-r-{{ $u->id }}" class="sp-confirm-row">
+                            <td colspan="7">
+                                <div class="sp-confirm-wrap">
+                                    <span>Reset two-step sign-in for <strong>{{ $u->name }}</strong>? Their app and recovery codes stop working and they set it up again at next sign-in. Confirm it is really them first.</span>
+                                    <button type="button" class="sp-confirm-yes" wire:click="executeReset2fa">Yes, reset</button>
+                                    <button type="button" class="sp-confirm-no" wire:click="cancelReset2fa">Cancel</button>
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
                     @if($confirmToggleId === $u->id)
                         <tr wire:key="sp-c-{{ $u->id }}" class="sp-confirm-row">
                             <td colspan="7">

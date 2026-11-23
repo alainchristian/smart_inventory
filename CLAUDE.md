@@ -2650,3 +2650,18 @@ Same authenticator-app flow, code and tests as platform support (see
   on Railway and redeploy, then set it up again and turn it back on.
 - Support's "View as" is unaffected: the gate runs on the real signed-in
   account before the identity swap.
+
+### Lost phone: resets and recovery codes (2026-11-23)
+- **`App\Services\TwoFactorReset`** is the one rule for clearing someone's
+  two-step setup (`allowed($actor, $target)` / `reset()`): support may reset
+  any owner or admin, an owner may reset an admin or another owner (never
+  their own), an admin nobody. The target must be owner/admin and enrolled.
+  Buttons: "Reset 2-step" on Owner → Users and the support console, each with
+  an inline confirm. Audited as `two_factor_reset` (`details.reset_by`).
+  The server command `account:reset-2fa` still works and is unchanged.
+- **New recovery codes:** topbar menu → "Recovery codes"
+  (`two-factor.manage`). Needs a current authenticator code (a recovery code
+  is refused), shares the 5-tries lock, audited `two_factor_codes_regenerated`.
+- The codes page won't continue until "I saved these somewhere other than
+  this phone" is ticked.
+Tests: `tests/Feature/Auth/TwoFactorRecoveryTest.php`.

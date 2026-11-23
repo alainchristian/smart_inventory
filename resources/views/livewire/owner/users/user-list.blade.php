@@ -470,6 +470,12 @@
                             {{ $user->is_active ? 'Deactivate' : 'Activate' }}
                         </button>
                         @endif
+                        @if(\App\Services\TwoFactorReset::allowed(auth()->user(), $user))
+                        <button wire:click="confirmReset2fa({{ $user->id }})" class="um-action"
+                                title="Lost phone and recovery codes? They set up the authenticator app again at next sign-in.">
+                            Reset 2-step
+                        </button>
+                        @endif
                         @if($isRestricted)
                         <span style="font-size:11px;color:var(--text-dim);font-style:italic">
                             Owner-managed
@@ -478,6 +484,23 @@
                     </div>
                 </td>
             </tr>
+
+            @if($confirmResetId === $user->id)
+            <tr class="um-confirm-row" wire:key="um-reset-{{ $user->id }}">
+                <td colspan="8" style="padding:14px 16px">
+                    <div class="um-confirm-box">
+                        <span style="color:var(--amber)"><x-icon name="alert-triangle" size="18" /></span>
+                        <span class="um-confirm-text">
+                            Reset two-step sign-in for <strong>{{ $user->name }}</strong>?
+                            Their authenticator app and recovery codes stop working, and they must set it up again at their next sign-in.
+                            Do this only if you know it is really them.
+                        </span>
+                        <button wire:click="executeReset2fa" class="um-confirm-yes">Yes, reset</button>
+                        <button wire:click="cancelReset2fa" class="um-confirm-no">Cancel</button>
+                    </div>
+                </td>
+            </tr>
+            @endif
 
             {{-- Inline confirmation row --}}
             @else
