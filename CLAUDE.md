@@ -2665,3 +2665,19 @@ Same authenticator-app flow, code and tests as platform support (see
 - The codes page won't continue until "I saved these somewhere other than
   this phone" is ticked.
 Tests: `tests/Feature/Auth/TwoFactorRecoveryTest.php`.
+
+### Trust this device (2026-11-23)
+Owners and admins can tick "Trust this device for 30 days" on the code
+screen (authenticator code only, never a recovery code). Platform support
+never gets it.
+- `trusted_devices` stores the sha256 of a random cookie token
+  (`trusted_device`, encrypted, HttpOnly, SameSite=Lax). `RequireTwoFactor`
+  lets a valid cookie for that user through and **replaces the token on every
+  use**; the 30-day expiry is fixed from the day it was trusted.
+- A new password, a changed / cleared authenticator, or a deactivation deletes
+  all of the user's devices (`User::booted`). Rotating APP_KEY makes every
+  cookie unreadable, i.e. everyone is asked for a code once.
+- Topbar → Recovery codes also lists trusted devices and has "Sign out all
+  devices". Audited: `two_factor_device_trusted` / `_skipped` / `_devices_revoked`.
+- Not covered: query-builder updates of `users` skip the model hook.
+Tests: `tests/Feature/Auth/TrustedDeviceTest.php`.

@@ -68,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/codes', 'codesDone')->name('codes.done');
         Route::get('/manage', 'manage')->name('manage');
         Route::post('/manage', 'regenerate')->name('regenerate');
+        Route::post('/devices/revoke', 'revokeDevices')->name('devices.revoke');
     });
 
     // Forced password change (new users)

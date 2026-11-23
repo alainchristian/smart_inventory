@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\TrustedDevice;
+use App\Services\AuditLogger;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,6 +29,18 @@ class RequireTwoFactor
         }
 
         if ($request->hasSession() && $request->session()->get(self::SESSION_KEY) === $user->id) {
+            return $next($request);
+        }
+
+        // A device this person chose to trust (passed the code on it before) skips the code
+        if ($request->hasSession() && $user->canTrustDevices() && $device = TrustedDevice::forRequest($user, $request)) {
+            $device->touchAndRotate($request);
+            $request->session()->put(self::SESSION_KEY, $user->id);
+            AuditLogger::log([
+                'action' => 'two_factor_device_skipped', 'module' => 'auth', 'entity' => $user,
+                'entity_identifier' => $user->email, 'details' => ['device_id' => $device->id],
+            ]);
+
             return $next($request);
         }
 

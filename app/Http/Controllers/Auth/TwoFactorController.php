@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\RequireTwoFactor;
+use App\Models\TrustedDevice;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Support\Totp;
@@ -67,6 +68,16 @@ class TwoFactorController extends Controller
 
         RateLimiter::clear($key);
         $this->pass($request, $user);
+
+        // Only after a real authenticator code, never a recovery code (lost-phone situation)
+        if (! $recovery && $request->boolean('trust_device') && $user->canTrustDevices()) {
+            $device = TrustedDevice::trust($user, $request);
+            AuditLogger::log([
+                'action' => 'two_factor_device_trusted', 'module' => 'auth', 'entity' => $user,
+                'entity_identifier' => $user->email, 'severity' => 'warning',
+                'details' => ['device_id' => $device->id, 'days' => TrustedDevice::DAYS, 'browser' => $device->user_agent],
+            ]);
+        }
 
         if ($recovery) {
             $left = count($user->fresh()->two_factor_recovery_codes ?? []);
@@ -166,7 +177,29 @@ class TwoFactorController extends Controller
 
         return view('layouts.login', ['slot' => new HtmlString(view('auth.two-factor.manage', [
             'user' => $user, 'left' => count($user->two_factor_recovery_codes ?? []),
+            'devices' => $user->trustedDevices()->where('expires_at', '>', now())->orderByDesc('last_used_at')->get(),
+            'thisDevice' => TrustedDevice::forRequest($user, $request)?->id,
         ])->render())]);
+    }
+
+    /** "Sign out all devices": every trusted device is asked for a code again. */
+    public function revokeDevices(Request $request)
+    {
+        $user = $request->user();
+        if (! $user->requiresTwoFactor() || ! $user->hasTwoFactor()) {
+            return redirect()->route('dashboard');
+        }
+
+        $count = $user->trustedDevices()->count();
+        $user->trustedDevices()->delete();
+        TrustedDevice::forget();
+
+        AuditLogger::log([
+            'action' => 'two_factor_devices_revoked', 'module' => 'auth', 'entity' => $user,
+            'entity_identifier' => $user->email, 'severity' => 'warning', 'details' => ['devices' => $count],
+        ]);
+
+        return redirect()->route('two-factor.manage')->with('status', 'All trusted devices were removed. Each one will ask for a code again.');
     }
 
     public function regenerate(Request $request)

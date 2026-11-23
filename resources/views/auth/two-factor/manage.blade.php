@@ -27,6 +27,32 @@
         <button type="submit" class="btn-login">{{ __('Enter the code from your app to make new codes') }}</button>
     </form>
 
+    @if(session('status'))
+        <div style="margin-top:14px;padding:9px 11px;border-radius:9px;background:#e8f7f3;color:#0b7a68;font-size:13px">{{ session('status') }}</div>
+    @endif
+
+    <div style="margin-top:18px;border-top:1px solid #e2e6f3;padding-top:14px">
+        <p class="form-caption" style="margin-bottom:6px">{{ __('Trusted devices') }}</p>
+        @forelse($devices as $d)
+            <div style="padding:8px 0;border-bottom:1px solid #eef0f8;font-size:12px;line-height:1.45;color:#4a5372">
+                <div style="color:#1c2440;font-weight:600">
+                    {{ \Illuminate\Support\Str::limit($d->user_agent ?: __('Unknown browser'), 70) }}
+                    @if($d->id === $thisDevice)<span style="color:#0e9e86"> · {{ __('this device') }}</span>@endif
+                </div>
+                <div>{{ __('Last used') }} {{ local_time($d->last_used_at)?->format('d M Y H:i') }} · {{ __('trusted until') }} {{ local_time($d->expires_at)?->format('d M Y') }}</div>
+            </div>
+        @empty
+            <p style="margin:0;font-size:13px;color:#7a81a0;text-align:center">{{ __('No trusted devices. You are asked for a code at every sign-in.') }}</p>
+        @endforelse
+
+        @if($devices->isNotEmpty())
+            <form method="POST" action="{{ route('two-factor.devices.revoke') }}" style="margin-top:10px">
+                @csrf
+                <button type="submit" style="width:100%;padding:10px;border:1.5px solid #e2e6f3;border-radius:10px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#e11d48;font-family:inherit">{{ __('Sign out all devices') }}</button>
+            </form>
+        @endif
+    </div>
+
     <div style="margin-top:14px;text-align:center">
         <a href="{{ route('dashboard') }}" style="font-size:13px;color:#7a81a0">{{ __('Back') }}</a>
     </div>

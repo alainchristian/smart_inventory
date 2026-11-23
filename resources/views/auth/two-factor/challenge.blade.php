@@ -37,6 +37,13 @@
             @enderror
         </div>
 
+        @if($user->canTrustDevices())
+            <label x-show="!recovery" style="display:flex;gap:8px;align-items:flex-start;margin:0 0 12px;font-size:13px;line-height:1.45;color:#4a5372;cursor:pointer">
+                <input type="checkbox" name="trust_device" value="1" style="margin-top:3px">
+                <span>{{ __('Trust this device for :n days. Only on your own phone or computer, never a shared one.', ['n' => \App\Models\TrustedDevice::DAYS]) }}</span>
+            </label>
+        @endif
+
         <button type="submit" class="btn-login">{{ __('Verify') }}</button>
     </form>
 

@@ -164,6 +164,31 @@ class User extends Authenticatable
         return $this->isSuperUser() && (bool) config('auth.owner_two_factor');
     }
 
+    /** Owners and admins may skip the code on a device they trust; platform support never. */
+    public function canTrustDevices(): bool
+    {
+        return ! $this->isSuperAdmin() && $this->requiresTwoFactor() && $this->hasTwoFactor();
+    }
+
+    public function trustedDevices(): HasMany
+    {
+        return $this->hasMany(TrustedDevice::class);
+    }
+
+    /**
+     * A trusted device is only as good as the credentials behind it: a new password,
+     * a changed or cleared authenticator, or a deactivation takes every one away.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user) {
+            if ($user->wasChanged('password') || $user->wasChanged('two_factor_secret')
+                || ($user->wasChanged('is_active') && ! $user->is_active)) {
+                $user->trustedDevices()->delete();
+            }
+        });
+    }
+
     public function hasTwoFactor(): bool
     {
         return $this->two_factor_confirmed_at !== null && $this->two_factor_secret !== null;
