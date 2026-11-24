@@ -16,6 +16,9 @@ class CheckPasswordChange
             ! app(\App\Support\ViewAs::class)->active() &&
             !$request->routeIs('password.change') &&
             !$request->routeIs('logout') &&
+            // Two-step comes first: RequireTwoFactor holds an account at these pages until it
+            // passes, and it blocks /change-password, so redirecting from here made a loop
+            !$request->routeIs('two-factor.*') &&
             !$request->routeIs('livewire.*')
         ) {
             return redirect()->route('password.change');

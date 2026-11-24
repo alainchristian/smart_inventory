@@ -61,6 +61,19 @@ class OwnerTwoFactorTest extends TestCase
         $this->actingAs($owner)->getJson(route('owner.dashboard'))->assertStatus(401);
     }
 
+    public function test_a_new_password_wall_does_not_loop_with_the_two_step_setup(): void
+    {
+        // Used to bounce setup -> change-password -> setup forever (ERR_TOO_MANY_REDIRECTS)
+        $admin = $this->user('admin', ['must_change_password' => true]);
+
+        $this->actingAs($admin)->get(route('two-factor.setup'))->assertOk();
+
+        // Once the code is passed, the forced password change comes next
+        $this->actingAs($this->enrol($admin))->withSession([RequireTwoFactor::SESSION_KEY => $admin->id])
+            ->get(route('owner.dashboard'))->assertRedirect(route('password.change'));
+        $this->get(route('password.change'))->assertOk();
+    }
+
     public function test_enrolled_owner_is_asked_for_the_code_until_it_is_passed(): void
     {
         $owner = $this->enrol($this->user('owner'));
