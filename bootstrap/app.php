@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.password.change' => \App\Http\Middleware\CheckPasswordChange::class,
         ]);
 
+        // Clickjacking / sniffing / referrer / camera-permission headers on every response
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         // Server-Timing header (app / db time + query count) for measuring
         // production speed from DevTools; logs requests slower than 1s
         $middleware->prependToGroup('web', \App\Http\Middleware\ServerTiming::class);

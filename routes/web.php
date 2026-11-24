@@ -19,11 +19,6 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// QR Code Test Route (for troubleshooting)
-Route::get('/qr-test', function () {
-    return view('qr-code-test');
-})->name('qr.test');
-
 // Mobile Scanner (public access for phone scanning)
 Route::get('/scanner', function () {
     return view('scanner.mobile');
